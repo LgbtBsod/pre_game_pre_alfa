@@ -10,8 +10,8 @@ class MagicPlayer:
 		if player.energy >= cost:
 			player.health += strength
 			player.energy -= cost
-			if player.health >= player.stats['health']:
-				player.health = player.stats['health']
+			if player.health >= player.current_stats['health']:
+				player.health = player.current_stats['health']
 			self.animation_player.create_particles('aura',player.rect.center,groups)
 			self.animation_player.create_particles('heal',player.rect.center,groups)
 
