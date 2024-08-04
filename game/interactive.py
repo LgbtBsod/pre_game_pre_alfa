@@ -6,7 +6,7 @@ class Use_spite(pygame.sprite.Sprite):
 	def __init__(self,groups):
 		super().__init__(groups)
 		
-	def get_distance(self,player,sprite):
+	def get_distance(self,player, sprite):
 		spite_vec = pygame.math.Vector2(self.rect.center)
 		player_vec = pygame.math.Vector2(player.rect.center)
 		distance = (player_vec - spite_vec).magnitude()
