@@ -1,3 +1,7 @@
+# helper/settings.py
+
+from equip.item_base import artifacts
+
 # game setup
 WIDTH    = 1280	
 HEIGTH   = 720

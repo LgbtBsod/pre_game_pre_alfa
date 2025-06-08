@@ -1,10 +1,11 @@
 # player.py
 
-from ursina import Entity, Vec2, time, destroy, held_keys, Animation 
+from ursina import Entity, Vec2, time, destroy, held_keys, Animation, camera, Vec3
 from helper.settings import *
 from helper.support import import_folder, convert_to_num
 from equip.chance import chance
 import os
+
 
 class Player(Entity):
     def __init__(self, position=(0, 0), groups=None, obstacle_sprites=None,
@@ -17,12 +18,19 @@ class Player(Entity):
             collider='box'
         )
 
-        # Добавлено для работы с UI
+        # UI / Input
         self.weapon_index = 0
         self.can_switch_weapon = True
         self.weapon_switch_time = None
         self.switch_duration_cooldown = 0.2
         
+        self.weapon = list(weapon_data.keys())[self.weapon_index]
+
+        self.magic_index = 0
+        self.can_switch_magic = True
+        self.magic_switch_time = None
+        self.switch_duration_cooldown = 0.2
+
         # Графика
         self.import_player_assets()
         self.status = 'down'
@@ -88,11 +96,7 @@ class Player(Entity):
 
         # Магия
         self.create_magic = create_magic
-        self.magic_index = 0
         self.magic = list(magic_data.keys())[self.magic_index]
-        self.can_switch_magic = True
-        self.magic_switch_time = 0
-        self.switch_duration_cooldown = 0.2
 
         # Уязвимость
         self.vulnerable = True
@@ -108,13 +112,15 @@ class Player(Entity):
 
         for animation in self.animations:
             folder_path = f'graphics/player/{animation}'
+            if not os.path.exists(folder_path):  # Проверка наличия папки
+                continue
             frames_count = len(os.listdir(folder_path))
             self.animations[animation] = [
                 Animation(f'{folder_path}/{i}', autoplay=False, loop=False, fps=12, scale=1, enabled=False)
                 for i in range(frames_count)
             ]
 
-    def input(self):
+    def player_input(self):
         if not self.attacking:
             self.direction = Vec2(
                 int(held_keys['d']) - int(held_keys['a']),
@@ -124,21 +130,23 @@ class Player(Entity):
             if self.direction.length() > 0:
                 self.direction = self.direction.normalized()
 
+            # Обновление статуса
             if self.direction.x == 0 and self.direction.y == 0:
-                if 'idle' not in self.status and not 'attack' in self.status:
+                if 'idle' not in self.status and 'attack' not in self.status:
                     if 'attack' in self.status:
                         self.status = self.status.replace('_attack', '_idle')
                     else:
                         self.status += '_idle'
-
             elif 'idle' in self.status or 'attack' in self.status:
                 self.status = self.status.replace('_idle', '').replace('_attack', '')
 
+            # Атака
             if held_keys['space']:
                 self.attacking = True
                 self.attack_time = time.time()
                 self.create_attack()
 
+            # Магия
             if held_keys['control left']:
                 self.attacking = True
                 self.attack_time = time.time()
@@ -147,20 +155,19 @@ class Player(Entity):
                 cost = list(magic_data.values())[self.magic_index]['cost']
                 self.create_magic(style, strength, cost)
 
+            # Переключение оружия
             if held_keys['q'] and self.can_switch_weapon:
                 self.can_switch_weapon = False
                 self.weapon_switch_time = time.time()
                 self.weapon_index = (self.weapon_index + 1) % len(weapon_data)
                 self.weapon = list(weapon_data.keys())[self.weapon_index]
 
+            # Переключение магии
             if held_keys['e'] and self.can_switch_magic:
                 self.can_switch_magic = False
                 self.magic_switch_time = time.time()
                 self.magic_index = (self.magic_index + 1) % len(magic_data)
                 self.magic = list(magic_data.keys())[self.magic_index]
-
-    def get_status(self):
-        pass  # Обработано в input()
 
     def cooldowns(self):
         current_time = time.time()
@@ -179,16 +186,17 @@ class Player(Entity):
             self.vulnerable = True
 
     def animate(self):
-        animation = self.animations[self.status]
-        self.frame_index += self.animation_speed * time.dt * 60
+        animation = self.animations.get(self.status, [])
+        if animation:
+            self.frame_index += self.animation_speed * time.dt * 60
 
-        if self.frame_index >= len(animation):
-            self.frame_index = 0
+            if self.frame_index >= len(animation):
+                self.frame_index = 0
 
-        for anim in animation:
-            anim.enabled = False
-        animation[int(self.frame_index)].enabled = True
-        self.texture = animation[int(self.frame_index)].texture
+            for anim in animation:
+                anim.enabled = False
+            animation[int(self.frame_index)].enabled = True
+            self.texture = animation[int(self.frame_index)].texture
 
     def move(self):
         self.position += self.direction * self.speed * time.dt
@@ -222,7 +230,7 @@ class Player(Entity):
             self.health = self.current_stats['health']
 
     def update(self):
-        self.input()
+        self.player_input()
         self.cooldowns()
         self.animate()
         self.move()
@@ -230,4 +238,4 @@ class Player(Entity):
         self.hp_recovery()
 
         # Камера следует за игроком
-        camera.position = self.position + (0, 0, -20)
+        camera.position = Vec3(self.x, self.y, -20)

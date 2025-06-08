@@ -1,12 +1,10 @@
 # level.py
 
-from ursina import scene
-from ursina import Ursina, Entity, camera, Vec2, Vec3, time, Text, window, color, destroy
-from ursina.prefabs.platformer_controller_2d import PlatformerController2d
-from helper.settings import *
+from ursina import Ursina, Entity, scene, camera, time, destroy, held_keys, Vec2
 from tile import Tile
 from player import Player
 from debug import DebugText
+from helper.settings import *
 from helper.support import import_csv_layout, import_folder
 from weapon import Weapon
 from enemy import Enemy
@@ -14,41 +12,38 @@ from particles import AnimationPlayer
 from magic import MagicPlayer
 from anim_tile import AnimTile
 from equip.equipment import Equipment
-from UI.ui import UI
 from effect import Effect
 from save.save_load import save, load
-import json
+from UI.ui import UI
 from UI.upgrade import UpgradeMenu
+from interactive import UseSprite
 
 
 class Level(Entity):
     def __init__(self):
         super().__init__(parent=scene)
 
-        # Инициализация
-        self.player = None
-        self.game_paused = False
+        # Инициализация групп спрайтов
         self.visible_sprites = []
         self.obstacle_sprites = []
         self.attack_sprites = []
         self.attackable_sprites = []
 
-        # UI
+        # Создание игрока и интерфейса
+        self.player = None
+        self.game_paused = False
         self.ui = UI()
         self.menu = UpgradeMenu(self.player) if self.player else None
-
-        # Статистика игрока
-        self.equip = Equipment(self.current_stats)
 
         # Частицы и магия
         self.animation_player = AnimationPlayer()
         self.magic_player = MagicPlayer(self.animation_player)
 
-        # Создание карты
-        self.create_map()
+        # Экипировка
+        self.equip = Equipment(self.current_stats)
 
-        # FPS отладка
-        self.debug_text = DebugText()
+        # Запуск карты
+        self.create_map()
 
     def create_map(self):
         layouts = {
@@ -69,28 +64,51 @@ class Level(Entity):
                     if col != '-1':
                         x = col_index * TILESIZE
                         y = -row_index * TILESIZE
+
                         if style == 'boundary':
                             Tile((x, y), [self.obstacle_sprites], 'invisible')
+
                         elif style == 'tree':
                             random_grass_image = choice(graphics['tree'])
-                            Tile((x, y), [self.visible_sprites, self.obstacle_sprites, self.attackable_sprites],
-                                 'tree', random_grass_image)
+                            Tile(
+                                (x, y),
+                                [self.visible_sprites, self.obstacle_sprites, self.attackable_sprites],
+                                'tree',
+                                random_grass_image
+                            )
+
                         elif style == 'lake':
+                            # Добавляем анимированный тайл (воду)
                             AnimTile((x, y), [self.visible_sprites, self.obstacle_sprites], 'lake')
+
                         elif style == 'entities':
                             if col == '164':
-                                self.player = Player((x, y), [self.visible_sprites], self.obstacle_sprites,
-                                                     self.create_attack, self.destroy_attack, self.create_magic)
+                                self.player = Player(
+                                    (x, y),
+                                    [self.visible_sprites],
+                                    self.obstacle_sprites,
+                                    self.create_attack,
+                                    self.destroy_attack,
+                                    self.create_magic
+                                )
                                 self.menu = UpgradeMenu(self.player)
+
                             else:
                                 monster_name = {
                                     '160': 'warrior',
                                     '131': 'necromancer'
                                 }.get(col, 'squid')
-                                Enemy(monster_name, (x, y),
-                                      [self.visible_sprites, self.attackable_sprites],
-                                      self.obstacle_sprites, self.damage_player,
-                                      self.trigger_death_particles, self.add_exp, self.drops)
+
+                                Enemy(
+                                    monster_name,
+                                    (x, y),
+                                    [self.visible_sprites, self.attackable_sprites],
+                                    self.obstacle_sprites,
+                                    self.damage_player,
+                                    self.trigger_death_particles,
+                                    self.add_exp,
+                                    self.drops
+                                )
 
     def create_attack(self):
         self.current_attack = Weapon(self.player, [self.visible_sprites, self.attack_sprites])
@@ -102,7 +120,7 @@ class Level(Entity):
             self.magic_player.flame(self.player, cost, [self.visible_sprites, self.attack_sprites])
 
     def destroy_attack(self):
-        if hasattr(self, 'current_attack') and self.current_attack:
+        if self.current_attack:
             destroy(self.current_attack)
         self.current_attack = None
 
@@ -129,48 +147,68 @@ class Level(Entity):
     def current_stats(self, modify):
         base_stats = self.player.base
         must_be = {}
+
         for item in modify:
             if item in ['crit_rate', 'crit_chance']:
                 must_be[item] = modify[item]
             else:
                 must_be[item] = modify[item] + 1
+
         for item in must_be:
             if item in ['crit_rate', 'crit_chance']:
                 self.player.current_stats[item] = must_be[item] + base_stats[item]
             else:
                 self.player.current_stats[item] *= must_be[item]
+
         must_be.clear()
+        print(self.player.current_stats)
+        self.check_buff(self.player.current_stats)
+
+    def check_buff(self, stats):
+        print(self.player.status, stats)
 
     def run(self):
-        # Обновление видимых спрайтов
+        # Обновление всех видимых спрайтов
         for sprite in self.visible_sprites:
             sprite.update()
 
-        # Обновление UI
+        # Отображение UI
         self.ui.display(self.player)
 
-        # Проверка паузы
+        # Проверка нажатия Escape
         if held_keys['escape']:
             self.toggle()
 
-        # Меню улучшений
+        # Меню паузы
         if self.game_paused:
             self.menu.show()
         else:
             self.menu.hide()
 
         # Логика атаки
+        self.player_attack_logic()
+
+        # Обновление эффектов
+        for e in scene.entities:
+            if hasattr(e, 'update'):
+                e.update()
+
+        # Обновление отладки
+        self.debug_text.update(int(time.dt * 1000))  # FPS
+
+    def player_attack_logic(self):
+        if self.attack_sprites:
             for attack_sprite in self.attack_sprites:
                 colliders = attack_sprite.intersects().entities
-                for target in colliders:
-                    if hasattr(target, 'sprite_type') and target.sprite_type == 'tree':
-                        pos = target.position
+                for target_sprite in colliders:
+                    if hasattr(target_sprite, 'sprite_type') and target_sprite.sprite_type == 'tree':
+                        pos = target_sprite.position
                         offset = Vec2(0, 75)
-                        for _ in range(3, 6):
-                            self.animation_player.create_grass_particles(pos - offset, self.visible_sprites)
-                        destroy(target)
-                    elif hasattr(target, 'get_damage'):
-                        target.get_damage(self.player, attack_sprite.sprite_type)
+                        for _ in range(randint(3, 6)):
+                            self.animation_player.create_grass_particles(pos - offset, [self.visible_sprites])
+                        destroy(target_sprite)
+                    elif hasattr(target_sprite, 'get_damage'):
+                        target_sprite.get_damage(self.player, attack_sprite.sprite_type)
 
     def toggle(self):
         self.game_paused = not self.game_paused
@@ -180,8 +218,3 @@ class Level(Entity):
         exp = self.player.exp
         item = self.equip.equip
         save(pos, item, exp)
-
-    def update(self):
-        self.run()
-        self.debug_text.text = f'FPS: {int(1 / (time.dt or 0.001))}'
-        self.debug_text.update(int(1 / (time.dt or 0.001)))

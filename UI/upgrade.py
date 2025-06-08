@@ -1,12 +1,12 @@
 # UI/upgrade.py
 
-from ursina import Entity, Button, Text, color, Vec2, camera
+from ursina import Entity, Button, Text, color, Vec2
 
 
 class UpgradeMenu(Entity):
     def __init__(self, player):
         super().__init__(
-            parent=camera,  # ← Изменено: было camera.ui
+            parent=Entity(),
             model='quad',
             scale=(0.6, 0.8),
             position=Vec2(0.5, 0),
@@ -24,8 +24,6 @@ class UpgradeMenu(Entity):
     def create_items(self):
         self.item_list = []
         self.stat_names = list(self.player.base.keys())
-        self.max_values = list(self.player.max_stats.values())
-
         for i, stat in enumerate(self.stat_names):
             y_pos = 0.3 - i * 0.1
             bg = Entity(

@@ -1,6 +1,7 @@
 # anim_tile.py
 
-from ursina import Entity, Animation, time
+from ursina import Entity, time, Vec2
+from helper.settings import TILESIZE
 from helper.support import import_folder
 
 
@@ -8,36 +9,38 @@ class AnimTile(Entity):
     def __init__(self, position, groups=None, sprite_type='lake', surface=None):
         super().__init__(
             model='quad',
-            texture=None,
-            position=(position[0], position[1], -1),
+            position=Vec2(position[0], position[1]),
+            z=-0.5,
             collider='box'
         )
 
         self.sprite_type = sprite_type
-        self.animation_speed = 0.15
+        self.animation_speed = 0.1
         self.frame_index = 0
 
         # Загрузка анимации
+        self.animations = {}
         self.import_player_assets()
-        self.animate()
+
+        self.texture = self.animations['lake'][0] if 'lake' in self.animations else None
 
     def import_player_assets(self):
+        """Загружает анимацию воды"""
         water_path = 'graphics/water/'
 
-        self.animations = {
-            'lake': []
-        }
+        self.animations = {'lake': []}
 
         for animation in self.animations:
             full_path = water_path + animation
-            frames = import_folder(full_path)
-            for frame in frames:
-                self.animations[animation].append(frame)
+            self.animations[animation] = import_folder(full_path)
 
     def animate(self):
-        self.frame_index += self.animation_speed * 60 * time.dt
+        """Обновляет кадр анимации"""
+        self.frame_index += self.animation_speed * time.dt * 60  # Адаптация скорости под FPS
+
         if self.frame_index >= len(self.animations['lake']):
             self.frame_index = 0
+
         self.texture = self.animations['lake'][int(self.frame_index)]
 
     def update(self):
