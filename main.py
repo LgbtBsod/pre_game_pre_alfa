@@ -17,7 +17,7 @@ window.fps_counter.enabled = True
 game = Level()
 
 # ФПС лимит
-app.set_frame_rate(120)
+app.set_frame_rate_meter(120)
 
 # Запуск главного цикла
 app.run()

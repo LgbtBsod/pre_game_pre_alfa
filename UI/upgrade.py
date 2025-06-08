@@ -1,151 +1,106 @@
-from os import stat
-import pygame
-from helper.settings import *
-from helper.support import *
-class Upgrade:
-	def __init__(self,player):
+# UI/upgrade.py
 
-		# general setup
-		self.display_surface = pygame.display.get_surface()
-		self.player = player
-		self.attribute_nr = len(player.base)
-		self.attribute_names = list(player.base.keys())
-		self.max_values = list(player.max_stats.values())
-		self.font = pygame.font.Font(UI_FONT, 12)
+from ursina import Entity, Button, Text, color, Vec2, camera
 
-		# item creation
-		self.height = self.display_surface.get_size()[1] * 0.8
-		self.width = self.display_surface.get_size()[0] // self.attribute_nr
-		self.create_items()
 
-		# selection system 
-		self.selection_index = 0
-		self.selection_time = None
-		self.can_move = True
+class UpgradeMenu(Entity):
+    def __init__(self, player):
+        super().__init__(
+            parent=camera,  # ← Изменено: было camera.ui
+            model='quad',
+            scale=(0.6, 0.8),
+            position=Vec2(0.5, 0),
+            color=color.rgba(30, 30, 30, 200)
+        )
 
-	def input(self):
-		keys = pygame.key.get_pressed()
+        self.player = player
+        self.selection_index = 0
+        self.can_move = True
+        self.selection_time = None
 
-		if self.can_move:
-			if keys[pygame.K_RIGHT] and self.selection_index < self.attribute_nr - 1:
-				self.selection_index += 1
-				self.can_move = False
-				self.selection_time = pygame.time.get_ticks()
-			elif keys[pygame.K_LEFT] and self.selection_index >= 1:
-				self.selection_index -= 1
-				self.can_move = False
-				self.selection_time = pygame.time.get_ticks()
+        self.create_items()
+        self.hide()
 
-			if keys[pygame.K_SPACE]:
-				self.can_move = False
-				self.selection_time = pygame.time.get_ticks()
-				self.item_list[self.selection_index].trigger(self.player)
+    def create_items(self):
+        self.item_list = []
+        self.stat_names = list(self.player.base.keys())
+        self.max_values = list(self.player.max_stats.values())
 
-	def selection_cooldown(self):
-		if not self.can_move:
-			current_time = pygame.time.get_ticks()
-			if current_time - self.selection_time >= 300:
-				self.can_move = True
+        for i, stat in enumerate(self.stat_names):
+            y_pos = 0.3 - i * 0.1
+            bg = Entity(
+                parent=self,
+                model='quad',
+                scale=(0.5, 0.07),
+                position=(-0.1, y_pos),
+                color=color.dark_gray
+            )
+            label = Text(
+                parent=self,
+                text=stat,
+                position=Vec2(-0.09, y_pos + 0.02),
+                scale=1,
+                color=color.white
+            )
+            value = Text(
+                parent=self,
+                text='100',
+                position=Vec2(0.2, y_pos + 0.02),
+                scale=1,
+                color=color.gold
+            )
+            button = Button(
+                parent=self,
+                model='quad',
+                scale=(0.05, 0.05),
+                position=Vec2(0.3, y_pos),
+                text='+',
+                color=color.green
+            )
+            self.item_list.append({'bg': bg, 'label': label, 'value': value, 'button': button})
 
-	def create_items(self):
-		self.item_list = []
+    def input(self):
+        if self.can_move:
+            if held_keys['up arrow']:
+                self.selection_index = max(0, self.selection_index - 1)
+                self.can_move = False
+                self.selection_time = time.time()
+            elif held_keys['down arrow']:
+                self.selection_index = min(len(self.item_list) - 1, self.selection_index + 1)
+                self.can_move = False
+                self.selection_time = time.time()
 
-		for item, index in enumerate(range(self.attribute_nr)):
-			# horizontal position
-			full_width = self.display_surface.get_size()[0]
-			increment = full_width // self.attribute_nr
-			left = (item * increment) + (increment - self.width) // 2
-			
-			# vertical position 
-			top = self.display_surface.get_size()[1] * 0.1
+            if held_keys['space']:
+                self.upgrade(self.selection_index)
+                self.can_move = False
+                self.selection_time = time.time()
 
-			# create the object 
-			item = Item(left,top,self.width,self.height,index,self.font)
-			self.item_list.append(item)
+        if not self.can_move and time.time() - self.selection_time > 0.3:
+            self.can_move = True
 
-	def display(self):
-		self.input()
-		self.selection_cooldown()
+        for i, item in enumerate(self.item_list):
+            item['bg'].color = color.light_gray if i == self.selection_index else color.dark_gray
 
-		for index, item in enumerate(self.item_list):
+    def upgrade(self, index):
+        stat_name = self.stat_names[index]
+        cost = self.player.upgrade_cost[stat_name]
+        if self.player.exp >= cost and self.player.base[stat_name] < self.player.max_stats[stat_name]:
+            self.player.exp -= cost
+            self.player.base[stat_name] *= 1.1
+            self.player.upgrade_cost[stat_name] *= 1.1
 
-			# get attributes
-			name = self.attribute_names[index]
-			value = self.player.get_value_by_index(index)
-			max_value = self.max_values[index]
-			cost = self.player.get_cost_by_index(index)
-			item.display(self.display_surface,self.selection_index,name,value,max_value,cost)
+    def show(self):
+        self.enabled = True
 
-class Item:
-	def __init__(self,l,t,w,h,index,font):
-		self.rect = pygame.Rect(l,t,w,h)
-		self.index = index
-		self.font = font
+    def hide(self):
+        self.enabled = False
 
-	def display_names(self,surface,name,cost,selected):
-		color = TEXT_COLOR_SELECTED if selected else TEXT_COLOR
+    def update(self):
+        self.input()
+        self.update_values()
 
-		# title
-		title_surf = self.font.render(name,False,color)
-		title_rect = title_surf.get_rect(midtop = self.rect.midtop + pygame.math.Vector2(0,20))
-
-		# cost 
-		cost_surf = self.font.render(f'{int(cost)}',False,color)
-		cost_rect = cost_surf.get_rect(midbottom = self.rect.midbottom - pygame.math.Vector2(0,20))
-
-		# draw 
-		surface.blit(title_surf,title_rect)
-		surface.blit(cost_surf,cost_rect)
-
-	def display_bar(self,surface,value,max_value,selected):
-
-		# drawing setup
-		top = self.rect.midtop + pygame.math.Vector2(0,60)
-		bottom = self.rect.midbottom - pygame.math.Vector2(0,60)
-		color = BAR_COLOR_SELECTED if selected else BAR_COLOR
-
-		# bar setup
-		full_height = bottom[1] - top[1]
-		if type(value) and type(max_value) == int:
-			relative_number = (value / max_value) * full_height
-		else:
-			value = crit_for_upgrade(value)
-			max_value = crit_for_upgrade(max_value)
-			relative_number = (value / max_value)*full_height
-		value_rect = pygame.Rect(top[0] - 15,bottom[1] - relative_number,30,10)
-
-		# draw elements
-		pygame.draw.line(surface,color,top,bottom,5)
-		pygame.draw.rect(surface,color,value_rect)
-
-	def trigger(self,player):
-		upgrade_attribute = list(player.base.keys())[self.index]
-
-		if player.exp >= player.upgrade_cost[upgrade_attribute] and player.base[upgrade_attribute] < player.max_stats[upgrade_attribute]:
-			player.exp -= player.upgrade_cost[upgrade_attribute]
-			if upgrade_attribute != 'crit_chance' or upgrade_attribute != 'crit_rate':
-				player.base[upgrade_attribute] *= 1.2 
-			
-			elif upgrade_attribute == 'crit_chance':
-				player.base[upgrade_attribute] +=1
-			elif upgrade_attribute == 'crit_rate':
-				any = player.base[upgrade_attribute]
-				player.base[upgrade_attribute] = any+5
-			player.upgrade_cost[upgrade_attribute] *= 1.01
-		player.upload_stat()
-		print(player.base)
-		#print(player.current_stats)
-		
-		if player.base[upgrade_attribute] > player.max_stats[upgrade_attribute]:
-			player.base[upgrade_attribute] = player.max_stats[upgrade_attribute]
-
-	def display(self,surface,selection_num,name,value,max_value,cost):
-		if self.index == selection_num:
-			pygame.draw.rect(surface,UPGRADE_BG_COLOR_SELECTED,self.rect)
-			pygame.draw.rect(surface,UI_BORDER_COLOR,self.rect,4)
-		else:
-			pygame.draw.rect(surface,UI_BG_COLOR,self.rect)
-			pygame.draw.rect(surface,UI_BORDER_COLOR,self.rect,4)
-	
-		self.display_names(surface,name,cost,self.index == selection_num)
-		self.display_bar(surface,value,max_value,self.index == selection_num)
+    def update_values(self):
+        for i, item in enumerate(self.item_list):
+            stat = self.stat_names[i]
+            value = int(self.player.base[stat])
+            item['value'].text = str(value)

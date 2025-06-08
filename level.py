@@ -1,4 +1,5 @@
 # level.py
+
 from ursina import scene
 from ursina import Ursina, Entity, camera, Vec2, Vec3, time, Text, window, color, destroy
 from ursina.prefabs.platformer_controller_2d import PlatformerController2d
@@ -17,6 +18,8 @@ from UI.ui import UI
 from effect import Effect
 from save.save_load import save, load
 import json
+from UI.upgrade import UpgradeMenu
+
 
 class Level(Entity):
     def __init__(self):

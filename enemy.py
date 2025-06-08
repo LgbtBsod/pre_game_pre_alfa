@@ -1,12 +1,10 @@
 # enemy.py
 
-from ursina import Entity, Vec2, time, destroy, color
-import random
+from ursina import Entity, Vec2, time, destroy, color, Animation
 from helper.settings import *
 from equip.chance import chance
 from equip.item_base import artifacts
-import os  # ← Добавь этот импорт
-
+import os
 
 class Enemy(Entity):
     def __init__(self, monster_name, position, groups=None, obstacle_sprites=None,

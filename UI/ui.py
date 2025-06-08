@@ -1,11 +1,12 @@
 # UI/ui.py
 
-from ursina import Entity, Text, color, scene
+from ursina import Entity, Text, color, camera
+from helper.settings import weapon_data, magic_data
 
 
 class UI(Entity):
     def __init__(self):
-        super().__init__(parent=scene)
+        super().__init__(parent=camera)
 
         # Общие настройки
         self.player = None
@@ -50,7 +51,7 @@ class UI(Entity):
             z=-1,
             parent=self
         )
-
+        
     def create_bar(self, position, scale, bar_color, label='Bar'):
         bg = Entity(
             model='quad',
@@ -99,7 +100,7 @@ class UI(Entity):
             path = magic_data[magic_name]['graphic']
             self.magic_icon.texture = path
             self.magic_icon.color = color.gold if has_switched else color.white
-
+            
     def display(self, player):
         self.player = player
 

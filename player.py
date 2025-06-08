@@ -1,19 +1,28 @@
 # player.py
 
-from ursina import Entity, Vec2, time, destroy, held_keys, Animation
+from ursina import Entity, Vec2, time, destroy, held_keys, Animation 
 from helper.settings import *
-from entity import EntityBase
-from helper.support import import_folder
+from helper.support import import_folder, convert_to_num
 from equip.chance import chance
-import math
+import os
 
-
-class Player(EntityBase):
+class Player(Entity):
     def __init__(self, position=(0, 0), groups=None, obstacle_sprites=None,
                  create_attack=None, destroy_attack=None, create_magic=None):
-        super().__init__(model='quad', texture='graphics/player/down_idle/down.png',
-                         position=Vec2(position[0], position[1]), z=-1)
+        super().__init__(
+            model='quad',
+            texture='graphics/player/down_idle/down.png',
+            position=Vec2(position[0], position[1]),
+            z=-1,
+            collider='box'
+        )
 
+        # Добавлено для работы с UI
+        self.weapon_index = 0
+        self.can_switch_weapon = True
+        self.weapon_switch_time = None
+        self.switch_duration_cooldown = 0.2
+        
         # Графика
         self.import_player_assets()
         self.status = 'down'
@@ -22,7 +31,7 @@ class Player(EntityBase):
 
         # Движение
         self.direction = Vec2(0, 0)
-        self.speed = 200  # pixels per second
+        self.speed = 200  # пикселей в секунду
         self.obstacle_sprites = obstacle_sprites
 
         # Статы
@@ -90,9 +99,6 @@ class Player(EntityBase):
         self.hurt_time = 0
         self.invulnerability_duration = 0.5
 
-        # Камера
-        camera.add_script(SmoothFollow(target=self, offset=(0, 0, -20)))
-
     def import_player_assets(self):
         self.animations = {
             'up': [], 'down': [], 'left': [], 'right': [],
@@ -101,9 +107,12 @@ class Player(EntityBase):
         }
 
         for animation in self.animations:
-            full_path = f'graphics/player/{animation}'
-            self.animations[animation] = [Animation(f'{full_path}/{i}', autoplay=False, loop=False, fps=12)
-                                          for i in range(len(import_folder(full_path)))]
+            folder_path = f'graphics/player/{animation}'
+            frames_count = len(os.listdir(folder_path))
+            self.animations[animation] = [
+                Animation(f'{folder_path}/{i}', autoplay=False, loop=False, fps=12, scale=1, enabled=False)
+                for i in range(frames_count)
+            ]
 
     def input(self):
         if not self.attacking:
@@ -116,7 +125,7 @@ class Player(EntityBase):
                 self.direction = self.direction.normalized()
 
             if self.direction.x == 0 and self.direction.y == 0:
-                if 'idle' not in self.status:
+                if 'idle' not in self.status and not 'attack' in self.status:
                     if 'attack' in self.status:
                         self.status = self.status.replace('_attack', '_idle')
                     else:
@@ -219,3 +228,6 @@ class Player(EntityBase):
         self.move()
         self.energy_recovery()
         self.hp_recovery()
+
+        # Камера следует за игроком
+        camera.position = self.position + (0, 0, -20)
