@@ -1,39 +1,23 @@
-import pygame, sys
+# main.py
 
-from helper.settings import *
+from ursina import Ursina, window, color, Vec2, Vec3, time, camera
 from level import Level
-from debug import *
 
-class Game:
-	def __init__(self):
+# Запуск игры
+app = Ursina()
 
-		# general setup
-		pygame.init()
-		self.screen = pygame.display.set_mode((WIDTH,HEIGTH))
-		pygame.display.set_caption('Zelda')
-		self.clock = pygame.time.Clock()
+# Настройки окна
+window.title = 'Zelda'
+window.borderless = False
+window.fullscreen = False
+window.exit_button.visible = False
+window.fps_counter.enabled = True
 
-		self.level = Level()
-	
-	def run(self):
-		while True:
-			for event in pygame.event.get(): 
-				if event.type == pygame.QUIT:
-					pygame.quit()
-					sys.exit()
-				if event.type == pygame.KEYDOWN:
-	
-					if event.key == pygame.K_ESCAPE:
-						self.level.toggle()
-				if event.type == pygame.KEYDOWN:
-					if event.key == pygame.K_F1:
-						self.level.save_load()
-			self.screen.fill('black')
-			self.level.run()
-			debug(self.clock.get_fps())
-			pygame.display.update()
-			self.clock.tick(FPS)
+# Инициализация уровня
+game = Level()
 
-if __name__ == '__main__':
-	game = Game()
-	game.run()
+# ФПС лимит
+app.set_frame_rate(120)
+
+# Запуск главного цикла
+app.run()
