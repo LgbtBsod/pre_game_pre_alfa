@@ -1,5 +1,5 @@
 # level.py
-
+from ursina import scene
 from ursina import Ursina, Entity, camera, Vec2, Vec3, time, Text, window, color, destroy
 from ursina.prefabs.platformer_controller_2d import PlatformerController2d
 from helper.settings import *
@@ -181,3 +181,4 @@ class Level(Entity):
     def update(self):
         self.run()
         self.debug_text.text = f'FPS: {int(1 / (time.dt or 0.001))}'
+        self.debug_text.update(int(1 / (time.dt or 0.001)))

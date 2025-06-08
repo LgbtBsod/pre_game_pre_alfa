@@ -1,21 +1,36 @@
-import pygame 
+# weapon.py
 
-class Weapon(pygame.sprite.Sprite):
-	def __init__(self,player,groups):
-		super().__init__(groups)
-		self.sprite_type = 'weapon'
-		direction = player.status.split('_')[0]
+from ursina import Entity, Vec2
 
-		# graphic
-		full_path = f'graphics/weapons/{player.weapon}/{direction}.png'
-		self.image = pygame.image.load(full_path).convert_alpha()
-		
-		# placement
-		if direction == 'right':
-			self.rect = self.image.get_rect(midleft = player.rect.midright + pygame.math.Vector2(0,16))
-		elif direction == 'left': 
-			self.rect = self.image.get_rect(midright = player.rect.midleft + pygame.math.Vector2(0,16))
-		elif direction == 'down':
-			self.rect = self.image.get_rect(midtop = player.rect.midbottom + pygame.math.Vector2(-10,0))
-		else:
-			self.rect = self.image.get_rect(midbottom = player.rect.midtop + pygame.math.Vector2(-10,0))
+class Weapon(Entity):
+    def __init__(self, player, groups=None):
+        super().__init__(
+            model='quad',
+            position=player.position,
+            z=-0.1,
+            scale=(1, 1),
+            parent=player
+        )
+
+        self.sprite_type = 'weapon'
+        self.player = player
+        self.direction = player.status.split('_')[0]
+        self.weapon = player.weapon
+
+        # Загрузка текстуры
+        full_path = f'graphics/weapons/{self.weapon}/{self.direction}.png'
+        self.texture = full_path
+
+        # Позиционирование оружия относительно игрока
+        offset = {
+            'right': (32, 0),
+            'left': (-32, 0),
+            'up': (0, 32),
+            'down': (0, -32)
+        }
+
+        self.position = offset[self.direction]
+
+    def update(self):
+        if self.parent:
+            self.rotation = self.parent.rotation

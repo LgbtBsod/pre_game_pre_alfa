@@ -1,57 +1,41 @@
-import pygame
-from time import time
-from helper.support import*
-from helper.settings import *
+# effect.py
+
+from ursina import time
+
 
 class Effect:
-    def __init__(self,duration, cooldown,effect,get_buff):
-        super().__init__()
-        self.duration = duration * FPS
-        self.cooldown = cooldown * FPS
-        self.active = False
-        self.unavailable = False
+    def __init__(self, duration, cooldown, effect, get_buff):
+        # Время в секундах
+        self.duration = duration
+        self.cooldown = cooldown
         self.effect = effect
         self.buff = {}
-        self.dur = None
-        self.cd = None
         self.get_buff = get_buff
-        
+
+        self.active = False
+        self.unavailable = False
+        self.start_time = None
+
     def pull_my_devil_trigger(self):
+        """Активирует эффект"""
         self.active = True
-        self.dur = pygame.time.get_ticks()
-        for effect in self.effect.keys():
-            self.buff[effect] = convert_to_num(self.effect[effect])   
-        print(self.buff)
-            
-    
-    def cooldown(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.dur == self.duration:
-            self.active = False
-            self.unavailable = True
-        if current_time - self.cooldown == self.cd:
-            self.unavailable = False
-                 
-    def duration(self):
-        while self.active:
-            #self.get_buff(self.buff)
-            print(self.buff)
-        if self.unavailable:
-            for x in self.buff:
-                self.buff[x] = 0
-            #self.get_buff(self.buff)
-            print(self.buff)
-        
+        self.start_time = time.time()
+        for key in self.effect:
+            self.buff[key] = convert_to_num(self.effect[key])
+        print(f"Buff activated: {self.buff}")
+        self.get_buff(self.buff)
+
     def update(self):
-        self.cooldown()
-        self.duration()
+        """Обновляет состояние эффекта"""
+        if self.active:
+            if time.time() - self.start_time >= self.duration:
+                self.active = False
+                self.unavailable = True
+                for key in self.buff:
+                    self.buff[key] = 0
+                print(f"Buff expired: {self.buff}")
+                self.get_buff(self.buff)
 
-
-
-
-def brave(now=0,max=0):
-    if now < (max/3):
-        return True
-    else:
-        return False
-        
+        if self.unavailable:
+            if time.time() - self.start_time >= self.duration + self.cooldown:
+                self.unavailable = False

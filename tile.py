@@ -1,6 +1,8 @@
 # tile.py
 
-from ursina import Entity
+from ursina import Entity, color
+from helper.settings import TILESIZE
+
 
 class Tile(Entity):
     def __init__(self, position, groups=None, sprite_type='invisible', surface=None):
@@ -8,7 +10,6 @@ class Tile(Entity):
             model='quad',
             texture=surface,
             position=(position[0], position[1], 0),
-            origin=(0, 0),
             collider='box'
         )
 
@@ -25,12 +26,9 @@ class Tile(Entity):
 
         return Entity(
             model='wireframe_cube',
-            color=color.clear,
+            color=color.clear,  # ← Используем цвет напрямую
             scale=(TILESIZE, TILESIZE, 1),
             position=(pos[0] + offset[0], pos[1] + offset[1], -1),
             collider='box',
             parent=self
         )
-
-    def update(self):
-        pass
