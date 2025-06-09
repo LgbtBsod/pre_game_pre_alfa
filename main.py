@@ -1,23 +1,19 @@
 # main.py
 
-from ursina import Ursina, window, color, Vec2, Vec3, time, camera
+from ursina import Ursina, camera
 from level import Level
 
-# Запуск игры
+
 app = Ursina()
+camera.orthographic = True
+camera.fov = 10
+app.development_mode = False  # ← Отключаем hot-reload и Blender-зависимости
 
-# Настройки окна
-window.title = 'Zelda'
-window.borderless = False
-window.fullscreen = False
-window.exit_button.visible = False
-window.fps_counter.enabled = True
-
-# Инициализация уровня
 game = Level()
 
-# ФПС лимит
-app.set_frame_rate_meter(120)
 
-# Запуск главного цикла
+def update():
+    game.run()
+
+
 app.run()
