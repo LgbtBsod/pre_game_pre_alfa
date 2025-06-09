@@ -1,8 +1,8 @@
 # player/player.py
 from .base_player import BasePlayer
 from helper.settings import WEAPON_DATA, MAGIC_DATA
-from helper.support import import_folder, Animation
-from ursina import Vec2, held_keys, time
+from helper.support import import_folder
+from ursina import Vec2, held_keys, time, Animation
 import os
 import random
 from typing import Dict, List
@@ -14,6 +14,7 @@ class LikePlayer(BasePlayer):
             position=position,
             groups=groups,
             obstacle_sprites=obstacle_sprites
+            # self.buff_manager = BuffManager(self)
         )
 
         # Инициализация характеристик
@@ -96,21 +97,29 @@ class LikePlayer(BasePlayer):
         }
 
         for animation in self.animations:
-            folder_path = f'graphics/player/{animation}'
+            folder_path = f'assets/graphics/player/{animation}'
             if os.path.exists(folder_path):
                 self.animations[animation] = import_folder(folder_path)
             else:
                 print(f"Warning: Animation folder not found: {folder_path}")
 
-    def input(self):
+    def input(self, key=None):
         """Обработка ввода игрока"""
-        if not self.attacking:
+        if not self.attacking and key is None:
+            # Это для случая, если метод вызван не через событие клавиатуры
             self._handle_movement_input()
             self._handle_attack_input()
             self._handle_magic_input()
             self._handle_weapon_switch()
             self._handle_magic_switch()
-
+        elif key:
+            # Обработка конкретной клавиши (например, 'space', 'f')
+            if key == 'space':
+                self._handle_attack_input()
+            elif key in ['e', 'q']:
+                self._handle_weapon_switch()
+                self._handle_magic_switch()
+            
     def _handle_movement_input(self):
         """Обработка движения"""
         self.direction = Vec2(

@@ -5,6 +5,7 @@ from ursina.prefabs.hot_reloader import HotReloader
 from level import Level
 from panda3d.core import *
 from direct.showbase.ShowBase import ShowBase
+from UI.save_menu import SaveMenu
 
 
 HotReloader().enabled = False  # ← отключаем hot_reload
@@ -19,4 +20,18 @@ window.borderless = False
 window.fullscreen = False
 
 game = Level()
+
+save_menu = SaveMenu(game)
+
+
+def input(key):
+    if key == 'escape':
+        save_menu.toggle()
+
+    if key == 'f5':
+        game.save_game(slot=1)
+    if key == 'f9':
+        game.load_game(slot=1)
+        
+        
 app.run()
