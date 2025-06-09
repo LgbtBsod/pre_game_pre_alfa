@@ -1,7 +1,7 @@
 # tile.py
 
 from ursina import Entity, color
-from helper.settings import TILESIZE
+from helper.settings import GAME_SETTINGS
 
 
 class Tile(Entity):
@@ -19,7 +19,7 @@ class Tile(Entity):
     def get_hitbox(self, pos):
         # Создаём невидимую сущность для hitbox
         offset = {
-            'object': (-0, -TILESIZE),
+            'object': (-0, -GAME_SETTINGS['TILESIZE']),
             'tree': (0, -32),
             'invisible': (0, 0)
         }.get(self.sprite_type, (0, 0))
@@ -27,7 +27,7 @@ class Tile(Entity):
         return Entity(
             model='wireframe_cube',
             color=color.clear,  # ← Используем цвет напрямую
-            scale=(TILESIZE, TILESIZE, 1),
+            scale=(GAME_SETTINGS['TILESIZE'], GAME_SETTINGS['TILESIZE'], 1),
             position=(pos[0] + offset[0], pos[1] + offset[1], -1),
             collider='box',
             parent=self

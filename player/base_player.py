@@ -1,19 +1,16 @@
-# player/base_player.py
-
 from ursina import Entity, Vec2, time, held_keys
 
 
 class BasePlayer(Entity):
-    def __init__(self, position=(0, 0), groups=None, obstacle_sprites=None, **kwargs):
+    def __init__(self, position=(0, 0), groups=None, obstacle_sprites=None):
         super().__init__(
             model='quad',
-            texture=self.get_texture(),
+            texture='graphics/player/down_idle/down.png',
             position=Vec2(*position),
             z=-1,
             collider='box'
         )
 
-        # Статы (должны быть переопределены в подклассах)
         self.base_stats = {
             'health': 100,
             'energy': 60,
@@ -28,38 +25,28 @@ class BasePlayer(Entity):
             'crit_rate': 120
         }
 
-        self.max_stats = {k: v * 3 if isinstance(v, (int, float)) else v for k, v in self.base_stats.items()}
-        self.upgrade_cost = {stat: 100 for stat in self.base_stats}
-
-        # Атрибуты для динамических статов
         self.current_stats = self.base_stats.copy()
-        self.health = self.current_stats['health']
-        self.energy = self.current_stats['energy']
-        self.exp = 0
-
-        # Оружие и магия
-        self.weapon_index = 0
-        self.can_switch_weapon = True
-        self.switch_duration_cooldown = 0.2
-        self.obstacle_sprites = obstacle_sprites
-
-        # Анимация и движение
-        self.status = 'down'
-        self.direction = Vec2(0, 0)
-        self.speed = self.current_stats['speed'] * self.current_stats['agility']
-
-    def get_texture(self):
-        return 'graphics/player/down_idle/down.png'
+        self.reactive_effects = {}
+        self.active_effects = {}
 
     def input(self):
-        """Базовая логика ввода"""
+        """Обработка клавиш"""
         pass
 
     def move(self):
-        """Базовое движение"""
-        self.position += self.direction * self.speed * time.dt
+        """Логика движения"""
+        pass
+
+    def on_take_damage(self, amount, attack_type):
+        """Вызывается при получении урона"""
+        for name, func in self.reactive_effects.items():
+            amount = func(player=self, amount=amount, attack_type=attack_type)
+        return max(amount, 0)
+
+    def try_activate_effect(self, effect_name):
+        if effect_name in self.active_effects:
+            self.active_effects[effect_name]()
 
     def update(self):
-        """Обновление состояния игрока"""
         self.input()
         self.move()

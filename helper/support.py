@@ -22,11 +22,20 @@ def import_folder(path):
     return surface_list
 
 
-def convert_to_num(percents):
-    if isinstance(percents, str):
-        percents = percents.replace('%', '')
-    modify = float(percents) / 100
-    return modify
+def convert_to_num(value):
+    if isinstance(value, str):
+        if '%' in value:
+            return float(value.replace('%', '')) / 100
+        elif value.startswith('+'):
+            return float(value[1:])
+        elif value.startswith('*'):
+            return float(value[1:])
+        else:
+            try:
+                return float(value)
+            except ValueError:
+                return 0
+    return float(value or 0)
 
 
 def crit_percents(percents):

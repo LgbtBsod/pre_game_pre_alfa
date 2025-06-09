@@ -1,7 +1,7 @@
 # UI/ui.py
 
 from ursina import Entity, Text, color, Vec2, camera
-from helper.settings import weapon_data, magic_data
+from helper.settings import WEAPON_DATA, MAGIC_DATA
 
 class UI(Entity):
     def __init__(self):

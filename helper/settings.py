@@ -23,3 +23,5 @@ WEAPON_DATA = load_json('assets/weapons.json')
 
 # Враги
 MONSTER_DATA = load_json('assets/monsters.json')
+
+MAGIC_DATA = load_json('assets/magic.json')

@@ -1,7 +1,7 @@
 # anim_tile.py
 
 from ursina import Entity, time, Vec2
-from helper.settings import TILESIZE
+from helper.settings import GAME_SETTINGS
 from helper.support import import_folder
 
 
