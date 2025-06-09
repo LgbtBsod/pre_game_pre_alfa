@@ -17,7 +17,7 @@ class Level:
         self.obstacle_sprites = []
         self.attackable_sprites = []
 
-        self.player = Player(position=(0, 0), obstacle_sprites=self.obstacle_sprites)
+        self.player = LikePlayer(position=(0, 0), obstacle_sprites=self.obstacle_sprites)
         self.ui = UI()
         self.equip = Equipment(self.player)
 

@@ -2,8 +2,8 @@
 
 from ursina import Entity, Vec2, time, destroy, Animation
 import random
-from helper.settings import monster_data
-from equip.chance import chance
+from helper.settings import MONSTER_DATA
+# from equip.chance import chance
 from helper.support import convert_to_num
 import os
 
