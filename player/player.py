@@ -2,11 +2,12 @@
 from .base_player import BasePlayer
 from helper.settings import WEAPON_DATA, MAGIC_DATA
 from helper.support import import_folder
-from ursina import Vec2, held_keys, time, Animation
+from ursina import Vec2, held_keys, time, Animation, Entity, destroy, load_texture
 import os
 import random
 from typing import Dict, List
 
+from weapon.weapon import *
 
 class LikePlayer(BasePlayer):
     def __init__(self, position=(0, 0), groups=None, obstacle_sprites=None):
@@ -14,7 +15,6 @@ class LikePlayer(BasePlayer):
             position=position,
             groups=groups,
             obstacle_sprites=obstacle_sprites
-            # self.buff_manager = BuffManager(self)
         )
 
         # Инициализация характеристик
@@ -31,23 +31,27 @@ class LikePlayer(BasePlayer):
         self.weapon_cooldown = 0.2
         self.weapon_data = WEAPON_DATA
         self.weapon = list(WEAPON_DATA.keys())[self.weapon_index]
+        self.last_weapon_switch = 0
         
         # Система магии
         self.magic_index = 0
         self.magic_cooldown = 0.3
         self.magic_data = MAGIC_DATA
         self.magic = list(MAGIC_DATA.keys())[self.magic_index]
+        self.last_magic_switch = 0
         
         # Анимации и графика
         self.status = 'down'
+        self.frame_index = 0
         self.animation_speed = 0.15
         self._init_animations()
         
         # Состояние игрока
         self.attacking = False
-        self.attack_cooldown = 0
+        self.attack_cooldown = 0.4
         self.last_attack_time = 0
         self.last_regen_time = time.time()
+        self.current_attack = None
 
     def _init_stats(self):
         """Инициализация базовых характеристик"""
@@ -90,35 +94,37 @@ class LikePlayer(BasePlayer):
 
     def _init_animations(self):
         """Загрузка анимаций игрока"""
-        self.animations = {
-            'up': [], 'down': [], 'left': [], 'right': [],
-            'right_idle': [], 'left_idle': [], 'up_idle': [], 'down_idle': [],
-            'right_attack': [], 'left_attack': [], 'up_attack': [], 'down_attack': []
-        }
+        animation_types = ['up', 'down', 'left', 'right',
+                        'right_idle', 'left_idle', 'up_idle', 'down_idle',
+                        'right_attack', 'left_attack', 'up_attack', 'down_attack']
+        
+        self.animations = {anim: [] for anim in animation_types}
 
         for animation in self.animations:
             folder_path = f'assets/graphics/player/{animation}'
             if os.path.exists(folder_path):
                 self.animations[animation] = import_folder(folder_path)
+                print(f"Loaded {len(self.animations[animation])} frames for {animation}")
             else:
                 print(f"Warning: Animation folder not found: {folder_path}")
+                # Создаем пустую анимацию с одним кадром
+                self.animations[animation] = [load_texture('assets/graphics/player/default.png')]
 
     def input(self, key=None):
         """Обработка ввода игрока"""
-        if not self.attacking and key is None:
-            # Это для случая, если метод вызван не через событие клавиатуры
+        if self.attacking:  # Блокируем ввод во время атаки
+            return
+            
+        if key is None:
             self._handle_movement_input()
+        elif key == 'space':
             self._handle_attack_input()
+        elif key == 'control left':
             self._handle_magic_input()
+        elif key == 'q':
             self._handle_weapon_switch()
+        elif key == 'e':
             self._handle_magic_switch()
-        elif key:
-            # Обработка конкретной клавиши (например, 'space', 'f')
-            if key == 'space':
-                self._handle_attack_input()
-            elif key in ['e', 'q']:
-                self._handle_weapon_switch()
-                self._handle_magic_switch()
             
     def _handle_movement_input(self):
         """Обработка движения"""
@@ -132,37 +138,43 @@ class LikePlayer(BasePlayer):
 
     def _handle_attack_input(self):
         """Обработка атаки"""
-        if held_keys['space'] and time.time() - self.last_attack_time > self.attack_cooldown:
+        current_time = time.time()
+        if (current_time - self.last_attack_time > self.attack_cooldown and 
+            not self.attacking):
             self.attacking = True
-            self.last_attack_time = time.time()
+            self.last_attack_time = current_time
             self.create_attack()
             self._trigger_attack_animation()
 
     def _handle_magic_input(self):
         """Обработка магии"""
-        if held_keys['control left'] and self.current_stats['energy'] > 10:
+        current_time = time.time()
+        if (current_time - self.last_attack_time > self.attack_cooldown and 
+            not self.attacking):
             style = list(self.magic_data.keys())[self.magic_index]
-            strength = self.magic_data[style]['strength'] + self.current_stats['magic']
-            cost = self.magic_data[style]['cost']
+            magic_info = self.magic_data[style]
             
-            if self.current_stats['energy'] >= cost:
-                self.create_magic(style, strength, cost)
-                self.current_stats['energy'] -= cost
+            if self.current_stats['energy'] >= magic_info['cost']:
+                strength = magic_info['strength'] + self.current_stats['magic']
+                self.create_magic(style, strength, magic_info['cost'])
+                self.current_stats['energy'] -= magic_info['cost']
                 self.attacking = True
-                self.last_attack_time = time.time()
+                self.last_attack_time = current_time
 
     def _handle_weapon_switch(self):
         """Переключение оружия"""
-        if held_keys['q'] and time.time() - self.last_weapon_switch > self.weapon_cooldown:
-            self.last_weapon_switch = time.time()
+        current_time = time.time()
+        if current_time - self.last_weapon_switch > self.weapon_cooldown:
+            self.last_weapon_switch = current_time
             self.weapon_index = (self.weapon_index + 1) % len(self.weapon_data)
             self.weapon = list(self.weapon_data.keys())[self.weapon_index]
             print(f"Switched to {self.weapon}")
 
     def _handle_magic_switch(self):
         """Переключение магии"""
-        if held_keys['e'] and time.time() - self.last_magic_switch > self.magic_cooldown:
-            self.last_magic_switch = time.time()
+        current_time = time.time()
+        if current_time - self.last_magic_switch > self.magic_cooldown:
+            self.last_magic_switch = current_time
             self.magic_index = (self.magic_index + 1) % len(self.magic_data)
             self.magic = list(self.magic_data.keys())[self.magic_index]
             print(f"Switched to {self.magic}")
@@ -187,31 +199,61 @@ class LikePlayer(BasePlayer):
                     self.current_stats['max_health']
                 )
             
-            # Регенерация энергии
+                  # Регенерация энергии
             if self.current_stats['energy'] < self.current_stats['max_energy']:
                 self.current_stats['energy'] = min(
                     self.current_stats['energy'] + self.current_stats['mp_regen'],
                     self.current_stats['max_energy']
                 )
+      
+             # Регенерация стамины (добавьте это)
+            if self.current_stats['stamina'] < self.base_stats['stamina']:
+                regen_rate = 10  # Базовая скорость восстановления
+                if self.direction == Vec2(0, 0):  # Быстрее восстанавливается при бездействии
+                    regen_rate *= 2
+                self.current_stats['stamina'] = min(
+                    self.current_stats['stamina'] + regen_rate,
+                    self.base_stats['stamina']
+                )
 
     def _update_animation(self):
         """Обновление анимации игрока"""
-        if self.direction.x > 0:
-            self.status = 'right'
-        elif self.direction.x < 0:
-            self.status = 'left'
-        elif self.direction.y > 0:
-            self.status = 'up'
-        elif self.direction.y < 0:
-            self.status = 'down'
+        old_status = self.status
+        
+        # Определяем направление (только если не в состоянии атаки)
+        if not self.attacking:
+            if self.direction.x > 0:
+                self.status = 'right'
+            elif self.direction.x < 0:
+                self.status = 'left'
+            elif self.direction.y > 0:
+                self.status = 'up'
+            elif self.direction.y < 0:
+                self.status = 'down'
+            else:
+                self.status = self.status.split('_')[0]  # Сохраняем направление
 
+        # Добавляем состояние атаки (если атакуем)
         if self.attacking:
-            self.status += '_attack'
+            base_status = self.status.split('_')[0]
+            self.status = f'{base_status}_attack'
         elif self.direction == Vec2(0, 0):
-            self.status += '_idle'
+            self.status = f'{self.status.split("_")[0]}_idle'
 
-        # Здесь должна быть логика смены кадров анимации
-        # Например: self.frame_index += self.animation_speed * time.dt
+        # Сбрасываем индекс кадра при изменении статуса
+        if old_status != self.status:
+            self.frame_index = 0
+            
+        # Обновляем кадр анимации
+        if self.status in self.animations and len(self.animations[self.status]) > 0:
+            self.frame_index += self.animation_speed * time.dt * 60  # Умножаем на 60 для FPS-независимости
+            if self.frame_index >= len(self.animations[self.status]):
+                self.frame_index = 0
+                if '_attack' in self.status:  # Сброс анимации атаки
+                    self.attacking = False
+                    self.status = self.status.replace('_attack', '')
+                    
+            self.texture = self.animations[self.status][int(self.frame_index)]
 
     def _update_cooldowns(self):
         """Обновление времени перезарядки"""
@@ -220,8 +262,12 @@ class LikePlayer(BasePlayer):
 
     def get_damage(self, attack_type='physical') -> float:
         """Расчёт урона с учётом критов"""
-        base_damage = self.current_stats['attack']
-        weapon_bonus = self.weapon_data[self.weapon]['damage']
+        if attack_type == 'physical':
+            base_damage = self.current_stats['attack']
+            weapon_bonus = self.weapon_data[self.weapon]['damage']
+        else:  # magical
+            base_damage = self.current_stats['magic']
+            weapon_bonus = 1.0  # Магия не зависит от оружия
         
         total_damage = base_damage * weapon_bonus
         
@@ -233,13 +279,7 @@ class LikePlayer(BasePlayer):
         
         return total_damage
 
-    def get_magic_damage(self) -> float:
-        """Расчёт магического урона"""
-        base_damage = self.current_stats['magic']
-        spell_damage = self.magic_data[self.magic]['strength']
-        return base_damage * spell_damage
-
-    def take_damage(self, amount: float):
+    def take_damage(self, amount: float, damage_type='physical'):
         """Получение урона с учётом защиты"""
         defense_factor = max(0, 1 - self.current_stats['defense'] / 100)
         actual_damage = amount * defense_factor
@@ -251,8 +291,9 @@ class LikePlayer(BasePlayer):
     def die(self):
         """Обработка смерти игрока"""
         print("Player died!")
-        # Здесь может быть анимация смерти, респавн и т.д.
-        self.current_stats['health'] = self.current_stats['max_health'] * 0.3  # Частичное восстановление
+        # Частичное восстановление после смерти
+        self.current_stats['health'] = self.current_stats['max_health'] * 0.3
+        # Сброс позиции или другие эффекты смерти
 
     def gain_exp(self, amount: int):
         """Получение опыта и повышение уровня"""
@@ -289,20 +330,20 @@ class LikePlayer(BasePlayer):
         """Создание магического эффекта"""
         print(f'Casting {style} magic with power {strength} (cost: {cost} MP)')
         # Здесь должна быть логика создания визуального эффекта магии
-        # Например: MagicProjectile.create(style=style, power=strength)
 
     def create_attack(self):
         """Создаёт атаку с текущим оружием"""
-        from weapon import Weapon
-        self.current_attack = Weapon(player=self)
+        if not self.attacking:  # Защита от множественных атак
+            if self.current_attack:
+                destroy(self.current_attack)
+            self.current_attack = Weapon(player=self)
+            self._trigger_attack_animation()
         
     def _trigger_attack_animation(self):
         """Запускает анимацию атаки"""
-        from ursina import invoke
-        self.status = self.status.split('_')[0] + '_attack'
-
-        # Пример сброса статуса после анимации
-        invoke(self._reset_status, delay=0.3)
+        self.attacking = True
+        self.frame_index = 0  # Сбрасываем индекс кадра
+        # Не используем invoke для сброса, будем делать это в update_animation
 
     def _reset_status(self):
         """Возвращает игрока к нормальному статусу (не атакующему)"""

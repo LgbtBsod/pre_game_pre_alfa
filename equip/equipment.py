@@ -1,83 +1,103 @@
 # equip/equipment.py
-import sqlite3
-import json
-import effects.effects as effects
-import effects.buff_manager as BuffManager
-from effects.stat_modifier import StatModifier, ModifierType
 
+from typing import List, Dict, Callable, Optional, Any
+from .items_data import ItemsData
+from effects.stat_modifier import StatModifier
+import effects.effects as effects
 
 class Equipment:
-    def __init__(self, player, db_path='assets/items.db'):
+    def __init__(self, player):
         self.player = player
-        self.equip = ['Brave Heart', 'Phantom Cloak']
-        self.conn = sqlite3.connect(db_path)
-        self.load_artifacts()
-        self.buff_manager = None
-        # Подключаем BuffManager из BasePlayer
-        if hasattr(player, 'buff_manager'):
-            self.buff_manager = player.buff_manager
+        self.items_data = ItemsData()
+        self.equipped_items: List[str] = []
+        self.passive_stats: Dict[str, Dict[str, List]] = {}
+        self.active_effects: Dict[str, Callable] = {}
+        self.reactive_effects: Dict[str, Callable] = {}
+        
+        self._init_buff_manager()
+    
+    def _init_buff_manager(self):
+        """Инициализация менеджера баффов"""
+        if hasattr(self.player, 'buff_manager'):
+            self.buff_manager = self.player.buff_manager
         else:
-            self.buff_manager = BuffManager(player)
-
-        self.load_artifacts()
-        self.buff_manager.load_passive_effects('Brave Heart')
-        
-    def load_artifacts(self):
-        try:
-            cursor = self.conn.cursor()
-            # Используем параметризованный запрос для безопасности
-            placeholders = ','.join(['?'] * len(self.equip))
-            query = f"SELECT name, stats, effect, trigger FROM artifacts WHERE name IN ({placeholders})"
-            cursor.execute(query, self.equip)
-            rows = cursor.fetchall()
+            from effects.buff_manager import BuffManager
+            self.buff_manager = BuffManager(self.player)
+    
+    def equip_item(self, item_name: str) -> bool:
+        """Экипирует предмет если есть свободный слот"""
+        if not self.items_data.item_exists(item_name):
+            return False
             
-            for row in rows:
-                name, stats_str, effect_str, trigger = row
-                try:
-                    stats = json.loads(stats_str) if stats_str else {}
-                    effect_data = json.loads(effect_str) if effect_str else {}
-         
-
-                    if trigger == 'passive':
-                        self.apply_passive_stats(stats)
-                    elif trigger == 'reactive':
-                        self.register_reactive_effect(name, effect_data.get('on_hit'))
-                    elif trigger == 'active':
-                        self.register_active_effect(name, effect_data.get('on_use'))
-                    
-                except json.JSONDecodeError as e:
-                    print(f"Error decoding JSON for artifact {name}: {e}")
-        
-            self.conn.close() 
-        except sqlite3.Error as e:
-            print(f"Database error: {e}")
-                 
-
-    def apply_passive_stats(self, stats: dict):
-        """Применяет пассивные статы к игроку"""
-        for stat, value in stats.items():
-            if stat not in self.player.base_stats:
-                continue
-
-            # Поддержка нескольких модификаторов
-            if isinstance(value, str) and ',' in value:
-                modifiers = [v.strip() for v in value.split(',')]
-                final_value = StatModifier.apply_multiple(self.player.base_stats[stat], modifiers)
-            else:
-                final_value = StatModifier.apply_multiple(
-                    self.player.base_stats[stat],
-                    [value]
-                )
-
-            self.player.base_stats[stat] = final_value
+        if item_name in self.equipped_items:
+            return False
             
+        if len(self.equipped_items) >= 2:  # Макс 2 предмета
+            return False
+            
+        self.equipped_items.append(item_name)
+        self._apply_item_effects(item_name)
+        return True
+    
+    def unequip_item(self, item_name: str) -> bool:
+        """Снимает предмет и удаляет его эффекты"""
+        if item_name not in self.equipped_items:
+            return False
+            
+        self._remove_item_effects(item_name)
+        self.equipped_items.remove(item_name)
+        return True
+    
+    def _apply_item_effects(self, item_name: str):
+        """Применяет эффекты предмета"""
+        item_data = self.items_data.get_item(item_name)
+        if not item_data:
+            return
+            
+        # Пассивные эффекты
+        if item_data['trigger'] == 'passive':
+            for stat, value in item_data['stats'].items():
+                if stat not in self.player.base_stats:
+                    continue
+                
+                modifiers = value if isinstance(value, list) else [value]
+                base_value = self.player.base_stats[stat]
+                
+                self.player.base_stats[stat] = StatModifier.apply_multiple(base_value, modifiers)
+                self.passive_stats.setdefault(item_name, {})[stat] = modifiers
+            
+            self.player.current_stats = self.player.base_stats.copy()
+        
+        # Активные эффекты
+        elif item_data['trigger'] == 'active' and item_data['effect']:
+            effect_func = getattr(effects, item_data['effect'], None)
+            if effect_func:
+                self.active_effects[item_name] = lambda: effect_func(self.player)
+    
+    def _remove_item_effects(self, item_name: str):
+        """Удаляет эффекты предмета"""
+        # Удаляем пассивные эффекты
+        if item_name in self.passive_stats:
+            for stat, modifiers in self.passive_stats[item_name].items():
+                base_value = self.player.base_stats[stat]
+                self.player.base_stats[stat] = StatModifier.remove_modifiers(base_value, modifiers)
+            del self.passive_stats[item_name]
+        
+        # Удаляем активные эффекты
+        self.active_effects.pop(item_name, None)
+        
         self.player.current_stats = self.player.base_stats.copy()
-        print('[Equip] Все баффы применены')
-        
-    def register_reactive_effect(self, name, func_name):
-        if func_name and hasattr(effects, func_name):
-            self.player.reactive_effects[name] = getattr(effects, func_name)
-
-    def register_active_effect(self, name, func_name):
-        if func_name and hasattr(effects, func_name):
-            self.player.active_effects[name] = lambda: getattr(effects, func_name)(player=self.player)
+    
+    def use_item_effect(self, item_name: str) -> bool:
+        """Активирует эффект предмета"""
+        if item_name not in self.equipped_items:
+            return False
+            
+        if effect := self.active_effects.get(item_name):
+            effect()
+            return True
+        return False
+    
+    def get_equipped_items(self) -> List[Dict[str, Any]]:
+        """Возвращает данные экипированных предметов"""
+        return [self.items_data.get_item(name) for name in self.equipped_items]

@@ -7,8 +7,8 @@ import os
 from player.base_player import BasePlayer  # Импортируем базовый класс
 
 class Enemy(BasePlayer):  # Наследуем от BasePlayer
-    def __init__(self, monster_name, position, groups=None, obstacle_sprites=None,
-                 damage_player=None, trigger_death_particles=None, add_exp=None, drops=None):
+    def __init__(self, name, position, groups, obstacle_sprites, 
+                        damage_player, death_callback, add_exp, drops):
         # Инициализация базового класса
         super().__init__(
             position=position,
@@ -17,17 +17,17 @@ class Enemy(BasePlayer):  # Наследуем от BasePlayer
         )
         
         # Уникальные свойства врага
-        self.monster_name = monster_name
+        self.name = name
         self.damage_player = damage_player
-        self.trigger_death_particles = trigger_death_particles
+        self.trigger_death_particles = death_callback
         self.add_exp = add_exp
         self.drops = drops
-        
+        self.animations = {}
         # Переопределяем текстуру для врага
-        self.texture = self.get_texture(monster_name, 'idle')
+        self.texture = self.get_texture(name, 'idle')
         
         # Статы монстра из MONSTER_DATA
-        monster_info = MONSTER_DATA[self.monster_name]
+        monster_info = MONSTER_DATA[self.name]
         self.base_stats = {
             'health': monster_info['health'],
             'attack': monster_info['damage'],
@@ -47,7 +47,7 @@ class Enemy(BasePlayer):  # Наследуем от BasePlayer
         self.attack_cooldown = 0.4
         
         # Загрузка анимаций
-        self.import_graphics(monster_name)
+        self.import_graphics(name)
         self.status = 'idle'
         self.animation_speed = 0.15
         self.frame_index = 0
@@ -111,7 +111,7 @@ class Enemy(BasePlayer):  # Наследуем от BasePlayer
         """Проверка смерти врага"""
         if self.current_stats['health'] <= 0:
             destroy(self)
-            self.trigger_death_particles(self.position, self.monster_name)
+            self.trigger_death_particles(self.position, self.name)
             item = random.choice(list(artifacts.keys()))
             self.add_exp(self.exp)
             self.drops(item)
