@@ -1,6 +1,5 @@
 
 
-
 artifacts = {'Brave Heart':{'stats':{'health':0.2,'strength':0.2,
 'speed':0.2,'agility':0.2,'magic':0.2,
 'energy':0.2,'stamina':0.2,'hp_regen':0.2,
@@ -10,6 +9,5 @@ artifacts = {'Brave Heart':{'stats':{'health':0.2,'strength':0.2,
             #'Dad\'s Clock':{'stats':{'health':'50%'},'subscribe':'with love','effect':'1'},
             #'Boot\'s of speed':{'stats':{'agility':'20%'},'subscribe':'what ?','effect':'1'},
             
-
 
 }

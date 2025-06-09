@@ -1,83 +1,118 @@
-import pygame
-from helper.settings import * 
+# UI/ui.py
 
-class UI:
-	def __init__(self):
-		
-		# general 
-		self.display_surface = pygame.display.get_surface()
-		self.font = pygame.font.Font(UI_FONT,UI_FONT_SIZE)
+from ursina import Entity, Text, color, Vec2, camera
+from helper.settings import weapon_data, magic_data
 
-		# bar setup 
-		self.health_bar_rect = pygame.Rect(10,30,HEALTH_BAR_WIDTH,BAR_HEIGHT)
-		self.energy_bar_rect = pygame.Rect(10,50,ENERGY_BAR_WIDTH,BAR_HEIGHT)
-		self.menu_bar_rect = pygame.Rect(600, 350, 100, 100)
-		# convert weapon dictionary
-		self.weapon_graphics = []
-		for weapon in weapon_data.values():
-			path = weapon['graphic']
-			weapon = pygame.image.load(path).convert_alpha()
-			self.weapon_graphics.append(weapon)
+class UI(Entity):
+    def __init__(self):
+        super().__init__(parent=camera.ui)
 
-		# convert magic dictionary
-		self.magic_graphics = []
-		for magic in magic_data.values():
-			magic = pygame.image.load(magic['graphic']).convert_alpha()
-			self.magic_graphics.append(magic)
+        # Общие настройки
+        self.player = None
 
+        # Полоски здоровья и энергии
+        self.health_bar = self.create_bar(
+            position=Vec2(-0.75, 0.45),
+            scale=Vec2(0.3, 0.03),
+            bar_color=color.red,
+            label='Health'
+        )
+        self.energy_bar = self.create_bar(
+            position=Vec2(-0.75, 0.4),
+            scale=Vec2(0.2, 0.03),
+            bar_color=color.blue,
+            label='Energy'
+        )
 
-	def show_bar(self,current,max_amount,bg_rect,color):
-		# draw bg 
-		pygame.draw.rect(self.display_surface,UI_BG_COLOR,bg_rect)
+        # Текст опыта
+        self.exp_text = Text(
+            text='EXP: 0',
+            position=Vec2(0.65, -0.45),
+            scale=1,
+            color=color.white,
+            parent=self
+        )
 
-		# converting stat to pixel
-		ratio = current / max_amount
-		current_width = bg_rect.width * ratio
-		current_rect = bg_rect.copy()
-		current_rect.width = current_width
+        # Иконки оружия и магии
+        self.weapon_icon = Entity(
+            model='quad',
+            texture='graphics/weapons/sword/full.png',
+            position=Vec2(-0.8, -0.4),
+            scale=0.07,
+            z=-0.1,
+            parent=self
+        )
+        self.magic_icon = Entity(
+            model='quad',
+            texture='graphics/particles/heal/heal.png',
+            position=Vec2(-0.65, -0.4),
+            scale=0.07,
+            z=-0.1,
+            parent=self
+        )
 
-		# drawing the bar
-		pygame.draw.rect(self.display_surface,color,current_rect)
-		pygame.draw.rect(self.display_surface,UI_BORDER_COLOR,bg_rect,3)
+    def create_bar(self, position, scale, bar_color, label='Bar'):
+        bg = Entity(
+            model='quad',
+            color=color.dark_gray,
+            position=position,
+            scale=scale,
+            origin=(-0.5, 0),
+            z=-0.1,
+            parent=self
+        )
+        bar = Entity(
+            model='quad',
+            color=bar_color,
+            position=position,
+            scale=Vec2(scale.x * 0.95, scale.y * 0.9),
+            origin=(-0.5, 0),
+            z=-0.1,
+            parent=self
+        )
+        label_text = Text(
+            text=label,
+            position=position + Vec2(-0.05, 0.015),
+            scale=0.8,
+            color=color.white,
+            parent=self
+        )
+        return {'bg': bg, 'bar': bar, 'label': label_text}
 
-	def show_exp(self,exp):
-		text_surf = self.font.render(str(int(exp)),False,TEXT_COLOR)
-		x = self.display_surface.get_size()[0] - 20
-		y = self.display_surface.get_size()[1] - 20
-		text_rect = text_surf.get_rect(bottomright = (x,y))
+    def show_bar(self, current, max_amount, bar_obj, bar_color):
+        ratio = current / max_amount
+        bar_obj['bar'].scale_x = bar_obj['bg'].scale_x * ratio
+        bar_obj['bar'].color = bar_color
 
-		pygame.draw.rect(self.display_surface,UI_BG_COLOR,text_rect.inflate(20,20))
-		self.display_surface.blit(text_surf,text_rect)
-		pygame.draw.rect(self.display_surface,UI_BORDER_COLOR,text_rect.inflate(20,20),3)
+    def show_exp(self, exp):
+        self.exp_text.text = f'EXP: {int(exp)}'
 
-	def selection_box(self,left,top, has_switched):
-		bg_rect = pygame.Rect(left,top,ITEM_BOX_SIZE,ITEM_BOX_SIZE)
-		pygame.draw.rect(self.display_surface,UI_BG_COLOR,bg_rect)
-		if has_switched:
-			pygame.draw.rect(self.display_surface,UI_BORDER_COLOR_ACTIVE,bg_rect,3)
-		else:
-			pygame.draw.rect(self.display_surface,UI_BORDER_COLOR,bg_rect,3)
-		return bg_rect
+    def weapon_overlay(self, weapon_index, has_switched):
+        from helper.settings import weapon_data
+        if weapon_index < len(weapon_data):
+            weapon_name = list(weapon_data.keys())[weapon_index]
+            path = f'graphics/weapons/{weapon_name}/full.png'
+            self.weapon_icon.texture = path
+            self.weapon_icon.color = color.gold if has_switched else color.white
 
-	def weapon_overlay(self,weapon_index,has_switched):
-		bg_rect = self.selection_box(10,630,has_switched)
-		weapon_surf = self.weapon_graphics[weapon_index]
-		weapon_rect = weapon_surf.get_rect(center = bg_rect.center)
+    def magic_overlay(self, magic_index, has_switched):
+        from helper.settings import magic_data
+        if magic_index < len(magic_data):
+            magic_name = list(magic_data.keys())[magic_index]
+            path = magic_data[magic_name]['graphic']
+            self.magic_icon.texture = path
+            self.magic_icon.color = color.gold if has_switched else color.white
 
-		self.display_surface.blit(weapon_surf,weapon_rect)
+    def display(self, player):
+        self.player = player
 
-	def magic_overlay(self,magic_index,has_switched):
-		bg_rect = self.selection_box(80,635,has_switched)
-		magic_surf = self.magic_graphics[magic_index]
-		magic_rect = magic_surf.get_rect(center = bg_rect.center)
+        # Обновление полосок
+        self.show_bar(player.health, player.current_stats['health'], self.health_bar, color.red)
+        self.show_bar(player.energy, player.current_stats['energy'], self.energy_bar, color.blue)
 
-		self.display_surface.blit(magic_surf,magic_rect)
+        # Опыт
+        self.show_exp(player.exp)
 
-	def display(self,player):
-		self.show_bar(player.health,player.current_stats['health'],self.health_bar_rect,HEALTH_COLOR)
-		self.show_bar(player.energy,player.current_stats['energy'] ,self.energy_bar_rect,ENERGY_COLOR)
-
-		self.show_exp(player.exp)
-	
-		self.weapon_overlay(player.weapon_index,not player.can_switch_weapon)
-		self.magic_overlay(player.magic_index,not player.can_switch_magic)
+        # Иконки
+        self.weapon_overlay(player.weapon_index, not player.can_switch_weapon)
+        self.magic_overlay(player.magic_index, not player.can_switch_magic)

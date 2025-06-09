@@ -1,56 +1,61 @@
-from equip.chance import *
-from player import *
-from equip.item_base import *
-from helper.support import *
+# equip/equip.py
+
+from helper.settings import artifacts
+from player import Player
+from equip.chance import chance
+from helper.support import convert_to_num
 
 
-equip = []
-
-equip.append(list(artifacts.keys())[0])
-equip.append(list(artifacts.keys())[1])
-equip.append(list(artifacts.keys())[2])
-equip.append(list(artifacts.keys())[3])
-
-
-def get_base(player): 
+def get_base(player: Player):
+    """Возвращает базовые параметры игрока"""
     base_stat = {}
-    for i in player.keys():
-        base_stat[i] = player[i]
+    for stat in player.base:
+        base_stat[stat] = player.base[stat]
     return base_stat
-    
 
-def return_stats(stat_dict,stats):
-    must_be_plused = {}
-    
-    for first in stat_dict.keys():
-        one = stats[first]
-        two = stat_dict[first]
-        three = one*two
-        must_be_plused[first] = three
-    
+
+def return_stats(stat_dict, current_stats):
+    """
+    Возвращает бонусы от экипировки
+    :param stat_dict: словарь с атрибутами предмета
+    :param current_stats: текущие статы игрока
+    :return: словарь с бонусами
+    """
+    must_be_plused = {
+        'health': 0,
+        'attack': 0,
+        'magic': 0,
+        'agility': 0,
+        'hp_regen': 0,
+        'speed': 0,
+        'stamina': 0,
+        'energy': 0,
+        'strength': 0,
+        'crit_rate': 0,
+        'crit_chance': 0
+    }
+
+    for item in stat_dict:
+        if item in ['crit_rate', 'crit_chance']:
+            must_be_plused[item] = stat_dict[item]
+        else:
+            must_be_plused[item] += stat_dict[item]
+
+    # Преобразуем проценты в числа
+    for stat in must_be_plused:
+        if '%' in str(must_be_plused[stat]):
+            must_be_plused[stat] = convert_to_num(must_be_plused[stat])
+
     return must_be_plused
-    
-def get_equip_stat():
-    stat_dict = {}
-    for item in equip:
-        one_step = list(artifacts[item].values())[0]
-        for x in list(one_step.keys()):
-            if x in stat_dict:
-                any = stat_dict[x]
-                stat_dict[x] = convert_to_num(one_step[x])+ any
-            else:
-                stat_dict[x] = convert_to_num(one_step[x])
-    return stat_dict       
 
 
-def current_stats(must_be_plused,stats):
-    current_stats = {}
-    current_stats = stats
-    for item in must_be_plused.keys():
-        one = stats[item]
-        two = must_be_plused[item]
-        three = one + two
-        current_stats[item] = three 
-    #print(current_stats)
+def current_stats(must_be_plused, current_stats):
+    """Применяет бонусы к текущей стате"""
+    for stat in must_be_plused:
+        if stat in ['crit_rate', 'crit_chance']:
+            current_stats[stat] = must_be_plused[stat] + current_stats.get(stat, 0)
+        else:
+            current_stats[stat] *= must_be_plused[stat]
+
+    print("Обновлённые статы:", current_stats)
     return current_stats
-    
