@@ -1,6 +1,6 @@
 # player/player.py
 
-from base_player import BasePlayer
+from .base_player import BasePlayer
 from helper.settings import WEAPON_DATA
 
 
