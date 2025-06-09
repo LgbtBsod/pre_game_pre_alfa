@@ -2,180 +2,291 @@
 import sqlite3
 import json
 import time
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional, Union, Tuple
 from enum import Enum, auto
-
+from .stat_modifier import StatModifier, ModifierType
 
 class BuffType(Enum):
-    PERCENT = auto()
-    FLAT = auto()
-    MULTIPLY = auto()
-
+    BUFF = auto()
+    DEBUFF = auto()
+    AURA = auto()
 
 class BuffEffect:
-    def __init__(self, stat: str, value: float, duration: float, buff_type: BuffType):
+    def __init__(
+        self,
+        stat: str,
+        modifier: str,
+        duration: float,
+        buff_type: BuffType,
+        source: str = None,
+        is_permanent: bool = False
+    ):
         self.stat = stat
-        self.value = value
+        self.modifier = modifier
         self.duration = duration
         self.type = buff_type
+        self.source = source
+        self.is_permanent = is_permanent
         self.start_time = time.time()
-        self.end_time = self.start_time + duration if duration > 0 else None
+        self.end_time = self.start_time + duration if duration > 0 and not is_permanent else None
+        self.mod_value, self.mod_type = StatModifier.parse(modifier)
+        
+        # Для визуализации
+        self.icon = self._get_icon()
+        self.description = self._generate_description()
 
+    def _get_icon(self) -> str:
+        """Возвращает иконку в зависимости от типа баффа/дебафа"""
+        icons = {
+            (BuffType.BUFF, ModifierType.FLAT): "buff_flat",
+            (BuffType.BUFF, ModifierType.PERCENT_ADD): "buff_percent",
+            (BuffType.DEBUFF, ModifierType.FLAT): "debuff_flat",
+            (BuffType.DEBUFF, ModifierType.PERCENT_ADD): "debuff_percent"
+        }
+        return icons.get((self.type, self.mod_type), "default_icon")
+
+    def _generate_description(self) -> str:
+        """Генерирует описание эффекта"""
+        stat_names = {
+            "health": "Здоровье",
+            "attack": "Атака",
+            "speed": "Скорость"
+        }
+        
+        stat_name = stat_names.get(self.stat, self.stat)
+        value_str = self.modifier.replace("*", "×").replace("%", "%%")
+        
+        if self.type == BuffType.BUFF:
+            return f"+{value_str} к {stat_name}"
+        else:
+            return f"-{value_str} к {stat_name}"
+
+    @property
+    def time_left(self) -> Optional[float]:
+        if self.is_permanent:
+            return None
+        return max(self.end_time - time.time(), 0) if self.end_time else None
+
+    @property
+    def is_active(self) -> bool:
+        return self.is_permanent or (self.end_time and self.end_time > time.time())
 
 class BuffManager:
     def __init__(self, player, db_path: str = 'assets/items.db'):
         self.player = player
         self.db_path = db_path
-        self.active_buffs: List[BuffEffect] = []
-        self.expired_buffs: List[BuffEffect] = []
+        self.active_effects: List[BuffEffect] = []
         self._last_cleanup_time = 0
+        self._stat_cache = {}  # Кеш для оптимизации
+        
+        # Группировка эффектов по характеристикам
+        self._stat_effects: Dict[str, List[BuffEffect]] = {}
+
+    def _update_stat_cache(self, stat: str):
+        """Обновляет кеш для указанной характеристики"""
+        if stat not in self._stat_effects:
+            self._stat_effects[stat] = []
+        
+        active_effects = [e for e in self.active_effects if e.stat == stat and e.is_active]
+        self._stat_effects[stat] = active_effects
+        
+        # Пересчитываем итоговое значение
+        modifiers = [e.modifier for e in active_effects]
+        base_value = self.player.base_stats.get(stat, 0)
+        self._stat_cache[stat] = StatModifier.apply_multiple(base_value, modifiers)
+
+    def _apply_to_player(self):
+        """Применяет все активные эффекты к игроку"""
+        for stat in self._stat_effects.keys():
+            if stat in self.player.current_stats:
+                self.player.current_stats[stat] = self._stat_cache.get(stat, self.player.base_stats[stat])
 
     def load_passive_effects(self, item_name: str) -> bool:
-        """Загружает и применяет пассивные баффы из БД"""
+        """Загружает пассивные эффекты из базы данных"""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT effect FROM artifacts WHERE name=?", (item_name,))
+                cursor.execute(
+                    "SELECT effect, is_buff FROM artifacts WHERE name=?",
+                    (item_name,)
+                )
                 result = cursor.fetchone()
 
-            if not result or not result[0]:
+            if not result:
                 return False
 
-            effect_data = json.loads(result[0])
-            for buff in effect_data.get('buffs', []):
-                self.apply_buff(buff)
-            return True
-
-        except json.JSONDecodeError as e:
-            print(f'Ошибка парсинга эффекта для {item_name}: {e}')
-            return False
-        except sqlite3.Error as e:
-            print(f'Ошибка БД при загрузке эффектов: {e}')
-            return False
-
-    def apply_buff(self, buff_data: Dict) -> bool:
-        """Применяет один бафф из словаря данных"""
-        try:
-            stat = buff_data['stat']
-            if stat not in self.player.base_stats:
-                print(f"Характеристика {stat} не найдена в base_stats")
+            effect_data, is_buff = result
+            if not effect_data:
                 return False
 
-            buff_type = BuffType[buff_data['type'].upper()]
-            value = float(buff_data['value'])
-            duration = float(buff_data.get('duration', 0))
-
-            buff = BuffEffect(stat, value, duration, buff_type)
-            self._apply_buff_effect(buff)
-            self.active_buffs.append(buff)
+            effect_type = BuffType.BUFF if is_buff else BuffType.DEBUFF
+            effects = json.loads(effect_data)
+            
+            for effect in effects.get('effects', []):
+                self.add_effect(
+                    stat=effect['stat'],
+                    modifier=effect['modifier'],
+                    duration=effect.get('duration', 0),
+                    buff_type=effect_type,
+                    source=item_name,
+                    is_permanent=effect.get('is_permanent', False)
+                )
             return True
 
-        except KeyError as e:
-            print(f"Неверный формат баффа: отсутствует ключ {e}")
-            return False
-        except ValueError as e:
-            print(f"Ошибка значения в баффе: {e}")
+        except Exception as e:
+            print(f"Ошибка загрузки эффектов для {item_name}: {e}")
             return False
 
-    def _apply_buff_effect(self, buff: BuffEffect):
-        """Применяет эффект баффа к игроку"""
-        from .effects import apply_flat_buff, apply_multiply_buff, apply_percent_buff, reset_stat
+    def add_effect(
+        self,
+        stat: str,
+        modifier: str,
+        duration: float = 0,
+        buff_type: BuffType = BuffType.BUFF,
+        source: str = None,
+        is_permanent: bool = False
+    ) -> bool:
+        """Добавляет новый эффект (бафф или дебаф)"""
+        if stat not in self.player.base_stats:
+            print(f"Характеристика {stat} не найдена")
+            return False
 
-        if buff.type == BuffType.PERCENT:
-            apply_percent_buff(self.player, buff.stat, buff.value, buff.duration)
-        elif buff.type == BuffType.FLAT:
-            apply_flat_buff(self.player, buff.stat, buff.value, buff.duration)
-        elif buff.type == BuffType.MULTIPLY:
-            apply_multiply_buff(self.player, buff.stat, buff.value, buff.duration)
+        # Проверяем уникальность эффекта от источника
+        if source:
+            existing = next(
+                (e for e in self.active_effects 
+                 if e.source == source and e.stat == stat),
+                None
+            )
+            if existing:
+                self.remove_effect(existing)
 
-        print(f"[BUFF] Применён {buff.type.name} бафф {buff.stat}: {buff.value} на {buff.duration or '∞'} сек")
+        effect = BuffEffect(stat, modifier, duration, buff_type, source, is_permanent)
+        self.active_effects.append(effect)
+        self._update_stat_cache(stat)
+        self._apply_to_player()
+        
+        print(f"[EFFECT] {'+' if buff_type == BuffType.BUFF else '-'} "
+              f"{stat}: {modifier} ({duration or 'permanent'})")
+        return True
 
-    def cleanup_expired_buffs(self):
-        """Очищает завершившиеся баффы"""
+    def remove_effect(self, effect: BuffEffect) -> bool:
+        """Удаляет указанный эффект"""
+        if effect in self.active_effects:
+            self.active_effects.remove(effect)
+            self._update_stat_cache(effect.stat)
+            self._apply_to_player()
+            return True
+        return False
+
+    def remove_effects_by_source(self, source: str) -> int:
+        """Удаляет все эффекты от указанного источника"""
+        removed = 0
+        for effect in list(self.active_effects):
+            if effect.source == source:
+                if self.remove_effect(effect):
+                    removed += 1
+        return removed
+
+    def cleanup_expired(self):
+        """Очищает завершившиеся временные эффекты"""
         current_time = time.time()
-        if current_time - self._last_cleanup_time < 1.0:  # Оптимизация: не проверять каждый кадр
+        if current_time - self._last_cleanup_time < 1.0:  # Оптимизация
             return
 
         self._last_cleanup_time = current_time
-        new_active_buffs = []
-        
-        for buff in self.active_buffs:
-            if buff.end_time is None or buff.end_time > current_time:
-                new_active_buffs.append(buff)
-            else:
-                self.expired_buffs.append(buff)
-                print(f"[BUFF] Закончился бафф {buff.stat}")
+        needs_update = False
 
-        self.active_buffs = new_active_buffs
+        for effect in list(self.active_effects):
+            if not effect.is_permanent and not effect.is_active:
+                self.active_effects.remove(effect)
+                needs_update = True
+                print(f"[EFFECT] Закончился эффект {effect.stat}")
 
-    def get_active_buffs(self) -> List[Dict]:
-        """Возвращает список активных баффов в виде словарей"""
-        self.cleanup_expired_buffs()
-        return [{
-            'stat': buff.stat,
-            'type': buff.type.name.lower(),
-            'value': buff.value,
-            'time_left': buff.end_time - time.time() if buff.end_time else None
-        } for buff in self.active_buffs]
+        if needs_update:
+            self._update_all_stats()
 
-    def update(self):
-        """Обновляет состояние баффов, вызывается каждый кадр"""
-        self.cleanup_expired_buffs()
-        self._process_periodic_effects()
+    def _update_all_stats(self):
+        """Обновляет все характеристики"""
+        stats_to_update = {e.stat for e in self.active_effects}
+        for stat in stats_to_update:
+            self._update_stat_cache(stat)
+        self._apply_to_player()
 
-    def _process_periodic_effects(self):
+    def get_active_effects(self, stat: str = None) -> List[BuffEffect]:
+        """Возвращает активные эффекты для характеристики или все"""
+        self.cleanup_expired()
+        if stat:
+            return [e for e in self.active_effects if e.stat == stat and e.is_active]
+        return [e for e in self.active_effects if e.is_active]
+
+    def get_effect_value(self, stat: str) -> float:
+        """Возвращает текущее значение характеристики с учетом эффектов"""
+        return self._stat_cache.get(stat, self.player.base_stats.get(stat, 0))
+
+    def update(self, dt: float):
+        """Обновляет состояние менеджера"""
+        self.cleanup_expired()
+        self._process_periodic_effects(dt)
+
+    def _process_periodic_effects(self, dt: float):
         """Обрабатывает периодические эффекты (регенерация и т.д.)"""
-        # Пример: регенерация здоровья, если есть соответствующий бафф
-        regen_buffs = [b for b in self.active_buffs if b.stat == 'health_regen']
-        if regen_buffs:
-            total_regen = sum(b.value for b in regen_buffs)
+        # Пример: регенерация здоровья
+        if 'health_regen' in self._stat_cache:
+            regen_value = self._stat_cache['health_regen']
+            max_health = self.get_effect_value('max_health')
+            current_health = self.player.current_stats['health']
             self.player.current_stats['health'] = min(
-                self.player.current_stats['health'] + total_regen * time.dt,
-                self.player.current_stats['max_health']
+                current_health + regen_value * dt,
+                max_health
             )
 
-    def has_buff(self, stat: str, min_value: Optional[float] = None) -> bool:
-        """Проверяет, есть ли активный бафф для указанной характеристики"""
-        self.cleanup_expired_buffs()
-        for buff in self.active_buffs:
-            if buff.stat == stat and (min_value is None or buff.value >= min_value):
-                return True
-        return False
-
-    def get_combined_buff_value(self, stat: str) -> float:
-        """Возвращает суммарное значение всех активных баффов для характеристики"""
-        self.cleanup_expired_buffs()
-        total = 0.0
-        for buff in self.active_buffs:
-            if buff.stat == stat:
-                if buff.type == BuffType.FLAT:
-                    total += buff.value
-                elif buff.type == BuffType.PERCENT:
-                    total += buff.value * self.player.base_stats[stat]
-        return total
-    
-    def save_active_buffs(self):
-        """Сохраняет активные баффы в JSON"""
-        active = [{
-            'stat': b.stat,
-            'type': b.type.name.lower(),
-            'value': b.value,
-            'duration_left': max(b.end_time - time.time(), 0) if b.end_time else None
-        } for b in self.active_buffs]
-
-        with open('saves/active_buffs.json', 'w') as f:
-            json.dump(active, f, indent=4)
-            
-    def load_saved_buffs(self):
+    def save_state(self, filepath: str = 'saves/buffs.json'):
+        """Сохраняет текущее состояние эффектов"""
+        state = {
+            'effects': [{
+                'stat': e.stat,
+                'modifier': e.modifier,
+                'type': e.type.name,
+                'source': e.source,
+                'duration_left': e.time_left,
+                'is_permanent': e.is_permanent
+            } for e in self.active_effects if e.is_permanent or e.time_left]
+        }
+        
         try:
-            with open('saves/active_buffs.json', 'r') as f:
-                buffs = json.load(f)
-            for b in buffs:
-                self.apply_buff({
-                    'type': b['type'],
-                    'stat': b['stat'],
-                    'value': b['value'],
-                    'duration': b['duration_left']
-                })
+            with open(filepath, 'w') as f:
+                json.dump(state, f, indent=2)
+            return True
         except Exception as e:
-            print(f'Не удалось загрузить баффы: {e}')
+            print(f"Ошибка сохранения эффектов: {e}")
+            return False
+
+    def load_state(self, filepath: str = 'saves/buffs.json'):
+        """Загружает сохраненное состояние эффектов"""
+        try:
+            with open(filepath, 'r') as f:
+                state = json.load(f)
+            
+            self.clear_effects()
+            
+            for effect_data in state.get('effects', []):
+                self.add_effect(
+                    stat=effect_data['stat'],
+                    modifier=effect_data['modifier'],
+                    duration=effect_data.get('duration_left', 0),
+                    buff_type=BuffType[effect_data['type']],
+                    source=effect_data.get('source'),
+                    is_permanent=effect_data.get('is_permanent', False)
+                )
+            return True
+        except Exception as e:
+            print(f"Ошибка загрузки эффектов: {e}")
+            return False
+
+    def clear_effects(self):
+        """Очищает все эффекты"""
+        self.active_effects.clear()
+        self._stat_cache.clear()
+        self._stat_effects.clear()
+        self._apply_to_player()

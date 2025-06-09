@@ -3,7 +3,7 @@
 from ursina import Ursina, camera, time
 from helper.settings import GAME_SETTINGS
 from player.player import LikePlayer
-from enemy import Enemy
+from enemy.enemy import Enemy
 from anim_tile import AnimTile
 from tile import Tile
 from UI.ui import UI
@@ -20,7 +20,7 @@ class Level:
         self.player = LikePlayer(position=(0, 0), obstacle_sprites=self.obstacle_sprites)
         self.ui = UI()
         self.equip = Equipment(self.player)
-
+        self.player.level = self
         self.create_map()
 
     def create_map(self):
@@ -81,3 +81,14 @@ class Level:
 
     def toggle(self):
         pass
+    
+    def save_game(self, slot=1):
+        """Сохраняет текущее состояние игры"""
+        data = {
+            'player': self.player.to_dict(),
+            'enemies': [e.to_dict() for e in self.attackable_sprites],
+            'map': 'test',
+            'time': time.time()
+        }
+        save(slot=slot, data=data)
+        print(f'[Save] Сохранён слот {slot}')

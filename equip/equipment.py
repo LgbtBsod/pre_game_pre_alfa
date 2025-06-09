@@ -36,21 +36,22 @@ class Equipment:
                 try:
                     stats = json.loads(stats_str) if stats_str else {}
                     effect_data = json.loads(effect_str) if effect_str else {}
+         
+
+                    if trigger == 'passive':
+                        self.apply_passive_stats(stats)
+                    elif trigger == 'reactive':
+                        self.register_reactive_effect(name, effect_data.get('on_hit'))
+                    elif trigger == 'active':
+                        self.register_active_effect(name, effect_data.get('on_use'))
+                    
                 except json.JSONDecodeError as e:
                     print(f"Error decoding JSON for artifact {name}: {e}")
-                    continue
-
-                if trigger == 'passive':
-                    self.apply_passive_stats(stats)
-                elif trigger == 'reactive':
-                    self.register_reactive_effect(name, effect_data.get('on_hit'))
-                elif trigger == 'active':
-                    self.register_active_effect(name, effect_data.get('on_use'))
+        
+            self.conn.close() 
         except sqlite3.Error as e:
             print(f"Database error: {e}")
-        finally:
-            if hasattr(self, 'conn') and self.conn:
-                self.conn.close()  
+                 
 
     def apply_passive_stats(self, stats: dict):
         """Применяет пассивные статы к игроку"""

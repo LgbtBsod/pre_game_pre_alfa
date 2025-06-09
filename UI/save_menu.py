@@ -57,8 +57,12 @@ class SaveMenu(Entity):
         self.enabled = False
 
     def save_slot(self, slot):
-        self.game.save_game(slot=slot)
+        """Сохраняет игру в указанный слот"""
+        if hasattr(self.game, 'save_game'):
+            self.game.save_game(slot=slot)
+        else:
+            print('[Ошибка] Метод save_game не найден в Level')
         self.hide()
-
+    
     def update(self):
         pass
