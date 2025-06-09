@@ -27,9 +27,9 @@ class Level:
         from helper.support import import_csv_layout
 
         layouts = {
-            'boundary': import_csv_layout('maps/test._block.csv'),
-            'tree': import_csv_layout('maps/test._tree.csv'),
-            'entities': import_csv_layout('maps/test._entities.csv')
+            'boundary': import_csv_layout('assets/map/test._block.csv'),
+            'tree': import_csv_layout('assets/map/test._tree.csv'),
+            'entities': import_csv_layout('assets/map/test._entities.csv')
         }
 
         for style, layout in layouts.items():
@@ -47,7 +47,7 @@ class Level:
                         Tile((x, y), [self.visible_sprites, self.obstacle_sprites], 'tree')
                     elif style == 'entities':
                         if col == '164':  # ID игрока
-                            self.player = Player((x, y), groups=[self.visible_sprites], obstacle_sprites=self.obstacle_sprites)
+                            self.player = LikePlayer((x, y), groups=[self.visible_sprites], obstacle_sprites=self.obstacle_sprites)
                         else:
                             monster_name = {
                                 '160': 'warrior',

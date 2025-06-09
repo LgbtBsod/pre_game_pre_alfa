@@ -79,7 +79,7 @@ class BuffManager:
 
     def _apply_buff_effect(self, buff: BuffEffect):
         """Применяет эффект баффа к игроку"""
-        from effects import apply_percent_buff, apply_flat_buff, apply_multiply_buff
+        from .effects import apply_flat_buff, apply_multiply_buff, apply_percent_buff, reset_stat
 
         if buff.type == BuffType.PERCENT:
             apply_percent_buff(self.player, buff.stat, buff.value, buff.duration)
@@ -153,3 +153,29 @@ class BuffManager:
                 elif buff.type == BuffType.PERCENT:
                     total += buff.value * self.player.base_stats[stat]
         return total
+    
+    def save_active_buffs(self):
+        """Сохраняет активные баффы в JSON"""
+        active = [{
+            'stat': b.stat,
+            'type': b.type.name.lower(),
+            'value': b.value,
+            'duration_left': max(b.end_time - time.time(), 0) if b.end_time else None
+        } for b in self.active_buffs]
+
+        with open('saves/active_buffs.json', 'w') as f:
+            json.dump(active, f, indent=4)
+            
+    def load_saved_buffs(self):
+        try:
+            with open('saves/active_buffs.json', 'r') as f:
+                buffs = json.load(f)
+            for b in buffs:
+                self.apply_buff({
+                    'type': b['type'],
+                    'stat': b['stat'],
+                    'value': b['value'],
+                    'duration': b['duration_left']
+                })
+        except Exception as e:
+            print(f'Не удалось загрузить баффы: {e}')
