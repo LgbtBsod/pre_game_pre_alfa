@@ -290,3 +290,21 @@ class LikePlayer(BasePlayer):
         print(f'Casting {style} magic with power {strength} (cost: {cost} MP)')
         # Здесь должна быть логика создания визуального эффекта магии
         # Например: MagicProjectile.create(style=style, power=strength)
+
+    def create_attack(self):
+        """Создаёт атаку с текущим оружием"""
+        from weapon import Weapon
+        self.current_attack = Weapon(player=self)
+        
+    def _trigger_attack_animation(self):
+        """Запускает анимацию атаки"""
+        from ursina import invoke
+        self.status = self.status.split('_')[0] + '_attack'
+
+        # Пример сброса статуса после анимации
+        invoke(self._reset_status, delay=0.3)
+
+    def _reset_status(self):
+        """Возвращает игрока к нормальному статусу (не атакующему)"""
+        if '_attack' in self.status:
+            self.status = self.status.replace('_attack', '')

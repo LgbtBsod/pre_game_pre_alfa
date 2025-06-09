@@ -53,7 +53,7 @@ class Enemy(BasePlayer):  # Наследуем от BasePlayer
         self.frame_index = 0
 
     def get_texture(self, name, status):
-        return f'graphics/monsters/{name}/{status}/0.png'
+        return f'assets/graphics/monsters/{name}/{status}/0.png'
 
     def import_graphics(self, name):
         """Загрузка анимаций для врага"""

@@ -77,9 +77,8 @@ class BasePlayer(Entity):
         """Обновление состояния игрока"""
         self.input()
         self.move()
-        self.buff_manager.update()
-        
-        
+        self.buff_manager.update(time.time)
+               
     def to_dict(self):
         """Сохраняет текущее состояние игрока в словарь"""
         return {

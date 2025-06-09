@@ -26,7 +26,7 @@ class AnimTile(Entity):
 
     def import_player_assets(self):
         """Загружает анимацию воды"""
-        water_path = 'graphics/water/'
+        water_path = 'assets/graphics/water/'
 
         self.animations = {'lake': []}
 
