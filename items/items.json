@@ -1,0 +1,157 @@
+{
+    "weapon_types": {
+        "melee": {
+            "great_sword": {
+                "base_damage": 15,
+                "damage_type": "physical",
+                "element": "fire",
+                "element_damage": 5,
+                "effects": ["burn"],
+                "resist_mod": {"magic": 0.2},
+                "weakness_mod": {"ice": 0.1},
+                "cost": 100,
+                "rarity": 3
+            },
+            "iron_axe": {
+                "base_damage": 12,
+                "damage_type": "physical",
+                "element": "none",
+                "effects": [],
+                "cost": 60,
+                "rarity": 2
+            }
+        },
+        "ranged": {
+            "short_bow": {
+                "base_damage": 10,
+                "damage_type": "physical",
+                "element": "none",
+                "effects": [],
+                "cost": 50,
+                "rarity": 1
+            },
+            "elemental_bow": {
+                "base_damage": 12,
+                "damage_type": "physical",
+                "element": "lightning",
+                "effects": ["stun"],
+                "cost": 120,
+                "rarity": 4
+            }
+        },
+        "mage": {
+            "fire_staff": {
+                "base_damage": 18,
+                "damage_type": "magic",
+                "element": "fire",
+                "effects": ["burn"],
+                "cost": 150,
+                "rarity": 4
+            }
+        }
+    },
+    "accessory_types": {
+        "shield": {
+            "basic_shield": {
+                "defense": 5,
+                "effects": ["block"],
+                "cost": 40,
+                "rarity": 1
+            },
+            "magic_shield": {
+                "defense": 8,
+                "effects": ["reflect", "block"],
+                "cost": 100,
+                "rarity": 3
+            }
+        },
+        "amulet": {
+            "health_amulet": {
+                "defense": 0,
+                "effects": ["regen_health"],
+                "cost": 80,
+                "rarity": 2
+            }
+        },
+        "ring": {
+            "ring_of_power": {
+                "defense": 0,
+                "effects": ["boost_damage"],
+                "cost": 90,
+                "rarity": 3
+            }
+        }
+    },
+    "consumable_types": {
+        "health": {
+            "small_potion": {
+                "effects": {"heal": 20},
+                "cost": 20,
+                "rarity": 1
+            },
+            "large_potion": {
+                "effects": {"heal": 50},
+                "cost": 40,
+                "rarity": 2
+            }
+        },
+        "mana": {
+            "mana_potion": {
+                "effects": {"restore_mana": 30},
+                "cost": 25,
+                "rarity": 1
+            }
+        },
+        "xp": {
+            "xp_scroll": {
+                "effects": {"xp_boost": 100},
+                "cost": 50,
+                "rarity": 2
+            }
+        }
+    },
+    "npc_traders": {
+        "common": {
+            "inventory": ["small_potion", "basic_shield", "short_bow"],
+            "restock_interval": 600
+        },
+        "epic": {
+            "inventory": ["fire_staff", "magic_shield", "xp_scroll"],
+            "restock_interval": 300
+        }
+    },
+    "effect_groups": {
+        "element_combinations": {
+            "fire+lightning": {
+                "result": "electro",
+                "effects": ["stun", "chain_damage"],
+                "damage_multiplier": 1.3
+            },
+            "ice+fire": {
+                "result": "steam",
+                "effects": ["slow", "burn"],
+                "damage_multiplier": 1.1
+            }
+        },
+        "buffs": {
+            "strength": {
+                "duration": 300,
+                "effect": "attack_power_up"
+            },
+            "haste": {
+                "duration": 200,
+                "effect": "speed_up"
+            }
+        },
+        "debuffs": {
+            "poison": {
+                "duration": 150,
+                "effect": "periodic_damage"
+            },
+            "slow": {
+                "duration": 100,
+                "effect": "speed_down"
+            }
+        }
+    }
+}
