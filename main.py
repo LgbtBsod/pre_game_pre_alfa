@@ -1,188 +1,197 @@
 import pygame
+import asyncio
+import random
 import sys
-import json
-import os
-from datetime import datetime
-
-# Импорты классов
 from entities.player import Player
 from entities.enemy import Enemy
-from map.game_map import GameMap
-from npcs.trader import Trader
-from npcs.quest_giver import QuestGiver
-from items.chest import Chest
-from ai.player_ai import PlayerAI
-from ui.camera import Camera
-from ui.buttons import Button
+from entities.boss import Boss
+from items.weapon import WeaponGenerator
 
-# Инициализация Pygame
-pygame.init()
-
-# Константы экрана
-SCREEN_WIDTH = 1280
-SCREEN_HEIGHT = 720
-TILE_SIZE = 40
-FPS = 60
-
-# Цвета
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GRAY = (50, 50, 50)
-
-# Настройка экрана
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Isometric RPG Game")
-clock = pygame.time.Clock()
-
-# Загрузка данных
-def load_game():
-    """Загрузка сохраненных данных или создание новых"""
-    if os.path.exists("save.json"):
-        with open("save.json", "r") as f:
-            return json.load(f)
-    return {}
-
-def save_game(data):
-    """Сохранение игры"""
-    data["last_save"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    with open("save.json", "w") as f:
-        json.dump(data, f, indent=2)
-
-def init_game(saved_data=None):
-    """Инициализация игры"""
-    # Создание карты
-    game_map = GameMap(20, 15)
-    
-    # Создание игрока
-    player = Player(5, 5)
-    
-    # Создание врагов
-    enemies = []
-    for i in range(3):
-        enemy = Enemy(10 + i, 5, enemy_type="warrior")
-        enemies.append(enemy)
-        game_map.add_entity(enemy)
-    
-    # Создание сундуков
-    chests = []
-    for i in range(2):
-        chest = Chest(15, 5 + i)
-        chests.append(chest)
-        game_map.add_entity(chest)
-    
-    # Создание NPC
-    trader = Trader(18, 2)
-    quest_giver = QuestGiver(18, 3)
-    game_map.add_entity(trader)
-    game_map.add_entity(quest_giver)
-    
-    # Создание камеры
-    camera = Camera(SCREEN_WIDTH, SCREEN_HEIGHT)
-    
-    return game_map, player, enemies, chests, trader, quest_giver, camera
-
-def main():
-    # Загрузка сохраненных данных
-    saved_data = load_game()
-    
-    # Инициализация игры
-    game_map, player, enemies, chests, trader, quest_giver, camera = init_game(saved_data)
-    
-    # Меню
-    menu_buttons = [
-        Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 - 50, 200, 50, "Новая игра"),
-        Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2, 200, 50, "Загрузить"),
-        Button(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT//2 + 50, 200, 50, "Выход")
-    ]
-    
-    running = True
-    in_menu = True
-    game_paused = False
-    
-    while running:
-        # Обработка событий
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-                
-            # Обработка нажатий мыши
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if in_menu:
-                    # Обработка меню
-                    for button in menu_buttons:
-                        if button.check_hover(pygame.mouse.get_pos()):
-                            if button.text == "Выход":
-                                running = False
-                            elif button.text == "Новая игра":
-                                in_menu = False
-                            elif button.text == "Загрузить" and os.path.exists("save.json"):
-                                in_menu = False
-                
-                # Пауза
-                elif game_paused:
-                    pass  # Логика кнопок паузы
-                
-            # Управление игроком
-            if not in_menu and not game_paused:
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_e:
-                        # Взаимодействие с NPC
-                        nearby_entities = player.get_nearby_entities(game_map.entities)
-                        for entity in nearby_entities:
-                            if isinstance(entity, (Trader, QuestGiver)):
-                                entity.interact(player)
-                    elif event.key == pygame.K_p:
-                        game_paused = True
-                    elif event.key == pygame.K_s:
-                        # Сохранение игры
-                        save_data = {
-                            "player": player.serialize(),
-                            "enemies": [e.serialize() for e in enemies],
-                            "chests": [c.serialize() for c in chests]
-                        }
-                        save_game(save_data)
+class Game:
+    def __init__(self):
+        pygame.init()
+        self.screen = pygame.display.set_mode((1200, 800))
+        pygame.display.set_caption("Автономный ИИ-выживач")
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.font = pygame.font.SysFont(None, 24)
         
-        if in_menu:
-            # Отрисовка меню
-            screen.fill(BLACK)
-            for button in menu_buttons:
-                button.draw(screen)
-        elif game_paused:
-            # Отрисовка паузы
-            pass
-        else:
-            # Обновление состояния игры
-            keys = pygame.key.get_pressed()
-            player.update(keys, game_map)
+        # Создание игрока
+        self.player = Player("player_ai", (600, 400))
+        self.player.learning_rate = 1.0
+        
+        # Создание врагов
+        self.enemies = []
+        enemy_types = ["warrior", "archer", "mage"]
+        for i in range(10):
+            enemy = Enemy(random.choice(enemy_types), level=random.randint(1, 5))
+            enemy.position = [random.randint(100, 1100), random.randint(100, 700)]
+            self.enemies.append(enemy)
+        
+        # Создание босса с исправлением параметров
+        self.boss = Boss(boss_type="dragon", level=15, position=(900, 300))
+        self.boss.learning_rate = 0.005
+        
+        # Генерация стартового оружия
+        starter_weapon = WeaponGenerator.generate_weapon(1)
+        self.player.equip_item(starter_weapon)
+        
+        # Инициализация координатора ИИ
+        from ai.cooperation import AICoordinator
+        self.coordinator = AICoordinator()
+        
+        # Регистрация врагов в координаторе
+        for enemy in self.enemies:
+            self.coordinator.register_entity(enemy, "enemy_group")
+        
+        # Регистрация босса
+        self.coordinator.register_entity(self.boss, "boss_group")
+    
+    async def run(self):
+        while self.running:
+            delta_time = self.clock.tick(60) / 1000.0
+            
+            # Обработка событий
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+            
+            # Обновление игрока
+            self.player.update(delta_time)
             
             # Обновление врагов
-            for enemy in enemies:
-                enemy.update(player, enemies)
+            for enemy in self.enemies:
+                if enemy.alive:
+                    enemy.update(delta_time)
             
-            # Обновление камеры
-            camera.update(player.x, player.y)
+            # Обновление босса
+            if self.boss.alive:
+                self.boss.update(delta_time)
+            
+            # Обновление координатора ИИ
+            self.coordinator.update_group_behavior("enemy_group")
+            self.coordinator.update_group_behavior("boss_group")
+            
+            # Проверка столкновений
+            self.check_collisions()
+            
+            # Удаление мертвых врагов
+            self.enemies = [e for e in self.enemies if e.alive]
             
             # Отрисовка
-            screen.fill(GRAY)
-            game_map.draw(screen, camera)
-            player.draw(screen, camera)
+            self.screen.fill((20, 30, 40))
+            self.draw_entities()
+            self.draw_ui()
+            pygame.display.flip()
             
-            # Отрисовка врагов
-            for enemy in enemies:
-                enemy.draw(screen, camera)
-                
-            # Отрисовка сундуков
-            for chest in chests:
-                chest.draw(screen, camera)
-                
-            # Отрисовка UI
-            camera.draw_ui(screen, player)
-        
-        pygame.display.flip()
-        clock.tick(FPS)
+            # Проверка условий победы/поражения
+            if not self.player.alive:
+                self.game_over("Поражение! Игрок погиб.")
+            elif not self.boss.alive:
+                self.game_over("Победа! Босс повержен!")
     
-    pygame.quit()
-    sys.exit()
+    def check_collisions(self):
+        # Проверка столкновений между игроком и врагами
+        player_rect = pygame.Rect(self.player.position[0]-20, self.player.position[1]-20, 40, 40)
+        
+        for enemy in self.enemies:
+            if enemy.alive:
+                enemy_rect = pygame.Rect(enemy.position[0]-15, enemy.position[1]-15, 30, 30)
+                if player_rect.colliderect(enemy_rect):
+                    # Игрок получает урон от врага
+                    damage = enemy.damage_output * random.uniform(0.8, 1.2)
+                    self.player.take_damage({
+                        "amount": damage,
+                        "type": "physical",
+                        "source": enemy
+                    })
+        
+        # Проверка столкновений между игроком и боссом
+        if self.boss.alive:
+            boss_rect = pygame.Rect(self.boss.position[0]-30, self.boss.position[1]-30, 60, 60)
+            if player_rect.colliderect(boss_rect):
+                # Игрок получает урон от босса
+                damage = self.boss.damage_output * random.uniform(0.9, 1.5)
+                self.player.take_damage({
+                    "amount": damage,
+                    "type": "boss",
+                    "source": self.boss
+                })
+    
+    def draw_entities(self):
+        # Отрисовка игрока
+        color = (0, 100, 255) if self.player.alive else (50, 50, 50)
+        pygame.draw.circle(self.screen, color, self.player.position, 20)
+        
+        # Отрисовка врагов
+        for enemy in self.enemies:
+            if enemy.alive:
+                color = (255, 50, 50) if enemy.enemy_type == "warrior" else \
+                        (200, 50, 150) if enemy.enemy_type == "archer" else \
+                        (50, 150, 255)
+                pygame.draw.circle(self.screen, color, enemy.position, 15)
+        
+        # Отрисовка босса
+        if self.boss.alive:
+            pygame.draw.circle(self.screen, (255, 165, 0), self.boss.position, 30)
+            # Отображение фазы босса
+            phase_text = self.font.render(f"Фаза: {self.boss.phase}", True, (255, 255, 0))
+            self.screen.blit(phase_text, (self.boss.position[0]-20, self.boss.position[1]-40))
+    
+    def draw_ui(self):
+        # Отображение уровня игрока
+        level_text = self.font.render(f"Уровень: {self.player.level}", True, (255, 255, 255))
+        self.screen.blit(level_text, (10, 10))
+        
+        # Отображение здоровья
+        health_text = self.font.render(f"Здоровье: {int(self.player.health)}/{int(self.player.max_health)}", True, (255, 255, 255))
+        self.screen.blit(health_text, (10, 40))
+        
+        # Отображение знаний
+        knowledge_text = self.font.render(f"Известных слабостей: {len(self.player.known_weaknesses)}", True, (255, 255, 255))
+        self.screen.blit(knowledge_text, (10, 70))
+        
+        # Отображение скорости обучения
+        learn_text = self.font.render(f"Скорость обучения: {self.player.learning_rate:.2f}", True, (255, 255, 255))
+        self.screen.blit(learn_text, (10, 100))
+        
+        # Отображение состояния босса
+        if self.boss.alive:
+            boss_health = self.font.render(f"Босс: {int(self.boss.health)}/{int(self.boss.max_health)}", True, (255, 100, 100))
+            self.screen.blit(boss_health, (1000, 10))
+    
+    def game_over(self, message):
+        """Обработка окончания игры"""
+        game_over_font = pygame.font.SysFont(None, 72)
+        game_over_text = game_over_font.render(message, True, (255, 50, 50))
+        text_rect = game_over_text.get_rect(center=(600, 400))
+        
+        self.screen.blit(game_over_text, text_rect)
+        pygame.display.flip()
+        
+        # Ожидание нажатия клавиши
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                    self.running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        # Перезапуск игры
+                        self.__init__()
+                        waiting = False
+                    elif event.key == pygame.K_ESCAPE:
+                        waiting = False
+                        self.running = False
+        
+        if not self.running:
+            pygame.quit()
+            sys.exit()
+
+def main():
+    game = Game()
+    asyncio.run(game.run())
 
 if __name__ == "__main__":
     main()

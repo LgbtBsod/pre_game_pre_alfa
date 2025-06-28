@@ -1,0 +1,60 @@
+{
+  "whirlwind_attack": {
+    "name": "Вихревая атака",
+    "description": "Быстро вращается, нанося урон всем врагам в радиусе",
+    "damage": 30,
+    "radius": 5.0,
+    "cooldown": 10.0,
+    "mana_cost": 20,
+    "effects": ["bleed"],
+    "tags": ["aoe", "physical"]
+  },
+  "fireball": {
+    "name": "Огненный шар",
+    "description": "Бросает шар огня, наносящий урон и поджигающий врага",
+    "damage": 40,
+    "range": 15.0,
+    "cooldown": 5.0,
+    "mana_cost": 25,
+    "effects": ["burn"],
+    "tags": ["projectile", "fire"]
+  },
+  "frost_nova": {
+    "name": "Ледяной взрыв",
+    "description": "Замораживает врагов вокруг себя, нанося урон и замедляя",
+    "damage": 25,
+    "radius": 8.0,
+    "cooldown": 12.0,
+    "mana_cost": 35,
+    "effects": ["slow"],
+    "tags": ["aoe", "ice"]
+  },
+  "healing_light": {
+    "name": "Целительный свет",
+    "description": "Восстанавливает здоровье цели",
+    "heal": "30%",
+    "range": 10.0,
+    "cooldown": 8.0,
+    "mana_cost": 30,
+    "tags": ["heal", "holy"]
+  },
+  "berserker_rage": {
+    "name": "Ярость берсерка",
+    "description": "Увеличивает урон и скорость атаки ценой защиты",
+    "cooldown": 30.0,
+    "stamina_cost": 40,
+    "effects": ["combat_rage"],
+    "tags": ["self_buff", "physical"]
+  },
+  "dragon_breath": {
+    "name": "Дыхание дракона",
+    "description": "Извергает поток огня, наносящий огромный урон по области",
+    "damage": 100,
+    "range": 20.0,
+    "width": 5.0,
+    "cooldown": 20.0,
+    "mana_cost": 80,
+    "effects": ["burn"],
+    "tags": ["ultimate", "fire", "boss"]
+  }
+}
