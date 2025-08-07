@@ -134,13 +134,14 @@ class BehaviorTree:
 # Конкретные узлы
 class CheckLowHealth(ConditionNode):
     def __init__(self, threshold=0.3):
-        super().__init__(lambda e: e.health < threshold, f"CheckLowHealth({threshold})")
+        super().__init__(lambda e: (e.health / max(1.0, getattr(e, 'max_health', 1.0))) < threshold, f"CheckLowHealth({threshold})")
 
 class UseHealingItem(ActionNode):
     def __init__(self):
         def heal_action(entity):
-            if entity.inventory.has_consumable("HEAL"):
-                entity.inventory.use("HEAL")
+            # Безопасный вызов: используем доступный метод сущности
+            if hasattr(entity, "use_best_healing_item"):
+                entity.use_best_healing_item()
         super().__init__(heal_action, "UseHealingItem")
 
 class MoveToPosition(ActionNode):

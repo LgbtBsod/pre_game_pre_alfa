@@ -135,12 +135,18 @@ class AICoordinator:
         if leader:
             leader.role = "LEADER"
         
-        # Распределение ролей
+        # Распределение ролей (безопасные проверки)
         for entity in entities:
             if entity != leader:
-                if entity.health > 0.8 and entity.damage > 30:
+                try:
+                    health_ratio = float(entity.health) / max(1.0, float(getattr(entity, "max_health", 100)))
+                except Exception:
+                    health_ratio = 1.0
+                damage_value = float(getattr(entity, "damage_output", 0))
+                has_heal = bool(getattr(entity, "has_healing_abilities", False))
+                if health_ratio > 0.8 and damage_value > 30:
                     entity.role = "ASSAULT"
-                elif entity.health > 0.5 and entity.has_healing_abilities:
+                elif health_ratio > 0.5 and has_heal:
                     entity.role = "SUPPORT"
                 else:
                     entity.role = "DEFENDER"

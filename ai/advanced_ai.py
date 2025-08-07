@@ -156,12 +156,9 @@ class AdvancedAIController:
         self.memory.record_event("AI_UPDATE", {"time": current_time})
         self.learning.update(delta_time)
         
-        # Кооперативное поведение
+        # Кооперативное поведение (без вызова сложных действий — сущности не реализуют эти методы)
         if hasattr(self.entity, 'group_id'):
             self.coordinator.register_entity(self.entity, self.entity.group_id)
-            group_action = self.coordinator.get_group_action(self.entity)
-            if self._should_follow_group_order():
-                GroupTactics.execute_action(group_action, self.entity)
         
         # Обновление эмоционально-генетической системы
         self.emotion_genetics.update(delta_time)

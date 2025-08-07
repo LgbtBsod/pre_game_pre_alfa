@@ -94,13 +94,37 @@ class LearningController:
         self.exploration_rate = 0.2
     
     def _get_state_hash(self):
+        # Безопасные признаки состояния
+        def safe_num(val, default=0.0):
+            try:
+                return round(float(val), 1)
+            except Exception:
+                return default
+
+        enemy_near = False
+        if hasattr(self.entity, "nearby_enemies"):
+            try:
+                enemy_near = bool(self.entity.nearby_enemies)
+            except Exception:
+                enemy_near = False
+        elif hasattr(self.entity, "get_nearby_entities"):
+            try:
+                enemy_near = len(self.entity.get_nearby_entities(radius=15.0, enemy_only=True)) > 0
+            except Exception:
+                enemy_near = False
+
+        try:
+            pos = (int(self.entity.position[0] / 10), int(self.entity.position[1] / 10))
+        except Exception:
+            pos = (0, 0)
+
         state = {
-            "health": round(self.entity.health, 1),
-            "enemy_near": bool(self.entity.nearby_enemies),
-            "emotion": self.entity.emotion,
-            "stamina": round(self.entity.stamina, 1),
-            "mana": round(self.entity.mana, 1),
-            "position": (int(self.entity.position[0] / 10), int(self.entity.position[1] / 10))
+            "health": safe_num(self.entity.health),
+            "enemy_near": enemy_near,
+            "emotion": getattr(self.entity, "emotion", "NEUTRAL"),
+            "stamina": safe_num(getattr(self.entity, "stamina", 0.0)),
+            "mana": safe_num(getattr(self.entity, "mana", 0.0)),
+            "position": pos,
         }
         return str(state)
     
