@@ -267,10 +267,17 @@ class Entity:
     def learn_from_damage(self, damage_report: dict):
         """Анализ полученного урона для обучения"""
         effective_types = []
-        total_damage = damage_report.get("total", 0)
+        total_damage = float(damage_report.get("total", 0) or 0)
         
         for dmg_type, amount in damage_report.items():
-            if dmg_type != "total" and amount > total_damage * 0.3:
+            # Учитываем только числовые компоненты урона
+            if dmg_type == "total":
+                continue
+            try:
+                amount_val = float(amount)
+            except (TypeError, ValueError):
+                continue
+            if amount_val > total_damage * 0.3:
                 effective_types.append(dmg_type)
         
         if effective_types:

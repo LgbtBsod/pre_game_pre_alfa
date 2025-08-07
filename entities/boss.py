@@ -8,6 +8,8 @@ from .effect import Effect
 from ai.advanced_ai import AdvancedAIController
 
 class Boss(Entity):
+    # Общая память боссов
+    shared_knowledge = {}
     GENETIC_PROFILES_PATH = "data/genetic_profiles.json"
     EFFECTS_PATH = "data/effects.json"
     ABILITIES_PATH = "data/abilities.json"
