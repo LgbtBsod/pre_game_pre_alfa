@@ -256,7 +256,7 @@ class Entity:
     
     def take_damage(self, damage_report: dict):
         """Получить урон"""
-        total_damage = damage_report.get("total", 0)
+        total_damage = float(damage_report.get("total", 0) or 0)
         self.health -= total_damage
         
         if self.health <= 0:
@@ -268,9 +268,13 @@ class Entity:
         """Анализ полученного урона для обучения"""
         effective_types = []
         total_damage = float(damage_report.get("total", 0) or 0)
+<<<<<<< HEAD
+        for dmg_type, amount in damage_report.items():
+=======
         
         for dmg_type, amount in damage_report.items():
             # Учитываем только числовые компоненты урона
+>>>>>>> main
             if dmg_type == "total":
                 continue
             try:

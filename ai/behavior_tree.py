@@ -134,12 +134,20 @@ class BehaviorTree:
 # Конкретные узлы
 class CheckLowHealth(ConditionNode):
     def __init__(self, threshold=0.3):
+<<<<<<< HEAD
+        super().__init__(lambda e: (e.health / max(1.0, getattr(e, 'max_health', 1.0))) < threshold, f"CheckLowHealth({threshold})")
+=======
         super().__init__(lambda e: (e.health / max(1.0, e.max_health)) < threshold, f"CheckLowHealth({threshold})")
+>>>>>>> main
 
 class UseHealingItem(ActionNode):
     def __init__(self):
         def heal_action(entity):
+<<<<<<< HEAD
+            # Безопасный вызов: используем доступный метод сущности
+=======
             # Упростим до вызова метода сущности, если он есть
+>>>>>>> main
             if hasattr(entity, "use_best_healing_item"):
                 entity.use_best_healing_item()
         super().__init__(heal_action, "UseHealingItem")
