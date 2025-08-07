@@ -9,6 +9,8 @@ import math
 import time
 
 class Enemy(Entity):
+    # Общая память между всеми врагами
+    shared_knowledge = {}
     GENETIC_PROFILES_PATH = "data/genetic_profiles.json"
     EFFECTS_PATH = "data/effects.json"
     ABILITIES_PATH = "data/abilities.json"

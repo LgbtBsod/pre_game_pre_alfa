@@ -7,6 +7,7 @@ from entities.boss import Boss
 from items.weapon import WeaponGenerator
 from ai.cooperation import AICoordinator
 from map.tiled_map import TiledMap
+<<<<<<< HEAD
 
 
 def rgb_to_hex(color_tuple):
@@ -29,10 +30,35 @@ class TkGame:
         self.reincarnation_count = 0
 
         # Карта
+=======
+
+
+def rgb_to_hex(color_tuple):
+    r, g, b = color_tuple
+    return f"#{int(r):02x}{int(g):02x}{int(b):02x}"
+
+
+class TkGame:
+    def __init__(self, width=1200, height=800):
+        self.root = tk.Tk()
+        self.root.title("Автономный ИИ-выживач (Tkinter)")
+        self.width = width
+        self.height = height
+        self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, bg=rgb_to_hex((20, 30, 40)))
+        self.canvas.pack(fill=tk.BOTH, expand=True)
+
+        # Состояние
+        self.running = True
+        self.last_time = time.time()
+        self.ui_items = []
+
+        # Карта Tiled
+>>>>>>> main
         self.map_view_x = 0
         self.map_view_y = 0
         self.tiled_map = None
         try:
+<<<<<<< HEAD
             # Пользовательская карта
             self.tiled_map = TiledMap("map/map.json")
         except Exception:
@@ -67,10 +93,60 @@ class TkGame:
 
         # Камера к центру карты
         self._center_initial_camera()
+=======
+            self.tiled_map = TiledMap("map/map.json")
+        except Exception as e:
+            self.tiled_map = None
+
+        # Игровые сущности
+        # Позицию игрока задаём по центру карты, если карта загружена
+        if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
+            map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
+            map_px_h = self.tiled_map.height * self.tiled_map.tileheight
+            start_x = map_px_w // 2
+            start_y = map_px_h // 2
+            self.map_view_x = max(0, start_x - self.width // 2)
+            self.map_view_y = max(0, start_y - self.height // 2)
+            self.player = Player("player_ai", (start_x, start_y))
+        else:
+            self.player = Player("player_ai", (self.width // 2, self.height // 2))
+        self.player.learning_rate = 1.0
+
+        self.enemies = []
+        enemy_types = ["warrior", "archer", "mage"]
+        for _ in range(10):
+            enemy = Enemy(random.choice(enemy_types), level=random.randint(1, 5))
+            enemy.position = [random.randint(100, self.width - 100), random.randint(100, self.height - 100)]
+            enemy.player_ref = self.player
+            self.enemies.append(enemy)
+
+        self.boss = Boss(boss_type="dragon", level=15, position=(self.width - 300, 300))
+        self.boss.learning_rate = 0.005
+        self.boss.player_ref = self.player
+
+        # Оружие игроку
+        starter_weapon = WeaponGenerator.generate_weapon(1)
+        self.player.equip_item(starter_weapon)
+
+        # Координатор ИИ
+        self.coordinator = AICoordinator()
+        for enemy in self.enemies:
+            self.coordinator.register_entity(enemy, "enemy_group")
+        self.coordinator.register_entity(self.boss, "boss_group")
+
+        # Управление
+        self.root.bind("<Escape>", lambda e: self.stop())
+        self.root.bind("<space>", lambda e: self.restart())
+        # Движение игрока (WASD)
+        self._keys = set()
+        self.root.bind("<KeyPress>", self._on_key_down)
+        self.root.bind("<KeyRelease>", self._on_key_up)
+>>>>>>> main
 
         # Старт цикла
         self.root.after(16, self.game_loop)
 
+<<<<<<< HEAD
     # --- Инициализация сущностей ---
     def _create_player(self) -> Player:
         if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
@@ -128,19 +204,32 @@ class TkGame:
             self.root.after(16, self.game_loop)
 
     def stop(self) -> None:
+=======
+    def restart(self):
+        if not self.running:
+            self.running = True
+            self.__init__(self.width, self.height)
+
+    def stop(self):
+>>>>>>> main
         self.running = False
         try:
             self.root.destroy()
         except Exception:
             pass
 
+<<<<<<< HEAD
     def game_loop(self) -> None:
+=======
+    def game_loop(self):
+>>>>>>> main
         if not self.running:
             return
         now = time.time()
         delta_time = now - self.last_time
         self.last_time = now
 
+<<<<<<< HEAD
         # Логика ИИ игрока и сущностей
         self._update_player_ai(delta_time)
         self.player.update(delta_time)
@@ -155,22 +244,45 @@ class TkGame:
             self.boss.update(delta_time)
             self._move_entity_toward(self.boss, self.player.position, self.boss.combat_stats.get("movement_speed", 80.0), delta_time)
             self._process_chest_interactions(self.boss)
+=======
+        # Обновление логики
+        self._update_player_movement(delta_time)
+        self.player.update(delta_time)
+        for enemy in self.enemies:
+            if enemy.alive:
+                enemy.update(delta_time)
+                # Простое поведение: двигаться к игроку
+                enemy.move_towards(self.player.position, enemy.combat_stats.get("movement_speed", 100.0), delta_time)
+        if self.boss.alive:
+            self.boss.update(delta_time)
+            # Босс тоже понемногу движется к игроку
+            self.boss.move_towards(self.player.position, self.boss.combat_stats.get("movement_speed", 80.0), delta_time)
+>>>>>>> main
 
         # Групповая логика
         self.coordinator.update_group_behavior("enemy_group")
         self.coordinator.update_group_behavior("boss_group")
 
+<<<<<<< HEAD
         # Столкновения и фильтрация
         self.check_collisions()
         self.enemies = [e for e in self.enemies if e.alive]
 
         # Камера
+=======
+        # Столкновения
+        self.check_collisions()
+        self.enemies = [e for e in self.enemies if e.alive]
+
+        # Автокамера — центрируем вьюпорт на игроке (если карта есть)
+>>>>>>> main
         if self.tiled_map:
             self._center_camera_on_player()
 
         # Рендер
         self.draw()
 
+<<<<<<< HEAD
         # Смерть игрока -> перерождение, а не остановка игры
         if not self.player.alive:
             self._respawn_player()
@@ -187,6 +299,24 @@ class TkGame:
     def check_collisions(self) -> None:
         px, py = self.player.position
         # Враги
+=======
+        # Проверка конца игры
+        if not self.player.alive:
+            self.draw_game_over("Поражение! Игрок погиб.")
+            self.running = False
+            return
+        elif not self.boss.alive:
+            self.draw_game_over("Победа! Босс повержен!")
+            self.running = False
+            return
+
+        self.root.after(16, self.game_loop)
+
+    def check_collisions(self):
+        px, py = self.player.position
+
+        # Столкновения с врагами (радиусы 20 и 15)
+>>>>>>> main
         for enemy in self.enemies:
             if not enemy.alive:
                 continue
@@ -200,8 +330,14 @@ class TkGame:
                     "physical": damage,
                     "source": enemy,
                 })
+<<<<<<< HEAD
         # Босс
         if self.boss and self.boss.alive:
+=======
+
+        # Столкновение с боссом (радиус 30)
+        if self.boss.alive:
+>>>>>>> main
             bx, by = self.boss.position
             dx = px - bx
             dy = py - by
@@ -213,9 +349,16 @@ class TkGame:
                     "source": self.boss,
                 })
 
+<<<<<<< HEAD
     def draw(self) -> None:
         self.canvas.delete("all")
         # Карта
+=======
+    def draw(self):
+        self.canvas.delete("all")
+
+        # Карта (если загружена)
+>>>>>>> main
         if self.tiled_map:
             self.tiled_map.draw_to_canvas(
                 self.canvas,
@@ -226,7 +369,11 @@ class TkGame:
                 tag="map",
             )
 
+<<<<<<< HEAD
         # Игрок
+=======
+        # Игрок (с учётом камеры)
+>>>>>>> main
         px, py = self.player.position
         spx, spy = px - self.map_view_x, py - self.map_view_y
         self._draw_circle(spx, spy, 20, fill=rgb_to_hex((0, 100, 255)) if self.player.alive else rgb_to_hex((50, 50, 50)))
@@ -246,7 +393,11 @@ class TkGame:
             self._draw_circle(sex, sey, 15, fill=rgb_to_hex(color))
 
         # Босс
+<<<<<<< HEAD
         if self.boss and self.boss.alive:
+=======
+        if self.boss.alive:
+>>>>>>> main
             bx, by = self.boss.position
             sbx, sby = bx - self.map_view_x, by - self.map_view_y
             self._draw_circle(sbx, sby, 30, fill=rgb_to_hex((255, 165, 0)))
@@ -255,6 +406,7 @@ class TkGame:
         # UI
         self.canvas.create_text(10, 10, text=f"Уровень: {self.player.level}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
         self.canvas.create_text(10, 40, text=f"Здоровье: {int(self.player.health)}/{int(self.player.max_health)}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
+<<<<<<< HEAD
         self.canvas.create_text(10, 70, text=f"Реинкарнации: {self.reincarnation_count}", fill=rgb_to_hex((220, 220, 180)), anchor="nw")
         if self.tiled_map:
             self.canvas.create_text(10, 100, text=f"Карта: {self.tiled_map.width}x{self.tiled_map.height} (tile {self.tiled_map.tilewidth}x{self.tiled_map.tileheight})", fill=rgb_to_hex((180, 200, 255)), anchor="nw")
@@ -402,11 +554,59 @@ class TkGame:
     def _center_camera_on_player(self) -> None:
         px, py = self.player.position
         if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
+=======
+        self.canvas.create_text(10, 70, text=f"Известных слабостей: {len(self.player.known_weaknesses)}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
+        self.canvas.create_text(10, 100, text=f"Скорость обучения: {self.player.learning_rate:.2f}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
+        if self.tiled_map:
+            self.canvas.create_text(10, 130, text=f"Карта: {self.tiled_map.width}x{self.tiled_map.height} (tile {self.tiled_map.tilewidth}x{self.tiled_map.tileheight})", fill=rgb_to_hex((180, 200, 255)), anchor="nw")
+        if self.boss.alive:
+            self.canvas.create_text(self.width - 200, 10, text=f"Босс: {int(self.boss.health)}/{int(self.boss.max_health)}", fill=rgb_to_hex((255, 100, 100)), anchor="nw")
+
+    def draw_game_over(self, message):
+        self.canvas.create_rectangle(0, 0, self.width, self.height, fill="#000000", stipple="gray25")
+        self.canvas.create_text(self.width // 2, self.height // 2, text=message, fill=rgb_to_hex((255, 50, 50)), font=("Arial", 24, "bold"))
+        self.canvas.create_text(self.width // 2, self.height // 2 + 40, text="Нажмите Space для перезапуска или Esc для выхода", fill=rgb_to_hex((255, 255, 255)))
+
+    def _draw_circle(self, x, y, radius, fill="#ffffff"):
+        self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=fill, width=0)
+
+    def _on_key_down(self, event):
+        self._keys.add(event.keysym.lower())
+
+    def _on_key_up(self, event):
+        self._keys.discard(event.keysym.lower())
+
+    def _update_player_movement(self, dt: float):
+        dx = 0.0
+        dy = 0.0
+        if "w" in self._keys:
+            dy -= 1.0
+        if "s" in self._keys:
+            dy += 1.0
+        if "a" in self._keys:
+            dx -= 1.0
+        if "d" in self._keys:
+            dx += 1.0
+        if dx == 0.0 and dy == 0.0:
+            return
+        length = max(1e-6, (dx * dx + dy * dy) ** 0.5)
+        dx /= length
+        dy /= length
+        speed = float(self.player.combat_stats.get("movement_speed", 120.0))
+        self.player.position[0] += dx * speed * dt
+        self.player.position[1] += dy * speed * dt
+
+    def _center_camera_on_player(self):
+        px, py = self.player.position
+        # Размер карты (в пикселях), если известен
+        if self.tiled_map.width and self.tiled_map.height:
+>>>>>>> main
             map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
             map_px_h = self.tiled_map.height * self.tiled_map.tileheight
             self.map_view_x = max(0, min(px - self.width // 2, max(0, map_px_w - self.width)))
             self.map_view_y = max(0, min(py - self.height // 2, max(0, map_px_h - self.height)))
         else:
+<<<<<<< HEAD
             self.map_view_x = max(0, px - self.width // 2)
             self.map_view_y = max(0, py - self.height // 2)
 
@@ -435,6 +635,12 @@ class TkGame:
         bx, by = b
         return (ax - bx) ** 2 + (ay - by) ** 2
 
+=======
+            # Неизвестная граница — просто центрируем
+            self.map_view_x = max(0, px - self.width // 2)
+            self.map_view_y = max(0, py - self.height // 2)
+
+>>>>>>> main
 
 def main():
     game = TkGame()

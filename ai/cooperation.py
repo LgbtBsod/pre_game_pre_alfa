@@ -1,6 +1,7 @@
 from collections import defaultdict
 import random
 import math
+import time
 
 class AICoordinator:
     _instance = None
@@ -135,15 +136,26 @@ class AICoordinator:
         if leader:
             leader.role = "LEADER"
         
+<<<<<<< HEAD
         # Распределение ролей (безопасные проверки)
+=======
+        # Распределение ролей (безопасно по атрибутам)
+>>>>>>> main
         for entity in entities:
             if entity != leader:
                 try:
                     health_ratio = float(entity.health) / max(1.0, float(getattr(entity, "max_health", 100)))
                 except Exception:
                     health_ratio = 1.0
+<<<<<<< HEAD
                 damage_value = float(getattr(entity, "damage_output", 0))
                 has_heal = bool(getattr(entity, "has_healing_abilities", False))
+=======
+
+                damage_value = float(getattr(entity, "damage_output", 0))
+                has_heal = bool(getattr(entity, "has_healing_abilities", False))
+
+>>>>>>> main
                 if health_ratio > 0.8 and damage_value > 30:
                     entity.role = "ASSAULT"
                 elif health_ratio > 0.5 and has_heal:

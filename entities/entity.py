@@ -268,7 +268,13 @@ class Entity:
         """Анализ полученного урона для обучения"""
         effective_types = []
         total_damage = float(damage_report.get("total", 0) or 0)
+<<<<<<< HEAD
         for dmg_type, amount in damage_report.items():
+=======
+        
+        for dmg_type, amount in damage_report.items():
+            # Учитываем только числовые компоненты урона
+>>>>>>> main
             if dmg_type == "total":
                 continue
             try:

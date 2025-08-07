@@ -1,6 +1,7 @@
 import time
 from collections import deque
 import random
+import math
 import numpy as np
 
 class ReplayBuffer:
@@ -94,6 +95,7 @@ class LearningController:
         self.exploration_rate = 0.2
     
     def _get_state_hash(self):
+<<<<<<< HEAD
         # Безопасные признаки состояния
         def safe_num(val, default=0.0):
             try:
@@ -112,18 +114,54 @@ class LearningController:
                 enemy_near = len(self.entity.get_nearby_entities(radius=15.0, enemy_only=True)) > 0
             except Exception:
                 enemy_near = False
+=======
+        # Безопасные вычисления признаков состояния
+        try:
+            health_val = round(float(self.entity.health), 1)
+        except Exception:
+            health_val = 0.0
+
+        try:
+            stamina_val = round(float(self.entity.stamina), 1)
+        except Exception:
+            stamina_val = 0.0
+
+        try:
+            mana_val = round(float(self.entity.mana), 1)
+        except Exception:
+            mana_val = 0.0
+>>>>>>> main
 
         try:
             pos = (int(self.entity.position[0] / 10), int(self.entity.position[1] / 10))
         except Exception:
             pos = (0, 0)
 
+<<<<<<< HEAD
         state = {
             "health": safe_num(self.entity.health),
             "enemy_near": enemy_near,
             "emotion": getattr(self.entity, "emotion", "NEUTRAL"),
             "stamina": safe_num(getattr(self.entity, "stamina", 0.0)),
             "mana": safe_num(getattr(self.entity, "mana", 0.0)),
+=======
+        # Определяем близость врага по доступным данным
+        enemy_near = False
+        if hasattr(self.entity, "nearby_enemies"):
+            enemy_near = bool(self.entity.nearby_enemies)
+        elif hasattr(self.entity, "get_nearby_entities"):
+            try:
+                enemy_near = len(self.entity.get_nearby_entities(radius=15.0, enemy_only=True)) > 0
+            except Exception:
+                enemy_near = False
+
+        state = {
+            "health": health_val,
+            "enemy_near": enemy_near,
+            "emotion": getattr(self.entity, "emotion", "NEUTRAL"),
+            "stamina": stamina_val,
+            "mana": mana_val,
+>>>>>>> main
             "position": pos,
         }
         return str(state)
