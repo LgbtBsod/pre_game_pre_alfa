@@ -1,253 +1,173 @@
-from typing import List, Tuple, Optional, Dict, Any
 import random
 import math
 import time
+from typing import Dict, List, Optional, Any, Tuple
+from enum import Enum
+from dataclasses import dataclass
+from ai.memory import LearningController
 from .effect import Effect
 
+
+class DamageType(Enum):
+    PHYSICAL = "physical"
+    MAGIC = "magic"
+    FIRE = "fire"
+    ICE = "ice"
+    LIGHTNING = "lightning"
+    POISON = "poison"
+
+
+class CombatStyle(Enum):
+    MELEE = "melee"
+    RANGED = "ranged"
+    MAGIC = "magic"
+
+
+@dataclass
+class Attribute:
+    value: int
+    max_value: int = 100
+    growth_rate: float = 1.0
+
+
 class Entity:
-    def __init__(self, entity_id: str, position: Tuple[float, float] = (0, 0)):
-        self.id = entity_id
+    def __init__(self, entity_id: str, position: tuple = (0, 0)):
+        self.entity_id = entity_id
         self.position = list(position)
-        self.priority = 5
-        self.level: int = 1
-        self.experience: int = 0
-        self.exp_to_next_level: int = 100
-        self.attribute_points: int = 0
-        self.currency: int = 0
-        self.combat_style: str = "balanced"
+        self.alive = True
+        self.level = 1
+        self.experience = 0
+        self.experience_to_next = 100
         
-        # Основные характеристики
-        self.attributes: Dict[str, int] = {
-            "strength": 10,     # Сила - увеличивает физический урон
-            "dexterity": 10,    # Ловкость - увеличивает шанс крита и точность
-            "intelligence": 10, # Интеллект - увеличивает магический урон
-            "faith": 10,        # Вера - увеличивает силу священных/темных заклинаний
-            "vitality": 10,     # Живучесть - увеличивает максимальное здоровье
-            "endurance": 10,    # Выносливость - увеличивает максимальную стамину
-            "luck": 10          # Удача - влияет на качество дропа, торговлю и редкие события
+        # Характеристики
+        self.attributes = {
+            "strength": Attribute(10),
+            "dexterity": Attribute(10),
+            "intelligence": Attribute(10),
+            "vitality": Attribute(10),
+            "endurance": Attribute(10),
+            "faith": Attribute(10),
+            "luck": Attribute(10),
         }
+        self.attribute_points = 0
         
         # Боевые характеристики
-        self.combat_stats: Dict[str, float] = {
-            # Базовые характеристики
-            "physical_resist": 0.0,
-            "fire_resist": 0.0,
-            "ice_resist": 0.0,
-            "lightning_resist": 0.0,
-            "poison_resist": 0.0,
-            "holy_resist": 0.0,
-            "dark_resist": 0.0,
-            
-            # Шансы
-            "parry_chance": 0.05,
-            "block_chance": 0.1,
-            "critical_chance": 0.05,
-            "critical_damage": 1.5,  # Множитель критического урона
-            
-            # Проникающая способность
-            "physical_penetration": 0.0,
-            "fire_penetration": 0.0,
-            "ice_penetration": 0.0,
-            "lightning_penetration": 0.0,
-            "poison_penetration": 0.0,
-            "holy_penetration": 0.0,
-            "dark_penetration": 0.0,
-            
-            # Модификаторы урона
-            "physical_damage_mod": 1.0,
-            "fire_damage_mod": 1.0,
-            "ice_damage_mod": 1.0,
-            "lightning_damage_mod": 1.0,
-            "poison_damage_mod": 1.0,
-            "holy_damage_mod": 1.0,
-            "dark_damage_mod": 1.0,
-            
-            # Другие параметры
-            "attack_range": 50.0,
+        self.combat_stats = {
+            "health": 100,
+            "max_health": 100,
+            "mana": 50,
+            "max_mana": 50,
+            "stamina": 100,
+            "max_stamina": 100,
+            "damage_output": 10,
+            "defense": 5,
             "movement_speed": 100.0,
-            "life_steal": 0.0,  # Вампиризм - % урона в здоровье
-            "mana_steal": 0.0   # % урона в ману
+            "attack_speed": 1.0,
+            "critical_chance": 0.05,
+            "critical_multiplier": 1.5,
+            # Дополнительные параметры, используемые эффектами
+            "all_resist": 0.0,
+            "physical_resist": 0.0,
         }
         
-        # Экипировка
-        self.equipment: Dict[str, Optional[object]] = {
+        # Экипировка и инвентарь
+        self.equipment = {
             "weapon": None,
             "shield": None,
-            "head": None,
-            "chest": None,
-            "hands": None,
-            "legs": None,
-            "ring1": None,
-            "ring2": None,
-            "amulet": None
+            "armor": None,
+            "helmet": None,
+            "gloves": None,
+            "boots": None,
+            "accessory1": None,
+            "accessory2": None
         }
+        self.inventory = []
+        self.max_inventory_size = 20
         
-        self.inventory: [List[object]] = []
-        self.known_weaknesses: Dict[str, List[str]] = {}
-        self.item_knowledge: Dict[str, Dict] = {}
-        self.active_skills: List[str] = []
-        self.passive_skills: List[str] = []
+        # Система обучения
+        self.learning_rate = 0.1
+        self.learning_system = LearningController(self)
+        self.memory = {}
+        self.known_weaknesses = []
         
-        # Ресурсы
-        self.health: float = 100.0
-        self.max_health: float = 100.0
-        self.mana: float = 50.0
-        self.max_mana: float = 50.0
-        self.stamina: float = 100.0
-        self.max_stamina: float = 100.0
-        
-        # Состояние
-        self.alive: bool = True
-        self.team: str = "NEUTRAL"
-        self.elemental_affinity: str = "none"
-        self.learning_rate: float = 1.0
-        self.memory: Dict[str, Any] = {}
-        self.target = None
-        self.attack_cooldown: float = 0.0
-        self.last_attacker = None
+        # Активные эффекты и кулдауны умений
+        self.active_effects: Dict[str, Effect] = {}
         self.skill_cooldowns: Dict[str, float] = {}
         
-        # Система эффектов
-        self.active_effects: Dict[str, Effect] = {}
-        self.effect_tags: Dict[str, List[str]] = {}
-        self.last_effect_update = time.time()
-        
-        # Расширенные атрибуты
-        self.emotion = "NEUTRAL"
-        self.genetic_profile = {}
-        self.group_id = None
-        self.role = "SOLO"
-        self.combat_level = 1
-        self.damage_output = 10
-        self.ai_controller = None
-        self.skills: Dict[str, Dict] = {}
-        self.spells: Dict[str, Dict] = {}
-        self.last_action_success = False
-        self.last_health = self.max_health
-        self.last_mana_used = 0
-        self.last_damage_dealt = 0
-        self.distance_to_player = float('inf')
-        self.is_player = False
+        # Боевые параметры
+        self.attack_cooldown = 0
+        self.last_attacker = None
         self.is_boss = False
-    
-    # ========================
-    # Основные методы
-    # ========================
-    
-    def move_towards(self, target_pos: Tuple[float, float], speed: float, delta_time: float):
-        """Двигаться к целевой позиции"""
-        dx = target_pos[0] - self.position[0]
-        dy = target_pos[1] - self.position[1]
-        distance = math.sqrt(dx*dx + dy*dy)
+        self.combat_style = CombatStyle.MELEE
         
-        if distance > 1:
-            dx /= distance
-            dy /= distance
-            actual_speed = self.calculate_stat_with_effects(speed, "movement_speed")
-            self.position[0] += dx * actual_speed * delta_time
-            self.position[1] += dy * actual_speed * delta_time
-    
-    def distance_to(self, target) -> float:
-        """Расчитать расстояние до цели"""
-        dx = target.position[0] - self.position[0]
-        dy = target.position[1] - self.position[1]
-        return math.sqrt(dx*dx + dy*dy)
-    
-    def learn_weakness(self, enemy_type: str, weakness: str):
-        """Выучить слабость типа врага"""
-        if enemy_type not in self.known_weaknesses:
-            self.known_weaknesses[enemy_type] = []
-        if weakness not in self.known_weaknesses[enemy_type]:
-            self.known_weaknesses[enemy_type].append(weakness)
-    
-    def learn_item(self, item_id: str, properties: dict):
-        """Запомнить свойства предмета"""
-        self.item_knowledge[item_id] = properties
-    
-    def use_item(self, item):
-        """Использовать предмет"""
-        if item.id not in self.item_knowledge:
-            properties = item.use(self)
-            self.learn_item(item.id, properties)
-        else:
-            item.optimal_use(self, self.item_knowledge[item.id])
-    
-    def equip_item(self, item):
-        """Экипировать предмет"""
-        slot = item.equipment_slot
-        if slot in self.equipment and self.equipment[slot]:
-            self.unequip_item(slot)
-        self.equipment[slot] = item
-        item.apply_effects(self)
-    
-    def unequip_item(self, slot: str):
-        """Снять предмет"""
-        if slot in self.equipment and self.equipment[slot]:
-            self.equipment[slot].remove_effects(self)
-            self.equipment[slot] = None
+        # Ссылки на других сущностей
+        self.player_ref = None
+        self.shared_knowledge = {}
+        
+        # Обновляем производные характеристики
+        self.update_derived_stats()
     
     def update_derived_stats(self):
-        """Обновить производные характеристики"""
-        # Характеристики здоровья и ресурсов
-        vitality = self.attributes["vitality"]
-        endurance = self.attributes["endurance"]
-        intelligence = self.attributes["intelligence"]
+        """Обновление производных характеристик на основе базовых"""
+        # Здоровье
+        vitality = self.attributes["vitality"].value
+        self.combat_stats["max_health"] = 100 + vitality * 10
+        self.combat_stats["health"] = min(self.combat_stats["health"], self.combat_stats["max_health"])
         
-        self.max_health = 100 + vitality * 10
-        self.max_stamina = 100 + endurance * 5
-        self.max_mana = 50 + intelligence * 3
+        # Мана
+        intelligence = self.attributes["intelligence"].value
+        self.combat_stats["max_mana"] = 50 + intelligence * 5
+        self.combat_stats["mana"] = min(self.combat_stats["mana"], self.combat_stats["max_mana"])
         
-        # Рассчет с учетом эффектов
-        self.health = min(self.calculate_stat_with_effects(self.max_health, "max_health"), self.health)
-        self.stamina = min(self.calculate_stat_with_effects(self.max_stamina, "max_stamina"), self.stamina)
-        self.mana = min(self.calculate_stat_with_effects(self.max_mana, "max_mana"), self.mana)
+        # Выносливость
+        endurance = self.attributes["endurance"].value
+        self.combat_stats["max_stamina"] = 100 + endurance * 5
+        self.combat_stats["stamina"] = min(self.combat_stats["stamina"], self.combat_stats["max_stamina"])
         
-        # Боевые характеристики
-        dexterity = self.attributes["dexterity"]
-        luck = self.attributes["luck"]
+        # Урон
+        strength = self.attributes["strength"].value
+        dexterity = self.attributes["dexterity"].value
+        base_damage = 10 + strength * 2 + dexterity
         
-        # Критический урон и шанс
-        self.combat_stats["critical_chance"] = 0.05 + dexterity * 0.005
-        self.combat_stats["critical_damage"] = 1.5 + luck * 0.01
+        # Учитываем экипировку
+        weapon_damage = 0
+        if self.equipment["weapon"]:
+            weapon_damage = self.equipment["weapon"].get("base_damage", 0)
         
-        # Дальность атаки
-        self.combat_stats["attack_range"] = 50.0 + dexterity * 0.2
+        self.combat_stats["damage_output"] = base_damage + weapon_damage
         
-        # Удача влияет на различные аспекты
-        self.loot_quality_bonus = 1.0 + luck * 0.05
-        self.gold_find_bonus = 1.0 + luck * 0.03
-        self.merchant_prices_mod = 1.0 - min(0.5, luck * 0.01)  # Лучшие цены у торговцев
+        # Защита
+        defense = 5
+        for slot, item in self.equipment.items():
+            if item and "defense" in item:
+                defense += item["defense"]
+        self.combat_stats["defense"] = defense
         
-        # Сопротивления и проникновение (базовые значения)
-        for element in ["fire", "ice", "lightning", "poison", "holy", "dark"]:
-            self.combat_stats[f"{element}_resist"] = 0.0
-            self.combat_stats[f"{element}_penetration"] = 0.0
-            self.combat_stats[f"{element}_damage_mod"] = 1.0
+        # Скорость атаки
+        attack_speed = 1.0
+        if self.equipment["weapon"]:
+            weapon_speed = self.equipment["weapon"].get("attack_speed", 1.0)
+            attack_speed *= weapon_speed
+        self.combat_stats["attack_speed"] = attack_speed
     
     def gain_experience(self, amount: int):
-        """Получить опыт"""
-        # Удача влияет на получаемый опыт
-        luck_bonus = self.attributes["luck"] * 0.02
-        actual_amount = int(amount * (1.0 + luck_bonus))
-        
-        self.experience += actual_amount
-        while self.experience >= self.exp_to_next_level:
+        """Получение опыта"""
+        self.experience += amount
+        while self.experience >= self.experience_to_next:
             self.level_up()
     
     def level_up(self):
-        """Повысить уровень"""
+        """Повышение уровня"""
         self.level += 1
-        self.experience -= self.exp_to_next_level
-        self.exp_to_next_level = int(self.exp_to_next_level * 1.5)
+        self.experience -= self.experience_to_next
+        self.experience_to_next = int(self.experience_to_next * 1.2)
+        self.attribute_points += 5
         
-        if self.is_player:
-            self.attribute_points += 10
-        elif self.is_boss:
-            self.attribute_points += 10
-        else:
-            self.attribute_points += 5
-        
+        # Улучшение характеристик
         self.update_derived_stats()
+        
+        # Обучение на основе опыта
+        self.learning_system.process_experience()
     
     def distribute_attribute_points(self):
         """Распределить очки характеристик"""
@@ -268,13 +188,7 @@ class Entity:
         """Анализ полученного урона для обучения"""
         effective_types = []
         total_damage = float(damage_report.get("total", 0) or 0)
-<<<<<<< HEAD
         for dmg_type, amount in damage_report.items():
-=======
-        
-        for dmg_type, amount in damage_report.items():
-            # Учитываем только числовые компоненты урона
->>>>>>> main
             if dmg_type == "total":
                 continue
             try:
@@ -307,287 +221,377 @@ class Entity:
         if self.attack_cooldown > 0 or not self.alive or not target.alive:
             return None
         
-        weapon = self.equipment.get("weapon")
-        if not weapon:
-            return None
+        # Расчет урона
+        base_damage = self.combat_stats["damage_output"]
         
-        from combat.damage_system import DamageSystem
-        if self.distance_to(target) <= self.combat_stats["attack_range"]:
-            damage_report = DamageSystem.calculate_damage(self, target, weapon)
-            target.take_damage(damage_report)
-            target.last_attacker = self
-            self.attack_cooldown = 1.0 / weapon.attack_speed
+        # Критический удар
+        is_critical = random.random() < self.combat_stats["critical_chance"]
+        if is_critical:
+            base_damage *= self.combat_stats["critical_multiplier"]
+        
+        # Случайный разброс
+        final_damage = base_damage * random.uniform(0.8, 1.2)
+        
+        # Создание отчета об уроне
+        damage_report = {
+            "total": final_damage,
+            "physical": final_damage,
+            "source": self
+        }
+        
+        # Применение урона
+        target.take_damage(damage_report)
+        target.last_attacker = self
+        
+        # Кулдаун атаки
+        self.attack_cooldown = 1.0 / self.combat_stats["attack_speed"]
+        
+        return damage_report
+    
+    def update(self, delta_time: float):
+        """Обновление сущности"""
+        # Обновление кулдаунов
+        if self.attack_cooldown > 0:
+            self.attack_cooldown -= delta_time
+        
+        # Обновление системы обучения
+        if hasattr(self, 'learning_system'):
+            self.learning_system.update(delta_time)
+        
+        # Обновление эффектов предметов
+        self.update_item_effects(delta_time)
+        
+        # Обновление эффектов состояний
+        self.update_effects(delta_time)
+
+    # Совместимость: алиас id <-> entity_id
+    @property
+    def id(self) -> str:
+        return self.entity_id
+
+    @id.setter
+    def id(self, value: str):
+        self.entity_id = value
+    
+    def equip_item(self, item):
+        """Экипировать предмет"""
+        if not item:
+            return False
+        
+        item_type = item.get("type", "unknown")
+        slot = self.get_equipment_slot(item_type)
+        
+        if slot:
+            # Снимаем предыдущий предмет
+            if self.equipment[slot]:
+                self.unequip_item(slot)
             
-            # Вампиризм
-            self.apply_life_steal(damage_report["total"])
-            
-            # Обучение на основе атаки
-            if hasattr(self, 'learning_system'):
-                self.learning_system.on_attack(target, damage_report)
-            
-            return damage_report
+            # Экипируем новый
+            self.equipment[slot] = item
+            self.update_derived_stats()
+            return True
+        
+        return False
+    
+    def unequip_item(self, slot):
+        """Снять предмет"""
+        if slot in self.equipment and self.equipment[slot]:
+            item = self.equipment[slot]
+            self.equipment[slot] = None
+            self.update_derived_stats()
+            return item
         return None
     
-    def apply_life_steal(self, damage_amount: float):
-        """Применить эффект вампиризма"""
-        life_steal = self.combat_stats["life_steal"]
-        if life_steal > 0:
-            heal_amount = damage_amount * life_steal
-            self.health = min(self.max_health, self.health + heal_amount)
-        
-        mana_steal = self.combat_stats["mana_steal"]
-        if mana_steal > 0:
-            restore_amount = damage_amount * mana_steal
-            self.mana = min(self.max_mana, self.mana + restore_amount)
+    def get_equipment_slot(self, item_type):
+        """Определить слот для предмета"""
+        slot_mapping = {
+            "weapon": "weapon",
+            "shield": "shield", 
+            "armor": "armor",
+            "helmet": "helmet",
+            "gloves": "gloves",
+            "boots": "boots",
+            "amulet": "accessory1",
+            "ring": "accessory2"
+        }
+        return slot_mapping.get(item_type)
     
-    # ========================
-    # Методы для эффектов
-    # ========================
+    def add_to_inventory(self, item):
+        """Добавить предмет в инвентарь"""
+        if len(self.inventory) < self.max_inventory_size:
+            self.inventory.append(item)
+            return True
+        return False
     
-    def add_effect(self, effect_id: str, effect_data: Dict[str, Any], stacks: int = 1):
-        """Добавить эффект к сущности"""
-        from .effect import Effect
+    def remove_from_inventory(self, item):
+        """Удалить предмет из инвентаря"""
+        if item in self.inventory:
+            self.inventory.remove(item)
+            return True
+        return False
+    
+    def use_consumable(self, item):
+        """Использовать расходуемый предмет"""
+        if not item or "effects" not in item:
+            return False
         
-        if effect_id in self.active_effects:
-            # Увеличиваем стаки или обновляем время
-            effect = self.active_effects[effect_id]
-            max_stacks = effect_data.get('max_stacks', 1)
-            effect.stacks = min(max_stacks, effect.stacks + stacks)
-            effect.start_time = time.time()
-        else:
-            # Создаем новый эффект
-            effect = Effect(effect_id, effect_data.get('tags', []), effect_data.get('modifiers', []))
-            effect.stacks = min(effect_data.get('max_stacks', 1), stacks)
-            effect.apply(self, True)
-            self.active_effects[effect_id] = effect
+        effects = item["effects"]
+        applied = False
+        
+        for effect_type, effect_value in effects.items():
+            if effect_type == "heal":
+                self.combat_stats["health"] = min(
+                    self.combat_stats["max_health"],
+                    self.combat_stats["health"] + effect_value
+                )
+                applied = True
+            elif effect_type == "restore_mana":
+                self.combat_stats["mana"] = min(
+                    self.combat_stats["max_mana"],
+                    self.combat_stats["mana"] + effect_value
+                )
+                applied = True
+            elif effect_type == "xp_boost":
+                self.gain_experience(effect_value)
+                applied = True
+        
+        if applied:
+            self.remove_from_inventory(item)
+            return True
+        
+        return False
+    
+    def update_item_effects(self, delta_time: float):
+        """Обновление эффектов предметов"""
+        for slot, item in self.equipment.items():
+            if not item or "effects" not in item:
+                continue
             
-            # Обновляем теги
-            for tag in effect.tags:
-                if tag not in self.effect_tags:
-                    self.effect_tags[tag] = []
-                self.effect_tags[tag].append(effect_id)
+            effects = item["effects"]
+            for effect in effects:
+                if effect == "regen_health":
+                    regen_amount = 5 * delta_time
+                    self.combat_stats["health"] = min(
+                        self.combat_stats["max_health"],
+                        self.combat_stats["health"] + regen_amount
+                    )
+                elif effect == "boost_damage":
+                    # Временное усиление урона
+                    pass
+    
+    def has_consumable(self, effect_type: str = None):
+        """Проверить наличие расходуемого предмета"""
+        for item in self.inventory:
+            if "effects" in item:
+                if effect_type is None:
+                    return True
+                if effect_type in item["effects"]:
+                    return True
+        return False
+    
+    def use_best_healing_item(self):
+        """Использовать лучший предмет лечения"""
+        best_item = None
+        best_heal = 0
+        
+        for item in self.inventory:
+            if "effects" in item and "heal" in item["effects"]:
+                heal_amount = item["effects"]["heal"]
+                if heal_amount > best_heal:
+                    best_heal = heal_amount
+                    best_item = item
+        
+        if best_item:
+            return self.use_consumable(best_item)
+        return False
+    
+    @property
+    def health(self):
+        return self.combat_stats["health"]
+    
+    @health.setter
+    def health(self, value):
+        self.combat_stats["health"] = max(0, min(value, self.combat_stats["max_health"]))
+    
+    @property
+    def max_health(self):
+        return self.combat_stats["max_health"]
+    
+    @property
+    def mana(self):
+        return self.combat_stats["mana"]
+    
+    @mana.setter
+    def mana(self, value):
+        self.combat_stats["mana"] = max(0, min(value, self.combat_stats["max_mana"]))
+    
+    @property
+    def max_mana(self):
+        return self.combat_stats["max_mana"]
+    
+    @property
+    def stamina(self):
+        return self.combat_stats["stamina"]
+    
+    @stamina.setter
+    def stamina(self, value):
+        self.combat_stats["stamina"] = max(0, min(value, self.combat_stats["max_stamina"]))
+    
+    @property
+    def max_stamina(self):
+        return self.combat_stats["max_stamina"]
+    
+    def has_effect_tag(self, tag: str) -> bool:
+        """Проверить наличие эффекта по тегу среди активных эффектов"""
+        for eff in self.active_effects.values():
+            if tag in getattr(eff, 'tags', []):
+                return True
+        return False
+    
+    def add_effect(self, effect_id: str, effect_data: dict, stacks: int = 1):
+        """Добавить эффект к сущности"""
+        if not effect_data:
+            return
+        if effect_id in self.active_effects:
+            # Усиливаем стаки существующего эффекта
+            self.active_effects[effect_id].stacks += max(1, int(stacks))
+            return
+        tags = effect_data.get("tags", [])
+        modifiers = effect_data.get("modifiers", [])
+        effect = Effect(effect_id, tags, modifiers)
+        effect.stacks = max(1, int(stacks))
+        # Применяем эффект немедленно
+        effect.apply(self, True)
+        self.active_effects[effect_id] = effect
     
     def remove_effect(self, effect_id: str):
         """Удалить эффект с сущности"""
-        if effect_id in self.active_effects:
-            effect = self.active_effects[effect_id]
-            effect.apply(self, False)
-            del self.active_effects[effect_id]
-            
-            # Обновляем теги
-            for tag in effect.tags:
-                if tag in self.effect_tags and effect_id in self.effect_tags[tag]:
-                    self.effect_tags[tag].remove(effect_id)
-                    if not self.effect_tags[tag]:
-                        del self.effect_tags[tag]
-    
-    def has_effect_tag(self, tag: str) -> bool:
-        """Проверить наличие эффекта по тегу"""
-        return tag in self.effect_tags
+        effect = self.active_effects.get(effect_id)
+        if not effect:
+            return
+        # Отменяем модификаторы
+        effect.apply(self, False)
+        del self.active_effects[effect_id]
     
     def update_effects(self, delta_time: float):
         """Обновить состояние эффектов"""
-        current_time = time.time()
-        to_remove = []
-        
-        for effect_id, effect in list(self.active_effects.items()):
-            # Проверка истечения времени
-            if effect.is_expired():
-                to_remove.append(effect_id)
-            else:
-                # Обработка периодических эффектов
-                effect.process_tick(self, delta_time)
-        
-        for effect_id in to_remove:
-            self.remove_effect(effect_id)
+        if not self.active_effects:
+            return
+        expired: List[str] = []
+        for eff_id, eff in list(self.active_effects.items()):
+            eff.process_tick(self, delta_time)
+            if eff.is_expired():
+                expired.append(eff_id)
+        for eff_id in expired:
+            self.remove_effect(eff_id)
+
+    def use_skill(self, ability_id: str):
+        """Базовое применение способности для сущностей.
+        Поддерживает урон по цели и наложение эффекта на себя.
+        """
+        skills = getattr(self, "skills", {})
+        if ability_id not in skills:
+            return
+        skill_data = skills[ability_id]
+        # Нанесение урона цели, если есть ссылка на игрока
+        target = getattr(self, "player_ref", None)
+        damage = float(skill_data.get("damage", 0) or 0)
+        if target and getattr(target, "alive", False) and damage > 0:
+            target.take_damage({
+                "total": damage,
+                "physical": damage,
+                "source": self,
+            })
+        # Эффект от способности
+        effect_id = skill_data.get("apply_effect")
+        if effect_id and hasattr(self, "effects_db") and effect_id in self.effects_db:
+            self.add_effect(effect_id, self.effects_db[effect_id])
     
     def calculate_stat_with_effects(self, base_value: float, stat_name: str) -> float:
         """Рассчитать значение характеристики с учетом эффектов"""
-        value = base_value
+        # Простая реализация без эффектов
+        return base_value
+    
+    def distance_to(self, target) -> float:
+        """Расчитать расстояние до цели"""
+        dx = target.position[0] - self.position[0]
+        dy = target.position[1] - self.position[1]
+        return math.sqrt(dx*dx + dy*dy)
+    
+    def move_towards(self, target_pos: tuple, speed: float, delta_time: float):
+        """Двигаться к целевой позиции"""
+        dx = target_pos[0] - self.position[0]
+        dy = target_pos[1] - self.position[1]
+        distance = math.sqrt(dx*dx + dy*dy)
         
-        # Применяем аддитивные модификаторы
-        for effect in self.active_effects.values():
-            for modifier in effect.modifiers:
-                if modifier['attribute'] == stat_name and modifier['mode'] == 'add':
-                    value += modifier['value'] * effect.stacks
-        
-        # Применяем мультипликативные модификаторы
-        multiplier = 1.0
-        for effect in self.active_effects.values():
-            for modifier in effect.modifiers:
-                if modifier['attribute'] == stat_name and modifier['mode'] == 'multiply':
-                    multiplier *= modifier['value']
-        
-        return value * multiplier
-    
-    # ========================
-    # Методы для лута и торговли
-    # ========================
-    
-    def calculate_loot_quality(self, base_quality: float) -> float:
-        """Рассчитать качество лута с учетом удачи"""
-        luck = self.attributes["luck"]
-        quality_mod = 1.0 + luck * 0.05
-        return base_quality * quality_mod
-    
-    def calculate_gold_amount(self, base_amount: int) -> int:
-        """Рассчитать количество золота с учетом удачи"""
-        luck = self.attributes["luck"]
-        gold_mod = 1.0 + luck * 0.03
-        return int(base_amount * gold_mod)
-    
-    def get_merchant_price_modifier(self) -> float:
-        """Получить модификатор цен у торговцев"""
-        luck = self.attributes["luck"]
-        return max(0.5, 1.0 - luck * 0.01)
-    
-    def find_rare_item(self, item_pool: list) -> Optional[object]:
-        """Найти редкий предмет в пуле с учетом удачи"""
-        luck = self.attributes["luck"]
-        
-        # Шанс найти редкий предмет
-        rare_chance = min(0.3, 0.01 + luck * 0.005)
-        
-        if random.random() < rare_chance:
-            # Фильтруем редкие предметы
-            rare_items = [item for item in item_pool if item.rarity == "RARE"]
-            if rare_items:
-                return random.choice(rare_items)
-        
-        # Если редкий предмет не найден, возвращаем случайный обычный
-        return random.choice(item_pool) if item_pool else None
-    
-    # ========================
-    # Методы для ИИ и способностей
-    # ========================
-    
-    def get_nearby_entities(self, radius: float, enemy_only: bool = False) -> List['Entity']:
-        """Получить ближайшие сущности в радиусе"""
-        # Заглушка - в реальной игре будет пространственное разбиение
-        return []
-    
-    def attack_nearest(self):
-        """Атаковать ближайшего врага"""
-        nearest = self.find_nearest_enemy()
-        if nearest:
-            self.attack(nearest)
-    
-    def find_nearest_enemy(self) -> Optional['Entity']:
-        """Найти ближайшего врага"""
-        enemies = self.get_nearby_entities(radius=20.0, enemy_only=True)
-        if not enemies:
-            return None
-        return min(enemies, key=lambda e: self.distance_to(e))
-    
-    def defend(self):
-        """Перейти в защитную стойку"""
-        # Добавляем эффект защиты
-        if not self.has_effect_tag("defending"):
-            self.add_effect("defense_stance", {
-                "tags": ["defense", "buff"],
-                "modifiers": [
-                    {
-                        "attribute": "physical_resist",
-                        "value": 0.3,
-                        "mode": "add"
-                    },
-                    {
-                        "attribute": "movement_speed",
-                        "value": 0.7,
-                        "mode": "multiply"
-                    }
-                ],
-                "duration": 5.0
-            })
-    
-    def use_best_healing_item(self):
-        """Использовать лучший лечащий предмет"""
-        healing_items = [item for item in self.inventory if "heal" in item.tags]
-        if healing_items:
-            best_item = max(healing_items, key=lambda item: item.heal_power)
-            self.use_item(best_item)
-    
-    def flee_from_danger(self):
-        """Бежать от опасности"""
-        # Добавляем эффект бегства
-        self.add_effect("fleeing", {
-            "tags": ["movement", "buff"],
-            "modifiers": [
-                {
-                    "attribute": "movement_speed",
-                    "value": 1.3,
-                    "mode": "multiply"
-                },
-                {
-                    "attribute": "physical_resist",
-                    "value": -0.2,
-                    "mode": "add"
-                }
-            ],
-            "duration": 10.0
-        })
-    
-    def cast_spell(self, spell_name: str):
-        """Произнести заклинание"""
-        if spell_name in self.spells:
-            spell_data = self.spells[spell_name]
-            mana_cost = spell_data.get('mana_cost', 0)
-            
-            if self.mana >= mana_cost:
-                self.mana -= mana_cost
-                self.last_mana_used = mana_cost
-                
-                # Применение эффектов заклинания
-                for effect_id in spell_data.get('effects', []):
-                    self.add_effect(effect_id, spell_data['effects'][effect_id])
-                
-                # Установка перезарядки
-                cooldown = spell_data.get('cooldown', 0)
-                if cooldown > 0:
-                    self.skill_cooldowns[spell_name] = time.time() + cooldown
-    
-    def has_healing_abilities(self) -> bool:
-        """Имеет ли целительные способности"""
-        return "HEAL" in self.skills or "RESTORE" in self.spells
-    
-    def use_skill(self, skill_name: str):
-        """Использовать способность"""
-        if skill_name in self.skills:
-            skill_data = self.skills[skill_name]
-            stamina_cost = skill_data.get('stamina_cost', 0)
-            
-            if self.stamina >= stamina_cost:
-                self.stamina -= stamina_cost
-                
-                # Применение эффектов способности
-                for effect_id in skill_data.get('effects', []):
-                    self.add_effect(effect_id, skill_data['effects'][effect_id])
-                
-                # Установка перезарядки
-                cooldown = skill_data.get('cooldown', 0)
-                if cooldown > 0:
-                    self.skill_cooldowns[skill_name] = time.time() + cooldown
-    
-    def move_in_direction(self, direction: Tuple[float, float]):
-        """Двигаться в заданном направлении"""
-        dx, dy = direction
-        distance = max(0.1, math.sqrt(dx*dx + dy*dy))
-        dx /= distance
-        dy /= distance
-        
-        actual_speed = self.calculate_stat_with_effects(
-            self.combat_stats["movement_speed"], 
-            "movement_speed"
-        )
-        
-        self.position[0] += dx * actual_speed * 0.1
-        self.position[1] += dy * actual_speed * 0.1
-    
-    def calculate_elemental_damage(self, base_damage: float, element: str) -> float:
-        """Рассчитать урон с учетом стихийных модификаторов"""
-        damage_mod = self.combat_stats.get(f"{element}_damage_mod", 1.0)
-        return base_damage * damage_mod
-    
-    def get_elemental_penetration(self, element: str) -> float:
-        """Получить значение проникновения для стихии"""
-        return self.combat_stats.get(f"{element}_penetration", 0.0)
+        if distance > 1:
+            dx /= distance
+            dy /= distance
+            actual_speed = self.calculate_stat_with_effects(speed, "movement_speed")
+            self.position[0] += dx * actual_speed * delta_time
+            self.position[1] += dy * actual_speed * delta_time
+
+    # Свойства-адаптеры для того, чтобы эффекты могли изменять combat_stats через getattr/setattr
+    @property
+    def movement_speed(self) -> float:
+        return self.combat_stats.get("movement_speed", 100.0)
+
+    @movement_speed.setter
+    def movement_speed(self, value: float):
+        self.combat_stats["movement_speed"] = float(value)
+
+    @property
+    def damage_output(self) -> float:
+        return self.combat_stats.get("damage_output", 10.0)
+
+    @damage_output.setter
+    def damage_output(self, value: float):
+        self.combat_stats["damage_output"] = float(value)
+
+    @property
+    def defense(self) -> float:
+        return self.combat_stats.get("defense", 5.0)
+
+    @defense.setter
+    def defense(self, value: float):
+        self.combat_stats["defense"] = float(value)
+
+    @property
+    def attack_speed(self) -> float:
+        return self.combat_stats.get("attack_speed", 1.0)
+
+    @attack_speed.setter
+    def attack_speed(self, value: float):
+        self.combat_stats["attack_speed"] = float(value)
+
+    @property
+    def critical_chance(self) -> float:
+        return self.combat_stats.get("critical_chance", 0.05)
+
+    @critical_chance.setter
+    def critical_chance(self, value: float):
+        self.combat_stats["critical_chance"] = float(value)
+
+    @property
+    def critical_multiplier(self) -> float:
+        return self.combat_stats.get("critical_multiplier", 1.5)
+
+    @critical_multiplier.setter
+    def critical_multiplier(self, value: float):
+        self.combat_stats["critical_multiplier"] = float(value)
+
+    @property
+    def all_resist(self) -> float:
+        return self.combat_stats.get("all_resist", 0.0)
+
+    @all_resist.setter
+    def all_resist(self, value: float):
+        self.combat_stats["all_resist"] = float(value)
+
+    @property
+    def physical_resist(self) -> float:
+        return self.combat_stats.get("physical_resist", 0.0)
+
+    @physical_resist.setter
+    def physical_resist(self, value: float):
+        self.combat_stats["physical_resist"] = float(value)

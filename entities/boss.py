@@ -3,7 +3,7 @@ import json
 import os
 import time
 from typing import Tuple
-from .entity import Entity
+from .entity import Entity, Attribute
 from .effect import Effect
 from ai.advanced_ai import AdvancedAIController
 
@@ -69,28 +69,65 @@ class Boss(Entity):
             return {}
     
     def _init_attributes(self):
-        """Инициализация характеристик босса"""
-        # Базовые значения (выше, чем у обычных врагов)
+        """Инициализация атрибутов босса"""
+        # Базовые характеристики для боссов
         base_stats = {
-            "strength": 15,
-            "dexterity": 12,
-            "intelligence": 15,
-            "faith": 12,
-            "vitality": 20,
-            "endurance": 18,
-            "luck": 8
+            "strength": 20,
+            "dexterity": 15,
+            "intelligence": 18,
+            "vitality": 25,
+            "endurance": 20,
+            "faith": 15
+        }
+        
+        # Модификаторы по типам боссов
+        type_modifiers = {
+            "dragon": {
+                "strength": 1.5,
+                "vitality": 1.4,
+                "intelligence": 1.3
+            },
+            "demon_lord": {
+                "strength": 1.4,
+                "intelligence": 1.5,
+                "faith": 1.3
+            },
+            "lich_king": {
+                "intelligence": 1.6,
+                "faith": 1.4,
+                "vitality": 1.2
+            },
+            "titan": {
+                "strength": 1.6,
+                "vitality": 1.5,
+                "endurance": 1.4
+            },
+            "behemoth": {
+                "strength": 1.5,
+                "vitality": 1.6,
+                "endurance": 1.3
+            },
+            "leviathan": {
+                "strength": 1.4,
+                "vitality": 1.5,
+                "intelligence": 1.3
+            }
         }
         
         # Бонус за уровень
         level_bonus = (self.level - 1) * 3
         
-        # Инициализируем атрибуты, если еще не созданы
-        if not hasattr(self, 'attributes'):
-            self.attributes = {}
-        
+        # Устанавливаем атрибуты с использованием нового формата Attribute
         for attr in base_stats:
             # Базовое значение + бонус уровня
-            self.attributes[attr] = base_stats.get(attr, 10) + level_bonus
+            value = base_stats[attr] + level_bonus
+            
+            # Применяем модификатор типа
+            if self.boss_type in type_modifiers and attr in type_modifiers[self.boss_type]:
+                value *= type_modifiers[self.boss_type][attr]
+            
+            # Используем новый формат Attribute
+            self.attributes[attr] = Attribute(int(value))
         
         # Обновляем производные характеристики
         self.update_derived_stats()
@@ -102,10 +139,9 @@ class Boss(Entity):
         
         # Уникальные боевые характеристики для боссов
         self.combat_level = self.level * 2
-        self.damage_output = self.attributes["strength"] * 8
-        self.combat_stats["critical_damage"] = 2.0
-        self.combat_stats["all_resist"] = 0.2  # Базовое сопротивление всем типам урона
-        self.combat_stats["life_steal"] = 0.05
+        self.damage_output = self.attributes["strength"].value * 8
+        self.combat_stats["critical_multiplier"] = 2.0
+        self.combat_stats["defense"] = self.combat_stats.get("defense", 5) + 10
     
     def _load_genetic_profile(self):
         """Загрузка генетического профиля для босса"""
@@ -240,8 +276,8 @@ class Boss(Entity):
         
         # Бонусы при переходе на новую фазу
         if new_phase == 2:
-            self.attributes["strength"] += 10
-            self.attributes["vitality"] += 15
+            self.attributes["strength"].value += 10
+            self.attributes["vitality"].value += 15
             self.combat_stats["critical_chance"] += 0.1
             self.add_effect("phase2_power", self.effects_db.get("boss_phase2_power", {
                 "tags": ["buff", "boss"],
@@ -255,8 +291,8 @@ class Boss(Entity):
                 "duration": 30.0
             }))
         elif new_phase == 3:
-            self.attributes["intelligence"] += 15
-            self.attributes["faith"] += 10
+            self.attributes["intelligence"].value += 15
+            self.attributes["faith"].value += 10
             self.combat_stats["all_resist"] += 0.1
             self.add_effect("phase3_power", self.effects_db.get("boss_phase3_power", {
                 "tags": ["buff", "boss"],
@@ -322,9 +358,32 @@ class Boss(Entity):
                     use_chance *= (self.phase * 0.5)
                     
                     if random.random() < use_chance:
+                        # Используем способность (упрощенная логика)
                         self.use_skill(ability_id)
                         self.skill_cooldowns[ability_id] = current_time
                         return
+
+    def use_skill(self, ability_id: str):
+        """Применение способности босса (упрощенная версия).
+        Сейчас просто выводит действие и может накладывать эффект на себя/цель.
+        """
+        if ability_id not in self.skills:
+            return
+        skill_data = self.skills[ability_id]
+        # Если у босса есть ссылка на игрока, нанесем урон
+        target = getattr(self, "player_ref", None)
+        if target and getattr(target, "alive", False):
+            damage = float(skill_data.get("damage", 0))
+            if damage > 0:
+                target.take_damage({
+                    "total": damage,
+                    "boss": damage,
+                    "source": self,
+                })
+        # Наложение эффектов из способности (если есть)
+        effect_id = skill_data.get("apply_effect")
+        if effect_id and effect_id in self.effects_db:
+            self.add_effect(effect_id, self.effects_db[effect_id])
     
     def take_damage(self, damage_report: dict):
         """Переопределение метода получения урона"""
@@ -382,6 +441,15 @@ class Boss(Entity):
             "items": items,
             "experience": self.level * 500
         }
+
+    def calculate_gold_amount(self, base_gold: int) -> int:
+        """Расчет итогового количества золота (простая формула)."""
+        bonus = 1.0 + min(1.0, self.level * 0.05)
+        return int(base_gold * bonus)
+
+    def calculate_loot_quality(self, base_quality: float) -> float:
+        """Расчет качества добычи (простая формула)."""
+        return round(base_quality * (1.0 + self.level * 0.02), 2)
     
     def player_died(self):
         """Усиление босса после смерти игрока"""
@@ -390,12 +458,12 @@ class Boss(Entity):
         
         # Улучшение характеристик
         for attr in self.attributes:
-            self.attributes[attr] = int(self.attributes[attr] * 1.2)
+            self.attributes[attr].value = int(self.attributes[attr].value * 1.2)
         
         # Улучшение здоровья и урона
-        self.max_health *= 1.3
+        self.combat_stats["max_health"] = int(self.combat_stats["max_health"] * 1.3)
         self.health = self.max_health
-        self.damage_output *= 1.25
+        self.combat_stats["damage_output"] *= 1.25
         
         # Добавление нового навыка
         new_ability_id = f"enhanced_{self.boss_type}_ability"

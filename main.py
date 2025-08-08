@@ -1,13 +1,15 @@
 import random
 import time
 import tkinter as tk
+import json
+import os
 from entities.player import Player
 from entities.enemy import Enemy
 from entities.boss import Boss
 from items.weapon import WeaponGenerator
 from ai.cooperation import AICoordinator
 from map.tiled_map import TiledMap
-<<<<<<< HEAD
+import config
 
 
 def rgb_to_hex(color_tuple):
@@ -17,48 +19,121 @@ def rgb_to_hex(color_tuple):
 
 class TkGame:
     def __init__(self, width: int = 1200, height: int = 800):
+        self.show_menu = True
+        self.paused = False
+        self.save_file = "save_game.json"
+        
         self.root = tk.Tk()
         self.root.title("Автономный ИИ-выживач (Tkinter)")
-        self.width = width
-        self.height = height
-        self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, bg=rgb_to_hex((20, 30, 40)))
+        # Используем значения окна из config по умолчанию
+        self.width = width or config.WIDTH
+        self.height = height or config.HEIGHT
+        self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, bg=rgb_to_hex(config.BACKGROUND))
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
+        # Загрузка предметов
+        self.load_items()
+        
         self.running = True
         self.last_time = time.time()
         self.victory_shown = False
         self.reincarnation_count = 0
+        self.generation_count = 0
+        self.session_start_time = time.time()
 
         # Карта
-=======
-
-
-def rgb_to_hex(color_tuple):
-    r, g, b = color_tuple
-    return f"#{int(r):02x}{int(g):02x}{int(b):02x}"
-
-
-class TkGame:
-    def __init__(self, width=1200, height=800):
-        self.root = tk.Tk()
-        self.root.title("Автономный ИИ-выживач (Tkinter)")
-        self.width = width
-        self.height = height
-        self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, bg=rgb_to_hex((20, 30, 40)))
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        # Состояние
-        self.running = True
-        self.last_time = time.time()
-        self.ui_items = []
-
-        # Карта Tiled
->>>>>>> main
         self.map_view_x = 0
         self.map_view_y = 0
         self.tiled_map = None
+        
+        # Настройки игры (меняются в меню)
+        self.settings = {
+            "difficulty": "normal",        # easy | normal | hard
+            "learning_rate": 1.0,            # скорость обучения игрока
+            "window_size": (self.width, self.height),
+        }
+        
+        # Динамические данные для кликов по меню/настройкам
+        self.menu_buttons = []  # [{label, action, x0,x1,y0,y1}]
+        self.settings_controls = []  # [{key, type, x0,x1,y0,y1, value/index}]
+        
+        # Инициализация игры
+        if self.show_menu:
+            self.show_main_menu()
+        else:
+            self.init_game()
+    
+    def load_items(self):
+        """Загрузка предметов из JSON"""
         try:
-<<<<<<< HEAD
+            with open("items/items.json", "r", encoding="utf-8") as f:
+                self.items_data = json.load(f)
+        except Exception as e:
+            print(f"Ошибка загрузки предметов: {e}")
+            self.items_data = {}
+    
+    def show_main_menu(self):
+        """Показать главное меню"""
+        # Снимаем потенциальные старые бинды
+        self.root.unbind("<Key>")
+        self.canvas.unbind("<Button-1>")
+        self.canvas.unbind("<Button-3>")
+        
+        self.canvas.delete("all")
+        self.menu_buttons = []
+        
+        # Заголовок
+        self.canvas.create_text(
+            self.width // 2, 100,
+            text="Автономный ИИ-выживач",
+            fill=rgb_to_hex((255, 215, 0)),
+            font=("Arial", 32, "bold")
+        )
+        
+        # Кнопки
+        button_y = 250
+        button_spacing = 80
+        button_height = 50
+        button_half_w = 100
+        x0 = self.width // 2 - button_half_w
+        x1 = self.width // 2 + button_half_w
+        
+        def add_button(label, action, fill, outline):
+            nonlocal button_y
+            y0, y1 = button_y, button_y + button_height
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex(fill), outline=rgb_to_hex(outline))
+            self.canvas.create_text(self.width // 2, (y0 + y1) // 2, text=label, fill=rgb_to_hex((255, 255, 255)), font=("Arial", 16, "bold"))
+            self.menu_buttons.append({"label": label, "action": action, "x0": x0, "x1": x1, "y0": y0, "y1": y1})
+            button_y += button_spacing
+        
+        add_button("Новая игра", "new_game", (50, 150, 50), (100, 200, 100))
+        add_button("Загрузить игру", "load_game", (100, 100, 200), (150, 150, 250))
+        add_button("Настройки", "settings", (200, 150, 50), (250, 200, 100))
+        add_button("Выход", "exit", (200, 50, 50), (250, 100, 100))
+        
+        # Привязка событий мыши
+        self.canvas.bind("<Button-1>", self._on_menu_click)
+    
+    def _on_menu_click(self, event):
+        """Обработка кликов в главном меню"""
+        x, y = event.x, event.y
+        for btn in self.menu_buttons:
+            if btn["x0"] <= x <= btn["x1"] and btn["y0"] <= y <= btn["y1"]:
+                action = btn["action"]
+                if action == "new_game":
+                    self.show_menu = False
+                    self.init_game()
+                elif action == "load_game":
+                    self.load_game()
+                elif action == "settings":
+                    self.show_settings()
+                elif action == "exit":
+                    self.stop()
+                return
+    
+    def init_game(self):
+        """Инициализация игры"""
+        try:
             # Пользовательская карта
             self.tiled_map = TiledMap("map/map.json")
         except Exception:
@@ -88,65 +163,332 @@ class TkGame:
         # Ввод
         self.root.bind("<Escape>", lambda e: self.stop())
         self.root.bind("<space>", lambda e: self.soft_restart())
+        self.root.bind("<p>", lambda e: self.toggle_pause())
         self.canvas.bind("<Button-1>", self._on_left_click)
         self.canvas.bind("<Button-3>", self._on_right_click)
 
         # Камера к центру карты
         self._center_initial_camera()
-=======
-            self.tiled_map = TiledMap("map/map.json")
-        except Exception as e:
-            self.tiled_map = None
 
-        # Игровые сущности
-        # Позицию игрока задаём по центру карты, если карта загружена
-        if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
-            map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
-            map_px_h = self.tiled_map.height * self.tiled_map.tileheight
-            start_x = map_px_w // 2
-            start_y = map_px_h // 2
-            self.map_view_x = max(0, start_x - self.width // 2)
-            self.map_view_y = max(0, start_y - self.height // 2)
-            self.player = Player("player_ai", (start_x, start_y))
-        else:
-            self.player = Player("player_ai", (self.width // 2, self.height // 2))
-        self.player.learning_rate = 1.0
-
-        self.enemies = []
-        enemy_types = ["warrior", "archer", "mage"]
-        for _ in range(10):
-            enemy = Enemy(random.choice(enemy_types), level=random.randint(1, 5))
-            enemy.position = [random.randint(100, self.width - 100), random.randint(100, self.height - 100)]
-            enemy.player_ref = self.player
-            self.enemies.append(enemy)
-
-        self.boss = Boss(boss_type="dragon", level=15, position=(self.width - 300, 300))
-        self.boss.learning_rate = 0.005
-        self.boss.player_ref = self.player
-
-        # Оружие игроку
-        starter_weapon = WeaponGenerator.generate_weapon(1)
-        self.player.equip_item(starter_weapon)
-
-        # Координатор ИИ
-        self.coordinator = AICoordinator()
-        for enemy in self.enemies:
-            self.coordinator.register_entity(enemy, "enemy_group")
-        self.coordinator.register_entity(self.boss, "boss_group")
-
-        # Управление
-        self.root.bind("<Escape>", lambda e: self.stop())
-        self.root.bind("<space>", lambda e: self.restart())
-        # Движение игрока (WASD)
-        self._keys = set()
-        self.root.bind("<KeyPress>", self._on_key_down)
-        self.root.bind("<KeyRelease>", self._on_key_up)
->>>>>>> main
-
+        # Применяем настройки: скорость обучения игрока
+        try:
+            lr = float(self.settings.get("learning_rate", 1.0))
+            self.player.learning_rate = max(0.01, lr)
+        except Exception:
+            self.player.learning_rate = 1.0
+        
         # Старт цикла
         self.root.after(16, self.game_loop)
+    
+    def load_game(self):
+        """Загрузка сохраненной игры"""
+        if os.path.exists(self.save_file):
+            try:
+                with open(self.save_file, "r", encoding="utf-8") as f:
+                    save_data = json.load(f)
+                
+                self.show_menu = False
+                self.init_game()
+                
+                # Восстановление состояния
+                self.reincarnation_count = save_data.get("reincarnation_count", 0)
+                self.generation_count = save_data.get("generation_count", 0)
+                self.session_start_time = save_data.get("session_start_time", time.time())
+                
+                # Восстановление игрока
+                if "player" in save_data:
+                    player_data = save_data["player"]
+                    self.player.health = player_data.get("health", self.player.max_health)
+                    self.player.level = player_data.get("level", 1)
+                    self.player.learning_rate = player_data.get("learning_rate", 1.0)
+                    self.player.position = player_data.get("position", [self.width // 2, self.height // 2])
+                
+                # Восстановление препятствий и сундуков
+                self.user_obstacles = set(tuple(obs) for obs in save_data.get("obstacles", []))
+                self.chests = save_data.get("chests", [])
+                
+                print("Игра загружена успешно")
+            except Exception as e:
+                print(f"Ошибка загрузки: {e}")
+                self.show_menu = True
+                self.show_main_menu()
+        else:
+            print("Сохранение не найдено")
+            self.show_menu = True
+            self.show_main_menu()
+    
+    def save_game(self):
+        """Сохранение игры"""
+        try:
+            save_data = {
+                "reincarnation_count": self.reincarnation_count,
+                "generation_count": self.generation_count,
+                "session_start_time": self.session_start_time,
+                "player": {
+                    "health": self.player.health,
+                    "level": self.player.level,
+                    "learning_rate": self.player.learning_rate,
+                    "position": self.player.position
+                },
+                "obstacles": list(self.user_obstacles),
+                "chests": self.chests
+            }
+            
+            with open(self.save_file, "w", encoding="utf-8") as f:
+                json.dump(save_data, f, indent=2)
+            
+            print("Игра сохранена")
+        except Exception as e:
+            print(f"Ошибка сохранения: {e}")
+    
+    def toggle_pause(self):
+        """Переключение паузы"""
+        self.paused = not self.paused
+        if self.paused:
+            self.show_pause_menu()
+        else:
+            self.canvas.delete("pause_menu")
+            self.root.after(16, self.game_loop)
+    
+    def show_pause_menu(self):
+        """Показать меню паузы"""
+        self.canvas.create_rectangle(
+            0, 0, self.width, self.height,
+            fill=rgb_to_hex((0, 0, 0)), stipple="gray50",
+            tags="pause_menu"
+        )
+        
+        # Заголовок паузы
+        self.canvas.create_text(
+            self.width // 2, 200,
+            text="ПАУЗА",
+            fill=rgb_to_hex((255, 215, 0)),
+            font=("Arial", 36, "bold"),
+            tags="pause_menu"
+        )
+        
+        # Кнопки паузы
+        button_y = 300
+        button_spacing = 60
+        
+        # Продолжить
+        self.canvas.create_rectangle(
+            self.width // 2 - 100, button_y,
+            self.width // 2 + 100, button_y + 40,
+            fill=rgb_to_hex((50, 150, 50)), outline=rgb_to_hex((100, 200, 100)),
+            tags="pause_menu"
+        )
+        self.canvas.create_text(
+            self.width // 2, button_y + 20,
+            text="Продолжить",
+            fill=rgb_to_hex((255, 255, 255)),
+            font=("Arial", 14, "bold"),
+            tags="pause_menu"
+        )
+        
+        # Сохранить
+        button_y += button_spacing
+        self.canvas.create_rectangle(
+            self.width // 2 - 100, button_y,
+            self.width // 2 + 100, button_y + 40,
+            fill=rgb_to_hex((100, 100, 200)), outline=rgb_to_hex((150, 150, 250)),
+            tags="pause_menu"
+        )
+        self.canvas.create_text(
+            self.width // 2, button_y + 20,
+            text="Сохранить",
+            fill=rgb_to_hex((255, 255, 255)),
+            font=("Arial", 14, "bold"),
+            tags="pause_menu"
+        )
+        
+        # Главное меню
+        button_y += button_spacing
+        self.canvas.create_rectangle(
+            self.width // 2 - 100, button_y,
+            self.width // 2 + 100, button_y + 40,
+            fill=rgb_to_hex((200, 150, 50)), outline=rgb_to_hex((250, 200, 100)),
+            tags="pause_menu"
+        )
+        self.canvas.create_text(
+            self.width // 2, button_y + 20,
+            text="Главное меню",
+            fill=rgb_to_hex((255, 255, 255)),
+            font=("Arial", 14, "bold"),
+            tags="pause_menu"
+        )
+        
+        # Привязка событий паузы
+        self.canvas.bind("<Button-1>", self._on_pause_click)
+    
+    def _on_pause_click(self, event):
+        """Обработка кликов в меню паузы"""
+        x, y = event.x, event.y
+        
+        # Продолжить
+        if 300 <= y <= 340:
+            self.paused = False
+            self.canvas.delete("pause_menu")
+            self.canvas.bind("<Button-1>", self._on_left_click)
+            self.root.after(16, self.game_loop)
+        # Сохранить
+        elif 360 <= y <= 400:
+            self.save_game()
+        # Главное меню
+        elif 420 <= y <= 460:
+            self.show_menu = True
+            self.paused = False
+            self.show_main_menu()
+    
+    def show_settings(self):
+        """Показать настройки (сложность, скорость обучения, размер окна)."""
+        # Снимаем старые бинды
+        self.root.unbind("<Key>")
+        self.canvas.unbind("<Button-1>")
+        
+        self.canvas.delete("all")
+        self.settings_controls = []
+        
+        # Заголовок настроек
+        self.canvas.create_text(
+            self.width // 2, 100,
+            text="Настройки",
+            fill=rgb_to_hex((255, 215, 0)),
+            font=("Arial", 28, "bold")
+        )
+        
+        left_x = self.width // 2 - 250
+        right_x = self.width // 2 + 250
+        row_y = 200
+        row_step = 90
+        
+        # Сложность
+        self.canvas.create_text(left_x, row_y, text="Сложность:", fill="#ddd", font=("Arial", 16, "bold"), anchor="w")
+        difficulties = ["easy", "normal", "hard"]
+        current_idx = max(0, difficulties.index(self.settings.get("difficulty", "normal")))
+        btn_w, btn_h = 120, 40
+        gap = 20
+        x_cursor = left_x + 150
+        for i, lvl in enumerate(difficulties):
+            x0, y0 = x_cursor + i * (btn_w + gap), row_y - btn_h // 2
+            x1, y1 = x0 + btn_w, y0 + btn_h
+            fill = (90, 110, 150) if i == current_idx else (70, 90, 120)
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex(fill), outline="#99a")
+            self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text=lvl.capitalize(), fill="#eee", font=("Arial", 14, "bold"))
+            self.settings_controls.append({"key": "difficulty", "type": "choice", "value": lvl, "x0": x0, "x1": x1, "y0": y0, "y1": y1})
+        
+        # Скорость обучения
+        row_y += row_step
+        self.canvas.create_text(left_x, row_y, text="Скорость обучения:", fill="#ddd", font=("Arial", 16, "bold"), anchor="w")
+        val = float(self.settings.get("learning_rate", 1.0))
+        # Минус
+        x0, y0 = left_x + 300, row_y - 20
+        x1, y1 = x0 + 40, y0 + 40
+        self.canvas.create_rectangle(x0, y0, x1, y1, fill="#566", outline="#99a")
+        self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text="-", fill="#eef", font=("Arial", 18, "bold"))
+        self.settings_controls.append({"key": "learning_rate", "type": "dec", "x0": x0, "x1": x1, "y0": y0, "y1": y1})
+        # Значение
+        val_box_x0 = x1 + 10
+        val_box_x1 = val_box_x0 + 120
+        self.canvas.create_rectangle(val_box_x0, y0, val_box_x1, y1, outline="#99a")
+        self.canvas.create_text((val_box_x0 + val_box_x1) // 2, (y0 + y1) // 2, text=f"{val:.2f}", fill="#eef", font=("Arial", 14))
+        # Плюс
+        x0p = val_box_x1 + 10
+        x1p = x0p + 40
+        self.canvas.create_rectangle(x0p, y0, x1p, y1, fill="#566", outline="#99a")
+        self.canvas.create_text((x0p + x1p) // 2, (y0 + y1) // 2, text="+", fill="#eef", font=("Arial", 18, "bold"))
+        self.settings_controls.append({"key": "learning_rate", "type": "inc", "x0": x0p, "x1": x1p, "y0": y0, "y1": y1})
+        
+        # Размер окна (пресеты)
+        row_y += row_step
+        self.canvas.create_text(left_x, row_y, text="Размер окна:", fill="#ddd", font=("Arial", 16, "bold"), anchor="w")
+        sizes = [(1024, 768), (1200, 800), (1600, 900)]
+        cur_w, cur_h = self.settings.get("window_size", (self.width, self.height))
+        x_cursor = left_x + 150
+        for i, (w, h) in enumerate(sizes):
+            x0, y0 = x_cursor + i * (btn_w + gap), row_y - btn_h // 2
+            x1, y1 = x0 + btn_w, y0 + btn_h
+            is_sel = (w, h) == (cur_w, cur_h)
+            fill = (90, 110, 150) if is_sel else (70, 90, 120)
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex(fill), outline="#99a")
+            self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text=f"{w}x{h}", fill="#eee", font=("Arial", 14))
+            self.settings_controls.append({"key": "window_size", "type": "choice", "value": (w, h), "x0": x0, "x1": x1, "y0": y0, "y1": y1})
+        
+        # Кнопки управления
+        row_y += row_step + 30
+        ctrl_btn_w, ctrl_btn_h = 160, 48
+        cx = self.width // 2
+        # Применить
+        x0, y0 = cx - ctrl_btn_w - 20, row_y
+        x1, y1 = x0 + ctrl_btn_w, y0 + ctrl_btn_h
+        self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex((50, 150, 50)), outline="#9c9")
+        self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text="Применить", fill="#fff", font=("Arial", 16, "bold"))
+        self.settings_controls.append({"key": "apply", "type": "action", "x0": x0, "x1": x1, "y0": y0, "y1": y1})
+        # Назад
+        x0, y0 = cx + 20, row_y
+        x1, y1 = x0 + ctrl_btn_w, y0 + ctrl_btn_h
+        self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex((200, 150, 50)), outline="#cc9")
+        self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text="Назад", fill="#fff", font=("Arial", 16, "bold"))
+        self.settings_controls.append({"key": "back", "type": "action", "x0": x0, "x1": x1, "y0": y0, "y1": y1})
+        
+        # Обработчик кликов по настройкам
+        self.canvas.bind("<Button-1>", self._on_settings_click)
 
-<<<<<<< HEAD
+    def _on_settings_click(self, event):
+        x, y = event.x, event.y
+        for ctrl in self.settings_controls:
+            if ctrl["x0"] <= x <= ctrl["x1"] and ctrl["y0"] <= y <= ctrl["y1"]:
+                key = ctrl["key"]
+                ctype = ctrl["type"]
+                if ctype == "choice":
+                    self.settings[key] = ctrl.get("value")
+                    # Перерисовать, чтобы подсветить выбранное
+                    self.show_settings()
+                    return
+                if key == "learning_rate":
+                    cur = float(self.settings.get("learning_rate", 1.0))
+                    if ctype == "inc":
+                        cur = min(5.0, cur + 0.1)
+                    elif ctype == "dec":
+                        cur = max(0.1, cur - 0.1)
+                    self.settings["learning_rate"] = round(cur, 2)
+                    self.show_settings()
+                    return
+                if ctype == "action":
+                    if key == "apply":
+                        self._apply_settings()
+                        self.show_main_menu()
+                        return
+                    if key == "back":
+                        self.show_main_menu()
+                        return
+        
+    def _apply_settings(self):
+        # Применяем размер окна и фон
+        new_w, new_h = self.settings.get("window_size", (self.width, self.height))
+        if (new_w, new_h) != (self.width, self.height):
+            self.width, self.height = int(new_w), int(new_h)
+            try:
+                self.root.geometry(f"{self.width}x{self.height}")
+            except Exception:
+                pass
+            self.canvas.config(width=self.width, height=self.height)
+        # Обновим config, чтобы сохранить согласованность
+        try:
+            config.WIDTH, config.HEIGHT = self.width, self.height
+        except Exception:
+            pass
+        # Обновим фон в соответствии с config
+        try:
+            self.canvas.config(bg=rgb_to_hex(config.BACKGROUND))
+        except Exception:
+            pass
+    
+    def _return_to_main_menu(self, event):
+        """Возврат в главное меню из настроек"""
+        self.root.unbind("<Key>")  # Отвязываем обработчик
+        self.show_main_menu()
+
     # --- Инициализация сущностей ---
     def _create_player(self) -> Player:
         if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
@@ -158,15 +500,42 @@ class TkGame:
             start_x = self.width // 2
             start_y = self.height // 2
         player = Player("player_ai", (start_x, start_y))
-        player.learning_rate = 1.0
+        # Значение будет скорректировано в init_game() из self.settings
+        player.learning_rate = float(self.settings.get("learning_rate", 1.0))
+        # Убеждаемся, что combat_stats инициализированы правильно
+        if "max_health" not in player.combat_stats:
+            player.combat_stats["max_health"] = 100
+        if "health" not in player.combat_stats:
+            player.combat_stats["health"] = 100
         return player
 
     def _create_enemies(self) -> list:
         enemy_list = []
         enemy_types = ["warrior", "archer", "mage"]
-        for _ in range(10):
-            e = Enemy(random.choice(enemy_types), level=random.randint(1, 5))
-            e.position = [random.randint(200, 1000), random.randint(200, 700)]
+        # Увеличиваем расстояние между врагами
+        map_width = self.tiled_map.width * self.tiled_map.tilewidth if self.tiled_map else self.width
+        map_height = self.tiled_map.height * self.tiled_map.tileheight if self.tiled_map else self.height
+        
+        # Убеждаемся, что размеры карты корректны
+        if map_width <= 200:
+            map_width = self.width
+        if map_height <= 200:
+            map_height = self.height
+        
+        # Количество и уровень врагов зависят от сложности
+        difficulty = self.settings.get("difficulty", "normal")
+        if difficulty == "easy":
+            num_enemies, lvl_min, lvl_max = 6, 1, 3
+        elif difficulty == "hard":
+            num_enemies, lvl_min, lvl_max = 14, 3, 7
+        else:
+            num_enemies, lvl_min, lvl_max = 10, 1, 5
+        for _ in range(num_enemies):
+            e = Enemy(random.choice(enemy_types), level=random.randint(lvl_min, lvl_max))
+            # Распределяем врагов по всей карте
+            x = random.randint(100, max(200, map_width - 100))
+            y = random.randint(100, max(200, map_height - 100))
+            e.position = [x, y]
             e.player_ref = self.player
             enemy_list.append(e)
         return enemy_list
@@ -177,7 +546,9 @@ class TkGame:
             by = 300
         else:
             bx, by = self.width - 300, 300
-        boss = Boss(boss_type="dragon", level=15, position=(bx, by))
+        difficulty = self.settings.get("difficulty", "normal")
+        boss_level = 12 if difficulty == "easy" else (20 if difficulty == "hard" else 15)
+        boss = Boss(boss_type="dragon", level=boss_level, position=(bx, by))
         boss.learning_rate = 0.005
         boss.player_ref = self.player
         return boss
@@ -186,15 +557,34 @@ class TkGame:
     def soft_restart(self) -> None:
         """Перезапуск мира без закрытия окна и без потери знаний."""
         self.victory_shown = False
+        self.generation_count += 1
+        
         # Возрождаем игрока
         self._respawn_player()
         # Возрождаем врагов и босса
         for e in self.enemies:
             self._respawn_entity(e)
-            e.position = [random.randint(200, 1000), random.randint(200, 700)]
+            # Перемещаем врагов на новые позиции
+            map_width = self.tiled_map.width * self.tiled_map.tilewidth if self.tiled_map else self.width
+            map_height = self.tiled_map.height * self.tiled_map.tileheight if self.tiled_map else self.height
+            
+            # Убеждаемся, что размеры карты корректны
+            if map_width <= 200:
+                map_width = self.width
+            if map_height <= 200:
+                map_height = self.height
+            
+            e.position = [random.randint(100, max(200, map_width - 100)), random.randint(100, max(200, map_height - 100))]
         if self.boss:
             self._respawn_entity(self.boss)
-            self.boss.position = [self.width - 300, 300]
+            # Босс в правом верхнем углу карты
+            if self.tiled_map:
+                map_width = self.tiled_map.width * self.tiled_map.tilewidth
+                if map_width <= 200:
+                    map_width = self.width
+                self.boss.position = [max(300, map_width - 300), 300]
+            else:
+                self.boss.position = [self.width - 300, 300]
         # Сохраняем добавленные человеком препятствия/сундуки
         # Камера назад на игрока
         self._center_initial_camera()
@@ -204,32 +594,30 @@ class TkGame:
             self.root.after(16, self.game_loop)
 
     def stop(self) -> None:
-=======
-    def restart(self):
-        if not self.running:
-            self.running = True
-            self.__init__(self.width, self.height)
-
-    def stop(self):
->>>>>>> main
+        """Остановка игры и закрытие окна"""
+        print("Закрытие игры...")
         self.running = False
         try:
+            # Уничтожаем окно
+            self.root.quit()
             self.root.destroy()
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Ошибка при закрытии окна: {e}")
+            # Принудительное завершение
+            import sys
+            sys.exit(0)
 
-<<<<<<< HEAD
     def game_loop(self) -> None:
-=======
-    def game_loop(self):
->>>>>>> main
         if not self.running:
             return
+        if self.paused:
+            self.root.after(16, self.game_loop)
+            return
+        
         now = time.time()
         delta_time = now - self.last_time
         self.last_time = now
 
-<<<<<<< HEAD
         # Логика ИИ игрока и сущностей
         self._update_player_ai(delta_time)
         self.player.update(delta_time)
@@ -244,45 +632,22 @@ class TkGame:
             self.boss.update(delta_time)
             self._move_entity_toward(self.boss, self.player.position, self.boss.combat_stats.get("movement_speed", 80.0), delta_time)
             self._process_chest_interactions(self.boss)
-=======
-        # Обновление логики
-        self._update_player_movement(delta_time)
-        self.player.update(delta_time)
-        for enemy in self.enemies:
-            if enemy.alive:
-                enemy.update(delta_time)
-                # Простое поведение: двигаться к игроку
-                enemy.move_towards(self.player.position, enemy.combat_stats.get("movement_speed", 100.0), delta_time)
-        if self.boss.alive:
-            self.boss.update(delta_time)
-            # Босс тоже понемногу движется к игроку
-            self.boss.move_towards(self.player.position, self.boss.combat_stats.get("movement_speed", 80.0), delta_time)
->>>>>>> main
 
         # Групповая логика
         self.coordinator.update_group_behavior("enemy_group")
         self.coordinator.update_group_behavior("boss_group")
 
-<<<<<<< HEAD
         # Столкновения и фильтрация
         self.check_collisions()
         self.enemies = [e for e in self.enemies if e.alive]
 
         # Камера
-=======
-        # Столкновения
-        self.check_collisions()
-        self.enemies = [e for e in self.enemies if e.alive]
-
-        # Автокамера — центрируем вьюпорт на игроке (если карта есть)
->>>>>>> main
         if self.tiled_map:
             self._center_camera_on_player()
 
         # Рендер
         self.draw()
 
-<<<<<<< HEAD
         # Смерть игрока -> перерождение, а не остановка игры
         if not self.player.alive:
             self._respawn_player()
@@ -299,24 +664,6 @@ class TkGame:
     def check_collisions(self) -> None:
         px, py = self.player.position
         # Враги
-=======
-        # Проверка конца игры
-        if not self.player.alive:
-            self.draw_game_over("Поражение! Игрок погиб.")
-            self.running = False
-            return
-        elif not self.boss.alive:
-            self.draw_game_over("Победа! Босс повержен!")
-            self.running = False
-            return
-
-        self.root.after(16, self.game_loop)
-
-    def check_collisions(self):
-        px, py = self.player.position
-
-        # Столкновения с врагами (радиусы 20 и 15)
->>>>>>> main
         for enemy in self.enemies:
             if not enemy.alive:
                 continue
@@ -330,14 +677,9 @@ class TkGame:
                     "physical": damage,
                     "source": enemy,
                 })
-<<<<<<< HEAD
+
         # Босс
         if self.boss and self.boss.alive:
-=======
-
-        # Столкновение с боссом (радиус 30)
-        if self.boss.alive:
->>>>>>> main
             bx, by = self.boss.position
             dx = px - bx
             dy = py - by
@@ -349,16 +691,9 @@ class TkGame:
                     "source": self.boss,
                 })
 
-<<<<<<< HEAD
     def draw(self) -> None:
         self.canvas.delete("all")
         # Карта
-=======
-    def draw(self):
-        self.canvas.delete("all")
-
-        # Карта (если загружена)
->>>>>>> main
         if self.tiled_map:
             self.tiled_map.draw_to_canvas(
                 self.canvas,
@@ -369,11 +704,7 @@ class TkGame:
                 tag="map",
             )
 
-<<<<<<< HEAD
         # Игрок
-=======
-        # Игрок (с учётом камеры)
->>>>>>> main
         px, py = self.player.position
         spx, spy = px - self.map_view_x, py - self.map_view_y
         self._draw_circle(spx, spy, 20, fill=rgb_to_hex((0, 100, 255)) if self.player.alive else rgb_to_hex((50, 50, 50)))
@@ -393,11 +724,7 @@ class TkGame:
             self._draw_circle(sex, sey, 15, fill=rgb_to_hex(color))
 
         # Босс
-<<<<<<< HEAD
         if self.boss and self.boss.alive:
-=======
-        if self.boss.alive:
->>>>>>> main
             bx, by = self.boss.position
             sbx, sby = bx - self.map_view_x, by - self.map_view_y
             self._draw_circle(sbx, sby, 30, fill=rgb_to_hex((255, 165, 0)))
@@ -406,15 +733,28 @@ class TkGame:
         # UI
         self.canvas.create_text(10, 10, text=f"Уровень: {self.player.level}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
         self.canvas.create_text(10, 40, text=f"Здоровье: {int(self.player.health)}/{int(self.player.max_health)}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
-<<<<<<< HEAD
+
         self.canvas.create_text(10, 70, text=f"Реинкарнации: {self.reincarnation_count}", fill=rgb_to_hex((220, 220, 180)), anchor="nw")
+        self.canvas.create_text(10, 100, text=f"Поколения: {self.generation_count}", fill=rgb_to_hex((220, 180, 220)), anchor="nw")
+        
+        # Инфографика обучения
+        session_time = time.time() - self.session_start_time
+        self.canvas.create_text(10, 130, text=f"Время сессии: {int(session_time // 60)}:{int(session_time % 60):02d}", fill=rgb_to_hex((180, 220, 180)), anchor="nw")
+        self.canvas.create_text(10, 160, text=f"Скорость обучения: {self.player.learning_rate:.3f}", fill=rgb_to_hex((220, 180, 180)), anchor="nw")
+        
+        # Статистика ИИ
+        if hasattr(self.player, 'learning_system'):
+            learning_stats = getattr(self.player.learning_system, 'stats', {})
+            self.canvas.create_text(10, 190, text=f"Опыт: {learning_stats.get('total_experience', 0)}", fill=rgb_to_hex((180, 180, 220)), anchor="nw")
+            self.canvas.create_text(10, 220, text=f"Адаптация: {learning_stats.get('adaptation_rate', 0):.2f}", fill=rgb_to_hex((220, 220, 180)), anchor="nw")
+        
         if self.tiled_map:
-            self.canvas.create_text(10, 100, text=f"Карта: {self.tiled_map.width}x{self.tiled_map.height} (tile {self.tiled_map.tilewidth}x{self.tiled_map.tileheight})", fill=rgb_to_hex((180, 200, 255)), anchor="nw")
+            self.canvas.create_text(10, 250, text=f"Карта: {self.tiled_map.width}x{self.tiled_map.height} (tile {self.tiled_map.tilewidth}x{self.tiled_map.tileheight})", fill=rgb_to_hex((180, 200, 255)), anchor="nw")
         if self.boss and self.boss.alive:
             self.canvas.create_text(self.width - 220, 10, text=f"Босс: {int(self.boss.health)}/{int(self.boss.max_health)}", fill=rgb_to_hex((255, 100, 100)), anchor="nw")
 
         # Подсказки и пользовательские объекты
-        self.canvas.create_text(10, self.height - 24, text="Space: перезапуск (знания сохраняются) | ЛКМ: препятствие | ПКМ: сундук", fill=rgb_to_hex((200, 220, 240)), anchor="sw")
+        self.canvas.create_text(10, self.height - 24, text="Space: новое поколение | P: пауза | ЛКМ: препятствие | ПКМ: сундук", fill=rgb_to_hex((200, 220, 240)), anchor="sw")
         if self.tiled_map:
             tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
             for (tx, ty) in self.user_obstacles:
@@ -447,20 +787,46 @@ class TkGame:
     def _on_left_click(self, event) -> None:
         if not self.tiled_map:
             return
+        if self.paused:
+            return
+        
         world_x = event.x + self.map_view_x
         world_y = event.y + self.map_view_y
         tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
         tx, ty = int(world_x // tw), int(world_y // th)
-        self.user_obstacles.add((tx, ty))
+        
+        # Проверяем, есть ли уже препятствие в этой точке
+        if (tx, ty) in self.user_obstacles:
+            # Убираем препятствие при повторном клике
+            self.user_obstacles.remove((tx, ty))
+        else:
+            # Добавляем препятствие
+            self.user_obstacles.add((tx, ty))
 
     def _on_right_click(self, event) -> None:
         if not self.tiled_map:
             return
+        if self.paused:
+            return
+        
         world_x = event.x + self.map_view_x
         world_y = event.y + self.map_view_y
         tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
         tx, ty = int(world_x // tw), int(world_y // th)
-        self.chests.append({"tx": tx, "ty": ty, "opened": False})
+        
+        # Проверяем, есть ли уже сундук в этой точке
+        existing_chest = None
+        for chest in self.chests:
+            if chest["tx"] == tx and chest["ty"] == ty:
+                existing_chest = chest
+                break
+        
+        if existing_chest:
+            # Убираем сундук при повторном клике
+            self.chests.remove(existing_chest)
+        else:
+            # Добавляем сундук
+            self.chests.append({"tx": tx, "ty": ty, "opened": False})
 
     def _update_player_ai(self, dt: float) -> None:
         target_pos = None
@@ -554,59 +920,11 @@ class TkGame:
     def _center_camera_on_player(self) -> None:
         px, py = self.player.position
         if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
-=======
-        self.canvas.create_text(10, 70, text=f"Известных слабостей: {len(self.player.known_weaknesses)}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
-        self.canvas.create_text(10, 100, text=f"Скорость обучения: {self.player.learning_rate:.2f}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
-        if self.tiled_map:
-            self.canvas.create_text(10, 130, text=f"Карта: {self.tiled_map.width}x{self.tiled_map.height} (tile {self.tiled_map.tilewidth}x{self.tiled_map.tileheight})", fill=rgb_to_hex((180, 200, 255)), anchor="nw")
-        if self.boss.alive:
-            self.canvas.create_text(self.width - 200, 10, text=f"Босс: {int(self.boss.health)}/{int(self.boss.max_health)}", fill=rgb_to_hex((255, 100, 100)), anchor="nw")
-
-    def draw_game_over(self, message):
-        self.canvas.create_rectangle(0, 0, self.width, self.height, fill="#000000", stipple="gray25")
-        self.canvas.create_text(self.width // 2, self.height // 2, text=message, fill=rgb_to_hex((255, 50, 50)), font=("Arial", 24, "bold"))
-        self.canvas.create_text(self.width // 2, self.height // 2 + 40, text="Нажмите Space для перезапуска или Esc для выхода", fill=rgb_to_hex((255, 255, 255)))
-
-    def _draw_circle(self, x, y, radius, fill="#ffffff"):
-        self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=fill, width=0)
-
-    def _on_key_down(self, event):
-        self._keys.add(event.keysym.lower())
-
-    def _on_key_up(self, event):
-        self._keys.discard(event.keysym.lower())
-
-    def _update_player_movement(self, dt: float):
-        dx = 0.0
-        dy = 0.0
-        if "w" in self._keys:
-            dy -= 1.0
-        if "s" in self._keys:
-            dy += 1.0
-        if "a" in self._keys:
-            dx -= 1.0
-        if "d" in self._keys:
-            dx += 1.0
-        if dx == 0.0 and dy == 0.0:
-            return
-        length = max(1e-6, (dx * dx + dy * dy) ** 0.5)
-        dx /= length
-        dy /= length
-        speed = float(self.player.combat_stats.get("movement_speed", 120.0))
-        self.player.position[0] += dx * speed * dt
-        self.player.position[1] += dy * speed * dt
-
-    def _center_camera_on_player(self):
-        px, py = self.player.position
-        # Размер карты (в пикселях), если известен
-        if self.tiled_map.width and self.tiled_map.height:
->>>>>>> main
             map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
             map_px_h = self.tiled_map.height * self.tiled_map.tileheight
             self.map_view_x = max(0, min(px - self.width // 2, max(0, map_px_w - self.width)))
             self.map_view_y = max(0, min(py - self.height // 2, max(0, map_px_h - self.height)))
         else:
-<<<<<<< HEAD
             self.map_view_x = max(0, px - self.width // 2)
             self.map_view_y = max(0, py - self.height // 2)
 
@@ -635,12 +953,6 @@ class TkGame:
         bx, by = b
         return (ax - bx) ** 2 + (ay - by) ** 2
 
-=======
-            # Неизвестная граница — просто центрируем
-            self.map_view_x = max(0, px - self.width // 2)
-            self.map_view_y = max(0, py - self.height // 2)
-
->>>>>>> main
 
 def main():
     game = TkGame()

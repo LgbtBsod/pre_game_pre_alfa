@@ -48,7 +48,10 @@ class Effect:
         if isinstance(value, str):
             # Процент от максимального значения
             if value.endswith('%'):
-                percent = float(value[:-1]) / 100
+                try:
+                    percent = float(value[:-1]) / 100
+                except ValueError:
+                    return 0.0
                 if attr in ['health', 'mana', 'stamina']:
                     base_value = getattr(entity, f"max_{attr}", 0)
                 else:
@@ -59,7 +62,23 @@ class Effect:
             elif '/' in value:
                 parts = value.split('/')
                 if len(parts) == 2:
-                    return float(parts[0]) * self.stacks  # Учет стаков для значений в секунду
+                    head = parts[0].strip()
+                    # Поддержка вида "1%/1": сначала считаем процент от базового
+                    if head.endswith('%'):
+                        try:
+                            percent = float(head[:-1]) / 100
+                        except ValueError:
+                            return 0.0
+                        if attr in ['health', 'mana', 'stamina']:
+                            base_value = getattr(entity, f"max_{attr}", 0)
+                        else:
+                            base_value = getattr(entity, attr, 0)
+                        return base_value * percent * self.stacks
+                    # Иначе просто число в секунду
+                    try:
+                        return float(head) * self.stacks  # Учет стаков для значений в секунду
+                    except ValueError:
+                        return 0.0
         
         return 0.0
     
