@@ -1,4 +1,4 @@
-from .entity import Entity
+from .entity import Entity, Attribute
 from .effect import Effect
 from ai.advanced_ai import AdvancedAIController
 import random
@@ -82,71 +82,59 @@ class Enemy(Entity):
             return {}
     
     def _init_attributes(self):
-        """Инициализация характеристик в зависимости от типа врага"""
-        # Базовые значения
+        """Инициализация атрибутов на основе типа и уровня"""
+        # Базовые характеристики для всех врагов
         base_stats = {
-            "strength": 10,
-            "dexterity": 10,
-            "intelligence": 10,
-            "faith": 10,
-            "vitality": 10,
-            "endurance": 10,
-            "luck": 5
+            "strength": 8,
+            "dexterity": 8,
+            "intelligence": 8,
+            "vitality": 8,
+            "endurance": 8,
+            "faith": 8
         }
         
-        # Модификаторы для разных типов врагов
+        # Модификаторы по типам врагов
         type_modifiers = {
             "warrior": {
-                "strength": 1.5,
-                "vitality": 1.4,
-                "endurance": 1.3,
-                "luck": 0.8
+                "strength": 1.3,
+                "vitality": 1.2,
+                "endurance": 1.1
             },
             "archer": {
-                "dexterity": 1.8,
-                "intelligence": 1.2,
-                "luck": 1.2
+                "dexterity": 1.4,
+                "endurance": 1.2
             },
             "mage": {
-                "intelligence": 2.0,
-                "faith": 1.5,
-                "vitality": 0.8,
-                "luck": 1.0
+                "intelligence": 1.5,
+                "faith": 1.2
             },
             "assassin": {
-                "dexterity": 1.7,
-                "strength": 1.2,
-                "luck": 1.5
+                "dexterity": 1.3,
+                "strength": 1.1
             },
             "berserker": {
-                "strength": 2.0,
-                "endurance": 1.5,
-                "vitality": 0.7,
-                "luck": 0.7
+                "strength": 1.4,
+                "vitality": 1.3
             },
             "shaman": {
-                "faith": 1.8,
-                "intelligence": 1.5,
-                "vitality": 1.1,
-                "luck": 1.3
+                "intelligence": 1.3,
+                "faith": 1.4
             },
             "tank": {
-                "vitality": 2.0,
-                "endurance": 1.8,
-                "strength": 1.1,
-                "luck": 0.5
+                "vitality": 1.5,
+                "endurance": 1.4
             },
             "summoner": {
-                "intelligence": 1.7,
-                "faith": 1.3,
-                "luck": 1.1
+                "intelligence": 1.4,
+                "faith": 1.3
             }
         }
         
-        # Применяем модификаторы уровня
+        # Бонус за уровень
         level_bonus = (self.level - 1) * 2
         
-        for attr in self.attributes:
+        # Устанавливаем атрибуты с использованием нового формата Attribute
+        for attr in base_stats:
             # Базовое значение + бонус уровня
             value = base_stats[attr] + level_bonus
             
@@ -154,7 +142,8 @@ class Enemy(Entity):
             if self.enemy_type in type_modifiers and attr in type_modifiers[self.enemy_type]:
                 value *= type_modifiers[self.enemy_type][attr]
             
-            self.attributes[attr] = int(value)
+            # Используем новый формат Attribute
+            self.attributes[attr] = Attribute(int(value))
         
         # Обновляем производные характеристики
         self.update_derived_stats()
@@ -166,19 +155,17 @@ class Enemy(Entity):
         
         # Уникальные боевые характеристики по типам
         if self.enemy_type == "archer":
-            self.combat_stats["attack_range"] *= 1.5
-            self.combat_stats["critical_chance"] += 0.1
+            self.combat_stats["attack_range"] = self.combat_stats.get("attack_range", 50) * 1.5
+            self.combat_stats["critical_chance"] = self.combat_stats.get("critical_chance", 0.05) + 0.1
         elif self.enemy_type == "mage":
             self.combat_stats["elemental_penetration"] = 0.2
         elif self.enemy_type == "assassin":
-            self.combat_stats["critical_damage"] = 2.0
-            self.combat_stats["movement_speed"] *= 1.3
+            self.combat_stats["critical_multiplier"] = 2.0
+            self.combat_stats["movement_speed"] = self.combat_stats.get("movement_speed", 100) * 1.3
         elif self.enemy_type == "berserker":
-            self.combat_stats["physical_damage_mod"] = 1.3
-            self.combat_stats["life_steal"] = 0.1
+            self.combat_stats["damage_output"] = self.combat_stats.get("damage_output", 10) * 1.3
         elif self.enemy_type == "tank":
-            self.combat_stats["physical_resist"] = 0.3
-            self.combat_stats["block_chance"] = 0.2
+            self.combat_stats["defense"] = self.combat_stats.get("defense", 5) + 3
     
     def _load_genetic_profile(self):
         """Загрузка генетического профиля для типа врага"""
@@ -339,7 +326,7 @@ class Enemy(Entity):
         loot.append({"type": "currency", "amount": gold_amount})
         
         # Шанс выпадения предмета
-        item_chance = 0.3 + self.attributes["luck"] * 0.01
+        item_chance = 0.3 + self.attributes["luck"].value * 0.01
         
         # Типы предметов в зависимости от типа врага
         item_types = {
@@ -366,7 +353,7 @@ class Enemy(Entity):
             }
             
             # Редкие предметы
-            if random.random() < 0.1 * self.attributes["luck"] * 0.01:
+            if random.random() < 0.1 * self.attributes["luck"].value * 0.01:
                 item["rarity"] = "RARE"
                 item["value"] *= 3
             else:
@@ -396,8 +383,19 @@ class Enemy(Entity):
         enemy = cls(data["type"], data["level"], data["position"])
         enemy.id = data["id"]
         enemy.health = data["health"]
-        enemy.max_health = data["max_health"]
-        enemy.attributes = data["attributes"]
+        # max_health и combat_stats должны устанавливаться через combat_stats
+        enemy.combat_stats["max_health"] = data.get("max_health", enemy.combat_stats.get("max_health", 100))
+        attrs = data.get("attributes")
+        if isinstance(attrs, dict):
+            # Поддержка как для словаря значений, так и для словаря Attribute-подобных структур
+            for key, val in attrs.items():
+                if key in enemy.attributes:
+                    if hasattr(enemy.attributes[key], "value"):
+                        try:
+                            enemy.attributes[key].value = int(val if isinstance(val, (int, float)) else val.get("value", enemy.attributes[key].value))
+                        except Exception:
+                            pass
+        # Прочие боевые характеристики
         enemy.combat_stats = data["combat_stats"]
         
         # Восстановление эффектов
@@ -432,12 +430,12 @@ class EnemyGenerator:
         
         # Улучшенные характеристики для босса
         for attr in boss.attributes:
-            boss.attributes[attr] = int(boss.attributes[attr] * 1.5)
+            boss.attributes[attr].value = int(boss.attributes[attr].value * 1.5)
         
-        boss.max_health *= 5
+        boss.combat_stats["max_health"] = int(boss.combat_stats.get("max_health", 100) * 5)
         boss.health = boss.max_health
         boss.combat_level = level * 2
-        boss.damage_output *= 3
+        boss.combat_stats["damage_output"] = boss.combat_stats.get("damage_output", 10) * 3
         boss.is_boss = True
         
         # Особые способности босса
