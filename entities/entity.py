@@ -129,25 +129,51 @@ class Entity:
         dexterity = self.attributes["dexterity"].value
         base_damage = 10 + strength * 2 + dexterity
         
-        # Учитываем экипировку
-        weapon_damage = 0
-        if self.equipment["weapon"]:
-            weapon_damage = self.equipment["weapon"].get("base_damage", 0)
+        # Учитываем экипировку (поддержка словарей и объектного оружия)
+        weapon_damage = 0.0
+        weapon_attack_speed = None
+        weapon_item = self.equipment.get("weapon")
+        if weapon_item:
+            if isinstance(weapon_item, dict):
+                weapon_damage = float(weapon_item.get("base_damage", 0) or 0)
+                weapon_attack_speed = weapon_item.get("attack_speed")
+            else:
+                # Объектное оружие
+                try:
+                    if hasattr(weapon_item, "damage_types"):
+                        for dmg in weapon_item.damage_types:
+                            try:
+                                if isinstance(dmg, dict):
+                                    weapon_damage += float(dmg.get("value", 0) or 0)
+                                else:
+                                    weapon_damage += float(getattr(dmg, "value", 0) or 0)
+                            except Exception:
+                                pass
+                    if hasattr(weapon_item, "attack_speed"):
+                        weapon_attack_speed = float(getattr(weapon_item, "attack_speed", 1.0))
+                except Exception:
+                    pass
         
         self.combat_stats["damage_output"] = base_damage + weapon_damage
         
         # Защита
         defense = 5
         for slot, item in self.equipment.items():
-            if item and "defense" in item:
+            if not item:
+                continue
+            if isinstance(item, dict) and "defense" in item:
                 defense += item["defense"]
+            elif hasattr(item, "defense"):
+                try:
+                    defense += float(getattr(item, "defense", 0) or 0)
+                except Exception:
+                    pass
         self.combat_stats["defense"] = defense
         
         # Скорость атаки
         attack_speed = 1.0
-        if self.equipment["weapon"]:
-            weapon_speed = self.equipment["weapon"].get("attack_speed", 1.0)
-            attack_speed *= weapon_speed
+        if weapon_attack_speed is not None:
+            attack_speed *= weapon_attack_speed
         self.combat_stats["attack_speed"] = attack_speed
     
     def gain_experience(self, amount: int):
@@ -278,8 +304,12 @@ class Entity:
         if not item:
             return False
         
-        item_type = item.get("type", "unknown")
-        slot = self.get_equipment_slot(item_type)
+        slot = None
+        if hasattr(item, "equipment_slot"):
+            slot = getattr(item, "equipment_slot")
+        else:
+            item_type = item.get("type", "unknown")
+            slot = self.get_equipment_slot(item_type)
         
         if slot:
             # Снимаем предыдущий предмет
@@ -288,6 +318,11 @@ class Entity:
             
             # Экипируем новый
             self.equipment[slot] = item
+            if hasattr(item, "apply_effects"):
+                try:
+                    item.apply_effects(self)
+                except Exception:
+                    pass
             self.update_derived_stats()
             return True
         
@@ -298,6 +333,11 @@ class Entity:
         if slot in self.equipment and self.equipment[slot]:
             item = self.equipment[slot]
             self.equipment[slot] = None
+            if hasattr(item, "remove_effects"):
+                try:
+                    item.remove_effects(self)
+                except Exception:
+                    pass
             self.update_derived_stats()
             return item
         return None
@@ -364,20 +404,20 @@ class Entity:
     def update_item_effects(self, delta_time: float):
         """Обновление эффектов предметов"""
         for slot, item in self.equipment.items():
-            if not item or "effects" not in item:
+            if not item:
                 continue
-            
-            effects = item["effects"]
-            for effect in effects:
-                if effect == "regen_health":
-                    regen_amount = 5 * delta_time
-                    self.combat_stats["health"] = min(
-                        self.combat_stats["max_health"],
-                        self.combat_stats["health"] + regen_amount
-                    )
-                elif effect == "boost_damage":
-                    # Временное усиление урона
-                    pass
+            if isinstance(item, dict) and "effects" in item:
+                effects = item["effects"]
+                for effect in effects:
+                    if effect == "regen_health":
+                        regen_amount = 5 * delta_time
+                        self.combat_stats["health"] = min(
+                            self.combat_stats["max_health"],
+                            self.combat_stats["health"] + regen_amount
+                        )
+                    elif effect == "boost_damage":
+                        # Временное усиление урона
+                        pass
     
     def has_consumable(self, effect_type: str = None):
         """Проверить наличие расходуемого предмета"""

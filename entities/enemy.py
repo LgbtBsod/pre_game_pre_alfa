@@ -261,7 +261,7 @@ class Enemy(Entity):
         use_chance = 0.2 * delta_time
         
         # Увеличиваем шанс в зависимости от интеллекта
-        use_chance *= (0.5 + self.attributes["intelligence"] * 0.02)
+        use_chance *= (0.5 + self.attributes["intelligence"].value * 0.02)
         
         if can_use_ability and random.random() < use_chance:
             self._select_and_use_ability()
