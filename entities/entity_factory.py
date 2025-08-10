@@ -320,7 +320,7 @@ class EntityFactory:
         
         # Применяем атрибуты
         for attr_name, attr_value in enemy_data.attributes.items():
-            enemy.set_attribute_base(attr_name, attr_value)
+            enemy.attribute_manager.set_attribute_base(attr_name, attr_value)
         
         # Применяем боевые характеристики
         for stat_name, stat_value in enemy_data.combat_stats.items():

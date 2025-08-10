@@ -45,9 +45,9 @@ class Game:
         self.paused = False
         
         # Инициализация систем
-        self.game_logic = GameLogicManager()
-        self.render_manager = RenderManager()
-        self.game_menu = GameMenu()
+        self.game_logic = GameLogicManager(game_state_manager)
+        self.render_manager = None
+        self.game_menu = None
         
         # Игровые объекты
         self.player = None

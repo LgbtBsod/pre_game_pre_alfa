@@ -42,6 +42,7 @@ class BaseEntity:
     
     def __init__(self, entity_id: str, position: tuple = (0, 0)):
         self.entity_id = entity_id
+        self.name = entity_id  # Default name is the entity_id
         self.position = list(position)
         self.alive = True
         self.level = 1

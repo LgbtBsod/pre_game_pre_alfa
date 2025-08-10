@@ -31,6 +31,7 @@ class AttributeData:
     growth_rate: float
     category: str
     effects: Dict[str, float] = field(default_factory=dict)
+    hex_id: Optional[str] = None
     
     def to_tuple(self) -> Tuple[str, str, str, float, float, float, str, Dict[str, float]]:
         """Преобразовать в кортеж для быстрого доступа"""
@@ -58,6 +59,7 @@ class EffectData:
     interval: Optional[float] = None
     tick_interval: Optional[float] = None
     stackable: bool = False
+    hex_id: Optional[str] = None
     
     def to_tuple(self) -> Tuple[str, str, str, str, str, List[str], Dict[str, Any], int, Optional[float], Optional[float], Optional[float], bool]:
         """Преобразовать в кортеж для быстрого доступа"""
@@ -106,6 +108,7 @@ class ItemData:
     resist_mod: Dict[str, float] = field(default_factory=dict)
     weakness_mod: Dict[str, float] = field(default_factory=dict)
     elemental_resistance: Dict[str, float] = field(default_factory=dict)
+    hex_id: Optional[str] = None
     
     def to_tuple(self) -> Tuple[str, str, str, str, Optional[str], str, int, 
                                 Optional[float], Optional[float], Optional[float], 
@@ -152,6 +155,7 @@ class EntityData:
     ai_behavior: Optional[str] = None
     loot_table: Optional[List[str]] = None
     phases: Optional[List[Dict[str, Any]]] = None
+    hex_id: Optional[str] = None
     
     def to_tuple(self) -> Tuple[str, str, str, str, int, int, int, 
                                 Dict[str, float], Dict[str, float], List[str], 
@@ -210,7 +214,8 @@ class DataManager:
                 max_value REAL,
                 growth_rate REAL,
                 category TEXT,
-                effects TEXT
+                effects TEXT,
+                hex_id TEXT
             )
         ''')
         
@@ -227,7 +232,9 @@ class DataManager:
                 duration REAL,
                 interval REAL,
                 tick_interval REAL,
-                stackable INTEGER
+                stackable INTEGER,
+                effect_type TEXT,
+                hex_id TEXT
             )
         ''')
         
@@ -265,7 +272,8 @@ class DataManager:
                 tags TEXT,
                 resist_mod TEXT,
                 weakness_mod TEXT,
-                elemental_resistance TEXT
+                elemental_resistance TEXT,
+                hex_id TEXT
             )
         ''')
         
@@ -288,7 +296,8 @@ class DataManager:
                 experience_reward INTEGER,
                 ai_behavior TEXT,
                 loot_table TEXT,
-                phases TEXT
+                phases TEXT,
+                hex_id TEXT
             )
         ''')
         
@@ -361,17 +370,17 @@ class DataManager:
         # Добавляем атрибуты
         for attr in self.attributes.values():
             cursor.execute('''
-                INSERT INTO attributes VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO attributes VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (attr.id, attr.name, attr.description, attr.base_value,
-                  attr.max_value, attr.growth_rate, attr.category, json.dumps(attr.effects)))
+                  attr.max_value, attr.growth_rate, attr.category, json.dumps(attr.effects), attr.hex_id))
         
         # Добавляем эффекты
         for effect in self.effects.values():
             cursor.execute('''
-                INSERT INTO effects VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO effects VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (effect.id, effect.name, effect.description, effect.type, effect.category,
                   json.dumps(effect.tags), json.dumps(effect.modifiers), effect.max_stacks,
-                  effect.duration, effect.interval, effect.tick_interval, effect.stackable))
+                  effect.duration, effect.interval, effect.tick_interval, effect.stackable, effect.type, effect.hex_id))
         
         # Добавляем предметы
         for item in self.items.values():
@@ -382,8 +391,8 @@ class DataManager:
                     element_damage, range, cost, mana_cost, critical_chance,
                     weight, block_chance, heal_amount, heal_percent, mana_amount,
                     mana_percent, duration, cooldown, durability, max_durability,
-                    effects, modifiers, tags, resist_mod, weakness_mod, elemental_resistance
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    effects, modifiers, tags, resist_mod, weakness_mod, elemental_resistance, hex_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (item.id, item.name, item.description, item.type, item.slot,
                   item.rarity, item.level_requirement, item.base_damage,
                   item.attack_speed, item.defense, item.damage_type, item.element,
@@ -393,12 +402,12 @@ class DataManager:
                   item.cooldown, item.durability, item.max_durability, json.dumps(item.effects),
                   json.dumps(item.modifiers), json.dumps(item.tags),
                   json.dumps(item.resist_mod), json.dumps(item.weakness_mod),
-                  json.dumps(item.elemental_resistance)))
+                  json.dumps(item.elemental_resistance), item.hex_id))
         
         # Добавляем сущности
         for entity in self.entities.values():
             cursor.execute('''
-                INSERT INTO entities VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO entities VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (entity.id, entity.name, entity.description, entity.type,
                   entity.level, entity.experience, entity.experience_to_next,
                   json.dumps(entity.attributes), json.dumps(entity.combat_stats),
@@ -406,7 +415,7 @@ class DataManager:
                   json.dumps(entity.skills), json.dumps(entity.tags),
                   entity.enemy_type, entity.experience_reward,
                   entity.ai_behavior, json.dumps(entity.loot_table),
-                  json.dumps(entity.phases)))
+                  json.dumps(entity.phases), entity.hex_id))
         
         conn.commit()
         conn.close()
@@ -468,6 +477,43 @@ class DataManager:
                     results.append(entity)
         
         return results
+    
+    def insert_item(self, item: ItemData) -> bool:
+        """Добавить предмет в базу данных"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO items (
+                    id, name, description, type, slot, rarity, level_requirement,
+                    base_damage, attack_speed, defense, damage_type, element,
+                    element_damage, range, cost, mana_cost, critical_chance,
+                    weight, block_chance, heal_amount, heal_percent, mana_amount,
+                    mana_percent, duration, cooldown, durability, max_durability,
+                    effects, modifiers, tags, resist_mod, weakness_mod, elemental_resistance, hex_id
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (item.id, item.name, item.description, item.type, item.slot,
+                  item.rarity, item.level_requirement, item.base_damage,
+                  item.attack_speed, item.defense, item.damage_type, item.element,
+                  item.element_damage, item.range, item.cost, item.mana_cost,
+                  item.critical_chance, item.weight, item.block_chance, item.heal_amount,
+                  item.heal_percent, item.mana_amount, item.mana_percent, item.duration,
+                  item.cooldown, item.durability, item.max_durability, json.dumps(item.effects),
+                  json.dumps(item.modifiers), json.dumps(item.tags),
+                  json.dumps(item.resist_mod), json.dumps(item.weakness_mod),
+                  json.dumps(item.elemental_resistance), item.hex_id))
+            
+            conn.commit()
+            conn.close()
+            
+            # Добавляем в память
+            self.items[item.id] = item
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления предмета: {e}")
+            return False
 
 
 # Глобальный экземпляр менеджера данных
