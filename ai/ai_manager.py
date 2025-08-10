@@ -60,6 +60,11 @@ class AIManager:
         
         logger.info("AI Manager инициализирован")
     
+    def initialize(self):
+        """Инициализация AI Manager (для совместимости)"""
+        logger.info("AI Manager уже инициализирован")
+        return True
+
     def register_entity(self, entity, ai_core: AICore) -> bool:
         """Регистрирует сущность в AI системе"""
         try:
