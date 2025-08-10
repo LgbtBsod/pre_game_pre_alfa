@@ -115,3 +115,11 @@ class Effect:
                 if elapsed >= modifier['duration']:
                     return True
         return False
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Effect':
+        """Создать эффект из словаря."""
+        effect_id = data.get('id', 'unknown')
+        tags = data.get('tags', [])
+        modifiers = data.get('modifiers', [])
+        return cls(effect_id, tags, modifiers)

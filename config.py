@@ -1,10 +1,10 @@
-"""Константы конфигурации без инициализации графических библиотек."""
+"""Configuration constants without initializing graphics libraries."""
 
-# Настройки окна
+# Window settings
 WIDTH, HEIGHT = 1200, 800
-TILE_SIZE = 40  # Размер одного тайла в пикселях
+TILE_SIZE = 40  # Size of one tile in pixels
 
-# Цвета (RGB кортежи)
+# Colors (RGB tuples)
 BACKGROUND = (30, 35, 45)
 GRID_COLOR = (60, 70, 90)
 PLAYER_COLOR = (80, 180, 255)

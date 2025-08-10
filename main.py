@@ -1,834 +1,803 @@
+# -*- coding: utf-8 -*-
 import random
 import time
-import tkinter as tk
 import json
 import os
+import sys
+from direct.showbase.ShowBase import ShowBase
+from direct.task import Task
+# Fix imports for Panda3D 1.10.15
+from direct.gui.DirectGui import DirectButton, DirectLabel, DirectEntry, DirectOptionMenu
+from direct.gui.OnscreenText import OnscreenText
+
+# Aliases for compatibility
+OnscreenButton = DirectButton
+
+from panda3d.core import (
+    WindowProperties, Vec3, Vec2, Point3, Point2, 
+    TextNode, TransparencyAttrib, AntialiasAttrib,
+    DirectionalLight, AmbientLight, Spotlight, PerspectiveLens,
+    CollisionTraverser, CollisionHandlerQueue, CollisionNode,
+    CollisionSphere, CollisionBox, CollisionRay, CollisionHandlerPusher,
+    BitMask32, PandaNode, NodePath, PandaNode, PandaNode
+)
 from entities.player import Player
-from entities.enemy import Enemy
-from entities.boss import Boss
+from entities.enemy import Enemy, EnemyGenerator
+from entities.boss import Boss, BossGenerator
+from entities.entity_factory import EntityFactory
 from items.weapon import WeaponGenerator
 from ai.cooperation import AICoordinator
 from map.tiled_map import TiledMap
-import config
+from ai.advanced_ai import AdvancedAIController
+from ai.behavior_tree import BehaviorTree
+from ai.memory import AIMemory, LearningController
+from ai.emotion_genetics import EmotionGeneticSynthesizer
+from ai.pattern_recognizer import PatternRecognizer
+from ai.learning import PlayerLearning
+from ai.decision_maker import PlayerDecisionMaker
+from core.skill_system import SkillSystem
+from core.leveling_system import LevelingSystem
+from core.ai_update_scheduler import AIUpdateScheduler
+from config.game_constants import *
+from utils.game_utils import *
 
 
-def rgb_to_hex(color_tuple):
-    r, g, b = color_tuple
-    return f"#{int(r):02x}{int(g):02x}{int(b):02x}"
-
-
-class TkGame:
-    def __init__(self, width: int = 1200, height: int = 800):
+class Panda3DGame(ShowBase):
+    def __init__(self):
+        super().__init__()
+        
+        # Game variables
         self.show_menu = True
         self.paused = False
         self.save_file = "save_game.json"
-        
-        self.root = tk.Tk()
-        self.root.title("Автономный ИИ-выживач (Tkinter)")
-        # Используем значения окна из config по умолчанию
-        self.width = width or config.WIDTH
-        self.height = height or config.HEIGHT
-        self.canvas = tk.Canvas(self.root, width=self.width, height=self.height, bg=rgb_to_hex(config.BACKGROUND))
-        self.canvas.pack(fill=tk.BOTH, expand=True)
-
-        # Загрузка предметов
-        self.load_items()
-        
         self.running = True
         self.last_time = time.time()
         self.victory_shown = False
         self.reincarnation_count = 0
         self.generation_count = 0
         self.session_start_time = time.time()
-
-        # Карта
-        self.map_view_x = 0
-        self.map_view_y = 0
-        self.tiled_map = None
         
-        # Настройки игры (меняются в меню)
+        # Game settings
         self.settings = {
-            "difficulty": "normal",        # easy | normal | hard
-            "learning_rate": 1.0,            # скорость обучения игрока
-            "window_size": (self.width, self.height),
+            "difficulty": "normal",
+            "learning_rate": 1.0,
+            "window_size": (1024, 768),
         }
         
-        # Динамические данные для кликов по меню/настройкам
-        self.menu_buttons = []  # [{label, action, x0,x1,y0,y1}]
-        self.settings_controls = []  # [{key, type, x0,x1,y0,y1, value/index}]
+        # Game objects
+        self.player = None
+        self.enemies = []
+        self.boss = None
+        self.tiled_map = None
+        self.user_obstacles = set()
+        self.chests = []
         
-        # Инициализация игры
-        if self.show_menu:
-            self.show_main_menu()
-        else:
-            self.init_game()
+        # AI systems
+        self.coordinator = None
+        self.ai_scheduler = None
+        self.skill_system = None
+        self.leveling_system = None
+        self.player_leveling = None
+        self.player_ai_memory = None
+        self.player_learning = None
+        self.player_decision_maker = None
+        self.emotion_synthesizer = None
+        self.pattern_recognizer = None
+        
+        # UI elements
+        self.menu_buttons = []
+        self.settings_controls = []
+        self.ui_elements = []
+        
+        # Load items
+        self.load_items()
+        
+        # Setup lighting
+        self.setup_lighting()
+        
+        # Setup camera
+        self.setup_camera()
+        
+        # Setup window
+        self.setup_window()
+        
+        # Setup collisions
+        self.setup_collisions()
+        
+        # Setup controls
+        self.setup_controls()
+        
+        # Show main menu
+        self.show_main_menu()
+        
+        # Setup AI update scheduler
+        self.ai_scheduler = AIUpdateScheduler()
+        
+        # Register AI systems
+        if hasattr(self, 'ai_scheduler') and self.ai_scheduler:
+            self.ai_scheduler.register_system("player_ai", self._update_player_ai, 0.1)
+            self.ai_scheduler.register_system("enemy_ai", self._update_enemy_ai, 0.2)
+            self.ai_scheduler.register_system("boss_ai", self._update_boss_ai, 0.3)
+            self.ai_scheduler.register_system("coordination", self._update_coordination, 0.5)
+            self.ai_scheduler.register_system("pattern_analysis", self._update_patterns, 1.0)
+            self.ai_scheduler.register_system("emotion_synthesis", self._update_emotions, 2.0)
+    
+    def setup_window(self):
+        """Setup game window"""
+        props = WindowProperties()
+        props.setTitle("Autonomous AI Survivor (Panda3D)")
+        props.setSize(self.settings["window_size"][0], self.settings["window_size"][1])
+        props.setCursorHidden(False)
+        props.setIconFilename("icon.ico")  # if icon exists
+        
+        self.win.requestProperties(props)
+        
+        # Setup renderer
+        self.render.setAntialias(AntialiasAttrib.MAuto)
+    
+    def setup_lighting(self):
+        """Setup scene lighting"""
+        # Main directional light
+        dlight = DirectionalLight('dlight')
+        dlight.setColor((0.8, 0.8, 0.8, 1))
+        dlnp = self.render.attachNewNode(dlight)
+        dlnp.setHpr(45, -45, 0)
+        self.render.setLight(dlnp)
+        
+        # Ambient light
+        alight = AmbientLight('alight')
+        alight.setColor((0.2, 0.2, 0.2, 1))
+        alnp = self.render.attachNewNode(alight)
+        self.render.setLight(alnp)
+    
+    def setup_camera(self):
+        """Setup camera"""
+        # Camera follows player
+        self.camera.setPos(0, -50, 30)
+        self.camera.lookAt(0, 0, 0)
+        
+        # Setup lens
+        lens = self.cam.node().getLens()
+        lens.setFov(60)
+        lens.setNear(0.1)
+        lens.setFar(1000)
+    
+    def setup_collisions(self):
+        """Setup collision system"""
+        self.cTrav = CollisionTraverser()
+        self.cHandler = CollisionHandlerQueue()
+        
+        # Collision groups
+        self.player_collision_group = BitMask32.bit(0)
+        self.enemy_collision_group = BitMask32.bit(1)
+        self.obstacle_collision_group = BitMask32.bit(2)
+        self.chest_collision_group = BitMask32.bit(3)
     
     def load_items(self):
-        """Загрузка предметов из JSON"""
+        """Load items from JSON"""
         try:
             with open("items/items.json", "r", encoding="utf-8") as f:
                 self.items_data = json.load(f)
         except Exception as e:
-            print(f"Ошибка загрузки предметов: {e}")
+            print(f"Error loading items: {e}")
             self.items_data = {}
     
     def show_main_menu(self):
-        """Показать главное меню"""
-        # Снимаем потенциальные старые бинды
-        self.root.unbind("<Key>")
-        self.canvas.unbind("<Button-1>")
-        self.canvas.unbind("<Button-3>")
+        """Show main menu"""
+        self.clear_ui()
         
-        self.canvas.delete("all")
-        self.menu_buttons = []
-        
-        # Заголовок
-        self.canvas.create_text(
-            self.width // 2, 100,
-            text="Автономный ИИ-выживач",
-            fill=rgb_to_hex((255, 215, 0)),
-            font=("Arial", 32, "bold")
+        # Title
+        title = DirectLabel(
+            text="Autonomous AI Survivor",
+            pos=(0, 0, 0.7),
+            scale=0.08,
+            text_fg=(1, 0.84, 0, 1),  # Gold color
+            text_align=TextNode.ACenter
         )
+        self.ui_elements.append(title)
         
-        # Кнопки
-        button_y = 250
-        button_spacing = 80
-        button_height = 50
-        button_half_w = 100
-        x0 = self.width // 2 - button_half_w
-        x1 = self.width // 2 + button_half_w
+        # Menu buttons
+        button_data = [
+            ("New Game", self.start_new_game, (0.2, 0.6, 0.2, 1)),
+            ("Load Game", self.load_game, (0.4, 0.4, 0.8, 1)),
+            ("Settings", self.show_settings, (0.8, 0.6, 0.2, 1)),
+            ("Exit", self.stop, (0.8, 0.2, 0.2, 1))
+        ]
         
-        def add_button(label, action, fill, outline):
-            nonlocal button_y
-            y0, y1 = button_y, button_y + button_height
-            self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex(fill), outline=rgb_to_hex(outline))
-            self.canvas.create_text(self.width // 2, (y0 + y1) // 2, text=label, fill=rgb_to_hex((255, 255, 255)), font=("Arial", 16, "bold"))
-            self.menu_buttons.append({"label": label, "action": action, "x0": x0, "x1": x1, "y0": y0, "y1": y1})
-            button_y += button_spacing
-        
-        add_button("Новая игра", "new_game", (50, 150, 50), (100, 200, 100))
-        add_button("Загрузить игру", "load_game", (100, 100, 200), (150, 150, 250))
-        add_button("Настройки", "settings", (200, 150, 50), (250, 200, 100))
-        add_button("Выход", "exit", (200, 50, 50), (250, 100, 100))
-        
-        # Привязка событий мыши
-        self.canvas.bind("<Button-1>", self._on_menu_click)
+        for i, (text, command, color) in enumerate(button_data):
+            button = OnscreenButton(
+                text=text,
+                pos=(0, 0, 0.3 - i * 0.15),
+                scale=0.05,
+                command=command,
+                frameColor=color,
+                text_fg=(1, 1, 1, 1),
+                text_scale=0.8
+            )
+            self.ui_elements.append(button)
     
-    def _on_menu_click(self, event):
-        """Обработка кликов в главном меню"""
-        x, y = event.x, event.y
-        for btn in self.menu_buttons:
-            if btn["x0"] <= x <= btn["x1"] and btn["y0"] <= y <= btn["y1"]:
-                action = btn["action"]
-                if action == "new_game":
-                    self.show_menu = False
-                    self.init_game()
-                elif action == "load_game":
-                    self.load_game()
-                elif action == "settings":
-                    self.show_settings()
-                elif action == "exit":
-                    self.stop()
-                return
+    def clear_ui(self):
+        """Clear all UI elements"""
+        for element in self.ui_elements:
+            element.destroy()
+        self.ui_elements.clear()
+    
+    def start_new_game(self):
+        """Start new game"""
+        self.show_menu = False
+        self.clear_ui()
+        self.init_game()
+    
+    def show_settings(self):
+        """Show settings"""
+        self.clear_ui()
+        
+        # Settings title
+        title = DirectLabel(
+            text="Settings",
+            pos=(0, 0, 0.7),
+            scale=0.06,
+            text_fg=(1, 1, 1, 1),
+            text_align=TextNode.ACenter
+        )
+        self.ui_elements.append(title)
+        
+        # Difficulty
+        difficulty_label = DirectLabel(
+            text="Difficulty:",
+            pos=(-0.6, 0, 0.5),
+            scale=0.04,
+            text_fg=(1, 1, 1, 1),
+            text_align=TextNode.ALeft
+        )
+        self.ui_elements.append(difficulty_label)
+        
+        difficulties = ["easy", "normal", "hard"]
+        current_idx = max(0, difficulties.index(self.settings.get("difficulty", "normal")))
+        
+        if DirectOptionMenu:
+            difficulty_menu = DirectOptionMenu(
+                pos=(0, 0, 0.5),
+                scale=0.04,
+                items=difficulties,
+                initialitem=current_idx,
+                command=self.set_difficulty
+            )
+            self.ui_elements.append(difficulty_menu)
+        else:
+            # Alternative if DirectOptionMenu is not available
+            difficulty_text = DirectLabel(
+                text=f"Difficulty: {self.settings.get('difficulty', 'normal')}",
+                pos=(0, 0, 0.5),
+                scale=0.04,
+                text_fg=(1, 1, 1, 1),
+                text_align=TextNode.ACenter
+            )
+            self.ui_elements.append(difficulty_text)
+        
+        # Learning rate
+        learning_label = DirectLabel(
+            text="Learning Rate:",
+            pos=(-0.6, 0, 0.3),
+            scale=0.04,
+            text_fg=(1, 1, 1, 1),
+            text_align=TextNode.ALeft
+        )
+        self.ui_elements.append(learning_label)
+        
+        if DirectEntry:
+            learning_entry = DirectEntry(
+                pos=(0, 0, 0.3),
+                scale=0.04,
+                width=10,
+                text=str(self.settings.get("learning_rate", 1.0)),
+                command=self.set_learning_rate
+            )
+            self.ui_elements.append(learning_entry)
+        else:
+            # Alternative if DirectEntry is not available
+            learning_text = DirectLabel(
+                text=f"Speed: {self.settings.get('learning_rate', 1.0)}",
+                pos=(0, 0, 0.3),
+                scale=0.04,
+                text_fg=(1, 1, 1, 1),
+                text_align=TextNode.ACenter
+            )
+            self.ui_elements.append(learning_text)
+        
+        # Control buttons
+        apply_button = OnscreenButton(
+            text="Apply",
+            pos=(-0.2, 0, -0.2),
+            scale=0.04,
+            command=self.apply_settings,
+            frameColor=(0.2, 0.6, 0.2, 1)
+        )
+        self.ui_elements.append(apply_button)
+        
+        back_button = OnscreenButton(
+            text="Back",
+            pos=(0.2, 0, -0.2),
+            scale=0.04,
+            command=self.show_main_menu,
+            frameColor=(0.6, 0.4, 0.2, 1)
+        )
+        self.ui_elements.append(back_button)
+    
+    def set_difficulty(self, difficulty):
+        """Set difficulty"""
+        self.settings["difficulty"] = difficulty
+    
+    def set_learning_rate(self, rate):
+        """Set learning rate"""
+        try:
+            self.settings["learning_rate"] = float(rate)
+        except ValueError:
+            pass
+    
+    def apply_settings(self):
+        """Apply settings"""
+        # Add logic for applying settings here
+        self.show_main_menu()
     
     def init_game(self):
-        """Инициализация игры"""
+        """Game initialization"""
         try:
-            # Пользовательская карта
+            # User map
             self.tiled_map = TiledMap("map/map.json")
         except Exception:
             self.tiled_map = None
 
-        # Сущности
+        # Entities
         self.player = self._create_player()
         self.enemies = self._create_enemies()
         self.boss = self._create_boss()
 
-        # Оружие игроку
+        # Weapon for player
         if not self.player.equipment.get("weapon"):
             starter_weapon = WeaponGenerator.generate_weapon(1)
             self.player.equip_item(starter_weapon)
 
-        # AI координатор
+        # AI coordinator
         self.coordinator = AICoordinator()
         for enemy in self.enemies:
             self.coordinator.register_entity(enemy, "enemy_group")
         if self.boss:
             self.coordinator.register_entity(self.boss, "boss_group")
 
-        # Пользовательские объекты на карте
-        self.user_obstacles = set()  # {(tx, ty)}
-        self.chests = []  # [{"tx": int, "ty": int, "opened": bool}]
-
-        # Ввод
-        self.root.bind("<Escape>", lambda e: self.stop())
-        self.root.bind("<space>", lambda e: self.soft_restart())
-        self.root.bind("<p>", lambda e: self.toggle_pause())
-        self.canvas.bind("<Button-1>", self._on_left_click)
-        self.canvas.bind("<Button-3>", self._on_right_click)
-
-        # Камера к центру карты
-        self._center_initial_camera()
-
-        # Применяем настройки: скорость обучения игрока
-        try:
-            lr = float(self.settings.get("learning_rate", 1.0))
-            self.player.learning_rate = max(0.01, lr)
-        except Exception:
-            self.player.learning_rate = 1.0
+        # Initialize AI modules
+        self.skill_system = SkillSystem()
+        self.leveling_system = LevelingSystem()
         
-        # Старт цикла
-        self.root.after(16, self.game_loop)
+        # Initialize leveling system for player
+        self.player_leveling = LevelingSystem(self.player)
+        
+        # Initialize AI for player
+        self.player_ai_memory = AIMemory()
+        self.player_learning = PlayerLearning(self.player, self.player_ai_memory)
+        self.player_decision_maker = PlayerDecisionMaker(self.player, self.player_ai_memory)
+        
+        # Initialize emotions and patterns
+        self.emotion_synthesizer = EmotionGeneticSynthesizer(self.player, {}, {}, {})
+        self.pattern_recognizer = PatternRecognizer()
+        
+        # Register AI updates
+        self.ai_scheduler.register_entity(self.player, self.player_learning.update)
+        self.ai_scheduler.register_entity(self.player, self.player_decision_maker.update)
+        
+        # Initialize skills for player
+        self.skill_system.add_skill_to_entity(self.player, "whirlwind_attack")
+        self.skill_system.add_skill_to_entity(self.player, "healing_light")
+
+        # Create 3D representations of entities
+        self._create_3d_entities()
+        
+        # Setup controls
+        self.setup_controls()
+        
+        # Start game loop
+        self.taskMgr.add(self.game_loop, "game_loop")
     
-    def load_game(self):
-        """Загрузка сохраненной игры"""
-        if os.path.exists(self.save_file):
-            try:
-                with open(self.save_file, "r", encoding="utf-8") as f:
-                    save_data = json.load(f)
-                
-                self.show_menu = False
-                self.init_game()
-                
-                # Восстановление состояния
-                self.reincarnation_count = save_data.get("reincarnation_count", 0)
-                self.generation_count = save_data.get("generation_count", 0)
-                self.session_start_time = save_data.get("session_start_time", time.time())
-                
-                # Восстановление игрока
-                if "player" in save_data:
-                    player_data = save_data["player"]
-                    self.player.health = player_data.get("health", self.player.max_health)
-                    self.player.level = player_data.get("level", 1)
-                    self.player.learning_rate = player_data.get("learning_rate", 1.0)
-                    self.player.position = player_data.get("position", [self.width // 2, self.height // 2])
-                
-                # Восстановление препятствий и сундуков
-                self.user_obstacles = set(tuple(obs) for obs in save_data.get("obstacles", []))
-                self.chests = save_data.get("chests", [])
-                
-                print("Игра загружена успешно")
-            except Exception as e:
-                print(f"Ошибка загрузки: {e}")
-                self.show_menu = True
-                self.show_main_menu()
-        else:
-            print("Сохранение не найдено")
-            self.show_menu = True
-            self.show_main_menu()
-    
-    def save_game(self):
-        """Сохранение игры"""
-        try:
-            save_data = {
-                "reincarnation_count": self.reincarnation_count,
-                "generation_count": self.generation_count,
-                "session_start_time": self.session_start_time,
-                "player": {
-                    "health": self.player.health,
-                    "level": self.player.level,
-                    "learning_rate": self.player.learning_rate,
-                    "position": self.player.position
-                },
-                "obstacles": list(self.user_obstacles),
-                "chests": self.chests
-            }
+    def _create_3d_entities(self):
+        """Create 3D representations for entities"""
+        # Create simple geometric shapes for entities
+        
+        # Player (blue cube)
+        player_model = self.loader.loadModel("models/box")  # Load base model
+        if not player_model:
+            # If model not found, create a simple cube
+            player_model = self.create_simple_cube()
+        
+        player_model.setColor(0, 0.4, 1, 1)  # Blue color
+        player_model.setPos(self.player.position[0], self.player.position[1], 0)
+        player_model.reparentTo(self.render)
+        self.player.model = player_model
+        
+        # Enemies (red cubes)
+        for enemy in self.enemies:
+            enemy_model = self.loader.loadModel("models/box")
+            if not enemy_model:
+                enemy_model = self.create_simple_cube()
             
-            with open(self.save_file, "w", encoding="utf-8") as f:
-                json.dump(save_data, f, indent=2)
+            if enemy.enemy_type == "warrior":
+                enemy_model.setColor(1, 0.2, 0.2, 1)  # Red
+            elif enemy.enemy_type == "archer":
+                enemy_model.setColor(0.8, 0.2, 0.6, 1)  # Pink
+            else:
+                enemy_model.setColor(0.2, 0.6, 1, 1)  # Cyan
             
-            print("Игра сохранена")
-        except Exception as e:
-            print(f"Ошибка сохранения: {e}")
+            enemy_model.setPos(enemy.position[0], enemy.position[1], 0)
+            enemy_model.reparentTo(self.render)
+            enemy.model = enemy_model
+        
+        # Boss (larger orange cube)
+        if self.boss:
+            boss_model = self.loader.loadModel("models/box")
+            if not boss_model:
+                boss_model = self.create_simple_cube()
+            
+            boss_model.setColor(1, 0.65, 0, 1)  # Orange
+            boss_model.setScale(1.5)  # Larger than regular enemies
+            boss_model.setPos(self.boss.position[0], self.boss.position[1], 0)
+            boss_model.reparentTo(self.render)
+            self.boss.model = boss_model
     
-    def toggle_pause(self):
-        """Переключение паузы"""
-        self.paused = not self.paused
-        if self.paused:
-            self.show_pause_menu()
-        else:
-            self.canvas.delete("pause_menu")
-            self.root.after(16, self.game_loop)
+    def create_simple_cube(self):
+        """Create a simple cube if models are not found"""
+        # Create simple cube geometry
+        from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
+        from panda3d.core import GeomVertexWriter, GeomTriangles, GeomNode
+        
+        # Cube vertices
+        vertices = [
+            -0.5, -0.5, -0.5,  # 0
+             0.5, -0.5, -0.5,  # 1
+             0.5,  0.5, -0.5,  # 2
+            -0.5,  0.5, -0.5,  # 3
+            -0.5, -0.5,  0.5,  # 4
+             0.5, -0.5,  0.5,  # 5
+             0.5,  0.5,  0.5,  # 6
+            -0.5,  0.5,  0.5   # 7
+        ]
+        
+        # Indices for triangles
+        indices = [
+            0, 1, 2, 0, 2, 3,  # front face
+            1, 5, 6, 1, 6, 2,  # right face
+            5, 4, 7, 5, 7, 6,  # back face
+            4, 0, 3, 4, 3, 7,  # left face
+            3, 2, 6, 3, 6, 7,  # top face
+            4, 5, 1, 4, 1, 0   # bottom face
+        ]
+        
+        # Create geometry
+        format = GeomVertexFormat.getV3()
+        vdata = GeomVertexData('cube', format, Geom.UHStatic)
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        
+        for i in range(0, len(vertices), 3):
+            vertex.addData3(vertices[i], vertices[i+1], vertices[i+2])
+        
+        # Create triangles
+        tris = GeomTriangles(Geom.UHStatic)
+        for i in range(0, len(indices), 3):
+            tris.addVertices(indices[i], indices[i+1], indices[i+2])
+        
+        tris.closePrimitive()
+        
+        # Create geometry
+        geom = Geom(vdata)
+        geom.addPrimitive(tris)
+        
+        # Create node
+        node = GeomNode('cube')
+        node.addGeom(geom)
+        
+        return NodePath(node)
     
-    def show_pause_menu(self):
-        """Показать меню паузы"""
-        self.canvas.create_rectangle(
-            0, 0, self.width, self.height,
-            fill=rgb_to_hex((0, 0, 0)), stipple="gray50",
-            tags="pause_menu"
-        )
+    def setup_controls(self):
+        """Setup controls"""
+        # Keyboard handling
+        self.accept("escape", self.stop)
+        self.accept("space", self.soft_restart)
+        self.accept("p", self.toggle_pause)
+        self.accept("1", lambda: self._use_skill("whirlwind_attack"))
+        self.accept("2", lambda: self._use_skill("healing_light"))
         
-        # Заголовок паузы
-        self.canvas.create_text(
-            self.width // 2, 200,
-            text="ПАУЗА",
-            fill=rgb_to_hex((255, 215, 0)),
-            font=("Arial", 36, "bold"),
-            tags="pause_menu"
-        )
-        
-        # Кнопки паузы
-        button_y = 300
-        button_spacing = 60
-        
-        # Продолжить
-        self.canvas.create_rectangle(
-            self.width // 2 - 100, button_y,
-            self.width // 2 + 100, button_y + 40,
-            fill=rgb_to_hex((50, 150, 50)), outline=rgb_to_hex((100, 200, 100)),
-            tags="pause_menu"
-        )
-        self.canvas.create_text(
-            self.width // 2, button_y + 20,
-            text="Продолжить",
-            fill=rgb_to_hex((255, 255, 255)),
-            font=("Arial", 14, "bold"),
-            tags="pause_menu"
-        )
-        
-        # Сохранить
-        button_y += button_spacing
-        self.canvas.create_rectangle(
-            self.width // 2 - 100, button_y,
-            self.width // 2 + 100, button_y + 40,
-            fill=rgb_to_hex((100, 100, 200)), outline=rgb_to_hex((150, 150, 250)),
-            tags="pause_menu"
-        )
-        self.canvas.create_text(
-            self.width // 2, button_y + 20,
-            text="Сохранить",
-            fill=rgb_to_hex((255, 255, 255)),
-            font=("Arial", 14, "bold"),
-            tags="pause_menu"
-        )
-        
-        # Главное меню
-        button_y += button_spacing
-        self.canvas.create_rectangle(
-            self.width // 2 - 100, button_y,
-            self.width // 2 + 100, button_y + 40,
-            fill=rgb_to_hex((200, 150, 50)), outline=rgb_to_hex((250, 200, 100)),
-            tags="pause_menu"
-        )
-        self.canvas.create_text(
-            self.width // 2, button_y + 20,
-            text="Главное меню",
-            fill=rgb_to_hex((255, 255, 255)),
-            font=("Arial", 14, "bold"),
-            tags="pause_menu"
-        )
-        
-        # Привязка событий паузы
-        self.canvas.bind("<Button-1>", self._on_pause_click)
+        # Mouse handling
+        self.accept("mouse1", self._on_left_click)
+        self.accept("mouse3", self._on_right_click)
     
-    def _on_pause_click(self, event):
-        """Обработка кликов в меню паузы"""
-        x, y = event.x, event.y
-        
-        # Продолжить
-        if 300 <= y <= 340:
-            self.paused = False
-            self.canvas.delete("pause_menu")
-            self.canvas.bind("<Button-1>", self._on_left_click)
-            self.root.after(16, self.game_loop)
-        # Сохранить
-        elif 360 <= y <= 400:
-            self.save_game()
-        # Главное меню
-        elif 420 <= y <= 460:
-            self.show_menu = True
-            self.paused = False
-            self.show_main_menu()
-    
-    def show_settings(self):
-        """Показать настройки (сложность, скорость обучения, размер окна)."""
-        # Снимаем старые бинды
-        self.root.unbind("<Key>")
-        self.canvas.unbind("<Button-1>")
-        
-        self.canvas.delete("all")
-        self.settings_controls = []
-        
-        # Заголовок настроек
-        self.canvas.create_text(
-            self.width // 2, 100,
-            text="Настройки",
-            fill=rgb_to_hex((255, 215, 0)),
-            font=("Arial", 28, "bold")
-        )
-        
-        left_x = self.width // 2 - 250
-        right_x = self.width // 2 + 250
-        row_y = 200
-        row_step = 90
-        
-        # Сложность
-        self.canvas.create_text(left_x, row_y, text="Сложность:", fill="#ddd", font=("Arial", 16, "bold"), anchor="w")
-        difficulties = ["easy", "normal", "hard"]
-        current_idx = max(0, difficulties.index(self.settings.get("difficulty", "normal")))
-        btn_w, btn_h = 120, 40
-        gap = 20
-        x_cursor = left_x + 150
-        for i, lvl in enumerate(difficulties):
-            x0, y0 = x_cursor + i * (btn_w + gap), row_y - btn_h // 2
-            x1, y1 = x0 + btn_w, y0 + btn_h
-            fill = (90, 110, 150) if i == current_idx else (70, 90, 120)
-            self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex(fill), outline="#99a")
-            self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text=lvl.capitalize(), fill="#eee", font=("Arial", 14, "bold"))
-            self.settings_controls.append({"key": "difficulty", "type": "choice", "value": lvl, "x0": x0, "x1": x1, "y0": y0, "y1": y1})
-        
-        # Скорость обучения
-        row_y += row_step
-        self.canvas.create_text(left_x, row_y, text="Скорость обучения:", fill="#ddd", font=("Arial", 16, "bold"), anchor="w")
-        val = float(self.settings.get("learning_rate", 1.0))
-        # Минус
-        x0, y0 = left_x + 300, row_y - 20
-        x1, y1 = x0 + 40, y0 + 40
-        self.canvas.create_rectangle(x0, y0, x1, y1, fill="#566", outline="#99a")
-        self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text="-", fill="#eef", font=("Arial", 18, "bold"))
-        self.settings_controls.append({"key": "learning_rate", "type": "dec", "x0": x0, "x1": x1, "y0": y0, "y1": y1})
-        # Значение
-        val_box_x0 = x1 + 10
-        val_box_x1 = val_box_x0 + 120
-        self.canvas.create_rectangle(val_box_x0, y0, val_box_x1, y1, outline="#99a")
-        self.canvas.create_text((val_box_x0 + val_box_x1) // 2, (y0 + y1) // 2, text=f"{val:.2f}", fill="#eef", font=("Arial", 14))
-        # Плюс
-        x0p = val_box_x1 + 10
-        x1p = x0p + 40
-        self.canvas.create_rectangle(x0p, y0, x1p, y1, fill="#566", outline="#99a")
-        self.canvas.create_text((x0p + x1p) // 2, (y0 + y1) // 2, text="+", fill="#eef", font=("Arial", 18, "bold"))
-        self.settings_controls.append({"key": "learning_rate", "type": "inc", "x0": x0p, "x1": x1p, "y0": y0, "y1": y1})
-        
-        # Размер окна (пресеты)
-        row_y += row_step
-        self.canvas.create_text(left_x, row_y, text="Размер окна:", fill="#ddd", font=("Arial", 16, "bold"), anchor="w")
-        sizes = [(1024, 768), (1200, 800), (1600, 900)]
-        cur_w, cur_h = self.settings.get("window_size", (self.width, self.height))
-        x_cursor = left_x + 150
-        for i, (w, h) in enumerate(sizes):
-            x0, y0 = x_cursor + i * (btn_w + gap), row_y - btn_h // 2
-            x1, y1 = x0 + btn_w, y0 + btn_h
-            is_sel = (w, h) == (cur_w, cur_h)
-            fill = (90, 110, 150) if is_sel else (70, 90, 120)
-            self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex(fill), outline="#99a")
-            self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text=f"{w}x{h}", fill="#eee", font=("Arial", 14))
-            self.settings_controls.append({"key": "window_size", "type": "choice", "value": (w, h), "x0": x0, "x1": x1, "y0": y0, "y1": y1})
-        
-        # Кнопки управления
-        row_y += row_step + 30
-        ctrl_btn_w, ctrl_btn_h = 160, 48
-        cx = self.width // 2
-        # Применить
-        x0, y0 = cx - ctrl_btn_w - 20, row_y
-        x1, y1 = x0 + ctrl_btn_w, y0 + ctrl_btn_h
-        self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex((50, 150, 50)), outline="#9c9")
-        self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text="Применить", fill="#fff", font=("Arial", 16, "bold"))
-        self.settings_controls.append({"key": "apply", "type": "action", "x0": x0, "x1": x1, "y0": y0, "y1": y1})
-        # Назад
-        x0, y0 = cx + 20, row_y
-        x1, y1 = x0 + ctrl_btn_w, y0 + ctrl_btn_h
-        self.canvas.create_rectangle(x0, y0, x1, y1, fill=rgb_to_hex((200, 150, 50)), outline="#cc9")
-        self.canvas.create_text((x0 + x1) // 2, (y0 + y1) // 2, text="Назад", fill="#fff", font=("Arial", 16, "bold"))
-        self.settings_controls.append({"key": "back", "type": "action", "x0": x0, "x1": x1, "y0": y0, "y1": y1})
-        
-        # Обработчик кликов по настройкам
-        self.canvas.bind("<Button-1>", self._on_settings_click)
-
-    def _on_settings_click(self, event):
-        x, y = event.x, event.y
-        for ctrl in self.settings_controls:
-            if ctrl["x0"] <= x <= ctrl["x1"] and ctrl["y0"] <= y <= ctrl["y1"]:
-                key = ctrl["key"]
-                ctype = ctrl["type"]
-                if ctype == "choice":
-                    self.settings[key] = ctrl.get("value")
-                    # Перерисовать, чтобы подсветить выбранное
-                    self.show_settings()
-                    return
-                if key == "learning_rate":
-                    cur = float(self.settings.get("learning_rate", 1.0))
-                    if ctype == "inc":
-                        cur = min(5.0, cur + 0.1)
-                    elif ctype == "dec":
-                        cur = max(0.1, cur - 0.1)
-                    self.settings["learning_rate"] = round(cur, 2)
-                    self.show_settings()
-                    return
-                if ctype == "action":
-                    if key == "apply":
-                        self._apply_settings()
-                        self.show_main_menu()
-                        return
-                    if key == "back":
-                        self.show_main_menu()
-                        return
-        
-    def _apply_settings(self):
-        # Применяем размер окна и фон
-        new_w, new_h = self.settings.get("window_size", (self.width, self.height))
-        if (new_w, new_h) != (self.width, self.height):
-            self.width, self.height = int(new_w), int(new_h)
-            try:
-                self.root.geometry(f"{self.width}x{self.height}")
-            except Exception:
-                pass
-            self.canvas.config(width=self.width, height=self.height)
-        # Обновим config, чтобы сохранить согласованность
-        try:
-            config.WIDTH, config.HEIGHT = self.width, self.height
-        except Exception:
-            pass
-        # Обновим фон в соответствии с config
-        try:
-            self.canvas.config(bg=rgb_to_hex(config.BACKGROUND))
-        except Exception:
-            pass
-    
-    def _return_to_main_menu(self, event):
-        """Возврат в главное меню из настроек"""
-        self.root.unbind("<Key>")  # Отвязываем обработчик
-        self.show_main_menu()
-
-    # --- Инициализация сущностей ---
     def _create_player(self) -> Player:
+        """Create player"""
         if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
             map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
             map_px_h = self.tiled_map.height * self.tiled_map.tileheight
             start_x = map_px_w // 2
             start_y = map_px_h // 2
         else:
-            start_x = self.width // 2
-            start_y = self.height // 2
-        player = Player("player_ai", (start_x, start_y))
-        # Значение будет скорректировано в init_game() из self.settings
+            start_x = 0
+            start_y = 0
+        
+        player = EntityFactory.create_player("player_ai", (start_x, start_y))
         player.learning_rate = float(self.settings.get("learning_rate", 1.0))
-        # Убеждаемся, что combat_stats инициализированы правильно
-        if "max_health" not in player.combat_stats:
-            player.combat_stats["max_health"] = 100
-        if "health" not in player.combat_stats:
-            player.combat_stats["health"] = 100
+        
+        # Set base health values via component
+        combat_component = player.component_manager.get_component("CombatStatsComponent")
+        if combat_component:
+            combat_component.stats.max_health = 100
+            combat_component.stats.health = 100
+        
         return player
-
+    
     def _create_enemies(self) -> list:
+        """Create enemies"""
         enemy_list = []
         enemy_types = ["warrior", "archer", "mage"]
-        # Увеличиваем расстояние между врагами
-        map_width = self.tiled_map.width * self.tiled_map.tilewidth if self.tiled_map else self.width
-        map_height = self.tiled_map.height * self.tiled_map.tileheight if self.tiled_map else self.height
         
-        # Убеждаемся, что размеры карты корректны
+        map_width = self.tiled_map.width * self.tiled_map.tilewidth if self.tiled_map else 800
+        map_height = self.tiled_map.height * self.tiled_map.tileheight if self.tiled_map else 600
+        
         if map_width <= 200:
-            map_width = self.width
+            map_width = 800
         if map_height <= 200:
-            map_height = self.height
+            map_height = 600
         
-        # Количество и уровень врагов зависят от сложности
         difficulty = self.settings.get("difficulty", "normal")
         if difficulty == "easy":
-            num_enemies, lvl_min, lvl_max = 6, 1, 3
+            num_enemies, lvl_min, lvl_max = ENEMY_COUNT_EASY, ENEMY_LEVEL_MIN_EASY, ENEMY_LEVEL_MAX_EASY
         elif difficulty == "hard":
-            num_enemies, lvl_min, lvl_max = 14, 3, 7
+            num_enemies, lvl_min, lvl_max = ENEMY_COUNT_HARD, ENEMY_LEVEL_MIN_HARD, ENEMY_LEVEL_MAX_HARD
         else:
-            num_enemies, lvl_min, lvl_max = 10, 1, 5
+            num_enemies, lvl_min, lvl_max = ENEMY_COUNT_NORMAL, ENEMY_LEVEL_MIN_NORMAL, ENEMY_LEVEL_MAX_NORMAL
+        
         for _ in range(num_enemies):
-            e = Enemy(random.choice(enemy_types), level=random.randint(lvl_min, lvl_max))
-            # Распределяем врагов по всей карте
-            x = random.randint(100, max(200, map_width - 100))
-            y = random.randint(100, max(200, map_height - 100))
+            e = EntityFactory.create_enemy(level=random.randint(lvl_min, lvl_max))
+            x = random.randint(-map_width//2, map_width//2)
+            y = random.randint(-map_height//2, map_height//2)
             e.position = [x, y]
             e.player_ref = self.player
             enemy_list.append(e)
+        
         return enemy_list
-
+    
     def _create_boss(self) -> Boss:
+        """Create boss"""
         if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
-            bx = self.tiled_map.width * self.tiled_map.tilewidth - 300
+            bx = self.tiled_map.width * self.tiled_map.tilewidth // 2 - 300
             by = 300
         else:
-            bx, by = self.width - 300, 300
+            bx, by = 300, 300
+        
         difficulty = self.settings.get("difficulty", "normal")
-        boss_level = 12 if difficulty == "easy" else (20 if difficulty == "hard" else 15)
-        boss = Boss(boss_type="dragon", level=boss_level, position=(bx, by))
-        boss.learning_rate = 0.005
+        boss_level = BOSS_LEVEL_EASY if difficulty == "easy" else (BOSS_LEVEL_HARD if difficulty == "hard" else BOSS_LEVEL_NORMAL)
+        boss = EntityFactory.create_boss(level=boss_level, position=(bx, by))
         boss.player_ref = self.player
         return boss
-
-    # --- Жизненный цикл ---
-    def soft_restart(self) -> None:
-        """Перезапуск мира без закрытия окна и без потери знаний."""
-        self.victory_shown = False
-        self.generation_count += 1
+    
+    def game_loop(self, task):
+        """Main game loop"""
+        if not self.running:
+            return task.done
         
-        # Возрождаем игрока
-        self._respawn_player()
-        # Возрождаем врагов и босса
-        for e in self.enemies:
-            self._respawn_entity(e)
-            # Перемещаем врагов на новые позиции
-            map_width = self.tiled_map.width * self.tiled_map.tilewidth if self.tiled_map else self.width
-            map_height = self.tiled_map.height * self.tiled_map.tileheight if self.tiled_map else self.height
-            
-            # Убеждаемся, что размеры карты корректны
-            if map_width <= 200:
-                map_width = self.width
-            if map_height <= 200:
-                map_height = self.height
-            
-            e.position = [random.randint(100, max(200, map_width - 100)), random.randint(100, max(200, map_height - 100))]
-        if self.boss:
-            self._respawn_entity(self.boss)
-            # Босс в правом верхнем углу карты
-            if self.tiled_map:
-                map_width = self.tiled_map.width * self.tiled_map.tilewidth
-                if map_width <= 200:
-                    map_width = self.width
-                self.boss.position = [max(300, map_width - 300), 300]
-            else:
-                self.boss.position = [self.width - 300, 300]
-        # Сохраняем добавленные человеком препятствия/сундуки
-        # Камера назад на игрока
-        self._center_initial_camera()
-        # Продолжаем цикл (если был остановлен)
-        if not self.running:
-            self.running = True
-            self.root.after(16, self.game_loop)
-
-    def stop(self) -> None:
-        """Остановка игры и закрытие окна"""
-        print("Закрытие игры...")
-        self.running = False
-        try:
-            # Уничтожаем окно
-            self.root.quit()
-            self.root.destroy()
-        except Exception as e:
-            print(f"Ошибка при закрытии окна: {e}")
-            # Принудительное завершение
-            import sys
-            sys.exit(0)
-
-    def game_loop(self) -> None:
-        if not self.running:
-            return
         if self.paused:
-            self.root.after(16, self.game_loop)
-            return
+            return task.cont
+        
+        # Check if game is initialized
+        if self.show_menu or not self.player:
+            return task.cont
         
         now = time.time()
         delta_time = now - self.last_time
+        
+        # Limit delta_time for stability
+        delta_time = min(delta_time, 0.1)  # Max 100ms
+        
         self.last_time = now
-
-        # Логика ИИ игрока и сущностей
+        
+        # Update AI
         self._update_player_ai(delta_time)
-        self.player.update(delta_time)
-
-        for enemy in self.enemies:
-            if enemy.alive:
-                enemy.update(delta_time)
-                self._move_entity_toward(enemy, self.player.position, enemy.combat_stats.get("movement_speed", 100.0), delta_time)
-                self._process_chest_interactions(enemy)
-
-        if self.boss and self.boss.alive:
-            self.boss.update(delta_time)
-            self._move_entity_toward(self.boss, self.player.position, self.boss.combat_stats.get("movement_speed", 80.0), delta_time)
-            self._process_chest_interactions(self.boss)
-
-        # Групповая логика
-        self.coordinator.update_group_behavior("enemy_group")
-        self.coordinator.update_group_behavior("boss_group")
-
-        # Столкновения и фильтрация
-        self.check_collisions()
-        self.enemies = [e for e in self.enemies if e.alive]
-
-        # Камера
-        if self.tiled_map:
-            self._center_camera_on_player()
-
-        # Рендер
-        self.draw()
-
-        # Смерть игрока -> перерождение, а не остановка игры
-        if not self.player.alive:
+        if self.player:
+            self.player.update(delta_time)
+        
+        # Optimize: update only nearby enemies
+        if self.player:
+            player_pos = self.player.position
+            for enemy in self.enemies:
+                if enemy.alive:
+                    distance = self._dist2(player_pos, enemy.position)
+                    if distance < 1000:  # Update only within 1000 pixels radius
+                        enemy.update(delta_time)
+                        self._move_entity_toward(enemy, player_pos, enemy.movement_speed, delta_time)
+                        self._process_chest_interactions(enemy)
+            
+            if self.boss and self.boss.alive:
+                boss_distance = self._dist2(player_pos, self.boss.position)
+                if boss_distance < 1500:  # Boss active in a larger radius
+                    self.boss.update(delta_time)
+                    self._move_entity_toward(self.boss, player_pos, self.boss.movement_speed, delta_time)
+                    self._process_chest_interactions(self.boss)
+        
+        # Group logic
+        if hasattr(self, 'coordinator') and self.coordinator and self.player:
+            self.coordinator.update_group_behavior("enemy_group")
+            self.coordinator.update_group_behavior("boss_group")
+        
+        # Update AI modules (optimized)
+        if hasattr(self, 'ai_scheduler') and self.ai_scheduler and self.player:
+            self.ai_scheduler.update_all(delta_time)
+        
+        # Update skills and leveling
+        if hasattr(self, 'skill_system') and self.skill_system and self.player:
+            self.skill_system.update(delta_time)
+        if hasattr(self, 'leveling_system') and self.leveling_system and self.player:
+            self.leveling_system.update(delta_time)
+        
+        # Pattern analysis and emotions (less frequently for optimization)
+        if hasattr(self, 'pattern_recognizer') and self.pattern_recognizer and self.player:
+            if random.random() < 0.1:  # 10% chance to update
+                self.pattern_recognizer.analyze_combat_patterns([self.player] + self.enemies + ([self.boss] if self.boss else []))
+        if hasattr(self, 'emotion_synthesizer') and self.emotion_synthesizer and self.player:
+            self.emotion_synthesizer.update_emotions(delta_time)
+        
+        # Effect handling (optimized)
+        try:
+            from combat.damage_system import DamageSystem
+            # Process effects only for active entities
+            if self.player and self.player.alive:
+                DamageSystem.process_entity_effects(self.player, delta_time)
+            
+            for enemy in self.enemies:
+                if enemy.alive and hasattr(enemy, 'effects') and enemy.effects:
+                    DamageSystem.process_entity_effects(enemy, delta_time)
+            
+            if self.boss and self.boss.alive and hasattr(self.boss, 'effects') and self.boss.effects:
+                DamageSystem.process_entity_effects(self.boss, delta_time)
+        except ImportError:
+            pass
+        
+        # Collisions
+        if self.player:
+            self.check_collisions()
+        
+        # Check victory over enemies
+        if self.player and hasattr(self, 'player_leveling'):
+            for enemy in self.enemies[:]:
+                if not enemy.alive:
+                    enemy_level = getattr(enemy, 'level', 1)
+                    exp_gain = enemy_level * 10 + random.randint(5, 15)
+                    self.player_leveling.gain_experience(exp_gain)
+                    
+                    if hasattr(self, 'player_ai_memory'):
+                        self.player_ai_memory.record_event("ENEMY_DEFEATED", {
+                            "enemy_type": getattr(enemy, 'enemy_type', 'unknown'),
+                            "enemy_level": enemy_level,
+                            "exp_gained": exp_gain,
+                            "player_health": self.player.health,
+                            "player_level": self.player_leveling.level
+                        })
+                    
+                    # Remove 3D model
+                    if hasattr(enemy, 'model'):
+                        enemy.model.removeNode()
+                    
+                    self.enemies.remove(enemy)
+            
+            # Check victory over boss
+            if self.boss and not self.boss.alive and not hasattr(self.boss, 'exp_given'):
+                boss_level = getattr(self.boss, 'level', 15)
+                exp_gain = boss_level * 50 + random.randint(100, 200)
+                self.player_leveling.gain_experience(exp_gain)
+                
+                if hasattr(self, 'player_ai_memory'):
+                    self.player_ai_memory.record_event("BOSS_DEFEATED", {
+                        "boss_type": getattr(self.boss, 'boss_type', 'unknown'),
+                        "boss_level": boss_level,
+                        "exp_gained": exp_gain,
+                        "player_health": self.player.health,
+                        "player_level": self.player_leveling.level
+                    })
+                
+                self.boss.exp_given = True
+        
+        # Update 3D positions
+        if self.player:
+            self._update_3d_positions()
+        
+        # Update UI
+        self._update_ui()
+        
+        # Player death
+        if self.player and not self.player.alive:
             self._respawn_player()
-
-        # Победа: все враги и босс повержены
-        if (not self.enemies) and (not self.boss or not self.boss.alive):
+        
+        # Victory
+        if self.player and (not self.enemies) and (not self.boss or not self.boss.alive):
             if not self.victory_shown:
-                self._draw_banner("Победа! Все повержены.")
+                self._show_victory()
                 self.victory_shown = True
-
-        self.root.after(16, self.game_loop)
-
-    # --- Игровая логика ---
-    def check_collisions(self) -> None:
+        
+        return task.cont
+    
+    def _update_3d_positions(self):
+        """Update 3D positions of entities"""
+        # Player
+        if self.player and hasattr(self.player, 'model'):
+            self.player.model.setPos(self.player.position[0], self.player.position[1], 0)
+        
+        # Enemies
+        for enemy in self.enemies:
+            if hasattr(enemy, 'model') and enemy.alive:
+                enemy.model.setPos(enemy.position[0], enemy.position[1], 0)
+        
+        # Boss
+        if self.boss and hasattr(self.boss, 'model') and self.boss.alive:
+            self.boss.model.setPos(self.boss.position[0], self.boss.position[1], 0)
+    
+    def _update_ui(self):
+        """Update UI elements"""
+        # Add logic to update UI elements here
+        pass
+    
+    def _show_victory(self):
+        """Show victory screen"""
+        victory_text = DirectLabel(
+            text="Victory! All defeated.",
+            pos=(0, 0, 0),
+            scale=0.06,
+            text_fg=(1, 0.84, 0, 1),
+            text_align=TextNode.ACenter
+        )
+        self.ui_elements.append(victory_text)
+    
+    def check_collisions(self):
+        """Check collisions (optimized)"""
+        if not self.player or not self.player.alive:
+            return
+            
         px, py = self.player.position
-        # Враги
+        collision_radius_player = 20
+        collision_radius_enemy = 15
+        collision_radius_boss = 30
+        
+        # Enemies (optimized with caching)
         for enemy in self.enemies:
             if not enemy.alive:
                 continue
             ex, ey = enemy.position
             dx = px - ex
             dy = py - ey
-            if (dx * dx + dy * dy) <= (20 + 15) * (20 + 15):
-                damage = enemy.damage_output * random.uniform(0.8, 1.2)
-                self.player.take_damage({
-                    "total": damage,
-                    "physical": damage,
-                    "source": enemy,
-                })
-
-        # Босс
+            distance_squared = dx * dx + dy * dy
+            collision_threshold = (collision_radius_player + collision_radius_enemy) ** 2
+            
+            if distance_squared <= collision_threshold:
+                # Check if player recently took damage
+                if not hasattr(self.player, 'last_damage_time') or \
+                   time.time() - getattr(self.player, 'last_damage_time', 0) > 0.5:
+                    damage = getattr(enemy, 'damage_output', 10) * random.uniform(0.8, 1.2)
+                    self.player.take_damage(damage, "physical")
+                    self.player.last_damage_time = time.time()
+        
+        # Boss (optimized)
         if self.boss and self.boss.alive:
             bx, by = self.boss.position
             dx = px - bx
             dy = py - by
-            if (dx * dx + dy * dy) <= (20 + 30) * (20 + 30):
-                damage = self.boss.damage_output * random.uniform(0.9, 1.5)
-                self.player.take_damage({
-                    "total": damage,
-                    "boss": damage,
-                    "source": self.boss,
-                })
-
-    def draw(self) -> None:
-        self.canvas.delete("all")
-        # Карта
-        if self.tiled_map:
-            self.tiled_map.draw_to_canvas(
-                self.canvas,
-                self.map_view_x,
-                self.map_view_y,
-                self.width,
-                self.height,
-                tag="map",
-            )
-
-        # Игрок
-        px, py = self.player.position
-        spx, spy = px - self.map_view_x, py - self.map_view_y
-        self._draw_circle(spx, spy, 20, fill=rgb_to_hex((0, 100, 255)) if self.player.alive else rgb_to_hex((50, 50, 50)))
-
-        # Враги
-        for enemy in self.enemies:
-            if not enemy.alive:
-                continue
-            ex, ey = enemy.position
-            sex, sey = ex - self.map_view_x, ey - self.map_view_y
-            if enemy.enemy_type == "warrior":
-                color = (255, 50, 50)
-            elif enemy.enemy_type == "archer":
-                color = (200, 50, 150)
-            else:
-                color = (50, 150, 255)
-            self._draw_circle(sex, sey, 15, fill=rgb_to_hex(color))
-
-        # Босс
-        if self.boss and self.boss.alive:
-            bx, by = self.boss.position
-            sbx, sby = bx - self.map_view_x, by - self.map_view_y
-            self._draw_circle(sbx, sby, 30, fill=rgb_to_hex((255, 165, 0)))
-            self.canvas.create_text(sbx, sby - 40, text=f"Фаза: {self.boss.phase}", fill=rgb_to_hex((255, 255, 0)))
-
-        # UI
-        self.canvas.create_text(10, 10, text=f"Уровень: {self.player.level}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
-        self.canvas.create_text(10, 40, text=f"Здоровье: {int(self.player.health)}/{int(self.player.max_health)}", fill=rgb_to_hex((255, 255, 255)), anchor="nw")
-
-        self.canvas.create_text(10, 70, text=f"Реинкарнации: {self.reincarnation_count}", fill=rgb_to_hex((220, 220, 180)), anchor="nw")
-        self.canvas.create_text(10, 100, text=f"Поколения: {self.generation_count}", fill=rgb_to_hex((220, 180, 220)), anchor="nw")
-        
-        # Инфографика обучения
-        session_time = time.time() - self.session_start_time
-        self.canvas.create_text(10, 130, text=f"Время сессии: {int(session_time // 60)}:{int(session_time % 60):02d}", fill=rgb_to_hex((180, 220, 180)), anchor="nw")
-        self.canvas.create_text(10, 160, text=f"Скорость обучения: {self.player.learning_rate:.3f}", fill=rgb_to_hex((220, 180, 180)), anchor="nw")
-        
-        # Статистика ИИ
-        if hasattr(self.player, 'learning_system'):
-            learning_stats = getattr(self.player.learning_system, 'stats', {})
-            self.canvas.create_text(10, 190, text=f"Опыт: {learning_stats.get('total_experience', 0)}", fill=rgb_to_hex((180, 180, 220)), anchor="nw")
-            self.canvas.create_text(10, 220, text=f"Адаптация: {learning_stats.get('adaptation_rate', 0):.2f}", fill=rgb_to_hex((220, 220, 180)), anchor="nw")
-        
-        if self.tiled_map:
-            self.canvas.create_text(10, 250, text=f"Карта: {self.tiled_map.width}x{self.tiled_map.height} (tile {self.tiled_map.tilewidth}x{self.tiled_map.tileheight})", fill=rgb_to_hex((180, 200, 255)), anchor="nw")
-        if self.boss and self.boss.alive:
-            self.canvas.create_text(self.width - 220, 10, text=f"Босс: {int(self.boss.health)}/{int(self.boss.max_health)}", fill=rgb_to_hex((255, 100, 100)), anchor="nw")
-
-        # Подсказки и пользовательские объекты
-        self.canvas.create_text(10, self.height - 24, text="Space: новое поколение | P: пауза | ЛКМ: препятствие | ПКМ: сундук", fill=rgb_to_hex((200, 220, 240)), anchor="sw")
-        if self.tiled_map:
-            tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
-            for (tx, ty) in self.user_obstacles:
-                x0 = tx * tw - self.map_view_x
-                y0 = ty * th - self.map_view_y
-                self.canvas.create_rectangle(x0, y0, x0 + tw, y0 + th, outline="#88a", width=2)
-            for chest in self.chests:
-                tx, ty = chest["tx"], chest["ty"]
-                x0 = tx * tw - self.map_view_x + tw * 0.25
-                y0 = ty * th - self.map_view_y + th * 0.25
-                x1 = x0 + tw * 0.5
-                y1 = y0 + th * 0.5
-                fill = "#d4a017" if not chest.get("opened") else "#8b7d5b"
-                self.canvas.create_rectangle(x0, y0, x1, y1, fill=fill, outline="#553")
-
-    # --- Вспомогательные методы ---
-    def _draw_circle(self, x: float, y: float, radius: float, fill: str = "#ffffff") -> None:
-        self.canvas.create_oval(x - radius, y - radius, x + radius, y + radius, fill=fill, width=0)
-
-    def _draw_banner(self, text: str) -> None:
-        self.canvas.create_rectangle(0, 0, self.width, self.height, fill="#000000", stipple="gray25")
-        self.canvas.create_text(
-            self.width // 2,
-            self.height // 2,
-            text=text,
-            fill=rgb_to_hex((255, 215, 0)),
-            font=("Arial", 24, "bold"),
-        )
-
-    def _on_left_click(self, event) -> None:
-        if not self.tiled_map:
+            distance_squared = dx * dx + dy * dy
+            collision_threshold = (collision_radius_player + collision_radius_boss) ** 2
+            
+            if distance_squared <= collision_threshold:
+                if not hasattr(self.player, 'last_damage_time') or \
+                   time.time() - getattr(self.player, 'last_damage_time', 0) > 0.5:
+                    damage = getattr(self.boss, 'damage_output', 20) * random.uniform(0.9, 1.5)
+                    self.player.take_damage(damage, "physical")
+                    self.player.last_damage_time = time.time()
+    
+    def _update_player_ai(self, dt: float):
+        """Update player AI"""
+        if not self.player:
             return
-        if self.paused:
-            return
-        
-        world_x = event.x + self.map_view_x
-        world_y = event.y + self.map_view_y
-        tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
-        tx, ty = int(world_x // tw), int(world_y // th)
-        
-        # Проверяем, есть ли уже препятствие в этой точке
-        if (tx, ty) in self.user_obstacles:
-            # Убираем препятствие при повторном клике
-            self.user_obstacles.remove((tx, ty))
-        else:
-            # Добавляем препятствие
-            self.user_obstacles.add((tx, ty))
-
-    def _on_right_click(self, event) -> None:
-        if not self.tiled_map:
-            return
-        if self.paused:
-            return
-        
-        world_x = event.x + self.map_view_x
-        world_y = event.y + self.map_view_y
-        tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
-        tx, ty = int(world_x // tw), int(world_y // th)
-        
-        # Проверяем, есть ли уже сундук в этой точке
-        existing_chest = None
-        for chest in self.chests:
-            if chest["tx"] == tx and chest["ty"] == ty:
-                existing_chest = chest
-                break
-        
-        if existing_chest:
-            # Убираем сундук при повторном клике
-            self.chests.remove(existing_chest)
-        else:
-            # Добавляем сундук
-            self.chests.append({"tx": tx, "ty": ty, "opened": False})
-
-    def _update_player_ai(self, dt: float) -> None:
+            
         target_pos = None
         if self.chests and self.player.health < self.player.max_health * 0.7:
             target_pos = self._nearest_chest_world_pos(self.player.position)
@@ -840,123 +809,364 @@ class TkGame:
                 if alive_enemies:
                     target = min(alive_enemies, key=lambda e: self._dist2(self.player.position, e.position))
                     target_pos = target.position
+        
         if target_pos is None:
             return
-        speed = float(self.player.combat_stats.get("movement_speed", 120.0))
+        
+        speed = float(self.player.movement_speed)
         self._move_entity_toward(self.player, target_pos, speed, dt)
         self._process_chest_interactions(self.player)
-
-    def _move_entity_toward(self, entity, target_pos, speed: float, dt: float) -> None:
+    
+    def _move_entity_toward(self, entity, target_pos, speed: float, dt: float):
+        """Move entity towards target (optimized)"""
+        if not entity or not hasattr(entity, 'position') or not entity.position or not target_pos:
+            return
+            
         ex, ey = entity.position
         tx, ty = target_pos
+        
+        # Check distance to target
         dx = tx - ex
         dy = ty - ey
-        dist = max(1e-6, (dx * dx + dy * dy) ** 0.5)
+        distance_squared = dx * dx + dy * dy
+        
+        # If target too close, don't move
+        if distance_squared < 1.0:
+            return
+            
+        dist = max(1e-6, distance_squared ** 0.5)
         nx, ny = dx / dist, dy / dist
-        step_x = ex + nx * speed * dt
-        step_y = ey + ny * speed * dt
+        
+        # Calculate new step
+        step_size = speed * dt
+        step_x = ex + nx * step_size
+        step_y = ey + ny * step_size
+        
+        # Check for blocking
         if self._is_blocked_pixel(step_x, step_y):
+            # Try to bypass obstacle
             ax, ay = ny, -nx
-            step1_x = ex + ax * speed * dt
-            step1_y = ey + ay * speed * dt
+            step1_x = ex + ax * step_size
+            step1_y = ey + ay * step_size
+            
             if not self._is_blocked_pixel(step1_x, step1_y):
                 entity.position[0], entity.position[1] = step1_x, step1_y
                 return
+                
             bx, by = -ny, nx
-            step2_x = ex + bx * speed * dt
-            step2_y = ey + by * speed * dt
+            step2_x = ex + bx * step_size
+            step2_y = ey + by * step_size
+            
             if not self._is_blocked_pixel(step2_x, step2_y):
                 entity.position[0], entity.position[1] = step2_x, step2_y
                 return
+                
+            # If cannot bypass, stay in place
             return
+        
+        # Update position
         entity.position[0], entity.position[1] = step_x, step_y
-
+    
     def _is_blocked_pixel(self, x: float, y: float) -> bool:
-        if not self.tiled_map:
+        """Check if pixel is blocked (optimized)"""
+        if not self.tiled_map or not self.user_obstacles:
             return False
-        tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
+            
+        # Cache tile sizes
+        if not hasattr(self, '_tile_cache'):
+            self._tile_cache = {
+                'width': self.tiled_map.tilewidth,
+                'height': self.tiled_map.tileheight
+            }
+        
+        tw, th = self._tile_cache['width'], self._tile_cache['height']
+        
+        # Check map boundaries
+        if x < 0 or y < 0:
+            return True
+            
+        # Calculate tile coordinates
         tx, ty = int(x // tw), int(y // th)
+        
+        # Check for blocking
         return (tx, ty) in self.user_obstacles
-
+    
     def _nearest_chest_world_pos(self, from_pos):
-        if not self.chests:
+        """Find nearest chest (optimized)"""
+        if not self.chests or not from_pos:
             return None
+            
         fx, fy = from_pos
-        best, best_d2 = None, None
-        tw = self.tiled_map.tilewidth if self.tiled_map else 40
-        th = self.tiled_map.tileheight if self.tiled_map else 40
-        for chest in self.chests:
+        best, best_d2 = None, float('inf')
+        
+        # Cache tile sizes
+        if not hasattr(self, '_tile_cache'):
+            self._tile_cache = {
+                'width': self.tiled_map.tilewidth if self.tiled_map else 40,
+                'height': self.tiled_map.tileheight if self.tiled_map else 40
+            }
+        
+        tw, th = self._tile_cache['width'], self._tile_cache['height']
+        
+        # Filter only unopened chests
+        available_chests = [chest for chest in self.chests if not chest.get("opened")]
+        
+        for chest in available_chests:
             cx = chest["tx"] * tw + tw / 2
             cy = chest["ty"] * th + th / 2
             d2 = (cx - fx) ** 2 + (cy - fy) ** 2
-            if best is None or d2 < best_d2:
+            
+            if d2 < best_d2:
                 best, best_d2 = (cx, cy), d2
+                
+                # If chest is very close, return it immediately
+                if d2 < 100:  # 10 tiles squared
+                    break
+        
         return best
-
-    def _process_chest_interactions(self, entity) -> None:
-        if not self.chests or not self.tiled_map:
+    
+    def _process_chest_interactions(self, entity):
+        """Process chest interactions (optimized)"""
+        if not self.chests or not self.tiled_map or not entity or not hasattr(entity, 'position'):
             return
-        tw, th = self.tiled_map.tilewidth, self.tiled_map.tileheight
+            
+        # Cache tile sizes
+        if not hasattr(self, '_tile_cache'):
+            self._tile_cache = {
+                'width': self.tiled_map.tilewidth,
+                'height': self.tiled_map.tileheight
+            }
+        
+        tw, th = self._tile_cache['width'], self._tile_cache['height']
         ex, ey = entity.position
         etx, ety = int(ex // tw), int(ey // th)
-        for chest in list(self.chests):
+        
+        # Check only unopened chests
+        for chest in self.chests:
             if chest.get("opened"):
                 continue
+                
             if chest["tx"] == etx and chest["ty"] == ety:
-                entity.health = min(entity.max_health, entity.health + 20)
+                # Restore health
+                if hasattr(entity, 'health') and hasattr(entity, 'max_health'):
+                    entity.health = min(entity.max_health, entity.health + 20)
                 chest["opened"] = True
-
-    def _center_initial_camera(self) -> None:
-        if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
-            px, py = self.player.position
-            map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
-            map_px_h = self.tiled_map.height * self.tiled_map.tileheight
-            self.map_view_x = max(0, min(px - self.width // 2, max(0, map_px_w - self.width)))
-            self.map_view_y = max(0, min(py - self.height // 2, max(0, map_px_h - self.height)))
-        else:
-            self.map_view_x = max(0, self.player.position[0] - self.width // 2)
-            self.map_view_y = max(0, self.player.position[1] - self.height // 2)
-
-    def _center_camera_on_player(self) -> None:
-        px, py = self.player.position
-        if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
-            map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
-            map_px_h = self.tiled_map.height * self.tiled_map.tileheight
-            self.map_view_x = max(0, min(px - self.width // 2, max(0, map_px_w - self.width)))
-            self.map_view_y = max(0, min(py - self.height // 2, max(0, map_px_h - self.height)))
-        else:
-            self.map_view_x = max(0, px - self.width // 2)
-            self.map_view_y = max(0, py - self.height // 2)
-
-    def _respawn_player(self) -> None:
+                break  # Exit after finding the first chest
+    
+    def _respawn_player(self):
+        """Respawn player (optimized)"""
+        if not self.player:
+            return
+            
         self.reincarnation_count += 1
-        self.player.alive = True
-        self.player.health = self.player.max_health
-        # Лёгкое усиление как результат обучения (опционально)
-        self.player.learning_rate = min(2.0, self.player.learning_rate * 1.01)
-        # Перемещение к центру
-        if self.tiled_map and self.tiled_map.width and self.tiled_map.height:
-            map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
-            map_px_h = self.tiled_map.height * self.tiled_map.tileheight
+        
+        if hasattr(self.player, 'alive'):
+            self.player.alive = True
+        if hasattr(self.player, 'health') and hasattr(self.player, 'max_health'):
+            self.player.health = self.player.max_health
+        if hasattr(self.player, 'learning_rate'):
+            self.player.learning_rate = min(2.0, self.player.learning_rate * 1.01)
+        
+        # Place player in the center of the map
+        if self.tiled_map and hasattr(self.tiled_map, 'width') and hasattr(self.tiled_map, 'height'):
+            # Cache tile sizes
+            if not hasattr(self, '_tile_cache'):
+                self._tile_cache = {
+                    'width': self.tiled_map.tilewidth,
+                    'height': self.tiled_map.tileheight
+                }
+            
+            tw, th = self._tile_cache['width'], self._tile_cache['height']
+            map_px_w = self.tiled_map.width * tw
+            map_px_h = self.tiled_map.height * th
             self.player.position = [map_px_w // 2, map_px_h // 2]
         else:
-            self.player.position = [self.width // 2, self.height // 2]
-
-    @staticmethod
-    def _respawn_entity(entity) -> None:
-        entity.alive = True
-        entity.health = entity.max_health
-
-    @staticmethod
-    def _dist2(a, b) -> float:
+            self.player.position = [0, 0]
+    
+    def _dist2(self, a, b) -> float:
+        """Distance between two points squared"""
+        if not a or not b or len(a) < 2 or len(b) < 2:
+            return float('inf')
         ax, ay = a
         bx, by = b
         return (ax - bx) ** 2 + (ay - by) ** 2
+    
+    def _use_skill(self, skill_id: str):
+        """Use skill"""
+        if hasattr(self, 'skill_system') and self.player:
+            success = self.skill_system.use_skill(skill_id, self.player)
+            if success:
+                print(f"Skill {skill_id} used successfully")
+            else:
+                print(f"Could not use skill {skill_id}")
+    
+    def _on_left_click(self):
+        """Handle left mouse click"""
+        # Add logic for placing obstacles here
+        pass
+    
+    def _on_right_click(self):
+        """Handle right mouse click"""
+        # Add logic for placing chests here
+        pass
+    
+    def toggle_pause(self):
+        """Toggle pause"""
+        self.paused = not self.paused
+        if self.paused:
+            self._show_pause_menu()
+        else:
+            self._hide_pause_menu()
+    
+    def _show_pause_menu(self):
+        """Show pause menu"""
+        # Create pause menu
+        pass
+    
+    def _hide_pause_menu(self):
+        """Hide pause menu"""
+        # Hide pause menu
+        pass
+    
+    def soft_restart(self):
+        """Soft restart"""
+        self.victory_shown = False
+        self.generation_count += 1
+        
+        # Respawn player
+        if self.player:
+            self._respawn_player()
+        
+        # Respawn enemies
+        for e in self.enemies:
+            self._respawn_entity(e)
+            map_width = self.tiled_map.width * self.tiled_map.tilewidth if self.tiled_map else 800
+            map_height = self.tiled_map.height * self.tiled_map.tileheight if self.tiled_map else 600
+            
+            if map_width <= 200:
+                map_width = 800
+            if map_height <= 200:
+                map_height = 600
+            
+            e.position = [random.randint(-map_width//2, map_width//2), random.randint(-map_height//2, map_height//2)]
+        
+        # Respawn boss
+        if self.boss:
+            self._respawn_entity(self.boss)
+            if self.tiled_map:
+                map_width = self.tiled_map.width * self.tiled_map.tilewidth
+                if map_width <= 200:
+                    map_width = 800
+                self.boss.position = [map_width//2 - 300, 300]
+            else:
+                self.boss.position = [300, 300]
+    
+    @staticmethod
+    def _respawn_entity(entity):
+        """Respawn entity"""
+        entity.alive = True
+        entity.health = entity.max_health
+    
+    def load_game(self):
+        """Load saved game"""
+        if os.path.exists(self.save_file):
+            try:
+                with open(self.save_file, "r", encoding="utf-8") as f:
+                    save_data = json.load(f)
+                
+                self.show_menu = False
+                self.init_game()
+                
+                # Restore state
+                self.reincarnation_count = save_data.get("reincarnation_count", 0)
+                self.generation_count = save_data.get("generation_count", 0)
+                self.session_start_time = save_data.get("session_start_time", time.time())
+                
+                # Restore player
+                if "player" in save_data and self.player:
+                    player_data = save_data["player"]
+                    self.player.health = player_data.get("health", self.player.max_health)
+                    self.player.level = player_data.get("level", 1)
+                    self.player.learning_rate = player_data.get("learning_rate", 1.0)
+                    self.player.position = player_data.get("position", [0, 0])
+                
+                # Restore obstacles and chests
+                self.user_obstacles = set(tuple(obs) for obs in save_data.get("obstacles", []))
+                self.chests = save_data.get("chests", [])
+                
+                print("Game loaded successfully")
+            except Exception as e:
+                print(f"Error loading: {e}")
+                self.show_menu = True
+                self.show_main_menu()
+        else:
+            print("Save file not found")
+            self.show_menu = True
+            self.show_main_menu()
+    
+    def save_game(self):
+        """Save game"""
+        try:
+            save_data = {
+                "reincarnation_count": self.reincarnation_count,
+                "generation_count": self.generation_count,
+                "session_start_time": self.session_start_time,
+                "player": {
+                    "health": self.player.health if self.player else 100,
+                    "level": self.player.level if self.player else 1,
+                    "learning_rate": self.player.learning_rate if self.player else 1.0,
+                    "position": self.player.position if self.player else [0, 0]
+                },
+                "obstacles": list(self.user_obstacles),
+                "chests": self.chests
+            }
+            
+            with open(self.save_file, "w", encoding="utf-8") as f:
+                json.dump(save_data, f, indent=2)
+            
+            print("Game saved")
+        except Exception as e:
+            print(f"Error saving: {e}")
+    
+    def _update_enemy_ai(self, dt: float):
+        """Update enemy AI"""
+        if self.player:
+            for enemy in self.enemies:
+                if enemy.alive and hasattr(enemy, 'update'):
+                    enemy.update(dt)
+    
+    def _update_boss_ai(self, dt: float):
+        """Update boss AI"""
+        if self.boss and self.boss.alive and hasattr(self.boss, 'update') and self.player:
+            self.boss.update(dt)
+    
+    def _update_coordination(self, dt: float):
+        """Update AI coordination"""
+        if hasattr(self, 'coordinator') and self.coordinator and self.player:
+            self.coordinator.update_group_behavior("enemy_group")
+            self.coordinator.update_group_behavior("boss_group")
+    
+    def _update_patterns(self, dt: float):
+        """Update pattern recognition"""
+        if hasattr(self, 'pattern_recognizer') and self.pattern_recognizer and self.player:
+            entities = [self.player] + self.enemies + ([self.boss] if self.boss else [])
+            self.pattern_recognizer.analyze_combat_patterns(entities)
+    
+    def _update_emotions(self, dt: float):
+        """Update emotion synthesis"""
+        if hasattr(self, 'emotion_synthesizer') and self.emotion_synthesizer and self.player:
+            self.emotion_synthesizer.update_emotions(dt)
+    
+    def stop(self):
+        """Stop game"""
+        print("Closing game...")
+        self.running = False
+        self.userExit()
 
 
 def main():
-    game = TkGame()
-    game.root.mainloop()
+    game = Panda3DGame()
+    game.run()
 
 
 if __name__ == "__main__":
