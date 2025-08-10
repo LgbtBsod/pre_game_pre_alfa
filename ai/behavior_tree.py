@@ -131,7 +131,7 @@ class BehaviorTree:
     def get_active_nodes(self):
         return [node for node in self.execution_stack]
 
-# Конкретные узлы
+# Concrete nodes
 class CheckLowHealth(ConditionNode):
     def __init__(self, threshold=0.3):
         super().__init__(lambda e: (e.health / max(1.0, getattr(e, 'max_health', 1.0))) < threshold, f"CheckLowHealth({threshold})")
@@ -139,7 +139,7 @@ class CheckLowHealth(ConditionNode):
 class UseHealingItem(ActionNode):
     def __init__(self):
         def heal_action(entity):
-            # Безопасный вызов: используем доступный метод сущности
+            # Safe call: use available entity method
             if hasattr(entity, "use_best_healing_item"):
                 entity.use_best_healing_item()
         super().__init__(heal_action, "UseHealingItem")
@@ -163,7 +163,7 @@ class CheckMana(ConditionNode):
     def __init__(self, min_mana):
         super().__init__(lambda e: e.mana >= min_mana, f"CheckMana({min_mana})")
 
-# Генератор деревьев на основе личности
+# Generates trees based on personality
 def generate_tree_for_personality(personality):
     if personality["aggression"] > 0.7:
         return Selector([

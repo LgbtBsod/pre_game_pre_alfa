@@ -1,4 +1,8 @@
 import random
+from entities.effect import Effect
+import json
+import os
+import time
 
 
 class DamageSystem:
@@ -60,4 +64,76 @@ class DamageSystem:
             total_damage *= dmg_mult
 
         damage_report["total"] = total_damage
+        
+        # Применение эффектов от оружия и навыков
+        DamageSystem._apply_weapon_effects(attacker, target, weapon, skill)
+        
         return damage_report
+    
+    @staticmethod
+    def _apply_weapon_effects(attacker, target, weapon, skill):
+        """Применить эффекты от оружия и навыков"""
+        effects_to_apply = []
+        
+        # Эффекты от оружия
+        if hasattr(weapon, 'effects') and weapon.effects:
+            effects_to_apply.extend(weapon.effects)
+        
+        # Эффекты от навыка
+        if skill and hasattr(skill, 'effects') and skill.effects:
+            effects_to_apply.extend(skill.effects)
+        
+        # Применение эффектов
+        for effect_id in effects_to_apply:
+            DamageSystem._apply_effect_to_target(target, effect_id)
+    
+    @staticmethod
+    def _apply_effect_to_target(target, effect_id):
+        """Применить эффект к цели"""
+        try:
+            # Загрузка данных эффектов
+            effects_file = "data/effects.json"
+            if os.path.exists(effects_file):
+                with open(effects_file, 'r', encoding='utf-8') as f:
+                    effects_data = json.load(f)
+                
+                if effect_id in effects_data:
+                    effect_data = effects_data[effect_id]
+                    
+                    # Создание и применение эффекта
+                    effect = Effect(
+                        effect_id=effect_id,
+                        tags=effect_data.get("tags", []),
+                        modifiers=effect_data.get("modifiers", [])
+                    )
+                    
+                    # Применение эффекта к цели
+                    effect.apply(target, True)
+                    
+                    # Добавление эффекта в список активных эффектов цели
+                    if not hasattr(target, 'active_effects'):
+                        target.active_effects = []
+                    target.active_effects.append(effect)
+                    
+        except Exception as e:
+            print(f"Ошибка применения эффекта {effect_id}: {e}")
+    
+    @staticmethod
+    def process_entity_effects(entity, delta_time):
+        """Обработать все активные эффекты сущности"""
+        if not hasattr(entity, 'active_effects'):
+            return
+        
+        # Обработка эффектов
+        for effect in entity.active_effects[:]:  # Копия списка для безопасного удаления
+            if effect.active:
+                effect.process_tick(entity, delta_time)
+                
+                # Проверка истечения эффекта
+                if hasattr(effect, 'duration') and effect.duration:
+                    if time.time() - effect.start_time >= effect.duration:
+                        effect.active = False
+                        effect.apply(entity, False)  # Отмена эффекта
+                        entity.active_effects.remove(effect)
+            else:
+                entity.active_effects.remove(effect)

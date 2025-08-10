@@ -1,6 +1,5 @@
 import random
 import heapq
-import pygame
 
 # Фолбэки для изометрии при отсутствии utils.math_utils
 def iso_to_cart(x, y, tile_w=80, tile_h=40):
@@ -144,8 +143,8 @@ class GameMap:
                     camera.apply(*iso_to_cart(x+1, y+1)),
                     camera.apply(*iso_to_cart(x, y+1))
                 ]
-                pygame.draw.polygon(surface, color, points)
-                pygame.draw.polygon(surface, (60, 70, 90), points, 1)
+                surface.drawPolygon(points, color)
+                surface.drawPolygon(points, (60, 70, 90))
 
         # Собираем все сущности для отрисовки в правильном порядке
         entities_to_draw = []

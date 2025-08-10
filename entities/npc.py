@@ -1,4 +1,4 @@
-from .entity import Entity
+from .entity_refactored import Entity
 import random
 
 class NPCEnemy(Entity):
