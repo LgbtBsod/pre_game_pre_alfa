@@ -505,6 +505,10 @@ class BaseEntity:
     def max_health(self) -> float:
         return self.combat_stats_manager.get_stats().max_health
     
+    @max_health.setter
+    def max_health(self, value: float):
+        self.combat_stats_manager.get_stats().max_health = value
+    
     @property
     def mana(self) -> float:
         return self.combat_stats_manager.get_stats().mana
@@ -517,6 +521,10 @@ class BaseEntity:
     def max_mana(self) -> float:
         return self.combat_stats_manager.get_stats().max_mana
     
+    @max_mana.setter
+    def max_mana(self, value: float):
+        self.combat_stats_manager.get_stats().max_mana = value
+    
     @property
     def stamina(self) -> float:
         return self.combat_stats_manager.get_stats().stamina
@@ -528,6 +536,10 @@ class BaseEntity:
     @property
     def max_stamina(self) -> float:
         return self.combat_stats_manager.get_stats().max_stamina
+    
+    @max_stamina.setter
+    def max_stamina(self, value: float):
+        self.combat_stats_manager.get_stats().max_stamina = value
     
     @property
     def movement_speed(self) -> float:

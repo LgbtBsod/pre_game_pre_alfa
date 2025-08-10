@@ -8,7 +8,7 @@ import logging
 import sqlite3
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 import threading
 
 logger = logging.getLogger(__name__)
@@ -24,21 +24,21 @@ class ItemData:
     slot: Optional[str]
     rarity: str
     level_requirement: int
-    base_damage: float
-    attack_speed: float
-    damage_type: Optional[str]
-    element: Optional[str]
-    element_damage: float
-    defense: float
-    weight: float
-    durability: int
-    max_durability: int
-    cost: int
-    effects: List[str]
-    modifiers: Dict[str, Any]
-    tags: List[str]
-    resist_mod: Dict[str, float]
-    weakness_mod: Dict[str, float]
+    base_damage: float = 0.0
+    attack_speed: float = 1.0
+    damage_type: Optional[str] = None
+    element: Optional[str] = None
+    element_damage: float = 0.0
+    defense: float = 0.0
+    weight: float = 0.0
+    durability: int = 100
+    max_durability: int = 100
+    cost: int = 0
+    effects: List[str] = field(default_factory=list)
+    modifiers: Dict[str, Any] = field(default_factory=dict)
+    tags: List[str] = field(default_factory=list)
+    resist_mod: Dict[str, float] = field(default_factory=dict)
+    weakness_mod: Dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
@@ -50,13 +50,13 @@ class EnemyData:
     enemy_type: str
     level: int
     experience_reward: int
-    attributes: Dict[str, float]
-    combat_stats: Dict[str, float]
-    ai_behavior: Optional[str]
-    loot_table: List[str]
-    skills: List[str]
-    tags: List[str]
-    phases: List[Dict[str, Any]]
+    attributes: Dict[str, float] = field(default_factory=dict)
+    combat_stats: Dict[str, float] = field(default_factory=dict)
+    ai_behavior: Optional[str] = None
+    loot_table: List[str] = field(default_factory=list)
+    skills: List[str] = field(default_factory=list)
+    tags: List[str] = field(default_factory=list)
+    phases: List[Dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass
@@ -66,14 +66,14 @@ class EffectData:
     name: str
     description: str
     effect_type: str
-    duration: float
-    tick_rate: float
-    magnitude: float
-    target_type: Optional[str]
-    conditions: Dict[str, Any]
-    modifiers: Dict[str, Any]
-    visual_effects: Dict[str, Any]
-    sound_effects: Dict[str, Any]
+    duration: float = 10.0
+    tick_rate: float = 1.0
+    magnitude: float = 1.0
+    target_type: Optional[str] = None
+    conditions: Dict[str, Any] = field(default_factory=dict)
+    modifiers: Dict[str, Any] = field(default_factory=dict)
+    visual_effects: Dict[str, Any] = field(default_factory=dict)
+    sound_effects: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -256,6 +256,23 @@ class DataManager:
                     data = json.load(f)
                     for item_id, item_data in data.get("items", {}).items():
                         item_data["id"] = item_id
+                        # Удаляем hex_id если он есть, так как он уже определен в классе
+                        if 'hex_id' in item_data:
+                            del item_data['hex_id']
+                        # Обеспечиваем наличие обязательных полей
+                        item_data.setdefault('base_damage', 0.0)
+                        item_data.setdefault('attack_speed', 1.0)
+                        item_data.setdefault('element_damage', 0.0)
+                        item_data.setdefault('defense', 0.0)
+                        item_data.setdefault('weight', 0.0)
+                        item_data.setdefault('durability', 100)
+                        item_data.setdefault('max_durability', 100)
+                        item_data.setdefault('cost', 0)
+                        item_data.setdefault('effects', [])
+                        item_data.setdefault('modifiers', {})
+                        item_data.setdefault('tags', [])
+                        item_data.setdefault('resist_mod', {})
+                        item_data.setdefault('weakness_mod', {})
                         self._items_cache[item_id] = ItemData(**item_data)
                 logger.info(f"Загружено {len(self._items_cache)} предметов")
         except Exception as e:
@@ -271,6 +288,19 @@ class DataManager:
                     for entity_id, entity_data in data.get("entities", {}).items():
                         if entity_data.get("type") in ["enemy", "boss"]:
                             entity_data["id"] = entity_id
+                            # Удаляем hex_id если он есть, так как он уже определен в классе
+                            if 'hex_id' in entity_data:
+                                del entity_data['hex_id']
+                            # Удаляем type если он есть, так как используем enemy_type
+                            if 'type' in entity_data:
+                                del entity_data['type']
+                            # Обеспечиваем наличие обязательных полей
+                            entity_data.setdefault('attributes', {})
+                            entity_data.setdefault('combat_stats', {})
+                            entity_data.setdefault('loot_table', [])
+                            entity_data.setdefault('skills', [])
+                            entity_data.setdefault('tags', [])
+                            entity_data.setdefault('phases', [])
                             self._enemies_cache[entity_id] = EnemyData(**entity_data)
                 logger.info(f"Загружено {len(self._enemies_cache)} врагов")
         except Exception as e:
@@ -285,6 +315,23 @@ class DataManager:
                     data = json.load(f)
                     for effect_id, effect_data in data.get("effects", {}).items():
                         effect_data["id"] = effect_id
+                        # Удаляем hex_id если он есть, так как он уже определен в классе
+                        if 'hex_id' in effect_data:
+                            del effect_data['hex_id']
+                        # Удаляем type если он есть, так как используем effect_type
+                        if 'type' in effect_data:
+                            del effect_data['type']
+                        # Удаляем category если он есть, так как его нет в нашем классе
+                        if 'category' in effect_data:
+                            del effect_data['category']
+                        # Обеспечиваем наличие обязательных полей
+                        effect_data.setdefault('duration', 10.0)
+                        effect_data.setdefault('tick_rate', 1.0)
+                        effect_data.setdefault('magnitude', 1.0)
+                        effect_data.setdefault('conditions', {})
+                        effect_data.setdefault('modifiers', {})
+                        effect_data.setdefault('visual_effects', {})
+                        effect_data.setdefault('sound_effects', {})
                         self._effects_cache[effect_id] = EffectData(**effect_data)
                 logger.info(f"Загружено {len(self._effects_cache)} эффектов")
         except Exception as e:

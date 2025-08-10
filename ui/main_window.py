@@ -83,7 +83,7 @@ class MainWindow:
         # Состояние игры
         self.game_state = GameState.MENU
         self.game_running = False
-        self.game_paused = False
+        self.is_paused = False
         self.game_thread: Optional[threading.Thread] = None
         
         # UI компоненты
@@ -105,6 +105,9 @@ class MainWindow:
         
         # UI элементы
         self.ui_elements: Dict[str, Any] = {}
+        
+        # Флаг для обновления UI
+        self.ui_update_needed = False
         
         # Инициализация
         self._init_ui()
@@ -171,15 +174,19 @@ class MainWindow:
         
     def _create_menu_button(self, parent, text: str, command: Callable, bg_color: str):
         """Создание кнопки меню с улучшенным стилем"""
+        button_style = UIStyles.BUTTON_STYLE.copy()
+        button_style.update({
+            'bg': bg_color,
+            'fg': UIStyles.COLORS['text_white'],
+            'width': 20,
+            'height': 2
+        })
+        
         btn = tk.Button(
             parent,
             text=text,
             command=command,
-            bg=bg_color,
-            fg=UIStyles.COLORS['text_white'],
-            width=20,
-            height=2,
-            **UIStyles.BUTTON_STYLE
+            **button_style
         )
         btn.pack(pady=5)
         
@@ -295,16 +302,20 @@ class MainWindow:
         
     def _create_control_button(self, parent, text: str, command: Callable, bg_color: str):
         """Создание кнопки управления"""
+        button_style = UIStyles.BUTTON_STYLE.copy()
+        button_style.update({
+            'font': UIStyles.FONTS['text_medium'],
+            'bg': bg_color,
+            'fg': UIStyles.COLORS['text_white'],
+            'relief': 'flat',
+            'width': 15
+        })
+        
         btn = tk.Button(
             parent,
             text=text,
             command=command,
-            font=UIStyles.FONTS['text_medium'],
-            bg=bg_color,
-            fg=UIStyles.COLORS['text_white'],
-            relief='flat',
-            width=15,
-            **UIStyles.BUTTON_STYLE
+            **button_style
         )
         btn.pack(pady=2)
         
@@ -407,7 +418,7 @@ class MainWindow:
             
             # Запускаем игровой цикл
             self.game_running = True
-            self.game_paused = False
+            self.is_paused = False
             self.game_state = GameState.PLAYING
             self.game_thread = threading.Thread(target=self._game_loop, daemon=True)
             self.game_thread.start()
@@ -487,26 +498,34 @@ class MainWindow:
         def on_cancel():
             dialog.destroy()
         
+        button_style_ok = UIStyles.BUTTON_STYLE.copy()
+        button_style_ok.update({
+            'font': UIStyles.FONTS['text_medium'],
+            'bg': UIStyles.COLORS['accent_blue'],
+            'fg': UIStyles.COLORS['text_white'],
+            'width': 10
+        })
+        
+        button_style_cancel = UIStyles.BUTTON_STYLE.copy()
+        button_style_cancel.update({
+            'font': UIStyles.FONTS['text_medium'],
+            'bg': UIStyles.COLORS['text_dark'],
+            'fg': UIStyles.COLORS['text_white'],
+            'width': 10
+        })
+        
         tk.Button(
             button_frame,
             text="OK",
             command=on_ok,
-            font=UIStyles.FONTS['text_medium'],
-            bg=UIStyles.COLORS['accent_blue'],
-            fg=UIStyles.COLORS['text_white'],
-            width=10,
-            **UIStyles.BUTTON_STYLE
+            **button_style_ok
         ).pack(side='left', padx=5)
         
         tk.Button(
             button_frame,
             text="Отмена",
             command=on_cancel,
-            font=UIStyles.FONTS['text_medium'],
-            bg=UIStyles.COLORS['text_dark'],
-            fg=UIStyles.COLORS['text_white'],
-            width=10,
-            **UIStyles.BUTTON_STYLE
+            **button_style_cancel
         ).pack(side='left', padx=5)
         
         dialog.wait_window()
@@ -558,26 +577,34 @@ class MainWindow:
         def on_cancel():
             dialog.destroy()
         
+        button_style_load = UIStyles.BUTTON_STYLE.copy()
+        button_style_load.update({
+            'font': UIStyles.FONTS['text_medium'],
+            'bg': UIStyles.COLORS['accent_blue'],
+            'fg': UIStyles.COLORS['text_white'],
+            'width': 10
+        })
+        
+        button_style_cancel_load = UIStyles.BUTTON_STYLE.copy()
+        button_style_cancel_load.update({
+            'font': UIStyles.FONTS['text_medium'],
+            'bg': UIStyles.COLORS['text_dark'],
+            'fg': UIStyles.COLORS['text_white'],
+            'width': 10
+        })
+        
         tk.Button(
             button_frame,
             text="Загрузить",
             command=on_load,
-            font=UIStyles.FONTS['text_medium'],
-            bg=UIStyles.COLORS['accent_blue'],
-            fg=UIStyles.COLORS['text_white'],
-            width=10,
-            **UIStyles.BUTTON_STYLE
+            **button_style_load
         ).pack(side='left', padx=5)
         
         tk.Button(
             button_frame,
             text="Отмена",
             command=on_cancel,
-            font=UIStyles.FONTS['text_medium'],
-            bg=UIStyles.COLORS['text_dark'],
-            fg=UIStyles.COLORS['text_white'],
-            width=10,
-            **UIStyles.BUTTON_STYLE
+            **button_style_cancel_load
         ).pack(side='left', padx=5)
         
         dialog.wait_window()
@@ -590,7 +617,7 @@ class MainWindow:
                 if game_state_manager.load_game(result[0]):
                     self._init_game_systems()
                     self.game_running = True
-                    self.game_paused = False
+                    self.is_paused = False
                     self.game_state = GameState.PLAYING
                     self.game_thread = threading.Thread(target=self._game_loop, daemon=True)
                     self.game_thread.start()
@@ -659,14 +686,14 @@ class MainWindow:
                     self.last_fps_time = current_time
                 
                 # Обновляем игровую логику только если не на паузе
-                if not self.game_paused:
+                if not self.is_paused:
                     self._update_game(delta_time)
                 
                 # Рендерим
                 self._render_game()
                 
-                # Обновляем UI
-                self._update_ui()
+                # Устанавливаем флаг для обновления UI на главном потоке
+                self.ui_update_needed = True
                 
                 # Ограничиваем FPS
                 target_frame_time = 1.0 / self.game_settings.fps
@@ -760,8 +787,8 @@ class MainWindow:
     def _toggle_pause(self):
         """Переключение паузы"""
         if self.game_state == GameState.PLAYING:
-            self.game_paused = not self.game_paused
-            if self.game_paused:
+            self.is_paused = not self.is_paused
+            if self.is_paused:
                 self.game_state = GameState.PAUSED
                 self._update_status("Игра на паузе", UIStyles.COLORS['accent_orange'])
                 self.ui_elements['pause_btn'].config(text="Продолжить")
@@ -821,8 +848,20 @@ class MainWindow:
         self.root.quit()
         self.root.destroy()
         
+    def _update_ui_safe(self):
+        """Безопасное обновление UI на главном потоке"""
+        if self.ui_update_needed and self.game_state == GameState.PLAYING:
+            self._update_ui()
+            self.ui_update_needed = False
+        
+        # Планируем следующее обновление
+        if self.game_running:
+            self.root.after(16, self._update_ui_safe)  # ~60 FPS
+    
     def run(self):
         """Запуск главного окна"""
+        # Запускаем обновление UI
+        self.root.after(16, self._update_ui_safe)
         self.root.mainloop()
 
 
