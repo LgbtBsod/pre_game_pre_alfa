@@ -1,4 +1,4 @@
-from .entity import Entity, Spell
+from .entity import Entity
 import random
 
 class NPCEnemy(Entity):
@@ -23,9 +23,9 @@ class NPCEnemy(Entity):
     
     def _init_spells(self):
         if random.random() > 0.5:
-            self.spells["Fireball"] = Spell("Fireball", 20, "damage", damage=40)
+            self.spells["Fireball"] = {"name": "Fireball", "mana_cost": 20, "type": "damage", "damage": 40}
         if self.has_healing_abilities:
-            self.spells["Heal"] = Spell("Heal", 15, "healing", healing=30)
+            self.spells["Heal"] = {"name": "Heal", "mana_cost": 15, "type": "healing", "healing": 30}
 
 class BossEnemy(NPCEnemy):
     def __init__(self, entity_id, position):
@@ -41,9 +41,9 @@ class BossEnemy(NPCEnemy):
         self._init_boss_spells()
     
     def _init_boss_spells(self):
-        self.spells["Meteor"] = Spell("Meteor", 40, "damage", damage=80)
-        self.spells["Shield"] = Spell("Shield", 30, "defense")
-        self.spells["MassHeal"] = Spell("MassHeal", 50, "healing", healing=50)
+        self.spells["Meteor"] = {"name": "Meteor", "mana_cost": 40, "type": "damage", "damage": 80}
+        self.spells["Shield"] = {"name": "Shield", "mana_cost": 30, "type": "defense"}
+        self.spells["MassHeal"] = {"name": "MassHeal", "mana_cost": 50, "type": "healing", "healing": 50}
     
     def update(self, delta_time):
         if self.phase in self.phase_transitions:
@@ -62,7 +62,7 @@ class BossEnemy(NPCEnemy):
             self.ai_controller.behavior_tree = self._create_phase3_behavior()
     
     def _create_phase2_behavior(self):
-        from systems.ai.behavior_tree import Selector, Sequence, CheckLowHealth, UseHealingItem, AttackNearestEnemy
+        from ai.behavior_tree import Selector, Sequence, CheckLowHealth, UseHealingItem, AttackNearestEnemy
         return Selector([
             Sequence([
                 CheckLowHealth(0.4),
@@ -72,7 +72,7 @@ class BossEnemy(NPCEnemy):
         ])
     
     def _create_phase3_behavior(self):
-        from systems.ai.behavior_tree import Selector, Sequence, CheckLowHealth, UseHealingItem, AttackNearestEnemy
+        from ai.behavior_tree import Selector, Sequence, CheckLowHealth, UseHealingItem, AttackNearestEnemy
         return Selector([
             CheckLowHealth(0.3),
             UseHealingItem(),
@@ -84,5 +84,5 @@ class PlayerEntity(Entity):
         super().__init__(entity_id, position)
         self.is_player = True
         self.team = "PLAYER"
-        self.spells["Firebolt"] = Spell("Firebolt", 10, "damage", damage=25)
-        self.spells["Heal"] = Spell("Heal", 15, "healing", healing=30)
+        self.spells["Firebolt"] = {"name": "Firebolt", "mana_cost": 10, "type": "damage", "damage": 25}
+        self.spells["Heal"] = {"name": "Heal", "mana_cost": 15, "type": "healing", "healing": 30}

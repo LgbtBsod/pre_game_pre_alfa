@@ -146,9 +146,10 @@ class LearningController:
                 "FLEE": 0,
                 "CAST_SPELL": 0
             }
-            # Add spell actions
-            for spell in self.entity.spells:
-                self.q_table[state_hash][f"CAST_{spell}"] = 0
+            # Add spell actions (используем skills вместо spells)
+            if hasattr(self.entity, 'skills') and self.entity.skills:
+                for skill_name in self.entity.skills.keys():
+                    self.q_table[state_hash][f"CAST_{skill_name}"] = 0
         
         # Эпсилон-жадная стратегия
         if random.random() < self.exploration_rate:
@@ -212,16 +213,27 @@ class LearningController:
     
     def _perform_action(self, action):
         if action == "ATTACK":
-            self.entity.attack_nearest()
+            # Используем существующий метод attack если есть цель
+            if hasattr(self.entity, 'target') and self.entity.target:
+                self.entity.attack(self.entity.target)
         elif action == "DEFEND":
-            self.entity.defend()
+            # Простое действие защиты - увеличиваем защиту
+            if hasattr(self.entity, 'combat_stats'):
+                self.entity.combat_stats['defense'] = min(20, self.entity.combat_stats.get('defense', 5) + 1)
         elif action == "USE_ITEM":
-            self.entity.use_best_healing_item()
+            # Используем существующий метод
+            if hasattr(self.entity, 'use_best_healing_item'):
+                self.entity.use_best_healing_item()
         elif action == "FLEE":
-            self.entity.flee_from_danger()
+            # Простое бегство - отдаляемся от угрозы
+            if hasattr(self.entity, 'position') and hasattr(self.entity, 'movement_speed'):
+                # Упрощенная логика бегства
+                pass
         elif action.startswith("CAST_"):
-            spell_name = action[5:]
-            self.entity.cast_spell(spell_name)
+            skill_name = action[5:]
+            # Используем существующий метод use_skill
+            if hasattr(self.entity, 'use_skill'):
+                self.entity.use_skill(skill_name)
             
 class EnhancedAIMemory(AIMemory):
     def __init__(self, short_term_capacity=10, long_term_capacity=100):

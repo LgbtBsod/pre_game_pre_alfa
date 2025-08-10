@@ -2,6 +2,7 @@ import random
 import json
 import os
 import time
+import math
 from .behavior_tree import BehaviorTree, generate_tree_for_personality
 from .memory import AIMemory, LearningController
 from .cooperation import AICoordinator, GroupTactics
@@ -105,13 +106,15 @@ class AdvancedAIController:
         """Определение режима обновления для оптимизации"""
         # Определяем тип сущности по приоритету
         entity_type = "NORMAL"
-        if self.entity.is_player:
+        
+        # Безопасные проверки атрибутов
+        if hasattr(self.entity, 'is_player') and self.entity.is_player:
             entity_type = "PLAYER"
-        elif self.entity.is_boss:
+        elif hasattr(self.entity, 'is_boss') and self.entity.is_boss:
             entity_type = "BOSS"
-        elif self.entity.priority <= 2:
+        elif hasattr(self.entity, 'priority') and self.entity.priority <= 2:
             entity_type = "MINIBOSS"
-        elif self.entity.priority <= 3:
+        elif hasattr(self.entity, 'priority') and self.entity.priority <= 3:
             entity_type = "ELITE"
         
         # Режимы обновления в зависимости от типа и расстояния
@@ -302,8 +305,19 @@ class AdvancedAIController:
     
     def _random_movement(self):
         """Случайное перемещение"""
-        random_direction = (random.uniform(-1, 1), random.uniform(-1, 1))
-        self.entity.move_in_direction(random_direction)
+        # Генерируем случайную позицию в пределах определенного радиуса
+        current_pos = self.entity.position
+        radius = 50.0  # Радиус случайного движения
+        random_angle = random.uniform(0, 2 * 3.14159)
+        random_distance = random.uniform(0, radius)
+        
+        target_x = current_pos[0] + random_distance * math.cos(random_angle)
+        target_y = current_pos[1] + random_distance * math.sin(random_angle)
+        target_pos = (target_x, target_y)
+        
+        # Используем существующий метод move_towards
+        speed = self.entity.movement_speed
+        self.entity.move_towards(target_pos, speed, 0.1)  # delta_time = 0.1 для плавности
     
     def _use_tactical_abilities(self, delta_time: float):
         """Тактическое использование способностей"""

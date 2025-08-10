@@ -15,7 +15,16 @@ class EmotionGeneticSynthesizer:
         self.emotion_power = 1.0
     
     def update(self, delta_time: float):
+        # Безопасная проверка атрибута emotion
+        if not hasattr(self.entity, 'emotion'):
+            # Если атрибута нет, создаем базовую эмоцию
+            self.entity.emotion = "NEUTRAL"
+        
         current_emotion = self.entity.emotion
+        
+        # Безопасная проверка genetic_profile
+        if not hasattr(self.entity, 'genetic_profile'):
+            self.entity.genetic_profile = {}
         
         # Активация генов на основе эмоций
         for gene_id in self.emotion_gene_triggers.get(current_emotion, []):
@@ -38,28 +47,38 @@ class EmotionGeneticSynthesizer:
         if gene_id in self.active_gene_effects:
             return
         
-        gene_data = self.entity.genetic_profile[gene_id]
-        self.active_gene_effects[gene_id] = gene_data["effects"]
+        gene_data = self.entity.genetic_profile.get(gene_id, {})
+        if not gene_data:
+            return
+            
+        effects = gene_data.get("effects", [])
+        self.active_gene_effects[gene_id] = effects
         
         # Применение немедленных эффектов
-        for effect, value in gene_data["immediate_effects"].items():
+        immediate_effects = gene_data.get("immediate_effects", {})
+        for effect, value in immediate_effects.items():
             if effect == "heal":
-                self.entity.health = min(self.entity.max_health, self.entity.health + value)
+                if hasattr(self.entity, 'health') and hasattr(self.entity, 'max_health'):
+                    self.entity.health = min(self.entity.max_health, self.entity.health + value)
             elif effect == "damage_boost":
                 if hasattr(self.entity, 'add_damage_boost'):
                     self.entity.add_damage_boost(value)
             elif effect == "mana_regen":
-                self.entity.mana = min(self.entity.max_mana, self.entity.mana + value)
+                if hasattr(self.entity, 'mana') and hasattr(self.entity, 'max_mana'):
+                    self.entity.mana = min(self.entity.max_mana, self.entity.mana + value)
         
         # Начало длительных эффектов
-        self.entity.add_effect(gene_data["effects"])
+        if hasattr(self.entity, 'add_effect') and effects:
+            self.entity.add_effect(effects)
     
     def deactivate_gene(self, gene_id: str):
         if gene_id not in self.active_gene_effects:
             return
         
         # Удаление длительных эффектов
-        self.entity.remove_effect(self.active_gene_effects[gene_id])
+        effects = self.active_gene_effects[gene_id]
+        if hasattr(self.entity, 'remove_effect') and effects:
+            self.entity.remove_effect(effects)
         del self.active_gene_effects[gene_id]
     
     def apply_emotion_modifiers(self, delta_time: float):
@@ -67,11 +86,11 @@ class EmotionGeneticSynthesizer:
         self.emotion_power = 1.0
         
         for gene_id in self.active_gene_effects:
-            gene_data = self.entity.genetic_profile[gene_id]
+            gene_data = self.entity.genetic_profile.get(gene_id, {})
             if "emotion_modifier" in gene_data:
                 mod = gene_data["emotion_modifier"]
-                if mod["emotion"] == self.entity.emotion:
-                    self.emotion_power *= mod["multiplier"]
+                if mod.get("emotion") == self.entity.emotion:
+                    self.emotion_power *= mod.get("multiplier", 1.0)
         
         # Усиление эффектов текущей эмоции
         if hasattr(self.entity, 'apply_emotion_effects'):
