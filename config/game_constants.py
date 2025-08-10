@@ -1,33 +1,42 @@
-"""Константы и настройки игры."""
+"""Константы и настройки игры.
+Использует единые настройки из unified_settings для устранения дублирования.
+"""
 
-# Размеры окна по умолчанию
-WINDOW_WIDTH = 1200
-WINDOW_HEIGHT = 800
-WIDTH = 1200  # Для обратной совместимости
-HEIGHT = 800  # Для обратной совместимости
-DEFAULT_WINDOW_WIDTH = 1200
-DEFAULT_WINDOW_HEIGHT = 800
+from config.unified_settings import (
+    get_window_settings, get_map_settings, get_player_settings, get_enemy_settings,
+    get_combat_settings, get_leveling_settings, get_ai_settings, get_movement_settings,
+    get_fps_settings, get_audio_settings, get_gameplay_settings, get_ui_settings,
+    get_inventory_settings, get_effect_settings, get_skill_settings, get_loot_settings
+)
 
-# Настройки карты
-MAP_TILE_SIZE = 32
-TILE_SIZE = 32  # Для обратной совместимости
-MAP_WIDTH = 50
-MAP_HEIGHT = 50
+# Размеры окна по умолчанию (из unified_settings)
+WINDOW_WIDTH = get_window_settings().WIDTH
+WINDOW_HEIGHT = get_window_settings().HEIGHT
+WIDTH = get_window_settings().WIDTH  # Для обратной совместимости
+HEIGHT = get_window_settings().HEIGHT  # Для обратной совместимости
+DEFAULT_WINDOW_WIDTH = get_window_settings().DEFAULT_WIDTH
+DEFAULT_WINDOW_HEIGHT = get_window_settings().DEFAULT_HEIGHT
 
-# Настройки игрока
-PLAYER_START_HEALTH = 100
-PLAYER_BASE_HEALTH = 100  # Для обратной совместимости
-PLAYER_START_MANA = 50
-PLAYER_START_STAMINA = 100
-PLAYER_MOVEMENT_SPEED = 150
-PLAYER_ATTACK_SPEED = 1.0
+# Настройки карты (из unified_settings)
+MAP_TILE_SIZE = get_map_settings().TILE_SIZE
+TILE_SIZE = get_map_settings().TILE_SIZE  # Для обратной совместимости
+MAP_WIDTH = get_map_settings().MAP_WIDTH
+MAP_HEIGHT = get_map_settings().MAP_HEIGHT
 
-# Настройки врагов
-ENEMY_BASE_HEALTH = 80
-ENEMY_BASE_MANA = 30
-ENEMY_BASE_STAMINA = 80
-ENEMY_MOVEMENT_SPEED = 100
-ENEMY_ATTACK_SPEED = 0.8
+# Настройки игрока (из unified_settings)
+PLAYER_START_HEALTH = get_player_settings().START_HEALTH
+PLAYER_BASE_HEALTH = get_player_settings().START_HEALTH  # Для обратной совместимости
+PLAYER_START_MANA = get_player_settings().START_MANA
+PLAYER_START_STAMINA = get_player_settings().START_STAMINA
+PLAYER_MOVEMENT_SPEED = get_player_settings().MOVEMENT_SPEED
+PLAYER_ATTACK_SPEED = get_player_settings().ATTACK_SPEED
+
+# Настройки врагов (из unified_settings)
+ENEMY_BASE_HEALTH = get_enemy_settings().BASE_HEALTH
+ENEMY_BASE_MANA = get_enemy_settings().BASE_MANA
+ENEMY_BASE_STAMINA = get_enemy_settings().BASE_STAMINA
+ENEMY_MOVEMENT_SPEED = get_enemy_settings().MOVEMENT_SPEED
+ENEMY_ATTACK_SPEED = get_enemy_settings().ATTACK_SPEED
 
 # Количество и уровни врагов по сложности
 ENEMY_COUNT_EASY = 3
@@ -51,43 +60,43 @@ BOSS_LEVEL_EASY = 5
 BOSS_LEVEL_NORMAL = 10
 BOSS_LEVEL_HARD = 15
 
-# Настройки боя
-ATTACK_RANGE = 50
-CRITICAL_CHANCE_BASE = 0.05
-CRITICAL_MULTIPLIER_BASE = 2.0
-CRITICAL_MULTIPLIER = 2.0  # Для обратной совместимости
-DAMAGE_REDUCTION_BASE = 0.1
-BASE_DAMAGE = 10  # Базовый урон
+# Настройки боя (из unified_settings)
+ATTACK_RANGE = get_combat_settings().ATTACK_RANGE_BASE
+CRITICAL_CHANCE_BASE = get_combat_settings().CRITICAL_CHANCE_BASE
+CRITICAL_MULTIPLIER_BASE = get_combat_settings().CRITICAL_MULTIPLIER_BASE
+CRITICAL_MULTIPLIER = get_combat_settings().CRITICAL_MULTIPLIER_BASE  # Для обратной совместимости
+DAMAGE_REDUCTION_BASE = get_combat_settings().DAMAGE_REDUCTION_BASE
+BASE_DAMAGE = get_combat_settings().BASE_DAMAGE  # Базовый урон
 
-# Настройки опыта и уровней
-XP_BASE = 100
-XP_MULTIPLIER = 1.5
-LEVEL_CAP = 100
+# Настройки опыта и уровней (из unified_settings)
+XP_BASE = get_leveling_settings().XP_BASE
+XP_MULTIPLIER = get_leveling_settings().XP_MULTIPLIER
+LEVEL_CAP = get_leveling_settings().LEVEL_CAP
 
-# Настройки ИИ
-AI_UPDATE_FREQUENCY = 0.1  # секунды
-AI_DECISION_DELAY = 0.5
-AI_MEMORY_DURATION = 30.0
+# Настройки ИИ (из unified_settings)
+AI_UPDATE_FREQUENCY = get_ai_settings().AI_UPDATE_FREQUENCY  # секунды
+AI_DECISION_DELAY = get_ai_settings().DECISION_DELAY
+AI_MEMORY_DURATION = get_ai_settings().MEMORY_DURATION
 
-# Настройки физики
-GRAVITY = 0.0
-FRICTION = 0.8
-COLLISION_TOLERANCE = 2.0
+# Настройки физики (из unified_settings)
+GRAVITY = get_movement_settings().GRAVITY
+FRICTION = get_movement_settings().FRICTION
+COLLISION_TOLERANCE = get_movement_settings().COLLISION_TOLERANCE
 
-# Настройки рендеринга
-RENDER_FPS = 60
-UPDATE_FPS = 120
-CAMERA_SMOOTHING = 0.1
+# Настройки рендеринга (из unified_settings)
+RENDER_FPS = get_fps_settings().RENDER_FPS
+UPDATE_FPS = get_fps_settings().UPDATE_FPS
+CAMERA_SMOOTHING = get_map_settings().CAMERA_SMOOTHING
 
-# Настройки звука
-SOUND_ENABLED = True
-MUSIC_ENABLED = True
-SOUND_VOLUME = 0.7
-MUSIC_VOLUME = 0.5
+# Настройки звука (из unified_settings)
+SOUND_ENABLED = get_audio_settings().SOUND_ENABLED
+MUSIC_ENABLED = get_audio_settings().MUSIC_ENABLED
+SOUND_VOLUME = get_audio_settings().SFX_VOLUME
+MUSIC_VOLUME = get_audio_settings().MUSIC_VOLUME
 
-# Настройки сохранения
-AUTO_SAVE_INTERVAL = 300  # секунды
-MAX_SAVE_SLOTS = 10
+# Настройки сохранения (из unified_settings)
+AUTO_SAVE_INTERVAL = get_gameplay_settings().AUTO_SAVE_INTERVAL  # секунды
+MAX_SAVE_SLOTS = get_gameplay_settings().MAX_SAVE_SLOTS
 SAVE_FILE_EXTENSION = ".sav"
 
 # Настройки сложности
@@ -115,7 +124,7 @@ DIFFICULTY_SETTINGS = {
     }
 }
 
-# Цвета
+# Цвета (из unified_settings)
 COLORS = {
     "player": "#00ff00",
     "enemy": "#ff0000",
@@ -124,41 +133,41 @@ COLORS = {
     "item": "#ffff00",
     "projectile": "#ff8800",
     "effect": "#00ffff",
-    "ui_background": "#000000",
+    "ui_background": "#1a1a1a",
     "ui_text": "#ffffff",
     "ui_button": "#444444",
     "ui_button_hover": "#666666"
 }
 
-# Основные цвета
+# Основные цвета (из unified_settings)
 BACKGROUND = (0, 0, 0)  # Черный фон
 PLAYER_COLOR = (0, 255, 0)  # Зеленый цвет игрока
 TEXT_COLOR = (255, 255, 255)  # Белый цвет текста
 
-# Размеры UI элементов
-UI_ELEMENT_HEIGHT = 30
-UI_PADDING = 10
-UI_MARGIN = 5
-UI_FONT_SIZE = 14
+# Размеры UI элементов (из unified_settings)
+UI_ELEMENT_HEIGHT = get_ui_settings().ELEMENT_HEIGHT
+UI_PADDING = get_ui_settings().PADDING
+UI_MARGIN = get_ui_settings().MARGIN
+UI_FONT_SIZE = get_ui_settings().FONT_SIZE
 
-# Настройки инвентаря
-INVENTORY_SLOTS = 20
-EQUIPMENT_SLOTS = 8
-STACK_SIZE_LIMIT = 99
+# Настройки инвентаря (из unified_settings)
+INVENTORY_SLOTS = get_inventory_settings().SLOTS
+EQUIPMENT_SLOTS = get_inventory_settings().EQUIPMENT_SLOTS
+STACK_SIZE_LIMIT = get_inventory_settings().STACK_SIZE_LIMIT
 
-# Настройки эффектов
-EFFECT_DURATION_BASE = 10.0
-EFFECT_TICK_RATE = 1.0
-MAX_ACTIVE_EFFECTS = 20
+# Настройки эффектов (из unified_settings)
+EFFECT_DURATION_BASE = get_effect_settings().DURATION_BASE
+EFFECT_TICK_RATE = get_effect_settings().TICK_RATE
+MAX_ACTIVE_EFFECTS = get_effect_settings().MAX_ACTIVE_EFFECTS
 
-# Настройки способностей
-SKILL_COOLDOWN_BASE = 1.0
-SKILL_MANA_COST_BASE = 10
-SKILL_STAMINA_COST_BASE = 15
+# Настройки способностей (из unified_settings)
+SKILL_COOLDOWN_BASE = get_skill_settings().COOLDOWN_BASE
+SKILL_MANA_COST_BASE = get_skill_settings().MANA_COST_BASE
+SKILL_STAMINA_COST_BASE = get_skill_settings().STAMINA_COST_BASE
 
-# Настройки лута
-LOOT_DROP_CHANCE_BASE = 0.3
-LOOT_QUALITY_BASE = 1.0
-RARE_ITEM_CHANCE = 0.1
-EPIC_ITEM_CHANCE = 0.05
-LEGENDARY_ITEM_CHANCE = 0.01
+# Настройки лута (из unified_settings)
+LOOT_DROP_CHANCE_BASE = get_loot_settings().DROP_CHANCE_BASE
+LOOT_QUALITY_BASE = get_loot_settings().QUALITY_BASE
+RARE_ITEM_CHANCE = get_loot_settings().RARE_ITEM_CHANCE
+EPIC_ITEM_CHANCE = get_loot_settings().EPIC_ITEM_CHANCE
+LEGENDARY_ITEM_CHANCE = get_loot_settings().LEGENDARY_ITEM_CHANCE

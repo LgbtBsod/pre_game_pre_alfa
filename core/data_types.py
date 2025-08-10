@@ -336,40 +336,175 @@ class DataManager:
         self.update_database()
     
     def load_attributes(self):
-        """Загрузить атрибуты"""
-        file_path = self.data_path / "attributes.json"
-        if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                for attr_id, attr_data in data.get("attributes", {}).items():
-                    self.attributes[attr_id] = AttributeData.from_dict(attr_data)
+        """Загрузить атрибуты из базы данных"""
+        try:
+            import sqlite3
+            db_path = Path("data/game_data.db")
+            if db_path.exists():
+                with sqlite3.connect(db_path) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM attributes")
+                    rows = cursor.fetchall()
+                    
+                    for row in rows:
+                        try:
+                            attr_data = {
+                                'id': row[0],
+                                'name': row[1],
+                                'description': row[2] or '',
+                                'base_value': row[3] or 10.0,
+                                'max_value': row[4] or 100.0,
+                                'growth_rate': row[5] or 1.0,
+                                'category': row[6] or 'physical',
+                                'effects': json.loads(row[7]) if row[7] else {},
+                                'hex_id': row[8] if len(row) > 8 else None
+                            }
+                            self.attributes[attr_data['id']] = AttributeData.from_dict(attr_data)
+                        except Exception as e:
+                            logger.warning(f"Ошибка загрузки атрибута {row[0]}: {e}")
+                            continue
+            else:
+                logger.warning("База данных не найдена")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки атрибутов: {e}")
     
     def load_effects(self):
-        """Загрузить эффекты"""
-        file_path = self.data_path / "effects.json"
-        if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                for effect_id, effect_data in data.get("effects", {}).items():
-                    self.effects[effect_id] = EffectData.from_dict(effect_data)
+        """Загрузить эффекты из базы данных"""
+        try:
+            import sqlite3
+            db_path = Path("data/game_data.db")
+            if db_path.exists():
+                with sqlite3.connect(db_path) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM effects")
+                    rows = cursor.fetchall()
+                    
+                    for row in rows:
+                        try:
+                            effect_data = {
+                                'id': row[0],
+                                'name': row[1],
+                                'description': row[2] or '',
+                                'type': row[3],
+                                'category': row[4] if len(row) > 4 else 'general',
+                                'tags': json.loads(row[5]) if len(row) > 5 and row[5] else [],
+                                'modifiers': json.loads(row[6]) if len(row) > 6 and row[6] else {},
+                                'max_stacks': row[7] if len(row) > 7 else 1,
+                                'duration': row[8] if len(row) > 8 else None,
+                                'interval': row[9] if len(row) > 9 else None,
+                                'tick_interval': row[10] if len(row) > 10 else None,
+                                'stackable': row[11] if len(row) > 11 else False,
+                                'hex_id': row[12] if len(row) > 12 else None
+                            }
+                            self.effects[effect_data['id']] = EffectData.from_dict(effect_data)
+                        except Exception as e:
+                            logger.warning(f"Ошибка загрузки эффекта {row[0]}: {e}")
+                            continue
+            else:
+                logger.warning("База данных не найдена")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки эффектов: {e}")
     
     def load_items(self):
-        """Загрузить предметы"""
-        file_path = self.data_path / "items.json"
-        if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                for item_id, item_data in data.get("items", {}).items():
-                    self.items[item_id] = ItemData.from_dict(item_data)
+        """Загрузить предметы из базы данных"""
+        try:
+            import sqlite3
+            db_path = Path("data/game_data.db")
+            if db_path.exists():
+                with sqlite3.connect(db_path) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM items")
+                    rows = cursor.fetchall()
+                    
+                    for row in rows:
+                        try:
+                            item_data = {
+                                'id': row[0],
+                                'name': row[1],
+                                'description': row[2] or '',
+                                'type': row[3],
+                                'slot': row[4],
+                                'rarity': row[5],
+                                'level_requirement': row[6] or 1,
+                                'base_damage': row[7],
+                                'attack_speed': row[8],
+                                'defense': row[9],
+                                'damage_type': row[10],
+                                'element': row[11],
+                                'element_damage': row[12],
+                                'range': row[13] if len(row) > 13 else None,
+                                'cost': row[14] if len(row) > 14 else 0,
+                                'mana_cost': row[15] if len(row) > 15 else None,
+                                'critical_chance': row[16] if len(row) > 16 else None,
+                                'weight': row[17] if len(row) > 17 else None,
+                                'block_chance': row[18] if len(row) > 18 else None,
+                                'heal_amount': row[19] if len(row) > 19 else None,
+                                'heal_percent': row[20] if len(row) > 20 else None,
+                                'mana_amount': row[21] if len(row) > 21 else None,
+                                'mana_percent': row[22] if len(row) > 22 else None,
+                                'duration': row[23] if len(row) > 23 else None,
+                                'cooldown': row[24] if len(row) > 24 else None,
+                                'durability': row[25] if len(row) > 25 else None,
+                                'max_durability': row[26] if len(row) > 26 else None,
+                                'effects': json.loads(row[27]) if len(row) > 27 and row[27] else [],
+                                'modifiers': json.loads(row[28]) if len(row) > 28 and row[28] else {},
+                                'tags': json.loads(row[29]) if len(row) > 29 and row[29] else [],
+                                'resist_mod': json.loads(row[30]) if len(row) > 30 and row[30] else {},
+                                'weakness_mod': json.loads(row[31]) if len(row) > 31 and row[31] else {},
+                                'elemental_resistance': json.loads(row[32]) if len(row) > 32 and row[32] else {},
+                                'hex_id': row[33] if len(row) > 33 else None
+                            }
+                            self.items[item_data['id']] = ItemData.from_dict(item_data)
+                        except Exception as e:
+                            logger.warning(f"Ошибка загрузки предмета {row[0]}: {e}")
+                            continue
+            else:
+                logger.warning("База данных не найдена")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки предметов: {e}")
     
     def load_entities(self):
-        """Загрузить сущности"""
-        file_path = self.data_path / "entities.json"
-        if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                for entity_id, entity_data in data.get("entities", {}).items():
-                    self.entities[entity_id] = EntityData.from_dict(entity_data)
+        """Загрузить сущности из базы данных"""
+        try:
+            import sqlite3
+            db_path = Path("data/game_data.db")
+            if db_path.exists():
+                with sqlite3.connect(db_path) as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM entities")
+                    rows = cursor.fetchall()
+                    
+                    for row in rows:
+                        try:
+                            entity_data = {
+                                'id': row[0],
+                                'name': row[1],
+                                'description': row[2] or '',
+                                'type': row[3],
+                                'level': row[4] or 1,
+                                'experience': row[5] or 0,
+                                'experience_to_next': row[6] or 100,
+                                'attributes': json.loads(row[7]) if len(row) > 7 and row[7] else {},
+                                'combat_stats': json.loads(row[8]) if len(row) > 8 and row[8] else {},
+                                'equipment_slots': json.loads(row[9]) if len(row) > 9 and row[9] else [],
+                                'inventory_size': row[10] if len(row) > 10 else 0,
+                                'skills': json.loads(row[11]) if len(row) > 11 and row[11] else [],
+                                'tags': json.loads(row[12]) if len(row) > 12 and row[12] else [],
+                                'enemy_type': row[13] if len(row) > 13 else None,
+                                'experience_reward': row[14] if len(row) > 14 else None,
+                                'ai_behavior': row[15] if len(row) > 15 else None,
+                                'loot_table': json.loads(row[16]) if len(row) > 16 and row[16] else None,
+                                'phases': json.loads(row[17]) if len(row) > 17 and row[17] else None,
+                                'hex_id': row[18] if len(row) > 18 else None
+                            }
+                            self.entities[entity_data['id']] = EntityData.from_dict(entity_data)
+                        except Exception as e:
+                            logger.warning(f"Ошибка загрузки сущности {row[0]}: {e}")
+                            continue
+            else:
+                logger.warning("База данных не найдена")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки сущностей: {e}")
     
     def load_settings(self):
         """Загрузить настройки игры"""

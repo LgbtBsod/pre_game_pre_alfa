@@ -106,11 +106,6 @@ class ResourceManager:
         """Инициализирует пути к ресурсам."""
         base_path = Path("data")
         self._resource_paths = {
-            'items': base_path / "items.json",
-            'entities': base_path / "entities.json",
-            'effects': base_path / "effects.json",
-            'abilities': base_path / "abilities.json",
-            'attributes': base_path / "attributes.json",
             'game_settings': base_path / "game_settings.json",
             'difficulty': base_path / "difficulty_settings.json",
             'ui': base_path / "ui_settings.json",
@@ -128,9 +123,6 @@ class ResourceManager:
             for resource_type, path in self._resource_paths.items():
                 if path.exists():
                     self._load_json_resource(resource_type, path)
-            
-            # Импортируем данные в базу данных
-            self._import_to_database()
             
             logger.info("Базовые ресурсы загружены")
             

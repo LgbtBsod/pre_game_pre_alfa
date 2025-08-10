@@ -1,3 +1,3 @@
 @echo off
-python main.py
+python run_game_ui.py
 pause

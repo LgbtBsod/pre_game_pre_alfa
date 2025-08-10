@@ -8,8 +8,8 @@ from entities.base_entity import BaseEntity
 class Player(BaseEntity):
     """Игрок - управляемая сущность с AI"""
     
-    def __init__(self, position: tuple = (0, 0)):
-        super().__init__("player", position)
+    def __init__(self, entity_id: str = "player", position: tuple = (0, 0), attribute_templates: dict = None):
+        super().__init__(entity_id, position, attribute_templates)
         
         # Специфичные для игрока параметры
         self.name = "Герой"

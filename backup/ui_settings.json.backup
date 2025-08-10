@@ -1,0 +1,54 @@
+{
+  "display": {
+    "show_health_bars": true,
+    "show_damage_numbers": true,
+    "show_minimap": true,
+    "show_quest_log": true,
+    "show_fps": false,
+    "show_coordinates": false,
+    "ui_scale": 1.0,
+    "ui_opacity": 0.9
+  },
+  "colors": {
+    "player": "#00ff00",
+    "enemy": "#ff0000",
+    "boss": "#ff00ff",
+    "npc": "#0000ff",
+    "item": "#ffff00",
+    "projectile": "#ff8800",
+    "effect": "#00ffff",
+    "ui_background": "#000000",
+    "ui_text": "#ffffff",
+    "ui_button": "#444444",
+    "ui_button_hover": "#666666",
+    "ui_button_active": "#888888",
+    "health_bar": "#ff0000",
+    "mana_bar": "#0000ff",
+    "stamina_bar": "#ffff00",
+    "experience_bar": "#00ff00"
+  },
+  "fonts": {
+    "main_font": "Arial",
+    "main_font_size": 14,
+    "title_font_size": 18,
+    "small_font_size": 12,
+    "large_font_size": 24,
+    "font_antialiasing": true
+  },
+  "layout": {
+    "health_bar_position": "top_left",
+    "mana_bar_position": "top_left",
+    "stamina_bar_position": "top_left",
+    "minimap_position": "top_right",
+    "inventory_position": "bottom_right",
+    "skill_bar_position": "bottom_center",
+    "chat_position": "bottom_left"
+  },
+  "animations": {
+    "ui_animations_enabled": true,
+    "animation_speed": 1.0,
+    "fade_in_duration": 0.3,
+    "fade_out_duration": 0.2,
+    "slide_animation": true
+  }
+}

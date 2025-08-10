@@ -40,7 +40,7 @@ class CombatStyle(Enum):
 class BaseEntity:
     """Базовая сущность с основными системами и AI"""
     
-    def __init__(self, entity_id: str, position: tuple = (0, 0)):
+    def __init__(self, entity_id: str, position: tuple = (0, 0), attribute_templates: Dict[str, float] = None):
         self.entity_id = entity_id
         self.name = entity_id  # Default name is the entity_id
         self.position = list(position)
@@ -51,7 +51,7 @@ class BaseEntity:
         self.playtime = 0.0
         
         # Системы сущности
-        self.attribute_manager = AttributeManager()
+        self.attribute_manager = AttributeManager(entity_id)
         self.combat_stats_manager = CombatStatsManager()
         self.inventory_manager = InventoryManager()
         
@@ -62,8 +62,17 @@ class BaseEntity:
         self.pattern_recognizer = PatternRecognizer()
         self.learning_system = LearningSystem(self)
         
-        # Инициализация систем
-        self.attribute_manager.initialize_default_attributes()
+        # Инициализация атрибутов из шаблонов или БД
+        if attribute_templates:
+            self.attribute_manager.initialize_from_templates(attribute_templates)
+        else:
+            # Пытаемся загрузить из БД, если не получилось - используем стандартные
+            from core.entity_attribute_manager import entity_attribute_manager
+            loaded_attrs = entity_attribute_manager.load_entity_attributes(entity_id)
+            if loaded_attrs:
+                self.attribute_manager = loaded_attrs
+            else:
+                self.attribute_manager.initialize_default_attributes()
         
         # Активные эффекты и кулдауны
         self.active_effects: Dict[str, Effect] = {}
@@ -75,8 +84,11 @@ class BaseEntity:
         self.is_boss = False
         self.combat_style = CombatStyle.MELEE
         
-        # Система обучения
-        self.learning_rate = 0.1
+        # Система обучения (теперь как атрибут сущности)
+        self.learning_rate = self._get_ai_attribute("learning_rate", 0.1)
+        self.memory_decay_rate = self._get_ai_attribute("memory_decay_rate", 0.95)
+        self.pattern_recognition_threshold = self._get_ai_attribute("pattern_recognition_threshold", 0.7)
+        
         self.memory = {}
         self.known_weaknesses = []
         self.learned_tactics = []
@@ -576,3 +588,73 @@ class BaseEntity:
     def get_stamina_percentage(self) -> float:
         """Возвращает процент выносливости"""
         return self.combat_stats_manager.get_stamina_percentage()
+    
+    def _get_ai_attribute(self, attribute_name: str, default_value: float) -> float:
+        """Получает AI атрибут сущности или использует значение по умолчанию"""
+        # Сначала пытаемся получить из атрибутов сущности
+        if hasattr(self, 'attribute_manager') and self.attribute_manager:
+            # Проверяем специальные AI атрибуты
+            ai_attr_map = {
+                "learning_rate": "ai_learning_rate",
+                "memory_decay_rate": "ai_memory_decay_rate", 
+                "pattern_recognition_threshold": "ai_pattern_threshold"
+            }
+            
+            mapped_name = ai_attr_map.get(attribute_name, attribute_name)
+            if self.attribute_manager.has_attribute(mapped_name):
+                return self.attribute_manager.get_attribute_value(mapped_name)
+        
+        # Если не найден, используем значение по умолчанию
+        return default_value
+    
+    def set_ai_attribute(self, attribute_name: str, value: float):
+        """Устанавливает AI атрибут сущности"""
+        ai_attr_map = {
+            "learning_rate": "ai_learning_rate",
+            "memory_decay_rate": "ai_memory_decay_rate",
+            "pattern_recognition_threshold": "ai_pattern_threshold"
+        }
+        
+        mapped_name = ai_attr_map.get(attribute_name, attribute_name)
+        
+        if hasattr(self, 'attribute_manager') and self.attribute_manager:
+            if self.attribute_manager.has_attribute(mapped_name):
+                self.attribute_manager.set_attribute_base(mapped_name, value)
+            else:
+                # Создаем новый атрибут если не существует
+                self.attribute_manager.set_attribute_base(mapped_name, value)
+                self.attribute_manager.set_attribute_max(mapped_name, value * 2)  # Максимум в 2 раза больше
+        
+        # Обновляем соответствующие свойства
+        if attribute_name == "learning_rate":
+            self.learning_rate = value
+        elif attribute_name == "memory_decay_rate":
+            self.memory_decay_rate = value
+        elif attribute_name == "pattern_recognition_threshold":
+            self.pattern_recognition_threshold = value
+    
+    def save_attributes(self):
+        """Сохраняет атрибуты сущности в БД"""
+        try:
+            from core.entity_attribute_manager import entity_attribute_manager
+            entity_attribute_manager.save_entity_attributes(self.entity_id, self.attribute_manager)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Ошибка сохранения атрибутов сущности {self.entity_id}: {e}")
+    
+    def load_attributes(self):
+        """Загружает атрибуты сущности из БД"""
+        try:
+            from core.entity_attribute_manager import entity_attribute_manager
+            loaded_attrs = entity_attribute_manager.load_entity_attributes(self.entity_id)
+            if loaded_attrs:
+                self.attribute_manager = loaded_attrs
+                # Обновляем AI атрибуты
+                self.learning_rate = self._get_ai_attribute("learning_rate", 0.1)
+                self.memory_decay_rate = self._get_ai_attribute("memory_decay_rate", 0.95)
+                self.pattern_recognition_threshold = self._get_ai_attribute("pattern_recognition_threshold", 0.7)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Ошибка загрузки атрибутов сущности {self.entity_id}: {e}")

@@ -80,18 +80,12 @@ class GameLauncher:
     def _verify_data_integrity(self) -> bool:
         """Проверка целостности игровых данных"""
         try:
-            # Проверяем основные файлы данных
-            required_files = [
-                'data/entities.json',
-                'data/items.json',
-                'data/abilities.json',
-                'data/attributes.json'
-            ]
-            
-            for file_path in required_files:
-                if not Path(file_path).exists():
-                    logger.warning(f"Файл {file_path} не найден")
-                    
+            # Проверяем базу данных
+            db_path = Path('data/game_data.db')
+            if not db_path.exists():
+                logger.warning("База данных не найдена")
+                return False
+                
             # Проверяем создание тестовых объектов
             test_player = entity_factory.create_player("TestPlayer", (100, 100))
             if not test_player:
@@ -228,11 +222,15 @@ def create_backup():
         backup_dir.mkdir(exist_ok=True)
         
         important_files = [
-            'data/entities.json',
-            'data/items.json',
-            'data/abilities.json',
-            'data/attributes.json',
-            'data/game_settings.json'
+            'data/game_data.db',
+            'data/game_settings.json',
+            'data/difficulty_settings.json',
+            'data/ui_settings.json',
+            'data/graphics_settings.json',
+            'data/audio_settings.json',
+            'data/ai_settings.json',
+            'data/combat_settings.json',
+            'data/inventory_settings.json'
         ]
         
         for file_path in important_files:

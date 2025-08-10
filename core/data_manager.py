@@ -114,8 +114,8 @@ class DataManager:
         self.db_path = self.data_dir / "game_data.db"
         self._init_database()
         
-        # Загрузка данных
-        self._load_all_data()
+        # Загрузка данных из базы данных
+        self._load_all_data_from_db()
     
     def _init_database(self):
         """Инициализация базы данных."""
@@ -232,148 +232,170 @@ class DataManager:
         
         conn.commit()
     
-    def _load_all_data(self):
-        """Загружает все данные из JSON файлов и БД."""
+    def _load_all_data_from_db(self):
+        """Загружает все данные из базы данных."""
         try:
-            self._load_items_from_json()
-            self._load_enemies_from_json()
-            self._load_effects_from_json()
-            self._load_abilities_from_json()
-            
-            # Импортируем данные в БД
-            self._import_json_to_db()
-            
+            self._load_items_from_db()
+            self._load_enemies_from_db()
+            self._load_effects_from_db()
+            self._load_abilities_from_db()
             logger.info("Все данные загружены успешно")
         except Exception as e:
             logger.error(f"Ошибка загрузки данных: {e}")
     
-    def _load_items_from_json(self):
-        """Загружает предметы из JSON файла."""
-        try:
-            items_file = self.data_dir / "items.json"
-            if items_file.exists():
-                with open(items_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    for item_id, item_data in data.get("items", {}).items():
-                        item_data["id"] = item_id
-                        # Удаляем hex_id если он есть, так как он уже определен в классе
-                        if 'hex_id' in item_data:
-                            del item_data['hex_id']
-                        # Обеспечиваем наличие обязательных полей
-                        item_data.setdefault('base_damage', 0.0)
-                        item_data.setdefault('attack_speed', 1.0)
-                        item_data.setdefault('element_damage', 0.0)
-                        item_data.setdefault('defense', 0.0)
-                        item_data.setdefault('weight', 0.0)
-                        item_data.setdefault('durability', 100)
-                        item_data.setdefault('max_durability', 100)
-                        item_data.setdefault('cost', 0)
-                        item_data.setdefault('effects', [])
-                        item_data.setdefault('modifiers', {})
-                        item_data.setdefault('tags', [])
-                        item_data.setdefault('resist_mod', {})
-                        item_data.setdefault('weakness_mod', {})
-                        self._items_cache[item_id] = ItemData(**item_data)
-                logger.info(f"Загружено {len(self._items_cache)} предметов")
-        except Exception as e:
-            logger.error(f"Ошибка загрузки предметов: {e}")
-    
-    def _load_enemies_from_json(self):
-        """Загружает врагов из JSON файла."""
-        try:
-            entities_file = self.data_dir / "entities.json"
-            if entities_file.exists():
-                with open(entities_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    for entity_id, entity_data in data.get("entities", {}).items():
-                        if entity_data.get("type") in ["enemy", "boss"]:
-                            entity_data["id"] = entity_id
-                            # Удаляем hex_id если он есть, так как он уже определен в классе
-                            if 'hex_id' in entity_data:
-                                del entity_data['hex_id']
-                            # Удаляем type если он есть, так как используем enemy_type
-                            if 'type' in entity_data:
-                                del entity_data['type']
-                            # Обеспечиваем наличие обязательных полей
-                            entity_data.setdefault('attributes', {})
-                            entity_data.setdefault('combat_stats', {})
-                            entity_data.setdefault('loot_table', [])
-                            entity_data.setdefault('skills', [])
-                            entity_data.setdefault('tags', [])
-                            entity_data.setdefault('phases', [])
-                            self._enemies_cache[entity_id] = EnemyData(**entity_data)
-                logger.info(f"Загружено {len(self._enemies_cache)} врагов")
-        except Exception as e:
-            logger.error(f"Ошибка загрузки врагов: {e}")
-    
-    def _load_effects_from_json(self):
-        """Загружает эффекты из JSON файла."""
-        try:
-            effects_file = self.data_dir / "effects.json"
-            if effects_file.exists():
-                with open(effects_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    for effect_id, effect_data in data.get("effects", {}).items():
-                        effect_data["id"] = effect_id
-                        # Удаляем hex_id если он есть, так как он уже определен в классе
-                        if 'hex_id' in effect_data:
-                            del effect_data['hex_id']
-                        # Удаляем type если он есть, так как используем effect_type
-                        if 'type' in effect_data:
-                            del effect_data['type']
-                        # Удаляем category если он есть, так как его нет в нашем классе
-                        if 'category' in effect_data:
-                            del effect_data['category']
-                        # Обеспечиваем наличие обязательных полей
-                        effect_data.setdefault('duration', 10.0)
-                        effect_data.setdefault('tick_rate', 1.0)
-                        effect_data.setdefault('magnitude', 1.0)
-                        effect_data.setdefault('conditions', {})
-                        effect_data.setdefault('modifiers', {})
-                        effect_data.setdefault('visual_effects', {})
-                        effect_data.setdefault('sound_effects', {})
-                        self._effects_cache[effect_id] = EffectData(**effect_data)
-                logger.info(f"Загружено {len(self._effects_cache)} эффектов")
-        except Exception as e:
-            logger.error(f"Ошибка загрузки эффектов: {e}")
-    
-    def _load_abilities_from_json(self):
-        """Загружает способности из JSON файла."""
-        try:
-            abilities_file = self.data_dir / "abilities.json"
-            if abilities_file.exists():
-                with open(abilities_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    for ability_id, ability_data in data.get("abilities", {}).items():
-                        ability_data["id"] = ability_id
-                        self._abilities_cache[ability_id] = AbilityData(**ability_data)
-                logger.info(f"Загружено {len(self._abilities_cache)} способностей")
-        except Exception as e:
-            logger.error(f"Ошибка загрузки способностей: {e}")
-    
-    def _import_json_to_db(self):
-        """Импортирует данные из JSON в базу данных."""
+    def _load_items_from_db(self):
+        """Загружает предметы из базы данных."""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                # Импорт предметов
-                for item_data in self._items_cache.values():
-                    self._insert_item_to_db(conn, item_data)
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM items')
+                rows = cursor.fetchall()
                 
-                # Импорт врагов
-                for enemy_data in self._enemies_cache.values():
-                    self._insert_enemy_to_db(conn, enemy_data)
+                for row in rows:
+                    try:
+                        # Создаем словарь с данными из БД
+                        item_data = {
+                            'id': row[0],
+                            'name': row[1],
+                            'description': row[2] or '',
+                            'type': row[3],
+                            'slot': row[4],
+                            'rarity': row[5],
+                            'level_requirement': row[6] or 1,
+                            'base_damage': row[7] or 0.0,
+                            'attack_speed': row[8] or 1.0,
+                            'damage_type': row[9],
+                            'element': row[10],
+                            'element_damage': row[11] or 0.0,
+                            'defense': row[12] or 0.0,
+                            'weight': row[13] or 0.0,
+                            'durability': row[14] or 100,
+                            'max_durability': row[15] or 100,
+                            'cost': row[16] or 0,
+                            'effects': json.loads(row[17]) if row[17] else [],
+                            'modifiers': json.loads(row[18]) if row[18] else {},
+                            'tags': json.loads(row[19]) if row[19] else [],
+                            'resist_mod': json.loads(row[20]) if row[20] else {},
+                            'weakness_mod': json.loads(row[21]) if row[21] else {}
+                        }
+                        
+                        self._items_cache[item_data['id']] = ItemData(**item_data)
+                    except Exception as e:
+                        logger.warning(f"Ошибка загрузки предмета {row[0]}: {e}")
+                        continue
                 
-                # Импорт эффектов
-                for effect_data in self._effects_cache.values():
-                    self._insert_effect_to_db(conn, effect_data)
-                
-                # Импорт способностей
-                for ability_data in self._abilities_cache.values():
-                    self._insert_ability_to_db(conn, ability_data)
-                
-            logger.info("Данные импортированы в БД")
+                logger.info(f"Загружено {len(self._items_cache)} предметов из БД")
         except Exception as e:
-            logger.error(f"Ошибка импорта в БД: {e}")
+            logger.error(f"Ошибка загрузки предметов из БД: {e}")
+    
+    def _load_enemies_from_db(self):
+        """Загружает врагов из базы данных."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM enemies')
+                rows = cursor.fetchall()
+                
+                for row in rows:
+                    try:
+                        # Создаем словарь с данными из БД
+                        enemy_data = {
+                            'id': row[0],
+                            'name': row[1],
+                            'description': row[2] or '',
+                            'enemy_type': row[3],
+                            'level': row[4] or 1,
+                            'experience_reward': row[5] or 10,
+                            'attributes': json.loads(row[6]) if row[6] else {},
+                            'combat_stats': json.loads(row[7]) if row[7] else {},
+                            'ai_behavior': row[8],
+                            'loot_table': json.loads(row[9]) if row[9] else [],
+                            'skills': json.loads(row[10]) if row[10] else [],
+                            'tags': json.loads(row[11]) if row[11] else [],
+                            'phases': json.loads(row[12]) if row[12] else []
+                        }
+                        
+                        self._enemies_cache[enemy_data['id']] = EnemyData(**enemy_data)
+                    except Exception as e:
+                        logger.warning(f"Ошибка загрузки врага {row[0]}: {e}")
+                        continue
+                
+                logger.info(f"Загружено {len(self._enemies_cache)} врагов из БД")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки врагов из БД: {e}")
+    
+    def _load_effects_from_db(self):
+        """Загружает эффекты из базы данных."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM effects')
+                rows = cursor.fetchall()
+                
+                for row in rows:
+                    try:
+                        # Создаем словарь с данными из БД
+                        effect_data = {
+                            'id': row[0],
+                            'name': row[1],
+                            'description': row[2] or '',
+                            'effect_type': row[3],
+                            'duration': row[4] or 10.0,
+                            'tick_rate': row[5] or 1.0,
+                            'magnitude': row[6] or 1.0,
+                            'target_type': row[7],
+                            'conditions': json.loads(row[8]) if row[8] else {},
+                            'modifiers': json.loads(row[9]) if row[9] else {},
+                            'visual_effects': json.loads(row[10]) if row[10] else {},
+                            'sound_effects': json.loads(row[11]) if row[11] else {}
+                        }
+                        
+                        self._effects_cache[effect_data['id']] = EffectData(**effect_data)
+                    except Exception as e:
+                        logger.warning(f"Ошибка загрузки эффекта {row[0]}: {e}")
+                        continue
+                
+                logger.info(f"Загружено {len(self._effects_cache)} эффектов из БД")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки эффектов из БД: {e}")
+    
+    def _load_abilities_from_db(self):
+        """Загружает способности из базы данных."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM abilities')
+                rows = cursor.fetchall()
+                
+                for row in rows:
+                    try:
+                        # Создаем словарь с данными из БД
+                        ability_data = {
+                            'id': row[0],
+                            'name': row[1],
+                            'description': row[2] or '',
+                            'ability_type': row[3],
+                            'cooldown': row[4] or 1.0,
+                            'mana_cost': row[5] or 0,
+                            'stamina_cost': row[6] or 0,
+                            'health_cost': row[7] or 0,
+                            'damage': row[8] or 0.0,
+                            'damage_type': row[9],
+                            'range': row[10] or 0.0,
+                            'area_of_effect': row[11] or 0.0,
+                            'effects': json.loads(row[12]) if row[12] else [],
+                            'requirements': json.loads(row[13]) if row[13] else {},
+                            'modifiers': json.loads(row[14]) if row[14] else {}
+                        }
+                        
+                        self._abilities_cache[ability_data['id']] = AbilityData(**ability_data)
+                    except Exception as e:
+                        logger.warning(f"Ошибка загрузки способности {row[0]}: {e}")
+                        continue
+                
+                logger.info(f"Загружено {len(self._abilities_cache)} способностей из БД")
+        except Exception as e:
+            logger.error(f"Ошибка загрузки способностей из БД: {e}")
     
     def _insert_item_to_db(self, conn: sqlite3.Connection, item_data: ItemData):
         """Вставляет предмет в БД."""
@@ -444,7 +466,7 @@ class DataManager:
             ability_data.range, ability_data.area_of_effect, json.dumps(ability_data.effects),
             json.dumps(ability_data.requirements), json.dumps(ability_data.modifiers)
         ))
-    
+
     # Методы доступа к данным
     def get_item(self, item_id: str) -> Optional[ItemData]:
         """Получает данные предмета."""
@@ -547,7 +569,7 @@ class DataManager:
             self._enemies_cache.clear()
             self._effects_cache.clear()
             self._abilities_cache.clear()
-            self._load_all_data()
+            self._load_all_data_from_db()
 
 
 # Глобальный экземпляр менеджера данных

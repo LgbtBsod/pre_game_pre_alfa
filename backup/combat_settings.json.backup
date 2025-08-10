@@ -1,0 +1,48 @@
+{
+  "mechanics": {
+    "base_attack_cooldown": 1.0,
+    "critical_hit_threshold": 0.95,
+    "block_chance_cap": 0.75,
+    "dodge_chance_cap": 0.5,
+    "parry_chance_cap": 0.4,
+    "damage_reduction_cap": 0.8,
+    "stun_duration_base": 2.0,
+    "knockback_force": 50.0
+  },
+  "damage": {
+    "base_damage": 10,
+    "critical_multiplier": 2.0,
+    "elemental_damage_multiplier": 1.5,
+    "armor_penetration": 0.1,
+    "damage_variance": 0.2,
+    "minimum_damage": 1
+  },
+  "effects": {
+    "max_active_effects": 20,
+    "effect_duration_base": 10.0,
+    "effect_tick_rate": 1.0,
+    "effect_stack_limit": 5,
+    "effect_immunity_duration": 30.0
+  },
+  "combat_ai": {
+    "attack_range": 50,
+    "retreat_health_threshold": 0.3,
+    "aggressive_health_threshold": 0.7,
+    "flanking_enabled": true,
+    "cover_usage": true,
+    "tactical_positioning": true
+  },
+  "projectiles": {
+    "projectile_speed": 200,
+    "projectile_gravity": 0.0,
+    "projectile_lifetime": 5.0,
+    "ricochet_enabled": false,
+    "piercing_enabled": false
+  },
+  "area_effects": {
+    "max_area_effects": 10,
+    "area_effect_duration": 8.0,
+    "area_effect_tick_rate": 0.5,
+    "area_effect_fade_time": 1.0
+  }
+}
