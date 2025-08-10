@@ -99,7 +99,10 @@ class AICoordinator:
                 if rel == "ENEMY" and gid in self.groups:
                     for enemy in self.groups[gid]:
                         if enemy.health > 0:
-                            threat_score = enemy.combat_level * (1.0 + enemy.damage_output / 100)
+                            # Безопасная проверка атрибутов
+                            combat_level = getattr(enemy, 'combat_level', 1)
+                            damage_output = getattr(enemy, 'damage_output', 0)
+                            threat_score = combat_level * (1.0 + damage_output / 100)
                             
                             # Учет расстояния
                             distance = math.sqrt(
