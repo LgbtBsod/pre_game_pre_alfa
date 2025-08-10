@@ -21,6 +21,11 @@ class DamageSystem:
         total_damage = 0.0
         damage_report = {"total": 0.0}
 
+        # Получаем настройки боя
+        from config.unified_settings import get_combat_settings
+
+        combat_settings = get_combat_settings()
+
         # Базовый урон от характеристик (атрибуты представлены числами)
         base_damage = 0.0
         weapon_type_value = getattr(weapon.weapon_type, "value", weapon.weapon_type)
@@ -30,11 +35,20 @@ class DamageSystem:
             wtype = str(weapon_type_value).lower()
 
         if any(k in wtype for k in ["sword", "axe", "hammer"]):
-            base_damage = float(attacker.attributes.get("strength", 10)) * 0.7
+            base_damage = (
+                float(attacker.attributes.get("strength", 10))
+                * combat_settings.MELEE_DAMAGE_MULTIPLIER
+            )
         elif any(k in wtype for k in ["bow", "crossbow", "musket"]):
-            base_damage = float(attacker.attributes.get("dexterity", 10)) * 0.8
+            base_damage = (
+                float(attacker.attributes.get("dexterity", 10))
+                * combat_settings.RANGED_DAMAGE_MULTIPLIER
+            )
         elif "staff" in wtype:
-            base_damage = float(attacker.attributes.get("intelligence", 10)) * 0.9
+            base_damage = (
+                float(attacker.attributes.get("intelligence", 10))
+                * combat_settings.MAGIC_DAMAGE_MULTIPLIER
+            )
 
         # Учет урона от оружия
         for dmg_type in weapon.damage_types:
@@ -56,16 +70,20 @@ class DamageSystem:
             effective_resistance = max(0.0, resistance - penetration)
 
             # Финальный урон по типу
-            final_damage = max(0.0, (base_damage + dmg_value) * (1 - effective_resistance))
+            final_damage = max(
+                0.0, (base_damage + dmg_value) * (1 - effective_resistance)
+            )
             total_damage += final_damage
             damage_report[dtype_key] = final_damage
 
         # Учет критического удара
-        critical_chance = float(attacker.combat_stats.get("critical_chance", 0.05)) + float(
-            getattr(weapon, "critical_chance", 0.0)
-        )
+        critical_chance = float(
+            attacker.combat_stats.get(
+                "critical_chance", combat_settings.BASE_CRITICAL_CHANCE
+            )
+        ) + float(getattr(weapon, "critical_chance", 0.0))
         if random.random() < critical_chance:
-            total_damage *= 2.0
+            total_damage *= combat_settings.CRITICAL_DAMAGE_MULTIPLIER
             damage_report["critical"] = True
 
         # Учет навыков (если есть)
@@ -74,29 +92,29 @@ class DamageSystem:
             total_damage *= dmg_mult
 
         damage_report["total"] = total_damage
-        
+
         # Применение эффектов от оружия и навыков
         DamageSystem._apply_weapon_effects(attacker, target, weapon, skill)
-        
+
         return damage_report
-    
+
     @staticmethod
     def _apply_weapon_effects(attacker, target, weapon, skill):
         """Применить эффекты от оружия и навыков"""
         effects_to_apply = []
-        
+
         # Эффекты от оружия
-        if hasattr(weapon, 'effects') and weapon.effects:
+        if hasattr(weapon, "effects") and weapon.effects:
             effects_to_apply.extend(weapon.effects)
-        
+
         # Эффекты от навыка
-        if skill and hasattr(skill, 'effects') and skill.effects:
+        if skill and hasattr(skill, "effects") and skill.effects:
             effects_to_apply.extend(skill.effects)
-        
+
         # Применение эффектов
         for effect_id in effects_to_apply:
             DamageSystem._apply_effect_to_target(target, effect_id)
-    
+
     @staticmethod
     def _apply_effect_to_target(target, effect_id):
         """Применить эффект к цели"""
@@ -104,43 +122,43 @@ class DamageSystem:
             # Загрузка данных эффектов
             effects_file = "data/effects.json"
             if os.path.exists(effects_file):
-                with open(effects_file, 'r', encoding='utf-8') as f:
+                with open(effects_file, "r", encoding="utf-8") as f:
                     effects_data = json.load(f)
-                
+
                 if effect_id in effects_data:
                     effect_data = effects_data[effect_id]
-                    
+
                     # Создание и применение эффекта
                     effect = Effect(
                         effect_id=effect_id,
                         tags=effect_data.get("tags", []),
-                        modifiers=effect_data.get("modifiers", [])
+                        modifiers=effect_data.get("modifiers", []),
                     )
-                    
+
                     # Применение эффекта к цели
                     effect.apply(target, True)
-                    
+
                     # Добавление эффекта в список активных эффектов цели
-                    if not hasattr(target, 'active_effects'):
+                    if not hasattr(target, "active_effects"):
                         target.active_effects = []
                     target.active_effects.append(effect)
-                    
+
         except Exception as e:
             logger.error(f"Ошибка применения эффекта {effect_id}: {e}")
-    
+
     @staticmethod
     def process_entity_effects(entity, delta_time):
         """Обработать все активные эффекты сущности"""
-        if not hasattr(entity, 'active_effects'):
+        if not hasattr(entity, "active_effects"):
             return
-        
+
         # Обработка эффектов
         for effect in entity.active_effects[:]:  # Копия списка для безопасного удаления
             if effect.active:
                 effect.process_tick(entity, delta_time)
-                
+
                 # Проверка истечения эффекта
-                if hasattr(effect, 'duration') and effect.duration:
+                if hasattr(effect, "duration") and effect.duration:
                     if time.time() - effect.start_time >= effect.duration:
                         effect.active = False
                         effect.apply(entity, False)  # Отмена эффекта

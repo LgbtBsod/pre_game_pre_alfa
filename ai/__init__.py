@@ -3,21 +3,14 @@
 Включает улучшенную систему искусственного интеллекта с модульной архитектурой.
 """
 
-from .ai_core import (
-    AICore,
-    AIState,
-    AIPriority,
-    AIPersonality,
-    AIKnowledge,
-    AIEmotion
-)
+from .ai_core import AICore, AIState, AIPriority, AIPersonality, AIKnowledge, AIEmotion
 
 from .ai_manager import (
     AIManager,
     ai_manager,
     GroupCoordinator,
     SpatialHash,
-    UpdateQueue
+    UpdateQueue,
 )
 
 from .advanced_ai import AdvancedAIController
@@ -31,32 +24,30 @@ from .pattern_recognizer import PatternRecognizer
 
 __all__ = [
     # Основные AI компоненты
-    'AICore',
-    'AIState', 
-    'AIPriority',
-    'AIPersonality',
-    'AIKnowledge',
-    'AIEmotion',
-    
+    "AICore",
+    "AIState",
+    "AIPriority",
+    "AIPersonality",
+    "AIKnowledge",
+    "AIEmotion",
     # Менеджер AI
-    'AIManager',
-    'ai_manager',
-    'GroupCoordinator',
-    'SpatialHash',
-    'UpdateQueue',
-    
+    "AIManager",
+    "ai_manager",
+    "GroupCoordinator",
+    "SpatialHash",
+    "UpdateQueue",
     # Устаревшие компоненты (для совместимости)
-    'AdvancedAIController',
-    'BehaviorTree',
-    'generate_tree_for_personality',
-    'AICoordinator',
-    'GroupTactics',
-    'DecisionMaker',
-    'EmotionGeneticSynthesizer',
-    'LearningSystem',
-    'PlayerLearning',
-    'EnemyLearning', 
-    'BossLearning',
-    'AIMemory',
-    'PatternRecognizer'
+    "AdvancedAIController",
+    "BehaviorTree",
+    "generate_tree_for_personality",
+    "AICoordinator",
+    "GroupTactics",
+    "DecisionMaker",
+    "EmotionGeneticSynthesizer",
+    "LearningSystem",
+    "PlayerLearning",
+    "EnemyLearning",
+    "BossLearning",
+    "AIMemory",
+    "PatternRecognizer",
 ]

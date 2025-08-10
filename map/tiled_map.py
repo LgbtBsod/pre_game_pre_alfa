@@ -2,6 +2,7 @@ import json
 import os
 from typing import Dict, List, Tuple
 
+
 class TiledMap:
     def __init__(self, file_path: str):
         if not os.path.exists(file_path):
@@ -9,13 +10,22 @@ class TiledMap:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
+        # Получаем настройки карты
+        from config.unified_settings import get_map_settings
+
+        map_settings = get_map_settings()
+
         self.width: int = int(data.get("width", 0))
         self.height: int = int(data.get("height", 0))
-        self.tilewidth: int = int(data.get("tilewidth", 32))
-        self.tileheight: int = int(data.get("tileheight", 32))
+        self.tilewidth: int = int(data.get("tilewidth", map_settings.DEFAULT_TILE_SIZE))
+        self.tileheight: int = int(
+            data.get("tileheight", map_settings.DEFAULT_TILE_SIZE)
+        )
         self.infinite: bool = bool(data.get("infinite", False))
         self.layers: List[Dict] = [
-            layer for layer in data.get("layers", []) if layer.get("type") == "tilelayer"
+            layer
+            for layer in data.get("layers", [])
+            if layer.get("type") == "tilelayer"
         ]
 
         # bounds for infinite maps
@@ -46,7 +56,12 @@ class TiledMap:
         if min_tx is None:
             min_tx = min_ty = 0
             max_tx = max_ty = 0
-        self.min_tx, self.min_ty, self.max_tx, self.max_ty = min_tx, min_ty, max_tx, max_ty
+        self.min_tx, self.min_ty, self.max_tx, self.max_ty = (
+            min_tx,
+            min_ty,
+            max_tx,
+            max_ty,
+        )
 
     def get_tile_gid(self, x: int, y: int) -> int:
         for layer in reversed(self.layers):
@@ -74,7 +89,15 @@ class TiledMap:
             idx = y * w + x
             return int(data[idx]) if 0 <= idx < len(data) else 0
 
-    def draw_to_canvas(self, canvas, view_left_px: int, view_top_px: int, view_w: int, view_h: int, tag: str = "map") -> None:
+    def draw_to_canvas(
+        self,
+        canvas,
+        view_left_px: int,
+        view_top_px: int,
+        view_w: int,
+        view_h: int,
+        tag: str = "map",
+    ) -> None:
         tw, th = self.tilewidth, self.tileheight
         cols = max(0, self.max_tx - self.min_tx)
         rows = max(0, self.max_ty - self.min_ty)
@@ -97,6 +120,6 @@ class TiledMap:
                 y0 = lty * th - view_top_px
                 x1 = x0 + tw
                 y1 = y0 + th
-                canvas.create_rectangle(x0, y0, x1, y1, fill=color, width=0, tags=(tag,))
-
-
+                canvas.create_rectangle(
+                    x0, y0, x1, y1, fill=color, width=0, tags=(tag,)
+                )

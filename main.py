@@ -6,16 +6,15 @@
 import sys
 import logging
 import time
-from pathlib import Path
 
 # Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('game.log', encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("game.log", encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 logger = logging.getLogger(__name__)
@@ -30,8 +29,6 @@ from items.item_manager import item_manager
 # Импорт игровых систем
 from core.game_logic_manager import GameLogicManager
 from core.resource_manager import resource_manager
-from ui.game_menu import GameMenu
-from ui.render_manager import RenderManager
 
 # Импорт AI системы
 from ai.ai_manager import ai_manager
@@ -84,13 +81,15 @@ class Game:
     def start_new_game(self, player_name: str, difficulty: str = "normal"):
         """Начинает новую игру"""
         try:
-            logger.info(f"Создание новой игры: {player_name}, сложность: {difficulty}")
+            logger.info(
+                f"Создание новой игры: {player_name}, " f"сложность: {difficulty}"
+            )
             
             # Создаем новое состояние игры
             game_id = game_state_manager.create_new_game(
                 save_name=f"Save_{player_name}_{int(time.time())}",
                 player_name=player_name,
-                difficulty=difficulty
+                difficulty=difficulty,
             )
             
             if not game_id:
@@ -133,7 +132,9 @@ class Game:
             
             # Восстанавливаем игрока
             player_state = game_state.player_state
-            self.player = entity_factory.create_player(player_state.player_id, player_state.position)
+            self.player = entity_factory.create_player(
+                player_state.player_id, player_state.position
+            )
             
             # Восстанавливаем характеристики игрока
             self.restore_player_state(player_state)
@@ -208,11 +209,11 @@ class Game:
                     enemy = entity_factory.create_enemy(
                         enemy_type="warrior",
                         level=1,
-                        position=(100 + i * 50, 100 + i * 50)
+                        position=(100 + i * 50, 100 + i * 50),
                     )
                     self.entities.append(enemy)
                     # Регистрируем в AI системе
-                    if hasattr(enemy, 'ai_core'):
+                    if hasattr(enemy, "ai_core"):
                         ai_manager.register_entity(enemy, enemy.ai_core)
             
             elif area_name == "forest":
@@ -221,11 +222,11 @@ class Game:
                     enemy = entity_factory.create_enemy(
                         enemy_type="archer",
                         level=3,
-                        position=(200 + i * 80, 200 + i * 80)
+                        position=(200 + i * 80, 200 + i * 80),
                     )
                     self.entities.append(enemy)
                     # Регистрируем в AI системе
-                    if hasattr(enemy, 'ai_core'):
+                    if hasattr(enemy, "ai_core"):
                         ai_manager.register_entity(enemy, enemy.ai_core)
             
             elif area_name == "dungeon":
@@ -234,14 +235,16 @@ class Game:
                     enemy = entity_factory.create_enemy(
                         enemy_type="mage",
                         level=5,
-                        position=(300 + i * 60, 300 + i * 60)
+                        position=(300 + i * 60, 300 + i * 60),
                     )
                     self.entities.append(enemy)
                     # Регистрируем в AI системе
-                    if hasattr(enemy, 'ai_core'):
+                    if hasattr(enemy, "ai_core"):
                         ai_manager.register_entity(enemy, enemy.ai_core)
             
-            logger.info(f"Создано {len(self.entities)} сущностей для области {area_name}")
+            logger.info(
+                f"Создано {len(self.entities)} сущностей для области {area_name}"
+            )
             
         except Exception as e:
             logger.error(f"Ошибка создания сущностей: {e}")
@@ -274,7 +277,7 @@ class Game:
                 game_state_manager.auto_save(self.game_time)
                 
                 # Ограничиваем FPS
-                time.sleep(max(0, 1/60 - self.delta_time))
+                time.sleep(max(0, 1 / 60 - self.delta_time))
             
             logger.info("Игровой цикл завершен")
             
@@ -285,14 +288,15 @@ class Game:
         """Обрабатывает ввод"""
         try:
             # Обработка ввода через меню
-            input_result = self.game_menu.handle_input()
-            
-            if input_result == "quit":
-                self.running = False
-            elif input_result == "pause":
-                self.paused = not self.paused
-            elif input_result == "save":
-                self.save_game()
+            if self.game_menu:
+                input_result = self.game_menu.handle_input()
+                
+                if input_result == "quit":
+                    self.running = False
+                elif input_result == "pause":
+                    self.paused = not self.paused
+                elif input_result == "save":
+                    self.save_game()
             
             # Обработка игрового ввода
             if not self.paused and self.player:
@@ -337,6 +341,9 @@ class Game:
     def render(self):
         """Рендерит игру"""
         try:
+            if not self.render_manager:
+                return
+                
             # Очищаем экран
             self.render_manager.clear()
             
@@ -353,7 +360,8 @@ class Game:
                 self.render_manager.render_entity(self.player)
             
             # Рендерим UI
-            self.game_menu.render(self.render_manager)
+            if self.game_menu:
+                self.game_menu.render(self.render_manager)
             
             # Обновляем экран
             self.render_manager.update()
@@ -392,15 +400,19 @@ class Game:
             "position": self.player.position,
             "level": self.player.level,
             "experience": self.player.experience,
-            "attributes": {name: self.player.get_attribute_value(name) 
-                          for name in self.player.attributes.keys()},
+            "attributes": {
+                name: self.player.get_attribute_value(name)
+                for name in self.player.attributes.keys()
+            },
             "combat_stats": self.player.combat_stats.copy(),
             "equipment": self.player.equipment.copy(),
-            "inventory": [item.item_id if hasattr(item, 'item_id') else str(item) 
-                         for item in self.player.inventory],
+            "inventory": [
+                item.item_id if hasattr(item, "item_id") else str(item)
+                for item in self.player.inventory
+            ],
             "skills": list(self.player.skill_cooldowns.keys()),
             "effects": list(self.player.active_effects.keys()),
-            "playtime": self.player.playtime
+            "playtime": self.player.playtime,
         }
     
     def restore_player_state(self, player_state):
@@ -466,31 +478,39 @@ class Game:
 
 def main():
     """Главная функция"""
-    game = Game()
+    # Запускаем главное окно с UI
+    from ui.main_window import main as run_ui
     
     try:
-        # Инициализация
-        if not game.initialize():
-            logger.error("Не удалось инициализировать игру")
-            return
-        
-        # Простое тестовое сообщение
-        logger.info("Игра успешно инициализирована!")
-        logger.info("Все системы загружены и готовы к работе.")
-        
-        # Здесь можно добавить простой тестовый интерфейс или запустить игру
-        input("Нажмите Enter для выхода...")
-    
-    except KeyboardInterrupt:
-        logger.info("Игра прервана пользователем")
-    
+        run_ui()
     except Exception as e:
         logger.error(f"Критическая ошибка: {e}")
-    
-    finally:
-        # Очистка ресурсов
-        game.cleanup()
-        logger.info("Игра завершена")
+        # Fallback к консольной версии
+        game = Game()
+        
+        try:
+            # Инициализация
+            if not game.initialize():
+                logger.error("Не удалось инициализировать игру")
+                return
+            
+            # Простое тестовое сообщение
+            logger.info("Игра успешно инициализирована!")
+            logger.info("Все системы загружены и готовы к работе.")
+            
+            # Здесь можно добавить простой тестовый интерфейс или запустить игру
+            input("Нажмите Enter для выхода...")
+        
+        except KeyboardInterrupt:
+            logger.info("Игра прервана пользователем")
+        
+        except Exception as e:
+            logger.error(f"Критическая ошибка: {e}")
+        
+        finally:
+            # Очистка ресурсов
+            game.cleanup()
+            logger.info("Игра завершена")
 
 
 if __name__ == "__main__":

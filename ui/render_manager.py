@@ -1,21 +1,33 @@
 """
 Менеджер рендеринга - управляет отрисовкой всех игровых элементов
-Оптимизированная версия с улучшенной производительностью
+Версия для Panda3D с улучшенной производительностью
 """
+
 import time
 import math
 from typing import Dict, List, Optional, Any, Tuple
-from tkinter import Canvas
 from dataclasses import dataclass
+
+from panda3d.core import (
+    WindowFramework, PandaFramework, NodePath, 
+    Point3, Vec3, Vec4, TransparencyAttrib,
+    TextNode, AntialiasAttrib, DirectionalLight,
+    AmbientLight, PerspectiveLens, OrthographicLens,
+    CardMaker, LineSegs, PandaNode
+)
+from direct.showbase.ShowBase import ShowBase
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
+from direct.task import Task
 
 from core.game_state_manager import game_state_manager
 from config.game_constants import PLAYER_COLOR, TEXT_COLOR
-from utils.game_utils import rgb_to_hex
 
 
 @dataclass
 class RenderStats:
     """Статистика рендеринга"""
+
     frames_rendered: int = 0
     entities_rendered: int = 0
     render_time: float = 0.0
@@ -24,334 +36,462 @@ class RenderStats:
 
 
 class RenderManager:
-    """Управляет рендерингом всех игровых элементов с оптимизацией"""
-    
-    def __init__(self, canvas: Canvas, game_state: game_state_manager):
-        self.canvas = canvas
+    """Управляет рендерингом всех игровых элементов с Panda3D"""
+
+    def __init__(self, base: ShowBase, game_state: game_state_manager):
+        self.base = base
         self.game_state = game_state
-        self.width = canvas.winfo_reqwidth()
-        self.height = canvas.winfo_reqheight()
         
+        # Получаем размеры окна
+        self.width = self.base.win.get_x_size()
+        self.height = self.base.win.get_y_size()
+
         # Позиция камеры
         self.camera_x = 0
         self.camera_y = 0
         self.camera_zoom = 1.0
-        
+
         # Статистика рендеринга
         self.stats = RenderStats()
         self.stats.last_fps_time = time.time()
-        
+
         # Кэш для оптимизации
-        self._cached_entities: Dict[int, Dict] = {}
+        self._cached_entities: Dict[int, NodePath] = {}
         self._last_render_time = 0
-        self._render_interval = 1.0 / 60  # 60 FPS
-        
+
+        # Получаем настройки рендеринга
+        from config.unified_settings import UnifiedSettings
+        self._render_interval = 1.0 / UnifiedSettings.RENDER_FPS
+
         # Настройки рендеринга
         self.show_fps = True
         self.show_debug_info = False
         self.show_health_bars = True
         self.show_names = True
-        
+
         # Цвета и стили
         self.colors = {
-            'background': '#1a1a1a',
-            'border': '#333333',
-            'text': rgb_to_hex(TEXT_COLOR),
-            'player': rgb_to_hex(PLAYER_COLOR),
-            'enemy_warrior': '#ff3333',
-            'enemy_archer': '#ff66cc',
-            'enemy_mage': '#3399ff',
-            'health_good': '#00ff00',
-            'health_warning': '#ffff00',
-            'health_critical': '#ff0000',
-            'health_bg': '#333333',
-            'health_border': '#666666'
+            "background": Vec4(0.1, 0.1, 0.1, 1.0),
+            "border": Vec4(0.2, 0.2, 0.2, 1.0),
+            "text": Vec4(1.0, 1.0, 1.0, 1.0),
+            "player": Vec4(0.0, 0.8, 1.0, 1.0),
+            "enemy_warrior": Vec4(1.0, 0.2, 0.2, 1.0),
+            "enemy_archer": Vec4(1.0, 0.4, 0.8, 1.0),
+            "enemy_mage": Vec4(0.2, 0.6, 1.0, 1.0),
+            "health_good": Vec4(0.0, 1.0, 0.0, 1.0),
+            "health_warning": Vec4(1.0, 1.0, 0.0, 1.0),
+            "health_critical": Vec4(1.0, 0.0, 0.0, 1.0),
+            "health_bg": Vec4(0.2, 0.2, 0.2, 1.0),
+            "health_border": Vec4(0.4, 0.4, 0.4, 1.0),
         }
+
+        # Создаем сцены
+        self._setup_scenes()
+        self._setup_lighting()
+        self._setup_camera()
+
+    def _setup_scenes(self):
+        """Настройка сцен"""
+        # Основная сцена для игровых объектов
+        self.game_scene = self.base.render.attach_new_node("game_scene")
         
-        # Шрифты
-        self.fonts = {
-            'title': ('Arial', 16, 'bold'),
-            'normal': ('Arial', 10),
-            'small': ('Arial', 8),
-            'debug': ('Consolas', 8)
-        }
+        # Сцена для UI элементов
+        self.ui_scene = self.base.render2d.attach_new_node("ui_scene")
         
+        # Сцена для отладочной информации
+        self.debug_scene = self.base.render2d.attach_new_node("debug_scene")
+
+    def _setup_lighting(self):
+        """Настройка освещения"""
+        # Основное освещение
+        main_light = DirectionalLight("main_light")
+        main_light.set_color(Vec4(0.8, 0.8, 0.8, 1.0))
+        main_light_np = self.game_scene.attach_new_node(main_light)
+        main_light_np.set_hpr(45, -45, 0)
+        self.game_scene.set_light(main_light_np)
+
+        # Фоновое освещение
+        ambient_light = AmbientLight("ambient_light")
+        ambient_light.set_color(Vec4(0.3, 0.3, 0.3, 1.0))
+        ambient_light_np = self.game_scene.attach_new_node(ambient_light)
+        self.game_scene.set_light(ambient_light_np)
+
+    def _setup_camera(self):
+        """Настройка камеры"""
+        # Устанавливаем камеру в ортографический режим для 2D игры
+        lens = OrthographicLens()
+        lens.set_film_size(20, 15)  # Размер видимой области
+        self.base.cam.node().set_lens(lens)
+        
+        # Позиционируем камеру
+        self.base.cam.set_pos(0, -10, 0)
+        self.base.cam.look_at(Point3(0, 0, 0))
+
     def clear(self):
-        """Очистка canvas"""
-        self.canvas.delete("all")
+        """Очистка сцен"""
+        # Очищаем игровые объекты
+        for child in self.game_scene.get_children():
+            if child.get_name().startswith("entity_"):
+                child.remove_node()
         
+        # Очищаем UI элементы
+        for child in self.ui_scene.get_children():
+            if child.get_name().startswith("ui_"):
+                child.remove_node()
+
     def update(self):
         """Обновление экрана"""
-        self.canvas.update()
-        
+        # Panda3D обновляет экран автоматически
+        pass
+
     def set_camera(self, x: float, y: float, zoom: float = 1.0):
         """Установка позиции камеры"""
         self.camera_x = x
         self.camera_y = y
-        self.camera_zoom = max(0.1, min(3.0, zoom))  # Ограничиваем зум
+        self.camera_zoom = max(0.1, min(3.0, zoom))
         
-    def world_to_screen(self, world_x: float, world_y: float) -> Tuple[int, int]:
+        # Обновляем позицию камеры
+        self.base.cam.set_pos(x, -10, y)
+        
+        # Обновляем зум через размер линзы
+        lens = self.base.cam.node().get_lens()
+        if isinstance(lens, OrthographicLens):
+            lens.set_film_size(20 / self.camera_zoom, 15 / self.camera_zoom)
+
+    def world_to_screen(self, world_x: float, world_y: float) -> Tuple[float, float]:
         """Преобразование мировых координат в экранные"""
-        screen_x = int((world_x - self.camera_x) * self.camera_zoom + self.width // 2)
-        screen_y = int((world_y - self.camera_y) * self.camera_zoom + self.height // 2)
-        return screen_x, screen_y
-        
-    def screen_to_world(self, screen_x: int, screen_y: int) -> Tuple[float, float]:
-        """Преобразование экранных координат в мировые"""
-        world_x = (screen_x - self.width // 2) / self.camera_zoom + self.camera_x
-        world_y = (screen_y - self.height // 2) / self.camera_zoom + self.camera_y
+        # В Panda3D координаты уже в мировых единицах
         return world_x, world_y
-        
+
+    def screen_to_world(self, screen_x: float, screen_y: float) -> Tuple[float, float]:
+        """Преобразование экранных координат в мировые"""
+        # В Panda3D координаты уже в мировых единицах
+        return screen_x, screen_y
+
     def render_area(self, area_name: str):
-        """Рендеринг игровой области с оптимизацией"""
-        # Фон
-        self.canvas.create_rectangle(
-            0, 0, self.width, self.height,
-            fill=self.colors['background'],
-            outline=self.colors['border'],
-            width=2,
-            tags="background"
-        )
-        
-        # Сетка (опционально)
-        if self.show_debug_info:
-            self._render_grid()
-        
-        # Название области
-        self.canvas.create_text(
-            self.width // 2, 30,
-            text=f"Область: {area_name}",
-            fill=self.colors['text'],
-            font=self.fonts['title'],
-            tags="ui"
-        )
-        
-    def _render_grid(self, grid_size: int = 50):
-        """Отрисовка сетки для отладки"""
-        # Вертикальные линии
-        for x in range(0, self.width, grid_size):
-            self.canvas.create_line(
-                x, 0, x, self.height,
-                fill='#333333',
-                width=1,
-                tags="debug"
+        """Рендеринг игровой области"""
+        try:
+            # Создаем фон
+            self._create_background()
+            
+            # Создаем сетку
+            self._create_grid()
+            
+            # Создаем название области
+            self._create_area_name(area_name)
+            
+        except Exception as e:
+            print(f"Ошибка рендеринга области: {e}")
+
+    def _create_background(self):
+        """Создание фона"""
+        # Создаем плоскость для фона
+        cm = CardMaker("background")
+        cm.set_frame(-10, 10, -7.5, 7.5)
+        background = self.game_scene.attach_new_node(cm.generate())
+        background.set_color(self.colors["background"])
+        background.set_depth_write(False)
+        background.set_depth_test(False)
+
+    def _create_grid(self, grid_size: float = 1.0):
+        """Создание сетки"""
+        try:
+            # Создаем линии сетки
+            ls = LineSegs("grid")
+            ls.set_color(self.colors["border"])
+            ls.set_thickness(1.0)
+            
+            # Вертикальные линии
+            for x in range(-10, 11, int(grid_size)):
+                ls.move_to(x, -7.5, 0)
+                ls.draw_to(x, 7.5, 0)
+            
+            # Горизонтальные линии
+            for y in range(-7, 8, int(grid_size)):
+                ls.move_to(-10, y, 0)
+                ls.draw_to(10, y, 0)
+            
+            grid_node = ls.create()
+            grid_np = self.game_scene.attach_new_node(grid_node)
+            grid_np.set_depth_write(False)
+            
+        except Exception as e:
+            print(f"Ошибка создания сетки: {e}")
+
+    def _create_area_name(self, area_name: str):
+        """Создание названия области"""
+        try:
+            text = OnscreenText(
+                text=f"Область: {area_name}",
+                pos=(0, 0.8),
+                scale=0.05,
+                fg=self.colors["text"],
+                shadow=(0, 0, 0, 1),
+                parent=self.ui_scene
             )
-        
-        # Горизонтальные линии
-        for y in range(0, self.height, grid_size):
-            self.canvas.create_line(
-                0, y, self.width, y,
-                fill='#333333',
-                width=1,
-                tags="debug"
-            )
-        
+            text.set_name("area_name")
+            
+        except Exception as e:
+            print(f"Ошибка создания названия области: {e}")
+
     def render_entity(self, entity):
-        """Рендеринг игровой сущности с оптимизацией"""
-        if not hasattr(entity, 'position'):
-            return
+        """Рендеринг сущности"""
+        try:
+            if not entity or not hasattr(entity, 'position'):
+                return
+
+            # Получаем стиль сущности
+            style = self._get_entity_style(entity)
             
-        # Проверяем, нужно ли рендерить
-        if not self._should_render_entity(entity):
-            return
+            # Проверяем, нужно ли рендерить
+            if not self._should_render_entity(entity):
+                return
+
+            # Создаем или обновляем визуальное представление
+            entity_node = self._get_or_create_entity_node(entity, style)
             
-        x, y = entity.position
-        
-        # Определяем тип сущности и стиль
-        entity_style = self._get_entity_style(entity)
-        
-        # Отрисовываем сущность
-        self._render_entity_shape(x, y, entity_style)
-        
-        # Отрисовываем имя
-        if self.show_names:
-            self._render_entity_name(x, y, entity, entity_style)
-        
-        # Отрисовываем полоску здоровья
-        if self.show_health_bars and hasattr(entity, 'health') and hasattr(entity, 'max_health'):
-            self._render_health_bar(x, y, entity, entity_style)
-        
-        # Обновляем статистику
-        self.stats.entities_rendered += 1
-        
+            # Обновляем позицию
+            entity_node.set_pos(entity.position[0], 0, entity.position[1])
+            
+            # Рисуем имя
+            if self.show_names:
+                self._render_entity_name(entity, style)
+            
+            # Рисуем полоску здоровья
+            if self.show_health_bars:
+                self._render_health_bar(entity, style)
+
+            self.stats.entities_rendered += 1
+
+        except Exception as e:
+            print(f"Ошибка рендеринга сущности: {e}")
+
     def _should_render_entity(self, entity) -> bool:
-        """Проверка, нужно ли рендерить сущность (оптимизация)"""
-        if not hasattr(entity, 'position'):
+        """Проверяет, нужно ли рендерить сущность"""
+        if not entity or not hasattr(entity, 'position'):
             return False
-            
-        # Проверяем видимость (простая проверка по расстоянию)
-        x, y = entity.position
-        center_x, center_y = self.width // 2, self.height // 2
         
-        # Если сущность слишком далеко от центра экрана, не рендерим
-        distance = math.sqrt((x - center_x)**2 + (y - center_y)**2)
-        max_distance = max(self.width, self.height) * 0.8
+        # Проверяем, находится ли сущность в поле зрения камеры
+        x, y = entity.position[0], entity.position[1]
         
-        return distance <= max_distance
-        
+        # Добавляем запас для рендеринга
+        margin = 5
+        return (-10 - margin <= x <= 10 + margin and 
+                -7.5 - margin <= y <= 7.5 + margin)
+
     def _get_entity_style(self, entity) -> Dict:
-        """Получение стиля для сущности"""
-        if hasattr(entity, 'name') and 'player' in entity.name.lower():
-            return {
-                'color': self.colors['player'],
-                'size': 20,
-                'shape': 'circle',
-                'outline': '#ffffff',
-                'outline_width': 2
-            }
-        elif hasattr(entity, 'enemy_type'):
-            enemy_colors = {
-                'warrior': self.colors['enemy_warrior'],
-                'archer': self.colors['enemy_archer'],
-                'mage': self.colors['enemy_mage']
-            }
-            return {
-                'color': enemy_colors.get(entity.enemy_type, self.colors['enemy_warrior']),
-                'size': 15,
-                'shape': 'circle',
-                'outline': '#ffffff',
-                'outline_width': 1
-            }
-        else:
-            return {
-                'color': '#ffffff',
-                'size': 10,
-                'shape': 'circle',
-                'outline': '#666666',
-                'outline_width': 1
-            }
+        """Получает стиль для сущности"""
+        style = {
+            "color": self.colors["enemy_warrior"],
+            "size": 0.5,
+            "shape": "circle",
+            "name": "Unknown"
+        }
         
-    def _render_entity_shape(self, x: float, y: float, style: Dict):
-        """Отрисовка формы сущности"""
-        size = style['size']
+        try:
+            if hasattr(entity, 'entity_type'):
+                if entity.entity_type == "player":
+                    style.update({
+                        "color": self.colors["player"],
+                        "size": 0.6,
+                        "name": "Игрок"
+                    })
+                elif entity.entity_type == "enemy":
+                    if hasattr(entity, 'enemy_type'):
+                        if entity.enemy_type == "warrior":
+                            style["color"] = self.colors["enemy_warrior"]
+                        elif entity.enemy_type == "archer":
+                            style["color"] = self.colors["enemy_archer"]
+                        elif entity.enemy_type == "mage":
+                            style["color"] = self.colors["enemy_mage"]
+                    
+                    if hasattr(entity, 'name'):
+                        style["name"] = entity.name
+                    else:
+                        style["name"] = "Враг"
+            
+            if hasattr(entity, 'level'):
+                style["name"] += f" (Ур.{entity.level})"
+                
+        except Exception as e:
+            print(f"Ошибка получения стиля сущности: {e}")
         
-        if style['shape'] == 'circle':
-            self.canvas.create_oval(
-                x - size, y - size,
-                x + size, y + size,
-                fill=style['color'],
-                outline=style['outline'],
-                width=style['outline_width'],
-                tags="entity"
-            )
-        elif style['shape'] == 'square':
-            self.canvas.create_rectangle(
-                x - size, y - size,
-                x + size, y + size,
-                fill=style['color'],
-                outline=style['outline'],
-                width=style['outline_width'],
-                tags="entity"
-            )
+        return style
+
+    def _get_or_create_entity_node(self, entity, style: Dict) -> NodePath:
+        """Получает или создает узел для сущности"""
+        entity_id = id(entity)
         
-    def _render_entity_name(self, x: float, y: float, entity, style: Dict):
-        """Отрисовка имени сущности"""
-        name = getattr(entity, 'name', getattr(entity, 'enemy_type', 'Unknown'))
-        size = style['size']
+        if entity_id in self._cached_entities:
+            # Обновляем цвет существующего узла
+            node = self._cached_entities[entity_id]
+            node.set_color(style["color"])
+            return node
         
-        self.canvas.create_text(
-            x, y - size - 10,
-            text=name,
-            fill=self.colors['text'],
-            font=self.fonts['normal'],
-            tags="ui"
-        )
+        # Создаем новый узел
+        size = style.get("size", 0.5)
+        shape = style.get("shape", "circle")
         
-    def _render_health_bar(self, x: float, y: float, entity, style: Dict):
-        """Отрисовка полоски здоровья"""
-        health_percent = entity.health / entity.max_health
-        size = style['size']
-        
-        # Размеры полоски здоровья
-        health_width = 30
-        health_height = 4
-        
-        # Позиция полоски
-        bar_x = x - health_width // 2
-        bar_y = y + size + 5
-        
-        # Фон полоски здоровья
-        self.canvas.create_rectangle(
-            bar_x, bar_y,
-            bar_x + health_width, bar_y + health_height,
-            fill=self.colors['health_bg'],
-            outline=self.colors['health_border'],
-            tags="ui"
-        )
-        
-        # Полоска здоровья
-        current_width = int(health_width * health_percent)
-        if current_width > 0:
-            # Определяем цвет в зависимости от здоровья
-            if health_percent > 0.5:
-                health_color = self.colors['health_good']
-            elif health_percent > 0.25:
-                health_color = self.colors['health_warning']
+        if shape == "circle":
+            # Создаем сферу
+            from panda3d.core import GeomNode
+            node = self.base.loader.load_model("models/sphere")
+            if not node.is_empty():
+                node.set_scale(size)
             else:
-                health_color = self.colors['health_critical']
-            
-            self.canvas.create_rectangle(
-                bar_x, bar_y,
-                bar_x + current_width, bar_y + health_height,
-                fill=health_color,
-                tags="ui"
-            )
+                # Fallback - создаем простую сферу
+                node = self._create_sphere(size)
+        else:
+            # Создаем куб
+            node = self._create_cube(size)
         
+        node.set_color(style["color"])
+        node.set_name(f"entity_{entity_id}")
+        node.reparent_to(self.game_scene)
+        
+        self._cached_entities[entity_id] = node
+        return node
+
+    def _create_sphere(self, radius: float) -> NodePath:
+        """Создает простую сферу"""
+        from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
+        from panda3d.core import GeomVertexWriter, GeomTriangles
+        
+        # Создаем вершины сферы
+        format = GeomVertexFormat.get_v3n3c4()
+        vdata = GeomVertexData('sphere', format, Geom.UH_static)
+        
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        color = GeomVertexWriter(vdata, 'color')
+        
+        # Простая сфера из 8 вершин куба
+        for x in [-radius, radius]:
+            for y in [-radius, radius]:
+                for z in [-radius, radius]:
+                    vertex.add_data3(x, y, z)
+                    color.add_data4(1, 1, 1, 1)
+        
+        # Создаем треугольники
+        tris = GeomTriangles(Geom.UH_static)
+        # Добавляем грани куба...
+        
+        geom = Geom(vdata)
+        geom.add_primitive(tris)
+        
+        node = GeomNode('sphere')
+        node.add_geom(geom)
+        
+        return NodePath(node)
+
+    def _create_cube(self, size: float) -> NodePath:
+        """Создает куб"""
+        from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
+        from panda3d.core import GeomVertexWriter, GeomTriangles
+        
+        format = GeomVertexFormat.get_v3n3c4()
+        vdata = GeomVertexData('cube', format, Geom.UH_static)
+        
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        color = GeomVertexWriter(vdata, 'color')
+        
+        # Вершины куба
+        for x in [-size, size]:
+            for y in [-size, size]:
+                for z in [-size, size]:
+                    vertex.add_data3(x, y, z)
+                    color.add_data4(1, 1, 1, 1)
+        
+        # Создаем треугольники для граней куба
+        tris = GeomTriangles(Geom.UH_static)
+        # Добавляем грани...
+        
+        geom = Geom(vdata)
+        geom.add_primitive(tris)
+        
+        node = GeomNode('cube')
+        node.add_geom(geom)
+        
+        return NodePath(node)
+
+    def _render_entity_name(self, entity, style: Dict):
+        """Рендеринг имени сущности"""
+        try:
+            name = style.get("name", "Unknown")
+            x, y = entity.position[0], entity.position[1]
+            
+            # Создаем текст над сущностью
+            text = OnscreenText(
+                text=name,
+                pos=(x, y + 1),
+                scale=0.03,
+                fg=self.colors["text"],
+                shadow=(0, 0, 0, 1),
+                parent=self.game_scene
+            )
+            text.set_name(f"name_{id(entity)}")
+            
+        except Exception as e:
+            print(f"Ошибка рендеринга имени: {e}")
+
+    def _render_health_bar(self, entity, style: Dict):
+        """Рендеринг полоски здоровья"""
+        try:
+            if not hasattr(entity, 'health') or not hasattr(entity, 'max_health'):
+                return
+                
+            x, y = entity.position[0], entity.position[1]
+            health_ratio = entity.health / max(1, entity.max_health)
+            
+            # Определяем цвет здоровья
+            if health_ratio > 0.6:
+                fill_color = self.colors["health_good"]
+            elif health_ratio > 0.3:
+                fill_color = self.colors["health_warning"]
+            else:
+                fill_color = self.colors["health_critical"]
+            
+            # Создаем полоску здоровья
+            bar_width = 1.0
+            bar_height = 0.1
+            
+            # Фон полоски
+            cm = CardMaker(f"health_bg_{id(entity)}")
+            cm.set_frame(-bar_width/2, bar_width/2, -bar_height/2, bar_height/2)
+            bg = self.game_scene.attach_new_node(cm.generate())
+            bg.set_color(self.colors["health_bg"])
+            bg.set_pos(x, 0, y + 0.8)
+            bg.set_depth_write(False)
+            
+            # Заполнение полоски
+            if health_ratio > 0:
+                fill_width = bar_width * health_ratio
+                cm = CardMaker(f"health_fill_{id(entity)}")
+                cm.set_frame(-fill_width/2, fill_width/2, -bar_height/2, bar_height/2)
+                fill = self.game_scene.attach_new_node(cm.generate())
+                fill.set_color(fill_color)
+                fill.set_pos(x, 0, y + 0.8)
+                fill.set_depth_write(False)
+                
+        except Exception as e:
+            print(f"Ошибка рендеринга полоски здоровья: {e}")
+
     def render_ui(self):
-        """Рендеринг пользовательского интерфейса"""
-        # Время игры
-        game_time = time.time()
-        time_str = f"Время: {int(game_time // 60)}:{int(game_time % 60):02d}"
-        
-        self.canvas.create_text(
-            10, 10,
-            text=time_str,
-            fill=self.colors['text'],
-            font=self.fonts['normal'],
-            anchor='nw',
-            tags="ui"
-        )
-        
-        # FPS
-        if self.show_fps:
-            self._update_fps()
-            fps_text = f"FPS: {self.stats.fps}"
-            self.canvas.create_text(
-                self.width - 10, 10,
-                text=fps_text,
-                fill=self.colors['text'],
-                font=self.fonts['normal'],
-                anchor='ne',
-                tags="ui"
-            )
-        
-        # Инструкции
-        instructions = [
-            "Управление:",
-            "ЛКМ - перемещение игрока",
-            "ESC - меню",
-            "P - пауза",
-            "F5 - сохранение"
-        ]
-        
-        y_offset = 60
-        for instruction in instructions:
-            self.canvas.create_text(
-                10, y_offset,
-                text=instruction,
-                fill=self.colors['text'],
-                font=self.fonts['small'],
-                anchor='nw',
-                tags="ui"
-            )
-            y_offset += 20
+        """Рендеринг UI элементов"""
+        try:
+            # Рендерим FPS
+            if self.show_fps:
+                self._update_fps()
+                self._render_fps()
             
-        # Отладочная информация
-        if self.show_debug_info:
-            self._render_debug_info()
-            
+            # Рендерим отладочную информацию
+            if self.show_debug_info:
+                self._render_debug_info()
+                
+        except Exception as e:
+            print(f"Ошибка рендеринга UI: {e}")
+
     def _update_fps(self):
-        """Обновление FPS счетчика"""
+        """Обновление FPS"""
         current_time = time.time()
         self.stats.frames_rendered += 1
         
@@ -359,152 +499,192 @@ class RenderManager:
             self.stats.fps = self.stats.frames_rendered
             self.stats.frames_rendered = 0
             self.stats.last_fps_time = current_time
+
+    def _render_fps(self):
+        """Рендеринг FPS"""
+        try:
+            # Удаляем старый FPS текст
+            old_fps = self.debug_scene.find("fps_text")
+            if not old_fps.is_empty():
+                old_fps.remove_node()
             
+            # Создаем новый FPS текст
+            text = OnscreenText(
+                text=f"FPS: {self.stats.fps}",
+                pos=(-1.3, 0.9),
+                scale=0.04,
+                fg=self.colors["text"],
+                shadow=(0, 0, 0, 1),
+                parent=self.debug_scene
+            )
+            text.set_name("fps_text")
+            
+        except Exception as e:
+            print(f"Ошибка рендеринга FPS: {e}")
+
     def _render_debug_info(self):
-        """Отрисовка отладочной информации"""
-        debug_info = [
-            f"Камера: ({self.camera_x:.1f}, {self.camera_y:.1f})",
-            f"Зум: {self.camera_zoom:.2f}",
-            f"Сущностей: {self.stats.entities_rendered}",
-            f"Время рендера: {self.stats.render_time:.3f}ms"
-        ]
-        
-        y_offset = self.height - 100
-        for info in debug_info:
-            self.canvas.create_text(
-                10, y_offset,
-                text=info,
-                fill=self.colors['text'],
-                font=self.fonts['debug'],
-                anchor='nw',
-                tags="debug"
-            )
-            y_offset += 15
+        """Рендеринг отладочной информации"""
+        try:
+            # Удаляем старую отладочную информацию
+            old_debug = self.debug_scene.find("debug_info")
+            if not old_debug.is_empty():
+                old_debug.remove_node()
             
-    def render_frame(self):
-        """Отрисовка полного кадра с оптимизацией"""
-        start_time = time.time()
-        
-        # Очищаем canvas
-        self.clear()
-        
-        # Рендер области
-        self.render_area("current_area")
-        
-        # Рендер UI
-        self.render_ui()
-        
-        # Обновляем статистику
-        self.stats.render_time = (time.time() - start_time) * 1000
-        self.stats.entities_rendered = 0
-        
-    def center_camera_on_player(self, player):
-        """Центрирование камеры на игроке"""
-        if not player or not hasattr(player, 'position'):
-            return
+            debug_text = [
+                f"Камера: ({self.camera_x:.1f}, {self.camera_y:.1f})",
+                f"Зум: {self.camera_zoom:.2f}",
+                f"Сущности: {self.stats.entities_rendered}",
+                f"Время рендера: {self.stats.render_time:.3f}ms"
+            ]
             
-        px, py = player.position
-        self.camera_x = px
-        self.camera_y = py
-        
-    def get_world_position(self, screen_x: int, screen_y: int) -> Tuple[float, float]:
-        """Получение мировой позиции из экранных координат"""
-        return self.screen_to_world(screen_x, screen_y)
-        
-    def draw_banner(self, text: str, color: str = None):
-        """Отрисовка баннера"""
-        if color is None:
-            color = '#ffd700'  # Золотой цвет по умолчанию
+            # Создаем контейнер для отладочной информации
+            debug_container = self.debug_scene.attach_new_node("debug_info")
             
-        # Полупрозрачный фон
-        self.canvas.create_rectangle(
-            0, 0, self.width, self.height,
-            fill='#000000',
-            stipple='gray25',
-            tags="banner"
-        )
-        
-        # Текст баннера
-        self.canvas.create_text(
-            self.width // 2,
-            self.height // 2,
-            text=text,
-            fill=color,
-            font=self.fonts['title'],
-            tags="banner"
-        )
-        
-    def draw_minimap(self, entities: List, player, size: int = 150):
-        """Отрисовка миникарты"""
-        if not entities and not player:
-            return
-            
-        # Позиция миникарты
-        map_x = self.width - size - 10
-        map_y = 10
-        
-        # Фон миникарты
-        self.canvas.create_rectangle(
-            map_x, map_y,
-            map_x + size, map_y + size,
-            fill='#000000',
-            outline='#ffffff',
-            width=2,
-            tags="minimap"
-        )
-        
-        # Масштаб для миникарты
-        scale = size / 800  # Предполагаем, что игровая область 800x800
-        
-        # Отрисовываем игрока
-        if player and hasattr(player, 'position'):
-            px, py = player.position
-            player_x = map_x + int(px * scale)
-            player_y = map_y + int(py * scale)
-            
-            self.canvas.create_oval(
-                player_x - 3, player_y - 3,
-                player_x + 3, player_y + 3,
-                fill=self.colors['player'],
-                tags="minimap"
-            )
-        
-        # Отрисовываем сущности
-        for entity in entities:
-            if hasattr(entity, 'position'):
-                ex, ey = entity.position
-                entity_x = map_x + int(ex * scale)
-                entity_y = map_y + int(ey * scale)
-                
-                # Цвет сущности
-                if hasattr(entity, 'enemy_type'):
-                    color = self.colors.get(f'enemy_{entity.enemy_type}', '#ffffff')
-                else:
-                    color = '#ffffff'
-                
-                self.canvas.create_oval(
-                    entity_x - 2, entity_y - 2,
-                    entity_x + 2, entity_y + 2,
-                    fill=color,
-                    tags="minimap"
+            for i, text in enumerate(debug_text):
+                text_node = OnscreenText(
+                    text=text,
+                    pos=(-1.3, 0.8 - i * 0.05),
+                    scale=0.03,
+                    fg=self.colors["text"],
+                    shadow=(0, 0, 0, 1),
+                    parent=debug_container
                 )
                 
+        except Exception as e:
+            print(f"Ошибка рендеринга отладочной информации: {e}")
+
+    def render_frame(self):
+        """Рендеринг одного кадра"""
+        try:
+            start_time = time.time()
+            
+            # Очищаем старые элементы
+            self.clear()
+            
+            # Рендерим UI
+            self.render_ui()
+            
+            # Обновляем статистику
+            self.stats.render_time = (time.time() - start_time) * 1000
+            
+        except Exception as e:
+            print(f"Ошибка рендеринга кадра: {e}")
+
+    def center_camera_on_player(self, player):
+        """Центрирует камеру на игроке"""
+        try:
+            if player and hasattr(player, 'position'):
+                self.camera_x = player.position[0]
+                self.camera_y = player.position[1]
+                self.set_camera(self.camera_x, self.camera_y, self.camera_zoom)
+        except Exception as e:
+            print(f"Ошибка центрирования камеры: {e}")
+
+    def get_world_position(self, screen_x: float, screen_y: float) -> Tuple[float, float]:
+        """Получает мировую позицию по экранным координатам"""
+        return self.screen_to_world(screen_x, screen_y)
+
+    def draw_banner(self, text: str, color: Vec4 = None):
+        """Рисует баннер с текстом"""
+        try:
+            if color is None:
+                color = self.colors["text"]
+            
+            # Создаем баннер
+            text_node = OnscreenText(
+                text=text,
+                pos=(0, 0),
+                scale=0.08,
+                fg=color,
+                shadow=(0, 0, 0, 1),
+                parent=self.ui_scene
+            )
+            text_node.set_name("banner")
+            
+        except Exception as e:
+            print(f"Ошибка рисования баннера: {e}")
+
+    def draw_minimap(self, entities: List, player, size: float = 0.3):
+        """Рисует миникарту"""
+        try:
+            if not entities and not player:
+                return
+                
+            # Позиция миникарты (правый верхний угол)
+            map_x = 1.2
+            map_y = 0.8
+            
+            # Фон миникарты
+            cm = CardMaker("minimap_bg")
+            cm.set_frame(map_x - size, map_x + size, map_y - size, map_y + size)
+            bg = self.ui_scene.attach_new_node(cm.generate())
+            bg.set_color(self.colors["background"])
+            bg.set_depth_write(False)
+            
+            # Масштаб миникарты
+            scale = size / 10  # 20 - размер игрового мира
+            
+            # Рисуем игрока
+            if player and hasattr(player, 'position'):
+                px = map_x + player.position[0] * scale
+                py = map_y + player.position[1] * scale
+                
+                cm = CardMaker("player_minimap")
+                cm.set_frame(-0.01, 0.01, -0.01, 0.01)
+                player_dot = self.ui_scene.attach_new_node(cm.generate())
+                player_dot.set_color(self.colors["player"])
+                player_dot.set_pos(px, 0, py)
+                player_dot.set_depth_write(False)
+            
+            # Рисуем врагов
+            for entity in entities:
+                if hasattr(entity, 'position'):
+                    ex = map_x + entity.position[0] * scale
+                    ey = map_y + entity.position[1] * scale
+                    
+                    cm = CardMaker(f"enemy_minimap_{id(entity)}")
+                    cm.set_frame(-0.008, 0.008, -0.008, 0.008)
+                    enemy_dot = self.ui_scene.attach_new_node(cm.generate())
+                    enemy_dot.set_color(self.colors["enemy_warrior"])
+                    enemy_dot.set_pos(ex, 0, ey)
+                    enemy_dot.set_depth_write(False)
+                    
+        except Exception as e:
+            print(f"Ошибка рисования миникарты: {e}")
+
     def toggle_debug_info(self):
-        """Переключение отладочной информации"""
+        """Переключает отображение отладочной информации"""
         self.show_debug_info = not self.show_debug_info
-        
+
     def toggle_fps_display(self):
-        """Переключение отображения FPS"""
+        """Переключает отображение FPS"""
         self.show_fps = not self.show_fps
-        
+
     def toggle_health_bars(self):
-        """Переключение отображения полосок здоровья"""
+        """Переключает отображение полосок здоровья"""
         self.show_health_bars = not self.show_health_bars
-        
+
     def toggle_names(self):
-        """Переключение отображения имен"""
+        """Переключает отображение имен"""
         self.show_names = not self.show_names
-        
+
     def get_render_stats(self) -> RenderStats:
-        """Получение статистики рендеринга"""
+        """Получает статистику рендеринга"""
         return self.stats
+    
+    def cleanup(self):
+        """Очистка ресурсов"""
+        try:
+            # Очищаем кэш сущностей
+            for node in self._cached_entities.values():
+                if not node.is_empty():
+                    node.remove_node()
+            self._cached_entities.clear()
+            
+            # Очищаем сцены
+            self.game_scene.remove_node()
+            self.ui_scene.remove_node()
+            self.debug_scene.remove_node()
+            
+        except Exception as e:
+            print(f"Ошибка очистки render manager: {e}")

@@ -1,6 +1,7 @@
 import random
 import heapq
 
+
 # Фолбэки для изометрии при отсутствии utils.math_utils
 def iso_to_cart(x, y, tile_w=80, tile_h=40):
     cart_x = (x - y) * (tile_w // 2)
@@ -10,6 +11,11 @@ def iso_to_cart(x, y, tile_w=80, tile_h=40):
 
 class GameMap:
     def __init__(self, width, height, player_start=None):
+        # Получаем настройки карты
+        from config.unified_settings import get_map_settings
+
+        map_settings = get_map_settings()
+
         self.width = width
         self.height = height
         self.tiles = [[0 for _ in range(width)] for _ in range(height)]
@@ -19,24 +25,28 @@ class GameMap:
         # Создаем базовый рельеф
         for y in range(height):
             for x in range(width):
-                if random.random() < 0.1:
+                if random.random() < map_settings.OBSTACLE_CHANCE:
                     self.tiles[y][x] = 1  # Препятствие
 
         # Создаем естественные препятствия (например, горы)
-        for _ in range(5):
+        for _ in range(map_settings.NATURAL_OBSTACLE_COUNT):
             rx, ry = random.randint(5, width - 5), random.randint(5, height - 5)
             for dx in range(-2, 3):
                 for dy in range(-2, 3):
                     nx, ny = rx + dx, ry + dy
                     if 0 <= nx < width and 0 <= ny < height:
-                        if random.random() < 0.7:  # Не все клетки заполняем
+                        if (
+                            random.random() < map_settings.OBSTACLE_FILL_CHANCE
+                        ):  # Не все клетки заполняем
                             self.tiles[ny][nx] = 1
 
         # Точки интереса (для спавна врагов, сундуков и т.п.)
-        for _ in range(10):
+        for _ in range(map_settings.POINTS_OF_INTEREST_COUNT):
             while True:
                 x, y = random.randint(10, width - 10), random.randint(10, height - 10)
-                if self.tiles[y][x] == 0 and (player_start is None or (x, y) != player_start):
+                if self.tiles[y][x] == 0 and (
+                    player_start is None or (x, y) != player_start
+                ):
                     self.points_of_interest.append((x, y))
                     break
 
@@ -66,7 +76,7 @@ class GameMap:
     def find_path(self, start_x, start_y, end_x, end_y):
         """
         Находит путь между двумя точками с помощью A*
-        
+
         :param start_x: начальная X
         :param start_y: начальная Y
         :param end_x: конечная X
@@ -101,7 +111,9 @@ class GameMap:
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, goal)
+                    f_score[neighbor] = tentative_g_score + self.heuristic(
+                        neighbor, goal
+                    )
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
         return None  # Путь не найден
@@ -139,9 +151,9 @@ class GameMap:
                 color = (80, 90, 110) if self.tiles[y][x] == 0 else (120, 100, 80)
                 points = [
                     camera.apply(*iso_to_cart(x, y)),
-                    camera.apply(*iso_to_cart(x+1, y)),
-                    camera.apply(*iso_to_cart(x+1, y+1)),
-                    camera.apply(*iso_to_cart(x, y+1))
+                    camera.apply(*iso_to_cart(x + 1, y)),
+                    camera.apply(*iso_to_cart(x + 1, y + 1)),
+                    camera.apply(*iso_to_cart(x, y + 1)),
                 ]
                 surface.drawPolygon(points, color)
                 surface.drawPolygon(points, (60, 70, 90))

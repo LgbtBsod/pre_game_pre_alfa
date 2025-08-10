@@ -1,14 +1,23 @@
 """
 Главное окно игры с полноценным UI интерфейсом
-Оптимизированная версия с улучшенной архитектурой
+Версия для Panda3D с улучшенной архитектурой
 """
-import tkinter as tk
-from tkinter import ttk, messagebox
-import threading
+
+import sys
 import time
 from typing import Optional, Callable, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
+
+from direct.showbase.ShowBase import ShowBase
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
+from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectEntry import DirectEntry
+from direct.gui.DirectFrame import DirectFrame
+from direct.gui.DirectLabel import DirectLabel
+from direct.task import Task
+from panda3d.core import Vec4, Point3, OrthographicLens
 
 from .game_menu import GameMenu
 from .render_manager import RenderManager
@@ -19,6 +28,7 @@ from ai.ai_manager import ai_manager
 
 class GameState(Enum):
     """Состояния игры"""
+
     MENU = "menu"
     PLAYING = "playing"
     PAUSED = "paused"
@@ -28,847 +38,831 @@ class GameState(Enum):
 @dataclass
 class GameSettings:
     """Настройки игры"""
-    player_name: str = "Player"
-    difficulty: str = "normal"
-    window_width: int = 1200
-    window_height: int = 800
-    fps: int = 60
-    auto_save_interval: int = 300  # секунды
+
+    def __init__(self):
+        # Получаем настройки из unified_settings
+        from config.unified_settings import UnifiedSettings
+
+        self.player_name = "Player"
+        self.difficulty = "normal"
+        self.window_width = UnifiedSettings.WINDOW_WIDTH
+        self.window_height = UnifiedSettings.WINDOW_HEIGHT
+        self.fps = UnifiedSettings.RENDER_FPS
+        self.auto_save_interval = 300  # секунды
 
 
 class UIStyles:
     """Стили UI"""
+
     COLORS = {
-        'bg_dark': '#1a1a1a',
-        'bg_medium': '#2a2a2a',
-        'bg_light': '#3a3a3a',
-        'accent_blue': '#4a9eff',
-        'accent_green': '#00aa00',
-        'accent_orange': '#ffaa00',
-        'accent_red': '#ff4a4a',
-        'text_white': '#ffffff',
-        'text_gray': '#cccccc',
-        'text_dark': '#666666',
-        'border': '#555555'
+        "bg_dark": Vec4(0.1, 0.1, 0.1, 1.0),
+        "bg_medium": Vec4(0.2, 0.2, 0.2, 1.0),
+        "bg_light": Vec4(0.3, 0.3, 0.3, 1.0),
+        "accent_blue": Vec4(0.3, 0.6, 1.0, 1.0),
+        "accent_green": Vec4(0.0, 0.7, 0.0, 1.0),
+        "accent_orange": Vec4(1.0, 0.7, 0.0, 1.0),
+        "accent_red": Vec4(1.0, 0.3, 0.3, 1.0),
+        "text_white": Vec4(1.0, 1.0, 1.0, 1.0),
+        "text_gray": Vec4(0.8, 0.8, 0.8, 1.0),
+        "text_dark": Vec4(0.4, 0.4, 0.4, 1.0),
+        "border": Vec4(0.3, 0.3, 0.3, 1.0),
     }
-    
-    FONTS = {
-        'title_large': ('Arial', 24, 'bold'),
-        'title_medium': ('Arial', 18, 'bold'),
-        'title_small': ('Arial', 14, 'bold'),
-        'text_large': ('Arial', 12),
-        'text_medium': ('Arial', 10),
-        'text_small': ('Arial', 8)
-    }
-    
+
     BUTTON_STYLE = {
-        'font': FONTS['text_large'],
-        'relief': 'flat',
-        'bd': 0,
-        'padx': 10,
-        'pady': 5
+        "relief": "flat",
+        "frameColor": COLORS["bg_medium"],
+        "frameSize": (-0.1, 0.1, -0.05, 0.05),
+        "text_fg": COLORS["text_white"],
+        "text_scale": 0.04,
     }
 
 
-class MainWindow:
+class MainWindow(ShowBase):
     """Главное окно игры с оптимизированной архитектурой"""
-    
+
     def __init__(self):
-        self.root = tk.Tk()
+        super().__init__()
         self._setup_window()
-        
+
         # Настройки игры
         self.game_settings = GameSettings()
-        
+
         # Состояние игры
         self.game_state = GameState.MENU
         self.game_running = False
         self.is_paused = False
-        self.game_thread: Optional[threading.Thread] = None
-        
+
         # UI компоненты
-        self.game_canvas: Optional[tk.Canvas] = None
         self.render_manager: Optional[RenderManager] = None
         self.game_menu: Optional[GameMenu] = None
         
         # Игровые объекты
         self.player = None
         self.entities = []
-        self.current_area = "starting_area"
-        
-        # Время и производительность
+        self.current_area = None
+
+        # Время
         self.game_time = 0
-        self.last_frame_time = time.time()
-        self.frame_count = 0
-        self.fps_counter = 0
-        self.last_fps_time = time.time()
-        
+        self.delta_time = 0
+        self.last_frame_time = 0
+
         # UI элементы
-        self.ui_elements: Dict[str, Any] = {}
-        
-        # Флаг для обновления UI
-        self.ui_update_needed = False
+        self.ui_elements = {}
         
         # Инициализация
         self._init_ui()
         self._bind_events()
-        
+        self._create_main_menu()
+
     def _setup_window(self):
-        """Настройка главного окна"""
-        self.root.title("AI EVOLVE - Игра с ИИ")
-        self.root.geometry("1200x800")
-        self.root.configure(bg=UIStyles.COLORS['bg_dark'])
-        self.root.minsize(800, 600)
+        """Настройка окна"""
+        # Устанавливаем размер окна
+        self.win.set_size(self.game_settings.window_width, self.game_settings.window_height)
         
         # Центрируем окно
-        self.root.update_idletasks()
-        x = (self.root.winfo_screenwidth() // 2) - (1200 // 2)
-        y = (self.root.winfo_screenheight() // 2) - (800 // 2)
-        self.root.geometry(f"1200x800+{x}+{y}")
+        self.center_window()
         
+        # Устанавливаем заголовок
+        self.win.set_title("AI EVOLVE - Игра с Искусственным Интеллектом")
+        
+        # Настройки рендеринга
+        self.render.set_antialias(True)
+        self.render.set_shader_auto()
+
+    def center_window(self):
+        """Центрирует окно на экране"""
+        try:
+            # Получаем размеры экрана
+            props = self.win.get_properties()
+            screen_width = props.get_x_size()
+            screen_height = props.get_y_size()
+            
+            # Вычисляем позицию для центрирования
+            x = (screen_width - self.game_settings.window_width) // 2
+            y = (screen_height - self.game_settings.window_height) // 2
+            
+            # Устанавливаем позицию окна
+            self.win.set_origin(x, y)
+        except Exception as e:
+            print(f"Ошибка центрирования окна: {e}")
+
     def _init_ui(self):
-        """Инициализация пользовательского интерфейса"""
-        self._create_main_menu()
-        self._create_game_area()
-        self._create_control_panel()
-        
-    def _create_main_menu(self):
-        """Создание главного меню"""
-        self.ui_elements['menu_frame'] = tk.Frame(
-            self.root, 
-            bg=UIStyles.COLORS['bg_medium'], 
-            relief='raised', 
-            bd=2
-        )
-        self.ui_elements['menu_frame'].pack(fill='x', padx=5, pady=5)
-        
-        # Заголовок
-        title_label = tk.Label(
-            self.ui_elements['menu_frame'],
-            text="AI EVOLVE",
-            font=UIStyles.FONTS['title_large'],
-            fg=UIStyles.COLORS['accent_blue'],
-            bg=UIStyles.COLORS['bg_medium']
-        )
-        title_label.pack(pady=10)
-        
-        # Подзаголовок
-        subtitle_label = tk.Label(
-            self.ui_elements['menu_frame'],
-            text="Игра с эволюционирующим ИИ",
-            font=UIStyles.FONTS['text_large'],
-            fg=UIStyles.COLORS['text_gray'],
-            bg=UIStyles.COLORS['bg_medium']
-        )
-        subtitle_label.pack(pady=5)
-        
-        # Кнопки меню
-        button_frame = tk.Frame(self.ui_elements['menu_frame'], bg=UIStyles.COLORS['bg_medium'])
-        button_frame.pack(pady=20)
-        
-        # Создаем кнопки с улучшенным стилем
-        self._create_menu_button(button_frame, "Новая игра", self._start_new_game, UIStyles.COLORS['accent_blue'])
-        self._create_menu_button(button_frame, "Загрузить игру", self._load_game, UIStyles.COLORS['accent_blue'])
-        self._create_menu_button(button_frame, "Настройки", self._show_settings, UIStyles.COLORS['accent_blue'])
-        self._create_menu_button(button_frame, "Выход", self._exit_game, UIStyles.COLORS['accent_red'])
-        
-    def _create_menu_button(self, parent, text: str, command: Callable, bg_color: str):
-        """Создание кнопки меню с улучшенным стилем"""
-        button_style = UIStyles.BUTTON_STYLE.copy()
-        button_style.update({
-            'bg': bg_color,
-            'fg': UIStyles.COLORS['text_white'],
-            'width': 20,
-            'height': 2
-        })
-        
-        btn = tk.Button(
-            parent,
-            text=text,
-            command=command,
-            **button_style
-        )
-        btn.pack(pady=5)
-        
-        # Добавляем hover эффект
-        btn.bind('<Enter>', lambda e: btn.configure(bg=self._lighten_color(bg_color)))
-        btn.bind('<Leave>', lambda e: btn.configure(bg=bg_color))
-        
-        return btn
-        
-    def _create_game_area(self):
-        """Создание игровой области"""
-        self.ui_elements['game_frame'] = tk.Frame(self.root, bg=UIStyles.COLORS['bg_dark'])
-        self.ui_elements['game_frame'].pack(fill='both', expand=True, padx=5, pady=5)
-        
-        # Canvas для игры
-        self.game_canvas = tk.Canvas(
-            self.ui_elements['game_frame'],
-            width=800,
-            height=600,
-            bg='#000000',
-            highlightthickness=0
-        )
-        self.game_canvas.pack(side='left', fill='both', expand=True)
-        
-        # Информационная панель
-        self._create_info_panel()
-        
-    def _create_info_panel(self):
-        """Создание информационной панели"""
-        info_frame = tk.Frame(self.ui_elements['game_frame'], bg=UIStyles.COLORS['bg_medium'], width=300)
-        info_frame.pack(side='right', fill='y', padx=(5, 0))
-        info_frame.pack_propagate(False)
-        
-        # Заголовок панели
-        info_title = tk.Label(
-            info_frame,
-            text="ИНФОРМАЦИЯ",
-            font=UIStyles.FONTS['title_small'],
-            fg=UIStyles.COLORS['accent_blue'],
-            bg=UIStyles.COLORS['bg_medium']
-        )
-        info_title.pack(pady=10)
-        
-        # Информация об игроке
-        self._create_player_info_section(info_frame)
-        
-        # Информация об области
-        self._create_area_info_section(info_frame)
-        
-        # Кнопки управления
-        self._create_control_buttons(info_frame)
-        
-    def _create_player_info_section(self, parent):
-        """Создание секции информации об игроке"""
-        self.ui_elements['player_info_frame'] = tk.LabelFrame(
-            parent,
-            text="Игрок",
-            font=UIStyles.FONTS['text_medium'],
-            fg=UIStyles.COLORS['text_gray'],
-            bg=UIStyles.COLORS['bg_medium'],
-            relief='flat'
-        )
-        self.ui_elements['player_info_frame'].pack(fill='x', padx=10, pady=5)
-        
-        # Метки информации об игроке
-        self.ui_elements['player_name_label'] = self._create_info_label(
-            self.ui_elements['player_info_frame'], "Имя: -"
-        )
-        self.ui_elements['player_level_label'] = self._create_info_label(
-            self.ui_elements['player_info_frame'], "Уровень: -"
-        )
-        self.ui_elements['player_health_label'] = self._create_info_label(
-            self.ui_elements['player_info_frame'], "Здоровье: -"
-        )
-        self.ui_elements['player_fps_label'] = self._create_info_label(
-            self.ui_elements['player_info_frame'], "FPS: -"
+        """Инициализация UI"""
+        # Создаем основной контейнер
+        self.main_frame = DirectFrame(
+            frameColor=UIStyles.COLORS["bg_dark"],
+            frameSize=(-1, 1, -1, 1),
+            parent=self.render2d
         )
         
-    def _create_area_info_section(self, parent):
-        """Создание секции информации об области"""
-        self.ui_elements['area_info_frame'] = tk.LabelFrame(
-            parent,
-            text="Область",
-            font=UIStyles.FONTS['text_medium'],
-            fg=UIStyles.COLORS['text_gray'],
-            bg=UIStyles.COLORS['bg_medium'],
-            relief='flat'
-        )
-        self.ui_elements['area_info_frame'].pack(fill='x', padx=10, pady=5)
-        
-        self.ui_elements['area_name_label'] = self._create_info_label(
-            self.ui_elements['area_info_frame'], "Название: -"
-        )
-        self.ui_elements['entities_count_label'] = self._create_info_label(
-            self.ui_elements['area_info_frame'], "Сущностей: -"
-        )
-        
-    def _create_control_buttons(self, parent):
-        """Создание кнопок управления"""
-        control_frame = tk.Frame(parent, bg=UIStyles.COLORS['bg_medium'])
-        control_frame.pack(fill='x', padx=10, pady=10)
-        
-        # Кнопки с улучшенным стилем
-        self.ui_elements['pause_btn'] = self._create_control_button(
-            control_frame, "Пауза", self._toggle_pause, UIStyles.COLORS['accent_orange']
-        )
-        self.ui_elements['save_btn'] = self._create_control_button(
-            control_frame, "Сохранить", self._save_game, UIStyles.COLORS['accent_green']
-        )
-        self.ui_elements['menu_btn'] = self._create_control_button(
-            control_frame, "Меню", self._show_game_menu, UIStyles.COLORS['accent_blue']
-        )
-        
-    def _create_control_button(self, parent, text: str, command: Callable, bg_color: str):
-        """Создание кнопки управления"""
-        button_style = UIStyles.BUTTON_STYLE.copy()
-        button_style.update({
-            'font': UIStyles.FONTS['text_medium'],
-            'bg': bg_color,
-            'fg': UIStyles.COLORS['text_white'],
-            'relief': 'flat',
-            'width': 15
-        })
-        
-        btn = tk.Button(
-            parent,
-            text=text,
-            command=command,
-            **button_style
-        )
-        btn.pack(pady=2)
-        
-        # Hover эффект
-        btn.bind('<Enter>', lambda e: btn.configure(bg=self._lighten_color(bg_color)))
-        btn.bind('<Leave>', lambda e: btn.configure(bg=bg_color))
-        
-        return btn
-        
-    def _create_info_label(self, parent, text: str):
-        """Создание информационной метки"""
-        label = tk.Label(
-            parent,
-            text=text,
-            font=UIStyles.FONTS['text_medium'],
-            fg=UIStyles.COLORS['text_gray'],
-            bg=UIStyles.COLORS['bg_medium']
-        )
-        label.pack(anchor='w', padx=5, pady=2)
-        return label
-        
-    def _create_control_panel(self):
-        """Создание панели управления"""
-        control_frame = tk.Frame(self.root, bg=UIStyles.COLORS['bg_medium'], height=100)
-        control_frame.pack(fill='x', padx=5, pady=5)
-        control_frame.pack_propagate(False)
-        
-        # Статус игры
-        self.ui_elements['status_label'] = tk.Label(
-            control_frame,
-            text="Готов к запуску",
-            font=UIStyles.FONTS['text_large'],
-            fg=UIStyles.COLORS['accent_green'],
-            bg=UIStyles.COLORS['bg_medium']
-        )
-        self.ui_elements['status_label'].pack(pady=10)
-        
-        # Прогресс-бар
-        self.ui_elements['progress_bar'] = ttk.Progressbar(
-            control_frame,
-            mode='indeterminate'
-        )
-        self.ui_elements['progress_bar'].pack(fill='x', padx=10, pady=5)
-        
+        # Создаем рендер менеджер
+        self.render_manager = RenderManager(self, game_state_manager)
+
     def _bind_events(self):
         """Привязка событий"""
-        # Закрытие окна
-        self.root.protocol("WM_DELETE_WINDOW", self._exit_game)
+        # Привязываем клавиши
+        self.accept("escape", self._on_escape)
+        self.accept("p", self._toggle_pause)
+        self.accept("f5", self._save_game)
+        self.accept("f1", self._toggle_debug)
         
-        # Клавиши
-        self.root.bind('<Key>', self._on_key)
-        self.root.bind('<Escape>', lambda e: self._show_game_menu())
-        
-        # Мышь
-        if self.game_canvas:
-            self.game_canvas.bind('<Button-1>', self._on_mouse_click)
-            self.game_canvas.bind('<Motion>', self._on_mouse_move)
-            
-    def _lighten_color(self, color: str, factor: float = 1.2) -> str:
-        """Осветление цвета для hover эффектов"""
-        # Простая реализация осветления цвета
-        if color.startswith('#'):
-            r = int(color[1:3], 16)
-            g = int(color[3:5], 16)
-            b = int(color[5:7], 16)
-            
-            r = min(255, int(r * factor))
-            g = min(255, int(g * factor))
-            b = min(255, int(b * factor))
-            
-            return f"#{r:02x}{g:02x}{b:02x}"
-        return color
-        
+        # Привязываем мышь
+        self.accept("mouse1", self._on_mouse_click)
+        self.accept("mouse3", self._on_right_click)
+
+    def _create_main_menu(self):
+        """Создание главного меню"""
+        # Заголовок игры
+        title = OnscreenText(
+            text="AI EVOLVE",
+            pos=(0, 0.7),
+            scale=0.15,
+            fg=UIStyles.COLORS["accent_blue"],
+            shadow=(0, 0, 0, 1),
+            parent=self.main_frame
+        )
+        self.ui_elements["title"] = title
+
+        # Подзаголовок
+        subtitle = OnscreenText(
+            text="Игра с Искусственным Интеллектом",
+            pos=(0, 0.5),
+            scale=0.05,
+            fg=UIStyles.COLORS["text_gray"],
+            shadow=(0, 0, 0, 1),
+            parent=self.main_frame
+        )
+        self.ui_elements["subtitle"] = subtitle
+
+        # Кнопка "Новая игра"
+        new_game_btn = DirectButton(
+            text="Новая игра",
+            pos=(0, 0.2),
+            scale=0.06,
+            command=self._start_new_game,
+            **UIStyles.BUTTON_STYLE,
+            parent=self.main_frame
+        )
+        self.ui_elements["new_game_btn"] = new_game_btn
+
+        # Кнопка "Загрузить игру"
+        load_game_btn = DirectButton(
+            text="Загрузить игру",
+            pos=(0, 0.1),
+            scale=0.06,
+            command=self._load_game,
+            **UIStyles.BUTTON_STYLE,
+            parent=self.main_frame
+        )
+        self.ui_elements["load_game_btn"] = load_game_btn
+
+        # Кнопка "Настройки"
+        settings_btn = DirectButton(
+            text="Настройки",
+            pos=(0, 0.0),
+            scale=0.06,
+            command=self._show_settings,
+            **UIStyles.BUTTON_STYLE,
+            parent=self.main_frame
+        )
+        self.ui_elements["settings_btn"] = settings_btn
+
+        # Кнопка "Выход"
+        exit_btn = DirectButton(
+            text="Выход",
+            pos=(0, -0.1),
+            scale=0.06,
+            command=self._exit_game,
+            **UIStyles.BUTTON_STYLE,
+            parent=self.main_frame
+        )
+        self.ui_elements["exit_btn"] = exit_btn
+
     def _start_new_game(self):
-        """Запуск новой игры"""
+        """Начинает новую игру"""
         try:
-            self.game_state = GameState.LOADING
-            self._update_status("Загрузка новой игры...", UIStyles.COLORS['accent_orange'])
+            # Показываем диалог создания новой игры
+            self._show_new_game_dialog()
+        except Exception as e:
+            print(f"Ошибка создания новой игры: {e}")
+
+    def _show_new_game_dialog(self):
+        """Показывает диалог создания новой игры"""
+        # Скрываем главное меню
+        self._hide_main_menu()
+        
+        # Создаем диалог
+        dialog_frame = DirectFrame(
+            frameColor=UIStyles.COLORS["bg_medium"],
+            frameSize=(-0.5, 0.5, -0.4, 0.4),
+            pos=(0, 0, 0),
+            parent=self.render2d
+        )
+        self.ui_elements["dialog_frame"] = dialog_frame
+        
+        # Заголовок диалога
+        dialog_title = OnscreenText(
+            text="Создание новой игры",
+            pos=(0, 0.3),
+            scale=0.08,
+            fg=UIStyles.COLORS["text_white"],
+            parent=dialog_frame
+        )
+        self.ui_elements["dialog_title"] = dialog_title
+        
+        # Поле ввода имени игрока
+        name_label = OnscreenText(
+            text="Имя игрока:",
+            pos=(-0.3, 0.1),
+            scale=0.05,
+            fg=UIStyles.COLORS["text_white"],
+            parent=dialog_frame
+        )
+        self.ui_elements["name_label"] = name_label
+        
+        name_entry = DirectEntry(
+            text="Player",
+            pos=(0, 0, 0.1),
+            scale=0.05,
+            width=20,
+            parent=dialog_frame
+        )
+        self.ui_elements["name_entry"] = name_entry
+        
+        # Выбор сложности
+        difficulty_label = OnscreenText(
+            text="Сложность:",
+            pos=(-0.3, -0.1),
+            scale=0.05,
+            fg=UIStyles.COLORS["text_white"],
+            parent=dialog_frame
+        )
+        self.ui_elements["difficulty_label"] = difficulty_label
+        
+        # Кнопки сложности
+        easy_btn = DirectButton(
+            text="Легкая",
+            pos=(-0.2, 0, -0.1),
+            scale=0.04,
+            command=lambda: self._set_difficulty("easy"),
+            **UIStyles.BUTTON_STYLE,
+            parent=dialog_frame
+        )
+        self.ui_elements["easy_btn"] = easy_btn
+        
+        normal_btn = DirectButton(
+            text="Нормальная",
+            pos=(0, 0, -0.1),
+            scale=0.04,
+            command=lambda: self._set_difficulty("normal"),
+            **UIStyles.BUTTON_STYLE,
+            parent=dialog_frame
+        )
+        self.ui_elements["normal_btn"] = normal_btn
+        
+        hard_btn = DirectButton(
+            text="Сложная",
+            pos=(0.2, 0, -0.1),
+            scale=0.04,
+            command=lambda: self._set_difficulty("hard"),
+            **UIStyles.BUTTON_STYLE,
+            parent=dialog_frame
+        )
+        self.ui_elements["hard_btn"] = hard_btn
+        
+        # Кнопки диалога
+        ok_btn = DirectButton(
+            text="Начать игру",
+            pos=(-0.15, 0, -0.3),
+            scale=0.05,
+            command=self._create_game,
+            **UIStyles.BUTTON_STYLE,
+            parent=dialog_frame
+        )
+        self.ui_elements["ok_btn"] = ok_btn
+        
+        cancel_btn = DirectButton(
+            text="Отмена",
+            pos=(0.15, 0, -0.3),
+            scale=0.05,
+            command=self._cancel_dialog,
+            **UIStyles.BUTTON_STYLE,
+            parent=dialog_frame
+        )
+        self.ui_elements["cancel_btn"] = cancel_btn
+        
+        # Сохраняем выбранную сложность
+        self.selected_difficulty = "normal"
+
+    def _set_difficulty(self, difficulty: str):
+        """Устанавливает сложность"""
+        self.selected_difficulty = difficulty
+
+    def _create_game(self):
+        """Создает новую игру"""
+        try:
+            # Получаем имя игрока
+            name_entry = self.ui_elements.get("name_entry")
+            player_name = name_entry.get() if name_entry else "Player"
             
-            # Показываем диалог настроек
-            if not self._show_new_game_dialog():
-                self.game_state = GameState.MENU
-                self._update_status("Готов к запуску", UIStyles.COLORS['accent_green'])
-                return
+            # Закрываем диалог
+            self._cancel_dialog()
             
-            # Скрываем главное меню
-            self.ui_elements['menu_frame'].pack_forget()
-            
-            # Инициализируем игровые системы
+            # Создаем игру
             self._init_game_systems()
             
             # Создаем игрока
-            self.player = entity_factory.create_player(
-                self.game_settings.player_name,
-                (400, 300)
-            )
+            self.player = entity_factory.create_player(player_name, (0, 0))
             
             # Загружаем начальную область
-            self._load_area(self.current_area)
+            self._load_area("starting_area")
+            
+            # Переключаемся в игровой режим
+            self._switch_to_game_mode()
             
             # Запускаем игровой цикл
-            self.game_running = True
-            self.is_paused = False
-            self.game_state = GameState.PLAYING
-            self.game_thread = threading.Thread(target=self._game_loop, daemon=True)
-            self.game_thread.start()
-            
-            # Обновляем статус
-            self._update_status("Игра запущена", UIStyles.COLORS['accent_green'])
+            self._start_game_loop()
             
         except Exception as e:
-            self.game_state = GameState.MENU
-            self._update_status("Ошибка запуска", UIStyles.COLORS['accent_red'])
-            messagebox.showerror("Ошибка", f"Не удалось запустить игру: {e}")
-            
-    def _show_new_game_dialog(self):
-        """Показывает диалог настроек новой игры"""
-        dialog = tk.Toplevel(self.root)
-        dialog.title("Новая игра")
-        dialog.geometry("400x300")
-        dialog.configure(bg=UIStyles.COLORS['bg_medium'])
-        dialog.transient(self.root)
-        dialog.grab_set()
+            print(f"Ошибка создания игры: {e}")
+
+    def _cancel_dialog(self):
+        """Отменяет диалог"""
+        # Удаляем элементы диалога
+        for key in ["dialog_frame", "dialog_title", "name_label", "name_entry", 
+                   "difficulty_label", "easy_btn", "normal_btn", "hard_btn", 
+                   "ok_btn", "cancel_btn"]:
+            if key in self.ui_elements:
+                self.ui_elements[key].destroy()
+                del self.ui_elements[key]
         
-        # Центрируем диалог
-        dialog.geometry("+%d+%d" % (
-            self.root.winfo_rootx() + 50,
-            self.root.winfo_rooty() + 50
-        ))
-        
-        # Имя игрока
-        tk.Label(
-            dialog,
-            text="Имя игрока:",
-            font=UIStyles.FONTS['text_large'],
-            fg=UIStyles.COLORS['text_gray'],
-            bg=UIStyles.COLORS['bg_medium']
-        ).pack(pady=10)
-        
-        name_entry = tk.Entry(
-            dialog,
-            font=UIStyles.FONTS['text_large'],
-            width=20
-        )
-        name_entry.pack(pady=5)
-        name_entry.insert(0, self.game_settings.player_name)
-        name_entry.focus()
-        
-        # Сложность
-        tk.Label(
-            dialog,
-            text="Сложность:",
-            font=UIStyles.FONTS['text_large'],
-            fg=UIStyles.COLORS['text_gray'],
-            bg=UIStyles.COLORS['bg_medium']
-        ).pack(pady=10)
-        
-        difficulty_var = tk.StringVar(value=self.game_settings.difficulty)
-        difficulty_combo = ttk.Combobox(
-            dialog,
-            textvariable=difficulty_var,
-            values=["easy", "normal", "hard"],
-            state="readonly",
-            width=15
-        )
-        difficulty_combo.pack(pady=5)
-        
-        # Кнопки
-        button_frame = tk.Frame(dialog, bg=UIStyles.COLORS['bg_medium'])
-        button_frame.pack(pady=20)
-        
-        result = [False]
-        
-        def on_ok():
-            self.game_settings.player_name = name_entry.get()
-            self.game_settings.difficulty = difficulty_var.get()
-            result[0] = True
-            dialog.destroy()
-            
-        def on_cancel():
-            dialog.destroy()
-        
-        button_style_ok = UIStyles.BUTTON_STYLE.copy()
-        button_style_ok.update({
-            'font': UIStyles.FONTS['text_medium'],
-            'bg': UIStyles.COLORS['accent_blue'],
-            'fg': UIStyles.COLORS['text_white'],
-            'width': 10
-        })
-        
-        button_style_cancel = UIStyles.BUTTON_STYLE.copy()
-        button_style_cancel.update({
-            'font': UIStyles.FONTS['text_medium'],
-            'bg': UIStyles.COLORS['text_dark'],
-            'fg': UIStyles.COLORS['text_white'],
-            'width': 10
-        })
-        
-        tk.Button(
-            button_frame,
-            text="OK",
-            command=on_ok,
-            **button_style_ok
-        ).pack(side='left', padx=5)
-        
-        tk.Button(
-            button_frame,
-            text="Отмена",
-            command=on_cancel,
-            **button_style_cancel
-        ).pack(side='left', padx=5)
-        
-        dialog.wait_window()
-        return result[0]
-        
+        # Показываем главное меню
+        self._show_main_menu()
+
+    def _hide_main_menu(self):
+        """Скрывает главное меню"""
+        for key in ["title", "subtitle", "new_game_btn", "load_game_btn", 
+                   "settings_btn", "exit_btn"]:
+            if key in self.ui_elements:
+                self.ui_elements[key].hide()
+
+    def _show_main_menu(self):
+        """Показывает главное меню"""
+        for key in ["title", "subtitle", "new_game_btn", "load_game_btn", 
+                   "settings_btn", "exit_btn"]:
+            if key in self.ui_elements:
+                self.ui_elements[key].show()
+
     def _load_game(self):
-        """Загрузка игры"""
-        saves = game_state_manager.get_save_list()
+        """Загружает игру"""
+        try:
+            # Показываем список сохранений
+            saves = game_state_manager.get_save_list()
+            if not saves:
+                self._show_message("Нет сохранений")
+                return
+            
+            # Создаем диалог выбора сохранения
+            self._show_load_dialog(saves)
+            
+        except Exception as e:
+            print(f"Ошибка загрузки игры: {e}")
+
+    def _show_load_dialog(self, saves):
+        """Показывает диалог загрузки"""
+        # Скрываем главное меню
+        self._hide_main_menu()
         
-        if not saves:
-            messagebox.showinfo("Информация", "Нет доступных сохранений")
-            return
+        # Создаем диалог
+        dialog_frame = DirectFrame(
+            frameColor=UIStyles.COLORS["bg_medium"],
+            frameSize=(-0.6, 0.6, -0.5, 0.5),
+            pos=(0, 0, 0),
+            parent=self.render2d
+        )
+        self.ui_elements["load_dialog"] = dialog_frame
         
-        # Показываем диалог выбора сохранения
-        dialog = tk.Toplevel(self.root)
-        dialog.title("Загрузить игру")
-        dialog.geometry("500x400")
-        dialog.configure(bg=UIStyles.COLORS['bg_medium'])
-        dialog.transient(self.root)
-        dialog.grab_set()
+        # Заголовок
+        title = OnscreenText(
+            text="Выберите сохранение",
+            pos=(0, 0.4),
+            scale=0.08,
+            fg=UIStyles.COLORS["text_white"],
+            parent=dialog_frame
+        )
+        self.ui_elements["load_title"] = title
         
         # Список сохранений
-        listbox = tk.Listbox(
-            dialog,
-            font=UIStyles.FONTS['text_large'],
-            bg=UIStyles.COLORS['bg_dark'],
-            fg=UIStyles.COLORS['text_gray'],
-            selectmode='single'
-        )
-        listbox.pack(fill='both', expand=True, padx=10, pady=10)
+        y_offset = 0.2
+        for i, save in enumerate(saves[:5]):  # Показываем первые 5 сохранений
+            save_btn = DirectButton(
+                text=f"{save['name']} - {save['date']}",
+                pos=(0, 0, y_offset - i * 0.1),
+                scale=0.04,
+                command=lambda s=save: self._load_save(s),
+                **UIStyles.BUTTON_STYLE,
+                parent=dialog_frame
+            )
+            self.ui_elements[f"save_btn_{i}"] = save_btn
         
-        for save in saves:
-            listbox.insert(tk.END, f"{save['name']} - {save['date']}")
-        
-        # Кнопки
-        button_frame = tk.Frame(dialog, bg=UIStyles.COLORS['bg_medium'])
-        button_frame.pack(pady=10)
-        
-        result = [None]
-        
-        def on_load():
-            selection = listbox.curselection()
-            if selection:
-                result[0] = saves[selection[0]]['id']
-                dialog.destroy()
-            else:
-                messagebox.showwarning("Предупреждение", "Выберите сохранение")
-        
-        def on_cancel():
-            dialog.destroy()
-        
-        button_style_load = UIStyles.BUTTON_STYLE.copy()
-        button_style_load.update({
-            'font': UIStyles.FONTS['text_medium'],
-            'bg': UIStyles.COLORS['accent_blue'],
-            'fg': UIStyles.COLORS['text_white'],
-            'width': 10
-        })
-        
-        button_style_cancel_load = UIStyles.BUTTON_STYLE.copy()
-        button_style_cancel_load.update({
-            'font': UIStyles.FONTS['text_medium'],
-            'bg': UIStyles.COLORS['text_dark'],
-            'fg': UIStyles.COLORS['text_white'],
-            'width': 10
-        })
-        
-        tk.Button(
-            button_frame,
-            text="Загрузить",
-            command=on_load,
-            **button_style_load
-        ).pack(side='left', padx=5)
-        
-        tk.Button(
-            button_frame,
+        # Кнопка отмены
+        cancel_btn = DirectButton(
             text="Отмена",
-            command=on_cancel,
-            **button_style_cancel_load
-        ).pack(side='left', padx=5)
-        
-        dialog.wait_window()
-        
-        if result[0]:
-            try:
-                self.game_state = GameState.LOADING
-                self._update_status("Загрузка игры...", UIStyles.COLORS['accent_orange'])
+            pos=(0, 0, -0.4),
+            scale=0.05,
+            command=self._cancel_load_dialog,
+            **UIStyles.BUTTON_STYLE,
+            parent=dialog_frame
+        )
+        self.ui_elements["load_cancel_btn"] = cancel_btn
+
+    def _load_save(self, save):
+        """Загружает сохранение"""
+        try:
+            # Закрываем диалог
+            self._cancel_load_dialog()
+            
+            # Загружаем игру
+            if game_state_manager.load_game(save['id']):
+                self._init_game_systems()
+                self._switch_to_game_mode()
+                self._start_game_loop()
+            else:
+                self._show_message("Ошибка загрузки сохранения")
                 
-                if game_state_manager.load_game(result[0]):
-                    self._init_game_systems()
-                    self.game_running = True
-                    self.is_paused = False
-                    self.game_state = GameState.PLAYING
-                    self.game_thread = threading.Thread(target=self._game_loop, daemon=True)
-                    self.game_thread.start()
-                    self._update_status("Игра загружена", UIStyles.COLORS['accent_green'])
-                else:
-                    self.game_state = GameState.MENU
-                    self._update_status("Ошибка загрузки", UIStyles.COLORS['accent_red'])
-                    messagebox.showerror("Ошибка", "Не удалось загрузить игру")
-            except Exception as e:
-                self.game_state = GameState.MENU
-                self._update_status("Ошибка загрузки", UIStyles.COLORS['accent_red'])
-                messagebox.showerror("Ошибка", f"Ошибка загрузки: {e}")
-                
+        except Exception as e:
+            print(f"Ошибка загрузки сохранения: {e}")
+
+    def _cancel_load_dialog(self):
+        """Отменяет диалог загрузки"""
+        # Удаляем элементы диалога
+        for key in list(self.ui_elements.keys()):
+            if key.startswith("load_"):
+                self.ui_elements[key].destroy()
+                del self.ui_elements[key]
+        
+        # Показываем главное меню
+        self._show_main_menu()
+
     def _show_settings(self):
-        """Показ настроек"""
-        messagebox.showinfo("Настройки", "Настройки игры будут добавлены в следующей версии")
-        
-    def _init_game_systems(self):
-        """Инициализация игровых систем"""
-        # Создаем рендер менеджер
-        self.render_manager = RenderManager(self.game_canvas, game_state_manager)
-        
-        # Создаем игровое меню
-        self.game_menu = GameMenu(self.game_canvas, 800, 600)
-        
-        # Инициализируем AI систему
-        ai_manager.initialize()
-        
-    def _load_area(self, area_name: str):
-        """Загрузка игровой области"""
-        self.current_area = area_name
-        self.entities.clear()
-        
-        # Создаем врагов в зависимости от области
-        if area_name == "starting_area":
-            for i in range(3):
-                enemy = entity_factory.create_enemy(
-                    "warrior",
-                    1,
-                    (100 + i * 50, 100 + i * 50)
-                )
-                self.entities.append(enemy)
-                if hasattr(enemy, 'ai_core'):
-                    ai_manager.register_entity(enemy, enemy.ai_core)
-        
-        # Обновляем информацию об области
-        self._update_area_info()
-        
-    def _game_loop(self):
-        """Основной игровой цикл с оптимизацией"""
-        try:
-            while self.game_running:
-                # Вычисляем delta time
-                current_time = time.time()
-                delta_time = current_time - self.last_frame_time
-                self.last_frame_time = current_time
-                
-                # Обновляем время игры
-                self.game_time += int(delta_time * 1000)
-                
-                # Обновляем FPS счетчик
-                self.frame_count += 1
-                if current_time - self.last_fps_time >= 1.0:
-                    self.fps_counter = self.frame_count
-                    self.frame_count = 0
-                    self.last_fps_time = current_time
-                
-                # Обновляем игровую логику только если не на паузе
-                if not self.is_paused:
-                    self._update_game(delta_time)
-                
-                # Рендерим
-                self._render_game()
-                
-                # Устанавливаем флаг для обновления UI на главном потоке
-                self.ui_update_needed = True
-                
-                # Ограничиваем FPS
-                target_frame_time = 1.0 / self.game_settings.fps
-                sleep_time = max(0, target_frame_time - delta_time)
-                if sleep_time > 0:
-                    time.sleep(sleep_time)
-                
-        except Exception as e:
-            print(f"Ошибка в игровом цикле: {e}")
-            self.game_state = GameState.MENU
-            
-    def _update_game(self, delta_time: float):
-        """Обновление игровой логики"""
-        # Обновляем AI систему
-        ai_manager.update(delta_time)
-        
-        # Обновляем игрока
-        if self.player:
-            self.player.update(delta_time)
-        
-        # Обновляем сущности
-        for entity in self.entities[:]:
-            entity.update(delta_time)
-            if not entity.alive:
-                self.entities.remove(entity)
-                ai_manager.unregister_entity(entity)
-        
-        # Проверяем коллизии
-        self._check_collisions()
-        
-    def _render_game(self):
-        """Рендеринг игры"""
-        if not self.render_manager:
-            return
-            
-        # Очищаем canvas
-        self.game_canvas.delete("all")
-        
-        # Рендерим область
-        self.render_manager.render_area(self.current_area)
-        
-        # Рендерим сущности
-        for entity in self.entities:
-            self.render_manager.render_entity(entity)
-        
-        # Рендерим игрока
-        if self.player:
-            self.render_manager.render_entity(self.player)
-        
-        # Рендерим UI
-        if self.game_menu and self.game_menu.visible:
-            self.game_menu.render(self.render_manager)
-            
-    def _update_ui(self):
-        """Обновление UI"""
-        if not self.player:
-            return
-            
-        # Обновляем информацию об игроке
-        self.ui_elements['player_name_label'].config(text=f"Имя: {self.player.name}")
-        self.ui_elements['player_level_label'].config(text=f"Уровень: {getattr(self.player, 'level', 1)}")
-        self.ui_elements['player_health_label'].config(text=f"Здоровье: {int(getattr(self.player, 'health', 100))}")
-        self.ui_elements['player_fps_label'].config(text=f"FPS: {self.fps_counter}")
-        
-        # Обновляем информацию об области
-        self._update_area_info()
-        
-    def _update_area_info(self):
-        """Обновление информации об области"""
-        self.ui_elements['area_name_label'].config(text=f"Название: {self.current_area}")
-        self.ui_elements['entities_count_label'].config(text=f"Сущностей: {len(self.entities)}")
-        
-    def _update_status(self, text: str, color: str):
-        """Обновление статуса игры"""
-        self.ui_elements['status_label'].config(text=text, fg=color)
-        
-    def _check_collisions(self):
-        """Проверка коллизий"""
-        if not self.player:
-            return
-            
-        for entity in self.entities:
-            if entity.alive and self.player.alive:
-                distance = self.player.distance_to(entity)
-                if distance < 50:
-                    if self.player.can_attack():
-                        self.player.attack(entity)
-                    if entity.can_attack():
-                        entity.attack(self.player)
-                        
-    def _toggle_pause(self):
-        """Переключение паузы"""
-        if self.game_state == GameState.PLAYING:
-            self.is_paused = not self.is_paused
-            if self.is_paused:
-                self.game_state = GameState.PAUSED
-                self._update_status("Игра на паузе", UIStyles.COLORS['accent_orange'])
-                self.ui_elements['pause_btn'].config(text="Продолжить")
-            else:
-                self.game_state = GameState.PLAYING
-                self._update_status("Игра запущена", UIStyles.COLORS['accent_green'])
-                self.ui_elements['pause_btn'].config(text="Пауза")
-        
-    def _save_game(self):
-        """Сохранение игры"""
-        try:
-            if game_state_manager.save_game():
-                messagebox.showinfo("Сохранение", "Игра сохранена успешно")
-            else:
-                messagebox.showerror("Ошибка", "Не удалось сохранить игру")
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Ошибка сохранения: {e}")
-            
-    def _show_game_menu(self):
-        """Показ игрового меню"""
-        if self.game_menu and self.game_state == GameState.PLAYING:
-            self.game_menu.toggle()
-            
-    def _on_key(self, event):
-        """Обработка нажатий клавиш"""
-        if self.game_state != GameState.PLAYING:
-            return
-            
-        key = event.keysym.lower()
-        
-        if key == 'escape':
-            self._show_game_menu()
-        elif key == 'p':
-            self._toggle_pause()
-        elif key == 'f5':
-            self._save_game()
-            
-    def _on_mouse_click(self, event):
-        """Обработка кликов мыши"""
-        if self.game_state != GameState.PLAYING or not self.player:
-            return
-            
-        # Перемещение игрока
-        self.player.position = (event.x, event.y)
-        
-    def _on_mouse_move(self, event):
-        """Обработка движения мыши"""
-        pass
-        
+        """Показывает настройки"""
+        # Пока просто показываем сообщение
+        self._show_message("Настройки будут добавлены позже")
+
     def _exit_game(self):
         """Выход из игры"""
-        if self.game_running:
-            self.game_running = False
-            if self.game_thread:
-                self.game_thread.join(timeout=1)
+        self.userExit()
+
+    def _init_game_systems(self):
+        """Инициализация игровых систем"""
+        # Инициализируем системы
+        from config.settings_manager import settings_manager
+        from core.data_manager import data_manager
         
-        self.root.quit()
-        self.root.destroy()
+        settings_manager.reload_settings()
+        data_manager.reload_data()
+
+    def _load_area(self, area_name: str):
+        """Загружает игровую область"""
+        try:
+            self.current_area = area_name
+            
+            # Очищаем текущие сущности
+            self.entities.clear()
+            
+            # Создаем сущности для области
+            self._spawn_area_entities(area_name)
+            
+        except Exception as e:
+            print(f"Ошибка загрузки области: {e}")
+
+    def _spawn_area_entities(self, area_name: str):
+        """Создает сущности для области"""
+        try:
+            if area_name == "starting_area":
+                # Создаем несколько слабых врагов
+                for i in range(3):
+                    enemy = entity_factory.create_enemy(
+                        enemy_type="warrior",
+                        level=1,
+                        position=(2 + i * 2, 2 + i * 2)
+                    )
+                    self.entities.append(enemy)
+                    # Регистрируем в AI системе
+                    if hasattr(enemy, 'ai_core'):
+                        ai_manager.register_entity(enemy, enemy.ai_core)
+            
+            elif area_name == "forest":
+                # Создаем лесных врагов
+                for i in range(5):
+                    enemy = entity_factory.create_enemy(
+                        enemy_type="archer",
+                        level=3,
+                        position=(3 + i * 3, 3 + i * 3)
+                    )
+                    self.entities.append(enemy)
+                    if hasattr(enemy, 'ai_core'):
+                        ai_manager.register_entity(enemy, enemy.ai_core)
+            
+            elif area_name == "dungeon":
+                # Создаем подземных врагов
+                for i in range(8):
+                    enemy = entity_factory.create_enemy(
+                        enemy_type="mage",
+                        level=5,
+                        position=(4 + i * 2, 4 + i * 2)
+                    )
+                    self.entities.append(enemy)
+                    if hasattr(enemy, 'ai_core'):
+                        ai_manager.register_entity(enemy, enemy.ai_core)
+            
+        except Exception as e:
+            print(f"Ошибка создания сущностей: {e}")
+
+    def _switch_to_game_mode(self):
+        """Переключает в игровой режим"""
+        # Скрываем главное меню
+        self._hide_main_menu()
         
-    def _update_ui_safe(self):
-        """Безопасное обновление UI на главном потоке"""
-        if self.ui_update_needed and self.game_state == GameState.PLAYING:
+        # Создаем игровое меню
+        self.game_menu = GameMenu(self.render2d, self.game_settings.window_width, 
+                                 self.game_settings.window_height)
+        
+        # Создаем игровые UI элементы
+        self._create_game_ui()
+        
+        # Переключаем состояние
+        self.game_state = GameState.PLAYING
+        self.game_running = True
+
+    def _create_game_ui(self):
+        """Создает игровые UI элементы"""
+        # Информационная панель
+        info_frame = DirectFrame(
+            frameColor=UIStyles.COLORS["bg_medium"],
+            frameSize=(-0.3, 0.3, 0.8, 1.0),
+            pos=(-0.7, 0, 0),
+            parent=self.render2d
+        )
+        self.ui_elements["info_frame"] = info_frame
+        
+        # Информация об игроке
+        player_info = OnscreenText(
+            text="Игрок: Неизвестно",
+            pos=(-0.7, 0.9),
+            scale=0.04,
+            fg=UIStyles.COLORS["text_white"],
+            parent=self.render2d
+        )
+        self.ui_elements["player_info"] = player_info
+        
+        # Информация об области
+        area_info = OnscreenText(
+            text="Область: Неизвестно",
+            pos=(-0.7, 0.85),
+            scale=0.04,
+            fg=UIStyles.COLORS["text_white"],
+            parent=self.render2d
+        )
+        self.ui_elements["area_info"] = area_info
+
+    def _start_game_loop(self):
+        """Запускает игровой цикл"""
+        # Добавляем задачу обновления игры
+        self.task_mgr.add(self._game_loop, "game_loop")
+
+    def _game_loop(self, task):
+        """Игровой цикл"""
+        try:
+            # Вычисляем delta time
+            current_time = time.time()
+            self.delta_time = current_time - self.last_frame_time
+            self.last_frame_time = current_time
+            
+            # Обновляем время игры
+            self.game_time += int(self.delta_time * 1000)
+            
+            # Обновляем игровую логику
+            if not self.is_paused:
+                self._update_game()
+            
+            # Рендерим
+            self._render_game()
+            
+            # Обновляем UI
             self._update_ui()
-            self.ui_update_needed = False
-        
-        # Планируем следующее обновление
-        if self.game_running:
-            self.root.after(16, self._update_ui_safe)  # ~60 FPS
-    
-    def run(self):
-        """Запуск главного окна"""
-        # Запускаем обновление UI
-        self.root.after(16, self._update_ui_safe)
-        self.root.mainloop()
+            
+            # Автосохранение
+            if self.game_time % (self.game_settings.auto_save_interval * 1000) == 0:
+                self._save_game()
+            
+            return Task.cont
+            
+        except Exception as e:
+            print(f"Ошибка в игровом цикле: {e}")
+            return Task.cont
+
+    def _update_game(self):
+        """Обновляет игровую логику"""
+        try:
+            # Обновляем AI систему
+            ai_manager.update(self.delta_time)
+            
+            # Обновляем игрока
+            if self.player:
+                self.player.update(self.delta_time)
+            
+            # Обновляем сущности
+            for entity in self.entities[:]:
+                entity.update(self.delta_time)
+                
+                # Удаляем мертвых сущностей
+                if not entity.alive:
+                    self.entities.remove(entity)
+                    ai_manager.unregister_entity(entity)
+            
+            # Проверяем коллизии
+            self._check_collisions()
+            
+        except Exception as e:
+            print(f"Ошибка обновления игры: {e}")
+
+    def _render_game(self):
+        """Рендерит игру"""
+        try:
+            if self.render_manager:
+                # Рендерим область
+                if self.current_area:
+                    self.render_manager.render_area(self.current_area)
+                
+                # Рендерим сущности
+                for entity in self.entities:
+                    self.render_manager.render_entity(entity)
+                
+                # Рендерим игрока
+                if self.player:
+                    self.render_manager.render_entity(self.player)
+                
+                # Центрируем камеру на игроке
+                if self.player:
+                    self.render_manager.center_camera_on_player(self.player)
+                
+                # Рендерим UI
+                self.render_manager.render_ui()
+                
+        except Exception as e:
+            print(f"Ошибка рендеринга: {e}")
+
+    def _update_ui(self):
+        """Обновляет UI"""
+        try:
+            # Обновляем информацию об игроке
+            if self.player and "player_info" in self.ui_elements:
+                player_text = f"Игрок: {self.player.name} (Ур.{self.player.level})"
+                self.ui_elements["player_info"].set_text(player_text)
+            
+            # Обновляем информацию об области
+            if "area_info" in self.ui_elements:
+                area_text = f"Область: {self.current_area}"
+                self.ui_elements["area_info"].set_text(area_text)
+                
+        except Exception as e:
+            print(f"Ошибка обновления UI: {e}")
+
+    def _check_collisions(self):
+        """Проверяет коллизии"""
+        try:
+            if not self.player:
+                return
+            
+            # Проверяем коллизии игрока с врагами
+            for entity in self.entities:
+                if entity.alive and self.player.alive:
+                    distance = self.player.distance_to(entity)
+                    if distance < 1.0:  # Радиус коллизии
+                        # Игрок атакует врага
+                        if self.player.can_attack():
+                            self.player.attack(entity)
+                        
+                        # Враг атакует игрока
+                        if entity.can_attack():
+                            entity.attack(self.player)
+            
+        except Exception as e:
+            print(f"Ошибка проверки коллизий: {e}")
+
+    def _on_escape(self):
+        """Обработка клавиши Escape"""
+        if self.game_state == GameState.PLAYING:
+            self._toggle_pause()
+        elif self.game_state == GameState.PAUSED:
+            self._toggle_pause()
+
+    def _toggle_pause(self):
+        """Переключает паузу"""
+        self.is_paused = not self.is_paused
+        if self.is_paused:
+            self.game_state = GameState.PAUSED
+            self._show_message("Игра приостановлена")
+        else:
+            self.game_state = GameState.PLAYING
+            self._hide_message()
+
+    def _save_game(self):
+        """Сохраняет игру"""
+        try:
+            if self.player:
+                # Создаем состояние игрока
+                player_state = {
+                    "position": self.player.position,
+                    "level": self.player.level,
+                    "experience": self.player.experience,
+                    "health": self.player.health,
+                    "max_health": self.player.max_health,
+                }
+                
+                # Обновляем состояние в менеджере
+                game_state_manager.update_player_state(player_state)
+                
+                # Сохраняем игру
+                if game_state_manager.save_game():
+                    self._show_message("Игра сохранена")
+                else:
+                    self._show_message("Ошибка сохранения")
+            else:
+                self._show_message("Нет игрока для сохранения")
+                
+        except Exception as e:
+            print(f"Ошибка сохранения: {e}")
+
+    def _toggle_debug(self):
+        """Переключает отладочную информацию"""
+        if self.render_manager:
+            self.render_manager.toggle_debug_info()
+
+    def _on_mouse_click(self):
+        """Обработка клика мыши"""
+        if self.game_state == GameState.PLAYING and self.player:
+            # Получаем позицию мыши в мировых координатах
+            mouse_pos = self.mouse_watcher.get_mouse()
+            if mouse_pos:
+                # Преобразуем в мировые координаты
+                world_pos = self.render_manager.get_world_position(mouse_pos.get_x(), mouse_pos.get_y())
+                # Перемещаем игрока
+                self.player.position = [world_pos[0], world_pos[1]]
+
+    def _on_right_click(self):
+        """Обработка правого клика мыши"""
+        if self.game_state == GameState.PLAYING:
+            # Показываем контекстное меню
+            pass
+
+    def _show_message(self, text: str, duration: float = 3.0):
+        """Показывает сообщение"""
+        try:
+            # Удаляем старое сообщение
+            if "message" in self.ui_elements:
+                self.ui_elements["message"].destroy()
+            
+            # Создаем новое сообщение
+            message = OnscreenText(
+                text=text,
+                pos=(0, 0),
+                scale=0.06,
+                fg=UIStyles.COLORS["accent_blue"],
+                shadow=(0, 0, 0, 1),
+                parent=self.render2d
+            )
+            self.ui_elements["message"] = message
+            
+            # Удаляем сообщение через время
+            def remove_message(task):
+                if "message" in self.ui_elements:
+                    self.ui_elements["message"].destroy()
+                    del self.ui_elements["message"]
+                return Task.done
+            
+            self.task_mgr.do_method_later(duration, remove_message, "remove_message")
+            
+        except Exception as e:
+            print(f"Ошибка показа сообщения: {e}")
+
+    def _hide_message(self):
+        """Скрывает сообщение"""
+        if "message" in self.ui_elements:
+            self.ui_elements["message"].destroy()
+            del self.ui_elements["message"]
 
 
 def main():
-    """Главная функция для запуска UI"""
-    app = MainWindow()
-    app.run()
+    """Главная функция"""
+    try:
+        # Создаем и запускаем главное окно
+        app = MainWindow()
+        app.run()
+    except Exception as e:
+        print(f"Критическая ошибка: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

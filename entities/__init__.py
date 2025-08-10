@@ -6,10 +6,4 @@ from .enemy import Enemy
 from .entity_factory import EntityFactory
 from .effect import Effect
 
-__all__ = [
-    'BaseEntity',
-    'Player',
-    'Enemy',
-    'EntityFactory',
-    'Effect'
-]
+__all__ = ["BaseEntity", "Player", "Enemy", "EntityFactory", "Effect"]

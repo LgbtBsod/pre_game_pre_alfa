@@ -2,13 +2,21 @@ import math
 import random
 import pygame
 
+
 class Camera:
     def __init__(self, x=0, y=0):
+        # Получаем настройки камеры
+        from config.unified_settings import get_camera_settings
+
+        camera_settings = get_camera_settings()
+
         self.x = x  # Смещение камеры по X
         self.y = y  # Смещение камеры по Y
         self.target_x = x  # Целевая позиция по X
         self.target_y = y  # Целевая позиция по Y
-        self.lerp_speed = 0.1  # Скорость плавного перемещения камеры
+        self.lerp_speed = (
+            camera_settings.LERP_SPEED
+        )  # Скорость плавного перемещения камеры
         self.zoom = 1.0  # Масштаб (зум)
         self.shake_amount = 0  # Величина тряски экрана
         self.shake_offset = (0, 0)  # Текущее смещение тряски
@@ -27,15 +35,25 @@ class Camera:
             angle = random.uniform(0, 2 * math.pi)
             self.shake_offset = (
                 math.cos(angle) * self.shake_amount / 2,
-                math.sin(angle) * self.shake_amount / 2
+                math.sin(angle) * self.shake_amount / 2,
             )
         else:
             self.shake_offset = (0, 0)
 
     def apply(self, world_x, world_y):
         """Применяет камеру к мировым координатам и возвращает экранные координаты"""
-        screen_x = int(world_x - self.x + self.shake_offset[0] + pygame.display.get_surface().get_width() // 2)
-        screen_y = int(world_y - self.y + self.shake_offset[1] + pygame.display.get_surface().get_height() // 3)
+        screen_x = int(
+            world_x
+            - self.x
+            + self.shake_offset[0]
+            + pygame.display.get_surface().get_width() // 2
+        )
+        screen_y = int(
+            world_y
+            - self.y
+            + self.shake_offset[1]
+            + pygame.display.get_surface().get_height() // 3
+        )
         return screen_x, screen_y
 
     def shake(self, amount=10):
@@ -44,13 +62,25 @@ class Camera:
 
     def zoom_in(self, factor=0.95):
         """Увеличивает масштаб (приближает)"""
+        from config.unified_settings import get_camera_settings
+
+        camera_settings = get_camera_settings()
+
         self.zoom *= factor
-        self.zoom = max(0.5, min(2.0, self.zoom))
+        self.zoom = max(
+            camera_settings.MIN_ZOOM, min(camera_settings.MAX_ZOOM, self.zoom)
+        )
 
     def zoom_out(self, factor=1.05):
         """Уменьшает масштаб (удаляет)"""
+        from config.unified_settings import get_camera_settings
+
+        camera_settings = get_camera_settings()
+
         self.zoom *= factor
-        self.zoom = max(0.5, min(2.0, self.zoom))
+        self.zoom = max(
+            camera_settings.MIN_ZOOM, min(camera_settings.MAX_ZOOM, self.zoom)
+        )
 
     def reset_zoom(self):
         """Сбрасывает масштаб до стандартного"""
