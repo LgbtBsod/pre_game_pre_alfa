@@ -2,12 +2,15 @@
 Система кортежей данных для игры
 Вместо парсинга по имени используются структурированные данные
 """
+import logging
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 from enum import Enum
 import json
 import sqlite3
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class DataType(Enum):
@@ -41,7 +44,11 @@ class AttributeData:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'AttributeData':
         """Создать из словаря"""
-        return cls(**data)
+        # Удаляем hex_id из данных, если он есть, так как это поле уже определено в классе
+        data_copy = data.copy()
+        if 'hex_id' in data_copy:
+            del data_copy['hex_id']
+        return cls(**data_copy)
 
 
 @dataclass
@@ -69,7 +76,12 @@ class EffectData:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'EffectData':
         """Создать из словаря"""
-        return cls(**data)
+        # Удаляем hex_id из данных, если он есть, так как это поле уже определено в классе
+        data_copy = data.copy()
+        if 'hex_id' in data_copy:
+            del data_copy['hex_id']
+        # Поле type уже определено в классе, поэтому не нужно его удалять
+        return cls(**data_copy)
 
 
 @dataclass
@@ -131,7 +143,12 @@ class ItemData:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'ItemData':
         """Создать из словаря"""
-        return cls(**data)
+        # Удаляем hex_id из данных, если он есть, так как это поле уже определено в классе
+        data_copy = data.copy()
+        if 'hex_id' in data_copy:
+            del data_copy['hex_id']
+        # Поле type уже определено в классе, поэтому не нужно его удалять
+        return cls(**data_copy)
 
 
 @dataclass
@@ -172,7 +189,12 @@ class EntityData:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'EntityData':
         """Создать из словаря"""
-        return cls(**data)
+        # Удаляем hex_id из данных, если он есть, так как это поле уже определено в классе
+        data_copy = data.copy()
+        if 'hex_id' in data_copy:
+            del data_copy['hex_id']
+        # Поле type уже определено в классе, поэтому не нужно его удалять
+        return cls(**data_copy)
 
 
 class DataManager:
@@ -478,9 +500,12 @@ class DataManager:
         
         return results
     
-    def insert_item(self, item: ItemData) -> bool:
+    def insert_item(self, item_data: Dict[str, Any]) -> bool:
         """Добавить предмет в базу данных"""
         try:
+            # Создаем объект ItemData из словаря
+            item = ItemData.from_dict(item_data)
+            
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
             
@@ -514,6 +539,53 @@ class DataManager:
         except Exception as e:
             logger.error(f"Ошибка добавления предмета: {e}")
             return False
+    
+    def insert_enemy(self, enemy_data: Dict[str, Any]) -> bool:
+        """Добавить врага в базу данных"""
+        try:
+            # Создаем объект EntityData из словаря
+            enemy = EntityData.from_dict(enemy_data)
+            
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute('''
+                INSERT INTO entities VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (enemy.id, enemy.name, enemy.description, enemy.type,
+                  enemy.level, enemy.experience, enemy.experience_to_next,
+                  json.dumps(enemy.attributes), json.dumps(enemy.combat_stats),
+                  json.dumps(enemy.equipment_slots), enemy.inventory_size,
+                  json.dumps(enemy.skills), json.dumps(enemy.tags),
+                  enemy.enemy_type, enemy.experience_reward,
+                  enemy.ai_behavior, json.dumps(enemy.loot_table),
+                  json.dumps(enemy.phases), enemy.hex_id))
+            
+            conn.commit()
+            conn.close()
+            
+            # Добавляем в память
+            self.entities[enemy.id] = enemy
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления врага: {e}")
+            return False
+    
+    def get_items_by_type(self, item_type: str) -> List[ItemData]:
+        """Получить предметы по типу"""
+        return [item for item in self.items.values() if item.type == item_type]
+    
+    def get_enemies_by_type(self, enemy_type: str) -> List[EntityData]:
+        """Получить врагов по типу"""
+        return [entity for entity in self.entities.values() 
+                if entity.type in ['enemy', 'boss'] and entity.enemy_type == enemy_type]
+    
+    def get_enemy(self, enemy_id: str) -> Optional[EntityData]:
+        """Получить врага по ID"""
+        entity = self.entities.get(enemy_id)
+        if entity and entity.type in ['enemy', 'boss']:
+            return entity
+        return None
 
 
 # Глобальный экземпляр менеджера данных

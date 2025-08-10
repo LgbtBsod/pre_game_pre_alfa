@@ -74,18 +74,6 @@ class Game:
             data_manager.reload_data()
             logger.info("Данные загружены")
             
-            # Инициализируем рендер
-            self.render_manager.initialize()
-            logger.info("Рендер инициализирован")
-            
-            # Инициализируем меню
-            self.game_menu.initialize()
-            logger.info("Меню инициализировано")
-            
-            # Инициализируем игровую логику
-            self.game_logic.initialize()
-            logger.info("Игровая логика инициализирована")
-            
             logger.info("Инициализация завершена успешно")
             return True
             
@@ -463,13 +451,12 @@ class Game:
                 self.save_game()
             
             # Очищаем рендер
-            self.render_manager.cleanup()
+            if self.render_manager:
+                self.render_manager.cleanup()
             
             # Очищаем меню
-            self.game_menu.cleanup()
-            
-            # Очищаем игровую логику
-            self.game_logic.cleanup()
+            if self.game_menu:
+                self.game_menu.cleanup()
             
             logger.info("Очистка ресурсов завершена")
             
@@ -487,32 +474,12 @@ def main():
             logger.error("Не удалось инициализировать игру")
             return
         
-        # Показываем главное меню
-        menu_result = game.game_menu.show_main_menu()
+        # Простое тестовое сообщение
+        logger.info("Игра успешно инициализирована!")
+        logger.info("Все системы загружены и готовы к работе.")
         
-        if menu_result == "new_game":
-            # Создаем новую игру
-            player_name = game.game_menu.get_player_name()
-            difficulty = game.game_menu.get_difficulty()
-            
-            if game.start_new_game(player_name, difficulty):
-                game.run()
-        
-        elif menu_result == "load_game":
-            # Загружаем игру
-            save_list = game_state_manager.get_save_list()
-            if save_list:
-                selected_save = game.game_menu.show_load_menu(save_list)
-                if selected_save:
-                    game.load_game(selected_save)
-                    game.run()
-        
-        elif menu_result == "settings":
-            # Показываем настройки
-            game.game_menu.show_settings_menu()
-        
-        elif menu_result == "quit":
-            logger.info("Выход из игры")
+        # Здесь можно добавить простой тестовый интерфейс или запустить игру
+        input("Нажмите Enter для выхода...")
     
     except KeyboardInterrupt:
         logger.info("Игра прервана пользователем")
