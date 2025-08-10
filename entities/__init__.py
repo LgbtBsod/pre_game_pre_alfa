@@ -1,23 +1,15 @@
 """Модуль сущностей игры."""
 
-from .entity import Entity
-from .entity_refactored import Entity as EntityRefactored
+from .base_entity import BaseEntity
 from .player import Player
-from .enemy import Enemy, EnemyGenerator
-from .boss import Boss, BossGenerator
-from .npc import NPCEnemy
+from .enemy import Enemy
 from .entity_factory import EntityFactory
 from .effect import Effect
 
 __all__ = [
-    'Entity',
-    'EntityRefactored',
+    'BaseEntity',
     'Player',
     'Enemy',
-    'EnemyGenerator',
-    'Boss',
-    'BossGenerator',
-    'NPCEnemy',
     'EntityFactory',
     'Effect'
 ]

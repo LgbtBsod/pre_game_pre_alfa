@@ -198,7 +198,7 @@ class BaseEntity:
                 self.learn_weapon_effectiveness(attacker_weapon, damage_type, damage_report.get("final_damage", 0))
         
         # Сохраняем в память
-        self.ai_memory.store_experience("damage_taken", damage_report)
+        self.ai_memory.record_event("damage_taken", damage_report)
         
         # Анализируем паттерны
         self.pattern_recognizer.analyze_damage_pattern(damage_report)
@@ -295,7 +295,7 @@ class BaseEntity:
     def learn_from_attack(self, damage_report: dict, target):
         """Учится на атаке"""
         # Сохраняем опыт атаки
-        self.ai_memory.store_experience("attack_performed", damage_report)
+        self.ai_memory.record_event("attack_performed", damage_report)
         
         # Анализируем эффективность
         damage_dealt = damage_report.get("damage", 0)
@@ -345,7 +345,7 @@ class BaseEntity:
         self.item_preferences[item_type] += 1
         
         # Сохраняем опыт использования
-        self.ai_memory.store_experience("item_used", {
+        self.ai_memory.record_event("item_used", {
             "item_type": item_type,
             "usage_type": usage_type,
             "effectiveness": 1.0
@@ -469,7 +469,7 @@ class BaseEntity:
         """Смерть сущности"""
         self.alive = False
         # Сохраняем опыт смерти
-        self.ai_memory.store_experience("death", {"cause": "combat", "level": self.level})
+        self.ai_memory.record_event("death", {"cause": "combat", "level": self.level})
     
     def use_consumable(self, item):
         """Использует расходник"""

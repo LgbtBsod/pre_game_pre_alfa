@@ -8,6 +8,10 @@ class LearningSystem:
     def process_experience(self):
         # Базовый метод, переопределяется в подклассах
         pass
+    
+    def update(self, delta_time):
+        """Обновляет систему обучения"""
+        self.process_experience()
 
 class PlayerLearning(LearningSystem):
     def process_experience(self):

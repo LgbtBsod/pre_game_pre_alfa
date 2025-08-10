@@ -306,7 +306,7 @@ class Enemy(BaseEntity):
         self.skill_cooldowns[skill_id] = 5.0  # 5 секунд кулдаун
         
         # Учимся использованию умения
-        self.ai_memory.store_experience("skill_used", {
+        self.ai_memory.record_event("skill_used", {
             "skill_id": skill_id,
             "target": target,
             "effectiveness": 1.0
@@ -331,4 +331,4 @@ class Enemy(BaseEntity):
             self.item_preferences[tactic_used] = max(0, self.item_preferences[tactic_used] - 1)
         
         # Сохраняем опыт
-        self.ai_memory.store_experience("combat_experience", combat_data)
+        self.ai_memory.record_event("combat_experience", combat_data)

@@ -11,8 +11,6 @@ from dataclasses import dataclass
 from core.data_manager import data_manager, EnemyData
 from .player import Player
 from .enemy import Enemy
-from .boss import Boss
-from .npc import NPCEnemy
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +41,13 @@ class EntityFactory:
     def create_player(self, player_id: str = "player", position: Tuple[float, float] = (0, 0)) -> Player:
         """Создание игрока."""
         try:
-            player = Player(player_id, position)
+            player = Player(position)
+            player.entity_id = player_id
             logger.debug(f"Создан игрок: {player_id}")
             return player
         except Exception as e:
             logger.error(f"Ошибка создания игрока: {e}")
-            return Player(player_id, position)
+            return Player(position)
     
     def create_enemy(self, enemy_type: str = None, level: int = 1, 
                     position: Tuple[float, float] = None) -> Enemy:
@@ -78,7 +77,7 @@ class EntityFactory:
             return Enemy("warrior", level, position or (0, 0))
     
     def create_boss(self, boss_type: str = None, level: int = 10, 
-                   position: Tuple[float, float] = None) -> Boss:
+                   position: Tuple[float, float] = None) -> Enemy:
         """Создание босса."""
         try:
             if position is None:
@@ -91,8 +90,9 @@ class EntityFactory:
             # Получаем данные босса
             boss_data = self._get_boss_data(boss_type, level)
             
-            # Создаем босса
-            boss = Boss(boss_type, level, position)
+            # Создаем босса как врага с особыми параметрами
+            boss = Enemy(boss_type, level, position)
+            boss.is_boss = True
             
             # Применяем данные
             self._apply_boss_data(boss, boss_data)
@@ -102,17 +102,18 @@ class EntityFactory:
             
         except Exception as e:
             logger.error(f"Ошибка создания босса: {e}")
-            return Boss("dragon", level, position or (0, 0))
+            return Enemy("dragon", level, position or (0, 0))
     
-    def create_npc(self, npc_type: str, position: Tuple[float, float] = (0, 0)) -> NPCEnemy:
+    def create_npc(self, npc_type: str, position: Tuple[float, float] = (0, 0)) -> Enemy:
         """Создание NPC."""
         try:
-            npc = NPCEnemy(npc_type, position)
+            npc = Enemy(npc_type, 1, position)
+            npc.ai_behavior = "friendly"
             logger.debug(f"Создан NPC: {npc_type}")
             return npc
         except Exception as e:
             logger.error(f"Ошибка создания NPC: {e}")
-            return NPCEnemy(npc_type, position)
+            return Enemy(npc_type, 1, position)
     
     def create_enemy_pack(self, pack_size: int = 3, level: int = 1, 
                          center_position: Tuple[float, float] = (0, 0),
@@ -131,7 +132,7 @@ class EntityFactory:
         return enemies
     
     def create_boss_with_minions(self, boss_level: int = 15, minion_count: int = 3,
-                                center_position: Tuple[float, float] = (0, 0)) -> Tuple[Boss, List[Enemy]]:
+                               center_position: Tuple[float, float] = (0, 0)) -> Tuple[Enemy, List[Enemy]]:
         """Создание босса с миньонами."""
         # Создаем босса в центре
         boss = self.create_boss(level=boss_level, position=center_position)
@@ -331,7 +332,7 @@ class EntityFactory:
             # Здесь можно добавить логику применения навыков
             pass
     
-    def _apply_boss_data(self, boss: Boss, boss_data: EnemyData):
+    def _apply_boss_data(self, boss: Enemy, boss_data: EnemyData):
         """Применяет данные к боссу."""
         self._apply_enemy_data(boss, boss_data)
         boss.is_boss = True

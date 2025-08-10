@@ -10,7 +10,7 @@ from collections import defaultdict, OrderedDict
 import weakref
 
 from config.settings_manager import settings_manager
-from data.database_manager import db_manager
+from core.data_manager import data_manager
 
 logger = logging.getLogger(__name__)
 
@@ -157,14 +157,14 @@ class ResourceManager:
             if 'items' in self._loaded_resources:
                 for item_id, item_data in self._loaded_resources['items'].get('items', {}).items():
                     item_data['id'] = item_id
-                    db_manager.insert_item(item_data)
+                    data_manager.insert_item(item_data)
             
             # Импорт врагов
             if 'entities' in self._loaded_resources:
                 for entity_id, entity_data in self._loaded_resources['entities'].get('entities', {}).items():
                     if entity_data.get('type') in ['enemy', 'boss']:
                         entity_data['id'] = entity_id
-                        db_manager.insert_enemy(entity_data)
+                        data_manager.insert_enemy(entity_data)
             
             logger.info("Данные импортированы в базу данных")
             
@@ -183,7 +183,7 @@ class ResourceManager:
             return cached_item
         
         # Затем базу данных
-        item = db_manager.get_item(item_id)
+        item = data_manager.get_item(item_id)
         if item:
             self.cache.put(f"item_{item_id}", item)
             return item
@@ -202,7 +202,7 @@ class ResourceManager:
     def get_items_by_type(self, item_type: str) -> List[Dict[str, Any]]:
         """Получает предметы по типу."""
         # Сначала база данных
-        items = db_manager.get_items_by_type(item_type)
+        items = data_manager.get_items_by_type(item_type)
         if items:
             # Кэшируем результаты
             for item in items:
@@ -230,7 +230,7 @@ class ResourceManager:
             return cached_enemy
         
         # Затем базу данных
-        enemy = db_manager.get_enemy(enemy_id)
+        enemy = data_manager.get_enemy(enemy_id)
         if enemy:
             self.cache.put(f"enemy_{enemy_id}", enemy)
             return enemy
@@ -249,7 +249,7 @@ class ResourceManager:
     def get_enemies_by_type(self, enemy_type: str) -> List[Dict[str, Any]]:
         """Получает врагов по типу."""
         # Сначала база данных
-        enemies = db_manager.get_enemies_by_type(enemy_type)
+        enemies = data_manager.get_enemies_by_type(enemy_type)
         if enemies:
             # Кэшируем результаты
             for enemy in enemies:

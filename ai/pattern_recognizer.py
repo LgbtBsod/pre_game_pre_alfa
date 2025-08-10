@@ -139,3 +139,21 @@ class PatternRecognizer:
             'pattern_types': list(set(type(p).__name__ for p in self.patterns)),
             'response_types': list(set(type(r).__name__ for r in self.responses))
         }
+    
+    def analyze_damage_pattern(self, damage_report: Dict[str, Any]):
+        """Анализирует паттерн урона"""
+        # Извлекаем ключевые характеристики урона
+        pattern = {
+            "damage": damage_report.get("damage", 0),
+            "damage_type": damage_report.get("damage_type", "unknown"),
+            "attacker_type": damage_report.get("attacker_type", "unknown"),
+            "is_critical": damage_report.get("is_critical", False)
+        }
+        
+        # Добавляем паттерн для распознавания
+        self.add_pattern(pattern, "damage_pattern")
+    
+    def update(self, delta_time):
+        """Обновляет распознаватель паттернов"""
+        # Здесь можно добавить логику обновления
+        pass

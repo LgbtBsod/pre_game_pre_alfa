@@ -7,8 +7,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
 
-from .component import Component
-from .attributes import AttributesComponent
+from .attributes import AttributeManager, Attribute
 
 logger = logging.getLogger(__name__)
 

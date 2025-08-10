@@ -132,7 +132,7 @@ class Player(BaseEntity):
             self.item_preferences[item_type] += 2
         
         # Сохраняем опыт смерти
-        self.ai_memory.store_experience("death_analysis", {
+        self.ai_memory.record_event("death_analysis", {
             "damage_types": damage_types,
             "attacker_types": attacker_types,
             "level": self.level
@@ -166,7 +166,7 @@ class Player(BaseEntity):
                 self.weapon_mastery[weapon_type] += 0.05
         
         # Сохраняем опыт
-        self.ai_memory.store_experience("successful_kill", {
+        self.ai_memory.record_event("successful_kill", {
             "enemy_type": enemy_type,
             "weapon_used": getattr(equipped_weapon, 'item_type', 'unknown') if equipped_weapon else "none",
             "level": self.level

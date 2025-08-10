@@ -5,6 +5,25 @@ class DecisionMaker:
     def make_decisions(self, delta_time):
         # Базовый метод, переопределяется в подклассах
         pass
+    
+    def make_combat_decision(self, target, distance):
+        """Принимает решение в бою"""
+        if not target or not target.alive:
+            return "idle"
+        
+        # Простая логика принятия решений
+        if distance <= 50:  # Ближний бой
+            return "attack"
+        elif distance <= 150:  # Средняя дистанция
+            return "chase"
+        elif self.entity.health < self.entity.max_health * 0.3:  # Низкое здоровье
+            return "retreat"
+        else:
+            return "patrol"
+    
+    def update(self, delta_time):
+        """Обновляет принятие решений"""
+        self.make_decisions(delta_time)
 
 class PlayerDecisionMaker(DecisionMaker):
     def make_decisions(self, delta_time):

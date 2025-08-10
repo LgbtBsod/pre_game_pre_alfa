@@ -81,6 +81,25 @@ class AIMemory:
             if pattern[key] == situation[key]:
                 similarity += 1
         return similarity / len(common_keys)
+    
+    def get_recent_events(self, event_type, count=5):
+        """Получает последние события определенного типа"""
+        events = []
+        for event in reversed(list(self.memory)):
+            if event.get("type") == event_type:
+                events.append(event)
+                if len(events) >= count:
+                    break
+        return events
+    
+    def update(self, delta_time):
+        """Обновляет память"""
+        # Уменьшаем важность старых воспоминаний
+        self.decay_memories(0.01 * delta_time)
+    
+    def improve_capacity(self):
+        """Улучшает емкость памяти"""
+        self.memory = deque(list(self.memory), maxlen=min(20, len(self.memory) + 5))
 
 class LearningController:
     def __init__(self, entity):
