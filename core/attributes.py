@@ -1,178 +1,127 @@
-"""Компонент для управления атрибутами сущности."""
+"""
+Система атрибутов сущностей.
+Управляет базовыми характеристиками персонажей и их ростом.
+"""
 
-from typing import Dict, Any, Optional
-from dataclasses import dataclass, field
-from .component import Component
+from typing import Dict, Optional, Tuple
+from dataclasses import dataclass
 
 
 @dataclass
 class Attribute:
-    """Атрибут сущности."""
-    base_value: float
-    max_value: float = 100.0
-    growth_rate: float = 1.0
-    current_value: float = None
-    bonuses: Dict[str, float] = field(default_factory=dict)
-    multipliers: Dict[str, float] = field(default_factory=dict)
+    """Атрибут сущности с текущим значением, максимумом и скоростью роста"""
+    current: float
+    maximum: float
+    growth_rate: float
     
-    def __post_init__(self):
-        if self.current_value is None:
-            self.current_value = self.base_value
-    
-    @property
-    def total_value(self) -> float:
-        """Общее значение атрибута с учетом бонусов и множителей."""
-        total = self.current_value
-        
-        # Применяем аддитивные бонусы
-        for bonus in self.bonuses.values():
-            total += bonus
-        
-        # Применяем мультипликативные бонусы
-        for multiplier in self.multipliers.values():
-            total *= multiplier
-        
-        return max(0, min(total, self.max_value))
-    
-    def add_bonus(self, source: str, value: float) -> None:
-        """Добавить бонус к атрибуту."""
-        self.bonuses[source] = value
-    
-    def remove_bonus(self, source: str) -> None:
-        """Убрать бонус от источника."""
-        if source in self.bonuses:
-            del self.bonuses[source]
-    
-    def add_multiplier(self, source: str, value: float) -> None:
-        """Добавить множитель к атрибуту."""
-        self.multipliers[source] = value
-    
-    def remove_multiplier(self, source: str) -> None:
-        """Убрать множитель от источника."""
-        if source in self.multipliers:
-            del self.multipliers[source]
-    
-    def level_up(self) -> None:
-        """Повысить уровень атрибута."""
-        self.base_value += self.growth_rate
-        self.current_value = self.base_value
-
-
-class AttributesComponent(Component):
-    """Компонент для управления атрибутами."""
-    
-    def __init__(self, entity):
-        super().__init__(entity)
-        self.attributes: Dict[str, Attribute] = {}
-        self.attribute_points: int = 0
-        self._setup_default_attributes()
-    
-    def _setup_default_attributes(self) -> None:
-        """Настройка атрибутов по умолчанию."""
-        default_attrs = {
-            "strength": Attribute(10.0, 100.0, 1.0),
-            "dexterity": Attribute(10.0, 100.0, 1.0),
-            "intelligence": Attribute(10.0, 100.0, 1.0),
-            "vitality": Attribute(10.0, 100.0, 1.0),
-            "endurance": Attribute(10.0, 100.0, 1.0),
-            "faith": Attribute(10.0, 100.0, 1.0),
-            "luck": Attribute(10.0, 100.0, 1.0)
-        }
-        
-        for name, attr in default_attrs.items():
-            self.attributes[name] = attr
-    
-    def get_attribute(self, name: str) -> Optional[Attribute]:
-        """Получить атрибут по имени."""
-        return self.attributes.get(name)
-    
-    def get_attribute_value(self, name: str) -> float:
-        """Получить значение атрибута."""
-        attr = self.get_attribute(name)
-        return attr.total_value if attr else 0.0
-    
-    def has_attribute(self, name: str) -> bool:
-        """Проверить, есть ли атрибут."""
-        return name in self.attributes
-    
-    def set_attribute_base(self, name: str, value: float) -> None:
-        """Установить базовое значение атрибута."""
-        if name in self.attributes:
-            self.attributes[name].base_value = value
-            self.attributes[name].current_value = value
-    
-    def add_attribute_bonus(self, name: str, source: str, value: float) -> None:
-        """Добавить бонус к атрибуту."""
-        if name in self.attributes:
-            self.attributes[name].add_bonus(source, value)
-    
-    def remove_attribute_bonus(self, name: str, source: str) -> None:
-        """Убрать бонус от атрибута."""
-        if name in self.attributes:
-            self.attributes[name].remove_bonus(source)
-    
-    def add_attribute_multiplier(self, name: str, source: str, value: float) -> None:
-        """Добавить множитель к атрибуту."""
-        if name in self.attributes:
-            self.attributes[name].add_multiplier(source, value)
-    
-    def remove_attribute_multiplier(self, name: str, source: str) -> None:
-        """Убрать множитель от атрибута."""
-        if name in self.attributes:
-            self.attributes[name].remove_multiplier(source)
-    
-    def invest_attribute_point(self, name: str) -> bool:
-        """Инвестировать очко атрибута."""
-        if self.attribute_points > 0 and name in self.attributes:
-            self.attributes[name].level_up()
-            self.attribute_points -= 1
+    def increase(self, amount: float = 1.0) -> bool:
+        """Увеличивает атрибут"""
+        if self.current < self.maximum:
+            self.current = min(self.current + amount, self.maximum)
             return True
         return False
     
-    def gain_attribute_points(self, amount: int) -> None:
-        """Получить очки атрибутов."""
+    def set_base(self, value: float) -> None:
+        """Устанавливает базовое значение"""
+        self.current = max(0, min(value, self.maximum))
+    
+    def set_max(self, value: float) -> None:
+        """Устанавливает максимальное значение"""
+        self.maximum = max(0, value)
+        self.current = min(self.current, self.maximum)
+    
+    def get_percentage(self) -> float:
+        """Возвращает процент заполнения атрибута"""
+        return self.current / self.maximum if self.maximum > 0 else 0.0
+
+
+class AttributeManager:
+    """Менеджер атрибутов сущности"""
+    
+    def __init__(self):
+        self.attributes: Dict[str, Attribute] = {}
+        self.attribute_points = 0
+    
+    def initialize_default_attributes(self):
+        """Инициализирует стандартные атрибуты"""
+        default_attrs = {
+            "strength": Attribute(10, 100, 1.0),
+            "dexterity": Attribute(10, 100, 1.0),
+            "intelligence": Attribute(10, 100, 1.0),
+            "vitality": Attribute(10, 100, 1.0),
+            "endurance": Attribute(10, 100, 1.0),
+            "faith": Attribute(10, 100, 1.0),
+            "luck": Attribute(10, 100, 1.0),
+        }
+        self.attributes.update(default_attrs)
+    
+    def get_attribute(self, name: str) -> Optional[Attribute]:
+        """Получает атрибут по имени"""
+        return self.attributes.get(name)
+    
+    def get_attribute_value(self, name: str) -> float:
+        """Получает текущее значение атрибута"""
+        attr = self.get_attribute(name)
+        return attr.current if attr else 0.0
+    
+    def get_attribute_max(self, name: str) -> float:
+        """Получает максимальное значение атрибута"""
+        attr = self.get_attribute(name)
+        return attr.maximum if attr else 0.0
+    
+    def get_attribute_growth(self, name: str) -> float:
+        """Получает скорость роста атрибута"""
+        attr = self.get_attribute(name)
+        return attr.growth_rate if attr else 0.0
+    
+    def set_attribute_base(self, name: str, value: float) -> None:
+        """Устанавливает базовое значение атрибута"""
+        if name in self.attributes:
+            self.attributes[name].set_base(value)
+        else:
+            self.attributes[name] = Attribute(value, value, 1.0)
+    
+    def set_attribute_max(self, name: str, value: float) -> None:
+        """Устанавливает максимальное значение атрибута"""
+        if name in self.attributes:
+            self.attributes[name].set_max(value)
+        else:
+            self.attributes[name] = Attribute(0, value, 1.0)
+    
+    def increase_attribute(self, name: str, amount: float = 1.0) -> bool:
+        """Увеличивает атрибут"""
+        if name in self.attributes:
+            return self.attributes[name].increase(amount)
+        return False
+    
+    def has_attribute(self, name: str) -> bool:
+        """Проверяет наличие атрибута"""
+        return name in self.attributes
+    
+    def add_attribute_points(self, amount: int) -> None:
+        """Добавляет очки атрибутов"""
         self.attribute_points += amount
     
-    def _on_initialize(self) -> None:
-        """Инициализация компонента."""
-        pass
+    def spend_attribute_point(self, attribute_name: str) -> bool:
+        """Тратит очко атрибута на увеличение характеристики"""
+        if self.attribute_points > 0 and self.has_attribute(attribute_name):
+            if self.increase_attribute(attribute_name, 1.0):
+                self.attribute_points -= 1
+                return True
+        return False
     
-    def _on_update(self, delta_time: float) -> None:
-        """Обновление компонента."""
-        pass
+    def get_all_attributes(self) -> Dict[str, Attribute]:
+        """Возвращает все атрибуты"""
+        return self.attributes.copy()
     
-    def to_dict(self) -> Dict[str, Any]:
-        """Сериализация в словарь."""
-        data = super().to_dict()
-        data.update({
-            'attributes': {
-                name: {
-                    'base_value': attr.base_value,
-                    'max_value': attr.max_value,
-                    'growth_rate': attr.growth_rate,
-                    'current_value': attr.current_value,
-                    'bonuses': attr.bonuses.copy(),
-                    'multipliers': attr.multipliers.copy()
-                }
-                for name, attr in self.attributes.items()
-            },
-            'attribute_points': self.attribute_points
-        })
-        return data
-    
-    def from_dict(self, data: Dict[str, Any]) -> None:
-        """Десериализация из словаря."""
-        super().from_dict(data)
-        
-        if 'attributes' in data:
-            for name, attr_data in data['attributes'].items():
-                if name in self.attributes:
-                    attr = self.attributes[name]
-                    attr.base_value = attr_data.get('base_value', attr.base_value)
-                    attr.max_value = attr_data.get('max_value', attr.max_value)
-                    attr.growth_rate = attr_data.get('growth_rate', attr.growth_rate)
-                    attr.current_value = attr_data.get('current_value', attr.current_value)
-                    attr.bonuses = attr_data.get('bonuses', {}).copy()
-                    attr.multipliers = attr_data.get('multipliers', {}).copy()
-        
-        self.attribute_points = data.get('attribute_points', 0)
+    def get_attribute_summary(self) -> Dict[str, Dict[str, float]]:
+        """Возвращает сводку всех атрибутов"""
+        summary = {}
+        for name, attr in self.attributes.items():
+            summary[name] = {
+                "current": attr.current,
+                "maximum": attr.maximum,
+                "growth_rate": attr.growth_rate,
+                "percentage": attr.get_percentage()
+            }
+        return summary

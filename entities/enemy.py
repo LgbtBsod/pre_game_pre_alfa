@@ -1,185 +1,334 @@
-"""Класс врага, наследующий от BaseEnemy."""
+"""
+Враг - противник игрока с AI системами.
+"""
 
-import random
-from typing import List, Tuple, Optional, Dict, Any
-from .base_enemy import BaseEnemy
-from .effect import Effect
+from entities.base_entity import BaseEntity
 
 
-class Enemy(BaseEnemy):
-    """Класс обычного врага."""
+class Enemy(BaseEntity):
+    """Враг - противник игрока с AI"""
     
-    # Типы врагов для разнообразия
-    ENEMY_TYPES = [
-        "warrior",      # Ближний бой, высокая защита
-        "archer",       # Дальний бой, высокая точность
-        "mage",         # Магический урон, контроль
-        "assassin",     # Скорость, критический урон
-        "berserker",    # Высокий урон, низкая защита
-        "shaman",       # Поддержка, баффы/дебаффы
-        "tank",         # Высокая защита, угроза
-        "summoner"      # Призыв существ
-    ]
+    def __init__(self, enemy_type: str, level: int = 1, position: tuple = (0, 0)):
+        super().__init__(f"enemy_{enemy_type}", position)
+        
+        # Специфичные для врага параметры
+        self.enemy_type = enemy_type
+        self.level = level
+        self.experience_reward = 10 * level
+        self.ai_behavior = "aggressive"
+        self.loot_table = []
+        self.skills = []
+        
+        # Настройки врага
+        self.aggro_range = 100.0
+        self.attack_range = 50.0
+        self.patrol_radius = 200.0
+        self.return_to_spawn = True
+        self.spawn_position = list(position)
+        
+        # Состояние ИИ
+        self.target = None
+        self.state = "idle"  # idle, patrol, chase, attack, return
+        self.last_attack_time = 0.0
+        
+        # AI специфичные настройки
+        self.learning_rate = 0.15  # Враги учатся быстрее
+        self.aggression_level = 0.7
+        self.cowardice_threshold = 0.3
+        self.retreat_health_threshold = 0.2
+        
+        # Обновляем характеристики для врага
+        self.scale_for_level(level)
+        self.update_derived_stats()
+        
+        # Инициализируем AI поведение
+        self.initialize_ai_behavior()
     
-    def __init__(self, enemy_type: str = None, level: int = 1, position: Tuple[float, float] = (0, 0)):
-        # Определяем тип врага
-        if not enemy_type:
-            enemy_type = random.choice(self.ENEMY_TYPES)
-        
-        # Создаем ID для врага
-        entity_id = f"{enemy_type}_{random.randint(1000,9999)}"
-        
-        # Вызываем конструктор базового класса
-        super().__init__(entity_id, enemy_type, level, position)
-        
-        # Устанавливаем приоритет для ИИ
-        self.priority = {
-            "warrior": 4,
-            "archer": 4,
-            "mage": 4,
-            "assassin": 3,
-            "berserker": 3,
-            "shaman": 3,
-            "tank": 3,
-            "summoner": 3
-        }.get(enemy_type, 4)
-        
-        # Скорость обучения для обычных врагов
-        self.learning_rate = 0.05
-    
-    def _init_attributes(self):
-        """Инициализация атрибутов на основе типа и уровня"""
-        # Базовые характеристики для всех врагов
-        base_stats = {
-            "strength": 8,
-            "dexterity": 8,
-            "intelligence": 8,
-            "vitality": 8,
-            "endurance": 8,
-            "faith": 8
-        }
-        
-        # Модификаторы по типам врагов
-        type_modifiers = {
+    def initialize_ai_behavior(self):
+        """Инициализирует AI поведение на основе типа врага"""
+        behavior_configs = {
             "warrior": {
-                "strength": 1.3,
-                "vitality": 1.2,
-                "endurance": 1.1
+                "aggression_level": 0.8,
+                "preferred_range": "melee",
+                "tactics": ["charge", "defensive_stance"],
+                "weapon_preferences": ["sword", "axe", "mace"]
             },
             "archer": {
-                "dexterity": 1.4,
-                "endurance": 1.2,
-                "strength": 0.9
+                "aggression_level": 0.6,
+                "preferred_range": "ranged",
+                "tactics": ["kite", "cover_fire"],
+                "weapon_preferences": ["bow", "crossbow"]
             },
             "mage": {
-                "intelligence": 1.5,
-                "faith": 1.2,
-                "vitality": 0.8
+                "aggression_level": 0.5,
+                "preferred_range": "ranged",
+                "tactics": ["spell_spam", "debuff"],
+                "weapon_preferences": ["staff", "wand"]
             },
             "assassin": {
-                "dexterity": 1.6,
-                "strength": 1.1,
-                "endurance": 1.3
+                "aggression_level": 0.9,
+                "preferred_range": "melee",
+                "tactics": ["stealth", "backstab"],
+                "weapon_preferences": ["dagger", "short_sword"]
             },
             "berserker": {
-                "strength": 1.8,
-                "vitality": 1.1,
-                "endurance": 1.2
-            },
-            "shaman": {
-                "intelligence": 1.3,
-                "faith": 1.4,
-                "vitality": 1.0
-            },
-            "tank": {
-                "vitality": 1.6,
-                "endurance": 1.4,
-                "strength": 1.1
-            },
-            "summoner": {
-                "intelligence": 1.4,
-                "faith": 1.3,
-                "endurance": 1.1
+                "aggression_level": 1.0,
+                "preferred_range": "melee",
+                "tactics": ["rage", "reckless_attack"],
+                "weapon_preferences": ["great_sword", "battle_axe"]
             }
         }
         
-        # Применяем модификаторы типа
-        modifiers = type_modifiers.get(self.enemy_type, {})
-        for attr, value in base_stats.items():
-            modifier = modifiers.get(attr, 1.0)
-            final_value = int(value * modifier * (1 + (self.level - 1) * 0.1))
-            self.set_attribute_base(attr, final_value)
+        config = behavior_configs.get(self.enemy_type, behavior_configs["warrior"])
+        self.aggression_level = config["aggression_level"]
+        self.preferred_range = config["preferred_range"]
+        self.available_tactics = config["tactics"]
+        self.weapon_preferences = config["weapon_preferences"]
     
-    def _load_genetic_profile(self):
-        """Загрузка генетического профиля"""
-        if not self.genetic_profiles:
+    def scale_for_level(self, level: int):
+        """Масштабирует характеристики под уровень"""
+        # Базовые множители для уровня
+        health_multiplier = 1.0 + (level - 1) * 0.5
+        damage_multiplier = 1.0 + (level - 1) * 0.3
+        defense_multiplier = 1.0 + (level - 1) * 0.2
+        
+        # Обновляем характеристики
+        stats = self.combat_stats_manager.get_stats()
+        stats.max_health *= health_multiplier
+        stats.health = stats.max_health
+        stats.damage_output *= damage_multiplier
+        stats.defense *= defense_multiplier
+        
+        # Обновляем атрибуты
+        for attr_name in ["strength", "dexterity", "intelligence", "vitality", "endurance"]:
+            current_value = self.attribute_manager.get_attribute_value(attr_name)
+            self.attribute_manager.set_attribute_base(attr_name, current_value * (1.0 + (level - 1) * 0.1))
+    
+    def update(self, delta_time: float):
+        """Обновляет врага"""
+        super().update(delta_time)
+        
+        # Обновляем ИИ
+        self.update_ai(delta_time)
+    
+    def update_ai(self, delta_time: float):
+        """Обновляет ИИ врага с учетом обучения"""
+        if not self.alive:
             return
         
-        # Поиск профиля по типу врага
-        profile = self.genetic_profiles.get(self.enemy_type, {})
-        if not profile:
-            return
+        # Ищем цель
+        if not self.target or not self.target.alive:
+            self.find_target()
         
-        # Применение генетических модификаторов
-        for attr, modifier in profile.get("attribute_modifiers", {}).items():
-            if self.has_attribute(attr):
-                current_value = self.get_attribute_value(attr)  # Используем новый метод
-                new_value = int(current_value * modifier)
-                self.set_attribute_base(attr, new_value)
+        if self.target:
+            distance = self.distance_to(self.target)
+            
+            # Принимаем решение на основе обучения
+            decision = self.decision_maker.make_combat_decision(self.target, distance)
+            
+            if decision == "attack":
+                self.state = "attack"
+                if self.can_attack():
+                    self.attack(self.target)
+            elif decision == "chase":
+                self.state = "chase"
+                self.move_towards(self.target.position, self.movement_speed, delta_time)
+            elif decision == "retreat":
+                self.state = "return"
+                self.return_to_spawn_point(delta_time)
+            elif decision == "use_item":
+                self.use_item_intelligently()
+        else:
+            # Нет цели - патрулируем или возвращаемся
+            if self.state == "return":
+                self.return_to_spawn_point(delta_time)
+            else:
+                self.patrol(delta_time)
     
-    def _load_abilities(self):
-        """Загрузка способностей"""
-        if not self.abilities_db:
-            return
+    def find_target(self):
+        """Ищет цель для атаки с учетом обучения"""
+        # Здесь должна быть логика поиска игрока или других целей
+        # Пока просто заглушка - в реальной игре здесь будет поиск ближайшего игрока
+        pass
+    
+    def return_to_spawn_point(self, delta_time: float):
+        """Возвращается к точке спавна"""
+        distance_to_spawn = ((self.position[0] - self.spawn_position[0]) ** 2 + 
+                           (self.position[1] - self.spawn_position[1]) ** 2) ** 0.5
         
-        # Поиск способностей по типу врага
-        abilities = self.abilities_db.get(self.enemy_type, [])
-        for ability_id in abilities:
-            # Здесь можно добавить логику загрузки способностей
-            pass
+        if distance_to_spawn > 10:
+            self.move_towards(self.spawn_position, self.movement_speed, delta_time)
+        else:
+            self.state = "patrol"
     
-    def _apply_initial_effects(self):
-        """Применение начальных эффектов"""
-        if not self.effects_db:
-            return
+    def patrol(self, delta_time: float):
+        """Патрулирует территорию"""
+        # Простое патрулирование - случайное движение
+        import random
+        import math
         
-        # Поиск эффектов по типу врага
-        effects = self.effects_db.get(self.enemy_type, [])
-        for effect_data in effects:
-            effect = Effect.from_dict(effect_data)
-            if effect:
-                self.add_effect(effect)
-    
-    def _use_abilities(self, delta_time: float):
-        """Использование способностей"""
-        # Простая логика использования способностей
-        if hasattr(self, 'ai_controller') and self.ai_controller:
-            # ИИ контроллер решает, какую способность использовать
-            pass
-    
-    def _generate_loot(self):
-        """Генерация лута при смерти"""
-        # Простая генерация лута
-        loot_chance = 0.3  # 30% шанс выпадения лута
+        if random.random() < 0.01:  # 1% шанс сменить направление
+            angle = random.uniform(0, 2 * math.pi)
+            self.patrol_direction = [math.cos(angle), math.sin(angle)]
         
-        if random.random() < loot_chance:
-            # Здесь можно добавить логику генерации конкретных предметов
-            pass
-
-
-class EnemyGenerator:
-    """Генератор врагов."""
+        if hasattr(self, 'patrol_direction'):
+            target_x = self.spawn_position[0] + self.patrol_direction[0] * self.patrol_radius
+            target_y = self.spawn_position[1] + self.patrol_direction[1] * self.patrol_radius
+            self.move_towards((target_x, target_y), self.movement_speed * 0.5, delta_time)
     
-    @staticmethod
-    def generate_enemy(level: int, position: Tuple[float, float] = None):
-        """Генерация обычного врага"""
-        if position is None:
-            position = (random.randint(0, 100), random.randint(0, 100))
+    def attack(self, target):
+        """Атакует цель с учетом обучения и тактик"""
+        if not self.can_attack() or not target.alive:
+            return None
         
-        return Enemy(level=level, position=position)
+        # Выбираем тактику атаки
+        tactic = self.select_attack_tactic(target)
+        
+        # Выбираем лучшее оружие
+        best_weapon = self.select_best_weapon_for_target(target)
+        
+        # Вычисляем урон с учетом тактики
+        base_damage = self.combat_stats_manager.get_stats().damage_output
+        damage_bonus = self.get_learned_damage_bonus(target)
+        tactic_bonus = self.get_tactic_damage_bonus(tactic)
+        
+        total_damage = base_damage + damage_bonus + tactic_bonus
+        
+        # Проверяем критический удар
+        import random
+        critical_chance = self.combat_stats_manager.get_stats().critical_chance
+        critical_multiplier = self.combat_stats_manager.get_stats().critical_multiplier
+        
+        is_critical = random.random() < critical_chance
+        damage_multiplier = critical_multiplier if is_critical else 1.0
+        
+        final_damage = total_damage * damage_multiplier
+        
+        # Создаем отчет об уроне
+        damage_report = {
+            "damage": final_damage,
+            "damage_type": "physical",
+            "is_critical": is_critical,
+            "attacker": self,
+            "attacker_type": self.__class__.__name__,
+            "weapon_type": best_weapon.get("type", "unknown") if best_weapon else "unknown",
+            "learned_bonus": damage_bonus,
+            "tactic": tactic,
+            "tactic_bonus": tactic_bonus
+        }
+        
+        # Наносим урон цели
+        target.take_damage(damage_report)
+        
+        # Начинаем кулдаун атаки
+        self.start_attack_cooldown()
+        
+        # Учимся на атаке
+        self.learn_from_attack(damage_report, target)
+        
+        return damage_report
     
-    @staticmethod
-    def generate_boss(level: int, position: Tuple[float, float] = None):
-        """Генерация босса (перенаправляет на BossGenerator)"""
-        from .boss import BossGenerator
-        return BossGenerator.generate_boss(level, position)
+    def select_attack_tactic(self, target) -> str:
+        """Выбирает тактику атаки на основе ситуации"""
+        health_percentage = self.get_health_percentage()
+        target_health_percentage = target.get_health_percentage()
+        
+        # Агрессивные тактики при низком здоровье врага
+        if target_health_percentage < 0.3:
+            if "reckless_attack" in self.available_tactics:
+                return "reckless_attack"
+        
+        # Защитные тактики при низком здоровье
+        if health_percentage < self.retreat_health_threshold:
+            if "defensive_stance" in self.available_tactics:
+                return "defensive_stance"
+        
+        # Обычные тактики
+        if "charge" in self.available_tactics:
+            return "charge"
+        
+        return "normal_attack"
+    
+    def get_tactic_damage_bonus(self, tactic: str) -> float:
+        """Получает бонус к урону от тактики"""
+        tactic_bonuses = {
+            "reckless_attack": 10.0,
+            "charge": 5.0,
+            "backstab": 15.0,
+            "normal_attack": 0.0,
+            "defensive_stance": -2.0
+        }
+        return tactic_bonuses.get(tactic, 0.0)
+    
+    def die(self):
+        """Смерть врага"""
+        super().die()
+        
+        # Дроп предметов
+        self.drop_loot()
+        
+        # Даем опыт игроку
+        if self.target and hasattr(self.target, 'kill_enemy'):
+            self.target.kill_enemy(self)
+    
+    def drop_loot(self):
+        """Дроп предметов на основе обучения"""
+        # Здесь должна быть логика дропа предметов из loot_table
+        # с учетом предпочтений игрока (если враг учился)
+        pass
+    
+    def set_ai_behavior(self, behavior: str):
+        """Устанавливает поведение ИИ"""
+        valid_behaviors = ["aggressive", "defensive", "coward", "berserker"]
+        if behavior in valid_behaviors:
+            self.ai_behavior = behavior
+    
+    def set_loot_table(self, loot_items: list):
+        """Устанавливает таблицу добычи"""
+        self.loot_table = loot_items
+    
+    def add_skill(self, skill_id: str):
+        """Добавляет умение"""
+        if skill_id not in self.skills:
+            self.skills.append(skill_id)
+    
+    def can_use_skill(self, skill_id: str) -> bool:
+        """Проверяет, может ли использовать умение"""
+        return skill_id in self.skills and skill_id not in self.skill_cooldowns
+    
+    def use_skill(self, skill_id: str, target=None):
+        """Использует умение"""
+        if not self.can_use_skill(skill_id):
+            return False
+        
+        # Здесь должна быть логика использования умений
+        # Пока просто устанавливаем кулдаун
+        self.skill_cooldowns[skill_id] = 5.0  # 5 секунд кулдаун
+        
+        # Учимся использованию умения
+        self.ai_memory.store_experience("skill_used", {
+            "skill_id": skill_id,
+            "target": target,
+            "effectiveness": 1.0
+        })
+        
+        return True
+    
+    def learn_from_combat(self, combat_data: dict):
+        """Учится на основе боевого опыта"""
+        # Анализируем эффективность тактик
+        tactic_used = combat_data.get("tactic", "normal_attack")
+        damage_dealt = combat_data.get("damage", 0)
+        target_type = combat_data.get("target_type", "unknown")
+        
+        # Обновляем предпочтения тактик
+        if tactic_used not in self.item_preferences:
+            self.item_preferences[tactic_used] = 0
+        
+        if damage_dealt > 15:
+            self.item_preferences[tactic_used] += 1
+        else:
+            self.item_preferences[tactic_used] = max(0, self.item_preferences[tactic_used] - 1)
+        
+        # Сохраняем опыт
+        self.ai_memory.store_experience("combat_experience", combat_data)

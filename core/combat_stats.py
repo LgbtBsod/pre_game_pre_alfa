@@ -1,13 +1,15 @@
-"""Компонент для управления боевыми характеристиками."""
+"""
+Система боевых характеристик.
+Управляет здоровьем, маной, выносливостью и другими боевыми параметрами.
+"""
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from dataclasses import dataclass
-from .component import Component
 
 
 @dataclass
 class CombatStats:
-    """Боевые характеристики сущности."""
+    """Боевые характеристики сущности"""
     health: float = 100.0
     max_health: float = 100.0
     mana: float = 50.0
@@ -22,194 +24,165 @@ class CombatStats:
     critical_multiplier: float = 1.5
     all_resist: float = 0.0
     physical_resist: float = 0.0
-    fire_resist: float = 0.0
-    ice_resist: float = 0.0
-    lightning_resist: float = 0.0
-    poison_resist: float = 0.0
-    magic_resist: float = 0.0
-    holy_resist: float = 0.0
-    dark_resist: float = 0.0
-
-
-class CombatStatsComponent(Component):
-    """Компонент для управления боевыми характеристиками."""
-    
-    def __init__(self, entity):
-        super().__init__(entity)
-        self.stats = CombatStats()
-        self.attack_cooldown = 0.0
-        self.last_attacker = None
-        self.is_boss = False
-    
-    def take_damage(self, damage: float, damage_type: str = "physical") -> float:
-        """Получить урон с учетом сопротивлений."""
-        # Применяем сопротивление к типу урона
-        resistance = self._get_resistance(damage_type)
-        actual_damage = damage * (1.0 - resistance)
-        
-        # Применяем общую защиту
-        actual_damage = max(0, actual_damage - self.stats.defense)
-        
-        # Уменьшаем здоровье
-        self.stats.health = max(0, self.stats.health - actual_damage)
-        
-        return actual_damage
     
     def heal(self, amount: float) -> float:
-        """Восстановить здоровье."""
-        old_health = self.stats.health
-        self.stats.health = min(self.stats.max_health, self.stats.health + amount)
-        return self.stats.health - old_health
+        """Восстанавливает здоровье"""
+        old_health = self.health
+        self.health = min(self.health + amount, self.max_health)
+        return self.health - old_health
+    
+    def take_damage(self, damage: float) -> float:
+        """Получает урон"""
+        old_health = self.health
+        self.health = max(0, self.health - damage)
+        return old_health - self.health
     
     def restore_mana(self, amount: float) -> float:
-        """Восстановить ману."""
-        old_mana = self.stats.mana
-        self.stats.mana = min(self.stats.max_mana, self.stats.mana + amount)
-        return self.stats.mana - old_mana
+        """Восстанавливает ману"""
+        old_mana = self.mana
+        self.mana = min(self.mana + amount, self.max_mana)
+        return self.mana - old_mana
+    
+    def spend_mana(self, amount: float) -> bool:
+        """Тратит ману"""
+        if self.mana >= amount:
+            self.mana -= amount
+            return True
+        return False
     
     def restore_stamina(self, amount: float) -> float:
-        """Восстановить выносливость."""
-        old_stamina = self.stats.stamina
-        self.stats.stamina = min(self.stats.max_stamina, self.stats.stamina + amount)
-        return self.stats.stamina - old_stamina
+        """Восстанавливает выносливость"""
+        old_stamina = self.stamina
+        self.stamina = min(self.stamina + amount, self.max_stamina)
+        return self.stamina - old_stamina
     
-    def consume_mana(self, amount: float) -> bool:
-        """Потратить ману."""
-        if self.stats.mana >= amount:
-            self.stats.mana -= amount
+    def spend_stamina(self, amount: float) -> bool:
+        """Тратит выносливость"""
+        if self.stamina >= amount:
+            self.stamina -= amount
             return True
         return False
-    
-    def consume_stamina(self, amount: float) -> bool:
-        """Потратить выносливость."""
-        if self.stats.stamina >= amount:
-            self.stats.stamina -= amount
-            return True
-        return False
-    
-    def can_attack(self) -> bool:
-        """Может ли сущность атаковать."""
-        return self.attack_cooldown <= 0.0
-    
-    def start_attack_cooldown(self) -> None:
-        """Начать кулдаун атаки."""
-        self.attack_cooldown = 1.0 / self.stats.attack_speed
-    
-    def update_attack_cooldown(self, delta_time: float) -> None:
-        """Обновить кулдаун атаки."""
-        if self.attack_cooldown > 0:
-            self.attack_cooldown = max(0, self.attack_cooldown - delta_time)
     
     def is_alive(self) -> bool:
-        """Жива ли сущность."""
-        return self.stats.health > 0
+        """Проверяет, жив ли персонаж"""
+        return self.health > 0
     
     def is_dead(self) -> bool:
-        """Мертва ли сущность."""
-        return self.stats.health <= 0
+        """Проверяет, мертв ли персонаж"""
+        return self.health <= 0
     
     def get_health_percentage(self) -> float:
-        """Получить процент здоровья."""
-        if self.stats.max_health <= 0:
-            return 0.0
-        return self.stats.health / self.stats.max_health
+        """Возвращает процент здоровья"""
+        return self.health / self.max_health if self.max_health > 0 else 0.0
     
     def get_mana_percentage(self) -> float:
-        """Получить процент маны."""
-        if self.stats.max_mana <= 0:
-            return 0.0
-        return self.stats.mana / self.stats.max_mana
+        """Возвращает процент маны"""
+        return self.mana / self.max_mana if self.max_mana > 0 else 0.0
     
     def get_stamina_percentage(self) -> float:
-        """Получить процент выносливости."""
-        if self.stats.max_stamina <= 0:
-            return 0.0
-        return self.stats.stamina / self.stats.max_stamina
+        """Возвращает процент выносливости"""
+        return self.stamina / self.max_stamina if self.max_stamina > 0 else 0.0
     
-    def _get_resistance(self, damage_type: str) -> float:
-        """Получить сопротивление к типу урона."""
-        resistance_map = {
-            "physical": self.stats.physical_resist,
-            "fire": self.stats.fire_resist,
-            "ice": self.stats.ice_resist,
-            "lightning": self.stats.lightning_resist,
-            "poison": self.stats.poison_resist,
-            "magic": self.stats.magic_resist,
-            "holy": self.stats.holy_resist,
-            "dark": self.stats.dark_resist
+    def calculate_damage_reduction(self, damage_type: str = "physical") -> float:
+        """Вычисляет снижение урона"""
+        reduction = 0.0
+        
+        if damage_type == "physical":
+            reduction += self.physical_resist
+        
+        reduction += self.all_resist
+        
+        return min(reduction, 0.95)  # Максимум 95% снижения
+    
+    def calculate_final_damage(self, incoming_damage: float, damage_type: str = "physical") -> float:
+        """Вычисляет финальный урон с учетом защиты"""
+        damage_reduction = self.calculate_damage_reduction(damage_type)
+        return incoming_damage * (1.0 - damage_reduction)
+
+
+class CombatStatsManager:
+    """Менеджер боевых характеристик"""
+    
+    def __init__(self):
+        self.stats = CombatStats()
+    
+    def get_stats(self) -> CombatStats:
+        """Получает боевые характеристики"""
+        return self.stats
+    
+    def update_stats(self, new_stats: Dict[str, float]) -> None:
+        """Обновляет боевые характеристики"""
+        for key, value in new_stats.items():
+            if hasattr(self.stats, key):
+                setattr(self.stats, key, value)
+    
+    def heal(self, amount: float) -> float:
+        """Восстанавливает здоровье"""
+        return self.stats.heal(amount)
+    
+    def take_damage(self, damage: float) -> float:
+        """Получает урон"""
+        return self.stats.take_damage(damage)
+    
+    def restore_mana(self, amount: float) -> float:
+        """Восстанавливает ману"""
+        return self.stats.restore_mana(amount)
+    
+    def spend_mana(self, amount: float) -> bool:
+        """Тратит ману"""
+        return self.stats.spend_mana(amount)
+    
+    def restore_stamina(self, amount: float) -> float:
+        """Восстанавливает выносливость"""
+        return self.stats.restore_stamina(amount)
+    
+    def spend_stamina(self, amount: float) -> bool:
+        """Тратит выносливость"""
+        return self.stats.spend_stamina(amount)
+    
+    def is_alive(self) -> bool:
+        """Проверяет, жив ли персонаж"""
+        return self.stats.is_alive()
+    
+    def is_dead(self) -> bool:
+        """Проверяет, мертв ли персонаж"""
+        return self.stats.is_dead()
+    
+    def get_health_percentage(self) -> float:
+        """Возвращает процент здоровья"""
+        return self.stats.get_health_percentage()
+    
+    def get_mana_percentage(self) -> float:
+        """Возвращает процент маны"""
+        return self.stats.get_mana_percentage()
+    
+    def get_stamina_percentage(self) -> float:
+        """Возвращает процент выносливости"""
+        return self.stats.get_stamina_percentage()
+    
+    def calculate_damage_reduction(self, damage_type: str = "physical") -> float:
+        """Вычисляет снижение урона"""
+        return self.stats.calculate_damage_reduction(damage_type)
+    
+    def calculate_final_damage(self, incoming_damage: float, damage_type: str = "physical") -> float:
+        """Вычисляет финальный урон с учетом защиты"""
+        return self.stats.calculate_final_damage(incoming_damage, damage_type)
+    
+    def get_stats_dict(self) -> Dict[str, float]:
+        """Возвращает характеристики в виде словаря"""
+        return {
+            "health": self.stats.health,
+            "max_health": self.stats.max_health,
+            "mana": self.stats.mana,
+            "max_mana": self.stats.max_mana,
+            "stamina": self.stats.stamina,
+            "max_stamina": self.stats.max_stamina,
+            "damage_output": self.stats.damage_output,
+            "defense": self.stats.defense,
+            "movement_speed": self.stats.movement_speed,
+            "attack_speed": self.stats.attack_speed,
+            "critical_chance": self.stats.critical_chance,
+            "critical_multiplier": self.stats.critical_multiplier,
+            "all_resist": self.stats.all_resist,
+            "physical_resist": self.stats.physical_resist
         }
-        
-        # Возвращаем сопротивление к конкретному типу + общее сопротивление
-        specific_resist = resistance_map.get(damage_type, 0.0)
-        return min(0.95, specific_resist + self.stats.all_resist)
-    
-    def _on_initialize(self) -> None:
-        """Инициализация компонента."""
-        pass
-    
-    def _on_update(self, delta_time: float) -> None:
-        """Обновление компонента."""
-        self.update_attack_cooldown(delta_time)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Сериализация в словарь."""
-        data = super().to_dict()
-        data.update({
-            'stats': {
-                'health': self.stats.health,
-                'max_health': self.stats.max_health,
-                'mana': self.stats.mana,
-                'max_mana': self.stats.max_mana,
-                'stamina': self.stats.stamina,
-                'max_stamina': self.stats.max_stamina,
-                'damage_output': self.stats.damage_output,
-                'defense': self.stats.defense,
-                'movement_speed': self.stats.movement_speed,
-                'attack_speed': self.stats.attack_speed,
-                'critical_chance': self.stats.critical_chance,
-                'critical_multiplier': self.stats.critical_multiplier,
-                'all_resist': self.stats.all_resist,
-                'physical_resist': self.stats.physical_resist,
-                'fire_resist': self.stats.fire_resist,
-                'ice_resist': self.stats.ice_resist,
-                'lightning_resist': self.stats.lightning_resist,
-                'poison_resist': self.stats.poison_resist,
-                'magic_resist': self.stats.magic_resist,
-                'holy_resist': self.stats.holy_resist,
-                'dark_resist': self.stats.dark_resist
-            },
-            'attack_cooldown': self.attack_cooldown,
-            'is_boss': self.is_boss
-        })
-        return data
-    
-    def from_dict(self, data: Dict[str, Any]) -> None:
-        """Десериализация из словаря."""
-        super().from_dict(data)
-        
-        if 'stats' in data:
-            stats_data = data['stats']
-            self.stats.health = stats_data.get('health', 100.0)
-            self.stats.max_health = stats_data.get('max_health', 100.0)
-            self.stats.mana = stats_data.get('mana', 50.0)
-            self.stats.max_mana = stats_data.get('max_mana', 50.0)
-            self.stats.stamina = stats_data.get('stamina', 100.0)
-            self.stats.max_stamina = stats_data.get('max_stamina', 100.0)
-            self.stats.damage_output = stats_data.get('damage_output', 10.0)
-            self.stats.defense = stats_data.get('defense', 5.0)
-            self.stats.movement_speed = stats_data.get('movement_speed', 100.0)
-            self.stats.attack_speed = stats_data.get('attack_speed', 1.0)
-            self.stats.critical_chance = stats_data.get('critical_chance', 0.05)
-            self.stats.critical_multiplier = stats_data.get('critical_multiplier', 1.5)
-            self.stats.all_resist = stats_data.get('all_resist', 0.0)
-            self.stats.physical_resist = stats_data.get('physical_resist', 0.0)
-            self.stats.fire_resist = stats_data.get('fire_resist', 0.0)
-            self.stats.ice_resist = stats_data.get('ice_resist', 0.0)
-            self.stats.lightning_resist = stats_data.get('lightning_resist', 0.0)
-            self.stats.poison_resist = stats_data.get('poison_resist', 0.0)
-            self.stats.magic_resist = stats_data.get('magic_resist', 0.0)
-            self.stats.holy_resist = stats_data.get('holy_resist', 0.0)
-            self.stats.dark_resist = stats_data.get('dark_resist', 0.0)
-        
-        self.attack_cooldown = data.get('attack_cooldown', 0.0)
-        self.is_boss = data.get('is_boss', False)

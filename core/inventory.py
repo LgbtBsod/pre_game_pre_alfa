@@ -1,242 +1,249 @@
-"""Компонент для управления инвентарем и экипировкой."""
+"""
+Система инвентаря и экипировки.
+Управляет предметами, экипировкой и их эффектами.
+"""
 
-from typing import Dict, Any, Optional, List, Tuple
-from .component import Component
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass
 
 
-class InventoryComponent(Component):
-    """Компонент для управления инвентарем."""
+@dataclass
+class EquipmentSlot:
+    """Слот экипировки"""
+    name: str
+    item: Optional[Any] = None
+    item_type: str = ""
     
-    def __init__(self, entity):
-        super().__init__(entity)
-        self.inventory: List[Dict[str, Any]] = []
-        self.max_inventory_size = 20
-        self.equipment = {
-            "weapon": None,
-            "shield": None,
-            "armor": None,
-            "helmet": None,
-            "gloves": None,
-            "boots": None,
-            "accessory1": None,
-            "accessory2": None
+    def is_empty(self) -> bool:
+        """Проверяет, пуст ли слот"""
+        return self.item is None
+    
+    def equip_item(self, item: Any) -> Optional[Any]:
+        """Экипирует предмет, возвращает предыдущий предмет"""
+        previous_item = self.item
+        self.item = item
+        self.item_type = item.item_type if hasattr(item, 'item_type') else ""
+        return previous_item
+    
+    def unequip_item(self) -> Optional[Any]:
+        """Снимает предмет из слота"""
+        item = self.item
+        self.item = None
+        self.item_type = ""
+        return item
+
+
+class Inventory:
+    """Инвентарь сущности"""
+    
+    def __init__(self, max_size: int = 20):
+        self.items: List[Any] = []
+        self.max_size = max_size
+        self.weight_limit = 100.0
+        self.current_weight = 0.0
+    
+    def add_item(self, item: Any) -> bool:
+        """Добавляет предмет в инвентарь"""
+        if len(self.items) >= self.max_size:
+            return False
+        
+        item_weight = getattr(item, 'weight', 0.0)
+        if self.current_weight + item_weight > self.weight_limit:
+            return False
+        
+        self.items.append(item)
+        self.current_weight += item_weight
+        return True
+    
+    def remove_item(self, item: Any) -> bool:
+        """Удаляет предмет из инвентаря"""
+        if item in self.items:
+            self.items.remove(item)
+            item_weight = getattr(item, 'weight', 0.0)
+            self.current_weight -= item_weight
+            return True
+        return False
+    
+    def get_item_by_id(self, item_id: str) -> Optional[Any]:
+        """Получает предмет по ID"""
+        for item in self.items:
+            if hasattr(item, 'item_id') and item.item_id == item_id:
+                return item
+        return None
+    
+    def get_items_by_type(self, item_type: str) -> List[Any]:
+        """Получает предметы по типу"""
+        return [item for item in self.items if hasattr(item, 'item_type') and item.item_type == item_type]
+    
+    def get_consumables(self) -> List[Any]:
+        """Получает расходники"""
+        return self.get_items_by_type("consumable")
+    
+    def get_weapons(self) -> List[Any]:
+        """Получает оружие"""
+        return self.get_items_by_type("weapon")
+    
+    def get_armor(self) -> List[Any]:
+        """Получает броню"""
+        return self.get_items_by_type("armor")
+    
+    def is_full(self) -> bool:
+        """Проверяет, полон ли инвентарь"""
+        return len(self.items) >= self.max_size
+    
+    def get_free_space(self) -> int:
+        """Возвращает количество свободных слотов"""
+        return self.max_size - len(self.items)
+    
+    def get_weight_percentage(self) -> float:
+        """Возвращает процент заполнения по весу"""
+        return self.current_weight / self.weight_limit if self.weight_limit > 0 else 0.0
+    
+    def is_overweight(self) -> bool:
+        """Проверяет, перегружен ли инвентарь"""
+        return self.current_weight > self.weight_limit
+
+
+class Equipment:
+    """Экипировка сущности"""
+    
+    def __init__(self):
+        self.slots: Dict[str, EquipmentSlot] = {
+            "weapon": EquipmentSlot("weapon"),
+            "shield": EquipmentSlot("shield"),
+            "armor": EquipmentSlot("armor"),
+            "helmet": EquipmentSlot("helmet"),
+            "gloves": EquipmentSlot("gloves"),
+            "boots": EquipmentSlot("boots"),
+            "accessory1": EquipmentSlot("accessory1"),
+            "accessory2": EquipmentSlot("accessory2")
         }
     
-    def add_item(self, item: Dict[str, Any]) -> bool:
-        """Добавить предмет в инвентарь."""
-        if len(self.inventory) >= self.max_inventory_size:
-            return False
-        
-        self.inventory.append(item)
-        return True
-    
-    def remove_item(self, item: Dict[str, Any]) -> bool:
-        """Убрать предмет из инвентаря."""
-        if item in self.inventory:
-            self.inventory.remove(item)
-            return True
-        return False
-    
-    def remove_item_by_index(self, index: int) -> Optional[Dict[str, Any]]:
-        """Убрать предмет по индексу."""
-        if 0 <= index < len(self.inventory):
-            return self.inventory.pop(index)
+    def equip_item(self, item: Any, slot_name: str) -> Optional[Any]:
+        """Экипирует предмет в указанный слот"""
+        if slot_name in self.slots:
+            return self.slots[slot_name].equip_item(item)
         return None
     
-    def get_item_by_index(self, index: int) -> Optional[Dict[str, Any]]:
-        """Получить предмет по индексу."""
-        if 0 <= index < len(self.inventory):
-            return self.inventory[index]
+    def unequip_item(self, slot_name: str) -> Optional[Any]:
+        """Снимает предмет из указанного слота"""
+        if slot_name in self.slots:
+            return self.slots[slot_name].unequip_item()
         return None
     
-    def has_item(self, item_id: str) -> bool:
-        """Проверить наличие предмета по ID."""
-        return any(item.get('id') == item_id for item in self.inventory)
+    def get_equipped_item(self, slot_name: str) -> Optional[Any]:
+        """Получает экипированный предмет из слота"""
+        if slot_name in self.slots:
+            return self.slots[slot_name].item
+        return None
     
-    def get_item_count(self, item_id: str) -> int:
-        """Получить количество предметов по ID."""
-        return sum(1 for item in self.inventory if item.get('id') == item_id)
+    def get_equipped_items(self) -> Dict[str, Any]:
+        """Получает все экипированные предметы"""
+        return {slot_name: slot.item for slot_name, slot in self.slots.items() if not slot.is_empty()}
     
-    def find_items_by_type(self, item_type: str) -> List[Dict[str, Any]]:
-        """Найти предметы по типу."""
-        return [item for item in self.inventory if item.get('type') == item_type]
+    def get_equipment_bonuses(self) -> Dict[str, float]:
+        """Получает бонусы от экипировки"""
+        bonuses = {}
+        
+        for slot in self.slots.values():
+            if not slot.is_empty() and hasattr(slot.item, 'modifiers'):
+                for stat, value in slot.item.modifiers.items():
+                    if stat in bonuses:
+                        bonuses[stat] += value
+                    else:
+                        bonuses[stat] = value
+        
+        return bonuses
     
-    def find_consumables(self) -> List[Dict[str, Any]]:
-        """Найти все расходуемые предметы."""
-        return self.find_items_by_type("consumable")
+    def get_equipment_resistances(self) -> Dict[str, float]:
+        """Получает сопротивления от экипировки"""
+        resistances = {}
+        
+        for slot in self.slots.values():
+            if not slot.is_empty():
+                # Проверяем resist_mod
+                if hasattr(slot.item, 'resist_mod'):
+                    for element, value in slot.item.resist_mod.items():
+                        if element in resistances:
+                            resistances[element] += value
+                        else:
+                            resistances[element] = value
+                
+                # Проверяем weakness_mod
+                if hasattr(slot.item, 'weakness_mod'):
+                    for element, value in slot.item.weakness_mod.items():
+                        if element in resistances:
+                            resistances[element] -= value
+                        else:
+                            resistances[element] = -value
+        
+        return resistances
+
+
+class InventoryManager:
+    """Менеджер инвентаря и экипировки"""
     
-    def find_healing_items(self) -> List[Dict[str, Any]]:
-        """Найти предметы для лечения."""
-        healing_items = []
-        for item in self.inventory:
-            if item.get('type') == 'consumable' and 'heal' in item.get('effects', {}):
-                healing_items.append(item)
-        return healing_items
+    def __init__(self, max_inventory_size: int = 20):
+        self.inventory = Inventory(max_inventory_size)
+        self.equipment = Equipment()
     
-    def use_consumable(self, item: Dict[str, Any]) -> bool:
-        """Использовать расходуемый предмет."""
-        if item.get('type') == 'consumable' and item in self.inventory:
-            # Применяем эффекты предмета
-            effects = item.get('effects', {})
-            if self._apply_item_effects(effects):
-                # Убираем предмет из инвентаря
-                self.remove_item(item)
-                return True
+    def add_item_to_inventory(self, item: Any) -> bool:
+        """Добавляет предмет в инвентарь"""
+        return self.inventory.add_item(item)
+    
+    def remove_item_from_inventory(self, item: Any) -> bool:
+        """Удаляет предмет из инвентаря"""
+        return self.inventory.remove_item(item)
+    
+    def equip_item(self, item: Any, slot_name: str) -> bool:
+        """Экипирует предмет"""
+        # Удаляем предмет из инвентаря
+        if self.inventory.remove_item(item):
+            # Экипируем предмет
+            previous_item = self.equipment.equip_item(item, slot_name)
+            
+            # Если был предыдущий предмет, возвращаем его в инвентарь
+            if previous_item:
+                self.inventory.add_item(previous_item)
+            
+            return True
         return False
     
-    def _apply_item_effects(self, effects: Dict[str, Any]) -> bool:
-        """Применить эффекты предмета."""
-        try:
-            # Получаем компонент боевых характеристик
-            combat_stats = self.entity.get_component('CombatStatsComponent')
-            if not combat_stats:
-                return False
-            
-            # Применяем эффекты
-            if 'heal' in effects:
-                heal_amount = effects['heal']
-                combat_stats.heal(heal_amount)
-            
-            if 'restore_mana' in effects:
-                mana_amount = effects['restore_mana']
-                combat_stats.restore_mana(mana_amount)
-            
-            if 'restore_stamina' in effects:
-                stamina_amount = effects['restore_stamina']
-                combat_stats.restore_stamina(stamina_amount)
-            
-            return True
-        except Exception:
-            return False
-    
-    def equip_item(self, item: Dict[str, Any], slot: str) -> bool:
-        """Экипировать предмет."""
-        if slot not in self.equipment:
-            return False
-        
-        # Проверяем, что предмет подходит для слота
-        if not self._can_equip_to_slot(item, slot):
-            return False
-        
-        # Снимаем текущий предмет из слота
-        if self.equipment[slot]:
-            self.unequip_item(slot)
-        
-        # Экипируем новый предмет
-        self.equipment[slot] = item
-        
-        # Применяем эффекты экипировки
-        self._apply_equipment_effects(item, True)
-        
-        return True
-    
-    def unequip_item(self, slot: str) -> Optional[Dict[str, Any]]:
-        """Снять предмет из слота."""
-        if slot not in self.equipment or not self.equipment[slot]:
-            return None
-        
-        item = self.equipment[slot]
-        self.equipment[slot] = None
-        
-        # Убираем эффекты экипировки
-        self._apply_equipment_effects(item, False)
-        
-        return item
-    
-    def _can_equip_to_slot(self, item: Dict[str, Any], slot: str) -> bool:
-        """Проверить, можно ли экипировать предмет в слот."""
-        item_type = item.get('type')
-        slot_type = slot
-        
-        # Простая проверка совместимости
-        if slot_type == 'weapon' and item_type in ['sword', 'bow', 'staff', 'dagger']:
-            return True
-        elif slot_type == 'armor' and item_type == 'armor':
-            return True
-        elif slot_type == 'shield' and item_type == 'shield':
-            return True
-        elif slot_type in ['helmet', 'gloves', 'boots'] and item_type == 'armor':
-            return True
-        elif slot_type.startswith('accessory') and item_type == 'accessory':
-            return True
-        
+    def unequip_item(self, slot_name: str) -> bool:
+        """Снимает предмет из экипировки"""
+        item = self.equipment.unequip_item(slot_name)
+        if item:
+            return self.inventory.add_item(item)
         return False
     
-    def _apply_equipment_effects(self, item: Dict[str, Any], equipping: bool) -> None:
-        """Применить или убрать эффекты экипировки."""
-        try:
-            # Получаем компоненты
-            combat_stats = self.entity.get_component('CombatStatsComponent')
-            attributes = self.entity.get_component('AttributesComponent')
-            
-            if not combat_stats or not attributes:
-                return
-            
-            effects = item.get('equipment_effects', {})
-            multiplier = 1 if equipping else -1
-            
-            # Применяем эффекты к боевым характеристикам
-            for stat, value in effects.get('combat_stats', {}).items():
-                if hasattr(combat_stats.stats, stat):
-                    current_value = getattr(combat_stats.stats, stat)
-                    setattr(combat_stats.stats, stat, current_value + (value * multiplier))
-            
-            # Применяем эффекты к атрибутам
-            for attr, value in effects.get('attributes', {}).items():
-                attributes.add_attribute_bonus(attr, f"equipment_{item.get('id', 'unknown')}", value * multiplier)
-        
-        except Exception:
-            pass
+    def get_inventory_items(self) -> List[Any]:
+        """Получает предметы из инвентаря"""
+        return self.inventory.items.copy()
     
-    def get_equipped_item(self, slot: str) -> Optional[Dict[str, Any]]:
-        """Получить экипированный предмет из слота."""
-        return self.equipment.get(slot)
+    def get_equipped_items(self) -> Dict[str, Any]:
+        """Получает экипированные предметы"""
+        return self.equipment.get_equipped_items()
     
-    def is_slot_occupied(self, slot: str) -> bool:
-        """Занят ли слот."""
-        return slot in self.equipment and self.equipment[slot] is not None
+    def get_equipment_bonuses(self) -> Dict[str, float]:
+        """Получает бонусы от экипировки"""
+        return self.equipment.get_equipment_bonuses()
     
-    def get_inventory_size(self) -> int:
-        """Получить текущий размер инвентаря."""
-        return len(self.inventory)
-    
-    def get_free_slots(self) -> int:
-        """Получить количество свободных слотов."""
-        return self.max_inventory_size - len(self.inventory)
+    def get_equipment_resistances(self) -> Dict[str, float]:
+        """Получает сопротивления от экипировки"""
+        return self.equipment.get_equipment_resistances()
     
     def is_inventory_full(self) -> bool:
-        """Полон ли инвентарь."""
-        return len(self.inventory) >= self.max_inventory_size
+        """Проверяет, полон ли инвентарь"""
+        return self.inventory.is_full()
     
-    def _on_initialize(self) -> None:
-        """Инициализация компонента."""
-        pass
+    def get_free_inventory_space(self) -> int:
+        """Возвращает количество свободных слотов в инвентаре"""
+        return self.inventory.get_free_space()
     
-    def _on_update(self, delta_time: float) -> None:
-        """Обновление компонента."""
-        pass
+    def get_inventory_weight_percentage(self) -> float:
+        """Возвращает процент заполнения инвентаря по весу"""
+        return self.inventory.get_weight_percentage()
     
-    def to_dict(self) -> Dict[str, Any]:
-        """Сериализация в словарь."""
-        data = super().to_dict()
-        data.update({
-            'inventory': self.inventory.copy(),
-            'max_inventory_size': self.max_inventory_size,
-            'equipment': {
-                slot: item.copy() if item else None
-                for slot, item in self.equipment.items()
-            }
-        })
-        return data
-    
-    def from_dict(self, data: Dict[str, Any]) -> None:
-        """Десериализация из словаря."""
-        super().from_dict(data)
-        
-        self.inventory = data.get('inventory', []).copy()
-        self.max_inventory_size = data.get('max_inventory_size', 20)
-        
-        equipment_data = data.get('equipment', {})
-        for slot, item in equipment_data.items():
-            if slot in self.equipment:
-                self.equipment[slot] = item.copy() if item else None
+    def is_inventory_overweight(self) -> bool:
+        """Проверяет, перегружен ли инвентарь"""
+        return self.inventory.is_overweight()
