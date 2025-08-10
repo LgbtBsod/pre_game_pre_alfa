@@ -1,7 +1,7 @@
 {
   "effects": {
-    "eff_00010000": {
-      "id": "eff_00010000",
+    "str_001": {
+      "id": "str_001",
       "name": "Усиление силы",
       "description": "Увеличивает физический урон",
       "type": "buff",
@@ -13,15 +13,10 @@
         "damage_output": 2.0,
         "carry_weight": 5.0
       },
-      "tags": [
-        "strength",
-        "physical",
-        "permanent"
-      ],
-      "hex_id": "eff_00010000"
+      "tags": ["strength", "physical", "permanent"]
     },
-    "eff_00020000": {
-      "id": "eff_00020000",
+    "dex_001": {
+      "id": "dex_001",
       "name": "Усиление ловкости",
       "description": "Увеличивает точность и скорость атаки",
       "type": "buff",
@@ -34,15 +29,10 @@
         "attack_speed": 0.02,
         "accuracy": 0.5
       },
-      "tags": [
-        "dexterity",
-        "physical",
-        "permanent"
-      ],
-      "hex_id": "eff_00020000"
+      "tags": ["dexterity", "physical", "permanent"]
     },
-    "eff_00040000": {
-      "id": "eff_00040000",
+    "vit_001": {
+      "id": "vit_001",
       "name": "Усиление жизненной силы",
       "description": "Увеличивает здоровье и выносливость",
       "type": "buff",
@@ -55,15 +45,10 @@
         "max_stamina": 5.0,
         "health_regeneration": 0.5
       },
-      "tags": [
-        "vitality",
-        "health",
-        "permanent"
-      ],
-      "hex_id": "eff_00040000"
+      "tags": ["vitality", "health", "permanent"]
     },
-    "eff_00050000": {
-      "id": "eff_00050000",
+    "end_001": {
+      "id": "end_001",
       "name": "Усиление выносливости",
       "description": "Увеличивает защиту и сопротивление",
       "type": "buff",
@@ -76,15 +61,10 @@
         "stamina_regeneration": 1.0,
         "poison_resistance": 0.1
       },
-      "tags": [
-        "endurance",
-        "defense",
-        "permanent"
-      ],
-      "hex_id": "eff_00050000"
+      "tags": ["endurance", "defense", "permanent"]
     },
-    "eff_001a0003": {
-      "id": "eff_001a0003",
+    "fire_001": {
+      "id": "fire_001",
       "name": "Огненная сила",
       "description": "Увеличивает огненный урон",
       "type": "buff",
@@ -96,15 +76,10 @@
         "fire_damage": 5.0,
         "fire_resistance": 0.1
       },
-      "tags": [
-        "fire",
-        "elemental",
-        "permanent"
-      ],
-      "hex_id": "eff_001a0003"
+      "tags": ["fire", "elemental", "permanent"]
     },
-    "eff_001c0003": {
-      "id": "eff_001c0003",
+    "ice_001": {
+      "id": "ice_001",
       "name": "Ледяная сила",
       "description": "Увеличивает ледяной урон",
       "type": "buff",
@@ -116,15 +91,10 @@
         "ice_damage": 5.0,
         "ice_resistance": 0.1
       },
-      "tags": [
-        "ice",
-        "elemental",
-        "permanent"
-      ],
-      "hex_id": "eff_001c0003"
+      "tags": ["ice", "elemental", "permanent"]
     },
-    "eff_001e0003": {
-      "id": "eff_001e0003",
+    "lightning_001": {
+      "id": "lightning_001",
       "name": "Молниевая сила",
       "description": "Увеличивает электрический урон",
       "type": "buff",
@@ -136,15 +106,10 @@
         "lightning_damage": 5.0,
         "lightning_resistance": 0.1
       },
-      "tags": [
-        "lightning",
-        "elemental",
-        "permanent"
-      ],
-      "hex_id": "eff_001e0003"
+      "tags": ["lightning", "elemental", "permanent"]
     },
-    "eff_00220003": {
-      "id": "eff_00220003",
+    "water_001": {
+      "id": "water_001",
       "name": "Водяная сила",
       "description": "Увеличивает водяной урон",
       "type": "buff",
@@ -156,15 +121,10 @@
         "water_damage": 5.0,
         "water_resistance": 0.1
       },
-      "tags": [
-        "water",
-        "elemental",
-        "permanent"
-      ],
-      "hex_id": "eff_00220003"
+      "tags": ["water", "elemental", "permanent"]
     },
-    "eff_00240003": {
-      "id": "eff_00240003",
+    "fire_resist_001": {
+      "id": "fire_resist_001",
       "name": "Огненная защита",
       "description": "Увеличивает сопротивление огню",
       "type": "buff",
@@ -175,15 +135,10 @@
       "modifiers": {
         "fire_resistance": 0.3
       },
-      "tags": [
-        "fire",
-        "resistance",
-        "permanent"
-      ],
-      "hex_id": "eff_00240003"
+      "tags": ["fire", "resistance", "permanent"]
     },
-    "eff_00260003": {
-      "id": "eff_00260003",
+    "magic_resist_001": {
+      "id": "magic_resist_001",
       "name": "Магическая защита",
       "description": "Увеличивает сопротивление магии",
       "type": "buff",
@@ -194,15 +149,10 @@
       "modifiers": {
         "magic_resistance": 0.25
       },
-      "tags": [
-        "magic",
-        "resistance",
-        "permanent"
-      ],
-      "hex_id": "eff_00260003"
+      "tags": ["magic", "resistance", "permanent"]
     },
-    "eff_00280003": {
-      "id": "eff_00280003",
+    "str_boost_001": {
+      "id": "str_boost_001",
       "name": "Временное усиление силы",
       "description": "Временно увеличивает силу",
       "type": "buff",
@@ -214,15 +164,10 @@
         "damage_output": 5.0,
         "carry_weight": 10.0
       },
-      "tags": [
-        "strength",
-        "temporary",
-        "stackable"
-      ],
-      "hex_id": "eff_00280003"
+      "tags": ["strength", "temporary", "stackable"]
     },
-    "eff_002a0003": {
-      "id": "eff_002a0003",
+    "health_regen_001": {
+      "id": "health_regen_001",
       "name": "Регенерация здоровья",
       "description": "Постепенно восстанавливает здоровье",
       "type": "buff",
@@ -233,15 +178,10 @@
       "modifiers": {
         "health_regeneration": 2.0
       },
-      "tags": [
-        "health",
-        "regeneration",
-        "permanent"
-      ],
-      "hex_id": "eff_002a0003"
+      "tags": ["health", "regeneration", "permanent"]
     },
-    "eff_00200003": {
-      "id": "eff_00200003",
+    "mana_boost_001": {
+      "id": "mana_boost_001",
       "name": "Усиление маны",
       "description": "Увеличивает ману и её восстановление",
       "type": "buff",
@@ -253,15 +193,10 @@
         "max_mana": 20.0,
         "mana_regeneration": 2.0
       },
-      "tags": [
-        "mana",
-        "magic",
-        "permanent"
-      ],
-      "hex_id": "eff_00200003"
+      "tags": ["mana", "magic", "permanent"]
     },
-    "eff_002e0003": {
-      "id": "eff_002e0003",
+    "fire_power_001": {
+      "id": "fire_power_001",
       "name": "Огненная мощь",
       "description": "Временно увеличивает огненную силу",
       "type": "buff",
@@ -273,15 +208,10 @@
         "fire_damage": 10.0,
         "fire_resistance": 0.2
       },
-      "tags": [
-        "fire",
-        "temporary",
-        "elemental"
-      ],
-      "hex_id": "eff_002e0003"
+      "tags": ["fire", "temporary", "elemental"]
     },
-    "eff_00300003": {
-      "id": "eff_00300003",
+    "ice_protection_001": {
+      "id": "ice_protection_001",
       "name": "Ледяная защита",
       "description": "Временно увеличивает защиту от льда",
       "type": "buff",
@@ -293,15 +223,10 @@
         "ice_resistance": 0.3,
         "defense": 5.0
       },
-      "tags": [
-        "ice",
-        "temporary",
-        "defense"
-      ],
-      "hex_id": "eff_00300003"
+      "tags": ["ice", "temporary", "defense"]
     },
-    "eff_002b0003": {
-      "id": "eff_002b0003",
+    "heal_001": {
+      "id": "heal_001",
       "name": "Исцеление",
       "description": "Мгновенно восстанавливает здоровье",
       "type": "instant",
@@ -312,15 +237,10 @@
       "modifiers": {
         "heal_amount": 50.0
       },
-      "tags": [
-        "healing",
-        "instant",
-        "health"
-      ],
-      "hex_id": "eff_002b0003"
+      "tags": ["healing", "instant", "health"]
     },
-    "eff_002c0003": {
-      "id": "eff_002c0003",
+    "mana_001": {
+      "id": "mana_001",
       "name": "Восстановление маны",
       "description": "Мгновенно восстанавливает ману",
       "type": "instant",
@@ -331,15 +251,10 @@
       "modifiers": {
         "mana_amount": 30.0
       },
-      "tags": [
-        "mana",
-        "instant",
-        "magic"
-      ],
-      "hex_id": "eff_002c0003"
+      "tags": ["mana", "instant", "magic"]
     },
-    "eff_00310007": {
-      "id": "eff_00310007",
+    "burn": {
+      "id": "burn",
       "name": "Ожог",
       "description": "Наносит периодический огненный урон",
       "type": "debuff",
@@ -351,16 +266,10 @@
       "modifiers": {
         "fire_damage_per_tick": 3.0
       },
-      "tags": [
-        "fire",
-        "damage_over_time",
-        "stackable",
-        "elemental"
-      ],
-      "hex_id": "eff_00310007"
+      "tags": ["fire", "damage_over_time", "stackable", "elemental"]
     },
-    "eff_00320007": {
-      "id": "eff_00320007",
+    "poison": {
+      "id": "poison",
       "name": "Яд",
       "description": "Наносит периодический урон и замедляет",
       "type": "debuff",
@@ -373,16 +282,10 @@
         "poison_damage_per_tick": 2.0,
         "movement_speed": -0.1
       },
-      "tags": [
-        "poison",
-        "damage_over_time",
-        "slow",
-        "stackable"
-      ],
-      "hex_id": "eff_00320007"
+      "tags": ["poison", "damage_over_time", "slow", "stackable"]
     },
-    "eff_00330007": {
-      "id": "eff_00330007",
+    "slow": {
+      "id": "slow",
       "name": "Замедление",
       "description": "Уменьшает скорость движения и атаки",
       "type": "debuff",
@@ -394,16 +297,10 @@
         "movement_speed": -0.2,
         "attack_speed": -0.15
       },
-      "tags": [
-        "slow",
-        "movement",
-        "attack",
-        "stackable"
-      ],
-      "hex_id": "eff_00330007"
+      "tags": ["slow", "movement", "attack", "stackable"]
     },
-    "eff_00340007": {
-      "id": "eff_00340007",
+    "stun": {
+      "id": "stun",
       "name": "Оглушение",
       "description": "Полностью парализует цель",
       "type": "debuff",
@@ -416,15 +313,10 @@
         "can_attack": false,
         "can_cast": false
       },
-      "tags": [
-        "stun",
-        "control",
-        "paralysis"
-      ],
-      "hex_id": "eff_00340007"
+      "tags": ["stun", "control", "paralysis"]
     },
-    "eff_00350007": {
-      "id": "eff_00350007",
+    "bleed": {
+      "id": "bleed",
       "name": "Кровотечение",
       "description": "Наносит периодический физический урон",
       "type": "debuff",
@@ -436,16 +328,10 @@
       "modifiers": {
         "physical_damage_per_tick": 2.5
       },
-      "tags": [
-        "bleed",
-        "physical",
-        "damage_over_time",
-        "stackable"
-      ],
-      "hex_id": "eff_00350007"
+      "tags": ["bleed", "physical", "damage_over_time", "stackable"]
     },
-    "eff_00360007": {
-      "id": "eff_00360007",
+    "freeze": {
+      "id": "freeze",
       "name": "Заморозка",
       "description": "Полностью замораживает цель",
       "type": "debuff",
@@ -459,16 +345,10 @@
         "can_cast": false,
         "ice_resistance": -0.5
       },
-      "tags": [
-        "freeze",
-        "ice",
-        "control",
-        "elemental"
-      ],
-      "hex_id": "eff_00360007"
+      "tags": ["freeze", "ice", "control", "elemental"]
     },
-    "eff_00370007": {
-      "id": "eff_00370007",
+    "blind": {
+      "id": "blind",
       "name": "Ослепление",
       "description": "Уменьшает точность атак",
       "type": "debuff",
@@ -480,15 +360,10 @@
         "accuracy": -0.4,
         "critical_chance": -0.2
       },
-      "tags": [
-        "blind",
-        "accuracy",
-        "debuff"
-      ],
-      "hex_id": "eff_00370007"
+      "tags": ["blind", "accuracy", "debuff"]
     },
-    "eff_00380007": {
-      "id": "eff_00380007",
+    "vulnerability": {
+      "id": "vulnerability",
       "name": "Уязвимость",
       "description": "Увеличивает получаемый урон",
       "type": "debuff",
@@ -499,15 +374,10 @@
       "modifiers": {
         "damage_taken": 0.2
       },
-      "tags": [
-        "vulnerability",
-        "defense",
-        "stackable"
-      ],
-      "hex_id": "eff_00380007"
+      "tags": ["vulnerability", "defense", "stackable"]
     },
-    "eff_00390007": {
-      "id": "eff_00390007",
+    "armor_break": {
+      "id": "armor_break",
       "name": "Разрушение брони",
       "description": "Уменьшает защиту цели",
       "type": "debuff",
@@ -518,15 +388,10 @@
       "modifiers": {
         "defense": -0.3
       },
-      "tags": [
-        "armor_break",
-        "defense",
-        "stackable"
-      ],
-      "hex_id": "eff_00390007"
+      "tags": ["armor_break", "defense", "stackable"]
     },
-    "eff_003a0007": {
-      "id": "eff_003a0007",
+    "chain_damage": {
+      "id": "chain_damage",
       "name": "Цепной урон",
       "description": "Урон распространяется на ближайших врагов",
       "type": "buff",
@@ -538,15 +403,10 @@
         "chain_damage_radius": 3.0,
         "chain_damage_multiplier": 0.7
       },
-      "tags": [
-        "chain",
-        "special",
-        "area"
-      ],
-      "hex_id": "eff_003a0007"
+      "tags": ["chain", "special", "area"]
     },
-    "eff_003b0007": {
-      "id": "eff_003b0007",
+    "ice_armor": {
+      "id": "ice_armor",
       "name": "Ледяная броня",
       "description": "Создает защитный ледяной щит",
       "type": "buff",
@@ -558,16 +418,10 @@
         "defense": 8.0,
         "ice_resistance": 0.4
       },
-      "tags": [
-        "ice",
-        "defense",
-        "armor",
-        "elemental"
-      ],
-      "hex_id": "eff_003b0007"
+      "tags": ["ice", "defense", "armor", "elemental"]
     },
-    "eff_003c0007": {
-      "id": "eff_003c0007",
+    "toxin_explosion": {
+      "id": "toxin_explosion",
       "name": "Токсичный взрыв",
       "description": "Создает взрыв токсичного газа",
       "type": "instant",
@@ -579,16 +433,10 @@
         "poison_damage": 15.0,
         "area_radius": 4.0
       },
-      "tags": [
-        "poison",
-        "area",
-        "explosion",
-        "instant"
-      ],
-      "hex_id": "eff_003c0007"
+      "tags": ["poison", "area", "explosion", "instant"]
     },
-    "eff_003d0007": {
-      "id": "eff_003d0007",
+    "paralysis": {
+      "id": "paralysis",
       "name": "Паралич",
       "description": "Полностью парализует цель",
       "type": "debuff",
@@ -601,15 +449,10 @@
         "can_attack": false,
         "can_cast": false
       },
-      "tags": [
-        "paralysis",
-        "control",
-        "debuff"
-      ],
-      "hex_id": "eff_003d0007"
+      "tags": ["paralysis", "control", "debuff"]
     },
-    "eff_003e0007": {
-      "id": "eff_003e0007",
+    "infection": {
+      "id": "infection",
       "name": "Заражение",
       "description": "Серьезное заболевание, ослабляющее цель",
       "type": "debuff",
@@ -623,16 +466,10 @@
         "max_health": -0.1,
         "movement_speed": -0.3
       },
-      "tags": [
-        "disease",
-        "infection",
-        "debuff",
-        "serious"
-      ],
-      "hex_id": "eff_003e0007"
+      "tags": ["disease", "infection", "debuff", "serious"]
     },
-    "eff_003f0007": {
-      "id": "eff_003f0007",
+    "disease": {
+      "id": "disease",
       "name": "Болезнь",
       "description": "Общее ослабление организма",
       "type": "debuff",
@@ -646,12 +483,7 @@
         "strength": -0.2,
         "dexterity": -0.2
       },
-      "tags": [
-        "disease",
-        "debuff",
-        "weakening"
-      ],
-      "hex_id": "eff_003f0007"
+      "tags": ["disease", "debuff", "weakening"]
     }
   }
 }

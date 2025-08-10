@@ -1,7 +1,7 @@
 {
   "items": {
-    "itm_000c0000": {
-      "id": "itm_000c0000",
+    "wpn_001": {
+      "id": "wpn_001",
       "name": "Железный меч",
       "description": "Простой железный меч",
       "type": "weapon",
@@ -16,24 +16,17 @@
       "durability": 100,
       "max_durability": 100,
       "cost": 100,
-      "effects": [
-        "eff_00010000"
-      ],
+      "effects": ["str_001"],
       "modifiers": {
         "damage_output": 15.0,
         "attack_speed": 1.2
       },
-      "tags": [
-        "melee",
-        "physical",
-        "sword"
-      ],
+      "tags": ["melee", "physical", "sword"],
       "resist_mod": {},
-      "weakness_mod": {},
-      "hex_id": "itm_000c0000"
+      "weakness_mod": {}
     },
-    "itm_00100000": {
-      "id": "itm_00100000",
+    "wpn_002": {
+      "id": "wpn_002", 
       "name": "Лук охотника",
       "description": "Деревянный лук для дальних атак",
       "type": "weapon",
@@ -49,25 +42,18 @@
       "durability": 80,
       "max_durability": 80,
       "cost": 50,
-      "effects": [
-        "eff_00020000"
-      ],
+      "effects": ["dex_001"],
       "modifiers": {
         "damage_output": 12.0,
         "attack_speed": 1.5,
         "attack_range": 20.0
       },
-      "tags": [
-        "ranged",
-        "physical",
-        "bow"
-      ],
+      "tags": ["ranged", "physical", "bow"],
       "resist_mod": {},
-      "weakness_mod": {},
-      "hex_id": "itm_00100000"
+      "weakness_mod": {}
     },
-    "itm_00190003": {
-      "id": "itm_00190003",
+    "wpn_003": {
+      "id": "wpn_003",
       "name": "Огненный меч",
       "description": "Меч, зачарованный огненной магией",
       "type": "weapon",
@@ -82,32 +68,18 @@
       "durability": 120,
       "max_durability": 120,
       "cost": 300,
-      "effects": [
-        "eff_00010000",
-        "eff_001a0003"
-      ],
+      "effects": ["str_001", "fire_001"],
       "modifiers": {
         "damage_output": 18.0,
         "attack_speed": 1.1,
         "fire_damage": 8.0
       },
-      "tags": [
-        "melee",
-        "physical",
-        "fire",
-        "sword",
-        "enchanted"
-      ],
-      "resist_mod": {
-        "ice": 0.2
-      },
-      "weakness_mod": {
-        "water": 0.1
-      },
-      "hex_id": "itm_00190003"
+      "tags": ["melee", "physical", "fire", "sword", "enchanted"],
+      "resist_mod": {"ice": 0.2},
+      "weakness_mod": {"water": 0.1}
     },
-    "itm_001b0003": {
-      "id": "itm_001b0003",
+    "wpn_004": {
+      "id": "wpn_004",
       "name": "Ледяной топор",
       "description": "Топор с ледяным зачарованием",
       "type": "weapon",
@@ -122,32 +94,18 @@
       "durability": 110,
       "max_durability": 110,
       "cost": 280,
-      "effects": [
-        "eff_00010000",
-        "eff_001c0003"
-      ],
+      "effects": ["str_001", "ice_001"],
       "modifiers": {
         "damage_output": 20.0,
         "attack_speed": 0.9,
         "ice_damage": 6.0
       },
-      "tags": [
-        "melee",
-        "physical",
-        "ice",
-        "axe",
-        "enchanted"
-      ],
-      "resist_mod": {
-        "fire": 0.2
-      },
-      "weakness_mod": {
-        "lightning": 0.1
-      },
-      "hex_id": "itm_001b0003"
+      "tags": ["melee", "physical", "ice", "axe", "enchanted"],
+      "resist_mod": {"fire": 0.2},
+      "weakness_mod": {"lightning": 0.1}
     },
-    "itm_001d0003": {
-      "id": "itm_001d0003",
+    "wpn_005": {
+      "id": "wpn_005",
       "name": "Молниевый лук",
       "description": "Лук с электрическим зачарованием",
       "type": "weapon",
@@ -163,33 +121,19 @@
       "durability": 90,
       "max_durability": 90,
       "cost": 320,
-      "effects": [
-        "eff_00020000",
-        "eff_001e0003"
-      ],
+      "effects": ["dex_001", "lightning_001"],
       "modifiers": {
         "damage_output": 14.0,
         "attack_speed": 1.6,
         "lightning_damage": 7.0,
         "attack_range": 25.0
       },
-      "tags": [
-        "ranged",
-        "physical",
-        "lightning",
-        "bow",
-        "enchanted"
-      ],
-      "resist_mod": {
-        "water": 0.2
-      },
-      "weakness_mod": {
-        "earth": 0.1
-      },
-      "hex_id": "itm_001d0003"
+      "tags": ["ranged", "physical", "lightning", "bow", "enchanted"],
+      "resist_mod": {"water": 0.2},
+      "weakness_mod": {"earth": 0.1}
     },
-    "itm_001f0003": {
-      "id": "itm_001f0003",
+    "wpn_006": {
+      "id": "wpn_006",
       "name": "Огненный посох",
       "description": "Магический посох огня",
       "type": "weapon",
@@ -205,34 +149,19 @@
       "durability": 150,
       "max_durability": 150,
       "cost": 500,
-      "effects": [
-        "eff_00030000",
-        "eff_001a0003",
-        "eff_00200003"
-      ],
+      "effects": ["int_001", "fire_001", "mana_boost_001"],
       "modifiers": {
         "damage_output": 25.0,
         "magic_damage": 25.0,
         "fire_damage": 15.0,
         "mana_regeneration": 2.0
       },
-      "tags": [
-        "magic",
-        "fire",
-        "staff",
-        "enchanted",
-        "caster"
-      ],
-      "resist_mod": {
-        "ice": 0.3
-      },
-      "weakness_mod": {
-        "water": 0.2
-      },
-      "hex_id": "itm_001f0003"
+      "tags": ["magic", "fire", "staff", "enchanted", "caster"],
+      "resist_mod": {"ice": 0.3},
+      "weakness_mod": {"water": 0.2}
     },
-    "itm_00210003": {
-      "id": "itm_00210003",
+    "wpn_007": {
+      "id": "wpn_007",
       "name": "Водяной кинжал",
       "description": "Кинжал с водяной магией",
       "type": "weapon",
@@ -248,33 +177,19 @@
       "durability": 80,
       "max_durability": 80,
       "cost": 250,
-      "effects": [
-        "eff_00020000",
-        "eff_00220003"
-      ],
+      "effects": ["dex_001", "water_001"],
       "modifiers": {
         "damage_output": 12.0,
         "attack_speed": 2.0,
         "water_damage": 5.0,
         "critical_chance": 0.15
       },
-      "tags": [
-        "melee",
-        "physical",
-        "water",
-        "dagger",
-        "enchanted"
-      ],
-      "resist_mod": {
-        "fire": 0.2
-      },
-      "weakness_mod": {
-        "lightning": 0.1
-      },
-      "hex_id": "itm_00210003"
+      "tags": ["melee", "physical", "water", "dagger", "enchanted"],
+      "resist_mod": {"fire": 0.2},
+      "weakness_mod": {"lightning": 0.1}
     },
-    "itm_00150000": {
-      "id": "itm_00150000",
+    "arm_001": {
+      "id": "arm_001",
       "name": "Кожаная броня",
       "description": "Легкая кожаная броня",
       "type": "armor",
@@ -286,23 +201,16 @@
       "durability": 120,
       "max_durability": 120,
       "cost": 80,
-      "effects": [
-        "eff_00040000"
-      ],
+      "effects": ["vit_001"],
       "modifiers": {
         "defense": 8.0,
         "movement_speed": -0.05
       },
-      "tags": [
-        "light",
-        "physical",
-        "leather"
-      ],
-      "elemental_resistance": {},
-      "hex_id": "itm_00150000"
+      "tags": ["light", "physical", "leather"],
+      "elemental_resistance": {}
     },
-    "itm_00230003": {
-      "id": "itm_00230003",
+    "arm_002": {
+      "id": "arm_002",
       "name": "Огненная броня",
       "description": "Броня с защитой от огня",
       "type": "armor",
@@ -314,29 +222,17 @@
       "durability": 150,
       "max_durability": 150,
       "cost": 200,
-      "effects": [
-        "eff_00040000",
-        "eff_00240003"
-      ],
+      "effects": ["vit_001", "fire_resist_001"],
       "modifiers": {
         "defense": 15.0,
         "movement_speed": -0.08,
         "fire_resistance": 0.3
       },
-      "tags": [
-        "medium",
-        "physical",
-        "fire",
-        "enchanted"
-      ],
-      "elemental_resistance": {
-        "fire": 0.3,
-        "ice": -0.1
-      },
-      "hex_id": "itm_00230003"
+      "tags": ["medium", "physical", "fire", "enchanted"],
+      "elemental_resistance": {"fire": 0.3, "ice": -0.1}
     },
-    "itm_00160000": {
-      "id": "itm_00160000",
+    "shl_001": {
+      "id": "shl_001",
       "name": "Деревянный щит",
       "description": "Простой деревянный щит",
       "type": "shield",
@@ -349,24 +245,17 @@
       "durability": 90,
       "max_durability": 90,
       "cost": 40,
-      "effects": [
-        "eff_00050000"
-      ],
+      "effects": ["end_001"],
       "modifiers": {
         "defense": 12.0,
         "block_chance": 0.15,
         "movement_speed": -0.02
       },
-      "tags": [
-        "defensive",
-        "physical",
-        "wooden"
-      ],
-      "elemental_resistance": {},
-      "hex_id": "itm_00160000"
+      "tags": ["defensive", "physical", "wooden"],
+      "elemental_resistance": {}
     },
-    "itm_00250003": {
-      "id": "itm_00250003",
+    "shl_002": {
+      "id": "shl_002",
       "name": "Магический щит",
       "description": "Щит с магической защитой",
       "type": "shield",
@@ -374,35 +263,23 @@
       "rarity": "rare",
       "level_requirement": 5,
       "defense": 18.0,
-      "block_chance": 0.2,
+      "block_chance": 0.20,
       "weight": 4.0,
       "durability": 120,
       "max_durability": 120,
       "cost": 150,
-      "effects": [
-        "eff_00050000",
-        "eff_00260003"
-      ],
+      "effects": ["end_001", "magic_resist_001"],
       "modifiers": {
         "defense": 18.0,
-        "block_chance": 0.2,
+        "block_chance": 0.20,
         "movement_speed": -0.03,
         "magic_resistance": 0.25
       },
-      "tags": [
-        "defensive",
-        "magic",
-        "enchanted"
-      ],
-      "elemental_resistance": {
-        "fire": 0.2,
-        "ice": 0.2,
-        "lightning": 0.2
-      },
-      "hex_id": "itm_00250003"
+      "tags": ["defensive", "magic", "enchanted"],
+      "elemental_resistance": {"fire": 0.2, "ice": 0.2, "lightning": 0.2}
     },
-    "itm_00270003": {
-      "id": "itm_00270003",
+    "acc_001": {
+      "id": "acc_001",
       "name": "Кольцо силы",
       "description": "Кольцо, увеличивающее силу",
       "type": "accessory",
@@ -410,22 +287,15 @@
       "rarity": "rare",
       "level_requirement": 3,
       "cost": 90,
-      "effects": [
-        "eff_00280003"
-      ],
+      "effects": ["str_boost_001"],
       "modifiers": {
         "strength": 5.0,
         "damage_output": 3.0
       },
-      "tags": [
-        "accessory",
-        "strength",
-        "enchanted"
-      ],
-      "hex_id": "itm_00270003"
+      "tags": ["accessory", "strength", "enchanted"]
     },
-    "itm_00290003": {
-      "id": "itm_00290003",
+    "acc_002": {
+      "id": "acc_002",
       "name": "Амулет здоровья",
       "description": "Амулет, восстанавливающий здоровье",
       "type": "accessory",
@@ -433,22 +303,15 @@
       "rarity": "uncommon",
       "level_requirement": 2,
       "cost": 80,
-      "effects": [
-        "eff_002a0003"
-      ],
+      "effects": ["health_regen_001"],
       "modifiers": {
         "health_regeneration": 2.0,
         "max_health": 20.0
       },
-      "tags": [
-        "accessory",
-        "health",
-        "regeneration"
-      ],
-      "hex_id": "itm_00290003"
+      "tags": ["accessory", "health", "regeneration"]
     },
-    "itm_000d0000": {
-      "id": "itm_000d0000",
+    "pot_001": {
+      "id": "pot_001",
       "name": "Зелье здоровья",
       "description": "Восстанавливает здоровье",
       "type": "consumable",
@@ -458,19 +321,13 @@
       "heal_amount": 50.0,
       "heal_percent": 0.0,
       "cost": 20,
-      "effects": [
-        "eff_002b0003"
-      ],
+      "effects": ["heal_001"],
       "modifiers": {},
-      "tags": [
-        "healing",
-        "potion"
-      ],
-      "cooldown": 5.0,
-      "hex_id": "itm_000d0000"
+      "tags": ["healing", "potion"],
+      "cooldown": 5.0
     },
-    "itm_00110000": {
-      "id": "itm_00110000",
+    "pot_002": {
+      "id": "pot_002",
       "name": "Зелье маны",
       "description": "Восстанавливает ману",
       "type": "consumable",
@@ -480,19 +337,13 @@
       "mana_amount": 30.0,
       "mana_percent": 0.0,
       "cost": 25,
-      "effects": [
-        "eff_002c0003"
-      ],
+      "effects": ["mana_001"],
       "modifiers": {},
-      "tags": [
-        "mana",
-        "potion"
-      ],
-      "cooldown": 5.0,
-      "hex_id": "itm_00110000"
+      "tags": ["mana", "potion"],
+      "cooldown": 5.0
     },
-    "itm_002d0003": {
-      "id": "itm_002d0003",
+    "pot_003": {
+      "id": "pot_003",
       "name": "Огненное зелье",
       "description": "Зелье, дающее временную огненную силу",
       "type": "consumable",
@@ -500,25 +351,17 @@
       "rarity": "rare",
       "level_requirement": 3,
       "cost": 60,
-      "effects": [
-        "eff_002e0003"
-      ],
+      "effects": ["fire_power_001"],
       "modifiers": {
         "fire_damage": 10.0,
         "fire_resistance": 0.2
       },
-      "tags": [
-        "fire",
-        "potion",
-        "buff",
-        "temporary"
-      ],
+      "tags": ["fire", "potion", "buff", "temporary"],
       "duration": 300.0,
-      "cooldown": 60.0,
-      "hex_id": "itm_002d0003"
+      "cooldown": 60.0
     },
-    "itm_002f0003": {
-      "id": "itm_002f0003",
+    "pot_004": {
+      "id": "pot_004",
       "name": "Ледяное зелье",
       "description": "Зелье, дающее временную ледяную защиту",
       "type": "consumable",
@@ -526,33 +369,21 @@
       "rarity": "rare",
       "level_requirement": 3,
       "cost": 60,
-      "effects": [
-        "eff_00300003"
-      ],
+      "effects": ["ice_protection_001"],
       "modifiers": {
         "ice_resistance": 0.3,
         "defense": 5.0
       },
-      "tags": [
-        "ice",
-        "potion",
-        "buff",
-        "temporary"
-      ],
+      "tags": ["ice", "potion", "buff", "temporary"],
       "duration": 300.0,
-      "cooldown": 60.0,
-      "hex_id": "itm_002f0003"
+      "cooldown": 60.0
     }
   },
   "elemental_combinations": {
     "fire_lightning": {
       "name": "Электрошок",
       "description": "Комбинация огня и молнии создает мощный электрический разряд",
-      "effects": [
-        "stun",
-        "chain_damage",
-        "burn"
-      ],
+      "effects": ["stun", "chain_damage", "burn"],
       "damage_multiplier": 1.5,
       "duration": 5.0,
       "chance": 0.3
@@ -560,11 +391,7 @@
     "ice_fire": {
       "name": "Пар",
       "description": "Комбинация льда и огня создает обжигающий пар",
-      "effects": [
-        "slow",
-        "burn",
-        "blind"
-      ],
+      "effects": ["slow", "burn", "blind"],
       "damage_multiplier": 1.3,
       "duration": 4.0,
       "chance": 0.4
@@ -572,10 +399,7 @@
     "water_lightning": {
       "name": "Электропроводность",
       "description": "Вода усиливает электрические атаки",
-      "effects": [
-        "stun",
-        "chain_damage"
-      ],
+      "effects": ["stun", "chain_damage"],
       "damage_multiplier": 1.8,
       "duration": 3.0,
       "chance": 0.5
@@ -583,11 +407,7 @@
     "earth_fire": {
       "name": "Лава",
       "description": "Земля и огонь создают лавовые эффекты",
-      "effects": [
-        "burn",
-        "slow",
-        "armor_break"
-      ],
+      "effects": ["burn", "slow", "armor_break"],
       "damage_multiplier": 1.4,
       "duration": 6.0,
       "chance": 0.25
@@ -595,11 +415,7 @@
     "ice_water": {
       "name": "Заморозка",
       "description": "Лед и вода создают мощный замораживающий эффект",
-      "effects": [
-        "freeze",
-        "slow",
-        "ice_armor"
-      ],
+      "effects": ["freeze", "slow", "ice_armor"],
       "damage_multiplier": 1.6,
       "duration": 7.0,
       "chance": 0.35
@@ -609,31 +425,21 @@
     "burn_poison": {
       "name": "Токсичный огонь",
       "description": "Огонь и яд усиливают друг друга",
-      "effects": [
-        "burn",
-        "poison",
-        "toxin_explosion"
-      ],
+      "effects": ["burn", "poison", "toxin_explosion"],
       "damage_multiplier": 1.7,
       "duration": 8.0
     },
     "slow_stun": {
       "name": "Паралич",
       "description": "Замедление и оглушение создают паралич",
-      "effects": [
-        "paralysis",
-        "vulnerability"
-      ],
+      "effects": ["paralysis", "vulnerability"],
       "damage_multiplier": 1.2,
       "duration": 4.0
     },
     "bleed_poison": {
       "name": "Заражение",
       "description": "Кровотечение и яд создают заражение",
-      "effects": [
-        "infection",
-        "disease"
-      ],
+      "effects": ["infection", "disease"],
       "damage_multiplier": 1.4,
       "duration": 10.0
     }

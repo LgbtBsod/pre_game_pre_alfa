@@ -183,6 +183,54 @@ loot = item_manager.create_loot_table(enemy_level=10)
 - `data/game_data.db` - игровые данные
 - `saves/saves.db` - сохранения игр
 
+## Система 16-ричных ID
+
+### Преимущества
+- **Эффективность памяти**: 16-ричные ID занимают меньше места в памяти
+- **Уникальность**: Гарантированно уникальные ID для всех сущностей
+- **Простота хранения**: Оптимизированы для хранения в базе данных
+- **Масштабируемость**: Поддерживает миллионы сущностей
+- **Обратная совместимость**: Конвертер для старых ID
+
+### Формат ID
+- **Короткий формат**: `plr_00000000` (префикс + 8 символов hex)
+- **Полный формат**: `plr_0001000500011107` (16 символов hex с метаданными)
+- **Префиксы типов**: plr (игрок), enm (враг), bos (босс), itm (предмет), eff (эффект)
+
+### Типы сущностей
+- `AI_ENTITY` - AI сущности
+- `ITEM` - Предметы
+- `EFFECT` - Эффекты и способности
+- `PLAYER` - Игроки
+- `ENEMY` - Враги
+- `BOSS` - Боссы
+- `NPC` - NPC
+- `PROJECTILE` - Снаряды
+- `TRAP` - Ловушки
+- `CONTAINER` - Контейнеры
+
+### Использование
+
+```python
+from utils.entity_id_generator import generate_short_entity_id, EntityType
+
+# Генерация ID для разных типов сущностей
+player_id = generate_short_entity_id(EntityType.PLAYER)  # plr_00000000
+enemy_id = generate_short_entity_id(EntityType.ENEMY)    # enm_00010000
+item_id = generate_short_entity_id(EntityType.ITEM)      # itm_00020000
+effect_id = generate_short_entity_id(EntityType.EFFECT)  # eff_00030000
+```
+
+### Конвертация старых ID
+
+```python
+from utils.entity_id_generator import convert_legacy_id
+
+# Конвертация старых ID в новые
+new_id = convert_legacy_id("player_001", EntityType.PLAYER)  # plr_00000000
+new_id = convert_legacy_id("wpn_001", EntityType.ITEM)       # itm_00010000
+```
+
 ## Запуск игры
 
 ```bash

@@ -33,6 +33,9 @@ from core.resource_manager import resource_manager
 from ui.game_menu import GameMenu
 from ui.render_manager import RenderManager
 
+# Импорт AI системы
+from ai.ai_manager import ai_manager
+
 
 class Game:
     """Основной класс игры"""
@@ -220,6 +223,9 @@ class Game:
                         position=(100 + i * 50, 100 + i * 50)
                     )
                     self.entities.append(enemy)
+                    # Регистрируем в AI системе
+                    if hasattr(enemy, 'ai_core'):
+                        ai_manager.register_entity(enemy, enemy.ai_core)
             
             elif area_name == "forest":
                 # Создаем лесных врагов
@@ -230,6 +236,9 @@ class Game:
                         position=(200 + i * 80, 200 + i * 80)
                     )
                     self.entities.append(enemy)
+                    # Регистрируем в AI системе
+                    if hasattr(enemy, 'ai_core'):
+                        ai_manager.register_entity(enemy, enemy.ai_core)
             
             elif area_name == "dungeon":
                 # Создаем подземных врагов
@@ -240,6 +249,9 @@ class Game:
                         position=(300 + i * 60, 300 + i * 60)
                     )
                     self.entities.append(enemy)
+                    # Регистрируем в AI системе
+                    if hasattr(enemy, 'ai_core'):
+                        ai_manager.register_entity(enemy, enemy.ai_core)
             
             logger.info(f"Создано {len(self.entities)} сущностей для области {area_name}")
             
@@ -307,6 +319,9 @@ class Game:
             # Обновляем игровую логику
             self.game_logic.update(self.delta_time)
             
+            # Обновляем AI систему
+            ai_manager.update(self.delta_time)
+            
             # Обновляем игрока
             if self.player:
                 self.player.update(self.delta_time)
@@ -318,6 +333,8 @@ class Game:
                 # Удаляем мертвых сущностей
                 if not entity.alive:
                     self.entities.remove(entity)
+                    # Удаляем из AI системы
+                    ai_manager.unregister_entity(entity)
             
             # Проверяем коллизии
             self.check_collisions()

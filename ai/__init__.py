@@ -1,86 +1,62 @@
-"""Artificial Intelligence module."""
+"""
+Модуль AI для игровых сущностей.
+Включает улучшенную систему искусственного интеллекта с модульной архитектурой.
+"""
 
-try:
-    from .advanced_ai import AdvancedAIController
-    from .behavior_tree import BehaviorTree
-    from .cooperation import AICoordinator
-    from .decision_maker import PlayerDecisionMaker
-    from .emotion_genetics import EmotionGeneticSynthesizer
-    from .learning import PlayerLearning
-    from .memory import AIMemory, LearningController
-    from .pattern_recognizer import PatternRecognizer
+from .ai_core import (
+    AICore,
+    AIState,
+    AIPriority,
+    AIPersonality,
+    AIKnowledge,
+    AIEmotion
+)
+
+from .ai_manager import (
+    AIManager,
+    ai_manager,
+    GroupCoordinator,
+    SpatialHash,
+    UpdateQueue
+)
+
+from .advanced_ai import AdvancedAIController
+from .behavior_tree import BehaviorTree, generate_tree_for_personality
+from .cooperation import AICoordinator, GroupTactics
+from .decision_maker import DecisionMaker
+from .emotion_genetics import EmotionGeneticSynthesizer
+from .learning import LearningSystem, PlayerLearning, EnemyLearning, BossLearning
+from .memory import AIMemory
+from .pattern_recognizer import PatternRecognizer
+
+__all__ = [
+    # Основные AI компоненты
+    'AICore',
+    'AIState', 
+    'AIPriority',
+    'AIPersonality',
+    'AIKnowledge',
+    'AIEmotion',
     
-    __all__ = [
-        'AdvancedAIController',
-        'BehaviorTree', 
-        'AICoordinator',
-        'PlayerDecisionMaker',
-        'EmotionGeneticSynthesizer',
-        'PlayerLearning',
-        'AIMemory',
-        'LearningController',
-        'PatternRecognizer'
-    ]
-except ImportError:
-    # If modules not found, create stubs
-    class AdvancedAIController:
-        def __init__(self):
-            pass
+    # Менеджер AI
+    'AIManager',
+    'ai_manager',
+    'GroupCoordinator',
+    'SpatialHash',
+    'UpdateQueue',
     
-    class BehaviorTree:
-        def __init__(self):
-            pass
-    
-    class AICoordinator:
-        def __init__(self):
-            pass
-        def register_entity(self, entity, group):
-            pass
-        def update_group_behavior(self, group):
-            pass
-    
-    class PlayerDecisionMaker:
-        def __init__(self, player, memory):
-            pass
-        def update(self, dt):
-            pass
-    
-    class EmotionGeneticSynthesizer:
-        def __init__(self, player, *args):
-            pass
-        def update_emotions(self, dt):
-            pass
-    
-    class PlayerLearning:
-        def __init__(self, player, memory):
-            pass
-        def update(self, dt):
-            pass
-    
-    class AIMemory:
-        def __init__(self):
-            pass
-        def record_event(self, event_type, data):
-            pass
-    
-    class LearningController:
-        def __init__(self):
-            pass
-    
-    class PatternRecognizer:
-        def __init__(self):
-            pass
-        def analyze_combat_patterns(self, entities):
-            pass
-    
-    __all__ = [
-        'AdvancedAIController',
-        'BehaviorTree', 
-        'AICoordinator',
-        'PlayerDecisionMaker',
-        'EmotionGeneticSynthesizer',
-        'PlayerLearning',
-        'AIMemory',
-        'LearningController',
-        'PatternRecognizer'
-    ]
+    # Устаревшие компоненты (для совместимости)
+    'AdvancedAIController',
+    'BehaviorTree',
+    'generate_tree_for_personality',
+    'AICoordinator',
+    'GroupTactics',
+    'DecisionMaker',
+    'EmotionGeneticSynthesizer',
+    'LearningSystem',
+    'PlayerLearning',
+    'EnemyLearning', 
+    'BossLearning',
+    'AIMemory',
+    'PatternRecognizer'
+]
