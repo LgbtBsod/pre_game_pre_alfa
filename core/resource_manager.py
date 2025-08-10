@@ -9,7 +9,7 @@ from pathlib import Path
 from collections import defaultdict, OrderedDict
 import weakref
 
-from config.settings_manager import settings_manager
+from config.config_manager import config_manager
 from core.data_manager import data_manager
 
 logger = logging.getLogger(__name__)
@@ -188,7 +188,7 @@ class ResourceManager:
 
     def get_setting(self, section: str, key: str, default: Any = None) -> Any:
         """Получает настройку."""
-        return settings_manager.get_setting(section, key, default)
+        return config_manager.get('game', f"{section}.{key}", default)
 
     def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
         """Получает предмет."""

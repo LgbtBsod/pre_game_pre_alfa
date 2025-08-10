@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Импорт основных систем
-from config.settings_manager import settings_manager
+from config.config_manager import config_manager
 from core.data_manager import data_manager
 from core.game_state_manager import game_state_manager
 from entities.entity_factory import entity_factory
@@ -64,7 +64,7 @@ class Game:
             logger.info("Начинается инициализация игры...")
             
             # Загружаем настройки
-            settings_manager.reload_settings()
+            config_manager.reload()
             logger.info("Настройки загружены")
             
             # Загружаем данные

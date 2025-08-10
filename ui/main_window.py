@@ -41,13 +41,13 @@ class GameSettings:
 
     def __init__(self):
         # Получаем настройки из unified_settings
-        from config.unified_settings import UnifiedSettings
+        from config.config_manager import config_manager
 
         self.player_name = "Player"
         self.difficulty = "normal"
-        self.window_width = UnifiedSettings.WINDOW_WIDTH
-        self.window_height = UnifiedSettings.WINDOW_HEIGHT
-        self.fps = UnifiedSettings.RENDER_FPS
+        self.window_width = config_manager.get('game', 'display.window_width', 1280)
+        self.window_height = config_manager.get('game', 'display.window_height', 720)
+        self.fps = config_manager.get('game', 'display.render_fps', 60)
         self.auto_save_interval = 300  # секунды
 
 
@@ -516,10 +516,10 @@ class MainWindow(ShowBase):
     def _init_game_systems(self):
         """Инициализация игровых систем"""
         # Инициализируем системы
-        from config.settings_manager import settings_manager
+        from config.config_manager import config_manager
         from core.data_manager import data_manager
         
-        settings_manager.reload_settings()
+        config_manager.reload('game')
         data_manager.reload_data()
 
     def _load_area(self, area_name: str):

@@ -1,0 +1,86 @@
+{
+  "theme": {
+    "current": "dark",
+    "available_themes": ["dark", "light", "blue", "green"],
+    "custom_colors": {
+      "primary": "#4a90e2",
+      "secondary": "#7b68ee",
+      "success": "#28a745",
+      "warning": "#ffc107",
+      "danger": "#dc3545",
+      "info": "#17a2b8"
+    }
+  },
+  "layout": {
+    "main_menu": {
+      "width": 800,
+      "height": 600,
+      "position": "center"
+    },
+    "game_window": {
+      "width": 1280,
+      "height": 720,
+      "position": "center",
+      "resizable": true
+    },
+    "hud": {
+      "health_bar_position": "top_left",
+      "mana_bar_position": "top_left",
+      "inventory_position": "right",
+      "minimap_position": "top_right",
+      "chat_position": "bottom_left"
+    }
+  },
+  "controls": {
+    "keyboard": {
+      "move_up": "W",
+      "move_down": "S",
+      "move_left": "A",
+      "move_right": "D",
+      "inventory": "I",
+      "character": "C",
+      "map": "M",
+      "chat": "Enter",
+      "attack": "Space",
+      "sprint": "Shift",
+      "crouch": "Ctrl"
+    },
+    "mouse": {
+      "sensitivity": 1.0,
+      "invert_y": false,
+      "double_click_time": 0.3
+    }
+  },
+  "display": {
+    "show_damage_numbers": true,
+    "show_health_bars": true,
+    "show_minimap": true,
+    "show_fps": false,
+    "show_coordinates": false,
+    "show_debug_info": false,
+    "ui_scale": 1.0,
+    "font_size": 16,
+    "tooltip_delay": 0.5,
+    "animation_speed": 1.0
+  },
+  "notifications": {
+    "enabled": true,
+    "position": "top_right",
+    "duration": 5.0,
+    "max_notifications": 5,
+    "sound_enabled": true,
+    "types": {
+      "quest": {"color": "#28a745", "sound": "quest_notification"},
+      "combat": {"color": "#dc3545", "sound": "combat_notification"},
+      "inventory": {"color": "#ffc107", "sound": "inventory_notification"},
+      "system": {"color": "#17a2b8", "sound": "system_notification"}
+    }
+  },
+  "accessibility": {
+    "high_contrast": false,
+    "large_text": false,
+    "screen_reader_support": false,
+    "color_blind_support": false,
+    "keyboard_navigation": true
+  }
+}

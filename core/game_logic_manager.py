@@ -11,7 +11,7 @@ from core.game_state_manager import GameStateManager
 
 # Убираем циклический импорт
 if TYPE_CHECKING:
-    from entities.entity_refactored import Entity
+    from entities.base_entity import BaseEntity
 
 
 class GameLogicManager:
@@ -84,7 +84,7 @@ class GameLogicManager:
 
     def _move_entity_toward(
         self,
-        entity: "Entity",
+        entity: "BaseEntity",
         target_pos: Tuple[float, float],
         speed: float,
         delta_time: float,
@@ -210,7 +210,7 @@ class GameLogicManager:
             self._check_entity_chest_interaction(self.game_state.boss, tw, th)
 
     def _check_entity_chest_interaction(
-        self, entity: "Entity", tile_width: int, tile_height: int
+        self, entity: "BaseEntity", tile_width: int, tile_height: int
     ) -> None:
         """Проверка взаимодействия сущности с сундуком"""
         ex, ey = entity.position

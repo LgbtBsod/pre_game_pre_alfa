@@ -12,7 +12,7 @@ from dataclasses import dataclass, asdict
 import threading
 from datetime import datetime
 
-from config.settings_manager import settings_manager
+from config.config_manager import config_manager
 from core.data_manager import data_manager
 
 logger = logging.getLogger(__name__)
@@ -71,9 +71,7 @@ class GameStateManager:
         # Текущее состояние
         self.current_state: Optional[GameState] = None
         self.auto_save_enabled = True
-        self.auto_save_interval = settings_manager.get_setting(
-            "auto_save_interval", 300
-        )
+        self.auto_save_interval = config_manager.get('game', 'gameplay.auto_save_interval', 300)
         self.last_auto_save = 0
 
     def _init_database(self):

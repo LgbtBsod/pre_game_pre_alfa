@@ -22,9 +22,7 @@ class DamageSystem:
         damage_report = {"total": 0.0}
 
         # Получаем настройки боя
-        from config.unified_settings import get_combat_settings
-
-        combat_settings = get_combat_settings()
+        from config.config_manager import config_manager
 
         # Базовый урон от характеристик (атрибуты представлены числами)
         base_damage = 0.0
@@ -37,17 +35,17 @@ class DamageSystem:
         if any(k in wtype for k in ["sword", "axe", "hammer"]):
             base_damage = (
                 float(attacker.attributes.get("strength", 10))
-                * combat_settings.MELEE_DAMAGE_MULTIPLIER
+                * config_manager.get('game', 'combat.melee_damage_multiplier', 1.5)
             )
         elif any(k in wtype for k in ["bow", "crossbow", "musket"]):
             base_damage = (
                 float(attacker.attributes.get("dexterity", 10))
-                * combat_settings.RANGED_DAMAGE_MULTIPLIER
+                * config_manager.get('game', 'combat.ranged_damage_multiplier', 1.2)
             )
         elif "staff" in wtype:
             base_damage = (
                 float(attacker.attributes.get("intelligence", 10))
-                * combat_settings.MAGIC_DAMAGE_MULTIPLIER
+                * config_manager.get('game', 'combat.magic_damage_multiplier', 1.8)
             )
 
         # Учет урона от оружия
@@ -79,11 +77,11 @@ class DamageSystem:
         # Учет критического удара
         critical_chance = float(
             attacker.combat_stats.get(
-                "critical_chance", combat_settings.BASE_CRITICAL_CHANCE
+                "critical_chance", config_manager.get('game', 'combat.critical_chance_base', 0.05)
             )
         ) + float(getattr(weapon, "critical_chance", 0.0))
         if random.random() < critical_chance:
-            total_damage *= combat_settings.CRITICAL_DAMAGE_MULTIPLIER
+            total_damage *= config_manager.get('game', 'combat.critical_damage_multiplier', 2.0)
             damage_report["critical"] = True
 
         # Учет навыков (если есть)

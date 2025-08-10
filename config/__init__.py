@@ -1,23 +1,10 @@
-"""Конфигурационные модули игры."""
+"""
+Модуль конфигурации игры.
+Содержит все настройки и конфигурационные файлы.
+"""
 
-from .game_constants import (
-    WINDOW_WIDTH,
-    WINDOW_HEIGHT,
-    MAP_TILE_SIZE,
-    MAP_WIDTH,
-    MAP_HEIGHT,
-    PLAYER_START_HEALTH,
-    PLAYER_START_MANA,
-    PLAYER_START_STAMINA,
-    ENEMY_BASE_HEALTH,
-    ENEMY_BASE_MANA,
-    ENEMY_BASE_STAMINA,
-    BOSS_HEALTH_MULTIPLIER,
-    BOSS_DAMAGE_MULTIPLIER,
-    ATTACK_RANGE,
-    CRITICAL_CHANCE_BASE,
-    CRITICAL_MULTIPLIER_BASE,
-    XP_BASE,
-    XP_MULTIPLIER,
-    LEVEL_CAP,
-)
+from .config_manager import config_manager
+
+__all__ = [
+    'config_manager',
+]

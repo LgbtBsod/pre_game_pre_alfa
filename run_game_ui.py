@@ -23,7 +23,7 @@ logger = get_logger("Main")
 setup_logging("INFO")
 
 # Импорт основных систем
-from config.settings_manager import settings_manager
+from config.config_manager import config_manager
 from core.data_manager import data_manager
 from core.game_state_manager import game_state_manager
 from entities.entity_factory import entity_factory
@@ -52,7 +52,7 @@ class GameLauncher:
 
             # Загружаем настройки
             logger.info("Загрузка настроек...")
-            settings_manager.reload_settings()
+            config_manager.reload()
             logger.info("✓ Настройки загружены")
 
             # Загружаем данные

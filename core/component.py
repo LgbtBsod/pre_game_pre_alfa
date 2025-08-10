@@ -4,13 +4,13 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from entities.entity_refactored import Entity
+    from entities.base_entity import BaseEntity
 
 
 class Component(ABC):
     """Базовый класс для всех компонентов."""
 
-    def __init__(self, entity: "Entity"):
+    def __init__(self, entity: "BaseEntity"):
         self.entity = entity
         self.enabled = True
         self._initialized = False
