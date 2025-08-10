@@ -1,8 +1,16 @@
+"""Система уровней и характеристик."""
+
 import random
 import math
-from typing import Dict, List, Optional, Tuple, Any
+import logging
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
+
+from .component import Component
+from .attributes import AttributesComponent
+
+logger = logging.getLogger(__name__)
 
 
 class AttributeType(Enum):
@@ -134,7 +142,7 @@ class LevelingSystem:
         if hasattr(self.entity, 'on_level_up'):
             self.entity.on_level_up(old_level, self.level)
         
-        print(f"Уровень повышен! {old_level} → {self.level}")
+        logger.info(f"Уровень повышен! {old_level} → {self.level}")
     
     def _calculate_exp_requirement(self, level: int) -> int:
         """Рассчитать требуемый опыт для уровня"""
@@ -160,7 +168,7 @@ class LevelingSystem:
         # Обновляем текущие значения
         self._recalculate_attributes()
         
-        print(f"Характеристика {attribute.value} увеличена на {amount}")
+        logger.info(f"Характеристика {attribute.value} увеличена на {amount}")
         return True
     
     def add_attribute_bonus(self, attribute: AttributeType, bonus: AttributeBonus):
@@ -288,7 +296,7 @@ class LevelingSystem:
         if cost > 0 and hasattr(self.entity, 'currency'):
             self.entity.currency -= cost
         
-        print("Характеристики сброшены")
+        logger.info("Характеристики сброшены")
         return True
     
     def update(self, delta_time: float):

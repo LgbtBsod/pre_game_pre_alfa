@@ -139,14 +139,35 @@ class Boss(BaseEnemy):
     def apply_phase_effects(self):
         """Применение эффектов текущей фазы"""
         # Удаляем старые фазовые эффекты
-        self.active_effects = [effect for effect in self.active_effects 
-                              if not hasattr(effect, 'is_phase_effect')]
+        self.active_effects = {k: v for k, v in self.active_effects.items() 
+                              if not hasattr(v, 'is_phase_effect')}
         
         # Применяем новые фазовые эффекты
         phase_effects = {
-            1: {"name": "Фаза 1", "modifiers": {"damage_output": 1.0}},
-            2: {"name": "Фаза 2", "modifiers": {"damage_output": 1.3, "attack_speed": 1.2}},
-            3: {"name": "Фаза 3", "modifiers": {"damage_output": 1.6, "attack_speed": 1.4, "movement_speed": 1.3}}
+            1: {
+                "id": "phase_1", 
+                "tags": ["phase", "buff"], 
+                "modifiers": [
+                    {"attribute": "damage_output", "value": 1.0, "mode": "multiply"}
+                ]
+            },
+            2: {
+                "id": "phase_2", 
+                "tags": ["phase", "buff"], 
+                "modifiers": [
+                    {"attribute": "damage_output", "value": 1.3, "mode": "multiply"},
+                    {"attribute": "attack_speed", "value": 1.2, "mode": "multiply"}
+                ]
+            },
+            3: {
+                "id": "phase_3", 
+                "tags": ["phase", "buff"], 
+                "modifiers": [
+                    {"attribute": "damage_output", "value": 1.6, "mode": "multiply"},
+                    {"attribute": "attack_speed", "value": 1.4, "mode": "multiply"},
+                    {"attribute": "movement_speed", "value": 1.3, "mode": "multiply"}
+                ]
+            }
         }
         
         if self.phase in phase_effects:

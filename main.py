@@ -4,11 +4,23 @@ import time
 import json
 import os
 import sys
+import logging
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 # Fix imports for Panda3D 1.10.15
 from direct.gui.DirectGui import DirectButton, DirectLabel, DirectEntry, DirectOptionMenu
 from direct.gui.OnscreenText import OnscreenText
+
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('game.log', encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Aliases for compatibility
 OnscreenButton = DirectButton
@@ -19,7 +31,7 @@ from panda3d.core import (
     DirectionalLight, AmbientLight, Spotlight, PerspectiveLens,
     CollisionTraverser, CollisionHandlerQueue, CollisionNode,
     CollisionSphere, CollisionBox, CollisionRay, CollisionHandlerPusher,
-    BitMask32, PandaNode, NodePath, PandaNode, PandaNode
+    BitMask32, PandaNode, NodePath
 )
 from entities.player import Player
 from entities.enemy import Enemy, EnemyGenerator
@@ -38,8 +50,18 @@ from ai.decision_maker import PlayerDecisionMaker
 from core.skill_system import SkillSystem
 from core.leveling_system import LevelingSystem
 from core.ai_update_scheduler import AIUpdateScheduler
-from config.game_constants import *
-from utils.game_utils import *
+from config.game_constants import (
+    ENEMY_COUNT_EASY, ENEMY_COUNT_NORMAL, ENEMY_COUNT_HARD,
+    ENEMY_LEVEL_MIN_EASY, ENEMY_LEVEL_MAX_EASY,
+    ENEMY_LEVEL_MIN_NORMAL, ENEMY_LEVEL_MAX_NORMAL,
+    ENEMY_LEVEL_MIN_HARD, ENEMY_LEVEL_MAX_HARD,
+    BOSS_LEVEL_EASY, BOSS_LEVEL_NORMAL, BOSS_LEVEL_HARD
+)
+from utils.game_utils import (
+    calculate_distance, normalize_vector, clamp_value, 
+    interpolate_values, random_point_in_circle, rgb_to_hex, 
+    format_time, format_number
+)
 
 
 class Panda3DGame(ShowBase):
@@ -179,7 +201,7 @@ class Panda3DGame(ShowBase):
             with open("items/items.json", "r", encoding="utf-8") as f:
                 self.items_data = json.load(f)
         except Exception as e:
-            print(f"Error loading items: {e}")
+            logger.error(f"Error loading items: {e}")
             self.items_data = {}
     
     def show_main_menu(self):
@@ -345,7 +367,8 @@ class Panda3DGame(ShowBase):
         try:
             # User map
             self.tiled_map = TiledMap("map/map.json")
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error initializing game map: {e}")
             self.tiled_map = None
 
         # Entities
@@ -356,7 +379,7 @@ class Panda3DGame(ShowBase):
         # Weapon for player
         if not self.player.equipment.get("weapon"):
             starter_weapon = WeaponGenerator.generate_weapon(1)
-            self.player.equip_item(starter_weapon)
+            self.player.equip_item(starter_weapon, "weapon")
 
         # AI coordinator
         self.coordinator = AICoordinator()
@@ -996,9 +1019,9 @@ class Panda3DGame(ShowBase):
         if hasattr(self, 'skill_system') and self.player:
             success = self.skill_system.use_skill(skill_id, self.player)
             if success:
-                print(f"Skill {skill_id} used successfully")
+                logger.info(f"Skill {skill_id} used successfully")
             else:
-                print(f"Could not use skill {skill_id}")
+                logger.warning(f"Could not use skill {skill_id}")
     
     def _on_left_click(self):
         """Handle left mouse click"""
@@ -1094,13 +1117,13 @@ class Panda3DGame(ShowBase):
                 self.user_obstacles = set(tuple(obs) for obs in save_data.get("obstacles", []))
                 self.chests = save_data.get("chests", [])
                 
-                print("Game loaded successfully")
+                logger.info("Game loaded successfully")
             except Exception as e:
-                print(f"Error loading: {e}")
+                logger.error(f"Error loading: {e}")
                 self.show_menu = True
                 self.show_main_menu()
         else:
-            print("Save file not found")
+            logger.warning("Save file not found")
             self.show_menu = True
             self.show_main_menu()
     
@@ -1124,9 +1147,9 @@ class Panda3DGame(ShowBase):
             with open(self.save_file, "w", encoding="utf-8") as f:
                 json.dump(save_data, f, indent=2)
             
-            print("Game saved")
+            logger.info("Game saved")
         except Exception as e:
-            print(f"Error saving: {e}")
+            logger.error(f"Error saving: {e}")
     
     def _update_enemy_ai(self, dt: float):
         """Update enemy AI"""
@@ -1159,7 +1182,7 @@ class Panda3DGame(ShowBase):
     
     def stop(self):
         """Stop game"""
-        print("Closing game...")
+        logger.info("Closing game...")
         self.running = False
         self.userExit()
 

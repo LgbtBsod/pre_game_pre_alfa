@@ -1,0 +1,96 @@
+{
+  "attributes": {
+    "str_001": {
+      "id": "str_001",
+      "name": "Сила",
+      "description": "Увеличивает физический урон и переносимый вес",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "physical",
+      "effects": {
+        "damage_output": 2.0,
+        "carry_weight": 5.0
+      }
+    },
+    "dex_001": {
+      "id": "dex_001", 
+      "name": "Ловкость",
+      "description": "Увеличивает точность, критический шанс и скорость атаки",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "physical",
+      "effects": {
+        "critical_chance": 0.01,
+        "attack_speed": 0.02,
+        "accuracy": 0.5
+      }
+    },
+    "int_001": {
+      "id": "int_001",
+      "name": "Интеллект", 
+      "description": "Увеличивает магический урон и максимальную ману",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "magical",
+      "effects": {
+        "magic_damage": 2.0,
+        "max_mana": 5.0
+      }
+    },
+    "vit_001": {
+      "id": "vit_001",
+      "name": "Живучесть",
+      "description": "Увеличивает здоровье и регенерацию",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "survival",
+      "effects": {
+        "max_health": 20.0,
+        "health_regen": 0.1
+      }
+    },
+    "end_001": {
+      "id": "end_001",
+      "name": "Выносливость",
+      "description": "Увеличивает выносливость и физическую защиту",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "survival",
+      "effects": {
+        "max_stamina": 15.0,
+        "physical_resist": 0.1
+      }
+    },
+    "fai_001": {
+      "id": "fai_001",
+      "name": "Вера",
+      "description": "Увеличивает священную магию и защиту от нежити",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "magical",
+      "effects": {
+        "holy_damage": 2.0,
+        "undead_resist": 0.2
+      }
+    },
+    "luc_001": {
+      "id": "luc_001",
+      "name": "Удача",
+      "description": "Увеличивает критический шанс и качество добычи",
+      "base_value": 10.0,
+      "max_value": 100.0,
+      "growth_rate": 1.0,
+      "category": "utility",
+      "effects": {
+        "critical_chance": 0.005,
+        "loot_quality": 0.1
+      }
+    }
+  }
+}

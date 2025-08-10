@@ -123,7 +123,7 @@ class Enemy(BaseEnemy):
         # Применение генетических модификаторов
         for attr, modifier in profile.get("attribute_modifiers", {}).items():
             if self.has_attribute(attr):
-                current_value = self.get_attribute(attr)
+                current_value = self.get_attribute_value(attr)  # Используем новый метод
                 new_value = int(current_value * modifier)
                 self.set_attribute_base(attr, new_value)
     

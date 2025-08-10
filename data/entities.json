@@ -1,0 +1,153 @@
+{
+  "entities": {
+    "player_001": {
+      "id": "player_001",
+      "name": "Игрок",
+      "description": "Главный персонаж игры",
+      "type": "player",
+      "level": 1,
+      "experience": 0,
+      "experience_to_next": 100,
+      "attributes": {
+        "str_001": 10.0,
+        "dex_001": 10.0,
+        "int_001": 10.0,
+        "vit_001": 10.0,
+        "end_001": 10.0,
+        "fai_001": 10.0,
+        "luc_001": 10.0
+      },
+      "combat_stats": {
+        "health": 100.0,
+        "max_health": 100.0,
+        "mana": 50.0,
+        "max_mana": 50.0,
+        "stamina": 100.0,
+        "max_stamina": 100.0,
+        "damage_output": 10.0,
+        "defense": 5.0,
+        "movement_speed": 100.0,
+        "attack_speed": 1.0,
+        "critical_chance": 0.05,
+        "critical_multiplier": 1.5
+      },
+      "equipment_slots": ["weapon", "shield", "armor", "helmet", "gloves", "boots", "accessory1", "accessory2"],
+      "inventory_size": 20,
+      "skills": ["whirlwind_attack", "healing_light"],
+      "tags": ["playable", "humanoid"]
+    },
+    "enemy_001": {
+      "id": "enemy_001",
+      "name": "Гоблин-воин",
+      "description": "Агрессивный гоблин с мечом",
+      "type": "enemy",
+      "enemy_type": "warrior",
+      "level": 1,
+      "experience_reward": 25,
+      "attributes": {
+        "str_001": 8.0,
+        "dex_001": 12.0,
+        "vit_001": 8.0,
+        "end_001": 6.0
+      },
+      "combat_stats": {
+        "health": 80.0,
+        "max_health": 80.0,
+        "mana": 20.0,
+        "max_mana": 20.0,
+        "stamina": 60.0,
+        "max_stamina": 60.0,
+        "damage_output": 8.0,
+        "defense": 3.0,
+        "movement_speed": 90.0,
+        "attack_speed": 1.1,
+        "critical_chance": 0.03,
+        "critical_multiplier": 1.3
+      },
+      "ai_behavior": "aggressive",
+      "loot_table": ["wpn_001", "pot_001"],
+      "skills": ["basic_attack"],
+      "tags": ["enemy", "goblin", "melee"]
+    },
+    "enemy_002": {
+      "id": "enemy_002",
+      "name": "Гоблин-лучник",
+      "description": "Гоблин с луком",
+      "type": "enemy",
+      "enemy_type": "archer",
+      "level": 1,
+      "experience_reward": 30,
+      "attributes": {
+        "dex_001": 15.0,
+        "int_001": 5.0,
+        "vit_001": 6.0,
+        "end_001": 8.0
+      },
+      "combat_stats": {
+        "health": 60.0,
+        "max_health": 60.0,
+        "mana": 30.0,
+        "max_mana": 30.0,
+        "stamina": 80.0,
+        "max_stamina": 80.0,
+        "damage_output": 6.0,
+        "defense": 2.0,
+        "movement_speed": 110.0,
+        "attack_speed": 1.3,
+        "critical_chance": 0.08,
+        "critical_multiplier": 1.4,
+        "attack_range": 15.0
+      },
+      "ai_behavior": "ranged",
+      "loot_table": ["wpn_002", "pot_002"],
+      "skills": ["ranged_attack"],
+      "tags": ["enemy", "goblin", "ranged"]
+    },
+    "boss_001": {
+      "id": "boss_001",
+      "name": "Гоблин-вожак",
+      "description": "Мощный гоблин-вожак",
+      "type": "boss",
+      "enemy_type": "warrior",
+      "level": 3,
+      "experience_reward": 150,
+      "attributes": {
+        "str_001": 15.0,
+        "dex_001": 18.0,
+        "vit_001": 20.0,
+        "end_001": 12.0,
+        "int_001": 8.0
+      },
+      "combat_stats": {
+        "health": 300.0,
+        "max_health": 300.0,
+        "mana": 80.0,
+        "max_mana": 80.0,
+        "stamina": 150.0,
+        "max_stamina": 150.0,
+        "damage_output": 25.0,
+        "defense": 15.0,
+        "movement_speed": 85.0,
+        "attack_speed": 0.9,
+        "critical_chance": 0.12,
+        "critical_multiplier": 1.8
+      },
+      "ai_behavior": "boss",
+      "phases": [
+        {
+          "health_threshold": 0.7,
+          "effects": ["rage_001"],
+          "skills": ["whirlwind_attack"]
+        },
+        {
+          "health_threshold": 0.3,
+          "effects": ["berserker_001"],
+          "skills": ["berserker_rage", "dragon_breath"]
+        }
+      ],
+      "loot_table": ["wpn_001", "arm_001", "shl_001", "pot_001", "pot_002"],
+      "skills": ["basic_attack", "whirlwind_attack", "berserker_rage", "dragon_breath"],
+      "tags": ["boss", "goblin", "melee", "leader"]
+    }
+  }
+}

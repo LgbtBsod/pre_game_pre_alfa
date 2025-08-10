@@ -1,9 +1,14 @@
+"""Система умений и способностей."""
+
 import random
 import time
-from typing import Dict, List, Optional, Tuple, Any, Callable
+import logging
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from core.leveling_system import AttributeType
+
+logger = logging.getLogger(__name__)
 
 
 class SkillType(Enum):
@@ -336,7 +341,7 @@ class SkillSystem:
     
     def on_skill_learned(self, skill: Skill):
         """Обработчик изучения умения"""
-        print(f"Изучено новое умение: {skill.name}")
+        logger.info(f"Изучено новое умение: {skill.name}")
         
         # Можно добавить логику для автоматической активации умений
         if skill.skill_type == SkillType.PASSIVE:

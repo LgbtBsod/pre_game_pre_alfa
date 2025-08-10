@@ -2,6 +2,11 @@ import random
 from enum import Enum
 import json
 import trace
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from .item import Item
+
+logger = logging.getLogger(__name__)
 
 class WeaponType(Enum):
     SWORD = "Меч"
@@ -111,7 +116,7 @@ class WeaponGenerator:
                 cls._effects_data = json.load(f)
             return cls._effects_data
         except Exception as e:
-            print(f"Ошибка загрузки effects.json: {str(e)}")
+            logger.error(f"Ошибка загрузки effects.json: {str(e)}")
             traceback.print_exc()
             
             # Возвращаем минимальный набор эффектов
@@ -211,7 +216,7 @@ class WeaponGenerator:
                     weapon.add_equip_effect(effect_id, effects_data[effect_id])
                     weapon.special_effects.append(effects_data[effect_id].get('name', effect_id))
         except Exception as e:
-            print(f"Ошибка добавления эффектов к оружию: {str(e)}")
+            logger.error(f"Ошибка добавления эффектов к оружию: {str(e)}")
             traceback.print_exc()
         
         return weapon

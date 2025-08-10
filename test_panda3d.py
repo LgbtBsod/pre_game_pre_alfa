@@ -1,12 +1,24 @@
 #!/usr/bin/env python3
-"""
-Простой тест Panda3D для проверки установки
-"""
+"""Тест Panda3D для проверки 3D функциональности."""
+
+import sys
+import os
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Добавляем корневую директорию в путь
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import WindowProperties, TextNode
 from direct.gui.OnscreenText import OnscreenText
-print("✓ Panda3D успешно импортирован")
+logger.info("✓ Panda3D успешно импортирован")
 
 class TestPanda3D(ShowBase):
     def __init__(self):
@@ -28,8 +40,8 @@ class TestPanda3D(ShowBase):
         self.accept("escape", self.userExit)
         self.accept("space", self.rotate_cube)
         
-        print("✓ Panda3D тест запущен успешно")
-        print("Нажмите SPACE для вращения куба, ESC для выхода")
+        logger.info("✓ Panda3D тест запущен успешно")
+        logger.info("Нажмите SPACE для вращения куба, ESC для выхода")
     
     def create_test_cube(self):
         """Создание тестового куба"""
@@ -39,16 +51,16 @@ class TestPanda3D(ShowBase):
             if not self.cube:
                 # Если модель не найдена, создаем простой куб
                 self.cube = self.create_simple_cube()
-                print("✓ Создан простой куб")
+                logger.info("✓ Создан простой куб")
             else:
-                print("✓ Загружена модель box.egg")
+                logger.info("✓ Загружена модель box.egg")
             
             self.cube.setColor(0, 0.8, 1, 1)  # Голубой цвет
             self.cube.setPos(0, 0, 0)
             self.cube.reparentTo(self.render)
             
         except Exception as e:
-            print(f"⚠ Ошибка создания куба: {e}")
+            logger.warning(f"⚠ Ошибка создания куба: {e}")
             self.cube = None
     
     def create_simple_cube(self):
@@ -126,11 +138,11 @@ class TestPanda3D(ShowBase):
         )
         
         # Кнопка теста (упрощенная версия)
-        print("Кнопка теста создана (упрощенная версия)")
+        logger.info("Кнопка теста создана (упрощенная версия)")
     
     def test_button_click(self):
         """Тест нажатия кнопки"""
-        print("✓ Кнопка работает!")
+        logger.info("✓ Кнопка работает!")
         if self.cube:
             self.cube.setColor(1, 0.5, 0, 1)  # Оранжевый цвет
     
@@ -138,16 +150,16 @@ class TestPanda3D(ShowBase):
         """Вращение куба"""
         if self.cube:
             self.cube.setH(self.cube.getH() + 45)
-            print("Куб повернут на 45°")
+            logger.info("Куб повернут на 45°")
 
 def main():
-    print("Запуск теста Panda3D...")
+    logger.info("Запуск теста Panda3D...")
     try:
         app = TestPanda3D()
         app.run()
-        print("✓ Тест завершен успешно")
+        logger.info("✓ Тест завершен успешно")
     except Exception as e:
-        print(f"✗ Ошибка запуска: {e}")
+        logger.error(f"✗ Ошибка запуска: {e}")
         import traceback
         traceback.print_exc()
 

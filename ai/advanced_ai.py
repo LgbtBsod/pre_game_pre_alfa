@@ -3,10 +3,13 @@ import json
 import os
 import time
 import math
+import logging
 from .behavior_tree import BehaviorTree, generate_tree_for_personality
 from .memory import AIMemory, LearningController
 from .cooperation import AICoordinator, GroupTactics
 from .emotion_genetics import EmotionGeneticSynthesizer
+
+logger = logging.getLogger(__name__)
 
 class AdvancedAIController:
     # Уровни приоритета для оптимизации
@@ -60,7 +63,7 @@ class AdvancedAIController:
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Ошибка загрузки {file_path}: {str(e)}")
+            logger.error(f"Ошибка загрузки {file_path}: {str(e)}")
             return {}
     
     def _create_behavior_tree(self):

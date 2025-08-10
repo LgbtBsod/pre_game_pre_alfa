@@ -1,4 +1,10 @@
-import pygame
+"""Кнопки пользовательского интерфейса."""
+
+import logging
+from typing import Callable, Optional, Any
+from direct.gui.DirectGui import DirectButton
+
+logger = logging.getLogger(__name__)
 
 class Button:
     def __init__(self, x, y, width, height, text, action=None):
@@ -36,7 +42,7 @@ class Button:
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if self.rect.collidepoint(event.pos):
-                print(f"Button '{self.text}' pressed")  # Отладочный вывод
+                logger.debug(f"Button '{self.text}' pressed")  # Отладочный вывод
                 return self.action()
         return None
 

@@ -1,0 +1,80 @@
+{
+  "game_settings": {
+    "difficulty": {
+      "easy": {
+        "enemy_damage_multiplier": 0.8,
+        "enemy_health_multiplier": 0.8,
+        "player_damage_multiplier": 1.2,
+        "player_health_multiplier": 1.2,
+        "experience_multiplier": 1.5
+      },
+      "normal": {
+        "enemy_damage_multiplier": 1.0,
+        "enemy_health_multiplier": 1.0,
+        "player_damage_multiplier": 1.0,
+        "player_health_multiplier": 1.0,
+        "experience_multiplier": 1.0
+      },
+      "hard": {
+        "enemy_damage_multiplier": 1.3,
+        "enemy_health_multiplier": 1.5,
+        "player_damage_multiplier": 0.9,
+        "player_health_multiplier": 0.9,
+        "experience_multiplier": 0.8
+      }
+    },
+    "combat": {
+      "base_attack_cooldown": 1.0,
+      "critical_hit_threshold": 0.95,
+      "block_chance_cap": 0.75,
+      "dodge_chance_cap": 0.5,
+      "parry_chance_cap": 0.4,
+      "damage_reduction_cap": 0.8
+    },
+    "movement": {
+      "base_movement_speed": 100.0,
+      "sprint_multiplier": 1.5,
+      "crouch_multiplier": 0.6,
+      "swim_multiplier": 0.7,
+      "climb_multiplier": 0.4
+    },
+    "inventory": {
+      "max_stack_size": 99,
+      "auto_sort_enabled": true,
+      "quick_slot_count": 8,
+      "weight_limit_enabled": true,
+      "base_weight_limit": 100.0
+    },
+    "ui": {
+      "show_damage_numbers": true,
+      "show_health_bars": true,
+      "show_minimap": true,
+      "show_quest_log": true,
+      "ui_scale": 1.0,
+      "language": "ru"
+    },
+    "audio": {
+      "master_volume": 1.0,
+      "music_volume": 0.8,
+      "sfx_volume": 1.0,
+      "voice_volume": 0.9,
+      "ambient_volume": 0.6
+    },
+    "graphics": {
+      "resolution": "1920x1080",
+      "fullscreen": false,
+      "vsync": true,
+      "antialiasing": "msaa_4x",
+      "texture_quality": "high",
+      "shadow_quality": "medium",
+      "particle_quality": "high"
+    },
+    "ai": {
+      "learning_rate": 0.1,
+      "memory_decay_rate": 0.95,
+      "pattern_recognition_threshold": 0.7,
+      "emotion_synthesis_enabled": true,
+      "adaptive_difficulty": true
+    }
+  }
+}

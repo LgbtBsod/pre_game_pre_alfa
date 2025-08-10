@@ -1,7 +1,12 @@
-import json
+"""Базовый класс для всех предметов в игре."""
+
 import random
-import pickle
-from collections import defaultdict
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 class Item:
     def __init__(self, x, y, item_type="health", rarity=None):
@@ -69,13 +74,13 @@ class Item:
 
     def use(self, user):
         """Использование предмета"""
-        print(f"Использовано {self.item_type}")
+        logger.info(f"Использовано {self.item_type}")
         
         # Применение эффектов
         for effect, value in self.effects.items():
             if effect == "heal":
                 user.health = min(user.max_health, user.health + value)
-                print(f"Здоровье восстановлено на {value}. Теперь: {user.health}")
+                logger.info(f"Здоровье восстановлено на {value}. Теперь: {user.health}")
             elif effect == "currency":
                 user.gain_currency(value)
             elif effect == "regen_health":

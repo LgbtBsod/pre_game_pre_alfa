@@ -1,11 +1,18 @@
-"""Базовый класс для врагов, содержащий общую логику."""
+"""Базовый класс для всех врагов."""
 
 import random
 import json
 import os
-from typing import Dict, Any, Tuple, Optional
-from .entity_refactored import Entity
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
+from .entity import Entity
+from .effect import Effect
 from ai.advanced_ai import AdvancedAIController
+
+logger = logging.getLogger(__name__)
 
 
 class BaseEnemy(Entity):
@@ -17,8 +24,7 @@ class BaseEnemy(Entity):
     ABILITIES_PATH = "data/abilities.json"
     
     def __init__(self, entity_id: str, enemy_type: str, level: int, position: Tuple[float, float]):
-        from .entity_refactored import EntityType
-        super().__init__(entity_id, EntityType.ENEMY, position)
+        super().__init__(entity_id, position)
         
         self.enemy_type = enemy_type
         self.level = level
@@ -53,7 +59,7 @@ class BaseEnemy(Entity):
             with open(file_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Ошибка загрузки {file_path}: {str(e)}")
+            logger.error(f"Ошибка загрузки {file_path}: {str(e)}")
             return {}
     
     def _init_attributes(self):

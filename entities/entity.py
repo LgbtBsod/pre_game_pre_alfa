@@ -23,11 +23,8 @@ class CombatStyle(Enum):
     MAGIC = "magic"
 
 
-@dataclass
-class Attribute:
-    value: int
-    max_value: int = 100
-    growth_rate: float = 1.0
+# Атрибуты как кортежи: (текущее_значение, максимальное_значение, скорость_роста)
+# Это упрощает доступ и делает код более читаемым
 
 
 class Entity:
@@ -39,15 +36,15 @@ class Entity:
         self.experience = 0
         self.experience_to_next = 100
         
-        # Характеристики
+        # Характеристики как кортежи: (текущее_значение, максимальное_значение, скорость_роста)
         self.attributes = {
-            "strength": Attribute(10),
-            "dexterity": Attribute(10),
-            "intelligence": Attribute(10),
-            "vitality": Attribute(10),
-            "endurance": Attribute(10),
-            "faith": Attribute(10),
-            "luck": Attribute(10),
+            "strength": (10, 100, 1.0),
+            "dexterity": (10, 100, 1.0),
+            "intelligence": (10, 100, 1.0),
+            "vitality": (10, 100, 1.0),
+            "endurance": (10, 100, 1.0),
+            "faith": (10, 100, 1.0),
+            "luck": (10, 100, 1.0),
         }
         self.attribute_points = 0
         
@@ -110,23 +107,23 @@ class Entity:
     def update_derived_stats(self):
         """Обновление производных характеристик на основе базовых"""
         # Здоровье
-        vitality = self.attributes["vitality"].value
+        vitality = self.attributes["vitality"][0]  # текущее значение
         self.combat_stats["max_health"] = 100 + vitality * 10
         self.combat_stats["health"] = min(self.combat_stats["health"], self.combat_stats["max_health"])
         
         # Мана
-        intelligence = self.attributes["intelligence"].value
+        intelligence = self.attributes["intelligence"][0]  # текущее значение
         self.combat_stats["max_mana"] = 50 + intelligence * 5
         self.combat_stats["mana"] = min(self.combat_stats["mana"], self.combat_stats["max_mana"])
         
         # Выносливость
-        endurance = self.attributes["endurance"].value
+        endurance = self.attributes["endurance"][0]  # текущее значение
         self.combat_stats["max_stamina"] = 100 + endurance * 5
         self.combat_stats["stamina"] = min(self.combat_stats["stamina"], self.combat_stats["max_stamina"])
         
         # Урон
-        strength = self.attributes["strength"].value
-        dexterity = self.attributes["dexterity"].value
+        strength = self.attributes["strength"][0]  # текущее значение
+        dexterity = self.attributes["dexterity"][0]  # текущее значение
         base_damage = 10 + strength * 2 + dexterity
         
         # Учитываем экипировку (поддержка словарей и объектного оружия)
@@ -635,3 +632,51 @@ class Entity:
     @physical_resist.setter
     def physical_resist(self, value: float):
         self.combat_stats["physical_resist"] = float(value)
+    
+    def set_attribute_base(self, name: str, value: float) -> None:
+        """Установить базовое значение атрибута"""
+        if name in self.attributes:
+            current, max_val, growth = self.attributes[name]
+            self.attributes[name] = (value, max_val, growth)
+    
+    def get_attribute(self, name: str) -> Optional[Tuple[float, float, float]]:
+        """Получить атрибут по имени как кортеж (текущее, максимальное, рост)"""
+        return self.attributes.get(name)
+    
+    def get_attribute_value(self, name: str) -> float:
+        """Получить текущее значение атрибута"""
+        if name in self.attributes:
+            return self.attributes[name][0]
+        return 0.0
+    
+    def get_attribute_max(self, name: str) -> float:
+        """Получить максимальное значение атрибута"""
+        if name in self.attributes:
+            return self.attributes[name][1]
+        return 0.0
+    
+    def get_attribute_growth(self, name: str) -> float:
+        """Получить скорость роста атрибута"""
+        if name in self.attributes:
+            return self.attributes[name][2]
+        return 0.0
+    
+    def has_attribute(self, name: str) -> bool:
+        """Проверить, есть ли атрибут"""
+        return name in self.attributes
+    
+    def increase_attribute(self, name: str, amount: float = 1.0) -> bool:
+        """Увеличить атрибут на указанное количество"""
+        if name in self.attributes and self.attribute_points >= amount:
+            current, max_val, growth = self.attributes[name]
+            new_current = min(current + amount, max_val)
+            self.attributes[name] = (new_current, max_val, growth)
+            self.attribute_points -= amount
+            return True
+        return False
+    
+    def set_attribute_max(self, name: str, new_max: float) -> None:
+        """Установить новое максимальное значение атрибута"""
+        if name in self.attributes:
+            current, _, growth = self.attributes[name]
+            self.attributes[name] = (current, new_max, growth)

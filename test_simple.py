@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
-"""
-Простой тест Panda3D для проверки базовой функциональности
-"""
+"""Простой тест для проверки базовой функциональности."""
+
+import logging
+
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
@@ -40,7 +47,7 @@ class SimpleTest(ShowBase):
         self.taskMgr.add(self.update, "update")
     
     def test_button(self):
-        print("Кнопка работает!")
+        logger.info("Кнопка работает!")
         self.text['text'] = "Кнопка нажата!"
     
     def update(self, task):

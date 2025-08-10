@@ -5,7 +5,7 @@ import random
 from typing import Tuple, List, Any, Dict
 
 
-def distance(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
+def calculate_distance(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
     """Вычисление расстояния между двумя точками."""
     return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
 
@@ -18,19 +18,19 @@ def normalize_vector(vector: Tuple[float, float]) -> Tuple[float, float]:
     return (vector[0] / length, vector[1] / length)
 
 
-def clamp(value: float, min_val: float, max_val: float) -> float:
+def clamp_value(value: float, min_val: float, max_val: float) -> float:
     """Ограничение значения в заданном диапазоне."""
     return max(min_val, min(value, max_val))
 
 
-def lerp(start: float, end: float, t: float) -> float:
+def interpolate_values(start: float, end: float, t: float) -> float:
     """Линейная интерполяция между двумя значениями."""
     return start + (end - start) * t
 
 
 def smooth_step(start: float, end: float, t: float) -> float:
     """Плавная интерполяция с использованием функции smoothstep."""
-    t = clamp(t, 0, 1)
+    t = clamp_value(t, 0, 1)
     t = t * t * (3 - 2 * t)  # smoothstep
     return start + (end - start) * t
 
@@ -51,7 +51,7 @@ def random_point_in_rectangle(center: Tuple[float, float], width: float, height:
     return (x, y)
 
 
-def point_in_rectangle(point: Tuple[float, float], rect_center: Tuple[float, float], 
+def is_point_in_rect(point: Tuple[float, float], rect_center: Tuple[float, float], 
                       width: float, height: float) -> bool:
     """Проверка, находится ли точка в прямоугольнике."""
     x, y = point
@@ -60,7 +60,7 @@ def point_in_rectangle(point: Tuple[float, float], rect_center: Tuple[float, flo
             cy - height/2 <= y <= cy + height/2)
 
 
-def rotate_point(point: Tuple[float, float], center: Tuple[float, float], angle: float) -> Tuple[float, float]:
+def rotate_point_around_center(point: Tuple[float, float], center: Tuple[float, float], angle: float) -> Tuple[float, float]:
     """Поворот точки вокруг центра на заданный угол."""
     x, y = point
     cx, cy = center
@@ -74,7 +74,7 @@ def rotate_point(point: Tuple[float, float], center: Tuple[float, float], angle:
     return (new_x, new_y)
 
 
-def angle_between_points(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
+def get_angle_between_points(pos1: Tuple[float, float], pos2: Tuple[float, float]) -> float:
     """Вычисление угла между двумя точками."""
     dx = pos2[0] - pos1[0]
     dy = pos2[1] - pos1[1]
@@ -85,7 +85,7 @@ def move_towards(current_pos: Tuple[float, float], target_pos: Tuple[float, floa
                 speed: float, delta_time: float) -> Tuple[float, float]:
     """Движение к цели с заданной скоростью."""
     direction = normalize_vector((target_pos[0] - current_pos[0], target_pos[1] - current_pos[1]))
-    distance_to_target = distance(current_pos, target_pos)
+    distance_to_target = calculate_distance(current_pos, target_pos)
     
     if distance_to_target <= speed * delta_time:
         return target_pos
@@ -170,10 +170,10 @@ def weighted_random_choice(choices: List[Tuple[Any, float]]) -> Any:
 
 def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], t: float) -> Tuple[int, int, int]:
     """Интерполяция между двумя цветами."""
-    t = clamp(t, 0, 1)
-    r = int(lerp(color1[0], color2[0], t))
-    g = int(lerp(color1[1], color2[1], t))
-    b = int(lerp(color1[2], color2[2], t))
+    t = clamp_value(t, 0, 1)
+    r = int(interpolate_values(color1[0], color2[0], t))
+    g = int(interpolate_values(color1[1], color2[1], t))
+    b = int(interpolate_values(color1[2], color2[2], t))
     return (r, g, b)
 
 

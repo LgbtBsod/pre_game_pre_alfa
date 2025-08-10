@@ -1,8 +1,18 @@
+"""Система урона и эффектов."""
+
 import random
+import time
+import logging
+from typing import Dict, List, Optional, Any, Tuple
+from dataclasses import dataclass
+from enum import Enum
+
 from entities.effect import Effect
 import json
 import os
-import time
+
+
+logger = logging.getLogger(__name__)
 
 
 class DamageSystem:
@@ -116,7 +126,7 @@ class DamageSystem:
                     target.active_effects.append(effect)
                     
         except Exception as e:
-            print(f"Ошибка применения эффекта {effect_id}: {e}")
+            logger.error(f"Ошибка применения эффекта {effect_id}: {e}")
     
     @staticmethod
     def process_entity_effects(entity, delta_time):

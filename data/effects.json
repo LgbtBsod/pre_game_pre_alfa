@@ -1,228 +1,489 @@
 {
-  "bleed": {
-    "name": "Кровотечение",
-    "description": "Постепенная потеря здоровья",
-    "tags": ["damage", "dot", "physical"],
-    "modifiers": [
-      {
-        "attribute": "health",
-        "value": "-20/1",
-        "mode": "add",
-        "duration": "30",
-        "interval": "1"
-      }
-    ],
-    "max_stacks": "5"
-  },
-  "burn": {
-    "name": "Горение",
-    "description": "Урон от огня с течением времени",
-    "tags": ["damage", "dot", "fire"],
-    "modifiers": [
-      {
-        "attribute": "health",
-        "value": "-15/1",
-        "mode": "add",
-        "duration": "15",
-        "interval": "1"
+  "effects": {
+    "str_001": {
+      "id": "str_001",
+      "name": "Усиление силы",
+      "description": "Увеличивает физический урон",
+      "type": "buff",
+      "category": "attribute",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "damage_output": 2.0,
+        "carry_weight": 5.0
       },
-      {
-        "attribute": "fire_resist",
-        "value": "-0.2",
-        "mode": "add",
-        "duration": "15"
-      }
-    ]
-  },
-  "slow": {
-    "name": "Замедление",
-    "description": "Снижение скорости передвижения",
-    "tags": ["movement", "debuff"],
-    "modifiers": [
-      {
-        "attribute": "speed",
-        "value": "0.6",
-        "mode": "multiply",
-        "duration": "10"
-      }
-    ]
-  },
-  "combat_rage": {
-    "name": "Боевая ярость",
-    "description": "Увеличение урона в ближнем бою",
-    "tags": ["buff", "physical"],
-    "modifiers": [
-      {
-        "attribute": "damage_output",
-        "value": "1.25",
-        "mode": "multiply"
+      "tags": ["strength", "physical", "permanent"]
+    },
+    "dex_001": {
+      "id": "dex_001",
+      "name": "Усиление ловкости",
+      "description": "Увеличивает точность и скорость атаки",
+      "type": "buff",
+      "category": "attribute",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "critical_chance": 0.01,
+        "attack_speed": 0.02,
+        "accuracy": 0.5
       },
-      {
-        "attribute": "physical_resist",
-        "value": "-0.1",
-        "mode": "add"
-      }
-    ]
-  },
-  "eagle_eye": {
-    "name": "Орлиный глаз",
-    "description": "Улучшенная точность для дальних атак",
-    "tags": ["buff", "ranged"],
-    "modifiers": [
-      {
-        "attribute": "critical_chance",
-        "value": "0.15",
-        "mode": "add"
+      "tags": ["dexterity", "physical", "permanent"]
+    },
+    "vit_001": {
+      "id": "vit_001",
+      "name": "Усиление жизненной силы",
+      "description": "Увеличивает здоровье и выносливость",
+      "type": "buff",
+      "category": "attribute",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "max_health": 10.0,
+        "max_stamina": 5.0,
+        "health_regeneration": 0.5
       },
-      {
-        "attribute": "attack_range",
-        "value": "1.2",
-        "mode": "multiply"
-      }
-    ]
-  },
-  "arcane_shield": {
-    "name": "Магический щит",
-    "description": "Защита от магических атак",
-    "tags": ["defense", "magic"],
-    "modifiers": [
-      {
-        "attribute": "mana",
-        "value": "-2/1",
-        "mode": "add",
-        "interval": "1"
+      "tags": ["vitality", "health", "permanent"]
+    },
+    "end_001": {
+      "id": "end_001",
+      "name": "Усиление выносливости",
+      "description": "Увеличивает защиту и сопротивление",
+      "type": "buff",
+      "category": "attribute",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "defense": 2.0,
+        "stamina_regeneration": 1.0,
+        "poison_resistance": 0.1
       },
-      {
-        "attribute": "elemental_resist",
-        "value": "0.4",
-        "mode": "add"
-      }
-    ]
-  },
-  "boss_aura_1": {
-    "name": "Аура страха",
-    "description": "Ослабляет врагов поблизости",
-    "tags": ["aura", "debuff"],
-    "modifiers": [
-      {
-        "attribute": "critical_chance",
-        "value": "-0.05",
-        "mode": "add",
-        "aura_radius": "15.0"
-      }
-    ]
-  },
-  "rage_mode": {
-    "name": "Режим ярости",
-    "description": "Значительное усиление после перехода во 2 фазу",
-    "tags": ["buff", "transform"],
-    "modifiers": [
-      {
-        "attribute": "damage_output",
-        "value": "1.5",
-        "mode": "multiply"
+      "tags": ["endurance", "defense", "permanent"]
+    },
+    "fire_001": {
+      "id": "fire_001",
+      "name": "Огненная сила",
+      "description": "Увеличивает огненный урон",
+      "type": "buff",
+      "category": "elemental",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "fire_damage": 5.0,
+        "fire_resistance": 0.1
       },
-      {
-        "attribute": "attack_speed",
-        "value": "1.3",
-        "mode": "multiply"
+      "tags": ["fire", "elemental", "permanent"]
+    },
+    "ice_001": {
+      "id": "ice_001",
+      "name": "Ледяная сила",
+      "description": "Увеличивает ледяной урон",
+      "type": "buff",
+      "category": "elemental",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "ice_damage": 5.0,
+        "ice_resistance": 0.1
       },
-      {
-        "attribute": "physical_resist",
-        "value": "-0.15",
-        "mode": "add"
-      }
-    ]
-  },
-  "final_stand": {
-    "name": "Последний рубеж",
-    "description": "Финальное усиление в последней фазе",
-    "tags": ["buff", "ultimate"],
-    "modifiers": [
-      {
-        "attribute": "health_regen",
-        "value": "2%/1",
-        "mode": "add",
-        "interval": "1"
+      "tags": ["ice", "elemental", "permanent"]
+    },
+    "lightning_001": {
+      "id": "lightning_001",
+      "name": "Молниевая сила",
+      "description": "Увеличивает электрический урон",
+      "type": "buff",
+      "category": "elemental",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "lightning_damage": 5.0,
+        "lightning_resistance": 0.1
       },
-      {
-        "attribute": "damage_output",
-        "value": "2.0",
-        "mode": "multiply"
+      "tags": ["lightning", "elemental", "permanent"]
+    },
+    "water_001": {
+      "id": "water_001",
+      "name": "Водяная сила",
+      "description": "Увеличивает водяной урон",
+      "type": "buff",
+      "category": "elemental",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "water_damage": 5.0,
+        "water_resistance": 0.1
       },
-      {
-        "attribute": "all_resist",
-        "value": "0.3",
-        "mode": "add"
-      }
-    ]
-  },
-  "lifesteel": {
-    "name": "Сталь жизни",
-    "description": "Поглощает часть наносимого урона как здоровье",
-    "tags": ["buff", "enhancement"],
-    "modifiers": [
-      {
-        "attribute": "life_steal",
-        "value": "0.1",
-        "mode": "add"
-      }
-    ]
-  },
-  "soulburn": {
-    "name": "Ожог души",
-    "description": "Наносит дополнительный темный урон при атаке",
-    "tags": ["dot", "debuff", "dark"],
-    "modifiers": [
-      {
-        "attribute": "health",
-        "value": "-25/1",
-        "mode": "add",
-        "duration": "5",
-        "interval": "1"
-      }
-    ]
-  },
-  "frostbite": {
-    "name": "Обморожение",
-    "description": "Снижает скорость атаки цели",
-    "tags": ["debuff", "ice"],
-    "modifiers": [
-      {
-        "attribute": "attack_speed",
-        "value": "0.7",
-        "mode": "multiply",
-        "duration": "8"
-      }
-    ]
-  },
-  "thunderstrike": {
-    "name": "Удар грома",
-    "description": "Шанс оглушить цель при критическом ударе",
-    "tags": ["debuff", "lightning"],
-    "modifiers": [
-      {
-        "attribute": "stun_chance",
-        "value": "0.3",
-        "mode": "add",
-        "on_critical": "true"
-      }
-    ]
-  },
-  "berserker_fury": {
-    "name": "Ярость берсерка",
-    "description": "Увеличивает урон при снижении здоровья",
-    "tags": ["buff", "enhancement"],
-    "modifiers": [
-      {
-        "attribute": "damage_output",
-        "value": "1.0",
-        "mode": "multiply",
-        "scaling": {
-          "attribute": "missing_health",
-          "factor": "0.02"
-        }
-      }
-    ]
+      "tags": ["water", "elemental", "permanent"]
+    },
+    "fire_resist_001": {
+      "id": "fire_resist_001",
+      "name": "Огненная защита",
+      "description": "Увеличивает сопротивление огню",
+      "type": "buff",
+      "category": "resistance",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "fire_resistance": 0.3
+      },
+      "tags": ["fire", "resistance", "permanent"]
+    },
+    "magic_resist_001": {
+      "id": "magic_resist_001",
+      "name": "Магическая защита",
+      "description": "Увеличивает сопротивление магии",
+      "type": "buff",
+      "category": "resistance",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "magic_resistance": 0.25
+      },
+      "tags": ["magic", "resistance", "permanent"]
+    },
+    "str_boost_001": {
+      "id": "str_boost_001",
+      "name": "Временное усиление силы",
+      "description": "Временно увеличивает силу",
+      "type": "buff",
+      "category": "temporary",
+      "duration": 300.0,
+      "stackable": true,
+      "max_stacks": 3,
+      "modifiers": {
+        "damage_output": 5.0,
+        "carry_weight": 10.0
+      },
+      "tags": ["strength", "temporary", "stackable"]
+    },
+    "health_regen_001": {
+      "id": "health_regen_001",
+      "name": "Регенерация здоровья",
+      "description": "Постепенно восстанавливает здоровье",
+      "type": "buff",
+      "category": "regeneration",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "health_regeneration": 2.0
+      },
+      "tags": ["health", "regeneration", "permanent"]
+    },
+    "mana_boost_001": {
+      "id": "mana_boost_001",
+      "name": "Усиление маны",
+      "description": "Увеличивает ману и её восстановление",
+      "type": "buff",
+      "category": "attribute",
+      "duration": -1,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "max_mana": 20.0,
+        "mana_regeneration": 2.0
+      },
+      "tags": ["mana", "magic", "permanent"]
+    },
+    "fire_power_001": {
+      "id": "fire_power_001",
+      "name": "Огненная мощь",
+      "description": "Временно увеличивает огненную силу",
+      "type": "buff",
+      "category": "temporary",
+      "duration": 300.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "fire_damage": 10.0,
+        "fire_resistance": 0.2
+      },
+      "tags": ["fire", "temporary", "elemental"]
+    },
+    "ice_protection_001": {
+      "id": "ice_protection_001",
+      "name": "Ледяная защита",
+      "description": "Временно увеличивает защиту от льда",
+      "type": "buff",
+      "category": "temporary",
+      "duration": 300.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "ice_resistance": 0.3,
+        "defense": 5.0
+      },
+      "tags": ["ice", "temporary", "defense"]
+    },
+    "heal_001": {
+      "id": "heal_001",
+      "name": "Исцеление",
+      "description": "Мгновенно восстанавливает здоровье",
+      "type": "instant",
+      "category": "healing",
+      "duration": 0.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "heal_amount": 50.0
+      },
+      "tags": ["healing", "instant", "health"]
+    },
+    "mana_001": {
+      "id": "mana_001",
+      "name": "Восстановление маны",
+      "description": "Мгновенно восстанавливает ману",
+      "type": "instant",
+      "category": "healing",
+      "duration": 0.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "mana_amount": 30.0
+      },
+      "tags": ["mana", "instant", "magic"]
+    },
+    "burn": {
+      "id": "burn",
+      "name": "Ожог",
+      "description": "Наносит периодический огненный урон",
+      "type": "debuff",
+      "category": "damage_over_time",
+      "duration": 8.0,
+      "stackable": true,
+      "max_stacks": 5,
+      "tick_interval": 1.0,
+      "modifiers": {
+        "fire_damage_per_tick": 3.0
+      },
+      "tags": ["fire", "damage_over_time", "stackable", "elemental"]
+    },
+    "poison": {
+      "id": "poison",
+      "name": "Яд",
+      "description": "Наносит периодический урон и замедляет",
+      "type": "debuff",
+      "category": "damage_over_time",
+      "duration": 10.0,
+      "stackable": true,
+      "max_stacks": 3,
+      "tick_interval": 2.0,
+      "modifiers": {
+        "poison_damage_per_tick": 2.0,
+        "movement_speed": -0.1
+      },
+      "tags": ["poison", "damage_over_time", "slow", "stackable"]
+    },
+    "slow": {
+      "id": "slow",
+      "name": "Замедление",
+      "description": "Уменьшает скорость движения и атаки",
+      "type": "debuff",
+      "category": "movement",
+      "duration": 5.0,
+      "stackable": true,
+      "max_stacks": 3,
+      "modifiers": {
+        "movement_speed": -0.2,
+        "attack_speed": -0.15
+      },
+      "tags": ["slow", "movement", "attack", "stackable"]
+    },
+    "stun": {
+      "id": "stun",
+      "name": "Оглушение",
+      "description": "Полностью парализует цель",
+      "type": "debuff",
+      "category": "control",
+      "duration": 2.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "can_move": false,
+        "can_attack": false,
+        "can_cast": false
+      },
+      "tags": ["stun", "control", "paralysis"]
+    },
+    "bleed": {
+      "id": "bleed",
+      "name": "Кровотечение",
+      "description": "Наносит периодический физический урон",
+      "type": "debuff",
+      "category": "damage_over_time",
+      "duration": 6.0,
+      "stackable": true,
+      "max_stacks": 4,
+      "tick_interval": 1.5,
+      "modifiers": {
+        "physical_damage_per_tick": 2.5
+      },
+      "tags": ["bleed", "physical", "damage_over_time", "stackable"]
+    },
+    "freeze": {
+      "id": "freeze",
+      "name": "Заморозка",
+      "description": "Полностью замораживает цель",
+      "type": "debuff",
+      "category": "control",
+      "duration": 3.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "can_move": false,
+        "can_attack": false,
+        "can_cast": false,
+        "ice_resistance": -0.5
+      },
+      "tags": ["freeze", "ice", "control", "elemental"]
+    },
+    "blind": {
+      "id": "blind",
+      "name": "Ослепление",
+      "description": "Уменьшает точность атак",
+      "type": "debuff",
+      "category": "accuracy",
+      "duration": 4.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "accuracy": -0.4,
+        "critical_chance": -0.2
+      },
+      "tags": ["blind", "accuracy", "debuff"]
+    },
+    "vulnerability": {
+      "id": "vulnerability",
+      "name": "Уязвимость",
+      "description": "Увеличивает получаемый урон",
+      "type": "debuff",
+      "category": "defense",
+      "duration": 6.0,
+      "stackable": true,
+      "max_stacks": 3,
+      "modifiers": {
+        "damage_taken": 0.2
+      },
+      "tags": ["vulnerability", "defense", "stackable"]
+    },
+    "armor_break": {
+      "id": "armor_break",
+      "name": "Разрушение брони",
+      "description": "Уменьшает защиту цели",
+      "type": "debuff",
+      "category": "defense",
+      "duration": 8.0,
+      "stackable": true,
+      "max_stacks": 2,
+      "modifiers": {
+        "defense": -0.3
+      },
+      "tags": ["armor_break", "defense", "stackable"]
+    },
+    "chain_damage": {
+      "id": "chain_damage",
+      "name": "Цепной урон",
+      "description": "Урон распространяется на ближайших врагов",
+      "type": "buff",
+      "category": "special",
+      "duration": 5.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "chain_damage_radius": 3.0,
+        "chain_damage_multiplier": 0.7
+      },
+      "tags": ["chain", "special", "area"]
+    },
+    "ice_armor": {
+      "id": "ice_armor",
+      "name": "Ледяная броня",
+      "description": "Создает защитный ледяной щит",
+      "type": "buff",
+      "category": "defense",
+      "duration": 7.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "defense": 8.0,
+        "ice_resistance": 0.4
+      },
+      "tags": ["ice", "defense", "armor", "elemental"]
+    },
+    "toxin_explosion": {
+      "id": "toxin_explosion",
+      "name": "Токсичный взрыв",
+      "description": "Создает взрыв токсичного газа",
+      "type": "instant",
+      "category": "area_damage",
+      "duration": 0.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "poison_damage": 15.0,
+        "area_radius": 4.0
+      },
+      "tags": ["poison", "area", "explosion", "instant"]
+    },
+    "paralysis": {
+      "id": "paralysis",
+      "name": "Паралич",
+      "description": "Полностью парализует цель",
+      "type": "debuff",
+      "category": "control",
+      "duration": 4.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "modifiers": {
+        "can_move": false,
+        "can_attack": false,
+        "can_cast": false
+      },
+      "tags": ["paralysis", "control", "debuff"]
+    },
+    "infection": {
+      "id": "infection",
+      "name": "Заражение",
+      "description": "Серьезное заболевание, ослабляющее цель",
+      "type": "debuff",
+      "category": "disease",
+      "duration": 15.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "tick_interval": 3.0,
+      "modifiers": {
+        "disease_damage_per_tick": 5.0,
+        "max_health": -0.1,
+        "movement_speed": -0.3
+      },
+      "tags": ["disease", "infection", "debuff", "serious"]
+    },
+    "disease": {
+      "id": "disease",
+      "name": "Болезнь",
+      "description": "Общее ослабление организма",
+      "type": "debuff",
+      "category": "disease",
+      "duration": 12.0,
+      "stackable": false,
+      "max_stacks": 1,
+      "tick_interval": 2.0,
+      "modifiers": {
+        "disease_damage_per_tick": 3.0,
+        "strength": -0.2,
+        "dexterity": -0.2
+      },
+      "tags": ["disease", "debuff", "weakening"]
+    }
   }
 }

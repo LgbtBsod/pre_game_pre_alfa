@@ -1,30 +1,28 @@
-"""
-Менеджер состояния игры - управляет всеми игровыми системами и их взаимодействием
-"""
-import time
+"""Менеджер состояния игры."""
+
 import json
 import os
-from typing import Dict, List, Optional, Any, Tuple, TYPE_CHECKING
-from dataclasses import dataclass
+import time
+import logging
+from typing import Dict, Any, Optional, List
+from dataclasses import dataclass, asdict, field
+from enum import Enum
 
-# Убираем циклические импорты
-if TYPE_CHECKING:
-    from entities.player import Player
-    from entities.enemy import Enemy
-    from entities.boss import Boss
-    from ai.cooperation import AICoordinator
-    from ai.advanced_ai import AdvancedAIController
-    from ai.memory import AIMemory, LearningController
-    from ai.emotion_genetics import EmotionGeneticSynthesizer
-    from ai.pattern_recognizer import PatternRecognizer
-    from ai.learning import PlayerLearning
-    from ai.decision_maker import PlayerDecisionMaker
-    from core.skill_system import SkillSystem
-    from core.leveling_system import LevelingSystem
-    from core.ai_update_scheduler import AIUpdateScheduler
-    from items.weapon import WeaponGenerator
+from .component import Component, ComponentManager
+from .attributes import AttributesComponent
+from .combat_stats import CombatStatsComponent
+from .inventory import InventoryComponent
+from .transform import TransformComponent
+from .skill_system import SkillSystem
+from .leveling_system import LevelingSystem
+from config.game_constants import (
+    PLAYER_START_HEALTH, PLAYER_START_MANA, PLAYER_START_STAMINA,
+    ENEMY_BASE_HEALTH, ENEMY_BASE_MANA, ENEMY_BASE_STAMINA,
+    BOSS_HEALTH_MULTIPLIER, BOSS_DAMAGE_MULTIPLIER,
+    XP_BASE, XP_MULTIPLIER, LEVEL_CAP
+)
 
-from config.game_constants import *
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -32,7 +30,7 @@ class GameSettings:
     """Настройки игры"""
     difficulty: str = "normal"
     learning_rate: float = 1.0
-    window_size: Tuple[int, int] = (1200, 800)
+    window_size: List[int] = field(default_factory=lambda: [1200, 800])
 
 
 @dataclass
@@ -54,22 +52,22 @@ class GameStateManager:
         self.statistics.session_start_time = time.time()
         
         # Игровые сущности
-        self.player: Optional[Player] = None
-        self.enemies: List[Enemy] = []
-        self.boss: Optional[Boss] = None
+        self.player: Optional[Component] = None
+        self.enemies: List[Component] = []
+        self.boss: Optional[Component] = None
         
         # Системы
-        self.coordinator: Optional[AICoordinator] = None
-        self.ai_scheduler: Optional[AIUpdateScheduler] = None
+        self.coordinator: Optional[ComponentManager] = None
+        self.ai_scheduler: Optional[ComponentManager] = None
         self.skill_system: Optional[SkillSystem] = None
         self.leveling_system: Optional[LevelingSystem] = None
         
         # AI компоненты
-        self.player_ai_memory: Optional[AIMemory] = None
-        self.player_learning: Optional[PlayerLearning] = None
-        self.player_decision_maker: Optional[PlayerDecisionMaker] = None
-        self.emotion_synthesizer: Optional[EmotionGeneticSynthesizer] = None
-        self.pattern_recognizer: Optional[PatternRecognizer] = None
+        self.player_ai_memory: Optional[Component] = None
+        self.player_learning: Optional[Component] = None
+        self.player_decision_maker: Optional[Component] = None
+        self.emotion_synthesizer: Optional[Component] = None
+        self.pattern_recognizer: Optional[Component] = None
         
         # Пользовательские объекты
         self.user_obstacles: set = set()
@@ -448,7 +446,7 @@ class GameStateManager:
                 
             return True
         except Exception as e:
-            print(f"Ошибка сохранения: {e}")
+            logger.error(f"Ошибка сохранения: {e}")
             return False
             
     def load_game(self, save_file: str) -> bool:
@@ -479,7 +477,7 @@ class GameStateManager:
             
             return True
         except Exception as e:
-            print(f"Ошибка загрузки: {e}")
+            logger.error(f"Ошибка загрузки: {e}")
             return False
             
     def get_game_info(self) -> Dict[str, Any]:

@@ -122,4 +122,18 @@ class Effect:
         effect_id = data.get('id', 'unknown')
         tags = data.get('tags', [])
         modifiers = data.get('modifiers', [])
+        
+        # Преобразуем строковые значения в числовые
+        for modifier in modifiers:
+            if 'duration' in modifier and isinstance(modifier['duration'], str):
+                try:
+                    modifier['duration'] = float(modifier['duration'])
+                except ValueError:
+                    modifier['duration'] = 0.0
+            if 'interval' in modifier and isinstance(modifier['interval'], str):
+                try:
+                    modifier['interval'] = float(modifier['interval'])
+                except ValueError:
+                    modifier['interval'] = 0.0
+        
         return cls(effect_id, tags, modifiers)

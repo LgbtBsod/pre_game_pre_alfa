@@ -1,46 +1,56 @@
-#!/usr/bin/env python3
-"""
-Panda3D Diagnostics
-"""
+"""Отладочный скрипт для проверки установки Panda3D."""
 
 import sys
-print(f"Python version: {sys.version}")
-print(f"Python path: {sys.executable}")
+import subprocess
+import logging
 
+# Настройка логирования
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+logger.info(f"Python version: {sys.version}")
+logger.info(f"Python path: {sys.executable}")
+
+# Проверяем Panda3D
 try:
     import panda3d
-    print(f"✓ panda3d module found: {panda3d.__file__}")
+    logger.info(f"✓ panda3d module found: {panda3d.__file__}")
 except ImportError as e:
-    print(f"✗ panda3d module not found: {e}")
+    logger.error(f"✗ panda3d module not found: {e}")
 
+# Проверяем direct модуль
 try:
     import direct
-    print(f"✓ direct module found: {direct.__file__}")
+    logger.info(f"✓ direct module found: {direct.__file__}")
 except ImportError as e:
-    print(f"✗ direct module not found: {e}")
+    logger.error(f"✗ direct module not found: {e}")
 
+# Проверяем ShowBase
 try:
     from direct.showbase.ShowBase import ShowBase
-    print("✓ ShowBase successfully imported")
+    logger.info("✓ ShowBase successfully imported")
 except ImportError as e:
-    print(f"✗ ShowBase import failed: {e}")
+    logger.error(f"✗ ShowBase import failed: {e}")
 
+# Проверяем WindowProperties
 try:
     from panda3d.core import WindowProperties
-    print("✓ WindowProperties successfully imported")
+    logger.info("✓ WindowProperties successfully imported")
 except ImportError as e:
-    print(f"✗ WindowProperties import failed: {e}")
+    logger.error(f"✗ WindowProperties import failed: {e}")
 
-print("\nChecking pip list:")
-import subprocess
+logger.info("\nChecking pip list:")
 try:
     result = subprocess.run([sys.executable, "-m", "pip", "list"], 
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, check=True)
     if "panda3d" in result.stdout.lower():
-        print("✓ Panda3D found in pip list")
+        logger.info("✓ Panda3D found in pip list")
     else:
-        print("✗ Panda3D not found in pip list")
-        print("pip list output:")
-        print(result.stdout)
-except Exception as e:
-    print(f"Error running pip list: {e}")
+        logger.error("✗ Panda3D not found in pip list")
+        logger.info("pip list output:")
+        logger.info(result.stdout)
+except subprocess.CalledProcessError as e:
+    logger.error(f"Error running pip list: {e}")
