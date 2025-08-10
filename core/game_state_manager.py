@@ -1,506 +1,480 @@
-"""Менеджер состояния игры."""
+"""
+Менеджер состояния игры.
+Управляет сохранением, загрузкой и синхронизацией состояния игры.
+"""
 
 import json
-import os
-import time
 import logging
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass, asdict, field
-from enum import Enum
+import sqlite3
+from pathlib import Path
+from typing import Dict, List, Any, Optional, Tuple
+from dataclasses import dataclass, asdict
+import threading
+from datetime import datetime
 
-from .component import Component, ComponentManager
-from .attributes import AttributesComponent
-from .combat_stats import CombatStatsComponent
-from .inventory import InventoryComponent
-from .transform import TransformComponent
-from .skill_system import SkillSystem
-from .leveling_system import LevelingSystem
-from config.game_constants import (
-    PLAYER_START_HEALTH, PLAYER_START_MANA, PLAYER_START_STAMINA,
-    ENEMY_BASE_HEALTH, ENEMY_BASE_MANA, ENEMY_BASE_STAMINA,
-    BOSS_HEALTH_MULTIPLIER, BOSS_DAMAGE_MULTIPLIER,
-    XP_BASE, XP_MULTIPLIER, LEVEL_CAP
-)
+from config.settings_manager import settings_manager
+from core.data_manager import data_manager
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GameSettings:
-    """Настройки игры"""
-    difficulty: str = "normal"
-    learning_rate: float = 1.0
-    window_size: List[int] = field(default_factory=lambda: [1200, 800])
+class PlayerState:
+    """Состояние игрока"""
+    player_id: str
+    name: str
+    level: int
+    experience: int
+    experience_to_next: int
+    position: Tuple[float, float]
+    attributes: Dict[str, float]
+    combat_stats: Dict[str, float]
+    equipment: Dict[str, str]
+    inventory: List[str]
+    skills: List[str]
+    effects: List[str]
+    quests: List[str]
+    achievements: List[str]
+    playtime: int
+    last_save: datetime
 
 
 @dataclass
-class GameStatistics:
-    """Статистика игры"""
-    reincarnation_count: int = 0
-    generation_count: int = 0
-    session_start_time: float = 0.0
-    enemies_defeated: int = 0
-    boss_defeated: bool = False
+class GameState:
+    """Состояние игры"""
+    game_id: str
+    save_name: str
+    difficulty: str
+    world_seed: int
+    current_area: str
+    player_state: PlayerState
+    world_state: Dict[str, Any]
+    game_time: int
+    created_at: datetime
+    last_modified: datetime
 
 
 class GameStateManager:
-    """Управляет состоянием игры и всеми игровыми системами"""
+    """Менеджер состояния игры"""
     
-    def __init__(self, settings: GameSettings):
-        self.settings = settings
-        self.statistics = GameStatistics()
-        self.statistics.session_start_time = time.time()
+    def __init__(self, save_dir: str = "saves"):
+        self.save_dir = Path(save_dir)
+        self.save_dir.mkdir(exist_ok=True)
+        self._lock = threading.RLock()
         
-        # Игровые сущности
-        self.player: Optional[Component] = None
-        self.enemies: List[Component] = []
-        self.boss: Optional[Component] = None
+        # База данных для сохранений
+        self.db_path = self.save_dir / "saves.db"
+        self._init_database()
         
-        # Системы
-        self.coordinator: Optional[ComponentManager] = None
-        self.ai_scheduler: Optional[ComponentManager] = None
-        self.skill_system: Optional[SkillSystem] = None
-        self.leveling_system: Optional[LevelingSystem] = None
-        
-        # AI компоненты
-        self.player_ai_memory: Optional[Component] = None
-        self.player_learning: Optional[Component] = None
-        self.player_decision_maker: Optional[Component] = None
-        self.emotion_synthesizer: Optional[Component] = None
-        self.pattern_recognizer: Optional[Component] = None
-        
-        # Пользовательские объекты
-        self.user_obstacles: set = set()
-        self.chests: List[Dict[str, Any]] = []
-        
-        # Состояние
-        self.victory_shown: bool = False
-        self.paused: bool = False
-        self.running: bool = True
-        
-    def initialize_game(self, map_width: int, map_height: int) -> None:
-        """Инициализация всех игровых систем"""
-        self._create_entities(map_width, map_height)
-        self._setup_ai_systems()
-        self._setup_coordination()
-        self._setup_skills_and_leveling()
-        
-    def _create_entities(self, map_width: int, map_height: int) -> None:
-        """Создание игровых сущностей"""
-        from entities.player import Player
-        from items.weapon import WeaponGenerator
-        
-        # Игрок
-        start_x = map_width // 2 if map_width > 0 else 600
-        start_y = map_height // 2 if map_height > 0 else 400
-        self.player = Player("player_ai", (start_x, start_y))
-        self.player.learning_rate = self.settings.learning_rate
-        
-        # Враги
-        self.enemies = self._create_enemies(map_width, map_height)
-        
-        # Босс
-        self.boss = self._create_boss(map_width, map_height)
-        
-        # Стартовое оружие
-        if not self.player.equipment.get("weapon"):
-            starter_weapon = WeaponGenerator.generate_weapon(1)
-            self.player.equip_item(starter_weapon)
-            
-    def _create_enemies(self, map_width: int, map_height: int) -> List['Enemy']:
-        """Создание врагов в зависимости от сложности"""
-        import random
-        from entities.enemy import Enemy
-        
-        enemy_list = []
-        enemy_types = ["warrior", "archer", "mage"]
-        
-        # Настройки сложности
-        difficulty = self.settings.difficulty
-        if difficulty == "easy":
-            num_enemies, lvl_min, lvl_max = 6, 1, 3
-        elif difficulty == "hard":
-            num_enemies, lvl_min, lvl_max = 14, 3, 7
-        else:
-            num_enemies, lvl_min, lvl_max = 10, 1, 5
-            
-        for _ in range(num_enemies):
-            enemy = Enemy(random.choice(enemy_types), level=random.randint(lvl_min, lvl_max))
-            x = random.randint(100, max(200, map_width - 100)) if map_width > 0 else random.randint(100, 1100)
-            y = random.randint(100, max(200, map_height - 100)) if map_height > 0 else random.randint(100, 700)
-            enemy.position = [x, y]
-            enemy.player_ref = self.player
-            enemy_list.append(enemy)
-            
-        return enemy_list
-        
-    def _create_boss(self, map_width: int, map_height: int) -> 'Boss':
-        """Создание босса"""
-        import random
-        from entities.boss import Boss
-        
-        if map_width > 0:
-            bx = map_width - 300
-        else:
-            bx = 900
-            
-        by = 300
-        
-        difficulty = self.settings.difficulty
-        boss_level = 12 if difficulty == "easy" else (20 if difficulty == "hard" else 15)
-        
-        boss = Boss(boss_type="dragon", level=boss_level, position=(bx, by))
-        boss.learning_rate = 0.005
-        boss.player_ref = self.player
-        
-        return boss
-        
-    def _setup_ai_systems(self) -> None:
-        """Настройка AI систем"""
-        from ai.cooperation import AICoordinator
-        from ai.ai_update_scheduler import AIUpdateScheduler
-        from ai.memory import AIMemory
-        from ai.learning import PlayerLearning
-        from ai.decision_maker import PlayerDecisionMaker
-        from ai.emotion_genetics import EmotionGeneticSynthesizer
-        from ai.pattern_recognizer import PatternRecognizer
-        
-        # AI координатор
-        self.coordinator = AICoordinator()
-        for enemy in self.enemies:
-            self.coordinator.register_entity(enemy, "enemy_group")
-        if self.boss:
-            self.coordinator.register_entity(self.boss, "boss_group")
-            
-        # AI планировщик
-        self.ai_scheduler = AIUpdateScheduler()
-        
-        # AI для игрока
-        self.player_ai_memory = AIMemory()
-        self.player_learning = PlayerLearning(self.player, self.player_ai_memory)
-        self.player_decision_maker = PlayerDecisionMaker(self.player, self.player_ai_memory)
-        
-        # Эмоции и паттерны
-        self.emotion_synthesizer = EmotionGeneticSynthesizer(self.player, {}, {}, {})
-        self.pattern_recognizer = PatternRecognizer()
-        
-        # Регистрация AI обновлений
-        self.ai_scheduler.register_entity(self.player, self.player_learning.update)
-        self.ai_scheduler.register_entity(self.player, self.player_decision_maker.update)
-        
-    def _setup_coordination(self) -> None:
-        """Настройка координации между сущностями"""
-        pass  # Уже настроено в _setup_ai_systems
-        
-    def _setup_skills_and_leveling(self) -> None:
-        """Настройка системы навыков и уровней"""
-        from core.skill_system import SkillSystem
-        from core.leveling_system import LevelingSystem
-        
-        self.skill_system = SkillSystem()
-        self.leveling_system = LevelingSystem(self.player)
-        
-        # Добавление базовых навыков
-        self.skill_system.add_skill_to_entity(self.player, "whirlwind_attack")
-        self.skill_system.add_skill_to_entity(self.player, "healing_light")
-        
-    def update(self, delta_time: float) -> None:
-        """Обновление всех игровых систем"""
-        if self.paused or not self.running:
-            return
-            
-        # Обновление AI
-        self._update_ai_systems(delta_time)
-        
-        # Обновление сущностей
-        self._update_entities(delta_time)
-        
-        # Обновление систем
-        self._update_systems(delta_time)
-        
-        # Проверка состояния
-        self._check_game_state()
-        
-    def _update_ai_systems(self, delta_time: float) -> None:
-        """Обновление AI систем"""
-        # Обновление AI планировщика
-        if self.ai_scheduler:
-            self.ai_scheduler.update_all(delta_time)
-            
-        # Обновление координации
-        if self.coordinator:
-            self.coordinator.update_group_behavior("enemy_group")
-            self.coordinator.update_group_behavior("boss_group")
-            
-        # Анализ паттернов и эмоций
-        if self.pattern_recognizer:
-            entities = [self.player] + self.enemies + ([self.boss] if self.boss else [])
-            self.pattern_recognizer.analyze_combat_patterns(entities)
-            
-        if self.emotion_synthesizer:
-            self.emotion_synthesizer.update_emotions(delta_time)
-            
-    def _update_entities(self, delta_time: float) -> None:
-        """Обновление игровых сущностей"""
-        # Обновление игрока
-        if self.player and self.player.alive:
-            self.player.update(delta_time)
-            
-        # Обновление врагов
-        for enemy in self.enemies:
-            if enemy.alive:
-                enemy.update(delta_time)
-                
-        # Обновление босса
-        if self.boss and self.boss.alive:
-            self.boss.update(delta_time)
-            
-    def _update_systems(self, delta_time: float) -> None:
-        """Обновление игровых систем"""
-        # Обновление навыков
-        if self.skill_system:
-            self.skill_system.update(delta_time)
-            
-        # Обновление уровней
-        if self.leveling_system:
-            self.leveling_system.update(delta_time)
-            
-    def _check_game_state(self) -> None:
-        """Проверка состояния игры"""
-        # Проверка победы над врагами
-        for enemy in self.enemies[:]:
-            if not enemy.alive:
-                self._handle_enemy_defeat(enemy)
-                
-        # Проверка победы над боссом
-        if self.boss and not self.boss.alive and not hasattr(self.boss, 'exp_given'):
-            self._handle_boss_defeat()
-            
-        # Проверка смерти игрока
-        if self.player and not self.player.alive:
-            self._handle_player_death()
-            
-    def _handle_enemy_defeat(self, enemy: 'Enemy') -> None:
-        """Обработка победы над врагом"""
-        import random
-        
-        # Удаление врага из списка
-        self.enemies.remove(enemy)
-        
-        # Награждение опытом
-        if self.leveling_system:
-            enemy_level = getattr(enemy, 'level', 1)
-            exp_gain = enemy_level * 10 + random.randint(5, 15)
-            self.leveling_system.gain_experience(exp_gain)
-            
-        # Запись в память AI
-        if self.player_ai_memory:
-            enemy_level = getattr(enemy, 'level', 1)
-            exp_gain = enemy_level * 10 + random.randint(5, 15)
-            self.player_ai_memory.record_event("ENEMY_DEFEATED", {
-                "enemy_type": getattr(enemy, 'enemy_type', 'unknown'),
-                "enemy_level": enemy_level,
-                "exp_gained": exp_gain,
-                "player_health": self.player.health if self.player else 0,
-                "player_level": self.leveling_system.level if self.leveling_system else 1
-            })
-            
-        # Обновление статистики
-        self.statistics.enemies_defeated += 1
-        
-    def _handle_boss_defeat(self) -> None:
-        """Обработка победы над боссом"""
-        import random
-        
-        if not self.boss:
-            return
-            
-        # Награждение опытом
-        if self.leveling_system:
-            boss_level = getattr(self.boss, 'level', 15)
-            exp_gain = boss_level * 50 + random.randint(100, 200)
-            self.leveling_system.gain_experience(exp_gain)
-            
-        # Запись в память AI
-        if self.player_ai_memory:
-            boss_level = getattr(self.boss, 'level', 15)
-            exp_gain = boss_level * 50 + random.randint(100, 200)
-            self.player_ai_memory.record_event("BOSS_DEFEATED", {
-                "boss_type": getattr(self.boss, 'boss_type', 'unknown'),
-                "boss_level": boss_level,
-                "exp_gained": exp_gain,
-                "player_health": self.player.health if self.player else 0,
-                "player_level": self.leveling_system.level if self.leveling_system else 1
-            })
-            
-        # Обновление статистики
-        self.statistics.boss_defeated = True
-        self.boss.exp_given = True
-        
-    def _handle_player_death(self) -> None:
-        """Обработка смерти игрока"""
-        self.statistics.reincarnation_count += 1
-        
-    def soft_restart(self) -> None:
-        """Перезапуск мира без потери знаний"""
-        self.victory_shown = False
-        self.statistics.generation_count += 1
-        
-        # Возрождение игрока
-        if self.player:
-            self._respawn_player()
-            
-        # Возрождение врагов
-        for enemy in self.enemies:
-            self._respawn_entity(enemy)
-            self._reposition_enemy(enemy)
-            
-        # Возрождение босса
-        if self.boss:
-            self._respawn_entity(self.boss)
-            self._reposition_boss()
-            
-    def _respawn_player(self) -> None:
-        """Возрождение игрока"""
-        if not self.player:
-            return
-            
-        self.player.alive = True
-        self.player.health = self.player.max_health
-        self.player.learning_rate = min(2.0, self.player.learning_rate * 1.01)
-        
-        # Перемещение к центру
-        if hasattr(self, 'tiled_map') and self.tiled_map:
-            map_px_w = self.tiled_map.width * self.tiled_map.tilewidth
-            map_px_h = self.tiled_map.height * self.tiled_map.tileheight
-            self.player.position = [map_px_w // 2, map_px_h // 2]
-        else:
-            self.player.position = [600, 400]
-            
-    def _respawn_entity(self, entity) -> None:
-        """Возрождение сущности"""
-        entity.alive = True
-        entity.health = entity.max_health
-        
-    def _reposition_enemy(self, enemy: 'Enemy') -> None:
-        """Перемещение врага в случайную позицию"""
-        import random
-        
-        if not self.player:
-            return
-            
-        # Получаем размеры карты из позиции игрока
-        player_x, player_y = self.player.position
-        map_width = max(800, player_x * 2)
-        map_height = max(600, player_y * 2)
-        
-        # Размещаем врага в случайной позиции
-        x = random.randint(-map_width//2, map_width//2)
-        y = random.randint(-map_height//2, map_height//2)
-        enemy.position = [x, y]
-        
-        # Возрождаем врага
-        enemy.alive = True
-        enemy.health = enemy.max_health
-        
-    def _reposition_boss(self) -> None:
-        """Перемещение босса в случайную позицию"""
-        import random
-        
-        if not self.boss or not self.player:
-            return
-            
-        # Получаем размеры карты из позиции игрока
-        player_x, player_y = self.player.position
-        map_width = max(800, player_x * 2)
-        
-        # Размещаем босса справа от игрока
-        x = map_width//2 - 300
-        y = 300
-        self.boss.position = [x, y]
-        
-        # Возрождаем босса
-        self.boss.alive = True
-        self.boss.health = self.boss.max_health
-        self.boss.exp_given = False
-            
-    def save_game(self, save_file: str) -> bool:
-        """Сохранение игры"""
+        # Текущее состояние
+        self.current_state: Optional[GameState] = None
+        self.auto_save_enabled = True
+        self.auto_save_interval = settings_manager.get_setting("auto_save_interval", 300)
+        self.last_auto_save = 0
+    
+    def _init_database(self):
+        """Инициализация базы данных сохранений"""
         try:
-            save_data = {
-                "reincarnation_count": self.statistics.reincarnation_count,
-                "generation_count": self.statistics.generation_count,
-                "session_start_time": self.statistics.session_start_time,
-                "player": {
-                    "health": self.player.health if self.player else 100,
-                    "level": self.player.level if self.player else 1,
-                    "learning_rate": self.player.learning_rate if self.player else 1.0,
-                    "position": self.player.position if self.player else [600, 400]
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                # Таблица сохранений
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS saves (
+                        id TEXT PRIMARY KEY,
+                        save_name TEXT NOT NULL,
+                        difficulty TEXT DEFAULT 'normal',
+                        world_seed INTEGER,
+                        current_area TEXT,
+                        player_data TEXT,
+                        world_state TEXT,
+                        game_time INTEGER DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                ''')
+                
+                # Таблица статистики
+                cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS save_statistics (
+                        save_id TEXT,
+                        stat_name TEXT,
+                        stat_value REAL,
+                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (save_id) REFERENCES saves (id)
+                    )
+                ''')
+                
+                conn.commit()
+                logger.info("База данных сохранений инициализирована")
+        except Exception as e:
+            logger.error(f"Ошибка инициализации БД сохранений: {e}")
+    
+    def create_new_game(self, save_name: str, player_name: str, difficulty: str = "normal") -> str:
+        """Создает новую игру"""
+        try:
+            import random
+            
+            game_id = f"game_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            world_seed = random.randint(1, 999999)
+            
+            # Создаем начальное состояние игрока
+            player_state = PlayerState(
+                player_id="player",
+                name=player_name,
+                level=1,
+                experience=0,
+                experience_to_next=100,
+                position=(0.0, 0.0),
+                attributes={
+                    "strength": 10,
+                    "dexterity": 10,
+                    "intelligence": 10,
+                    "vitality": 10,
+                    "endurance": 10,
+                    "faith": 10,
+                    "luck": 10
                 },
-                "obstacles": list(self.user_obstacles),
-                "chests": self.chests
-            }
+                combat_stats={
+                    "health": 100,
+                    "max_health": 100,
+                    "mana": 50,
+                    "max_mana": 50,
+                    "stamina": 100,
+                    "max_stamina": 100,
+                    "damage_output": 10,
+                    "defense": 5,
+                    "movement_speed": 100.0,
+                    "attack_speed": 1.0,
+                    "critical_chance": 0.05,
+                    "critical_multiplier": 1.5
+                },
+                equipment={},
+                inventory=[],
+                skills=[],
+                effects=[],
+                quests=[],
+                achievements=[],
+                playtime=0,
+                last_save=datetime.now()
+            )
             
-            with open(save_file, "w", encoding="utf-8") as f:
-                json.dump(save_data, f, indent=2)
-                
-            return True
+            # Создаем состояние игры
+            game_state = GameState(
+                game_id=game_id,
+                save_name=save_name,
+                difficulty=difficulty,
+                world_seed=world_seed,
+                current_area="starting_area",
+                player_state=player_state,
+                world_state={
+                    "discovered_areas": ["starting_area"],
+                    "completed_quests": [],
+                    "killed_enemies": {},
+                    "collected_items": {},
+                    "world_events": []
+                },
+                game_time=0,
+                created_at=datetime.now(),
+                last_modified=datetime.now()
+            )
+            
+            # Сохраняем в БД
+            self._save_to_database(game_state)
+            
+            # Устанавливаем как текущее состояние
+            self.current_state = game_state
+            
+            logger.info(f"Создана новая игра: {save_name}")
+            return game_id
+            
         except Exception as e:
-            logger.error(f"Ошибка сохранения: {e}")
-            return False
-            
-    def load_game(self, save_file: str) -> bool:
-        """Загрузка игры"""
-        if not os.path.exists(save_file):
-            return False
-            
+            logger.error(f"Ошибка создания новой игры: {e}")
+            return ""
+    
+    def load_game(self, game_id: str) -> bool:
+        """Загружает игру"""
         try:
-            with open(save_file, "r", encoding="utf-8") as f:
-                save_data = json.load(f)
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM saves WHERE id = ?', (game_id,))
+                row = cursor.fetchone()
                 
-            # Восстановление статистики
-            self.statistics.reincarnation_count = save_data.get("reincarnation_count", 0)
-            self.statistics.generation_count = save_data.get("generation_count", 0)
-            self.statistics.session_start_time = save_data.get("session_start_time", time.time())
-            
-            # Восстановление игрока
-            if "player" in save_data and self.player:
-                player_data = save_data["player"]
-                self.player.health = player_data.get("health", self.player.max_health)
-                self.player.level = player_data.get("level", 1)
-                self.player.learning_rate = player_data.get("learning_rate", 1.0)
-                self.player.position = player_data.get("position", [600, 400])
+                if not row:
+                    logger.warning(f"Сохранение {game_id} не найдено")
+                    return False
                 
-            # Восстановление препятствий и сундуков
-            self.user_obstacles = set(tuple(obs) for obs in save_data.get("obstacles", []))
-            self.chests = save_data.get("chests", [])
-            
-            return True
+                # Восстанавливаем состояние игры
+                game_state = self._load_from_database_row(row)
+                self.current_state = game_state
+                
+                logger.info(f"Загружена игра: {game_state.save_name}")
+                return True
+                
         except Exception as e:
-            logger.error(f"Ошибка загрузки: {e}")
+            logger.error(f"Ошибка загрузки игры: {e}")
             return False
+    
+    def save_game(self, game_id: str = None) -> bool:
+        """Сохраняет игру"""
+        try:
+            if not self.current_state:
+                logger.warning("Нет активного состояния для сохранения")
+                return False
             
-    def get_game_info(self) -> Dict[str, Any]:
-        """Получение информации об игре для отображения"""
-        info = {
-            "player_level": self.leveling_system.level if self.leveling_system else 1,
-            "player_health": self.player.health if self.player else 0,
-            "player_max_health": self.player.max_health if self.player else 100,
-            "enemies_remaining": len([e for e in self.enemies if e.alive]),
-            "boss_alive": self.boss.alive if self.boss else False,
-            "reincarnation_count": self.statistics.reincarnation_count,
-            "generation_count": self.statistics.generation_count,
-            "session_time": time.time() - self.statistics.session_start_time,
-            "learning_rate": self.player.learning_rate if self.player else 1.0
-        }
+            if game_id:
+                self.current_state.game_id = game_id
+            
+            # Обновляем время последнего сохранения
+            self.current_state.last_modified = datetime.now()
+            self.current_state.player_state.last_save = datetime.now()
+            
+            # Сохраняем в БД
+            success = self._save_to_database(self.current_state)
+            
+            if success:
+                logger.info(f"Игра сохранена: {self.current_state.save_name}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения игры: {e}")
+            return False
+    
+    def auto_save(self, current_time: int) -> bool:
+        """Автосохранение"""
+        if not self.auto_save_enabled or not self.current_state:
+            return False
         
-        # Информация об опыте
-        if self.leveling_system:
-            exp_progress = self.leveling_system.get_leveling_progress()
-            info.update({
-                "current_exp": exp_progress.get('current_exp', 0),
-                "exp_to_next": exp_progress.get('exp_to_next', 100),
-                "attribute_points": exp_progress.get('attribute_points', 0)
-            })
+        if current_time - self.last_auto_save >= self.auto_save_interval:
+            self.last_auto_save = current_time
+            return self.save_game()
+        
+        return False
+    
+    def get_save_list(self) -> List[Dict[str, Any]]:
+        """Получает список сохранений"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT id, save_name, difficulty, current_area, game_time, 
+                           created_at, last_modified 
+                    FROM saves 
+                    ORDER BY last_modified DESC
+                ''')
+                rows = cursor.fetchall()
+                
+                saves = []
+                for row in rows:
+                    saves.append({
+                        "game_id": row[0],
+                        "save_name": row[1],
+                        "difficulty": row[2],
+                        "current_area": row[3],
+                        "game_time": row[4],
+                        "created_at": row[5],
+                        "last_modified": row[6]
+                    })
+                
+                return saves
+                
+        except Exception as e:
+            logger.error(f"Ошибка получения списка сохранений: {e}")
+            return []
+    
+    def delete_save(self, game_id: str) -> bool:
+        """Удаляет сохранение"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM saves WHERE id = ?', (game_id,))
+                cursor.execute('DELETE FROM save_statistics WHERE save_id = ?', (game_id,))
+                conn.commit()
+                
+                logger.info(f"Сохранение удалено: {game_id}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Ошибка удаления сохранения: {e}")
+            return False
+    
+    def update_player_state(self, player_data: Dict[str, Any]):
+        """Обновляет состояние игрока"""
+        if not self.current_state:
+            return
+        
+        try:
+            # Обновляем основные характеристики
+            if "position" in player_data:
+                self.current_state.player_state.position = tuple(player_data["position"])
             
-        return info
+            if "level" in player_data:
+                self.current_state.player_state.level = player_data["level"]
+            
+            if "experience" in player_data:
+                self.current_state.player_state.experience = player_data["experience"]
+            
+            if "attributes" in player_data:
+                self.current_state.player_state.attributes.update(player_data["attributes"])
+            
+            if "combat_stats" in player_data:
+                self.current_state.player_state.combat_stats.update(player_data["combat_stats"])
+            
+            if "equipment" in player_data:
+                self.current_state.player_state.equipment.update(player_data["equipment"])
+            
+            if "inventory" in player_data:
+                self.current_state.player_state.inventory = player_data["inventory"]
+            
+            if "skills" in player_data:
+                self.current_state.player_state.skills = player_data["skills"]
+            
+            if "effects" in player_data:
+                self.current_state.player_state.effects = player_data["effects"]
+            
+            if "quests" in player_data:
+                self.current_state.player_state.quests = player_data["quests"]
+            
+            if "achievements" in player_data:
+                self.current_state.player_state.achievements = player_data["achievements"]
+            
+            if "playtime" in player_data:
+                self.current_state.player_state.playtime = player_data["playtime"]
+            
+            # Обновляем время последнего изменения
+            self.current_state.last_modified = datetime.now()
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления состояния игрока: {e}")
+    
+    def update_world_state(self, world_data: Dict[str, Any]):
+        """Обновляет состояние мира"""
+        if not self.current_state:
+            return
+        
+        try:
+            self.current_state.world_state.update(world_data)
+            self.current_state.last_modified = datetime.now()
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления состояния мира: {e}")
+    
+    def get_current_state(self) -> Optional[GameState]:
+        """Получает текущее состояние игры"""
+        return self.current_state
+    
+    def export_save(self, game_id: str, export_path: str) -> bool:
+        """Экспортирует сохранение в файл"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM saves WHERE id = ?', (game_id,))
+                row = cursor.fetchone()
+                
+                if not row:
+                    return False
+                
+                game_state = self._load_from_database_row(row)
+                
+                # Сохраняем в JSON файл
+                export_data = asdict(game_state)
+                export_data["player_state"] = asdict(game_state.player_state)
+                
+                with open(export_path, 'w', encoding='utf-8') as f:
+                    json.dump(export_data, f, indent=2, ensure_ascii=False, default=str)
+                
+                logger.info(f"Сохранение экспортировано: {export_path}")
+                return True
+                
+        except Exception as e:
+            logger.error(f"Ошибка экспорта сохранения: {e}")
+            return False
+    
+    def import_save(self, import_path: str) -> bool:
+        """Импортирует сохранение из файла"""
+        try:
+            with open(import_path, 'r', encoding='utf-8') as f:
+                import_data = json.load(f)
+            
+            # Создаем состояние игры из импортированных данных
+            player_state = PlayerState(**import_data["player_state"])
+            game_state = GameState(
+                game_id=import_data["game_id"],
+                save_name=import_data["save_name"],
+                difficulty=import_data["difficulty"],
+                world_seed=import_data["world_seed"],
+                current_area=import_data["current_area"],
+                player_state=player_state,
+                world_state=import_data["world_state"],
+                game_time=import_data["game_time"],
+                created_at=datetime.fromisoformat(import_data["created_at"]),
+                last_modified=datetime.fromisoformat(import_data["last_modified"])
+            )
+            
+            # Сохраняем в БД
+            success = self._save_to_database(game_state)
+            
+            if success:
+                logger.info(f"Сохранение импортировано: {import_path}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Ошибка импорта сохранения: {e}")
+            return False
+    
+    def _save_to_database(self, game_state: GameState) -> bool:
+        """Сохраняет состояние в базу данных"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                
+                cursor.execute('''
+                    INSERT OR REPLACE INTO saves 
+                    (id, save_name, difficulty, world_seed, current_area, player_data,
+                     world_state, game_time, created_at, last_modified)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    game_state.game_id,
+                    game_state.save_name,
+                    game_state.difficulty,
+                    game_state.world_seed,
+                    game_state.current_area,
+                    json.dumps(asdict(game_state.player_state)),
+                    json.dumps(game_state.world_state),
+                    game_state.game_time,
+                    game_state.created_at.isoformat(),
+                    game_state.last_modified.isoformat()
+                ))
+                
+                conn.commit()
+                return True
+                
+        except Exception as e:
+            logger.error(f"Ошибка сохранения в БД: {e}")
+            return False
+    
+    def _load_from_database_row(self, row: tuple) -> GameState:
+        """Загружает состояние из строки базы данных"""
+        player_data = json.loads(row[5])
+        world_state = json.loads(row[6])
+        
+        player_state = PlayerState(**player_data)
+        
+        return GameState(
+            game_id=row[0],
+            save_name=row[1],
+            difficulty=row[2],
+            world_seed=row[3],
+            current_area=row[4],
+            player_state=player_state,
+            world_state=world_state,
+            game_time=row[7],
+            created_at=datetime.fromisoformat(row[8]),
+            last_modified=datetime.fromisoformat(row[9])
+        )
+
+
+# Глобальный экземпляр менеджера состояния игры
+game_state_manager = GameStateManager()
