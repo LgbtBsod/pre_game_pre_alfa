@@ -288,16 +288,50 @@ class GameInterface:
     def _update(self):
         """Обновление игровой логики"""
         if self.game_state == GameState.PLAYING and self.player:
+            delta_time = 0.016
             # Обновление игрока
-            self.player.update(0.016)
+            self.player.update(delta_time)
             
             # Обновление врагов
             for entity in self.entities:
-                entity.update(0.016)
+                entity.update(delta_time)
+            
+            # Подготовка состояния мира для глобальных событий
+            world_state = {
+                "mutation_level": getattr(self.player, "mutation_level", 0.0),
+                "evolution_cycles": getattr(self, "current_cycle", 1),
+                "emotional_instability": 0.5,
+                "psychic_energy": 0.4,
+                "ai_learning_rate": 0.5,
+                "reality_stability": 0.9,
+                "radiation_level": 0.1,
+                "disease_spread": 0.05,
+                "time_distortion": 0.0,
+                "reality_coherence": 1.0,
+            }
+            entities = [self.player] + list(self.entities)
             
             # Обновление систем
-            self.event_system.update(0.016)
-            self.difficulty_system.update(0.016)
+            try:
+                self.event_system.update(delta_time, world_state, entities)
+            except TypeError:
+                self.event_system.update(delta_time)
+            
+            # Подготовка данных игрока для DDS
+            player_data = {
+                "success_rate": 0.5,
+                "survival_time": getattr(self, "elapsed_time", 0.0),
+                "enemies_defeated": 0,
+                "damage_dealt": 0.0,
+                "damage_taken": 0.0,
+                "genetic_stability": 1.0,
+                "emotional_balance": 1.0,
+                "ai_adaptation": 0.5,
+            }
+            try:
+                self.difficulty_system.update(delta_time, player_data, world_state)
+            except TypeError:
+                self.difficulty_system.update(delta_time)
     
     def _render(self):
         """Отрисовка игры"""
@@ -376,7 +410,7 @@ class GameInterface:
     def _render_entity(self, entity, screen_pos):
         """Отрисовка сущности"""
         # Простая отрисовка круга
-        color = ColorScheme.GREEN if entity.entity_type == "player" else ColorScheme.RED
+        color = ColorScheme.GREEN if entity.type == "player" else ColorScheme.RED
         pygame.draw.circle(self.screen, color, (int(screen_pos[0]), int(screen_pos[1])), 20)
         
         # Имя сущности
@@ -416,7 +450,7 @@ class GameInterface:
             self.screen.blit(health_surf, (panel.x + 10, panel.y + 50))
             
             # Энергия
-            energy_text = f"Энергия: {self.player.stats.energy:.0f}/{self.player.stats.max_energy:.0f}"
+            energy_text = f"Энергия: {self.player.stats.stamina:.0f}/{self.player.stats.max_stamina:.0f}"
             energy_surf = self.fonts["small"].render(energy_text, True, ColorScheme.ENERGY_COLOR)
             self.screen.blit(energy_surf, (panel.x + 10, panel.y + 70))
             

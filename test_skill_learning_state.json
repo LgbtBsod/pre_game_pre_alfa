@@ -1,0 +1,46 @@
+{
+  "entity_id": "test_entity",
+  "learned_skills": [
+    "fire_ball",
+    "basic_attack",
+    "ice_shard",
+    "heal"
+  ],
+  "skill_combinations": {
+    "fire_ball+ice_shard": [
+      "fire_ball",
+      "ice_shard"
+    ]
+  },
+  "skill_effectiveness": {
+    "basic_attack": {
+      "general": 0.539
+    },
+    "fire_ball": {
+      "general": 0.534
+    },
+    "heal": {
+      "general": 0.525
+    },
+    "ice_shard": {
+      "general": 0.532
+    }
+  },
+  "combo_discoveries": [
+    {
+      "combo": "fire_ball+ice_shard",
+      "skills": [
+        "fire_ball",
+        "ice_shard"
+      ],
+      "effectiveness": 0.85,
+      "timestamp": "2025-08-19T01:08:56.511762"
+    }
+  ],
+  "learning_stats": {
+    "skills_learned": 4,
+    "combos_discovered": 1,
+    "total_skill_usage": 0,
+    "successful_combos": 0
+  }
+}

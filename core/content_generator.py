@@ -254,7 +254,14 @@ class ContentGenerator:
             }
         }
     
-    def generate_world(self, world_size: str = "medium") -> GeneratedWorld:
+    def generate_world(
+        self,
+        world_size: str = "medium",
+        *,
+        biome: Optional[str] = None,
+        size: Optional[str] = None,
+        difficulty: Optional[float] = None,
+    ) -> GeneratedWorld:
         """Генерация мира"""
         try:
             # Определение размера мира
@@ -264,12 +271,14 @@ class ContentGenerator:
                 "large": 1.5,
                 "huge": 2.0
             }
-            
-            size_mult = size_multipliers.get(world_size, 1.0)
+            # Параметр size (если передан) имеет приоритет над world_size
+            effective_size = size or world_size
+            size_mult = size_multipliers.get(effective_size, 1.0)
+            difficulty_mult = difficulty if isinstance(difficulty, (int, float)) else 1.0
             
             # Генерация биомов
             num_biomes = max(3, int(5 * size_mult))
-            biomes = self._generate_biomes(num_biomes)
+            biomes = self._generate_biomes(num_biomes, force_biome=biome, difficulty_mult=difficulty_mult)
             
             # Генерация достопримечательностей
             num_landmarks = max(2, int(8 * size_mult))
@@ -303,16 +312,27 @@ class ContentGenerator:
             logger.error(f"Ошибка генерации мира: {e}")
             raise
     
-    def _generate_biomes(self, num_biomes: int) -> List[Dict[str, Any]]:
+    def _generate_biomes(
+        self,
+        num_biomes: int,
+        *,
+        force_biome: Optional[str] = None,
+        difficulty_mult: float = 1.0,
+    ) -> List[Dict[str, Any]]:
         """Генерация биомов"""
         biomes = []
         available_biomes = list(self.biome_templates.keys())
         
         # Выбор случайных биомов
-        selected_biomes = self.random_generator.sample(
-            available_biomes, 
-            min(num_biomes, len(available_biomes))
-        )
+        if force_biome and force_biome in available_biomes:
+            remaining = [b for b in available_biomes if b != force_biome]
+            count_remaining = max(0, min(num_biomes - 1, len(remaining)))
+            selected_biomes = [force_biome] + self.random_generator.sample(remaining, count_remaining)
+        else:
+            selected_biomes = self.random_generator.sample(
+                available_biomes,
+                min(num_biomes, len(available_biomes))
+            )
         
         for i, biome_type in enumerate(selected_biomes):
             template = self.biome_templates[biome_type]
@@ -323,7 +343,7 @@ class ContentGenerator:
                 "x": self.random_generator.uniform(0, 100),
                 "y": self.random_generator.uniform(0, 100),
                 "size": biome_size,
-                "difficulty": template["difficulty"] * biome_size
+                "difficulty": template["difficulty"] * biome_size * max(0.1, difficulty_mult)
             }
             
             biome = {

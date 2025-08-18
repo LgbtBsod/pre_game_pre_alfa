@@ -19,6 +19,16 @@ from .combat_learning_system import CombatLearningSystem, CombatAction, EnemyVul
 from .advanced_weapon_system import AdvancedWeapon, WeaponType, WeaponRarity, WeaponFactory, WeaponManager
 from .integrated_combat_ai import IntegratedCombatAI, CombatStrategy, CombatContext, CombatDecision
 
+# Система навыков и расширенный боевой ИИ
+from .skill_system import (
+    Skill, SkillManager, SkillLearningAI, SkillFactory,
+    SkillType, SkillElement, SkillTarget, SkillCombo, SkillEffect, SkillRequirement
+)
+from .enhanced_combat_ai import (
+    EnhancedCombatAI, EnhancedCombatContext, CombatDecision as EnhancedCombatDecision,
+    CombatPhase, CombatTactic
+)
+
 __all__ = [
     # Основные системы
     'EffectSystem',
@@ -49,5 +59,24 @@ __all__ = [
     'IntegratedCombatAI',
     'CombatStrategy',
     'CombatContext',
-    'CombatDecision'
+    'CombatDecision',
+    
+    # Система навыков
+    'Skill',
+    'SkillManager',
+    'SkillLearningAI',
+    'SkillFactory',
+    'SkillType',
+    'SkillElement',
+    'SkillTarget',
+    'SkillCombo',
+    'SkillEffect',
+    'SkillRequirement',
+    
+    # Расширенный боевой ИИ
+    'EnhancedCombatAI',
+    'EnhancedCombatContext',
+    'EnhancedCombatDecision',
+    'CombatPhase',
+    'CombatTactic'
 ]
