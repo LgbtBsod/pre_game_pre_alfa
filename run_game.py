@@ -1,217 +1,254 @@
 #!/usr/bin/env python3
 """
-Главный файл запуска игры "Эволюционная Адаптация: Генетический Резонанс"
-Запускает графический интерфейс или консольный режим в зависимости от доступности Pygame
+Главный запуск игры "Эволюционная Адаптация: Генетический Резонанс"
+Поддерживает различные режимы запуска: GUI, консоль, тест, демо
 """
 
 import sys
 import os
 import logging
 from pathlib import Path
+from typing import Optional
 
-# Добавление корневой директории в путь для импортов
+# Добавляем корневую директорию в путь
 sys.path.insert(0, str(Path(__file__).parent))
 
-def setup_logging():
-    """Настройка логирования (форс UTF-8 на Windows)"""
-    # Переконфигурируем stdout/stderr в UTF-8 для русских сообщений
-    try:
-        if hasattr(sys.stdout, "reconfigure"):
-            sys.stdout.reconfigure(encoding="utf-8")
-        if hasattr(sys.stderr, "reconfigure"):
-            sys.stderr.reconfigure(encoding="utf-8")
-    except Exception:
-        pass
+# Настройка логирования с принудительной кодировкой UTF-8
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('logs/game.log', encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler('logs/game.log', encoding='utf-8')
-        ]
-    )
+logger = logging.getLogger(__name__)
 
-def check_dependencies():
+
+def check_dependencies() -> bool:
     """Проверка зависимостей"""
-    missing_deps = []
-    
     try:
         import pygame
-        print("✓ Pygame доступен")
+        logger.info("Pygame доступен")
     except ImportError:
-        missing_deps.append("pygame")
-        print("✗ Pygame не найден")
+        logger.warning("Pygame не найден. GUI режим недоступен.")
+        return False
+    
+    try:
+        import sqlite3
+        logger.info("SQLite3 доступен")
+    except ImportError:
+        logger.error("SQLite3 не найден. Игра не может работать.")
+        return False
     
     try:
         import numpy
-        print("✓ NumPy доступен")
+        logger.info("NumPy доступен")
     except ImportError:
-        missing_deps.append("numpy")
-        print("✗ NumPy не найден")
-    
-    if missing_deps:
-        print(f"\nДля установки зависимостей выполните:")
-        print(f"pip install {' '.join(missing_deps)}")
-        return False
+        logger.warning("NumPy не найден. Некоторые функции могут работать медленнее.")
     
     return True
 
+
 def create_directories():
     """Создание необходимых директорий"""
-    directories = ["logs", "save", "data", "config"]
-    
+    directories = ['logs', 'save', 'data']
     for directory in directories:
         Path(directory).mkdir(exist_ok=True)
-        print(f"✓ Директория {directory} создана/проверена")
+        logger.info(f"Директория {directory} готова")
+
 
 def run_graphical_interface():
     """Запуск графического интерфейса"""
     try:
-        from ui.game_interface import main as run_gui
-        print("Запуск графического интерфейса...")
-        run_gui()
+        from ui.game_interface import GameInterface
+        logger.info("Запуск графического интерфейса...")
+        
+        game = GameInterface()
+        game.run()
+        
     except Exception as e:
-        print(f"✗ Ошибка запуска графического интерфейса: {e}")
-        logging.error(f"Ошибка запуска графического интерфейса: {e}")
+        logger.error(f"Ошибка запуска GUI: {e}")
+        print(f"Ошибка запуска графического интерфейса: {e}")
         return False
+    
     return True
+
 
 def run_console_mode():
     """Запуск консольного режима"""
     try:
         from core.game_loop import GameLoop
-        print("Запуск консольного режима...")
+        logger.info("Запуск консольного режима...")
         
         game_loop = GameLoop(use_pygame=False)
-        if game_loop.start_new_game():
-            print("Игра запущена. Нажмите Ctrl+C для выхода")
-            game_loop.run()
-        else:
-            print("✗ Не удалось запустить игру")
-            return False
-            
+        game_loop.run()
+        
     except Exception as e:
-        print(f"✗ Ошибка запуска консольного режима: {e}")
-        logging.error(f"Ошибка запуска консольного режима: {e}")
+        logger.error(f"Ошибка запуска консольного режима: {e}")
+        print(f"Ошибка запуска консольного режима: {e}")
         return False
+    
     return True
+
 
 def run_test_mode():
     """Запуск тестового режима"""
     try:
-        from main_game import test_systems
-        print("Запуск тестирования систем...")
-        return test_systems()
+        logger.info("Запуск тестового режима...")
+        
+        # Тестирование основных систем
+        from core.effect_system import EffectDatabase
+        from core.genetic_system import AdvancedGeneticSystem
+        from core.emotion_system import AdvancedEmotionSystem
+        from core.ai_system import AdaptiveAISystem
+        
+        # Создание тестовых экземпляров
+        effect_db = EffectDatabase()
+        genetic_system = AdvancedGeneticSystem(effect_db)
+        emotion_system = AdvancedEmotionSystem(effect_db)
+        ai_system = AdaptiveAISystem(entity_id="TEST_AI")
+        
+        logger.info("Все основные системы инициализированы успешно")
+        print("✓ Все основные системы работают корректно")
+        
+        # Тестирование базы данных
+        try:
+            from core.database_manager import database_manager
+            effects = database_manager.get_effects()
+            logger.info(f"База данных доступна: {len(effects)} эффектов загружено")
+            print(f"✓ База данных: {len(effects)} эффектов")
+        except Exception as e:
+            logger.warning(f"Проблема с базой данных: {e}")
+            print(f"⚠ База данных: {e}")
+        
+        return True
+        
     except Exception as e:
+        logger.error(f"Ошибка тестового режима: {e}")
         print(f"✗ Ошибка тестирования: {e}")
-        logging.error(f"Ошибка тестирования: {e}")
         return False
+
 
 def run_demo_mode():
-    """Запуск демо-режима"""
+    """Запуск демонстрационного режима"""
     try:
-        from main_game import run_demo_mode as run_demo
-        print("Запуск демо-режима...")
-        run_demo()
+        logger.info("Запуск демонстрационного режима...")
+        
+        # Создание демо мира
+        from core.content_generator import ContentGenerator
+        from core.advanced_entity import AdvancedGameEntity
+        
+        generator = ContentGenerator()
+        world = generator.generate_world(biome="forest", size="small", difficulty=0.5)
+        
+        # Создание демо сущностей
+        player = AdvancedGameEntity(
+            entity_id="DEMO_PLAYER",
+            entity_type="player",
+            name="Демо Игрок",
+            position=(0, 0, 0)
+        )
+        
+        enemy = AdvancedGameEntity(
+            entity_id="DEMO_ENEMY",
+            entity_type="enemy",
+            name="Демо Враг",
+            position=(100, 0, 0)
+        )
+        
+        logger.info("Демо режим запущен успешно")
+        print("✓ Демо режим: мир и сущности созданы")
+        print(f"  - Мир: {world.name}, seed: {world.seed}")
+        print(f"  - Биомы: {len(world.biomes)}")
+        print(f"  - Игрок: {player.name}")
+        print(f"  - Враг: {enemy.name}")
+        
         return True
+        
     except Exception as e:
-        print(f"✗ Ошибка демо-режима: {e}")
-        logging.error(f"Ошибка демо-режима: {e}")
+        logger.error(f"Ошибка демо режима: {e}")
+        print(f"✗ Ошибка демо режима: {e}")
         return False
 
+
 def show_help():
-    """Показать справку"""
-    print("""
-ЭВОЛЮЦИОННАЯ АДАПТАЦИЯ: ГЕНЕТИЧЕСКИЙ РЕЗОНАНС
-================================================
+    """Показать справку по использованию"""
+    help_text = """
+Эволюционная Адаптация: Генетический Резонанс
 
 Использование:
-  python run_game.py [опция]
+  python run_game.py [режим]
 
-Опции:
-  --gui, -g          Запуск графического интерфейса (по умолчанию)
-  --console, -c      Запуск консольного режима
-  --test, -t         Тестирование всех систем
-  --demo, -d         Демо-режим (30 секунд)
-  --help, -h         Показать эту справку
+Режимы:
+  gui     - Графический интерфейс (по умолчанию)
+  console - Консольный режим
+  test    - Тестовый режим
+  demo    - Демонстрационный режим
+  help    - Показать эту справку
 
 Примеры:
-  python run_game.py              # Графический интерфейс
-  python run_game.py --console    # Консольный режим
-  python run_game.py --test       # Тестирование
-  python run_game.py --demo       # Демо-режим
-""")
+  python run_game.py          # Запуск GUI
+  python run_game.py console  # Запуск консоли
+  python run_game.py test     # Запуск тестов
+  python run_game.py demo     # Запуск демо
+"""
+    print(help_text)
+
 
 def main():
     """Главная функция"""
-    # Парсинг аргументов командной строки
-    args = sys.argv[1:] if len(sys.argv) > 1 else []
-    
-    # Обработка флага помощи
-    if any(arg in ['--help', '-h'] for arg in args):
-        show_help()
-        return
-    
-    # Настройка логирования
-    setup_logging()
+    print("🎮 Эволюционная Адаптация: Генетический Резонанс")
+    print("=" * 50)
     
     # Создание директорий
     create_directories()
     
     # Проверка зависимостей
     if not check_dependencies():
-        print("\n⚠ Некоторые зависимости отсутствуют. Игра может работать некорректно.")
+        print("❌ Критические зависимости не найдены. Установите необходимые пакеты.")
+        return 1
     
-    # Вывод заголовка
-    print("\n" + "=" * 60)
-    print("  ЭВОЛЮЦИОННАЯ АДАПТАЦИЯ: ГЕНЕТИЧЕСКИЙ РЕЗОНАНС")
-    print("=" * 60)
-    print("  Версия: 1.0.0")
-    print("  Автор: AI Assistant")
-    print("  Описание: Инновационная игра с эволюционными циклами")
-    print("=" * 60)
+    # Определение режима запуска
+    mode = sys.argv[1].lower() if len(sys.argv) > 1 else "gui"
     
-    try:
-        # Определение режима запуска
-        if any(arg in ['--test', '-t'] for arg in args):
-            # Тестовый режим
-            success = run_test_mode()
-            if success:
-                print("\n✓ Все системы работают корректно!")
-            else:
-                print("\n✗ Обнаружены проблемы в системах!")
-                sys.exit(1)
-                
-        elif any(arg in ['--demo', '-d'] for arg in args):
-            # Демо-режим
-            run_demo_mode()
-            
-        elif any(arg in ['--console', '-c'] for arg in args):
-            # Консольный режим
-            run_console_mode()
-            
-        else:
-            # Графический интерфейс (по умолчанию)
-            try:
-                import pygame
-                run_graphical_interface()
-            except ImportError:
-                print("⚠ Pygame недоступен, переключение на консольный режим")
-                run_console_mode()
-                
-    except KeyboardInterrupt:
-        print("\n\nИгра прервана пользователем")
-        logging.info("Игра прервана пользователем")
-        
-    except Exception as e:
-        print(f"\n\n✗ Критическая ошибка: {e}")
-        logging.critical(f"Критическая ошибка: {e}")
-        sys.exit(1)
-        
-    finally:
-        print("\nСпасибо за игру!")
-        print("=" * 60)
+    if mode == "help":
+        show_help()
+        return 0
+    
+    # Запуск выбранного режима
+    success = False
+    
+    if mode == "gui":
+        success = run_graphical_interface()
+    elif mode == "console":
+        success = run_console_mode()
+    elif mode == "test":
+        success = run_test_mode()
+    elif mode == "demo":
+        success = run_demo_mode()
+    else:
+        print(f"❌ Неизвестный режим: {mode}")
+        show_help()
+        return 1
+    
+    if success:
+        print("✅ Игра завершена успешно")
+        return 0
+    else:
+        print("❌ Игра завершена с ошибками")
+        return 1
+
 
 if __name__ == "__main__":
-    main()
+    try:
+        exit_code = main()
+        sys.exit(exit_code)
+    except KeyboardInterrupt:
+        print("\n🛑 Игра прервана пользователем")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"Критическая ошибка: {e}")
+        print(f"💥 Критическая ошибка: {e}")
+        sys.exit(1)

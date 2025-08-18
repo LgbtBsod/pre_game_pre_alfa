@@ -1,79 +1,141 @@
-"""Основные системы игры."""
+"""
+Основной модуль игровых систем.
+Содержит все ключевые компоненты для эволюционной адаптации.
+"""
 
-# Core systems for Evolutionary Adaptation: Genetic Resonance
-# Основные системы для "Эволюционная Адаптация: Генетический Резонас"
+# Основные системы
+from .effect_system import (
+    EffectType, EffectCode, Effect, EffectDatabase, 
+    ActiveEffect, EffectSystem
+)
 
-from .effect_system import EffectSystem, EffectDatabase, EffectCode
-from .genetic_system import AdvancedGeneticSystem
-from .emotion_system import AdvancedEmotionSystem
-from .ai_system import AdaptiveAISystem, QLearningAgent
-from .content_generator import ContentGenerator, GeneratedWorld
-from .evolution_system import EvolutionCycleSystem
-from .global_event_system import GlobalEventSystem
-from .dynamic_difficulty import DynamicDifficultySystem
-from .advanced_entity import AdvancedGameEntity, PygameGameEntity
-from .game_loop import GameLoop
+from .genetic_system import (
+    GeneCode, MutationType, Gene, GeneticAnomaly, 
+    AdvancedGeneticSystem
+)
 
-# Новые системы боевого ИИ
-from .combat_learning_system import CombatLearningSystem, CombatAction, EnemyVulnerability
-from .advanced_weapon_system import AdvancedWeapon, WeaponType, WeaponRarity, WeaponFactory, WeaponManager
-# from .integrated_combat_ai import IntegratedCombatAI, CombatStrategy, CombatContext, CombatDecision
+from .emotion_system import (
+    EmotionCode, EmotionIntensity, Emotion, 
+    EmotionalState, AdvancedEmotionSystem
+)
 
-# Система навыков и расширенный боевой ИИ
+from .ai_system import (
+    ActionType, AIState, AIAction, AIPersonality, 
+    QLearningAgent, AdaptiveAISystem
+)
+
+from .content_generator import (
+    BiomeType, EnemyType, WeaponType, ItemRarity,
+    GeneratedEnemy, GeneratedWeapon, GeneratedItem, 
+    GeneratedWorld, ContentGenerator
+)
+
+from .evolution_system import (
+    EvolutionStage, EvolutionBonus, EvolutionData, 
+    EvolutionPath, EvolutionCycleSystem
+)
+
+from .advanced_entity import (
+    EntityType, DamageType, EntityStats, EntityPosition,
+    AdvancedGameEntity, PygameGameEntity
+)
+
+from .game_loop import (
+    GameWorld, GameLoop
+)
+
+from .global_event_system import (
+    EventType, EventSeverity, EventCategory, 
+    GlobalEvent, EventTrigger, GlobalEventSystem
+)
+
+from .dynamic_difficulty import (
+    DifficultyLevel, DifficultyFactor, DifficultyParameter,
+    PlayerPerformance, DifficultyProfile, DynamicDifficultySystem
+)
+
+from .combat_learning_system import (
+    CombatAction, VulnerabilityType, EnemyVulnerability,
+    WeaponEffectiveness, ItemUsagePattern, CombatLearningSystem
+)
+
+from .advanced_weapon_system import (
+    WeaponType as WeaponSystemType, DamageType as WeaponDamageType,
+    WeaponRarity as WeaponSystemRarity, WeaponStats, WeaponEnhancement,
+    AdvancedWeapon, WeaponFactory, WeaponManager
+)
+
 from .skill_system import (
-    Skill, SkillManager, SkillLearningAI, SkillFactory,
-    SkillType, SkillElement, SkillTarget, SkillCombo, SkillEffect, SkillRequirement
-)
-from .enhanced_combat_ai import (
-    EnhancedCombatAI, EnhancedCombatContext, CombatDecision as EnhancedCombatDecision,
-    CombatPhase, CombatTactic
+    SkillType, SkillElement, SkillTarget, SkillRequirement,
+    SkillEffect, SkillCombo, Skill, SkillManager, SkillLearningAI
 )
 
+from .enhanced_combat_ai import (
+    CombatPhase, CombatTactic, EnhancedCombatContext,
+    CombatDecision, EnhancedCombatAI
+)
+
+from .database_manager import DatabaseManager, database_manager
+
+# Основные классы для импорта
 __all__ = [
-    # Основные системы
-    'EffectSystem',
-    'EffectDatabase', 
-    'EffectCode',
-    'AdvancedGeneticSystem',
-    'AdvancedEmotionSystem',
-    'AdaptiveAISystem',
-    'QLearningAgent',
-    'ContentGenerator',
-    'GeneratedWorld',
-    'EvolutionCycleSystem',
-    'GlobalEventSystem',
-    'DynamicDifficultySystem',
-    'AdvancedGameEntity',
-    'PygameGameEntity',
-    'GameLoop',
+    # Системы эффектов
+    'EffectType', 'EffectCode', 'Effect', 'EffectDatabase', 
+    'ActiveEffect', 'EffectSystem',
     
-    # Системы боевого ИИ
-    'CombatLearningSystem',
-    'CombatAction',
-    'EnemyVulnerability',
-    'AdvancedWeapon',
-    'WeaponType',
-    'WeaponRarity',
-    'WeaponFactory',
-    'WeaponManager',
-    # IntegratedCombatAI заменён на EnhancedCombatAI
+    # Генетическая система
+    'GeneCode', 'MutationType', 'Gene', 'GeneticAnomaly', 
+    'AdvancedGeneticSystem',
+    
+    # Эмоциональная система
+    'EmotionCode', 'EmotionIntensity', 'Emotion', 
+    'EmotionalState', 'AdvancedEmotionSystem',
+    
+    # ИИ система
+    'ActionType', 'AIState', 'AIAction', 'AIPersonality', 
+    'QLearningAgent', 'AdaptiveAISystem',
+    
+    # Генератор контента
+    'BiomeType', 'EnemyType', 'WeaponType', 'ItemRarity',
+    'GeneratedEnemy', 'GeneratedWeapon', 'GeneratedItem', 
+    'GeneratedWorld', 'ContentGenerator',
+    
+    # Система эволюции
+    'EvolutionStage', 'EvolutionBonus', 'EvolutionData', 
+    'EvolutionPath', 'EvolutionCycleSystem',
+    
+    # Игровые сущности
+    'EntityType', 'DamageType', 'EntityStats', 'EntityPosition',
+    'AdvancedGameEntity', 'PygameGameEntity',
+    
+    # Игровой цикл
+    'GameWorld', 'GameLoop',
+    
+    # Глобальные события
+    'EventType', 'EventSeverity', 'EventCategory', 
+    'GlobalEvent', 'EventTrigger', 'GlobalEventSystem',
+    
+    # Динамическая сложность
+    'DifficultyLevel', 'DifficultyFactor', 'DifficultyParameter',
+    'PlayerPerformance', 'DifficultyProfile', 'DynamicDifficultySystem',
+    
+    # Боевое обучение
+    'CombatAction', 'VulnerabilityType', 'EnemyVulnerability',
+    'WeaponEffectiveness', 'ItemUsagePattern', 'CombatLearningSystem',
+    
+    # Система оружия
+    'WeaponSystemType', 'WeaponDamageType', 'WeaponSystemRarity',
+    'WeaponStats', 'WeaponEnhancement', 'AdvancedWeapon', 
+    'WeaponFactory', 'WeaponManager',
     
     # Система навыков
-    'Skill',
-    'SkillManager',
-    'SkillLearningAI',
-    'SkillFactory',
-    'SkillType',
-    'SkillElement',
-    'SkillTarget',
-    'SkillCombo',
-    'SkillEffect',
-    'SkillRequirement',
+    'SkillType', 'SkillElement', 'SkillTarget', 'SkillRequirement',
+    'SkillEffect', 'SkillCombo', 'Skill', 'SkillManager', 'SkillLearningAI',
     
-    # Расширенный боевой ИИ
-    'EnhancedCombatAI',
-    'EnhancedCombatContext',
-    'EnhancedCombatDecision',
-    'CombatPhase',
-    'CombatTactic'
+    # Улучшенный боевой ИИ
+    'CombatPhase', 'CombatTactic', 'EnhancedCombatContext',
+    'CombatDecision', 'EnhancedCombatAI',
+    
+    # Менеджер базы данных
+    'DatabaseManager', 'database_manager',
 ]

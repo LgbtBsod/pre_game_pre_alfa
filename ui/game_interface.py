@@ -22,6 +22,7 @@ from core.evolution_system import EvolutionCycleSystem
 from core.global_event_system import GlobalEventSystem
 from core.dynamic_difficulty import DynamicDifficultySystem
 from core.advanced_entity import AdvancedGameEntity
+from config.config_manager import config_manager
 
 
 class GameState(Enum):
@@ -48,6 +49,20 @@ class GameSettings:
     music_volume: float = 0.7
     sfx_volume: float = 0.8
     difficulty: str = "normal"
+    
+    @classmethod
+    def from_config(cls) -> 'GameSettings':
+        """Создает настройки из конфигурации"""
+        return cls(
+            window_width=config_manager.get('game', 'display.window_width', 1280),
+            window_height=config_manager.get('game', 'display.window_height', 720),
+            fps=config_manager.get('game', 'display.render_fps', 60),
+            fullscreen=config_manager.get('game', 'display.fullscreen', False),
+            vsync=config_manager.get('game', 'display.vsync', True),
+            music_volume=config_manager.get('game', 'audio.music_volume', 0.7),
+            sfx_volume=config_manager.get('game', 'audio.sfx_volume', 0.8),
+            difficulty=config_manager.get('game', 'gameplay.difficulty', 'normal')
+        )
 
 
 class ColorScheme:
@@ -79,8 +94,8 @@ class ColorScheme:
 class GameInterface:
     """Главный класс игрового интерфейса"""
     
-    def __init__(self, settings: GameSettings):
-        self.settings = settings
+    def __init__(self, settings: Optional[GameSettings] = None):
+        self.settings = settings or GameSettings.from_config()
         self.game_state = GameState.MAIN_MENU
         self.running = False
         
@@ -475,7 +490,7 @@ class GameInterface:
         pygame.draw.rect(self.screen, ColorScheme.DARK_GRAY, panel)
         pygame.draw.rect(self.screen, ColorScheme.WHITE, panel, 2)
         
-        title = self.fonts["main"].render("ГЕНЕТИКА", True, ColorScheme.WHITE)
+        title = self.fonts["main"].render("ГЕНЕТИКА", True, ColorScheme.GENETIC_COLOR)
         title_rect = title.get_rect(center=(panel.centerx, panel.y + 20))
         self.screen.blit(title, title_rect)
         
@@ -663,7 +678,7 @@ class GameInterface:
 
 def main():
     """Главная функция запуска"""
-    settings = GameSettings()
+    settings = GameSettings.from_config()
     game = GameInterface(settings)
     game.run()
 
