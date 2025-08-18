@@ -1,398 +1,237 @@
-"""Оптимизированный менеджер ресурсов для управления игровыми данными."""
-
-import json
-import logging
-import threading
-import time
-from typing import Dict, List, Any, Optional, Callable
+import pygame
+import os
 from pathlib import Path
-from collections import defaultdict, OrderedDict
-import weakref
+from typing import Dict, List, Optional, Any, Tuple
+from collections import defaultdict
+import json
 
-from config.config_manager import config_manager
-from core.data_manager import data_manager
-
-logger = logging.getLogger(__name__)
-
-
-class ResourceCache:
-    """Кэш для ресурсов с LRU (Least Recently Used) политикой."""
-
-    def __init__(self, max_size: int = 1000):
-        self.max_size = max_size
-        self.cache = OrderedDict()
-        self.access_times = {}
-        self._lock = threading.Lock()
-
-    def get(self, key: str) -> Optional[Any]:
-        """Получает ресурс из кэша."""
-        with self._lock:
-            if key in self.cache:
-                # Обновляем время доступа
-                self.access_times[key] = time.time()
-                # Перемещаем в конец (LRU)
-                self.cache.move_to_end(key)
-                return self.cache[key]
-            return None
-
-    def put(self, key: str, value: Any):
-        """Добавляет ресурс в кэш."""
-        with self._lock:
-            if key in self.cache:
-                # Обновляем существующий
-                self.cache.move_to_end(key)
-                self.cache[key] = value
-            else:
-                # Добавляем новый
-                self.cache[key] = value
-                # Проверяем размер кэша
-                if len(self.cache) > self.max_size:
-                    # Удаляем самый старый элемент
-                    oldest_key = next(iter(self.cache))
-                    del self.cache[oldest_key]
-                    if oldest_key in self.access_times:
-                        del self.access_times[oldest_key]
-
-            self.access_times[key] = time.time()
-
-    def remove(self, key: str):
-        """Удаляет ресурс из кэша."""
-        with self._lock:
-            if key in self.cache:
-                del self.cache[key]
-            if key in self.access_times:
-                del self.access_times[key]
-
-    def clear(self):
-        """Очищает кэш."""
-        with self._lock:
-            self.cache.clear()
-            self.access_times.clear()
-
-    def size(self) -> int:
-        """Возвращает размер кэша."""
-        with self._lock:
-            return len(self.cache)
-
-    def get_stats(self) -> Dict[str, Any]:
-        """Возвращает статистику кэша."""
-        with self._lock:
-            return {
-                "size": len(self.cache),
-                "max_size": self.max_size,
-                "usage_percent": (len(self.cache) / self.max_size) * 100,
-            }
-
+class ResourceType:
+    """Resource type constants"""
+    IMAGE = "image"
+    SOUND = "sound"
+    MUSIC = "music"
+    FONT = "font"
+    DATA = "data"
 
 class ResourceManager:
-    """Оптимизированный менеджер ресурсов."""
-
-    def __init__(self):
-        self.cache = ResourceCache()
-        self._lock = threading.Lock()
-        self._load_callbacks = defaultdict(list)
-        self._resource_paths = {}
-        self._loaded_resources = {}
-        self._loading_queue = []
-        self._is_loading = False
-
-        # Инициализация путей к ресурсам
-        self._init_resource_paths()
-
-        # Загрузка базовых ресурсов
-        self._load_base_resources()
-
-    def _init_resource_paths(self):
-        """Инициализирует пути к ресурсам."""
-        base_path = Path("data")
-        self._resource_paths = {
-            "game_settings": base_path / "game_settings.json",
-            "difficulty": base_path / "difficulty_settings.json",
-            "ui": base_path / "ui_settings.json",
-            "graphics": base_path / "graphics_settings.json",
-            "audio": base_path / "audio_settings.json",
-            "ai": base_path / "ai_settings.json",
-            "combat": base_path / "combat_settings.json",
-            "inventory": base_path / "inventory_settings.json",
+    """Centralized resource management system"""
+    
+    def __init__(self, base_path: str = "."):
+        self.base_path = Path(base_path)
+        self._resources: Dict[str, Dict[str, Any]] = defaultdict(dict)
+        self._resource_cache: Dict[str, Any] = {}
+        self._cache_size_limit = 100  # Maximum cached resources
+        
+        # Supported file extensions
+        self._supported_formats = {
+            ResourceType.IMAGE: ['.png', '.jpg', '.jpeg', '.bmp', '.tga'],
+            ResourceType.SOUND: ['.wav', '.ogg', '.mp3'],
+            ResourceType.MUSIC: ['.ogg', '.mp3', '.wav'],
+            ResourceType.FONT: ['.ttf', '.otf'],
+            ResourceType.DATA: ['.json', '.csv', '.txt']
         }
-
-    def _load_base_resources(self):
-        """Загружает базовые ресурсы при инициализации."""
+    
+    def _get_resource_type(self, file_path: str) -> str:
+        """Determine resource type from file extension"""
+        ext = Path(file_path).suffix.lower()
+        
+        for resource_type, extensions in self._supported_formats.items():
+            if ext in extensions:
+                return resource_type
+        
+        return ResourceType.DATA
+    
+    def _normalize_path(self, path: str) -> Path:
+        """Normalize and validate file path"""
+        normalized = Path(path)
+        if not normalized.is_absolute():
+            normalized = self.base_path / normalized
+        return normalized
+    
+    def load_image(self, path: str, convert_alpha: bool = True) -> Optional[pygame.Surface]:
+        """Load an image resource"""
         try:
-            # Загружаем настройки
-            for resource_type, path in self._resource_paths.items():
-                if path.exists():
-                    self._load_json_resource(resource_type, path)
-
-            logger.info("Базовые ресурсы загружены")
-
+            full_path = self._normalize_path(path)
+            if not full_path.exists():
+                print(f"Warning: Image file not found: {full_path}")
+                return None
+            
+            image = pygame.image.load(str(full_path))
+            if convert_alpha:
+                image = image.convert_alpha()
+            
+            # Cache the loaded image
+            cache_key = f"image_{path}"
+            self._cache_resource(cache_key, image)
+            
+            return image
         except Exception as e:
-            logger.error(f"Ошибка загрузки базовых ресурсов: {e}")
-
-    def _load_json_resource(self, resource_type: str, path: Path):
-        """Загружает JSON ресурс."""
+            print(f"Error loading image {path}: {e}")
+            return None
+    
+    def load_sound(self, path: str) -> Optional[pygame.mixer.Sound]:
+        """Load a sound resource"""
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            self._loaded_resources[resource_type] = data
-            logger.debug(f"Загружен ресурс: {resource_type}")
-
+            full_path = self._normalize_path(path)
+            if not full_path.exists():
+                print(f"Warning: Sound file not found: {full_path}")
+                return None
+            
+            sound = pygame.mixer.Sound(str(full_path))
+            
+            # Cache the loaded sound
+            cache_key = f"sound_{path}"
+            self._cache_resource(cache_key, sound)
+            
+            return sound
         except Exception as e:
-            logger.error(f"Ошибка загрузки {resource_type}: {e}")
-            self._loaded_resources[resource_type] = {}
-
-    def _import_to_database(self):
-        """Импортирует данные в базу данных."""
+            print(f"Error loading sound {path}: {e}")
+            return None
+    
+    def load_font(self, path: str, size: int) -> Optional[pygame.font.Font]:
+        """Load a font resource"""
         try:
-            # Импорт предметов
-            if "items" in self._loaded_resources:
-                for item_id, item_data in (
-                    self._loaded_resources["items"].get("items", {}).items()
-                ):
-                    item_data["id"] = item_id
-                    # Преобразуем range в attack_range для совместимости
-                    if "range" in item_data:
-                        item_data["attack_range"] = item_data.pop("range")
-                    # Создаем объект ItemData
-                    from core.data_manager import ItemData
-
-                    try:
-                        item = ItemData(**item_data)
-                        data_manager.add_item(item)
-                    except Exception as e:
-                        logger.warning(f"Ошибка создания предмета {item_id}: {e}")
+            full_path = self._normalize_path(path)
+            if not full_path.exists():
+                print(f"Warning: Font file not found: {full_path}")
+                return None
+            
+            font = pygame.font.Font(str(full_path), size)
+            
+            # Cache the loaded font
+            cache_key = f"font_{path}_{size}"
+            self._cache_resource(cache_key, font)
+            
+            return font
+        except Exception as e:
+            print(f"Error loading font {path}: {e}")
+            return None
+    
+    def load_data_file(self, path: str) -> Optional[Any]:
+        """Load a data file (JSON, CSV, etc.)"""
+        try:
+            full_path = self._normalize_path(path)
+            if not full_path.exists():
+                print(f"Warning: Data file not found: {full_path}")
+                return None
+            
+            ext = full_path.suffix.lower()
+            
+            if ext == '.json':
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            elif ext == '.csv':
+                import csv
+                data = []
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    reader = csv.reader(f)
+                    for row in reader:
+                        data.append(row)
+                return data  # Return immediately for CSV files
+            else:
+                with open(full_path, 'r', encoding='utf-8') as f:
+                    data = f.read()
+            
+            # Cache the loaded data
+            cache_key = f"data_{path}"
+            self._cache_resource(cache_key, data)
+            
+            return data
+        except Exception as e:
+            print(f"Error loading data file {path}: {e}")
+            return None
+    
+    def load_folder(self, folder_path: str, resource_type: str = None) -> List[Any]:
+        """Load all resources from a folder"""
+        try:
+            full_path = self._normalize_path(folder_path)
+            if not full_path.exists() or not full_path.is_dir():
+                print(f"Warning: Folder not found: {full_path}")
+                return []
+            
+            resources = []
+            
+            for file_path in full_path.iterdir():
+                if file_path.is_file():
+                    if resource_type is None:
+                        resource_type = self._get_resource_type(str(file_path))
+                    
+                    relative_path = str(file_path.relative_to(self.base_path))
+                    
+                    if resource_type == ResourceType.IMAGE:
+                        resource = self.load_image(relative_path)
+                    elif resource_type == ResourceType.SOUND:
+                        resource = self.load_sound(relative_path)
+                    elif resource_type == ResourceType.MUSIC:
+                        resource = self.load_sound(relative_path)
+                    else:
                         continue
-
-            # Импорт врагов
-            if "entities" in self._loaded_resources:
-                for entity_id, entity_data in (
-                    self._loaded_resources["entities"].get("entities", {}).items()
-                ):
-                    if entity_data.get("type") in ["enemy", "boss"]:
-                        entity_data["id"] = entity_id
-                        # Создаем объект EnemyData
-                        from core.data_manager import EnemyData
-
-                        try:
-                            enemy = EnemyData(**entity_data)
-                            data_manager.add_enemy(enemy)
-                        except Exception as e:
-                            logger.warning(f"Ошибка создания врага {entity_id}: {e}")
-                            continue
-
-            logger.info("Данные импортированы в базу данных")
-
+                    
+                    if resource:
+                        resources.append(resource)
+            
+            return resources
         except Exception as e:
-            logger.error(f"Ошибка импорта в БД: {e}")
-
-    def get_setting(self, section: str, key: str, default: Any = None) -> Any:
-        """Получает настройку."""
-        return config_manager.get('game', f"{section}.{key}", default)
-
-    def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
-        """Получает предмет."""
-        # Сначала проверяем кэш
-        cached_item = self.cache.get(f"item_{item_id}")
-        if cached_item:
-            return cached_item
-
-        # Затем базу данных
-        item = data_manager.get_item(item_id)
-        if item:
-            self.cache.put(f"item_{item_id}", item)
-            return item
-
-        # Наконец, загруженные ресурсы
-        if "items" in self._loaded_resources:
-            items = self._loaded_resources["items"].get("items", {})
-            if item_id in items:
-                item_data = items[item_id].copy()
-                item_data["id"] = item_id
-                self.cache.put(f"item_{item_id}", item_data)
-                return item_data
-
-        return None
-
-    def get_items_by_type(self, item_type: str) -> List[Dict[str, Any]]:
-        """Получает предметы по типу."""
-        # Сначала база данных
-        items = data_manager.get_items_by_type(item_type)
-        if items:
-            # Кэшируем результаты
-            for item in items:
-                self.cache.put(f"item_{item['id']}", item)
-            return items
-
-        # Затем загруженные ресурсы
-        if "items" in self._loaded_resources:
-            items = []
-            for item_id, item_data in (
-                self._loaded_resources["items"].get("items", {}).items()
-            ):
-                if item_data.get("type") == item_type:
-                    item_data = item_data.copy()
-                    item_data["id"] = item_id
-                    items.append(item_data)
-                    self.cache.put(f"item_{item_id}", item_data)
-            return items
-
-        return []
-
-    def get_enemy(self, enemy_id: str) -> Optional[Dict[str, Any]]:
-        """Получает врага."""
-        # Сначала проверяем кэш
-        cached_enemy = self.cache.get(f"enemy_{enemy_id}")
-        if cached_enemy:
-            return cached_enemy
-
-        # Затем базу данных
-        enemy = data_manager.get_enemy(enemy_id)
-        if enemy:
-            self.cache.put(f"enemy_{enemy_id}", enemy)
-            return enemy
-
-        # Наконец, загруженные ресурсы
-        if "entities" in self._loaded_resources:
-            entities = self._loaded_resources["entities"].get("entities", {})
-            if enemy_id in entities:
-                enemy_data = entities[enemy_id].copy()
-                enemy_data["id"] = enemy_id
-                self.cache.put(f"enemy_{enemy_id}", enemy_data)
-                return enemy_data
-
-        return None
-
-    def get_enemies_by_type(self, enemy_type: str) -> List[Dict[str, Any]]:
-        """Получает врагов по типу."""
-        # Сначала база данных
-        enemies = data_manager.get_enemies_by_type(enemy_type)
-        if enemies:
-            # Кэшируем результаты
-            for enemy in enemies:
-                self.cache.put(f"enemy_{enemy['id']}", enemy)
-            return enemies
-
-        # Затем загруженные ресурсы
-        if "entities" in self._loaded_resources:
-            enemies = []
-            for entity_id, entity_data in (
-                self._loaded_resources["entities"].get("entities", {}).items()
-            ):
-                if entity_data.get("enemy_type") == enemy_type:
-                    entity_data = entity_data.copy()
-                    entity_data["id"] = entity_id
-                    enemies.append(entity_data)
-                    self.cache.put(f"enemy_{entity_id}", entity_data)
-            return enemies
-
-        return []
-
-    def get_effect(self, effect_id: str) -> Optional[Dict[str, Any]]:
-        """Получает эффект."""
-        if "effects" in self._loaded_resources:
-            effects = self._loaded_resources["effects"].get("effects", {})
-            return effects.get(effect_id)
-        return None
-
-    def get_ability(self, ability_id: str) -> Optional[Dict[str, Any]]:
-        """Получает способность."""
-        if "abilities" in self._loaded_resources:
-            abilities = self._loaded_resources["abilities"].get("abilities", {})
-            return abilities.get(ability_id)
-        return None
-
-    def get_attribute(self, attribute_id: str) -> Optional[Dict[str, Any]]:
-        """Получает атрибут."""
-        if "attributes" in self._loaded_resources:
-            attributes = self._loaded_resources["attributes"].get("attributes", {})
-            return attributes.get(attribute_id)
-        return None
-
-    def add_load_callback(self, resource_type: str, callback: Callable):
-        """Добавляет callback для загрузки ресурсов."""
-        self._load_callbacks[resource_type].append(callback)
-
-    def reload_resource(self, resource_type: str):
-        """Перезагружает ресурс."""
-        try:
-            if resource_type in self._resource_paths:
-                path = self._resource_paths[resource_type]
-                if path.exists():
-                    self._load_json_resource(resource_type, path)
-
-                    # Вызываем callbacks
-                    for callback in self._load_callbacks[resource_type]:
-                        try:
-                            callback()
-                        except Exception as e:
-                            logger.error(f"Ошибка в callback для {resource_type}: {e}")
-
-                    logger.info(f"Ресурс {resource_type} перезагружен")
-
-        except Exception as e:
-            logger.error(f"Ошибка перезагрузки ресурса {resource_type}: {e}")
-
-    def preload_resources(self, resource_types: List[str]):
-        """Предзагружает ресурсы."""
-        for resource_type in resource_types:
-            if resource_type in self._resource_paths:
-                path = self._resource_paths[resource_type]
-                if path.exists():
-                    self._load_json_resource(resource_type, path)
-
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """Возвращает статистику кэша."""
-        return self.cache.get_stats()
-
-    def clear_cache(self):
-        """Очищает кэш."""
-        self.cache.clear()
-        logger.info("Кэш ресурсов очищен")
-
-    def optimize_cache(self):
-        """Оптимизирует кэш."""
-        # Удаляем неиспользуемые ресурсы
-        current_time = time.time()
-        to_remove = []
-
-        for key, access_time in self.cache.access_times.items():
-            if current_time - access_time > 300:  # 5 минут
-                to_remove.append(key)
-
-        for key in to_remove:
-            self.cache.remove(key)
-
-        if to_remove:
-            logger.info(f"Удалено {len(to_remove)} неиспользуемых ресурсов из кэша")
-
-    def save_resource(self, resource_type: str, data: Dict[str, Any]):
-        """Сохраняет ресурс."""
-        try:
-            if resource_type in self._resource_paths:
-                path = self._resource_paths[resource_type]
-
-                # Обновляем в памяти
-                self._loaded_resources[resource_type] = data
-
-                # Сохраняем в файл
-                with open(path, "w", encoding="utf-8") as f:
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-
-                logger.info(f"Ресурс {resource_type} сохранен")
-
-        except Exception as e:
-            logger.error(f"Ошибка сохранения ресурса {resource_type}: {e}")
-
-    def get_resource_info(self) -> Dict[str, Any]:
-        """Возвращает информацию о ресурсах."""
+            print(f"Error loading folder {folder_path}: {e}")
+            return []
+    
+    def _cache_resource(self, key: str, resource: Any) -> None:
+        """Cache a resource with size limit management"""
+        if len(self._resource_cache) >= self._cache_size_limit:
+            # Remove oldest cached resource
+            oldest_key = next(iter(self._resource_cache))
+            del self._resource_cache[oldest_key]
+        
+        self._resource_cache[key] = resource
+    
+    def get_cached_resource(self, key: str) -> Optional[Any]:
+        """Get a cached resource"""
+        return self._resource_cache.get(key)
+    
+    def clear_cache(self) -> None:
+        """Clear the resource cache"""
+        self._resource_cache.clear()
+    
+    def preload_resources(self, resource_list: List[Tuple[str, str]]) -> int:
+        """Preload a list of resources"""
+        loaded_count = 0
+        
+        for resource_type, path in resource_list:
+            try:
+                if resource_type == ResourceType.IMAGE:
+                    if self.load_image(path):
+                        loaded_count += 1
+                elif resource_type == ResourceType.SOUND:
+                    if self.load_sound(path):
+                        loaded_count += 1
+                elif resource_type == ResourceType.MUSIC:
+                    if self.load_sound(path):
+                        loaded_count += 1
+                elif resource_type == ResourceType.FONT:
+                    if self.load_font(path, 16):  # Default size
+                        loaded_count += 1
+                elif resource_type == ResourceType.DATA:
+                    if self.load_data_file(path):
+                        loaded_count += 1
+            except Exception as e:
+                print(f"Error preloading {resource_type} resource {path}: {e}")
+        
+        return loaded_count
+    
+    def get_resource_info(self) -> Dict[str, int]:
+        """Get information about loaded resources"""
         info = {
-            "loaded_resources": list(self._loaded_resources.keys()),
-            "cache_stats": self.get_cache_stats(),
-            "resource_paths": {k: str(v) for k, v in self._resource_paths.items()},
+            'cached_resources': len(self._resource_cache),
+            'cache_size_limit': self._cache_size_limit
         }
+        
+        for resource_type in self._supported_formats:
+            count = len([k for k in self._resource_cache.keys() if k.startswith(resource_type)])
+            info[f'{resource_type}_count'] = count
+        
         return info
-
-
-# Глобальный экземпляр менеджера ресурсов
-resource_manager = ResourceManager()
+    
+    def cleanup(self) -> None:
+        """Cleanup resources"""
+        self.clear_cache()
+        pygame.mixer.stop()
