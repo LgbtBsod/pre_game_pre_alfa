@@ -10,6 +10,14 @@ from dataclasses import dataclass, field
 from enum import Enum
 import logging
 
+# Условный импорт pygame
+try:
+    import pygame
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
+    pygame = None
+
 from .effect_system import EffectSystem, EffectDatabase
 from .genetic_system import AdvancedGeneticSystem
 from .emotion_system import AdvancedEmotionSystem
@@ -110,10 +118,18 @@ class EntityPosition:
 class AdvancedGameEntity:
     """Универсальная игровая сущность"""
     
-    def __init__(self, entity_id: str, entity_type: str, effect_db: EffectDatabase):
+    def __init__(
+        self,
+        entity_id: str,
+        entity_type: str,
+        effect_db: Optional[EffectDatabase] = None,
+        name: Optional[str] = None,
+        position: Optional[Tuple[float, float, float]] = None,
+    ):
         self.id = entity_id
         self.type = entity_type
         self.guid = str(uuid.uuid4())
+        self.name = name or entity_id
         
         # Базовые характеристики
         self.stats = self._generate_base_stats()
@@ -126,6 +142,9 @@ class AdvancedGameEntity:
         self.weaknesses = self._generate_weaknesses()
         
         # Интегрированные системы
+        if effect_db is None:
+            # Локальная БД эффектов, если не передали внешнюю
+            effect_db = EffectDatabase()
         self.effect_system = EffectSystem(effect_db)
         self.emotion_system = AdvancedEmotionSystem(effect_db)
         self.genetic_system = AdvancedGeneticSystem(effect_db)
@@ -141,11 +160,24 @@ class AdvancedGameEntity:
         self.is_visible = True
         self.is_interactable = True
         
+        # Pygame поддержка
+        self.pygame_sprite = None
+        self.animation_frame = 0
+        self.animation_speed = 0.15
+        self.direction = pygame.math.Vector2() if PYGAME_AVAILABLE and pygame.get_init() else None
+        
         # История и статистика
         self.creation_time = 0.0  # Здесь будет время игры
         self.last_update_time = 0.0
         self.update_count = 0
         
+        # Установка позиции, если передана
+        if position is not None:
+            try:
+                self.position.x, self.position.y, self.position.z = position
+            except Exception:
+                pass
+
         # Инициализация
         self._initialize_entity()
         
@@ -929,3 +961,219 @@ class EntityQuestSystem:
                 self.completed_quests.append(completed_quest)
                 return True
         return False
+
+
+# Pygame интеграция для AdvancedGameEntity
+def add_pygame_support_to_entity(entity):
+    """Добавляет поддержку Pygame к существующей сущности"""
+    
+    def setup_pygame_sprite(self, sprite_path: str = None):
+        """Настройка Pygame спрайта"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return
+        
+        if sprite_path:
+            try:
+                self.pygame_sprite = pygame.image.load(sprite_path).convert_alpha()
+            except Exception as e:
+                logger.warning(f"Не удалось загрузить спрайт {sprite_path}: {e}")
+                self.pygame_sprite = None
+        
+        if not self.pygame_sprite:
+            # Создание простого спрайта
+            sprite_size = 32
+            self.pygame_sprite = pygame.Surface((sprite_size, sprite_size))
+            color = (0, 255, 0) if self.type == "player" else (255, 0, 0)
+            self.pygame_sprite.fill(color)
+    
+    def update_animation(self, delta_time: float):
+        """Обновление анимации"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return
+        
+        self.animation_frame += self.animation_speed * delta_time
+        if self.animation_frame >= 4:  # 4 кадра анимации
+            self.animation_frame = 0
+    
+    def move_pygame(self, direction: Tuple[float, float], speed: float, delta_time: float):
+        """Движение с поддержкой Pygame"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return
+        
+        # Обновление направления
+        self.direction.x = direction[0]
+        self.direction.y = direction[1]
+        
+        # Нормализация направления
+        if self.direction.magnitude() > 0:
+            self.direction = self.direction.normalize()
+        
+        # Обновление позиции
+        move_distance = speed * delta_time
+        self.position.x += self.direction.x * move_distance
+        self.position.y += self.direction.y * move_distance
+    
+    def get_pygame_rect(self) -> pygame.Rect:
+        """Получение Pygame прямоугольника для отрисовки"""
+        if not PYGAME_AVAILABLE or not pygame.get_init() or not self.pygame_sprite:
+            return pygame.Rect(0, 0, 32, 32) if PYGAME_AVAILABLE else None
+        
+        sprite_rect = self.pygame_sprite.get_rect()
+        sprite_rect.center = (int(self.position.x), int(self.position.y))
+        return sprite_rect
+    
+    def render_pygame(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)):
+        """Отрисовка сущности на Pygame экране"""
+        if not PYGAME_AVAILABLE or not pygame.get_init() or not self.pygame_sprite:
+            return
+        
+        # Позиция с учетом камеры
+        render_x = int(self.position.x - camera_offset[0])
+        render_y = int(self.position.y - camera_offset[1])
+        
+        # Отрисовка спрайта
+        screen.blit(self.pygame_sprite, (render_x, render_y))
+        
+        # Отрисовка имени
+        if hasattr(self, 'name') and self.name:
+            font = pygame.font.Font(None, 24)
+            name_surf = font.render(self.name, True, (255, 255, 255))
+            name_rect = name_surf.get_rect(center=(render_x, render_y - 20))
+            screen.blit(name_surf, name_rect)
+    
+    # Добавление методов к сущности
+    entity.setup_pygame_sprite = setup_pygame_sprite.__get__(entity)
+    entity.update_animation = update_animation.__get__(entity)
+    entity.move_pygame = move_pygame.__get__(entity)
+    entity.get_pygame_rect = get_pygame_rect.__get__(entity)
+    entity.render_pygame = render_pygame.__get__(entity)
+    
+    return entity
+
+
+# Расширение AdvancedGameEntity для Pygame
+class PygameGameEntity(AdvancedGameEntity):
+    """Версия AdvancedGameEntity с полной поддержкой Pygame"""
+    
+    def __init__(self, entity_id: str, entity_type: str, effect_db: EffectDatabase, sprite_path: str = None):
+        super().__init__(entity_id, entity_type, effect_db)
+        
+        # Инициализация Pygame компонентов
+        if PYGAME_AVAILABLE and pygame.get_init():
+            self.setup_pygame_sprite(sprite_path)
+            self.animation_frame = 0
+            self.animation_speed = 0.15
+            self.direction = pygame.math.Vector2()
+    
+    def update(self, delta_time: float):
+        """Обновление с поддержкой Pygame"""
+        super().update(delta_time)
+        
+        # Обновление анимации
+        if PYGAME_AVAILABLE and pygame.get_init():
+            self.update_animation(delta_time)
+    
+    def move(self, direction: Tuple[float, float], speed: float, delta_time: float):
+        """Движение с поддержкой Pygame"""
+        if PYGAME_AVAILABLE and pygame.get_init():
+            self.move_pygame(direction, speed, delta_time)
+        else:
+            # Fallback для консольного режима
+            self.position.x += direction[0] * speed * delta_time
+            self.position.y += direction[1] * speed * delta_time
+    
+    def render(self, screen: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)):
+        """Отрисовка на Pygame экране"""
+        if PYGAME_AVAILABLE and pygame.get_init():
+            self.render_pygame(screen, camera_offset)
+    
+    def load_animation_frames(self, folder_path: str) -> List[pygame.Surface]:
+        """Загружает кадры анимации из папки"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return []
+        
+        try:
+            import os
+            frames = []
+            if os.path.exists(folder_path):
+                for file in sorted(os.listdir(folder_path)):
+                    if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                        frame_path = os.path.join(folder_path, file)
+                        frame = pygame.image.load(frame_path).convert_alpha()
+                        frames.append(frame)
+            
+            if not frames:
+                logger.warning(f"Не найдены кадры анимации в {folder_path}")
+                return self._create_fallback_frames()
+            
+            return frames
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки кадров анимации из {folder_path}: {e}")
+            return self._create_fallback_frames()
+    
+    def _create_fallback_frames(self) -> List[pygame.Surface]:
+        """Создает резервные кадры анимации"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return []
+        
+        fallback_surf = pygame.Surface((64, 64))
+        fallback_surf.fill((255, 0, 255))  # Маджента для отладки
+        return [fallback_surf]
+    
+    def update_animation(self, animation_frames: List[pygame.Surface]) -> None:
+        """Обновляет анимацию сущности"""
+        if not PYGAME_AVAILABLE or not pygame.get_init() or not animation_frames:
+            return
+        
+        try:
+            # Обновляем индекс кадра
+            self.animation_frame += self.animation_speed
+            if self.animation_frame >= len(animation_frames):
+                self.animation_frame = 0
+
+            # Устанавливаем текущее изображение
+            frame_index = int(self.animation_frame)
+            if 0 <= frame_index < len(animation_frames):
+                self.pygame_sprite = animation_frames[frame_index]
+            else:
+                logger.warning(f"Неверный индекс кадра: {frame_index}")
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления анимации: {e}")
+    
+    def get_direction_vector(self) -> pygame.math.Vector2:
+        """Возвращает текущий вектор направления"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return None
+        return self.direction.copy() if self.direction else pygame.math.Vector2()
+    
+    def set_direction(self, direction: Tuple[float, float]) -> None:
+        """Устанавливает направление движения"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return
+        
+        if not self.direction:
+            self.direction = pygame.math.Vector2()
+        
+        self.direction.x = direction[0]
+        self.direction.y = direction[1]
+    
+    def is_moving(self) -> bool:
+        """Проверяет, движется ли сущность"""
+        if not PYGAME_AVAILABLE or not pygame.get_init() or not self.direction:
+            return False
+        return self.direction.magnitude() > 0
+    
+    def wave_value(self) -> int:
+        """Возвращает значение для эффекта мерцания"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return 255
+        
+        try:
+            import math
+            value = math.sin(pygame.time.get_ticks() * 0.01)
+            return 255 if value >= 0 else 0
+        except Exception as e:
+            logger.error(f"Ошибка расчета мерцания: {e}")
+            return 255

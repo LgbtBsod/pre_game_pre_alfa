@@ -23,7 +23,7 @@ from core.content_generator import ContentGenerator
 from core.evolution_system import EvolutionCycleSystem
 from core.global_event_system import GlobalEventSystem
 from core.dynamic_difficulty import DynamicDifficultySystem
-from entities.advanced_entity import AdvancedGameEntity
+from core.advanced_entity import AdvancedGameEntity
 
 # Настройка логирования
 def setup_logging(log_level: str = "INFO", log_file: str = None):
@@ -41,7 +41,15 @@ def setup_logging(log_level: str = "INFO", log_file: str = None):
     # Формат логов
     log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     
-    # Настройка корневого логгера
+    # Форсируем UTF-8 вывод в консоль Windows и настраиваем корневой логгер
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
     logging.basicConfig(
         level=level,
         format=log_format,
@@ -55,7 +63,7 @@ def setup_logging(log_level: str = "INFO", log_file: str = None):
         log_file_path = Path(log_file)
         log_file_path.parent.mkdir(parents=True, exist_ok=True)
         
-        file_handler = logging.FileHandler(log_file_path)
+        file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
         file_handler.setLevel(level)
         file_handler.setFormatter(logging.Formatter(log_format))
         
@@ -100,7 +108,7 @@ def test_systems():
         # Тест эмоциональной системы
         print("  - Тестирование эмоциональной системы...")
         emotion_system = AdvancedEmotionSystem(effect_db)
-        print(f"    ✓ Эмоциональная система: {len(emotion_system.emotion_templates)} эмоций")
+        print(f"    ✓ Эмоциональная система: {len(emotion_system.emotion_combos)} комбинаций эмоций")
         
         # Тест ИИ системы
         print("  - Тестирование ИИ системы...")
@@ -195,8 +203,27 @@ def run_full_game():
     print("Запуск полной игры...")
     
     try:
-        # Запуск основного игрового цикла
-        main_game_loop()
+        # Проверка доступности Pygame
+        try:
+            import pygame
+            pygame_available = True
+            print("✓ Pygame доступен - запуск графического интерфейса")
+        except ImportError:
+            pygame_available = False
+            print("⚠ Pygame недоступен - запуск консольного режима")
+        
+        if pygame_available:
+            # Запуск графического интерфейса
+            from ui.game_interface import main as run_gui
+            run_gui()
+        else:
+            # Запуск консольного режима
+            from core.game_loop import GameLoop
+            game_loop = GameLoop(use_pygame=False)
+            if game_loop.start_new_game():
+                game_loop.run()
+            else:
+                print("✗ Не удалось запустить игру")
         
     except Exception as e:
         print(f"✗ Ошибка запуска игры: {e}")

@@ -9,6 +9,14 @@ import logging
 from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 
+# Условный импорт pygame
+try:
+    import pygame
+    PYGAME_AVAILABLE = True
+except ImportError:
+    PYGAME_AVAILABLE = False
+    pygame = None
+
 from .effect_system import EffectDatabase
 from .genetic_system import AdvancedGeneticSystem
 from .emotion_system import AdvancedEmotionSystem
@@ -158,7 +166,7 @@ class GameWorld:
 class GameLoop:
     """Основной игровой цикл"""
     
-    def __init__(self):
+    def __init__(self, use_pygame: bool = False):
         # Инициализация систем
         self.effect_db = EffectDatabase()
         self.content_generator = ContentGenerator()
@@ -175,12 +183,41 @@ class GameLoop:
         self.target_fps = 60
         self.frame_time = 1.0 / self.target_fps
         
+        # Pygame поддержка
+        self.use_pygame = use_pygame
+        if self.use_pygame and PYGAME_AVAILABLE and pygame.get_init():
+            self.clock = pygame.time.Clock()
+            self.screen = None
+            self._setup_pygame()
+        
         # Статистика
         self.frames_rendered = 0
         self.fps_counter = 0
         self.last_fps_update = 0.0
         
         logger.info("Игровой цикл инициализирован")
+    
+    def _setup_pygame(self):
+        """Настройка Pygame компонентов"""
+        try:
+            if not PYGAME_AVAILABLE or not pygame.get_init():
+                if PYGAME_AVAILABLE:
+                    pygame.init()
+                else:
+                    self.use_pygame = False
+                    return
+            
+            # Создание экрана
+            screen_width = 1280
+            screen_height = 720
+            self.screen = pygame.display.set_mode((screen_width, screen_height))
+            pygame.display.set_caption("Эволюционная Адаптация: Генетический Резонанс")
+            
+            logger.info("Pygame компоненты инициализированы")
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации Pygame: {e}")
+            self.use_pygame = False
     
     def start_new_game(self, seed: int = None) -> bool:
         """Начало новой игры"""
@@ -262,7 +299,10 @@ class GameLoop:
                 delta_time = current_time - last_time
                 
                 # Ограничение FPS
-                if delta_time < self.frame_time:
+                if self.use_pygame and PYGAME_AVAILABLE and self.clock:
+                    self.clock.tick(self.target_fps)
+                    delta_time = 1.0 / self.target_fps
+                elif delta_time < self.frame_time:
                     time.sleep(self.frame_time - delta_time)
                     delta_time = self.frame_time
                 
@@ -308,8 +348,33 @@ class GameLoop:
     
     def _handle_input(self):
         """Обработка ввода"""
-        # Здесь будет логика обработки ввода
-        # Пока что просто заглушка
+        if self.use_pygame and pygame.get_init():
+            self._handle_pygame_input()
+        else:
+            self._handle_console_input()
+    
+    def _handle_pygame_input(self):
+        """Обработка ввода Pygame"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.is_running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    if self.is_paused:
+                        self.resume_game()
+                    else:
+                        self.pause_game()
+                elif event.key == pygame.K_SPACE:
+                    if self.is_paused:
+                        self.resume_game()
+                    else:
+                        self.pause_game()
+                elif event.key == pygame.K_q:
+                    self.is_running = False
+    
+    def _handle_console_input(self):
+        """Обработка консольного ввода"""
+        # Простая обработка для консольного режима
         pass
     
     def _update_game(self, delta_time: float):
@@ -434,9 +499,87 @@ class GameLoop:
     
     def _render(self):
         """Рендеринг игры"""
-        # Здесь будет логика рендеринга
-        # Пока что просто увеличение счётчика кадров
         self.frames_rendered += 1
+        
+        if self.use_pygame and self.screen:
+            try:
+                # Очистка экрана
+                self.screen.fill((0, 0, 0))
+                
+                # Отрисовка мира
+                if self.current_world:
+                    self._render_world()
+                
+                # Отрисовка сущностей
+                if self.current_world:
+                    for entity in self.current_world.entities:
+                        if entity.is_active and entity.is_visible:
+                            self._render_entity(entity)
+                
+                # Отрисовка UI
+                self._render_ui()
+                
+                # Обновление экрана
+                pygame.display.flip()
+                
+            except Exception as e:
+                logger.error(f"Ошибка рендеринга Pygame: {e}")
+        else:
+            # Консольный рендеринг
+            self._render_console()
+    
+    def _render_world(self):
+        """Отрисовка мира"""
+        if not self.screen:
+            return
+        
+        # Простая отрисовка фона
+        world_color = (50, 100, 50)  # Зеленый для леса
+        self.screen.fill(world_color)
+    
+    def _render_entity(self, entity):
+        """Отрисовка сущности"""
+        if not self.screen:
+            return
+        
+        # Использование Pygame методов сущности если доступны
+        if hasattr(entity, 'render_pygame'):
+            entity.render_pygame(self.screen)
+        else:
+            # Простая отрисовка круга
+            color = (0, 255, 0) if entity.type == "player" else (255, 0, 0)
+            pos = (int(entity.position.x), int(entity.position.y))
+            pygame.draw.circle(self.screen, color, pos, 10)
+    
+    def _render_ui(self):
+        """Отрисовка пользовательского интерфейса"""
+        if not self.screen:
+            return
+        
+        # Простая отрисовка статистики
+        font = pygame.font.Font(None, 36)
+        
+        # Время игры
+        time_text = f"Время: {self.game_time:.1f}s"
+        time_surf = font.render(time_text, True, (255, 255, 255))
+        self.screen.blit(time_surf, (10, 10))
+        
+        # FPS
+        fps_text = f"FPS: {self.fps_counter}"
+        fps_surf = font.render(fps_text, True, (255, 255, 255))
+        self.screen.blit(fps_surf, (10, 50))
+        
+        # Количество сущностей
+        if self.current_world:
+            entities_text = f"Сущности: {len(self.current_world.entities)}"
+            entities_surf = font.render(entities_text, True, (255, 255, 255))
+            self.screen.blit(entities_surf, (10, 90))
+    
+    def _render_console(self):
+        """Консольный рендеринг"""
+        # Простой вывод в консоль
+        if self.frames_rendered % 60 == 0:  # Каждую секунду
+            logger.info(f"Игровое время: {self.game_time:.1f}s, FPS: {self.fps_counter}")
     
     def _check_cycle_completion(self):
         """Проверка завершения эволюционного цикла"""
