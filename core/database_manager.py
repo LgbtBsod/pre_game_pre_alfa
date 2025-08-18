@@ -182,6 +182,61 @@ class DatabaseManager:
     # ---- Attributes (пока нет таблицы) ----
     def get_attributes(self) -> Dict[str, Dict[str, Any]]:
         return {}
+    
+    def get_item(self, item_id: str) -> Optional[Dict[str, Any]]:
+        """Получить предмет по ID"""
+        with self._lock:
+            if not self.db_path.exists():
+                return None
+            try:
+                conn = self._connect()
+                cur = conn.cursor()
+                cur.execute("SELECT * FROM items WHERE item_id = ?", (item_id,))
+                row = cur.fetchone()
+                conn.close()
+                
+                if row:
+                    return {
+                        "id": row["item_id"],
+                        "name": row["name"],
+                        "description": row["description"],
+                        "type": row["item_type"],
+                        "rarity": row["rarity"],
+                        "value": row["value"],
+                        "weight": row["weight"],
+                        "icon": row["icon"]
+                    }
+                return None
+            except Exception as e:
+                logger.error(f"Ошибка получения предмета {item_id}: {e}")
+                return None
+    
+    def get_weapon(self, weapon_id: str) -> Optional[Dict[str, Any]]:
+        """Получить оружие по ID"""
+        with self._lock:
+            if not self.db_path.exists():
+                return None
+            try:
+                conn = self._connect()
+                cur = conn.cursor()
+                cur.execute("SELECT * FROM weapons WHERE weapon_id = ?", (weapon_id,))
+                row = cur.fetchone()
+                conn.close()
+                
+                if row:
+                    return {
+                        "weapon_id": row["weapon_id"],
+                        "name": row["name"],
+                        "weapon_type": row["weapon_type"],
+                        "damage_type": row["damage_type"],
+                        "rarity": row["rarity"],
+                        "base_damage": row["base_damage"],
+                        "attack_speed": row["attack_speed"]
+                    }
+                return None
+            except Exception as e:
+                logger.error(f"Ошибка получения оружия {weapon_id}: {e}")
+                return None
 
 
 # Глобальный экземпляр

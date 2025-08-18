@@ -932,6 +932,37 @@ class EntityInventorySystem:
             if item.get("id") == item_id:
                 return item
         return None
+    
+    def add_item(self, item_id: str, quantity: int = 1) -> bool:
+        """Добавление предмета в инвентарь по ID"""
+        if len(self.items) < self.inventory_capacity:
+            # Проверяем, есть ли уже такой предмет
+            for item in self.items:
+                if item.get("id") == item_id:
+                    item["quantity"] = item.get("quantity", 1) + quantity
+                    return True
+            
+            # Добавляем новый предмет
+            self.items.append({
+                "id": item_id,
+                "quantity": quantity
+            })
+            return True
+        return False
+    
+    def clear_inventory(self):
+        """Очистка инвентаря"""
+        self.items.clear()
+    
+    def get_inventory_data(self) -> Dict[str, int]:
+        """Получение данных инвентаря для сохранения"""
+        inventory_data = {}
+        for item in self.items:
+            item_id = item.get("id")
+            quantity = item.get("quantity", 1)
+            if item_id:
+                inventory_data[item_id] = quantity
+        return inventory_data
 
 
 class EntityQuestSystem:
@@ -995,23 +1026,19 @@ def add_pygame_support_to_entity(entity):
         if self.animation_frame >= 4:  # 4 кадра анимации
             self.animation_frame = 0
     
-    def move_pygame(self, direction: Tuple[float, float], speed: float, delta_time: float):
+    def move_pygame(self, dx: float, dy: float):
         """Движение с поддержкой Pygame"""
         if not PYGAME_AVAILABLE or not pygame.get_init():
             return
         
-        # Обновление направления
-        self.direction.x = direction[0]
-        self.direction.y = direction[1]
-        
-        # Нормализация направления
-        if self.direction.magnitude() > 0:
-            self.direction = self.direction.normalize()
-        
         # Обновление позиции
-        move_distance = speed * delta_time
-        self.position.x += self.direction.x * move_distance
-        self.position.y += self.direction.y * move_distance
+        self.position.x += dx * self.stats.speed
+        self.position.y += dy * self.stats.speed
+        
+        # Обновление направления
+        if dx != 0 or dy != 0:
+            self.direction.x = dx
+            self.direction.y = dy
     
     def get_pygame_rect(self) -> pygame.Rect:
         """Получение Pygame прямоугольника для отрисовки"""

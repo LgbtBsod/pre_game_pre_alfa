@@ -233,6 +233,8 @@ class GameInterface:
                 self.game_state = GameState.PLAYING
             elif self.game_state == GameState.MAIN_MENU:
                 self.running = False
+            elif self.game_state in [GameState.INVENTORY, GameState.GENETICS, GameState.EMOTIONS, GameState.EVOLUTION]:
+                self.game_state = GameState.PLAYING
         
         elif key == pygame.K_i and self.game_state == GameState.PLAYING:
             self.game_state = GameState.INVENTORY
@@ -245,6 +247,17 @@ class GameInterface:
         
         elif key == pygame.K_v and self.game_state == GameState.PLAYING:
             self.game_state = GameState.EVOLUTION
+        
+        # Движение игрока
+        elif self.game_state == GameState.PLAYING and self.player:
+            if key == pygame.K_w or key == pygame.K_UP:
+                self.player.move_pygame(0, -1)
+            elif key == pygame.K_s or key == pygame.K_DOWN:
+                self.player.move_pygame(0, 1)
+            elif key == pygame.K_a or key == pygame.K_LEFT:
+                self.player.move_pygame(-1, 0)
+            elif key == pygame.K_d or key == pygame.K_RIGHT:
+                self.player.move_pygame(1, 0)
     
     def _handle_mouse_click(self, pos):
         """Обработка кликов мыши"""
@@ -257,6 +270,19 @@ class GameInterface:
                 self.game_state = GameState.SETTINGS
             elif self.buttons["exit"].collidepoint(pos):
                 self.running = False
+        
+        elif self.game_state == GameState.PAUSED and hasattr(self, 'pause_buttons'):
+            if self.pause_buttons["resume"].collidepoint(pos):
+                self.game_state = GameState.PLAYING
+            elif self.pause_buttons["save"].collidepoint(pos):
+                if self._save_game():
+                    print("Игра сохранена!")
+                else:
+                    print("Ошибка сохранения!")
+            elif self.pause_buttons["inventory"].collidepoint(pos):
+                self.game_state = GameState.INVENTORY
+            elif self.pause_buttons["main_menu"].collidepoint(pos):
+                self.game_state = GameState.MAIN_MENU
     
     def _handle_mouse_motion(self, pos):
         """Обработка движения мыши"""
@@ -292,13 +318,145 @@ class GameInterface:
             )
             self.entities.append(enemy)
         
+        # Генерация предметов для новой игры
+        self._generate_items_for_new_game()
+        
         self.current_cycle = 1
         self.game_state = GameState.PLAYING
     
+    def _generate_items_for_new_game(self):
+        """Генерация предметов для новой игры"""
+        if not self.player:
+            return
+        
+        # Очищаем инвентарь игрока
+        self.player.inventory_system.clear_inventory()
+        
+        # Добавляем базовые предметы
+        from core.database_manager import database_manager
+        
+        # Зелье здоровья
+        health_potion = database_manager.get_item("health_potion")
+        if health_potion:
+            self.player.inventory_system.add_item(health_potion["id"], 3)
+        
+        # Зелье маны
+        mana_potion = database_manager.get_item("mana_potion")
+        if mana_potion:
+            self.player.inventory_system.add_item(mana_potion["id"], 2)
+        
+        # Базовое оружие
+        sword = database_manager.get_weapon("sword_common")
+        if sword:
+            self.player.inventory_system.add_item(sword["weapon_id"], 1)
+    
+    def _save_game(self):
+        """Сохранение игры"""
+        if not self.player:
+            return False
+        
+        try:
+            save_data = {
+                "player": {
+                    "entity_id": self.player.entity_id,
+                    "name": self.player.name,
+                    "position": (self.player.position.x, self.player.position.y, self.player.position.z),
+                    "stats": {
+                        "health": self.player.stats.health,
+                        "max_health": self.player.stats.max_health,
+                        "stamina": self.player.stats.stamina,
+                        "max_stamina": self.player.stats.max_stamina,
+                        "mana": self.player.stats.mana,
+                        "max_mana": self.player.stats.max_mana
+                    },
+                    "inventory": self.player.inventory_system.get_inventory_data()
+                },
+                "entities": [
+                    {
+                        "entity_id": entity.entity_id,
+                        "name": entity.name,
+                        "position": (entity.position.x, entity.position.y, entity.position.z),
+                        "stats": {
+                            "health": entity.stats.health,
+                            "max_health": entity.stats.max_health
+                        }
+                    }
+                    for entity in self.entities
+                ],
+                "current_cycle": self.current_cycle,
+                "world_seed": getattr(self, 'world_seed', 12345)
+            }
+            
+            import json
+            with open("save/game_save.json", "w", encoding="utf-8") as f:
+                json.dump(save_data, f, ensure_ascii=False, indent=2)
+            
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка сохранения: {e}")
+            return False
+    
+    def _load_game(self):
+        """Загрузка игры"""
+        try:
+            import json
+            with open("save/game_save.json", "r", encoding="utf-8") as f:
+                save_data = json.load(f)
+            
+            # Восстанавливаем игрока
+            player_data = save_data["player"]
+            self.player = AdvancedGameEntity(
+                entity_id=player_data["entity_id"],
+                entity_type="player",
+                name=player_data["name"],
+                position=player_data["position"]
+            )
+            
+            # Восстанавливаем статистику
+            self.player.stats.health = player_data["stats"]["health"]
+            self.player.stats.max_health = player_data["stats"]["max_health"]
+            self.player.stats.stamina = player_data["stats"]["stamina"]
+            self.player.stats.max_stamina = player_data["stats"]["max_stamina"]
+            self.player.stats.mana = player_data["stats"]["mana"]
+            self.player.stats.max_mana = player_data["stats"]["max_mana"]
+            
+            # Восстанавливаем инвентарь
+            for item_id, quantity in player_data["inventory"].items():
+                self.player.inventory_system.add_item(item_id, quantity)
+            
+            # Восстанавливаем врагов
+            self.entities = []
+            for entity_data in save_data["entities"]:
+                entity = AdvancedGameEntity(
+                    entity_id=entity_data["entity_id"],
+                    entity_type="enemy",
+                    name=entity_data["name"],
+                    position=entity_data["position"]
+                )
+                entity.stats.health = entity_data["stats"]["health"]
+                entity.stats.max_health = entity_data["stats"]["max_health"]
+                self.entities.append(entity)
+            
+            self.current_cycle = save_data["current_cycle"]
+            self.world_seed = save_data.get("world_seed", 12345)
+            
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка загрузки: {e}")
+            return False
+    
     def _continue_game(self):
         """Продолжение игры"""
-        # TODO: Загрузка сохранения
-        pass
+        import os
+        if os.path.exists("save/game_save.json"):
+            if self._load_game():
+                self.game_state = GameState.PLAYING
+            else:
+                # Если загрузка не удалась, создаем новую игру
+                self._start_new_game()
+        else:
+            # Если сохранения нет, создаем новую игру
+            self._start_new_game()
     
     def _update(self):
         """Обновление игровой логики"""
@@ -409,15 +567,20 @@ class GameInterface:
     
     def _render_game(self):
         """Отрисовка игрового процесса"""
+        # Фон
+        self.screen.fill(ColorScheme.DARK_GRAY)
+        
         # Отрисовка игрока
         if self.player:
-            self._render_entity(self.player, (self.settings.window_width // 2, self.settings.window_height // 2))
+            player_pos = (int(self.player.position.x + self.settings.window_width // 2), 
+                         int(self.player.position.y + self.settings.window_height // 2))
+            self._render_entity(self.player, player_pos)
         
         # Отрисовка врагов
         for entity in self.entities:
-            pos = (entity.position.x + self.settings.window_width // 2, 
-                   entity.position.y + self.settings.window_height // 2)
-            self._render_entity(entity, pos)
+            enemy_pos = (int(entity.position.x + self.settings.window_width // 2), 
+                        int(entity.position.y + self.settings.window_height // 2))
+            self._render_entity(entity, enemy_pos)
         
         # Отрисовка UI панелей
         self._render_game_ui()
@@ -526,13 +689,41 @@ class GameInterface:
         
         # Текст паузы
         pause_text = self.fonts["large"].render("ПАУЗА", True, ColorScheme.WHITE)
-        pause_rect = pause_text.get_rect(center=(self.settings.window_width // 2, self.settings.window_height // 2))
+        pause_rect = pause_text.get_rect(center=(self.settings.window_width // 2, 200))
         self.screen.blit(pause_text, pause_rect)
         
-        # Инструкции
-        instructions = self.fonts["small"].render("Нажмите ESC для продолжения", True, ColorScheme.GRAY)
-        inst_rect = instructions.get_rect(center=(self.settings.window_width // 2, self.settings.window_height // 2 + 50))
-        self.screen.blit(instructions, inst_rect)
+        # Кнопки меню паузы
+        button_width = 300
+        button_height = 50
+        start_x = (self.settings.window_width - button_width) // 2
+        start_y = 300
+        
+        pause_buttons = {
+            "resume": pygame.Rect(start_x, start_y, button_width, button_height),
+            "save": pygame.Rect(start_x, start_y + 70, button_width, button_height),
+            "inventory": pygame.Rect(start_x, start_y + 140, button_width, button_height),
+            "main_menu": pygame.Rect(start_x, start_y + 210, button_width, button_height)
+        }
+        
+        button_texts = {
+            "resume": "ПРОДОЛЖИТЬ",
+            "save": "СОХРАНИТЬ",
+            "inventory": "ИНВЕНТАРЬ",
+            "main_menu": "ГЛАВНОЕ МЕНЮ"
+        }
+        
+        for button_id, button in pause_buttons.items():
+            color = ColorScheme.BLUE if button.collidepoint(pygame.mouse.get_pos()) else ColorScheme.GRAY
+            
+            pygame.draw.rect(self.screen, color, button)
+            pygame.draw.rect(self.screen, ColorScheme.WHITE, button, 2)
+            
+            text_surf = self.fonts["main"].render(button_texts[button_id], True, ColorScheme.WHITE)
+            text_rect = text_surf.get_rect(center=button.center)
+            self.screen.blit(text_surf, text_rect)
+        
+        # Сохраняем кнопки для обработки кликов
+        self.pause_buttons = pause_buttons
     
     def _render_inventory(self):
         """Отрисовка инвентаря"""
@@ -552,7 +743,42 @@ class GameInterface:
         title_rect = title.get_rect(center=(panel.centerx, panel.y + 30))
         self.screen.blit(title, title_rect)
         
-        # TODO: Добавить содержимое инвентаря
+        # Отображение предметов в инвентаре
+        if self.player and hasattr(self.player, 'inventory_system'):
+            inventory = self.player.inventory_system.get_inventory_data()
+            y_offset = 80
+            
+            if inventory:
+                for i, (item_id, quantity) in enumerate(inventory.items()):
+                    if i >= 10:  # Показываем только первые 10 предметов
+                        break
+                    
+                    # Получаем информацию о предмете
+                    from core.database_manager import database_manager
+                    item_info = database_manager.get_item(item_id)
+                    weapon_info = database_manager.get_weapon(item_id)
+                    
+                    if item_info:
+                        item_name = item_info.get("name", item_id)
+                        item_desc = item_info.get("description", "")
+                    elif weapon_info:
+                        item_name = weapon_info.get("name", item_id)
+                        item_desc = "Оружие"
+                    else:
+                        item_name = item_id
+                        item_desc = "Неизвестный предмет"
+                    
+                    # Отображаем предмет
+                    item_text = f"{item_name} x{quantity}"
+                    item_surf = self.fonts["main"].render(item_text, True, ColorScheme.WHITE)
+                    self.screen.blit(item_surf, (panel.x + 20, panel.y + y_offset + i * 30))
+                    
+                    # Описание предмета
+                    desc_surf = self.fonts["small"].render(item_desc, True, ColorScheme.GRAY)
+                    self.screen.blit(desc_surf, (panel.x + 20, panel.y + y_offset + i * 30 + 20))
+            else:
+                empty_text = self.fonts["main"].render("Инвентарь пуст", True, ColorScheme.GRAY)
+                self.screen.blit(empty_text, (panel.x + 20, panel.y + y_offset))
     
     def _render_genetics(self):
         """Отрисовка генетической панели"""

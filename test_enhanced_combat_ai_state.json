@@ -1,8 +1,0 @@
-{
-  "entity_id": "test_combat_entity",
-  "combat_phase": "preparation",
-  "current_tactic": "adaptive_response",
-  "aggression_level": 0.5,
-  "caution_level": 0.5,
-  "adaptability": 0.7,
-  "successful_tactics": {
