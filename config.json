@@ -1,0 +1,33 @@
+{
+  "width": 1280,
+  "height": 720,
+  "fps": 60,
+  "fullscreen": false,
+  "vsync": true,
+  "tilesize": 64,
+  "hitbox_offset": {
+    "player": -26,
+    "object": -40,
+    "grass": -10,
+    "invisible": 0
+  },
+  "bar_height": 20,
+  "health_bar_width": 200,
+  "energy_bar_width": 140,
+  "item_box_size": 80,
+  "ui_font": "graphics/font/joystix.ttf",
+  "ui_font_size": 18,
+  "water_color": "#71ddee",
+  "ui_bg_color": "#222222",
+  "ui_border_color": "#111111",
+  "text_color": "#EEEEEE",
+  "health_color": "red",
+  "energy_color": "blue",
+  "ui_border_color_active": "gold",
+  "master_volume": 1.0,
+  "music_volume": 0.7,
+  "sfx_volume": 0.8,
+  "show_fps": false,
+  "max_particles": 100,
+  "enable_vsync": true
+}
