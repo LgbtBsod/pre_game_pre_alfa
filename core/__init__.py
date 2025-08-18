@@ -17,7 +17,7 @@ from .game_loop import GameLoop
 # Новые системы боевого ИИ
 from .combat_learning_system import CombatLearningSystem, CombatAction, EnemyVulnerability
 from .advanced_weapon_system import AdvancedWeapon, WeaponType, WeaponRarity, WeaponFactory, WeaponManager
-from .integrated_combat_ai import IntegratedCombatAI, CombatStrategy, CombatContext, CombatDecision
+# from .integrated_combat_ai import IntegratedCombatAI, CombatStrategy, CombatContext, CombatDecision
 
 # Система навыков и расширенный боевой ИИ
 from .skill_system import (
@@ -56,10 +56,7 @@ __all__ = [
     'WeaponRarity',
     'WeaponFactory',
     'WeaponManager',
-    'IntegratedCombatAI',
-    'CombatStrategy',
-    'CombatContext',
-    'CombatDecision',
+    # IntegratedCombatAI заменён на EnhancedCombatAI
     
     # Система навыков
     'Skill',

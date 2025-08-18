@@ -7,6 +7,8 @@
 import random
 import math
 import json
+import sqlite3
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any, Set
 from dataclasses import dataclass, field
 from enum import Enum
@@ -172,15 +174,26 @@ class Skill:
 class SkillManager:
     """Менеджер навыков"""
     
-    def __init__(self):
+    def __init__(self, db_path: Optional[str] = "data/game_data.db"):
         self.skills: Dict[str, Skill] = {}
         self.skill_combos: Dict[str, SkillCombo] = {}
         self.skill_trees: Dict[str, List[str]] = {}
         self.elemental_affinities: Dict[str, Dict[SkillElement, float]] = {}
+        self.db_path = Path(db_path) if db_path else None
         
-        # Инициализация базовых навыков
-        self._initialize_basic_skills()
-        self._initialize_skill_combos()
+        # Попытка загрузки из БД, иначе инициализируем базовые
+        loaded = False
+        try:
+            if self.db_path and self.db_path.exists():
+                loaded = self._load_skills_from_db()
+        except Exception as e:
+            logger.error(f"Ошибка загрузки навыков из БД: {e}")
+            loaded = False
+        
+        if not loaded:
+            # Инициализация базовых навыков
+            self._initialize_basic_skills()
+            self._initialize_skill_combos()
     
     def _initialize_basic_skills(self):
         """Инициализация базовых навыков"""
@@ -259,6 +272,60 @@ class SkillManager:
     def add_skill_combo(self, combo: SkillCombo):
         """Добавляет комбинацию навыков"""
         self.skill_combos[combo.combo_id] = combo
+
+    def _load_skills_from_db(self) -> bool:
+        """Загружает навыки и их эффекты из SQLite"""
+        try:
+            conn = sqlite3.connect(str(self.db_path))
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            
+            # Загружаем навыки
+            cur.execute("SELECT * FROM skills")
+            rows = cur.fetchall()
+            for r in rows:
+                skill = Skill(
+                    skill_id=r["skill_id"],
+                    name=r["name"],
+                    description=r["description"],
+                    skill_type=SkillType(r["skill_type"]),
+                    element=SkillElement(r["element"]),
+                    target=SkillTarget(r["target"]),
+                    requirements=SkillRequirement(),
+                    effects=[],
+                    base_damage=r["base_damage"],
+                    base_healing=r["base_healing"],
+                    mana_cost=r["mana_cost"],
+                    cooldown=r["cooldown"],
+                    range=r["range"],
+                    accuracy=r["accuracy"],
+                    critical_chance=r["critical_chance"],
+                    critical_multiplier=r["critical_multiplier"]
+                )
+                self.add_skill(skill)
+            
+            # Загружаем эффекты
+            cur.execute("SELECT * FROM skill_effects")
+            eff_rows = cur.fetchall()
+            for er in eff_rows:
+                sid = er["skill_id"]
+                if sid in self.skills:
+                    effect = SkillEffect(
+                        effect_type=er["effect_type"],
+                        value=er["value"],
+                        duration=er["duration"],
+                        chance=er["chance"],
+                        scaling=er["scaling"],
+                        element=SkillElement(er["element"]) if er["element"] else SkillElement.NONE
+                    )
+                    self.skills[sid].effects.append(effect)
+            
+            conn.close()
+            logger.info(f"Загружено навыков из БД: {len(self.skills)}")
+            return len(self.skills) > 0
+        except Exception as e:
+            logger.error(f"Ошибка чтения БД навыков: {e}")
+            return False
     
     def get_skill(self, skill_id: str) -> Optional[Skill]:
         """Получает навык по ID"""

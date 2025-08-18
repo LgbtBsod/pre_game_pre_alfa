@@ -1,0 +1,216 @@
+{
+  "constants": {
+    "game": {
+      "max_level": 100,
+      "max_attributes": 999,
+      "max_skills": 50,
+      "max_inventory_slots": 100,
+      "max_equipment_slots": 10,
+      "max_party_size": 4,
+      "max_quests": 50,
+      "max_achievements": 100
+    },
+    "combat": {
+      "max_damage": 99999,
+      "max_defense": 9999,
+      "max_critical_chance": 1.0,
+      "max_dodge_chance": 0.95,
+      "max_block_chance": 0.9,
+      "max_parry_chance": 0.8,
+      "max_resistance": 0.95,
+      "min_accuracy": 0.1,
+      "max_accuracy": 1.0,
+      "base_attack_range": 2.0,
+      "base_spell_range": 10.0,
+      "max_attack_range": 50.0,
+      "max_spell_range": 100.0
+    },
+    "attributes": {
+      "max_strength": 999,
+      "max_dexterity": 999,
+      "max_constitution": 999,
+      "max_intelligence": 999,
+      "max_wisdom": 999,
+      "max_charisma": 999,
+      "max_health": 99999,
+      "max_mana": 99999,
+      "max_stamina": 99999,
+      "max_experience": 999999999,
+      "max_gold": 999999999
+    },
+    "evolution": {
+      "max_mutations": 10,
+      "max_generations": 1000,
+      "max_genetic_stability": 1.0,
+      "min_mutation_rate": 0.01,
+      "max_mutation_rate": 0.5,
+      "max_adaptation_speed": 2.0,
+      "min_inheritance_rate": 0.1,
+      "max_inheritance_rate": 1.0
+    },
+    "ai": {
+      "max_memory": 10000,
+      "max_learning_rate": 1.0,
+      "min_decision_threshold": 0.1,
+      "max_decision_threshold": 0.9,
+      "max_exploration_rate": 0.5,
+      "max_adaptation_speed": 1.0,
+      "max_personality_stability": 1.0
+    },
+    "world": {
+      "max_world_size": 10000,
+      "max_biomes": 20,
+      "max_enemies_per_chunk": 100,
+      "max_items_per_chunk": 50,
+      "max_weather_intensity": 1.0,
+      "max_time_scale": 10.0,
+      "min_gravity": 0.1,
+      "max_gravity": 10.0
+    },
+    "items": {
+      "max_item_level": 100,
+      "max_item_rarity": 6,
+      "max_item_durability": 9999,
+      "max_item_weight": 1000.0,
+      "max_item_value": 999999,
+      "max_item_effects": 10,
+      "max_item_requirements": 10
+    },
+    "skills": {
+      "max_skill_level": 100,
+      "max_skill_mana_cost": 9999,
+      "max_skill_cooldown": 999.0,
+      "max_skill_range": 100.0,
+      "max_skill_accuracy": 1.0,
+      "max_skill_critical_chance": 1.0,
+      "max_skill_critical_multiplier": 10.0,
+      "max_skill_effects": 10
+    },
+    "effects": {
+      "max_effect_duration": 9999.0,
+      "max_effect_tick_interval": 100.0,
+      "max_effect_stacks": 99,
+      "max_effect_value": 99999.0,
+      "max_effect_chance": 1.0
+    },
+    "genetics": {
+      "max_gene_expression": 1.0,
+      "max_gene_mutation": 0.5,
+      "max_gene_stability": 1.0,
+      "max_gene_compatibility": 1.0,
+      "max_gene_dominance": 1.0
+    },
+    "emotions": {
+      "max_emotion_intensity": 1.0,
+      "max_emotion_duration": 9999.0,
+      "max_emotion_stability": 1.0,
+      "max_emotion_resonance": 1.0
+    },
+    "physics": {
+      "gravity": 9.81,
+      "friction": 0.8,
+      "bounce": 0.3,
+      "air_resistance": 0.02,
+      "water_resistance": 0.1,
+      "collision_tolerance": 2.0
+    },
+    "rendering": {
+      "max_particles": 10000,
+      "max_effects": 1000,
+      "max_entities": 10000,
+      "max_lights": 100,
+      "max_shadows": 1000,
+      "max_textures": 1000,
+      "max_models": 1000
+    },
+    "audio": {
+      "max_channels": 32,
+      "max_sounds": 1000,
+      "max_music_tracks": 100,
+      "max_voice_lines": 1000,
+      "max_ambient_sounds": 100
+    },
+    "network": {
+      "max_players": 100,
+      "max_connections": 1000,
+      "max_packet_size": 65536,
+      "max_latency": 1000,
+      "max_bandwidth": 1000000
+    },
+    "save": {
+      "max_save_slots": 100,
+      "max_save_size": "100MB",
+      "max_backups": 50,
+      "auto_save_interval": 300,
+      "max_auto_saves": 10
+    },
+    "ui": {
+      "max_tooltip_length": 500,
+      "max_dialog_length": 1000,
+      "max_notification_count": 10,
+      "max_menu_depth": 10,
+      "max_hotbar_slots": 20
+    }
+  },
+  "formulas": {
+    "experience": {
+      "base_xp": 100,
+      "level_multiplier": 1.5,
+      "difficulty_multiplier": 1.2,
+      "bonus_xp": 0.1
+    },
+    "damage": {
+      "base_damage": 10,
+      "strength_multiplier": 0.5,
+      "weapon_multiplier": 1.0,
+      "skill_multiplier": 1.5,
+      "critical_multiplier": 2.0
+    },
+    "defense": {
+      "base_defense": 5,
+      "constitution_multiplier": 0.3,
+      "armor_multiplier": 1.0,
+      "skill_multiplier": 1.2
+    },
+    "health": {
+      "base_health": 100,
+      "constitution_multiplier": 10,
+      "level_multiplier": 5,
+      "bonus_multiplier": 1.1
+    },
+    "mana": {
+      "base_mana": 50,
+      "intelligence_multiplier": 8,
+      "level_multiplier": 3,
+      "bonus_multiplier": 1.05
+    },
+    "stamina": {
+      "base_stamina": 100,
+      "constitution_multiplier": 5,
+      "level_multiplier": 2,
+      "bonus_multiplier": 1.08
+    }
+  },
+  "thresholds": {
+    "combat": {
+      "low_health": 0.25,
+      "critical_health": 0.1,
+      "low_mana": 0.2,
+      "low_stamina": 0.3,
+      "danger_distance": 5.0,
+      "safe_distance": 15.0
+    },
+    "ai": {
+      "memory_threshold": 0.8,
+      "learning_threshold": 0.7,
+      "adaptation_threshold": 0.6,
+      "personality_threshold": 0.5
+    },
+    "evolution": {
+      "mutation_threshold": 0.3,
+      "stability_threshold": 0.7,
+      "adaptation_threshold": 0.5,
+      "inheritance_threshold": 0.6
+    }
+  }
+}

@@ -12,13 +12,8 @@ except ImportError:
     GameMenu = None
 
 try:
-    from .render_manager import RenderManager
+    from .game_interface import GameInterface
 except ImportError:
-    RenderManager = None
+    GameInterface = None
 
-try:
-    from .main_window import MainWindow
-except ImportError:
-    MainWindow = None
-
-__all__ = ["Button", "GameMenu", "RenderManager", "MainWindow"]
+__all__ = ["Button", "GameMenu", "GameInterface"]
