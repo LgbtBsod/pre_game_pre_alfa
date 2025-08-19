@@ -79,10 +79,11 @@ def run_graphical_interface():
 def run_console_mode():
     """Запуск консольного режима"""
     try:
-        from core.game_loop import GameLoop
+        from core.refactored_game_loop import RefactoredGameLoop
         logger.info("Запуск консольного режима...")
         
-        game_loop = GameLoop(use_pygame=False)
+        game_loop = RefactoredGameLoop(use_pygame=False)
+        game_loop.initialize()
         game_loop.run()
         
     except Exception as e:

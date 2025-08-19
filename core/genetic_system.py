@@ -367,3 +367,43 @@ class AdvancedGeneticSystem:
             "rarity": 0.5,
             "stability": 0.8
         }
+    
+    def update(self, delta_time: float):
+        """Обновление генетической системы"""
+        try:
+            # Проверка стабильности активных генов
+            for gene_code in self.active_genes[:]:  # Копия списка для безопасного удаления
+                stability = self.get_gene_stability(gene_code)
+                if stability < 0.3:  # Ген становится нестабильным
+                    # Шанс деактивации нестабильного гена
+                    if random.random() < 0.01 * delta_time:  # 1% в секунду
+                        self.deactivate_gene(gene_code)
+                        logger.warning(f"Нестабильный ген {gene_code} деактивирован")
+            
+            # Проверка возможности мутации
+            mutation_chance = self.get_mutation_chance()
+            if random.random() < mutation_chance * 0.001 * delta_time:  # Очень низкий шанс
+                self._trigger_random_mutation()
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления генетической системы: {e}")
+    
+    def _trigger_random_mutation(self):
+        """Случайная мутация"""
+        try:
+            mutation_types = list(MutationType)
+            mutation_type = random.choice(mutation_types)
+            
+            # Создание аномалии
+            anomaly = GeneticAnomaly(
+                anomaly_type=mutation_type,
+                description=f"Случайная мутация типа {mutation_type.value}",
+                effects=["random_effect"],
+                duration=0.0,  # Постоянная
+                severity=random.uniform(0.5, 1.5)
+            )
+            
+            logger.info(f"Сработала случайная мутация: {mutation_type.value}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка случайной мутации: {e}")

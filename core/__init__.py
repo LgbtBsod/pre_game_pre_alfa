@@ -40,9 +40,7 @@ from .advanced_entity import (
     AdvancedGameEntity, PygameGameEntity
 )
 
-from .game_loop import (
-    GameWorld, GameLoop
-)
+# Игровой цикл теперь в refactored_game_loop.py
 
 from .global_event_system import (
     EventType, EventSeverity, EventCategory, 
@@ -108,8 +106,7 @@ __all__ = [
     'EntityType', 'DamageType', 'EntityStats', 'EntityPosition',
     'AdvancedGameEntity', 'PygameGameEntity',
     
-    # Игровой цикл
-    'GameWorld', 'GameLoop',
+    # Игровой цикл (теперь в refactored_game_loop.py)
     
     # Глобальные события
     'EventType', 'EventSeverity', 'EventCategory', 

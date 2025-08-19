@@ -56,12 +56,16 @@ class EntityStats:
     max_health: float = 100.0
     stamina: float = 100.0
     max_stamina: float = 100.0
+    mana: float = 100.0
+    max_mana: float = 100.0
     damage: float = 20.0
     defense: float = 15.0
     speed: float = 1.0
     accuracy: float = 0.8
     critical_chance: float = 0.05
     critical_multiplier: float = 2.0
+    sheild: float = 0.0
+    max_sheild: float = 100.0
     
     def get_health_percent(self) -> float:
         """Получение процента здоровья"""
@@ -193,6 +197,8 @@ class AdvancedGameEntity:
             stats.max_health = 120.0
             stats.stamina = 150.0
             stats.max_stamina = 150.0
+            stats.mana = 120.0
+            stats.max_mana = 120.0
             stats.damage = 25.0
             stats.defense = 20.0
             stats.speed = 1.2

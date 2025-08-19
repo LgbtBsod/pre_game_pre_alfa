@@ -288,6 +288,34 @@ class ContentGenerator:
                 "speed": 1.1,
                 "effects": ["magical", "elemental"],
                 "tier_multipliers": [1.0, 1.25, 1.6, 2.1, 3.2]
+            },
+            "hammer": {
+                "base_damage": 35,
+                "damage_variance": 0.35,
+                "speed": 0.6,
+                "effects": ["crushing", "stunning"],
+                "tier_multipliers": [1.0, 1.4, 1.8, 2.5, 4.0]
+            },
+            "spear": {
+                "base_damage": 22,
+                "damage_variance": 0.2,
+                "speed": 1.2,
+                "effects": ["piercing", "reach"],
+                "tier_multipliers": [1.0, 1.25, 1.5, 2.0, 3.0]
+            },
+            "dagger": {
+                "base_damage": 12,
+                "damage_variance": 0.4,
+                "speed": 1.5,
+                "effects": ["fast", "stealth"],
+                "tier_multipliers": [1.0, 1.1, 1.3, 1.6, 2.0]
+            },
+            "mace": {
+                "base_damage": 28,
+                "damage_variance": 0.3,
+                "speed": 0.8,
+                "effects": ["blunt", "armor_breaking"],
+                "tier_multipliers": [1.0, 1.3, 1.7, 2.3, 3.5]
             }
         }
     
@@ -855,7 +883,11 @@ class ContentGenerator:
             "sword": ["sharp", "precise", "versatile"],
             "axe": ["heavy", "armor_piercing", "brutal"],
             "bow": ["ranged", "fast", "silent"],
-            "staff": ["magical", "elemental", "channeling"]
+            "staff": ["magical", "elemental", "channeling"],
+            "hammer": ["crushing", "stunning", "heavy"],
+            "spear": ["piercing", "reach", "versatile"],
+            "dagger": ["fast", "stealth", "precise"],
+            "mace": ["blunt", "armor_breaking", "heavy"]
         }
         
         # Специальные эффекты на основе тира

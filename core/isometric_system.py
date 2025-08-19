@@ -100,10 +100,17 @@ class IsometricProjection:
         target_camera_x = target_iso_x - screen_width / 2
         target_camera_y = target_iso_y - screen_height / 2
         
-        # Плавное следование камеры (сглаживание)
-        smoothing_factor = 0.1
+        # Плавное следование камеры (сглаживание) - уменьшаем для стабильности
+        smoothing_factor = 0.05  # Уменьшено с 0.1 для более плавного движения
         self.camera_x += (target_camera_x - self.camera_x) * smoothing_factor
         self.camera_y += (target_camera_y - self.camera_y) * smoothing_factor
+        
+        # Ограничиваем движение камеры для предотвращения "прыжков"
+        max_camera_movement = 5.0
+        if abs(target_camera_x - self.camera_x) < max_camera_movement:
+            self.camera_x = target_camera_x
+        if abs(target_camera_y - self.camera_y) < max_camera_movement:
+            self.camera_y = target_camera_y
 
 
 class PathfindingNode:

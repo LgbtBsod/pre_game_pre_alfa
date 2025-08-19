@@ -467,8 +467,13 @@ class AdaptiveAISystem:
                 # Осторожное поведение - движение от врага
                 dx, dy = self._calculate_direction_away_from_target(entity, nearest_enemy)
             else:
-                # Случайное исследование
+                # Случайное исследование - гарантируем движение
                 dx, dy = self._get_random_movement_direction()
+                
+                # Если движение слишком слабое, усиливаем его
+                if abs(dx) < 0.3 and abs(dy) < 0.3:
+                    dx *= 2.0
+                    dy *= 2.0
             
             # Избегание препятствий
             if nearest_obstacle and self._is_collision_imminent(entity, nearest_obstacle, dx, dy):
@@ -479,11 +484,20 @@ class AdaptiveAISystem:
             dx *= speed
             dy *= speed
             
+            # Гарантируем минимальное движение для предотвращения "застревания"
+            min_movement = 0.5
+            if abs(dx) < min_movement and abs(dy) < min_movement:
+                # Если движение слишком слабое, добавляем случайное направление
+                angle = random.uniform(0, 2 * math.pi)
+                dx += math.cos(angle) * min_movement
+                dy += math.sin(angle) * min_movement
+            
             return dx, dy
             
         except Exception as e:
             logger.error(f"Ошибка получения автономного движения: {e}")
-            return 0.0, 0.0
+            # Возвращаем случайное движение в случае ошибки
+            return random.uniform(-1.0, 1.0), random.uniform(-1.0, 1.0)
     
     def _get_nearest_enemy(self, entity, world) -> Optional[Any]:
         """Получение ближайшего врага"""
@@ -954,3 +968,52 @@ class AdaptiveAISystem:
                 logger.info(f"ИИ {self.entity_id} достиг уровня {self.level}")
         except Exception as e:
             logger.error(f"Ошибка обновления уровня обучения: {e}")
+
+    def update_environment_info(self, entity, world):
+        """Обновление информации об окружении для ИИ"""
+        try:
+            # Обновляем информацию о ближайших объектах
+            self._update_nearest_targets(entity, world)
+            
+            # Обновляем состояние личности на основе окружения
+            self._adapt_personality_to_environment(entity, world)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления информации об окружении: {e}")
+    
+    def _update_nearest_targets(self, entity, world):
+        """Обновление информации о ближайших целях"""
+        try:
+            # Кэшируем информацию о ближайших объектах
+            self._cached_nearest_enemy = self._get_nearest_enemy(entity, world)
+            self._cached_nearest_item = self._get_nearest_item(entity, world)
+            self._cached_nearest_obstacle = self._get_nearest_obstacle(entity, world)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления ближайших целей: {e}")
+    
+    def _adapt_personality_to_environment(self, entity, world):
+        """Адаптация личности к окружению"""
+        try:
+            if not hasattr(self, 'personality'):
+                return
+            
+            # Адаптация на основе количества врагов
+            enemy_count = len(getattr(world, 'entities', []))
+            if enemy_count > 3:
+                # Много врагов - увеличиваем осторожность
+                self.personality.caution = min(0.9, self.personality.caution + 0.1)
+                self.personality.aggression = max(0.1, self.personality.aggression - 0.05)
+            elif enemy_count == 0:
+                # Нет врагов - увеличиваем любопытство
+                self.personality.curiosity = min(0.9, self.personality.curiosity + 0.1)
+                self.personality.caution = max(0.1, self.personality.caution - 0.05)
+            
+            # Адаптация на основе препятствий
+            obstacle_count = len(getattr(world, 'obstacles', []))
+            if obstacle_count > 2:
+                # Много препятствий - увеличиваем осторожность
+                self.personality.caution = min(0.9, self.personality.caution + 0.05)
+            
+        except Exception as e:
+            logger.error(f"Ошибка адаптации личности: {e}")

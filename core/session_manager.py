@@ -136,9 +136,10 @@ class SessionManager:
     def create_new_session(self, slot_id: int, save_name: str, world_seed: int = None) -> SessionData:
         """Создание новой игровой сессии"""
         try:
-            # Проверяем доступность слота
+            # Если слот занят, удаляем старую сессию
             if not self._is_slot_available(slot_id):
-                raise ValueError(f"Слот {slot_id} уже занят")
+                logger.info(f"Слот {slot_id} занят, удаляем старую сессию")
+                self.delete_session(slot_id)
             
             # Генерируем UUID сессии
             session_uuid = str(uuid.uuid4())
@@ -513,6 +514,40 @@ class SessionManager:
             logger.error(f"Ошибка получения слотов: {e}")
             return []
     
+    def get_save_slots_info(self) -> List[Dict[str, Any]]:
+        """Получение информации о слотах сохранения для UI"""
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT slot_id, session_uuid, save_name, created_at, last_played,
+                       player_level, world_seed, play_time, is_active
+                FROM save_slots WHERE is_active = 1 ORDER BY slot_id
+            """)
+            
+            slots_info = []
+            for row in cursor.fetchall():
+                slot_info = {
+                    'slot_id': row[0],
+                    'session_uuid': row[1],
+                    'save_name': row[2] or f"Сохранение {row[0]}",
+                    'created_at': row[3],
+                    'last_played': row[4],
+                    'level': row[5] or 1,
+                    'world_seed': row[6] or 0,
+                    'play_time': row[7] or 0.0,
+                    'is_active': bool(row[8])
+                }
+                slots_info.append(slot_info)
+            
+            conn.close()
+            return slots_info
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения информации о слотах: {e}")
+            return []
+    
     def get_free_slot(self) -> Optional[int]:
         """Получение свободного слота"""
         used_slots = {slot.slot_id for slot in self.get_available_slots()}
@@ -522,6 +557,16 @@ class SessionManager:
                 return slot_id
         
         return None
+    
+    def get_available_slot_for_new_game(self) -> int:
+        """Получение доступного слота для новой игры (всегда возвращает слот)"""
+        # Сначала пытаемся найти свободный слот
+        free_slot = self.get_free_slot()
+        if free_slot is not None:
+            return free_slot
+        
+        # Если свободных слотов нет, используем слот 1 (перезапишем его)
+        return 1
     
     def delete_session(self, slot_id: int) -> bool:
         """Удаление сессии"""
