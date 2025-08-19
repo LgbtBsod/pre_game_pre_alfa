@@ -1,40 +1,41 @@
 #!/usr/bin/env python3
 """
 Скрипт для заполнения базы данных начальными данными.
-Заполняет таблицы skills, items, enemy_types, weapons начальным контентом.
+Заполняет справочные таблицы и создает примеры сессий.
 """
 
 import sqlite3
 from pathlib import Path
 import logging
+import uuid
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def populate_skills(cursor):
-    """Заполняет таблицу навыков"""
-    skills_data = [
-        ("basic_attack", "Базовая атака", "Простая физическая атака", "combat", "physical", "single_enemy", 10.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.05, 1.5),
-        ("fire_ball", "Огненный шар", "Магическая атака огнем", "magic", "fire", "single_enemy", 25.0, 0.0, 15.0, 2.0, 3.0, 0.9, 0.1, 1.8),
-        ("ice_shard", "Ледяной осколок", "Магическая атака льдом", "magic", "ice", "single_enemy", 20.0, 0.0, 12.0, 1.5, 2.5, 0.95, 0.08, 1.6),
-        ("heal", "Исцеление", "Восстанавливает здоровье", "support", "holy", "single_ally", 0.0, 30.0, 12.0, 3.0, 2.0, 1.0, 0.0, 1.0),
-        ("lightning_bolt", "Молния", "Электрическая атака", "magic", "lightning", "single_enemy", 30.0, 0.0, 18.0, 2.5, 4.0, 0.85, 0.15, 2.0),
-        ("poison_dart", "Отравленный дротик", "Атака ядом", "combat", "poison", "single_enemy", 15.0, 0.0, 8.0, 1.0, 2.0, 0.9, 0.12, 1.4),
-        ("shield_bash", "Удар щитом", "Защитная атака", "combat", "physical", "single_enemy", 18.0, 0.0, 5.0, 1.5, 1.5, 0.8, 0.08, 1.3),
-        ("fire_nova", "Огненная вспышка", "Атака по области", "magic", "fire", "area", 35.0, 0.0, 25.0, 8.0, 3.0, 0.8, 0.2, 2.2),
-        ("ice_wall", "Ледяная стена", "Защитное заклинание", "support", "ice", "self", 0.0, 0.0, 20.0, 5.0, 0.0, 1.0, 0.0, 1.0),
-        ("stealth", "Скрытность", "Пассивная способность", "passive", "none", "self", 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0)
+def populate_effects(cursor):
+    """Заполняет таблицу эффектов"""
+    effects_data = [
+        ("EFFECT_001", "STRENGTH_BOOST", "Увеличение силы", "buff", "strength", 10.0, 0, 30.0, 1.0, 1, "Временно увеличивает силу", ""),
+        ("EFFECT_002", "WEAKNESS", "Слабость", "debuff", "strength", -5.0, 0, 20.0, 1.0, 1, "Временно уменьшает силу", ""),
+        ("EFFECT_003", "HEALING", "Исцеление", "heal", "health", 25.0, 0, 0.0, 0.0, 1, "Восстанавливает здоровье", ""),
+        ("EFFECT_004", "POISON", "Отравление", "dot", "health", -3.0, 0, 10.0, 2.0, 5, "Наносит урон от яда", ""),
+        ("EFFECT_005", "BURN", "Горение", "dot", "health", -4.0, 0, 8.0, 1.5, 3, "Наносит урон от огня", ""),
+        ("EFFECT_006", "FREEZE", "Заморозка", "debuff", "speed", -0.5, 0, 5.0, 1.0, 1, "Замедляет движение", ""),
+        ("EFFECT_007", "STUN", "Оглушение", "debuff", "speed", -1.0, 0, 3.0, 0.0, 1, "Полностью останавливает", ""),
+        ("EFFECT_008", "INVISIBILITY", "Невидимость", "buff", "stealth", 1.0, 0, 15.0, 1.0, 1, "Делает невидимым", ""),
+        ("EFFECT_009", "REGENERATION", "Регенерация", "hot", "health", 2.0, 0, 20.0, 2.0, 1, "Постепенно восстанавливает здоровье", ""),
+        ("EFFECT_010", "MANA_BOOST", "Увеличение маны", "buff", "mana", 20.0, 0, 25.0, 1.0, 1, "Временно увеличивает ману", "")
     ]
     
     cursor.executemany("""
-        INSERT INTO skills (skill_id, name, description, skill_type, element, target, 
-                          base_damage, base_healing, mana_cost, cooldown, range, 
-                          accuracy, critical_chance, critical_multiplier)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, skills_data)
+        INSERT INTO effects (guid, code, name, effect_type, attribute, value, is_percent, 
+                           duration, tick_interval, max_stacks, description, icon)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, effects_data)
     
-    logger.info(f"Добавлено {len(skills_data)} навыков")
+    logger.info(f"Добавлено {len(effects_data)} эффектов")
 
 
 def populate_skill_effects(cursor):
@@ -64,29 +65,6 @@ def populate_skill_effects(cursor):
     """, effects_data)
     
     logger.info(f"Добавлено {len(effects_data)} эффектов навыков")
-
-
-def populate_items(cursor):
-    """Заполняет таблицу предметов"""
-    items_data = [
-        ("health_potion", "Зелье здоровья", "Восстанавливает здоровье", "consumable", "common", 50, 0.5, "graphics/items/health_potion.png"),
-        ("mana_potion", "Зелье маны", "Восстанавливает ману", "consumable", "common", 40, 0.3, "graphics/items/mana_potion.png"),
-        ("strength_potion", "Зелье силы", "Временно увеличивает силу", "consumable", "uncommon", 80, 0.4, "graphics/items/strength_potion.png"),
-        ("invisibility_cloak", "Плащ-невидимка", "Делает невидимым", "equipment", "rare", 200, 1.0, "graphics/items/invisibility_cloak.png"),
-        ("fire_resistance_ring", "Кольцо огнестойкости", "Увеличивает сопротивление огню", "equipment", "uncommon", 120, 0.1, "graphics/items/fire_ring.png"),
-        ("ice_resistance_ring", "Кольцо ледостойкости", "Увеличивает сопротивление льду", "equipment", "uncommon", 120, 0.1, "graphics/items/ice_ring.png"),
-        ("lightning_resistance_ring", "Кольцо молниестойкости", "Увеличивает сопротивление молнии", "equipment", "uncommon", 120, 0.1, "graphics/items/lightning_ring.png"),
-        ("poison_resistance_ring", "Кольцо ядостойкости", "Увеличивает сопротивление яду", "equipment", "uncommon", 120, 0.1, "graphics/items/poison_ring.png"),
-        ("healing_scroll", "Свиток исцеления", "Мгновенно исцеляет", "consumable", "rare", 150, 0.2, "graphics/items/healing_scroll.png"),
-        ("teleport_scroll", "Свиток телепортации", "Перемещает в безопасное место", "consumable", "epic", 300, 0.1, "graphics/items/teleport_scroll.png")
-    ]
-    
-    cursor.executemany("""
-        INSERT INTO items (item_id, name, description, item_type, rarity, value, weight, icon)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, items_data)
-    
-    logger.info(f"Добавлено {len(items_data)} предметов")
 
 
 def populate_enemy_types(cursor):
@@ -140,28 +118,116 @@ def populate_weapons(cursor):
     logger.info(f"Добавлено {len(weapons_data)} видов оружия")
 
 
-def populate_effects(cursor):
-    """Заполняет таблицу эффектов"""
-    effects_data = [
-        ("EFFECT_001", "STRENGTH_BOOST", "Увеличение силы", "buff", "strength", 10.0, 0, 30.0, 1.0, 1, "Временно увеличивает силу", ""),
-        ("EFFECT_002", "WEAKNESS", "Слабость", "debuff", "strength", -5.0, 0, 20.0, 1.0, 1, "Временно уменьшает силу", ""),
-        ("EFFECT_003", "HEALING", "Исцеление", "heal", "health", 25.0, 0, 0.0, 0.0, 1, "Восстанавливает здоровье", ""),
-        ("EFFECT_004", "POISON", "Отравление", "dot", "health", -3.0, 0, 10.0, 2.0, 5, "Наносит урон от яда", ""),
-        ("EFFECT_005", "BURN", "Горение", "dot", "health", -4.0, 0, 8.0, 1.5, 3, "Наносит урон от огня", ""),
-        ("EFFECT_006", "FREEZE", "Заморозка", "debuff", "speed", -0.5, 0, 5.0, 1.0, 1, "Замедляет движение", ""),
-        ("EFFECT_007", "STUN", "Оглушение", "debuff", "speed", -1.0, 0, 3.0, 0.0, 1, "Полностью останавливает", ""),
-        ("EFFECT_008", "INVISIBILITY", "Невидимость", "buff", "stealth", 1.0, 0, 15.0, 1.0, 1, "Делает невидимым", ""),
-        ("EFFECT_009", "REGENERATION", "Регенерация", "hot", "health", 2.0, 0, 20.0, 2.0, 1, "Постепенно восстанавливает здоровье", ""),
-        ("EFFECT_010", "MANA_BOOST", "Увеличение маны", "buff", "mana", 20.0, 0, 25.0, 1.0, 1, "Временно увеличивает ману", "")
+def create_example_sessions(cursor):
+    """Создает примеры сессий для демонстрации"""
+    import json
+    
+    # Создаем два примера слотов сохранения
+    session_uuids = [str(uuid.uuid4()), str(uuid.uuid4())]
+    now = datetime.now().isoformat()
+    
+    # Слот 1
+    cursor.execute("""
+        INSERT INTO save_slots 
+        (slot_id, session_uuid, save_name, created_at, last_played, player_level, world_seed, play_time, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (1, session_uuids[0], "Пример сохранения 1", now, now, 5, 12345, 3600.0, 1))
+    
+    # Слот 2
+    cursor.execute("""
+        INSERT INTO save_slots 
+        (slot_id, session_uuid, save_name, created_at, last_played, player_level, world_seed, play_time, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (2, session_uuids[1], "Пример сохранения 2", now, now, 3, 67890, 1800.0, 1))
+    
+    # Данные сессии 1
+    player_data_1 = {
+        "name": "Игрок 1",
+        "level": 5,
+        "experience": 1250,
+        "health": 100,
+        "mana": 80,
+        "position": {"x": 100, "y": 100, "z": 0}
+    }
+    
+    world_data_1 = {
+        "name": "Лесной мир",
+        "biome": "forest",
+        "difficulty": 1.2,
+        "explored_areas": 15
+    }
+    
+    cursor.execute("""
+        INSERT INTO session_data 
+        (session_uuid, slot_id, state, created_at, last_saved, player_data, world_data, 
+         inventory_data, progress_data, generation_seed, current_level)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session_uuids[0], 1, "active", now, now,
+        json.dumps(player_data_1), json.dumps(world_data_1),
+        json.dumps({"items": [], "weapons": [], "skills": []}),
+        json.dumps({"completed_levels": [1, 2, 3, 4], "current_quest": "main_quest_5"}),
+        12345, 5
+    ))
+    
+    # Данные сессии 2
+    player_data_2 = {
+        "name": "Игрок 2",
+        "level": 3,
+        "experience": 450,
+        "health": 80,
+        "mana": 60,
+        "position": {"x": 50, "y": 50, "z": 0}
+    }
+    
+    world_data_2 = {
+        "name": "Горный мир",
+        "biome": "mountain",
+        "difficulty": 0.8,
+        "explored_areas": 8
+    }
+    
+    cursor.execute("""
+        INSERT INTO session_data 
+        (session_uuid, slot_id, state, created_at, last_saved, player_data, world_data, 
+         inventory_data, progress_data, generation_seed, current_level)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        session_uuids[1], 2, "active", now, now,
+        json.dumps(player_data_2), json.dumps(world_data_2),
+        json.dumps({"items": [], "weapons": [], "skills": []}),
+        json.dumps({"completed_levels": [1, 2], "current_quest": "main_quest_3"}),
+        67890, 3
+    ))
+    
+    # Добавляем примеры сгенерированного контента для сессии 1
+    example_items_1 = [
+        ("item_001", "Зелье здоровья", "consumable", "common", json.dumps(["healing"]), 50, 0.5, "", 0, None),
+        ("item_002", "Меч новичка", "weapon", "common", json.dumps(["damage_boost"]), 100, 2.0, "", 0, None),
+        ("item_003", "Кольцо защиты", "equipment", "uncommon", json.dumps(["defense_boost"]), 200, 0.1, "", 0, None)
     ]
     
-    cursor.executemany("""
-        INSERT INTO effects (guid, code, name, effect_type, attribute, value, is_percent, 
-                           duration, tick_interval, max_stacks, description, icon)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, effects_data)
+    for item in example_items_1:
+        cursor.execute("""
+            INSERT INTO session_items 
+            (session_uuid, item_id, name, item_type, rarity, effects, value, weight, icon, is_obtained, obtained_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_uuids[0],) + item)
     
-    logger.info(f"Добавлено {len(effects_data)} эффектов")
+    # Добавляем примеры сгенерированного контента для сессии 2
+    example_items_2 = [
+        ("item_004", "Зелье маны", "consumable", "common", json.dumps(["mana_boost"]), 40, 0.3, "", 0, None),
+        ("item_005", "Лук охотника", "weapon", "uncommon", json.dumps(["range_boost"]), 150, 1.5, "", 0, None)
+    ]
+    
+    for item in example_items_2:
+        cursor.execute("""
+            INSERT INTO session_items 
+            (session_uuid, item_id, name, item_type, rarity, effects, value, weight, icon, is_obtained, obtained_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_uuids[1],) + item)
+    
+    logger.info(f"Создано 2 примера сессий с UUID: {session_uuids[0][:8]}... и {session_uuids[1][:8]}...")
 
 
 def main():
@@ -178,20 +244,22 @@ def main():
         
         logger.info("Начинаю заполнение базы данных...")
         
-        # Заполняем все таблицы
+        # Заполняем справочные таблицы
         populate_effects(cursor)
-        populate_skills(cursor)
         populate_skill_effects(cursor)
-        populate_items(cursor)
         populate_enemy_types(cursor)
         populate_weapons(cursor)
+        
+        # Создаем примеры сессий
+        create_example_sessions(cursor)
         
         # Коммитим изменения
         conn.commit()
         logger.info("База данных успешно заполнена!")
         
         # Показываем статистику
-        for table in ["effects", "skills", "skill_effects", "items", "enemy_types", "weapons"]:
+        for table in ["effects", "skill_effects", "enemy_types", "weapons", 
+                     "save_slots", "session_data", "session_items"]:
             cursor.execute(f"SELECT COUNT(*) FROM {table}")
             count = cursor.fetchone()[0]
             logger.info(f"Таблица {table}: {count} записей")

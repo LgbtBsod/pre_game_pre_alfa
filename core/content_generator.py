@@ -132,18 +132,11 @@ class ContentGenerator:
         self.name_prefixes = ["Dark", "Light", "Ancient", "Modern", "Mystic", "Tech", "Wild", "Tame"]
         self.name_suffixes = ["Beast", "Spirit", "Guardian", "Hunter", "Wanderer", "Defender", "Seeker"]
         
-        # Флаг инициализации контента
-        self.content_initialized = False
-        
         logger.info(f"Генератор контента инициализирован с seed: {self.seed}")
     
     def initialize_session_content(self, session_uuid: str, level: int = 1) -> Dict[str, Any]:
         """Инициализация контента для новой сессии"""
         try:
-            if self.content_initialized:
-                logger.warning("Контент уже инициализирован для этой сессии")
-                return {}
-            
             # Генерируем seed на основе UUID сессии и уровня
             session_seed = hash(session_uuid) % 999999
             level_seed = session_seed + level * 1000
@@ -155,6 +148,7 @@ class ContentGenerator:
                 "enemies": [],
                 "weapons": [],
                 "skills": [],
+                "genes": [],
                 "world_seed": level_seed
             }
             
@@ -188,8 +182,12 @@ class ContentGenerator:
                 skill = self._generate_basic_skill()
                 initial_content["skills"].append(skill)
             
-            self.content_initialized = True
-            logger.info(f"Контент инициализирован для сессии {session_uuid}")
+            # Генерируем начальные гены
+            for i in range(3):  # 3 начальных гена
+                gene = self._generate_basic_gene()
+                initial_content["genes"].append(gene)
+            
+            logger.info(f"Контент инициализирован для сессии {session_uuid} (seed: {level_seed})")
             return initial_content
             
         except Exception as e:
@@ -208,6 +206,21 @@ class ContentGenerator:
             "level": 1,
             "description": f"A basic {skill_type} skill",
             "effect": f"Provides basic {skill_type} capabilities"
+        }
+    
+    def _generate_basic_gene(self) -> Dict[str, Any]:
+        """Генерация базового гена"""
+        gene_types = ["strength", "agility", "intelligence", "vitality", "resistance"]
+        gene_type = self.random_generator.choice(gene_types)
+        
+        return {
+            "id": f"gene_{self.random_generator.randint(1000, 9999)}",
+            "name": f"Basic {gene_type.title()} Gene",
+            "gene_type": gene_type,
+            "effect_type": "stat_boost",
+            "value": self.random_generator.uniform(1.0, 5.0),
+            "rarity": "common",
+            "description": f"Enhances {gene_type} capabilities"
         }
     
     def _init_enemy_templates(self) -> Dict[str, Dict[str, Any]]:
@@ -281,6 +294,18 @@ class ContentGenerator:
     def _init_item_templates(self) -> Dict[str, Dict[str, Any]]:
         """Инициализация шаблонов предметов"""
         return {
+            "potion": {
+                "effects": ["heal", "boost", "cure"],
+                "rarity_weights": [0.5, 0.3, 0.15, 0.04, 0.01]
+            },
+            "weapon": {
+                "effects": ["damage", "critical", "elemental"],
+                "rarity_weights": [0.4, 0.35, 0.2, 0.04, 0.01]
+            },
+            "armor": {
+                "effects": ["defense", "resistance", "utility"],
+                "rarity_weights": [0.4, 0.35, 0.2, 0.04, 0.01]
+            },
             "consumable": {
                 "effects": ["heal", "boost", "cure"],
                 "rarity_weights": [0.5, 0.3, 0.15, 0.04, 0.01]

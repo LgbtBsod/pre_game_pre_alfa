@@ -362,11 +362,9 @@ class GameInterface:
     def _start_new_game(self):
         """Начало новой игры"""
         try:
-            self.game_state = GameState.LOADING
-            
-            # Создаём новую сессию
-            free_slot = self.session_manager.get_free_slot_id()
-            if not free_slot:
+            # Ищем свободный слот
+            free_slot = self.session_manager.get_free_slot()
+            if free_slot is None:
                 logger.error("Нет свободных слотов для сохранения")
                 return
             
@@ -395,6 +393,9 @@ class GameInterface:
             
             for skill in initial_content.get("skills", []):
                 self.session_manager.add_session_content("skills", skill)
+            
+            for gene in initial_content.get("genes", []):
+                self.session_manager.add_session_content("genes", gene)
             
             # Создание игрока с автономным ИИ
             self.player = AdvancedGameEntity(
@@ -466,11 +467,95 @@ class GameInterface:
         # Начинаем первый уровень
         self.level_progression.start_level(1)
         
-        # Генерация предметов для новой игры
-        self._generate_items_for_new_game()
-        
-        # Переход к игре
+        # Переходим в игровое состояние
         self.game_state = GameState.PLAYING
+        logger.info(f"Новая игра создана в слоте {free_slot}")
+    
+    def _load_existing_game(self, slot_id: int):
+        """Загрузка существующей игры"""
+        try:
+            # Загружаем сессию
+            session_data = self.session_manager.load_session(slot_id)
+            if not session_data:
+                logger.error(f"Не удалось загрузить сессию из слота {slot_id}")
+                return
+            
+            # Восстанавливаем игровые данные
+            player_data = session_data.player_data
+            world_data = session_data.world_data
+            inventory_data = session_data.inventory_data
+            progress_data = session_data.progress_data
+            
+            # Создание игрока с восстановленными данными
+            self.player = AdvancedGameEntity(
+                entity_id="PLAYER_001",
+                entity_type="player",
+                name=player_data.get("name", "Игрок"),
+                position=(
+                    player_data.get("position", {}).get("x", 0),
+                    player_data.get("position", {}).get("y", 0),
+                    player_data.get("position", {}).get("z", 0)
+                )
+            )
+            
+            # Восстанавливаем характеристики игрока
+            if "health" in player_data:
+                self.player.health = player_data["health"]
+            if "mana" in player_data:
+                self.player.mana = player_data["mana"]
+            if "level" in player_data:
+                self.player.level = player_data["level"]
+            
+            # Инициализация ИИ для игрока
+            self.player_ai = AdaptiveAISystem("PLAYER_001")
+            self.autonomous_movement_enabled = True
+            
+            # Восстанавливаем врагов из сессионного контента
+            self.entities = []
+            session_enemies = self.session_manager.get_session_content("enemies")
+            for i, enemy_data in enumerate(session_enemies):
+                if not enemy_data.get("is_defeated", False):  # Только не побежденные враги
+                    enemy = AdvancedGameEntity(
+                        entity_id=f"ENEMY_{i:03d}",
+                        entity_type="enemy",
+                        name=enemy_data.get("name", f"Враг {i+1}"),
+                        position=(random.randint(-200, 200), random.randint(-200, 200), 0)
+                    )
+                    self.entities.append(enemy)
+            
+            # Инициализация систем
+            self.effect_db = EffectDatabase()
+            self.genetic_system = AdvancedGeneticSystem(self.effect_db)
+            self.emotion_system = AdvancedEmotionSystem(self.effect_db)
+            self.content_generator = ContentGenerator(session_data.generation_seed)
+            self.evolution_system = EvolutionCycleSystem(self.effect_db)
+            self.event_system = GlobalEventSystem(self.effect_db)
+            self.difficulty_system = DynamicDifficultySystem()
+            
+            # Изометрические системы
+            self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
+            self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
+            self.isometric_renderer = IsometricRenderer(self.isometric_projection)
+            
+            # Система анимации спрайтов
+            self.player_sprite = CharacterSprite("graphics/player")
+            
+            # Система прогрессии уровней
+            self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
+            self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
+            self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
+            
+            # Восстанавливаем прогресс
+            if progress_data.get("current_level"):
+                self.level_progression.start_level(progress_data["current_level"])
+            
+            # Переходим в игровое состояние
+            self.game_state = GameState.PLAYING
+            logger.info(f"Игра загружена из слота {slot_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки игры: {e}")
+            self.game_state = GameState.MAIN_MENU
     
     def _generate_items_for_new_game(self):
         """Генерация предметов для новой игры"""
