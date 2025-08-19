@@ -966,3 +966,88 @@ class ContentGenerator:
     def generate_hash_from_seed(self) -> str:
         """Генерация хеша из текущего seed"""
         return hashlib.md5(str(self.seed).encode()).hexdigest()[:8]
+    
+    def generate_level_content(self, level_config: Dict[str, Any]) -> Dict[str, Any]:
+        """Генерация контента для нового уровня"""
+        try:
+            level_number = level_config.get("level_number", 1)
+            difficulty_multiplier = level_config.get("difficulty_multiplier", 1.0)
+            world_size = level_config.get("world_size", 1000)
+            enemy_count = level_config.get("enemy_count", 5)
+            item_count = level_config.get("item_count", 10)
+            obstacle_count = level_config.get("obstacle_count", 3)
+            player_data = level_config.get("player_data", {})
+            
+            # Генерируем новый seed для уровня
+            level_seed = self.seed + level_number * 1000
+            self.set_seed(level_seed)
+            
+            # Генерируем мир
+            world_config = {
+                "biome": self.random_generator.choice(list(BiomeType)).value,
+                "size": "large" if world_size > 1200 else "medium",
+                "difficulty": difficulty_multiplier
+            }
+            
+            # Генерируем врагов
+            enemies = []
+            for i in range(enemy_count):
+                enemy = self.generate_enemy(
+                    biome=world_config["biome"],
+                    level=int(level_number * difficulty_multiplier),
+                    enemy_type=self.random_generator.choice(list(EnemyType)).value
+                )
+                enemies.append(enemy)
+            
+            # Генерируем предметы
+            items = []
+            for i in range(item_count):
+                item = self.generate_item(
+                    item_type=self.random_generator.choice(["potion", "weapon", "armor", "tool", "artifact"]),
+                    rarity=self.random_generator.choice(list(ItemRarity)).value
+                )
+                items.append(item)
+            
+            # Генерируем препятствия
+            obstacles = []
+            for i in range(obstacle_count):
+                obstacle = {
+                    "id": f"OBSTACLE_{uuid.uuid4().hex[:8]}",
+                    "type": self.random_generator.choice(["trap", "barrier", "hazard"]),
+                    "position": (
+                        self.random_generator.randint(-world_size//2, world_size//2),
+                        self.random_generator.randint(-world_size//2, world_size//2),
+                        0
+                    ),
+                    "effect": self.random_generator.choice(["damage", "slow", "confuse", "teleport"])
+                }
+                obstacles.append(obstacle)
+            
+            # Создаем конфигурацию уровня
+            level_content = {
+                "level_number": level_number,
+                "world_config": world_config,
+                "enemies": [enemy.__dict__ for enemy in enemies],
+                "items": [item.__dict__ for item in items],
+                "obstacles": obstacles,
+                "player_data": player_data,
+                "world_size": world_size,
+                "difficulty_multiplier": difficulty_multiplier
+            }
+            
+            logger.info(f"Сгенерирован контент для уровня {level_number}")
+            return level_content
+            
+        except Exception as e:
+            logger.error(f"Ошибка генерации контента уровня: {e}")
+            # Возвращаем базовую конфигурацию в случае ошибки
+            return {
+                "level_number": level_config.get("level_number", 1),
+                "world_config": {"biome": "forest", "size": "medium", "difficulty": 1.0},
+                "enemies": [],
+                "items": [],
+                "obstacles": [],
+                "player_data": level_config.get("player_data", {}),
+                "world_size": 1000,
+                "difficulty_multiplier": 1.0
+            }

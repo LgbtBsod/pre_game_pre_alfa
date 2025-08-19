@@ -24,6 +24,8 @@ from core.global_event_system import GlobalEventSystem
 from core.dynamic_difficulty import DynamicDifficultySystem
 from core.advanced_entity import AdvancedGameEntity
 from core.isometric_system import IsometricProjection, BeaconNavigationSystem, IsometricRenderer
+from core.sprite_animation import CharacterSprite, Direction, AnimationState
+from core.level_progression import LevelProgressionSystem, StatisticsRenderer, LevelTransitionManager
 from config.config_manager import config_manager
 
 
@@ -38,6 +40,8 @@ class GameState(Enum):
     EVOLUTION = "evolution"
     SETTINGS = "settings"
     LOADING = "loading"
+    LEVEL_STATISTICS = "level_statistics"
+    NEXT_LEVEL = "next_level"
 
 
 @dataclass
@@ -287,6 +291,9 @@ class GameInterface:
             # Ручное управление (временное отключение автономности)
             elif key == pygame.K_SPACE:
                 self._toggle_autonomous_movement()
+        
+        # Обработка ввода для прогрессии уровней
+        self._handle_level_progression_input(key)
     
     def _handle_mouse_click(self, pos):
         """Обработка кликов мыши"""
@@ -386,6 +393,17 @@ class GameInterface:
         
         # Добавляем beacon_system к миру для ИИ
         self.beacon_system = self.beacon_system
+        
+        # Система анимации спрайтов
+        self.player_sprite = CharacterSprite("graphics/player")
+        
+        # Система прогрессии уровней
+        self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
+        self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["normal"])
+        self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
+        
+        # Начинаем первый уровень
+        self.level_progression.start_level(1)
         
         # Генерация предметов для новой игры
         self._generate_items_for_new_game()
@@ -547,6 +565,32 @@ class GameInterface:
             # Обновление игрока
             self.player.update(delta_time)
             
+            # Обновление спрайта игрока
+            if hasattr(self, 'player_sprite'):
+                # Определяем направление движения
+                if hasattr(self, 'player_ai') and hasattr(self, 'autonomous_movement_enabled') and self.autonomous_movement_enabled:
+                    dx, dy = self.player_ai.get_autonomous_movement(self.player, self)
+                    if abs(dx) > abs(dy):
+                        if dx > 0:
+                            self.player_sprite.set_direction(Direction.RIGHT)
+                        else:
+                            self.player_sprite.set_direction(Direction.LEFT)
+                    else:
+                        if dy > 0:
+                            self.player_sprite.set_direction(Direction.DOWN)
+                        else:
+                            self.player_sprite.set_direction(Direction.UP)
+                    
+                    # Определяем состояние анимации
+                    if abs(dx) > 0.1 or abs(dy) > 0.1:
+                        self.player_sprite.set_state(AnimationState.WALKING)
+                    else:
+                        self.player_sprite.set_state(AnimationState.IDLE)
+                
+                # Обновляем позицию спрайта
+                self.player_sprite.set_position(self.player.position.x, self.player.position.y)
+                self.player_sprite.update(delta_time)
+            
             # Обновление врагов
             for entity in self.entities:
                 entity.update(delta_time)
@@ -580,6 +624,23 @@ class GameInterface:
                 "reality_coherence": 1.0,
             }
             entities = [self.player] + list(self.entities)
+            
+            # Проверка обнаружения маяка
+            if hasattr(self, 'beacon_system') and self.player:
+                discovered_beacon = self.beacon_system.discover_beacon(
+                    (self.player.position.x, self.player.position.y, self.player.position.z)
+                )
+                if discovered_beacon:
+                    # Уведомляем систему прогрессии об обнаружении маяка
+                    if hasattr(self, 'level_progression'):
+                        self.level_progression.on_beacon_found(self.player)
+                        self.game_state = GameState.LEVEL_STATISTICS
+            
+            # Обновление системы прогрессии уровней
+            if hasattr(self, 'level_progression'):
+                self.level_progression.update(delta_time)
+                if hasattr(self, 'level_transition_manager'):
+                    self.level_transition_manager.update(delta_time)
             
             # Обновление систем
             try:
@@ -627,6 +688,10 @@ class GameInterface:
             self._render_settings()
         elif self.game_state == GameState.LOADING:
             self._render_loading()
+        elif self.game_state == GameState.LEVEL_STATISTICS:
+            self._render_level_statistics()
+        elif self.game_state == GameState.NEXT_LEVEL:
+            self._render_next_level()
         
         # Обновление экрана
         pygame.display.flip()
@@ -694,8 +759,19 @@ class GameInterface:
         # Отрисовка маяков
         self._render_beacons()
         
-        # Отрисовка игрока в изометрии
-        if self.player and hasattr(self.player, 'position'):
+        # Отрисовка игрока с использованием спрайтов
+        if self.player and hasattr(self.player, 'position') and hasattr(self, 'player_sprite'):
+            # Получаем изометрические координаты
+            iso_x, iso_y = self.isometric_projection.world_to_iso(self.player.position.x, self.player.position.y)
+            
+            # Применяем смещение камеры
+            screen_x = iso_x - self.isometric_projection.camera_x
+            screen_y = iso_y - self.isometric_projection.camera_y
+            
+            # Отрисовываем спрайт игрока
+            self.player_sprite.render(self.screen, (self.isometric_projection.camera_x, self.isometric_projection.camera_y))
+        elif self.player and hasattr(self.player, 'position'):
+            # Fallback: отрисовка простой формы если спрайт недоступен
             self.isometric_renderer.render_entity(
                 self.screen,
                 (self.player.position.x, self.player.position.y, self.player.position.z),
@@ -1677,6 +1753,100 @@ class GameInterface:
             print("Навигация отменена")
         except Exception as e:
             print(f"Ошибка отмены навигации: {e}")
+    
+    def _render_level_statistics(self):
+        """Отрисовка статистики уровня"""
+        if hasattr(self, 'level_progression') and hasattr(self, 'statistics_renderer'):
+            self.statistics_renderer.render_statistics(self.level_progression.get_statistics())
+    
+    def _render_next_level(self):
+        """Отрисовка экрана перехода к следующему уровню"""
+        if hasattr(self, 'level_transition_manager'):
+            self.level_transition_manager.render_transition()
+    
+    def _handle_level_progression_input(self, key):
+        """Обработка ввода для прогрессии уровней"""
+        if self.game_state == GameState.LEVEL_STATISTICS:
+            if key == pygame.K_SPACE:
+                # Переход к следующему уровню
+                if hasattr(self, 'level_progression') and self.player:
+                    next_level_data = self.level_progression.generate_next_level(self.player)
+                    self._start_next_level(next_level_data)
+            elif key == pygame.K_s:
+                # Сохранение игры
+                self._save_game()
+        elif self.game_state == GameState.NEXT_LEVEL:
+            if key == pygame.K_SPACE:
+                # Продолжение игры
+                self.game_state = GameState.PLAYING
+    
+    def _start_next_level(self, level_data: dict):
+        """Начало следующего уровня"""
+        try:
+            # Восстанавливаем прогресс игрока
+            if 'player_data' in level_data:
+                player_data = level_data['player_data']
+                
+                # Восстанавливаем позицию
+                if 'position' in player_data:
+                    self.player.position.x = player_data['position']['x']
+                    self.player.position.y = player_data['position']['y']
+                    self.player.position.z = player_data['position']['z']
+                
+                # Восстанавливаем характеристики
+                if 'stats' in player_data:
+                    stats = player_data['stats']
+                    self.player.stats.health = stats['health']
+                    self.player.stats.max_health = stats['max_health']
+                    self.player.stats.mana = stats['mana']
+                    self.player.stats.max_mana = stats['max_mana']
+                    self.player.stats.stamina = stats['stamina']
+                    self.player.stats.max_stamina = stats['max_stamina']
+                    self.player.stats.speed = stats['speed']
+                    self.player.stats.strength = stats['strength']
+                    self.player.stats.intelligence = stats['intelligence']
+                    self.player.stats.agility = stats['agility']
+                
+                # Восстанавливаем инвентарь
+                if 'inventory' in player_data:
+                    self.player.inventory_system.clear_inventory()
+                    for item_id, quantity in player_data['inventory'].items():
+                        self.player.inventory_system.add_item(item_id, quantity)
+                
+                # Восстанавливаем гены
+                if 'genes' in player_data and hasattr(self.player, 'genetic_system'):
+                    for gene_data in player_data['genes']:
+                        self.player.genetic_system.add_gene(gene_data['id'], gene_data['level'])
+                
+                # Восстанавливаем эмоции
+                if 'emotions' in player_data and hasattr(self.player, 'emotion_system'):
+                    for emotion, intensity in player_data['emotions'].items():
+                        self.player.emotion_system.set_emotion_intensity(emotion, intensity)
+                
+                # Восстанавливаем прогресс ИИ
+                if 'ai_learning' in player_data and hasattr(self.player, 'ai_system'):
+                    ai_data = player_data['ai_learning']
+                    self.player.ai_system.learning_level = ai_data['level']
+                    self.player.ai_system.experience_points = ai_data['experience']
+            
+            # Генерируем новый мир
+            if 'world_config' in level_data:
+                world_config = level_data['world_config']
+                # Здесь можно добавить генерацию нового мира с новыми врагами и препятствиями
+            
+            # Начинаем новый уровень
+            next_level_number = self.level_progression.current_level + 1
+            self.level_progression.start_level(next_level_number)
+            
+            # Переходим к игре
+            self.game_state = GameState.PLAYING
+            
+            logger.info(f"Начат уровень {next_level_number}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка начала следующего уровня: {e}")
+            # В случае ошибки возвращаемся к игре
+            self.game_state = GameState.PLAYING
 
 
 def main():

@@ -414,24 +414,24 @@ class AdaptiveAISystem:
     def get_autonomous_movement(self, entity, world) -> Tuple[float, float]:
         """Получение автономного движения для сущности"""
         try:
-                    # Проверка навигации к маяку (только если маяк уже обнаружен)
-        if hasattr(world, 'beacon_system') and hasattr(entity, 'position'):
-            # Проверяем, есть ли обнаруженные маяки
-            discovered_beacons = [b for b in world.beacon_system.beacons.values() if b.discovered]
-            
-            if discovered_beacons and world.beacon_system.active_target:
-                beacon_direction = world.beacon_system.get_navigation_direction(
-                    (entity.position.x, entity.position.y, entity.position.z)
-                )
-                if beacon_direction:
-                    # Движение к маяку с небольшой случайностью для естественности
-                    dx, dy = beacon_direction
-                    dx += random.uniform(-0.1, 0.1)
-                    dy += random.uniform(-0.1, 0.1)
-                    
-                    # Ограничение скорости движения
-                    speed = getattr(entity.stats, 'speed', 1.0) if hasattr(entity, 'stats') else 1.0
-                    return dx * speed, dy * speed
+            # Проверка навигации к маяку (только если маяк уже обнаружен)
+            if hasattr(world, 'beacon_system') and hasattr(entity, 'position'):
+                # Проверяем, есть ли обнаруженные маяки
+                discovered_beacons = [b for b in world.beacon_system.beacons.values() if b.discovered]
+                
+                if discovered_beacons and world.beacon_system.active_target:
+                    beacon_direction = world.beacon_system.get_navigation_direction(
+                        (entity.position.x, entity.position.y, entity.position.z)
+                    )
+                    if beacon_direction:
+                        # Движение к маяку с небольшой случайностью для естественности
+                        dx, dy = beacon_direction
+                        dx += random.uniform(-0.1, 0.1)
+                        dy += random.uniform(-0.1, 0.1)
+                        
+                        # Ограничение скорости движения
+                        speed = getattr(entity.stats, 'speed', 1.0) if hasattr(entity, 'stats') else 1.0
+                        return dx * speed, dy * speed
             
             # Анализ окружения (стандартное поведение)
             nearest_enemy = self._get_nearest_enemy(entity, world)
@@ -536,8 +536,8 @@ class AdaptiveAISystem:
             if not hasattr(entity, 'position') or not hasattr(target, 'position'):
                 return 0.0, 0.0
             
-            dx = target.position[0] - entity.position[0]
-            dy = target.position[1] - entity.position[1]
+            dx = target.position.x - entity.position.x
+            dy = target.position.y - entity.position.y
             
             # Нормализация вектора
             length = math.sqrt(dx * dx + dy * dy)
