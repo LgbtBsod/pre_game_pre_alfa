@@ -316,33 +316,56 @@ class AdvancedGameEntity:
         except Exception as e:
             logger.error(f"Ошибка установки базовых эмоций: {e}")
     
-    def update(self, delta_time: float, world=None):
+    def update(self, delta_time: float):
         """Обновление сущности"""
         try:
-            if not self.is_active:
-                return
-            
             # Обновление времени
             self.last_update_time += delta_time
             self.update_count += 1
             
             # Обновление систем
             self.effect_system.update(delta_time)
-            self.emotion_system.current_state.emotional_stability = max(0.0, 
-                self.emotion_system.current_state.emotional_stability - delta_time * 0.01)
-            
-            # Обновление ИИ (только для не-игроков)
-            if self.type != EntityType.PLAYER.value and hasattr(self, 'ai_system'):
-                self.ai_system.update(self, world, delta_time)
+            self.emotion_system.update(delta_time)
+            self.genetic_system.update(delta_time)
+            self.ai_system.update(self, None, delta_time)  # world=None для упрощения
             
             # Обновление памяти
             self.memory_system.update(delta_time)
             
-            # Проверка состояния
-            self._check_entity_state()
+            # Обновление анимации Pygame
+            if PYGAME_AVAILABLE and pygame.get_init():
+                self.update_animation(delta_time)
+            
+            # Восстановление выносливости
+            if self.stats.stamina < self.stats.max_stamina:
+                self.stats.stamina = min(self.stats.max_stamina, 
+                                       self.stats.stamina + 5.0 * delta_time)
             
         except Exception as e:
             logger.error(f"Ошибка обновления сущности {self.id}: {e}")
+    
+    def move_pygame(self, dx: float, dy: float):
+        """Движение с поддержкой Pygame"""
+        # Обновление позиции (работает независимо от pygame)
+        self.position.x += dx * self.stats.speed
+        self.position.y += dy * self.stats.speed
+        
+        # Обновление направления (только если pygame доступен)
+        if PYGAME_AVAILABLE and pygame.get_init():
+            if dx != 0 or dy != 0:
+                if self.direction is None:
+                    self.direction = pygame.math.Vector2()
+                self.direction.x = dx
+                self.direction.y = dy
+    
+    def update_animation(self, delta_time: float):
+        """Обновление анимации"""
+        if not PYGAME_AVAILABLE or not pygame.get_init():
+            return
+        
+        self.animation_frame += self.animation_speed * delta_time
+        if self.animation_frame >= 4:  # 4 кадра анимации
+            self.animation_frame = 0
     
     def _check_entity_state(self):
         """Проверка состояния сущности"""
@@ -1028,17 +1051,17 @@ def add_pygame_support_to_entity(entity):
     
     def move_pygame(self, dx: float, dy: float):
         """Движение с поддержкой Pygame"""
-        if not PYGAME_AVAILABLE or not pygame.get_init():
-            return
-        
-        # Обновление позиции
+        # Обновление позиции (работает независимо от pygame)
         self.position.x += dx * self.stats.speed
         self.position.y += dy * self.stats.speed
         
-        # Обновление направления
-        if dx != 0 or dy != 0:
-            self.direction.x = dx
-            self.direction.y = dy
+        # Обновление направления (только если pygame доступен)
+        if PYGAME_AVAILABLE and pygame.get_init():
+            if dx != 0 or dy != 0:
+                if self.direction is None:
+                    self.direction = pygame.math.Vector2()
+                self.direction.x = dx
+                self.direction.y = dy
     
     def get_pygame_rect(self) -> pygame.Rect:
         """Получение Pygame прямоугольника для отрисовки"""

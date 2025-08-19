@@ -372,12 +372,16 @@ class AdaptiveAISystem:
         return chosen_action
     
     def _execute_action(self, entity, action: AIAction, world) -> float:
-        """Выполнение действия и получение награды"""
+        """Выполнение действия ИИ"""
         try:
             reward = 0.0
+            current_time = self.last_action_time
+            
+            if not action.can_use(current_time):
+                return 0.0
             
             if action.action_type == ActionType.MOVE.value:
-                reward = self._execute_move(entity, world)
+                reward = self._execute_movement(entity, world)
             elif action.action_type == ActionType.ATTACK.value:
                 reward = self._execute_attack(entity, world)
             elif action.action_type == ActionType.DEFEND.value:
@@ -393,53 +397,315 @@ class AdaptiveAISystem:
             elif action.action_type == ActionType.WAIT.value:
                 reward = self._execute_wait(entity, world)
             
-            # Модификация награды на основе личности
-            reward = self._modify_reward_by_personality(reward, action)
+            # Обновление времени последнего использования
+            action.last_used = current_time
             
             return reward
             
         except Exception as e:
-            logger.error(f"Ошибка выполнения действия {action.action_type}: {e}")
+            logger.error(f"Ошибка выполнения действия ИИ: {e}")
             return 0.0
     
-    def _execute_move(self, entity, world) -> float:
+    def get_autonomous_movement(self, entity, world) -> Tuple[float, float]:
+        """Получение автономного движения для сущности"""
+        try:
+            # Анализ окружения
+            nearest_enemy = self._get_nearest_enemy(entity, world)
+            nearest_item = self._get_nearest_item(entity, world)
+            nearest_obstacle = self._get_nearest_obstacle(entity, world)
+            
+            # Определение направления движения на основе личности и состояния
+            dx, dy = 0.0, 0.0
+            
+            if self.personality.aggression > 0.7 and nearest_enemy:
+                # Агрессивное поведение - движение к врагу
+                dx, dy = self._calculate_direction_to_target(entity, nearest_enemy)
+            elif self.personality.curiosity > 0.7 and nearest_item:
+                # Любопытное поведение - движение к предмету
+                dx, dy = self._calculate_direction_to_target(entity, nearest_item)
+            elif self.personality.caution > 0.7 and nearest_enemy:
+                # Осторожное поведение - движение от врага
+                dx, dy = self._calculate_direction_away_from_target(entity, nearest_enemy)
+            else:
+                # Случайное исследование
+                dx, dy = self._get_random_movement_direction()
+            
+            # Избегание препятствий
+            if nearest_obstacle and self._is_collision_imminent(entity, nearest_obstacle, dx, dy):
+                dx, dy = self._calculate_avoidance_direction(entity, nearest_obstacle, dx, dy)
+            
+            # Ограничение скорости движения
+            speed = getattr(entity, 'speed', 1.0) if hasattr(entity, 'speed') else 1.0
+            dx *= speed
+            dy *= speed
+            
+            return dx, dy
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения автономного движения: {e}")
+            return 0.0, 0.0
+    
+    def _get_nearest_enemy(self, entity, world) -> Optional[Any]:
+        """Получение ближайшего врага"""
+        try:
+            if not hasattr(world, 'entities') or not world.entities:
+                return None
+            
+            nearest_enemy = None
+            min_distance = float('inf')
+            
+            for other_entity in world.entities:
+                if other_entity != entity and hasattr(other_entity, 'type') and other_entity.type == 'enemy':
+                    distance = self._calculate_distance(entity, other_entity)
+                    if distance < min_distance:
+                        min_distance = distance
+                        nearest_enemy = other_entity
+            
+            return nearest_enemy
+        except Exception as e:
+            logger.error(f"Ошибка поиска ближайшего врага: {e}")
+            return None
+    
+    def _get_nearest_item(self, entity, world) -> Optional[Any]:
+        """Получение ближайшего предмета"""
+        try:
+            if not hasattr(world, 'items') or not world.items:
+                return None
+            
+            nearest_item = None
+            min_distance = float('inf')
+            
+            for item in world.items:
+                distance = self._calculate_distance(entity, item)
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_item = item
+            
+            return nearest_item
+        except Exception as e:
+            logger.error(f"Ошибка поиска ближайшего предмета: {e}")
+            return None
+    
+    def _get_nearest_obstacle(self, entity, world) -> Optional[Any]:
+        """Получение ближайшего препятствия"""
+        try:
+            if not hasattr(world, 'obstacles') or not world.obstacles:
+                return None
+            
+            nearest_obstacle = None
+            min_distance = float('inf')
+            
+            for obstacle in world.obstacles:
+                distance = self._calculate_distance(entity, obstacle)
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_obstacle = obstacle
+            
+            return nearest_obstacle
+        except Exception as e:
+            logger.error(f"Ошибка поиска ближайшего препятствия: {e}")
+            return None
+    
+    def _calculate_direction_to_target(self, entity, target) -> Tuple[float, float]:
+        """Расчет направления к цели"""
+        try:
+            if not hasattr(entity, 'position') or not hasattr(target, 'position'):
+                return 0.0, 0.0
+            
+            dx = target.position[0] - entity.position[0]
+            dy = target.position[1] - entity.position[1]
+            
+            # Нормализация вектора
+            length = math.sqrt(dx * dx + dy * dy)
+            if length > 0:
+                dx /= length
+                dy /= length
+            
+            return dx, dy
+        except Exception as e:
+            logger.error(f"Ошибка расчета направления к цели: {e}")
+            return 0.0, 0.0
+    
+    def _calculate_direction_away_from_target(self, entity, target) -> Tuple[float, float]:
+        """Расчет направления от цели"""
+        try:
+            dx, dy = self._calculate_direction_to_target(entity, target)
+            return -dx, -dy
+        except Exception as e:
+            logger.error(f"Ошибка расчета направления от цели: {e}")
+            return 0.0, 0.0
+    
+    def _get_random_movement_direction(self) -> Tuple[float, float]:
+        """Получение случайного направления движения"""
+        try:
+            angle = random.uniform(0, 2 * math.pi)
+            dx = math.cos(angle)
+            dy = math.sin(angle)
+            return dx, dy
+        except Exception as e:
+            logger.error(f"Ошибка получения случайного направления: {e}")
+            return 0.0, 0.0
+    
+    def _is_collision_imminent(self, entity, obstacle, dx, dy) -> bool:
+        """Проверка приближающейся коллизии"""
+        try:
+            if not hasattr(entity, 'position') or not hasattr(obstacle, 'position'):
+                return False
+            
+            # Простая проверка расстояния
+            distance = self._calculate_distance(entity, obstacle)
+            return distance < 50  # Порог коллизии
+        except Exception as e:
+            logger.error(f"Ошибка проверки коллизии: {e}")
+            return False
+    
+    def _calculate_avoidance_direction(self, entity, obstacle, current_dx, current_dy) -> Tuple[float, float]:
+        """Расчет направления избегания препятствия"""
+        try:
+            # Перпендикулярное направление
+            avoid_dx = -current_dy
+            avoid_dy = current_dx
+            
+            # Нормализация
+            length = math.sqrt(avoid_dx * avoid_dx + avoid_dy * avoid_dy)
+            if length > 0:
+                avoid_dx /= length
+                avoid_dy /= length
+            
+            return avoid_dx, avoid_dy
+        except Exception as e:
+            logger.error(f"Ошибка расчета направления избегания: {e}")
+            return current_dx, current_dy
+    
+    def _calculate_distance(self, entity1, entity2) -> float:
+        """Расчет расстояния между сущностями"""
+        try:
+            if not hasattr(entity1, 'position') or not hasattr(entity2, 'position'):
+                return float('inf')
+            
+            dx = entity1.position[0] - entity2.position[0]
+            dy = entity1.position[1] - entity2.position[1]
+            return math.sqrt(dx * dx + dy * dy)
+        except Exception as e:
+            logger.error(f"Ошибка расчета расстояния: {e}")
+            return float('inf')
+    
+    def _execute_movement(self, entity, world) -> float:
         """Выполнение движения"""
-        # Здесь будет логика движения
-        return 0.1
+        try:
+            # Получение автономного движения
+            dx, dy = self.get_autonomous_movement(entity, world)
+            
+            # Применение движения к сущности
+            if hasattr(entity, 'move_pygame'):
+                entity.move_pygame(dx, dy)
+                return 1.0  # Положительная награда за движение
+            else:
+                # Альтернативный способ движения
+                if hasattr(entity, 'position'):
+                    entity.position = (
+                        entity.position[0] + dx,
+                        entity.position[1] + dy,
+                        entity.position[2]
+                    )
+                    return 1.0
+            
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения движения: {e}")
+            return 0.0
     
     def _execute_attack(self, entity, world) -> float:
         """Выполнение атаки"""
-        # Здесь будет логика атаки
-        return 0.5
+        try:
+            # Поиск ближайшего врага
+            nearest_enemy = self._get_nearest_enemy(entity, world)
+            if nearest_enemy:
+                # Простая атака
+                if hasattr(nearest_enemy, 'health'):
+                    nearest_enemy.health = max(0, nearest_enemy.health - 10)
+                    return 5.0  # Награда за успешную атаку
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения атаки: {e}")
+            return 0.0
     
     def _execute_defend(self, entity, world) -> float:
         """Выполнение защиты"""
-        # Здесь будет логика защиты
-        return 0.3
+        try:
+            # Увеличение защиты на короткое время
+            if hasattr(entity, 'defense'):
+                entity.defense = min(100, entity.defense + 10)
+                return 2.0  # Награда за защиту
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения защиты: {e}")
+            return 0.0
     
     def _execute_heal(self, entity, world) -> float:
         """Выполнение лечения"""
-        # Здесь будет логика лечения
-        return 0.8
+        try:
+            if hasattr(entity, 'health') and hasattr(entity, 'max_health'):
+                if entity.health < entity.max_health:
+                    entity.health = min(entity.max_health, entity.health + 20)
+                    return 3.0  # Награда за лечение
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения лечения: {e}")
+            return 0.0
     
     def _execute_retreat(self, entity, world) -> float:
         """Выполнение отступления"""
-        # Здесь будет логика отступления
-        return -0.2
+        try:
+            # Движение от ближайшего врага
+            nearest_enemy = self._get_nearest_enemy(entity, world)
+            if nearest_enemy:
+                dx, dy = self._calculate_direction_away_from_target(entity, nearest_enemy)
+                if hasattr(entity, 'move_pygame'):
+                    entity.move_pygame(dx, dy)
+                    return 1.0  # Награда за отступление
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения отступления: {e}")
+            return 0.0
     
     def _execute_explore(self, entity, world) -> float:
         """Выполнение исследования"""
-        # Здесь будет логика исследования
-        return 0.2
+        try:
+            # Случайное движение для исследования
+            dx, dy = self._get_random_movement_direction()
+            if hasattr(entity, 'move_pygame'):
+                entity.move_pygame(dx, dy)
+                return 0.5  # Небольшая награда за исследование
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения исследования: {e}")
+            return 0.0
     
     def _execute_interact(self, entity, world) -> float:
         """Выполнение взаимодействия"""
-        # Здесь будет логика взаимодействия
-        return 0.4
+        try:
+            # Поиск ближайшего предмета для взаимодействия
+            nearest_item = self._get_nearest_item(entity, world)
+            if nearest_item and self._calculate_distance(entity, nearest_item) < 30:
+                # Взаимодействие с предметом
+                return 2.0  # Награда за взаимодействие
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения взаимодействия: {e}")
+            return 0.0
     
     def _execute_wait(self, entity, world) -> float:
         """Выполнение ожидания"""
-        return 0.0
+        try:
+            # Простое ожидание - восстановление ресурсов
+            if hasattr(entity, 'stamina'):
+                entity.stamina = min(100, entity.stamina + 5)
+                return 0.1  # Небольшая награда за ожидание
+            return 0.0
+        except Exception as e:
+            logger.error(f"Ошибка выполнения ожидания: {e}")
+            return 0.0
     
     def _modify_reward_by_personality(self, base_reward: float, action: AIAction) -> float:
         """Модификация награды на основе личности"""

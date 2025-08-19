@@ -11,6 +11,7 @@ from typing import Optional, Dict, Any, List, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+import random
 
 # Импорт основных систем
 from core.effect_system import EffectDatabase
@@ -248,16 +249,31 @@ class GameInterface:
         elif key == pygame.K_v and self.game_state == GameState.PLAYING:
             self.game_state = GameState.EVOLUTION
         
-        # Движение игрока
+        # Игровое взаимодействие (создание объектов)
         elif self.game_state == GameState.PLAYING and self.player:
-            if key == pygame.K_w or key == pygame.K_UP:
-                self.player.move_pygame(0, -1)
-            elif key == pygame.K_s or key == pygame.K_DOWN:
-                self.player.move_pygame(0, 1)
-            elif key == pygame.K_a or key == pygame.K_LEFT:
-                self.player.move_pygame(-1, 0)
-            elif key == pygame.K_d or key == pygame.K_RIGHT:
-                self.player.move_pygame(1, 0)
+            # Создание препятствий
+            if key == pygame.K_1:  # Ловушка
+                self._create_trap()
+            elif key == pygame.K_2:  # Геобарьер
+                self._create_geo_barrier()
+            elif key == pygame.K_3:  # Сундук с предметами
+                self._create_chest()
+            elif key == pygame.K_4:  # Добавление врага
+                self._add_enemy()
+            
+            # Активация эмоций
+            elif key == pygame.K_5:  # Агрессия
+                self._activate_emotion("aggression")
+            elif key == pygame.K_6:  # Любопытство
+                self._activate_emotion("curiosity")
+            elif key == pygame.K_7:  # Осторожность
+                self._activate_emotion("caution")
+            elif key == pygame.K_8:  # Социальность
+                self._activate_emotion("social")
+            
+            # Ручное управление (временное отключение автономности)
+            elif key == pygame.K_SPACE:
+                self._toggle_autonomous_movement()
     
     def _handle_mouse_click(self, pos):
         """Обработка кликов мыши"""
@@ -292,13 +308,19 @@ class GameInterface:
         """Начало новой игры"""
         self.game_state = GameState.LOADING
         
-        # Создание игрока
+        # Создание игрока с автономным ИИ
         self.player = AdvancedGameEntity(
             entity_id="PLAYER_001",
             entity_type="player",
             name="Игрок",
             position=(0, 0, 0)
         )
+        
+        # Инициализация ИИ для игрока (автономное движение)
+        self.player_ai = AdaptiveAISystem("PLAYER_001")
+        
+        # Флаг автономного движения (по умолчанию включен)
+        self.autonomous_movement_enabled = True
         
         # Генерация мира
         world = self.content_generator.generate_world(
@@ -318,10 +340,24 @@ class GameInterface:
             )
             self.entities.append(enemy)
         
+        # Инициализация игровых объектов
+        self.obstacles = []  # Препятствия (ловушки, геобарьеры)
+        self.chests = []     # Сундуки с предметами
+        self.items = []      # Предметы на карте
+        
+        # Инициализация систем
+        self.effect_db = EffectDatabase()
+        self.genetic_system = AdvancedGeneticSystem(self.effect_db)
+        self.emotion_system = AdvancedEmotionSystem(self.effect_db)
+        self.content_generator = ContentGenerator()
+        self.evolution_system = EvolutionCycleSystem()
+        self.event_system = GlobalEventSystem()
+        self.difficulty_system = DynamicDifficultySystem()
+        
         # Генерация предметов для новой игры
         self._generate_items_for_new_game()
         
-        self.current_cycle = 1
+        # Переход к игре
         self.game_state = GameState.PLAYING
     
     def _generate_items_for_new_game(self):
@@ -462,12 +498,38 @@ class GameInterface:
         """Обновление игровой логики"""
         if self.game_state == GameState.PLAYING and self.player:
             delta_time = 0.016
+            
+            # Автономное движение игрока
+            if hasattr(self, 'player_ai') and hasattr(self, 'autonomous_movement_enabled') and self.autonomous_movement_enabled:
+                # Обновление ИИ игрока
+                self.player_ai.update(self.player, self, delta_time)
+                
+                # Получение автономного движения
+                dx, dy = self.player_ai.get_autonomous_movement(self.player, self)
+                if dx != 0 or dy != 0:
+                    self.player.move_pygame(dx, dy)
+            
             # Обновление игрока
             self.player.update(delta_time)
             
             # Обновление врагов
             for entity in self.entities:
                 entity.update(delta_time)
+            
+            # Обновление препятствий
+            for obstacle in self.obstacles:
+                if hasattr(obstacle, 'update'):
+                    obstacle.update(delta_time)
+            
+            # Обновление сундуков
+            for chest in self.chests:
+                if hasattr(chest, 'update'):
+                    chest.update(delta_time)
+            
+            # Обновление предметов на карте
+            for item in self.items:
+                if hasattr(item, 'update'):
+                    item.update(delta_time)
             
             # Подготовка состояния мира для глобальных событий
             world_state = {
@@ -566,24 +628,145 @@ class GameInterface:
             self.screen.blit(text_surf, text_rect)
     
     def _render_game(self):
-        """Отрисовка игрового процесса"""
-        # Фон
-        self.screen.fill(ColorScheme.DARK_GRAY)
+        """Отрисовка игрового экрана"""
+        # Темно-серый фон
+        self.screen.fill((40, 40, 40))
         
         # Отрисовка игрока
-        if self.player:
-            player_pos = (int(self.player.position.x + self.settings.window_width // 2), 
-                         int(self.player.position.y + self.settings.window_height // 2))
-            self._render_entity(self.player, player_pos)
+        if self.player and hasattr(self.player, 'position'):
+            player_x = int(self.player.position[0] + self.settings.window_width // 2)
+            player_y = int(self.player.position[1] + self.settings.window_height // 2)
+            
+            # Игрок (зеленый квадрат)
+            pygame.draw.rect(self.screen, ColorScheme.GREEN, (player_x - 10, player_y - 10, 20, 20))
+            
+            # Имя игрока
+            if hasattr(self.fonts, 'small'):
+                name_text = self.fonts['small'].render(self.player.name, True, ColorScheme.WHITE)
+                self.screen.blit(name_text, (player_x - 20, player_y - 30))
         
         # Отрисовка врагов
         for entity in self.entities:
-            enemy_pos = (int(entity.position.x + self.settings.window_width // 2), 
-                        int(entity.position.y + self.settings.window_height // 2))
-            self._render_entity(entity, enemy_pos)
+            if hasattr(entity, 'position'):
+                enemy_x = int(entity.position[0] + self.settings.window_width // 2)
+                enemy_y = int(entity.position[1] + self.settings.window_height // 2)
+                
+                # Враг (красный квадрат)
+                pygame.draw.rect(self.screen, ColorScheme.RED, (enemy_x - 8, enemy_y - 8, 16, 16))
+                
+                # Имя врага
+                if hasattr(self.fonts, 'small'):
+                    name_text = self.fonts['small'].render(entity.name, True, ColorScheme.WHITE)
+                    self.screen.blit(name_text, (enemy_x - 15, enemy_y - 25))
         
-        # Отрисовка UI панелей
-        self._render_game_ui()
+        # Отрисовка препятствий
+        for obstacle in self.obstacles:
+            if hasattr(obstacle, 'position'):
+                obs_x = int(obstacle['position'][0] + self.settings.window_width // 2)
+                obs_y = int(obstacle['position'][1] + self.settings.window_height // 2)
+                
+                if obstacle['type'] == 'trap':
+                    # Ловушка (оранжевый треугольник)
+                    points = [(obs_x, obs_y - 10), (obs_x - 8, obs_y + 8), (obs_x + 8, obs_y + 8)]
+                    pygame.draw.polygon(self.screen, ColorScheme.ORANGE, points)
+                elif obstacle['type'] == 'geo_barrier':
+                    # Геобарьер (серый прямоугольник)
+                    width = obstacle.get('width', 40)
+                    height = obstacle.get('height', 40)
+                    pygame.draw.rect(self.screen, ColorScheme.GRAY, 
+                                   (obs_x - width//2, obs_y - height//2, width, height))
+        
+        # Отрисовка сундуков
+        for chest in self.chests:
+            if hasattr(chest, 'position'):
+                chest_x = int(chest['position'][0] + self.settings.window_width // 2)
+                chest_y = int(chest['position'][1] + self.settings.window_height // 2)
+                
+                # Сундук (желтый прямоугольник)
+                color = ColorScheme.YELLOW if not chest['opened'] else ColorScheme.GRAY
+                pygame.draw.rect(self.screen, color, (chest_x - 12, chest_y - 8, 24, 16))
+                
+                # Замок (если сундук заблокирован)
+                if chest['locked']:
+                    pygame.draw.circle(self.screen, ColorScheme.BLACK, (chest_x, chest_y), 3)
+        
+        # Отрисовка предметов на карте
+        for item in self.items:
+            if hasattr(item, 'position'):
+                item_x = int(item['position'][0] + self.settings.window_width // 2)
+                item_y = int(item['position'][1] + self.settings.window_height // 2)
+                
+                # Предмет (синий круг)
+                pygame.draw.circle(self.screen, ColorScheme.BLUE, (item_x, item_y), 6)
+        
+        # Отрисовка панели состояния
+        self._render_status_panel()
+        
+        # Отрисовка подсказки управления
+        self._render_controls_help()
+    
+    def _render_status_panel(self):
+        """Отрисовка панели состояния"""
+        if not self.player:
+            return
+        
+        # Панель состояния (полупрозрачная)
+        panel_surface = pygame.Surface((300, 170))
+        panel_surface.set_alpha(180)
+        panel_surface.fill(ColorScheme.DARK_GRAY)
+        self.screen.blit(panel_surface, (10, 10))
+        
+        # Статистика игрока
+        if hasattr(self.fonts, 'small'):
+            # Здоровье
+            health_text = self.fonts['small'].render(f"Здоровье: {getattr(self.player, 'health', 100)}", True, ColorScheme.HEALTH_COLOR)
+            self.screen.blit(health_text, (20, 20))
+            
+            # Выносливость
+            stamina_text = self.fonts['small'].render(f"Выносливость: {getattr(self.player, 'stamina', 100)}", True, ColorScheme.STAMINA_COLOR)
+            self.screen.blit(stamina_text, (20, 40))
+            
+            # Позиция
+            pos_text = self.fonts['small'].render(f"Позиция: ({int(self.player.position[0])}, {int(self.player.position[1])})", True, ColorScheme.WHITE)
+            self.screen.blit(pos_text, (20, 60))
+            
+            # Статус автономного движения
+            auto_status = "ВКЛ" if getattr(self, 'autonomous_movement_enabled', True) else "ВЫКЛ"
+            auto_color = ColorScheme.GREEN if getattr(self, 'autonomous_movement_enabled', True) else ColorScheme.RED
+            auto_text = self.fonts['small'].render(f"Автономность: {auto_status}", True, auto_color)
+            self.screen.blit(auto_text, (20, 80))
+            
+            # Количество врагов
+            enemies_text = self.fonts['small'].render(f"Врагов: {len(self.entities)}", True, ColorScheme.RED)
+            self.screen.blit(enemies_text, (20, 100))
+            
+            # Количество препятствий
+            obstacles_text = self.fonts['small'].render(f"Препятствий: {len(self.obstacles)}", True, ColorScheme.ORANGE)
+            self.screen.blit(obstacles_text, (20, 120))
+            
+            # Количество сундуков
+            chests_text = self.fonts['small'].render(f"Сундуков: {len(self.chests)}", True, ColorScheme.YELLOW)
+            self.screen.blit(chests_text, (20, 140))
+    
+    def _render_controls_help(self):
+        """Отрисовка подсказки управления"""
+        if hasattr(self.fonts, 'small'):
+            help_texts = [
+                "Управление:",
+                "1 - Создать ловушку",
+                "2 - Создать геобарьер", 
+                "3 - Создать сундук",
+                "4 - Добавить врага",
+                "5-8 - Активировать эмоции",
+                "SPACE - Переключить автономность",
+                "ESC - Пауза"
+            ]
+            
+            y_offset = self.settings.window_height - 200
+            for i, text in enumerate(help_texts):
+                color = ColorScheme.WHITE if i == 0 else ColorScheme.LIGHT_GRAY
+                help_surface = self.fonts['small'].render(text, True, color)
+                self.screen.blit(help_surface, (self.settings.window_width - 250, y_offset + i * 20))
     
     def _render_entity(self, entity, screen_pos):
         """Отрисовка сущности"""
@@ -900,6 +1083,167 @@ class GameInterface:
         # Отображение FPS
         fps_text = self.fonts["small"].render(f"FPS: {self.fps_counter}", True, ColorScheme.GRAY)
         self.screen.blit(fps_text, (10, self.settings.window_height - 30))
+
+    def _create_trap(self):
+        """Создание ловушки"""
+        try:
+            if self.player and hasattr(self.player, 'position'):
+                # Создание ловушки рядом с игроком
+                trap_position = (
+                    self.player.position[0] + random.randint(-50, 50),
+                    self.player.position[1] + random.randint(-50, 50),
+                    0
+                )
+                
+                trap = {
+                    'id': f"TRAP_{len(self.obstacles):03d}",
+                    'type': 'trap',
+                    'position': trap_position,
+                    'damage': 20,
+                    'active': True,
+                    'triggered': False
+                }
+                
+                self.obstacles.append(trap)
+                print(f"Ловушка создана в позиции {trap_position}")
+        except Exception as e:
+            print(f"Ошибка создания ловушки: {e}")
+    
+    def _create_geo_barrier(self):
+        """Создание геобарьера"""
+        try:
+            if self.player and hasattr(self.player, 'position'):
+                # Создание геобарьера рядом с игроком
+                barrier_position = (
+                    self.player.position[0] + random.randint(-100, 100),
+                    self.player.position[1] + random.randint(-100, 100),
+                    0
+                )
+                
+                barrier = {
+                    'id': f"BARRIER_{len(self.obstacles):03d}",
+                    'type': 'geo_barrier',
+                    'position': barrier_position,
+                    'width': 80,
+                    'height': 80,
+                    'active': True,
+                    'blocking': True
+                }
+                
+                self.obstacles.append(barrier)
+                print(f"Геобарьер создан в позиции {barrier_position}")
+        except Exception as e:
+            print(f"Ошибка создания геобарьера: {e}")
+    
+    def _create_chest(self):
+        """Создание сундука с предметами"""
+        try:
+            if self.player and hasattr(self.player, 'position'):
+                # Создание сундука рядом с игроком
+                chest_position = (
+                    self.player.position[0] + random.randint(-80, 80),
+                    self.player.position[1] + random.randint(-80, 80),
+                    0
+                )
+                
+                # Генерация случайных предметов для сундука
+                chest_items = []
+                num_items = random.randint(1, 3)
+                for _ in range(num_items):
+                    item_id = random.choice(['health_potion', 'mana_potion', 'weapon_sword', 'armor_leather'])
+                    chest_items.append({
+                        'item_id': item_id,
+                        'quantity': random.randint(1, 3)
+                    })
+                
+                chest = {
+                    'id': f"CHEST_{len(self.chests):03d}",
+                    'type': 'chest',
+                    'position': chest_position,
+                    'items': chest_items,
+                    'opened': False,
+                    'locked': random.choice([True, False])
+                }
+                
+                self.chests.append(chest)
+                print(f"Сундук создан в позиции {chest_position} с {len(chest_items)} предметами")
+        except Exception as e:
+            print(f"Ошибка создания сундука: {e}")
+    
+    def _add_enemy(self):
+        """Добавление врага на карту"""
+        try:
+            if self.player and hasattr(self.player, 'position'):
+                # Создание врага рядом с игроком
+                enemy_position = (
+                    self.player.position[0] + random.randint(-150, 150),
+                    self.player.position[1] + random.randint(-150, 150),
+                    0
+                )
+                
+                enemy = AdvancedGameEntity(
+                    entity_id=f"ENEMY_{len(self.entities):03d}",
+                    entity_type="enemy",
+                    name=f"Враг {len(self.entities)+1}",
+                    position=enemy_position
+                )
+                
+                self.entities.append(enemy)
+                print(f"Враг добавлен в позиции {enemy_position}")
+        except Exception as e:
+            print(f"Ошибка добавления врага: {e}")
+    
+    def _activate_emotion(self, emotion_type: str):
+        """Активация доминирующей эмоции"""
+        try:
+            if hasattr(self, 'player_ai') and hasattr(self.player_ai, 'personality'):
+                # Временное изменение личности ИИ
+                if emotion_type == "aggression":
+                    self.player_ai.personality.aggression = 0.9
+                    self.player_ai.personality.caution = 0.1
+                    print("Активирована эмоция: Агрессия")
+                elif emotion_type == "curiosity":
+                    self.player_ai.personality.curiosity = 0.9
+                    self.player_ai.personality.caution = 0.3
+                    print("Активирована эмоция: Любопытство")
+                elif emotion_type == "caution":
+                    self.player_ai.personality.caution = 0.9
+                    self.player_ai.personality.aggression = 0.1
+                    print("Активирована эмоция: Осторожность")
+                elif emotion_type == "social":
+                    self.player_ai.personality.social = 0.9
+                    self.player_ai.personality.aggression = 0.2
+                    print("Активирована эмоция: Социальность")
+                
+                # Сброс эмоции через некоторое время
+                import threading
+                import time
+                def reset_emotion():
+                    time.sleep(10)  # 10 секунд
+                    self.player_ai.personality.aggression = 0.5
+                    self.player_ai.personality.curiosity = 0.5
+                    self.player_ai.personality.caution = 0.5
+                    self.player_ai.personality.social = 0.5
+                    print("Эмоция сброшена")
+                
+                thread = threading.Thread(target=reset_emotion)
+                thread.daemon = True
+                thread.start()
+        except Exception as e:
+            print(f"Ошибка активации эмоции: {e}")
+    
+    def _toggle_autonomous_movement(self):
+        """Переключение автономного движения"""
+        try:
+            if hasattr(self, 'autonomous_movement_enabled'):
+                self.autonomous_movement_enabled = not self.autonomous_movement_enabled
+            else:
+                self.autonomous_movement_enabled = False
+            
+            status = "включено" if self.autonomous_movement_enabled else "отключено"
+            print(f"Автономное движение {status}")
+        except Exception as e:
+            print(f"Ошибка переключения автономного движения: {e}")
 
 
 def main():
