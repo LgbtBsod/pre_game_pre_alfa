@@ -172,6 +172,83 @@ class AdvancedEmotionSystem:
         # Инициализация базовых эмоций
         self._init_base_emotions()
     
+    def update(self, delta_time: float):
+        """Обновление эмоциональной системы"""
+        try:
+            # Обновление длительности эмоций
+            self._update_emotion_durations(delta_time)
+            
+            # Проверка комбинаций эмоций
+            self._check_emotion_combinations()
+            
+            # Обновление резонанса
+            self._update_emotional_resonance(delta_time)
+            
+            # Очистка устаревших эмоций
+            self._cleanup_expired_emotions()
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления эмоциональной системы: {e}")
+    
+    def _update_emotion_durations(self, delta_time: float):
+        """Обновление длительности эмоций"""
+        # Уменьшение интенсивности эмоций со временем
+        for emotion_code in list(self.current_state.emotional_memory.keys()):
+            current_intensity = self.current_state.emotional_memory[emotion_code]
+            decay_rate = 0.1 * delta_time  # Скорость затухания
+            new_intensity = max(0.0, current_intensity - decay_rate)
+            
+            if new_intensity <= 0.01:
+                del self.current_state.emotional_memory[emotion_code]
+            else:
+                self.current_state.emotional_memory[emotion_code] = new_intensity
+    
+    def _check_emotion_combinations(self):
+        """Проверка комбинаций эмоций"""
+        current_emotions = list(self.current_state.emotional_memory.keys())
+        
+        for combo, result in self.emotion_combos.items():
+            emotion1, emotion2 = combo
+            if emotion1 in current_emotions and emotion2 in current_emotions:
+                # Проверяем шанс комбинации
+                if random.random() < result["chance"]:
+                    self._trigger_emotion_combo(result["result"], result["effects"])
+    
+    def _trigger_emotion_combo(self, combo_emotion: str, effects: List[str]):
+        """Активация комбинации эмоций"""
+        # Применяем эффекты комбинации
+        for effect_code in effects:
+            if hasattr(self.effect_db, 'apply_effect'):
+                self.effect_db.apply_effect(effect_code, intensity=1.0)
+        
+        # Добавляем комбинированную эмоцию
+        self.current_state.emotional_memory[combo_emotion] = 1.0
+        
+        logger.info(f"Активирована комбинация эмоций: {combo_emotion}")
+    
+    def _update_emotional_resonance(self, delta_time: float):
+        """Обновление эмоционального резонанса"""
+        # Увеличиваем резонанс при сильных эмоциях
+        total_intensity = sum(self.current_state.emotional_memory.values())
+        if total_intensity > 2.0:
+            self.current_state.resonance_level = min(1.0, 
+                self.current_state.resonance_level + 0.1 * delta_time)
+        else:
+            # Постепенное снижение резонанса
+            self.current_state.resonance_level = max(0.0, 
+                self.current_state.resonance_level - 0.05 * delta_time)
+    
+    def _cleanup_expired_emotions(self):
+        """Очистка устаревших эмоций"""
+        # Удаляем эмоции с очень низкой интенсивностью
+        expired_emotions = [
+            emotion for emotion, intensity in self.current_state.emotional_memory.items()
+            if intensity < 0.01
+        ]
+        
+        for emotion in expired_emotions:
+            del self.current_state.emotional_memory[emotion]
+    
     def _init_base_emotions(self):
         """Инициализация базовых эмоций"""
         base_emotions = [

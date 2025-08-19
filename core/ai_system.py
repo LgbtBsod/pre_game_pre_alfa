@@ -348,8 +348,24 @@ class AdaptiveAISystem:
     def _calculate_distance(self, pos1, pos2) -> float:
         """Расчёт расстояния между позициями"""
         try:
-            return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
-        except:
+            # Проверяем, является ли позиция EntityPosition или tuple/list
+            if hasattr(pos1, 'x') and hasattr(pos1, 'y'):
+                # EntityPosition dataclass
+                x1, y1 = pos1.x, pos1.y
+            else:
+                # tuple/list
+                x1, y1 = pos1[0], pos1[1]
+            
+            if hasattr(pos2, 'x') and hasattr(pos2, 'y'):
+                # EntityPosition dataclass
+                x2, y2 = pos2.x, pos2.y
+            else:
+                # tuple/list
+                x2, y2 = pos2[0], pos2[1]
+            
+            return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+        except Exception as e:
+            logger.error(f"Ошибка расчета расстояния: {e}")
             return 100.0
     
     def _choose_action(self, current_state: int, delta_time: float) -> AIAction:

@@ -59,16 +59,21 @@ class GameSettings:
     @classmethod
     def from_config(cls) -> 'GameSettings':
         """Создает настройки из конфигурации"""
-        return cls(
-            window_width=config_manager.get('game', 'display.window_width', 1280),
-            window_height=config_manager.get('game', 'display.window_height', 720),
-            fps=config_manager.get('game', 'display.render_fps', 60),
-            fullscreen=config_manager.get('game', 'display.fullscreen', False),
-            vsync=config_manager.get('game', 'display.vsync', True),
-            music_volume=config_manager.get('game', 'audio.music_volume', 0.7),
-            sfx_volume=config_manager.get('game', 'audio.sfx_volume', 0.8),
-            difficulty=config_manager.get('game', 'gameplay.difficulty', 'normal')
-        )
+        try:
+            return cls(
+                window_width=config_manager.get('game', 'display.window_width', 1280),
+                window_height=config_manager.get('game', 'display.window_height', 720),
+                fps=config_manager.get('game', 'display.render_fps', 60),
+                fullscreen=config_manager.get('game', 'display.fullscreen', False),
+                vsync=config_manager.get('game', 'display.vsync', True),
+                music_volume=config_manager.get('game', 'audio.music_volume', 0.7),
+                sfx_volume=config_manager.get('game', 'audio.sfx_volume', 0.8),
+                difficulty=config_manager.get('game', 'gameplay.difficulty', 'normal')
+            )
+        except Exception as e:
+            logger.error(f"Ошибка загрузки настроек из конфигурации: {e}")
+            # Возвращаем настройки по умолчанию
+            return cls()
 
 
 class ColorScheme:
@@ -101,7 +106,13 @@ class GameInterface:
     """Главный класс игрового интерфейса"""
     
     def __init__(self, settings: Optional[GameSettings] = None):
-        self.settings = settings or GameSettings.from_config()
+        try:
+            self.settings = settings or GameSettings.from_config()
+        except Exception as e:
+            logger.error(f"Ошибка загрузки настроек: {e}")
+            # Используем настройки по умолчанию
+            self.settings = GameSettings()
+        
         self.game_state = GameState.MAIN_MENU
         self.running = False
         
@@ -130,7 +141,17 @@ class GameInterface:
         self.content_generator = ContentGenerator()
         self.evolution_system = EvolutionCycleSystem(self.effect_db)
         self.event_system = GlobalEventSystem(self.effect_db)
-        self.difficulty_system = DynamicDifficultySystem()
+        
+        # Инициализация системы сложности с обработкой ошибок
+        try:
+            self.difficulty_system = DynamicDifficultySystem()
+            # Устанавливаем профиль сложности из настроек
+            if hasattr(self.settings, 'difficulty'):
+                self.difficulty_system.set_difficulty_profile(self.settings.difficulty)
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы сложности: {e}")
+            # Создаем систему сложности без установки профиля
+            self.difficulty_system = DynamicDifficultySystem()
         
         # Игровые данные
         self.player = None
@@ -391,15 +412,12 @@ class GameInterface:
         self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
         self.isometric_renderer = IsometricRenderer(self.isometric_projection)
         
-        # Добавляем beacon_system к миру для ИИ
-        self.beacon_system = self.beacon_system
-        
         # Система анимации спрайтов
         self.player_sprite = CharacterSprite("graphics/player")
         
         # Система прогрессии уровней
         self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
-        self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["normal"])
+        self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
         self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
         
         # Начинаем первый уровень

@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 class AnimationState(Enum):
     """Состояния анимации"""
     IDLE = "idle"
-    WALKING = "walking"
-    ATTACKING = "attacking"
+    WALKING = "walk"
+    ATTACKING = "attack"
     DEAD = "dead"
 
 
