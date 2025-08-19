@@ -142,6 +142,10 @@ class GameInterface:
         self.evolution_system = EvolutionCycleSystem(self.effect_db)
         self.event_system = GlobalEventSystem(self.effect_db)
         
+        # Система управления сессиями
+        from core.session_manager import session_manager
+        self.session_manager = session_manager
+        
         # Инициализация системы сложности с обработкой ошибок
         try:
             self.difficulty_system = DynamicDifficultySystem()
@@ -357,55 +361,94 @@ class GameInterface:
     
     def _start_new_game(self):
         """Начало новой игры"""
-        self.game_state = GameState.LOADING
-        
-        # Создание игрока с автономным ИИ
-        self.player = AdvancedGameEntity(
-            entity_id="PLAYER_001",
-            entity_type="player",
-            name="Игрок",
-            position=(0, 0, 0)
-        )
-        
-        # Инициализация ИИ для игрока (автономное движение)
-        self.player_ai = AdaptiveAISystem("PLAYER_001")
-        
-        # Флаг автономного движения (по умолчанию включен)
-        self.autonomous_movement_enabled = True
-        
-        # Генерация мира
-        world = self.content_generator.generate_world(
-            biome="forest",
-            size="medium",
-            difficulty=1.0
-        )
-        
-        # Создание врагов
-        self.entities = []
-        for i in range(5):
-            enemy = AdvancedGameEntity(
-                entity_id=f"ENEMY_{i:03d}",
-                entity_type="enemy",
-                name=f"Враг {i+1}",
-                position=(random.randint(-200, 200), random.randint(-200, 200), 0)
-            )
-            self.entities.append(enemy)
+        try:
+            self.game_state = GameState.LOADING
             
-        print(f"Создано {len(self.entities)} врагов на карте")
-        
-        # Инициализация игровых объектов
-        self.obstacles = []  # Препятствия (ловушки, геобарьеры)
-        self.chests = []     # Сундуки с предметами
-        self.items = []      # Предметы на карте
-        
-        # Инициализация систем
-        self.effect_db = EffectDatabase()
-        self.genetic_system = AdvancedGeneticSystem(self.effect_db)
-        self.emotion_system = AdvancedEmotionSystem(self.effect_db)
-        self.content_generator = ContentGenerator()
-        self.evolution_system = EvolutionCycleSystem(self.effect_db)
-        self.event_system = GlobalEventSystem(self.effect_db)
-        self.difficulty_system = DynamicDifficultySystem()
+            # Создаём новую сессию
+            free_slot = self.session_manager.get_free_slot_id()
+            if not free_slot:
+                logger.error("Нет свободных слотов для сохранения")
+                return
+            
+            # Создаём новую сессию
+            session_data = self.session_manager.create_new_session(
+                slot_id=free_slot,
+                save_name=f"Save {free_slot}",
+                world_seed=random.randint(1, 999999)
+            )
+            
+            # Инициализируем контент для новой сессии
+            initial_content = self.content_generator.initialize_session_content(
+                session_data.session_uuid, 
+                level=1
+            )
+            
+            # Добавляем сгенерированный контент в сессию
+            for item in initial_content.get("items", []):
+                self.session_manager.add_session_content("items", item)
+            
+            for weapon in initial_content.get("weapons", []):
+                self.session_manager.add_session_content("weapons", weapon)
+            
+            for enemy in initial_content.get("enemies", []):
+                self.session_manager.add_session_content("enemies", enemy)
+            
+            for skill in initial_content.get("skills", []):
+                self.session_manager.add_session_content("skills", skill)
+            
+            # Создание игрока с автономным ИИ
+            self.player = AdvancedGameEntity(
+                entity_id="PLAYER_001",
+                entity_type="player",
+                name="Игрок",
+                position=(0, 0, 0)
+            )
+            
+            # Инициализация ИИ для игрока (автономное движение)
+            self.player_ai = AdaptiveAISystem("PLAYER_001")
+            
+            # Флаг автономного движения (по умолчанию включен)
+            self.autonomous_movement_enabled = True
+            
+            # Генерация мира
+            world = self.content_generator.generate_world(
+                biome="forest",
+                size="medium",
+                difficulty=1.0
+            )
+            
+            # Создание врагов из сессионного контента
+            self.entities = []
+            session_enemies = self.session_manager.get_session_content("enemies")
+            for i, enemy_data in enumerate(session_enemies):
+                enemy = AdvancedGameEntity(
+                    entity_id=f"ENEMY_{i:03d}",
+                    entity_type="enemy",
+                    name=enemy_data.get("name", f"Враг {i+1}"),
+                    position=(random.randint(-200, 200), random.randint(-200, 200), 0)
+                )
+                self.entities.append(enemy)
+            
+            print(f"Создано {len(self.entities)} врагов на карте")
+            
+            # Инициализация игровых объектов
+            self.obstacles = []  # Препятствия (ловушки, геобарьеры)
+            self.chests = []     # Сундуки с предметами
+            self.items = []      # Предметы на карте
+            
+            # Инициализация систем
+            self.effect_db = EffectDatabase()
+            self.genetic_system = AdvancedGeneticSystem(self.effect_db)
+            self.emotion_system = AdvancedEmotionSystem(self.effect_db)
+            self.content_generator = ContentGenerator(session_data.generation_seed)
+            self.evolution_system = EvolutionCycleSystem(self.effect_db)
+            self.event_system = GlobalEventSystem(self.effect_db)
+            self.difficulty_system = DynamicDifficultySystem()
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания новой игры: {e}")
+            self.game_state = GameState.MAIN_MENU
+            return
         
         # Изометрические системы
         self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
@@ -457,7 +500,7 @@ class GameInterface:
     
     def _save_game(self):
         """Сохранение игры"""
-        if not self.player:
+        if not self.player or not self.session_manager.active_session:
             return False
         
         try:
@@ -488,15 +531,22 @@ class GameInterface:
                     }
                     for entity in self.entities
                 ],
-                "current_cycle": self.current_cycle,
-                "world_seed": getattr(self, 'world_seed', 12345)
+                "current_cycle": getattr(self, 'current_cycle', 1),
+                "world_seed": getattr(self, 'world_seed', 12345),
+                "play_time": getattr(self, 'play_time', 0.0),
+                "player_level": getattr(self, 'player_level', 1)
             }
             
-            import json
-            with open("save/game_save.json", "w", encoding="utf-8") as f:
-                json.dump(save_data, f, ensure_ascii=False, indent=2)
+            # Сохраняем через менеджер сессий
+            success = self.session_manager.save_session(save_data)
             
-            return True
+            if success:
+                logger.info("Игра сохранена успешно")
+                return True
+            else:
+                logger.error("Ошибка сохранения через менеджер сессий")
+                return False
+                
         except Exception as e:
             logger.error(f"Ошибка сохранения: {e}")
             return False
