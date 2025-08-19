@@ -96,6 +96,25 @@ class EmotionalState:
             return 0.5
         
         return positive_score / total
+    
+    def get_all_emotions(self) -> Dict[str, float]:
+        """Получение всех эмоций с их интенсивностью"""
+        emotions = {}
+        
+        # Добавляем первичную эмоцию
+        if self.primary_emotion:
+            emotions[self.primary_emotion] = 1.0
+        
+        # Добавляем вторичные эмоции
+        for emotion in self.secondary_emotions:
+            emotions[emotion] = 0.7
+        
+        # Добавляем эмоции из памяти
+        for emotion, intensity in self.emotional_memory.items():
+            if emotion not in emotions:
+                emotions[emotion] = intensity
+        
+        return emotions
 
 
 class AdvancedEmotionSystem:

@@ -23,6 +23,7 @@ from core.evolution_system import EvolutionCycleSystem
 from core.global_event_system import GlobalEventSystem
 from core.dynamic_difficulty import DynamicDifficultySystem
 from core.advanced_entity import AdvancedGameEntity
+from core.isometric_system import IsometricProjection, BeaconNavigationSystem, IsometricRenderer
 from config.config_manager import config_manager
 
 
@@ -271,6 +272,18 @@ class GameInterface:
             elif key == pygame.K_8:  # Социальность
                 self._activate_emotion("social")
             
+            # Навигация к маякам
+            elif key == pygame.K_m:  # К любому обнаруженному маяку
+                self._navigate_to_any_beacon()
+            elif key == pygame.K_x:  # Отменить навигацию
+                self._cancel_navigation()
+            
+            # Управление камерой
+            elif key == pygame.K_PLUS or key == pygame.K_EQUALS:  # Приблизить
+                self.isometric_projection.set_zoom(self.isometric_projection.zoom * 1.2)
+            elif key == pygame.K_MINUS:  # Отдалить
+                self.isometric_projection.set_zoom(self.isometric_projection.zoom / 1.2)
+            
             # Ручное управление (временное отключение автономности)
             elif key == pygame.K_SPACE:
                 self._toggle_autonomous_movement()
@@ -287,16 +300,26 @@ class GameInterface:
             elif self.buttons["exit"].collidepoint(pos):
                 self.running = False
         
+        elif self.game_state == GameState.SETTINGS and hasattr(self, 'settings_buttons'):
+            if self.settings_buttons["back"].collidepoint(pos):
+                self.game_state = GameState.MAIN_MENU
+        
         elif self.game_state == GameState.PAUSED and hasattr(self, 'pause_buttons'):
             if self.pause_buttons["resume"].collidepoint(pos):
                 self.game_state = GameState.PLAYING
             elif self.pause_buttons["save"].collidepoint(pos):
                 if self._save_game():
-                    print("Игра сохранена!")
+                    print("Игра сохранена в слот 1!")
                 else:
                     print("Ошибка сохранения!")
-            elif self.pause_buttons["inventory"].collidepoint(pos):
-                self.game_state = GameState.INVENTORY
+            elif self.pause_buttons["load"].collidepoint(pos):
+                if self._load_game():
+                    print("Игра загружена из слота 1!")
+                    self.game_state = GameState.PLAYING
+                else:
+                    print("Ошибка загрузки!")
+            elif self.pause_buttons["settings"].collidepoint(pos):
+                self.game_state = GameState.SETTINGS
             elif self.pause_buttons["main_menu"].collidepoint(pos):
                 self.game_state = GameState.MAIN_MENU
     
@@ -336,9 +359,11 @@ class GameInterface:
                 entity_id=f"ENEMY_{i:03d}",
                 entity_type="enemy",
                 name=f"Враг {i+1}",
-                position=(i * 100, 0, 0)
+                position=(random.randint(-200, 200), random.randint(-200, 200), 0)
             )
             self.entities.append(enemy)
+            
+        print(f"Создано {len(self.entities)} врагов на карте")
         
         # Инициализация игровых объектов
         self.obstacles = []  # Препятствия (ловушки, геобарьеры)
@@ -350,9 +375,17 @@ class GameInterface:
         self.genetic_system = AdvancedGeneticSystem(self.effect_db)
         self.emotion_system = AdvancedEmotionSystem(self.effect_db)
         self.content_generator = ContentGenerator()
-        self.evolution_system = EvolutionCycleSystem()
-        self.event_system = GlobalEventSystem()
+        self.evolution_system = EvolutionCycleSystem(self.effect_db)
+        self.event_system = GlobalEventSystem(self.effect_db)
         self.difficulty_system = DynamicDifficultySystem()
+        
+        # Изометрические системы
+        self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
+        self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
+        self.isometric_renderer = IsometricRenderer(self.isometric_projection)
+        
+        # Добавляем beacon_system к миру для ИИ
+        self.beacon_system = self.beacon_system
         
         # Генерация предметов для новой игры
         self._generate_items_for_new_game()
@@ -497,7 +530,8 @@ class GameInterface:
     def _update(self):
         """Обновление игровой логики"""
         if self.game_state == GameState.PLAYING and self.player:
-            delta_time = 0.016
+            # Правильный расчет delta_time
+            delta_time = self.clock.get_time() / 1000.0  # Преобразуем мс в секунды
             
             # Автономное движение игрока
             if hasattr(self, 'player_ai') and hasattr(self, 'autonomous_movement_enabled') and self.autonomous_movement_enabled:
@@ -507,7 +541,8 @@ class GameInterface:
                 # Получение автономного движения
                 dx, dy = self.player_ai.get_autonomous_movement(self.player, self)
                 if dx != 0 or dy != 0:
-                    self.player.move_pygame(dx, dy)
+                    # Применяем delta_time для плавного движения
+                    self.player.move_pygame(dx * delta_time * 30, dy * delta_time * 30)  # 30 - скорость
             
             # Обновление игрока
             self.player.update(delta_time)
@@ -628,82 +663,163 @@ class GameInterface:
             self.screen.blit(text_surf, text_rect)
     
     def _render_game(self):
-        """Отрисовка игрового экрана"""
+        """Отрисовка игрового экрана в изометрии"""
         # Темно-серый фон
         self.screen.fill((40, 40, 40))
         
-        # Отрисовка игрока
+        # Фокусировка камеры на игроке
         if self.player and hasattr(self.player, 'position'):
-            player_x = int(self.player.position[0] + self.settings.window_width // 2)
-            player_y = int(self.player.position[1] + self.settings.window_height // 2)
+            self.isometric_projection.focus_on_point(
+                self.player.position.x, 
+                self.player.position.y,
+                self.settings.window_width,
+                self.settings.window_height
+            )
             
-            # Игрок (зеленый квадрат)
-            pygame.draw.rect(self.screen, ColorScheme.GREEN, (player_x - 10, player_y - 10, 20, 20))
+            # Обновление маяков
+            self.beacon_system.update_beacon_signals(
+                (self.player.position.x, self.player.position.y, self.player.position.z)
+            )
+            
+            # Проверка обнаружения новых маяков
+            discovered_beacon = self.beacon_system.discover_beacon(
+                (self.player.position.x, self.player.position.y, self.player.position.z)
+            )
+            if discovered_beacon:
+                print(f"Обнаружен маяк: {discovered_beacon.id} ({discovered_beacon.beacon_type.value})")
+        
+        # Отрисовка сетки тайлов (опционально)
+        self._render_isometric_grid()
+        
+        # Отрисовка маяков
+        self._render_beacons()
+        
+        # Отрисовка игрока в изометрии
+        if self.player and hasattr(self.player, 'position'):
+            self.isometric_renderer.render_entity(
+                self.screen,
+                (self.player.position.x, self.player.position.y, self.player.position.z),
+                ColorScheme.GREEN,
+                size=16
+            )
             
             # Имя игрока
+            iso_x, iso_y = self.isometric_projection.world_to_iso(
+                self.player.position.x, self.player.position.y, self.player.position.z
+            )
+            iso_x += self.settings.window_width // 2
+            iso_y += self.settings.window_height // 2
+            
             if hasattr(self.fonts, 'small'):
                 name_text = self.fonts['small'].render(self.player.name, True, ColorScheme.WHITE)
-                self.screen.blit(name_text, (player_x - 20, player_y - 30))
+                self.screen.blit(name_text, (int(iso_x) - 20, int(iso_y) - 40))
         
-        # Отрисовка врагов
+        # Отрисовка врагов в изометрии
         for entity in self.entities:
             if hasattr(entity, 'position'):
-                enemy_x = int(entity.position[0] + self.settings.window_width // 2)
-                enemy_y = int(entity.position[1] + self.settings.window_height // 2)
-                
-                # Враг (красный квадрат)
-                pygame.draw.rect(self.screen, ColorScheme.RED, (enemy_x - 8, enemy_y - 8, 16, 16))
-                
-                # Имя врага
-                if hasattr(self.fonts, 'small'):
-                    name_text = self.fonts['small'].render(entity.name, True, ColorScheme.WHITE)
-                    self.screen.blit(name_text, (enemy_x - 15, enemy_y - 25))
+                self.isometric_renderer.render_entity(
+                    self.screen,
+                    (entity.position.x, entity.position.y, entity.position.z),
+                    ColorScheme.RED,
+                    size=12
+                )
         
-        # Отрисовка препятствий
+        # Отрисовка препятствий в изометрии
         for obstacle in self.obstacles:
-            if hasattr(obstacle, 'position'):
-                obs_x = int(obstacle['position'][0] + self.settings.window_width // 2)
-                obs_y = int(obstacle['position'][1] + self.settings.window_height // 2)
+            if 'position' in obstacle:
+                iso_x, iso_y = self.isometric_projection.world_to_iso(*obstacle['position'])
+                iso_x += self.settings.window_width // 2
+                iso_y += self.settings.window_height // 2
                 
                 if obstacle['type'] == 'trap':
-                    # Ловушка (оранжевый треугольник)
-                    points = [(obs_x, obs_y - 10), (obs_x - 8, obs_y + 8), (obs_x + 8, obs_y + 8)]
+                    # Ловушка (оранжевый ромб)
+                    points = [
+                        (iso_x, iso_y - 8), (iso_x + 8, iso_y), 
+                        (iso_x, iso_y + 8), (iso_x - 8, iso_y)
+                    ]
                     pygame.draw.polygon(self.screen, ColorScheme.ORANGE, points)
                 elif obstacle['type'] == 'geo_barrier':
-                    # Геобарьер (серый прямоугольник)
-                    width = obstacle.get('width', 40)
-                    height = obstacle.get('height', 40)
-                    pygame.draw.rect(self.screen, ColorScheme.GRAY, 
-                                   (obs_x - width//2, obs_y - height//2, width, height))
+                    # Геобарьер (серый блок)
+                    self.isometric_renderer.render_tile(
+                        self.screen, 
+                        int(obstacle['position'][0]), 
+                        int(obstacle['position'][1]), 
+                        'barrier', 
+                        ColorScheme.GRAY
+                    )
         
-        # Отрисовка сундуков
+        # Отрисовка сундуков в изометрии
         for chest in self.chests:
-            if hasattr(chest, 'position'):
-                chest_x = int(chest['position'][0] + self.settings.window_width // 2)
-                chest_y = int(chest['position'][1] + self.settings.window_height // 2)
+            if 'position' in chest:
+                iso_x, iso_y = self.isometric_projection.world_to_iso(*chest['position'])
+                iso_x += self.settings.window_width // 2
+                iso_y += self.settings.window_height // 2
                 
-                # Сундук (желтый прямоугольник)
                 color = ColorScheme.YELLOW if not chest['opened'] else ColorScheme.GRAY
-                pygame.draw.rect(self.screen, color, (chest_x - 12, chest_y - 8, 24, 16))
-                
-                # Замок (если сундук заблокирован)
-                if chest['locked']:
-                    pygame.draw.circle(self.screen, ColorScheme.BLACK, (chest_x, chest_y), 3)
+                pygame.draw.rect(self.screen, color, (int(iso_x) - 12, int(iso_y) - 8, 24, 16))
         
-        # Отрисовка предметов на карте
+        # Отрисовка предметов на карте в изометрии
         for item in self.items:
-            if hasattr(item, 'position'):
-                item_x = int(item['position'][0] + self.settings.window_width // 2)
-                item_y = int(item['position'][1] + self.settings.window_height // 2)
+            if 'position' in item:
+                iso_x, iso_y = self.isometric_projection.world_to_iso(*item['position'])
+                iso_x += self.settings.window_width // 2
+                iso_y += self.settings.window_height // 2
                 
-                # Предмет (синий круг)
-                pygame.draw.circle(self.screen, ColorScheme.BLUE, (item_x, item_y), 6)
+                pygame.draw.circle(self.screen, ColorScheme.BLUE, (int(iso_x), int(iso_y)), 6)
         
-        # Отрисовка панели состояния
+        # Отрисовка всех панелей интерфейса
         self._render_status_panel()
+        self._render_inventory_panel()
+        self._render_genetics_panel()
+        self._render_emotions_panel()
+        self._render_minimap()
         
         # Отрисовка подсказки управления
         self._render_controls_help()
+        
+        # Отрисовка информации о маяках
+        self._render_beacon_info()
+    
+    def _render_isometric_grid(self):
+        """Отрисовка изометрической сетки"""
+        # Простая сетка для демонстрации
+        grid_size = 10
+        for x in range(-grid_size, grid_size + 1):
+            for y in range(-grid_size, grid_size + 1):
+                if (x + y) % 2 == 0:
+                    self.isometric_renderer.render_tile(
+                        self.screen, x, y, 'ground', (60, 60, 60)
+                    )
+                else:
+                    self.isometric_renderer.render_tile(
+                        self.screen, x, y, 'ground', (50, 50, 50)
+                    )
+    
+    def _render_beacons(self):
+        """Отрисовка маяков"""
+        for beacon in self.beacon_system.beacons.values():
+            # Сдвиг для центрирования экрана
+            adjusted_position = (
+                beacon.position[0] - self.settings.window_width // 2,
+                beacon.position[1] - self.settings.window_height // 2,
+                beacon.position[2]
+            )
+            self.isometric_renderer.render_beacon(self.screen, beacon)
+    
+    def _render_beacon_info(self):
+        """Отрисовка информации о маяках"""
+        if hasattr(self.fonts, 'small'):
+            beacon_info = self.beacon_system.get_beacon_info()
+            
+            y_offset = self.settings.window_height - 150
+            info_texts = [
+                f"Маяков обнаружено: {beacon_info['discovered_beacons']}/{beacon_info['total_beacons']}",
+                f"Активная цель: {beacon_info['active_target'] or 'Нет'}"
+            ]
+            
+            for i, text in enumerate(info_texts):
+                info_surface = self.fonts['small'].render(text, True, ColorScheme.WHITE)
+                self.screen.blit(info_surface, (10, y_offset + i * 20))
     
     def _render_status_panel(self):
         """Отрисовка панели состояния"""
@@ -711,62 +827,106 @@ class GameInterface:
             return
         
         # Панель состояния (полупрозрачная)
-        panel_surface = pygame.Surface((300, 170))
+        panel_surface = pygame.Surface((300, 200))
         panel_surface.set_alpha(180)
         panel_surface.fill(ColorScheme.DARK_GRAY)
         self.screen.blit(panel_surface, (10, 10))
         
+        # Заголовок панели
+        if hasattr(self.fonts, 'main'):
+            title = self.fonts['main'].render("СТАТУС ИГРОКА", True, ColorScheme.WHITE)
+            self.screen.blit(title, (20, 15))
+        
         # Статистика игрока
         if hasattr(self.fonts, 'small'):
+            y_offset = 40
+            
             # Здоровье
-            health_text = self.fonts['small'].render(f"Здоровье: {getattr(self.player, 'health', 100)}", True, ColorScheme.HEALTH_COLOR)
-            self.screen.blit(health_text, (20, 20))
+            try:
+                health = getattr(self.player.stats, 'health', 100)
+                max_health = getattr(self.player.stats, 'max_health', 100)
+                health_text = self.fonts['small'].render(f"Здоровье: {health:.0f}/{max_health:.0f}", True, ColorScheme.HEALTH_COLOR)
+                self.screen.blit(health_text, (20, y_offset))
+                y_offset += 20
+            except:
+                pass
+            
+            # Мана
+            try:
+                mana = getattr(self.player.stats, 'mana', 100)
+                max_mana = getattr(self.player.stats, 'max_mana', 100)
+                mana_text = self.fonts['small'].render(f"Мана: {mana:.0f}/{max_mana:.0f}", True, ColorScheme.ENERGY_COLOR)
+                self.screen.blit(mana_text, (20, y_offset))
+                y_offset += 20
+            except:
+                pass
             
             # Выносливость
-            stamina_text = self.fonts['small'].render(f"Выносливость: {getattr(self.player, 'stamina', 100)}", True, ColorScheme.STAMINA_COLOR)
-            self.screen.blit(stamina_text, (20, 40))
+            try:
+                stamina = getattr(self.player.stats, 'stamina', 100)
+                max_stamina = getattr(self.player.stats, 'max_stamina', 100)
+                stamina_text = self.fonts['small'].render(f"Выносливость: {stamina:.0f}/{max_stamina:.0f}", True, ColorScheme.STAMINA_COLOR)
+                self.screen.blit(stamina_text, (20, y_offset))
+                y_offset += 20
+            except:
+                pass
             
             # Позиция
-            pos_text = self.fonts['small'].render(f"Позиция: ({int(self.player.position[0])}, {int(self.player.position[1])})", True, ColorScheme.WHITE)
-            self.screen.blit(pos_text, (20, 60))
+            pos_text = self.fonts['small'].render(f"Позиция: ({int(self.player.position.x)}, {int(self.player.position.y)})", True, ColorScheme.WHITE)
+            self.screen.blit(pos_text, (20, y_offset))
+            y_offset += 20
             
             # Статус автономного движения
             auto_status = "ВКЛ" if getattr(self, 'autonomous_movement_enabled', True) else "ВЫКЛ"
             auto_color = ColorScheme.GREEN if getattr(self, 'autonomous_movement_enabled', True) else ColorScheme.RED
             auto_text = self.fonts['small'].render(f"Автономность: {auto_status}", True, auto_color)
-            self.screen.blit(auto_text, (20, 80))
+            self.screen.blit(auto_text, (20, y_offset))
+            y_offset += 20
+            
+            # Уровень обучения ИИ
+            try:
+                ai_level = getattr(self.player_ai, 'learning_level', 1)
+                ai_text = self.fonts['small'].render(f"Уровень ИИ: {ai_level}", True, ColorScheme.GENETIC_COLOR)
+                self.screen.blit(ai_text, (20, y_offset))
+                y_offset += 20
+            except:
+                pass
             
             # Количество врагов
             enemies_text = self.fonts['small'].render(f"Врагов: {len(self.entities)}", True, ColorScheme.RED)
-            self.screen.blit(enemies_text, (20, 100))
+            self.screen.blit(enemies_text, (20, y_offset))
+            y_offset += 20
             
             # Количество препятствий
             obstacles_text = self.fonts['small'].render(f"Препятствий: {len(self.obstacles)}", True, ColorScheme.ORANGE)
-            self.screen.blit(obstacles_text, (20, 120))
+            self.screen.blit(obstacles_text, (20, y_offset))
+            y_offset += 20
             
             # Количество сундуков
             chests_text = self.fonts['small'].render(f"Сундуков: {len(self.chests)}", True, ColorScheme.YELLOW)
-            self.screen.blit(chests_text, (20, 140))
+            self.screen.blit(chests_text, (20, y_offset))
     
     def _render_controls_help(self):
         """Отрисовка подсказки управления"""
         if hasattr(self.fonts, 'small'):
             help_texts = [
                 "Управление:",
-                "1 - Создать ловушку",
-                "2 - Создать геобарьер", 
-                "3 - Создать сундук",
-                "4 - Добавить врага",
+                "1-4 - Создать объекты",
                 "5-8 - Активировать эмоции",
-                "SPACE - Переключить автономность",
-                "ESC - Пауза"
+                "M - К обнаруженному маяку",
+                "X - Отменить навигацию",
+                "+/- - Масштаб",
+                "SPACE - Автономность",
+                "ESC - Пауза",
+                "",
+                "Найдите скрытый маяк!"
             ]
             
-            y_offset = self.settings.window_height - 200
+            y_offset = self.settings.window_height - 220
             for i, text in enumerate(help_texts):
                 color = ColorScheme.WHITE if i == 0 else ColorScheme.LIGHT_GRAY
                 help_surface = self.fonts['small'].render(text, True, color)
-                self.screen.blit(help_surface, (self.settings.window_width - 250, y_offset + i * 20))
+                self.screen.blit(help_surface, (self.settings.window_width - 220, y_offset + i * 20))
     
     def _render_entity(self, entity, screen_pos):
         """Отрисовка сущности"""
@@ -829,6 +989,48 @@ class GameInterface:
         title = self.fonts["main"].render("ИНВЕНТАРЬ", True, ColorScheme.WHITE)
         title_rect = title.get_rect(center=(panel.centerx, panel.y + 20))
         self.screen.blit(title, title_rect)
+        
+        if self.player and hasattr(self.player, 'inventory_system'):
+            try:
+                inventory = self.player.inventory_system.get_inventory_data()
+                y_offset = 50
+                
+                if inventory:
+                    # Показываем первые 6 предметов
+                    for i, (item_id, quantity) in enumerate(inventory.items()[:6]):
+                        # Получаем информацию о предмете
+                        from core.database_manager import database_manager
+                        item_info = database_manager.get_item(item_id)
+                        weapon_info = database_manager.get_weapon(item_id)
+                        
+                        if item_info:
+                            item_name = item_info.get("name", item_id)
+                        elif weapon_info:
+                            item_name = weapon_info.get("name", item_id)
+                        else:
+                            item_name = item_id
+                        
+                        # Отображаем предмет
+                        item_text = f"{item_name} x{quantity}"
+                        item_surf = self.fonts["small"].render(item_text, True, ColorScheme.WHITE)
+                        self.screen.blit(item_surf, (panel.x + 10, panel.y + y_offset + i * 20))
+                else:
+                    empty_text = self.fonts["small"].render("Инвентарь пуст", True, ColorScheme.GRAY)
+                    self.screen.blit(empty_text, (panel.x + 10, panel.y + y_offset))
+                
+                # Общий вес инвентаря
+                try:
+                    total_weight = getattr(self.player.inventory_system, 'total_weight', 0)
+                    weight_text = f"Вес: {total_weight:.1f}"
+                    weight_surf = self.fonts["small"].render(weight_text, True, ColorScheme.LIGHT_GRAY)
+                    self.screen.blit(weight_surf, (panel.x + 10, panel.y + 150))
+                except:
+                    pass
+                    
+            except Exception as e:
+                error_text = f"Ошибка инвентаря: {str(e)[:20]}"
+                error_surf = self.fonts["small"].render(error_text, True, ColorScheme.RED)
+                self.screen.blit(error_surf, (panel.x + 10, panel.y + 50))
     
     def _render_genetics_panel(self):
         """Отрисовка панели генетики"""
@@ -841,9 +1043,42 @@ class GameInterface:
         self.screen.blit(title, title_rect)
         
         if self.player:
-            genes_text = f"Гены: {len(self.player.genetic_system.active_genes)}"
-            genes_surf = self.fonts["small"].render(genes_text, True, ColorScheme.GENETIC_COLOR)
-            self.screen.blit(genes_surf, (panel.x + 10, panel.y + 50))
+            y_offset = 50
+            
+            try:
+                # Активные гены
+                active_genes = getattr(self.player.genetic_system, 'active_genes', [])
+                genes_text = f"Активные гены: {len(active_genes)}"
+                genes_surf = self.fonts["small"].render(genes_text, True, ColorScheme.GENETIC_COLOR)
+                self.screen.blit(genes_surf, (panel.x + 10, panel.y + y_offset))
+                y_offset += 20
+                
+                # Показываем первые 3 гена
+                for i, gene in enumerate(active_genes[:3]):
+                    gene_text = f"Ген {i+1}: {gene}"
+                    gene_surf = self.fonts["small"].render(gene_text, True, ColorScheme.LIGHT_GRAY)
+                    self.screen.blit(gene_surf, (panel.x + 10, panel.y + y_offset))
+                    y_offset += 15
+                
+                y_offset += 5
+                
+                # Мутационный уровень
+                mutation_level = getattr(self.player, 'mutation_level', 0.0)
+                mutation_text = f"Мутации: {mutation_level:.2f}"
+                mutation_surf = self.fonts["small"].render(mutation_text, True, ColorScheme.GENETIC_COLOR)
+                self.screen.blit(mutation_surf, (panel.x + 10, panel.y + y_offset))
+                y_offset += 20
+                
+                # Генетическая стабильность
+                genetic_stability = getattr(self.player, 'genetic_stability', 1.0)
+                stability_text = f"Стабильность: {genetic_stability:.2f}"
+                stability_surf = self.fonts["small"].render(stability_text, True, ColorScheme.GENETIC_COLOR)
+                self.screen.blit(stability_surf, (panel.x + 10, panel.y + y_offset))
+                
+            except Exception as e:
+                error_text = f"Ошибка генетики: {str(e)[:20]}"
+                error_surf = self.fonts["small"].render(error_text, True, ColorScheme.RED)
+                self.screen.blit(error_surf, (panel.x + 10, panel.y + 50))
     
     def _render_emotions_panel(self):
         """Отрисовка панели эмоций"""
@@ -861,6 +1096,26 @@ class GameInterface:
                 emotion_text = f"Доминирующая: {emotion}"
                 emotion_surf = self.fonts["small"].render(emotion_text, True, ColorScheme.EMOTION_COLOR)
                 self.screen.blit(emotion_surf, (panel.x + 10, panel.y + 50))
+            
+            # Эмоциональный баланс
+            try:
+                balance = self.player.emotion_system.current_state.get_emotional_balance()
+                balance_text = f"Баланс: {balance:.2f}"
+                balance_surf = self.fonts["small"].render(balance_text, True, ColorScheme.EMOTION_COLOR)
+                self.screen.blit(balance_surf, (panel.x + 10, panel.y + 70))
+            except:
+                pass
+            
+            # Текущие эмоции
+            try:
+                emotions = self.player.emotion_system.current_state.get_all_emotions()
+                y_offset = 90
+                for i, (emotion_name, intensity) in enumerate(emotions.items()[:3]):
+                    emotion_text = f"{emotion_name}: {intensity:.1f}"
+                    emotion_surf = self.fonts["small"].render(emotion_text, True, ColorScheme.LIGHT_GRAY)
+                    self.screen.blit(emotion_surf, (panel.x + 10, panel.y + y_offset + i * 20))
+            except:
+                pass
     
     def _render_pause_menu(self):
         """Отрисовка меню паузы"""
@@ -884,14 +1139,16 @@ class GameInterface:
         pause_buttons = {
             "resume": pygame.Rect(start_x, start_y, button_width, button_height),
             "save": pygame.Rect(start_x, start_y + 70, button_width, button_height),
-            "inventory": pygame.Rect(start_x, start_y + 140, button_width, button_height),
-            "main_menu": pygame.Rect(start_x, start_y + 210, button_width, button_height)
+            "load": pygame.Rect(start_x, start_y + 140, button_width, button_height),
+            "settings": pygame.Rect(start_x, start_y + 210, button_width, button_height),
+            "main_menu": pygame.Rect(start_x, start_y + 280, button_width, button_height)
         }
         
         button_texts = {
             "resume": "ПРОДОЛЖИТЬ",
-            "save": "СОХРАНИТЬ",
-            "inventory": "ИНВЕНТАРЬ",
+            "save": "СОХРАНИТЬ ИГРУ",
+            "load": "ЗАГРУЗИТЬ ИГРУ",
+            "settings": "НАСТРОЙКИ",
             "main_menu": "ГЛАВНОЕ МЕНЮ"
         }
         
@@ -1055,8 +1312,40 @@ class GameInterface:
     
     def _render_settings(self):
         """Отрисовка настроек"""
-        # TODO: Реализовать панель настроек
-        self._render_main_menu()
+        # Заголовок
+        title = self.fonts["large"].render("НАСТРОЙКИ", True, ColorScheme.WHITE)
+        title_rect = title.get_rect(center=(self.settings.window_width // 2, 150))
+        self.screen.blit(title, title_rect)
+        
+        # Настройки
+        settings_text = [
+            "Громкость музыки: 70%",
+            "Громкость звуков: 80%",
+            "Разрешение: 1280x720",
+            "Полноэкранный режим: Выкл",
+            "Сложность: Нормальная"
+        ]
+        
+        y_offset = 250
+        for i, text in enumerate(settings_text):
+            setting_surf = self.fonts["main"].render(text, True, ColorScheme.WHITE)
+            setting_rect = setting_surf.get_rect(center=(self.settings.window_width // 2, y_offset + i * 40))
+            self.screen.blit(setting_surf, setting_rect)
+        
+        # Кнопка возврата
+        back_button = pygame.Rect((self.settings.window_width - 200) // 2, 500, 200, 50)
+        color = ColorScheme.BLUE if back_button.collidepoint(pygame.mouse.get_pos()) else ColorScheme.GRAY
+        pygame.draw.rect(self.screen, color, back_button)
+        pygame.draw.rect(self.screen, ColorScheme.WHITE, back_button, 2)
+        
+        back_text = self.fonts["main"].render("НАЗАД", True, ColorScheme.WHITE)
+        back_rect = back_text.get_rect(center=back_button.center)
+        self.screen.blit(back_text, back_rect)
+        
+        # Сохраняем кнопку для обработки кликов
+        if not hasattr(self, 'settings_buttons'):
+            self.settings_buttons = {}
+        self.settings_buttons["back"] = back_button
     
     def _render_loading(self):
         """Отрисовка экрана загрузки"""
@@ -1090,8 +1379,8 @@ class GameInterface:
             if self.player and hasattr(self.player, 'position'):
                 # Создание ловушки рядом с игроком
                 trap_position = (
-                    self.player.position[0] + random.randint(-50, 50),
-                    self.player.position[1] + random.randint(-50, 50),
+                    self.player.position.x + random.randint(-50, 50),
+                    self.player.position.y + random.randint(-50, 50),
                     0
                 )
                 
@@ -1115,8 +1404,8 @@ class GameInterface:
             if self.player and hasattr(self.player, 'position'):
                 # Создание геобарьера рядом с игроком
                 barrier_position = (
-                    self.player.position[0] + random.randint(-100, 100),
-                    self.player.position[1] + random.randint(-100, 100),
+                    self.player.position.x + random.randint(-100, 100),
+                    self.player.position.y + random.randint(-100, 100),
                     0
                 )
                 
@@ -1141,8 +1430,8 @@ class GameInterface:
             if self.player and hasattr(self.player, 'position'):
                 # Создание сундука рядом с игроком
                 chest_position = (
-                    self.player.position[0] + random.randint(-80, 80),
-                    self.player.position[1] + random.randint(-80, 80),
+                    self.player.position.x + random.randint(-80, 80),
+                    self.player.position.y + random.randint(-80, 80),
                     0
                 )
                 
@@ -1176,8 +1465,8 @@ class GameInterface:
             if self.player and hasattr(self.player, 'position'):
                 # Создание врага рядом с игроком
                 enemy_position = (
-                    self.player.position[0] + random.randint(-150, 150),
-                    self.player.position[1] + random.randint(-150, 150),
+                    self.player.position.x + random.randint(-150, 150),
+                    self.player.position.y + random.randint(-150, 150),
                     0
                 )
                 
@@ -1232,6 +1521,66 @@ class GameInterface:
         except Exception as e:
             print(f"Ошибка активации эмоции: {e}")
     
+    def _render_minimap(self):
+        """Отрисовка мини-карты"""
+        if not self.player:
+            return
+        
+        # Размер мини-карты
+        minimap_size = 150
+        minimap_x = self.settings.window_width - minimap_size - 20
+        minimap_y = 230  # Перемещаем ниже панели инвентаря
+        
+        # Фон мини-карты
+        minimap_surface = pygame.Surface((minimap_size, minimap_size))
+        minimap_surface.set_alpha(200)
+        minimap_surface.fill(ColorScheme.DARK_GRAY)
+        self.screen.blit(minimap_surface, (minimap_x, minimap_y))
+        
+        # Рамка мини-карты
+        pygame.draw.rect(self.screen, ColorScheme.WHITE, 
+                        (minimap_x, minimap_y, minimap_size, minimap_size), 2)
+        
+        # Заголовок мини-карты
+        if hasattr(self.fonts, 'small'):
+            title = self.fonts['small'].render("МИНИ-КАРТА", True, ColorScheme.WHITE)
+            self.screen.blit(title, (minimap_x + 5, minimap_y + 5))
+        
+        # Масштаб для мини-карты
+        scale = minimap_size / 1000  # 1000 - размер мира
+        
+        # Отрисовка игрока на мини-карте
+        player_x = minimap_x + (self.player.position.x + 500) * scale
+        player_y = minimap_y + (self.player.position.y + 500) * scale
+        pygame.draw.circle(self.screen, ColorScheme.GREEN, (int(player_x), int(player_y)), 4)
+        
+        # Отрисовка врагов на мини-карте
+        for entity in self.entities:
+            if hasattr(entity, 'position'):
+                enemy_x = minimap_x + (entity.position.x + 500) * scale
+                enemy_y = minimap_y + (entity.position.y + 500) * scale
+                pygame.draw.circle(self.screen, ColorScheme.RED, (int(enemy_x), int(enemy_y)), 2)
+        
+        # Отрисовка маяков на мини-карте
+        for beacon in self.beacon_system.beacons.values():
+            beacon_x = minimap_x + (beacon.position[0] + 500) * scale
+            beacon_y = minimap_y + (beacon.position[1] + 500) * scale
+            
+            # Цвет маяка в зависимости от типа
+            colors = {
+                "navigation": ColorScheme.GREEN,
+                "evolution": ColorScheme.PURPLE,
+                "resource": ColorScheme.YELLOW,
+                "danger": ColorScheme.RED,
+                "mystery": ColorScheme.BLUE
+            }
+            color = colors.get(beacon.beacon_type.value, ColorScheme.WHITE)
+            
+            if beacon.discovered:
+                pygame.draw.circle(self.screen, color, (int(beacon_x), int(beacon_y)), 3)
+            else:
+                pygame.draw.circle(self.screen, ColorScheme.GRAY, (int(beacon_x), int(beacon_y)), 2)
+    
     def _toggle_autonomous_movement(self):
         """Переключение автономного движения"""
         try:
@@ -1244,6 +1593,90 @@ class GameInterface:
             print(f"Автономное движение {status}")
         except Exception as e:
             print(f"Ошибка переключения автономного движения: {e}")
+    
+    def _navigate_to_beacon(self, beacon_type_str: str):
+        """Навигация к маяку определенного типа"""
+        try:
+            from core.isometric_system import BeaconType
+            
+            # Преобразование строки в тип маяка
+            beacon_type_map = {
+                "navigation": BeaconType.NAVIGATION,
+                "evolution": BeaconType.EVOLUTION,
+                "resource": BeaconType.RESOURCE,
+                "danger": BeaconType.DANGER,
+                "mystery": BeaconType.MYSTERY
+            }
+            
+            beacon_type = beacon_type_map.get(beacon_type_str)
+            if not beacon_type:
+                print(f"Неизвестный тип маяка: {beacon_type_str}")
+                return
+            
+            if not self.player:
+                return
+            
+            # Проверяем, есть ли обнаруженные маяки этого типа
+            discovered_beacons = [b for b in self.beacon_system.beacons.values() 
+                                if b.discovered and b.beacon_type == beacon_type]
+            
+            if discovered_beacons:
+                # Поиск ближайшего обнаруженного маяка указанного типа
+                nearest_beacon = self.beacon_system.get_nearest_beacon(
+                    (self.player.position.x, self.player.position.y, self.player.position.z),
+                    beacon_type
+                )
+                
+                if nearest_beacon:
+                    success = self.beacon_system.set_navigation_target(nearest_beacon.id)
+                    if success:
+                        print(f"Установлена цель навигации: {nearest_beacon.id} ({beacon_type_str})")
+                    else:
+                        print(f"Не удалось установить цель: {nearest_beacon.id}")
+                else:
+                    print(f"Ближайший маяк типа '{beacon_type_str}' не найден")
+            else:
+                print(f"Маяки типа '{beacon_type_str}' еще не обнаружены. Исследуйте мир!")
+                
+        except Exception as e:
+            print(f"Ошибка навигации к маяку: {e}")
+    
+    def _navigate_to_any_beacon(self):
+        """Навигация к любому обнаруженному маяку"""
+        try:
+            if not self.player:
+                return
+            
+            # Ищем все обнаруженные маяки
+            discovered_beacons = [b for b in self.beacon_system.beacons.values() if b.discovered]
+            
+            if discovered_beacons:
+                # Берем ближайший обнаруженный маяк
+                nearest_beacon = self.beacon_system.get_nearest_beacon(
+                    (self.player.position.x, self.player.position.y, self.player.position.z)
+                )
+                
+                if nearest_beacon:
+                    success = self.beacon_system.set_navigation_target(nearest_beacon.id)
+                    if success:
+                        print(f"Установлена цель навигации: {nearest_beacon.id}")
+                    else:
+                        print(f"Не удалось установить цель: {nearest_beacon.id}")
+                else:
+                    print("Обнаруженные маяки недоступны")
+            else:
+                print("Маяки еще не обнаружены. Исследуйте мир, чтобы найти скрытый маяк!")
+                
+        except Exception as e:
+            print(f"Ошибка навигации к маяку: {e}")
+    
+    def _cancel_navigation(self):
+        """Отмена навигации"""
+        try:
+            self.beacon_system.active_target = None
+            print("Навигация отменена")
+        except Exception as e:
+            print(f"Ошибка отмены навигации: {e}")
 
 
 def main():

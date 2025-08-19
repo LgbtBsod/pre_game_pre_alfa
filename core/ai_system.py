@@ -206,6 +206,8 @@ class AdaptiveAISystem:
         self.memory: Dict[str, Any] = {}
         self.experience_points = 0
         self.level = 1
+        self.learning_level = 1  # Уровень обучения ИИ
+        self.learning_history = []  # История обучения
         
         # Адаптация к игроку
         self.player_adaptation: Dict[str, float] = {}
@@ -277,6 +279,9 @@ class AdaptiveAISystem:
             
             # Обновление времени
             self.last_action_time += delta_time
+            
+            # Обновление уровня обучения
+            self._update_learning_level()
             
         except Exception as e:
             logger.error(f"Ошибка обновления ИИ системы: {e}")
@@ -409,7 +414,26 @@ class AdaptiveAISystem:
     def get_autonomous_movement(self, entity, world) -> Tuple[float, float]:
         """Получение автономного движения для сущности"""
         try:
-            # Анализ окружения
+                    # Проверка навигации к маяку (только если маяк уже обнаружен)
+        if hasattr(world, 'beacon_system') and hasattr(entity, 'position'):
+            # Проверяем, есть ли обнаруженные маяки
+            discovered_beacons = [b for b in world.beacon_system.beacons.values() if b.discovered]
+            
+            if discovered_beacons and world.beacon_system.active_target:
+                beacon_direction = world.beacon_system.get_navigation_direction(
+                    (entity.position.x, entity.position.y, entity.position.z)
+                )
+                if beacon_direction:
+                    # Движение к маяку с небольшой случайностью для естественности
+                    dx, dy = beacon_direction
+                    dx += random.uniform(-0.1, 0.1)
+                    dy += random.uniform(-0.1, 0.1)
+                    
+                    # Ограничение скорости движения
+                    speed = getattr(entity.stats, 'speed', 1.0) if hasattr(entity, 'stats') else 1.0
+                    return dx * speed, dy * speed
+            
+            # Анализ окружения (стандартное поведение)
             nearest_enemy = self._get_nearest_enemy(entity, world)
             nearest_item = self._get_nearest_item(entity, world)
             nearest_obstacle = self._get_nearest_obstacle(entity, world)
@@ -435,7 +459,7 @@ class AdaptiveAISystem:
                 dx, dy = self._calculate_avoidance_direction(entity, nearest_obstacle, dx, dy)
             
             # Ограничение скорости движения
-            speed = getattr(entity, 'speed', 1.0) if hasattr(entity, 'speed') else 1.0
+            speed = getattr(entity.stats, 'speed', 1.0) if hasattr(entity, 'stats') else 1.0
             dx *= speed
             dy *= speed
             
@@ -842,7 +866,8 @@ class AdaptiveAISystem:
         self.q_agent.q_table.fill(0)
         self.experience_points = 0
         self.level = 1
-        self.learning_history.clear()
+        self.learning_level = 1
+        self.learning_history = []
         
         logger.info(f"Обучение ИИ {self.entity_id} сброшено")
     
@@ -901,3 +926,15 @@ class AdaptiveAISystem:
         except Exception as e:
             logger.error(f"Ошибка загрузки состояния ИИ: {e}")
             return False
+    
+    def _update_learning_level(self):
+        """Обновление уровня обучения ИИ"""
+        try:
+            # Увеличиваем опыт на основе успешных действий
+            if self.experience_points > self.level * 100:
+                self.level += 1
+                self.learning_level = self.level
+                self.experience_points = 0
+                logger.info(f"ИИ {self.entity_id} достиг уровня {self.level}")
+        except Exception as e:
+            logger.error(f"Ошибка обновления уровня обучения: {e}")
