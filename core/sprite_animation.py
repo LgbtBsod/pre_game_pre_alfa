@@ -234,9 +234,13 @@ class CharacterSprite:
         return None
     
     def render(self, surface: pygame.Surface, camera_offset: Tuple[float, float] = (0, 0)):
-        """Отрисовка спрайта"""
+        """Отрисовка спрайта (камера и центр экрана учитываются)"""
         frame = self.get_surface()
         if frame:
             rect = frame.get_rect()
-            rect.center = (self.position.x - camera_offset[0], self.position.y - camera_offset[1])
+            screen_w, screen_h = surface.get_size()
+            rect.center = (
+                int(self.position.x - camera_offset[0] + screen_w // 2),
+                int(self.position.y - camera_offset[1] + screen_h // 2),
+            )
             surface.blit(frame, rect)

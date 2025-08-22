@@ -280,8 +280,8 @@ class AdaptiveAISystem:
             # Обновление времени
             self.last_action_time += delta_time
             
-            # Обновление уровня обучения
-            self._update_learning_level()
+            # Отключаем автоматическое повышение уровня (уровень должен расти за счёт событий)
+            # self._update_learning_level()
             
         except Exception as e:
             logger.error(f"Ошибка обновления ИИ системы: {e}")
@@ -794,12 +794,8 @@ class AdaptiveAISystem:
         action_index = self.available_actions.index(action)
         self.q_agent.update_q_value(current_state, action_index, reward, next_state)
         
-        # Увеличение опыта
-        self.experience_points += 1
-        
-        # Проверка повышения уровня
-        if self.experience_points >= self.level * 100:
-            self._level_up()
+        # Убираем авто-рост уровня от любых действий. Повышение уровня будет происходить
+        # только по игровым событиям (бой, квесты, сундуки и т.д.).
     
     def _level_up(self):
         """Повышение уровня ИИ"""

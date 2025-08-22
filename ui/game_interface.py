@@ -28,8 +28,12 @@ from core.global_event_system import GlobalEventSystem
 from core.dynamic_difficulty import DynamicDifficultySystem
 from core.advanced_entity import AdvancedGameEntity
 from core.isometric_system import IsometricProjection, BeaconNavigationSystem, IsometricRenderer
+from ui.camera import Camera
 from core.sprite_animation import CharacterSprite, Direction, AnimationState
+from core.movement_system import MovementSystem
 from core.level_progression import LevelProgressionSystem, StatisticsRenderer, LevelTransitionManager
+from ui.hud import StatusHUD, InventoryHUD, GeneticsHUD, AILearningHUD
+from ui.renderer import GameRenderer
 from config.config_manager import config_manager
 
 
@@ -220,13 +224,22 @@ class GameInterface:
         self.buttons["exit"] = pygame.Rect(start_x, start_y + 280, button_width, button_height)
         
         # Игровые панели
-        panel_width = 300
-        panel_height = 200
-        
+        panel_width = 320
+        panel_height = 220
         self.panels["stats"] = pygame.Rect(10, 10, panel_width, panel_height)
         self.panels["inventory"] = pygame.Rect(self.settings.window_width - panel_width - 10, 10, panel_width, panel_height)
         self.panels["genetics"] = pygame.Rect(10, self.settings.window_height - panel_height - 10, panel_width, panel_height)
         self.panels["emotions"] = pygame.Rect(self.settings.window_width - panel_width - 10, self.settings.window_height - panel_height - 10, panel_width, panel_height)
+        
+        # HUD объекты
+        self.status_hud = StatusHUD(self.screen, self.fonts, self.panels["stats"], ColorScheme)
+        self.inventory_hud = InventoryHUD(self.screen, self.fonts, self.panels["inventory"], ColorScheme)
+        self.genetics_hud = GeneticsHUD(self.screen, self.fonts, self.panels["genetics"], ColorScheme)
+        self.ai_hud = AILearningHUD(self.screen, self.fonts, self.panels["emotions"], ColorScheme)
+        
+        # Камера-хелпер
+        self.camera = Camera(self.settings.window_width, self.settings.window_height)
+        self.renderer = GameRenderer(self.screen, self.fonts, self.isometric_projection, self.camera, ColorScheme)
     
     def run(self):
         """Главный цикл игры"""
@@ -485,6 +498,7 @@ class GameInterface:
             self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
             self.isometric_renderer = IsometricRenderer(self.isometric_projection)
             self.player_sprite = CharacterSprite("graphics/player")
+            self.movement_system = MovementSystem()
             self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
             self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
             self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
@@ -590,6 +604,7 @@ class GameInterface:
             self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
             self.isometric_renderer = IsometricRenderer(self.isometric_projection)
             self.player_sprite = CharacterSprite("graphics/player")
+            self.movement_system = MovementSystem()
             
             # Прогресс: уровень мира
             cur_level = 1
@@ -680,7 +695,7 @@ class GameInterface:
             session.progress_data = {
                 "world_seed": getattr(self, 'world_seed', 12345),
                 "play_time": getattr(self, 'play_time', 0.0),
-                "player_level": getattr(self, 'player_level', 1)
+                "player_level": getattr(self.player, 'level', 1)
             }
             session.generation_seed = getattr(self, 'world_seed', 0)
             session.current_level = getattr(self, 'current_level', 1) if hasattr(self, 'current_level') else 1
@@ -767,18 +782,23 @@ class GameInterface:
             # Правильный расчет delta_time
             delta_time = self.clock.get_time() / 1000.0  # Преобразуем мс в секунды
             
-            # Непрерывное управление камерой (WASD/стрелки)
+            # Непрерывное управление камерой через хелпер
             keys = pygame.key.get_pressed()
-            cam_speed = 300.0  # пикс/сек
-            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-                self.isometric_projection.camera_x -= cam_speed * delta_time
-            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-                self.isometric_projection.camera_x += cam_speed * delta_time
-            if keys[pygame.K_UP] or keys[pygame.K_w]:
-                self.isometric_projection.camera_y -= cam_speed * delta_time
-            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-                self.isometric_projection.camera_y += cam_speed * delta_time
+            self.camera.update_from_inputs(keys, 300.0, delta_time)
             
+            # Ручное движение игрока (WASD/стрелки)
+            if hasattr(self, 'movement_system'):
+                mdx, mdy = self.movement_system.update_player_from_inputs(self.player, keys, delta_time)
+                if hasattr(self, 'player_sprite'):
+                    if abs(mdx) > 0.0 or abs(mdy) > 0.0:
+                        if abs(mdx) >= abs(mdy):
+                            self.player_sprite.set_direction(Direction.RIGHT if mdx > 0 else Direction.LEFT)
+                        else:
+                            self.player_sprite.set_direction(Direction.DOWN if mdy > 0 else Direction.UP)
+                        self.player_sprite.set_state(AnimationState.WALKING)
+                    else:
+                        self.player_sprite.set_state(AnimationState.IDLE)
+
             # Автономное движение игрока
             if hasattr(self, 'player_ai') and hasattr(self, 'autonomous_movement_enabled') and self.autonomous_movement_enabled:
                 # Обновление ИИ игрока
@@ -800,26 +820,18 @@ class GameInterface:
             
             # Обновление спрайта игрока
             if hasattr(self, 'player_sprite'):
-                # Определяем направление движения
+                # Если активен автономный режим, корректируем направление/состояние
                 if hasattr(self, 'player_ai') and hasattr(self, 'autonomous_movement_enabled') and self.autonomous_movement_enabled:
                     dx, dy = self.player_ai.get_autonomous_movement(self.player, self)
-                    if abs(dx) > abs(dy):
-                        if dx > 0:
-                            self.player_sprite.set_direction(Direction.RIGHT)
-                        else:
-                            self.player_sprite.set_direction(Direction.LEFT)
-                    else:
-                        if dy > 0:
-                            self.player_sprite.set_direction(Direction.DOWN)
-                        else:
-                            self.player_sprite.set_direction(Direction.UP)
-                    
-                    # Определяем состояние анимации
                     if abs(dx) > 0.1 or abs(dy) > 0.1:
+                        if abs(dx) >= abs(dy):
+                            self.player_sprite.set_direction(Direction.RIGHT if dx > 0 else Direction.LEFT)
+                        else:
+                            self.player_sprite.set_direction(Direction.DOWN if dy > 0 else Direction.UP)
                         self.player_sprite.set_state(AnimationState.WALKING)
                     else:
                         self.player_sprite.set_state(AnimationState.IDLE)
-                
+
                 # Обновляем позицию спрайта в изометрических координатах
                 iso_x, iso_y = self.isometric_projection.world_to_iso(
                     self.player.position.x, self.player.position.y, self.player.position.z
@@ -996,22 +1008,18 @@ class GameInterface:
                 print(f"Обнаружен маяк: {discovered_beacon.id} ({discovered_beacon.beacon_type.value})")
         
         # Отрисовка сетки тайлов (опционально)
-        self._render_isometric_grid()
+        self.renderer.render_grid()
         
         # Отрисовка маяков
         self._render_beacons()
         
-        # Отрисовка игрока с использованием спрайтов
-        if self.player and hasattr(self.player, 'position') and hasattr(self, 'player_sprite'):
-            # Получаем изометрические координаты
-            iso_x, iso_y = self.isometric_projection.world_to_iso(self.player.position.x, self.player.position.y)
-            
-            # Применяем смещение камеры
-            screen_x = iso_x - self.isometric_projection.camera_x
-            screen_y = iso_y - self.isometric_projection.camera_y
-            
-            # Отрисовываем спрайт игрока
-            self.player_sprite.render(self.screen, (self.isometric_projection.camera_x, self.isometric_projection.camera_y))
+        # Отрисовка игрока спрайтом (или fallback)
+        if self.player and hasattr(self, 'player_sprite'):
+            pi_x, pi_y = self.isometric_projection.world_to_iso(self.player.position.x, self.player.position.y, self.player.position.z)
+            sx, sy = self.camera.world_iso_to_screen(pi_x, pi_y)
+            self.player_sprite.set_position(sx, sy)
+            self.player_sprite.update(self.clock.get_time() / 1000.0)
+            self.player_sprite.render(self.screen, (0, 0))
         elif self.player and hasattr(self.player, 'position'):
             # Fallback: отрисовка простой формы если спрайт недоступен
             self.isometric_renderer.render_entity(
@@ -1028,69 +1036,31 @@ class GameInterface:
             iso_x += self.settings.window_width // 2
             iso_y += self.settings.window_height // 2
             
-            if hasattr(self.fonts, 'small'):
+            if 'small' in self.fonts:
                 name_text = self.fonts['small'].render(self.player.name, True, ColorScheme.WHITE)
                 self.screen.blit(name_text, (int(iso_x) - 20, int(iso_y) - 40))
         
         # Отрисовка врагов в изометрии
-        for entity in self.entities:
-            if hasattr(entity, 'position'):
-                self.isometric_renderer.render_entity(
-                    self.screen,
-                    (entity.position.x, entity.position.y, entity.position.z),
-                    ColorScheme.RED,
-                    size=12
-                )
+        self.renderer.render_enemies(self.entities)
         
         # Отрисовка препятствий в изометрии
-        for obstacle in self.obstacles:
-            if 'position' in obstacle:
-                iso_x, iso_y = self.isometric_projection.world_to_iso(*obstacle['position'])
-                iso_x += self.settings.window_width // 2
-                iso_y += self.settings.window_height // 2
-                
-                if obstacle['type'] == 'trap':
-                    # Ловушка (оранжевый ромб)
-                    points = [
-                        (iso_x, iso_y - 8), (iso_x + 8, iso_y), 
-                        (iso_x, iso_y + 8), (iso_x - 8, iso_y)
-                    ]
-                    pygame.draw.polygon(self.screen, ColorScheme.ORANGE, points)
-                elif obstacle['type'] == 'geo_barrier':
-                    # Геобарьер (серый блок)
-                    self.isometric_renderer.render_tile(
-                        self.screen, 
-                        int(obstacle['position'][0]), 
-                        int(obstacle['position'][1]), 
-                        'barrier', 
-                        ColorScheme.GRAY
-                    )
+        self.renderer.render_obstacles(self.obstacles)
         
         # Отрисовка сундуков в изометрии
-        for chest in self.chests:
-            if 'position' in chest:
-                iso_x, iso_y = self.isometric_projection.world_to_iso(*chest['position'])
-                iso_x += self.settings.window_width // 2
-                iso_y += self.settings.window_height // 2
-                
-                color = ColorScheme.YELLOW if not chest['opened'] else ColorScheme.GRAY
-                pygame.draw.rect(self.screen, color, (int(iso_x) - 12, int(iso_y) - 8, 24, 16))
+        self.renderer.render_chests(self.chests)
         
         # Отрисовка предметов на карте в изометрии
-        for item in self.items:
-            if 'position' in item:
-                iso_x, iso_y = self.isometric_projection.world_to_iso(*item['position'])
-                iso_x += self.settings.window_width // 2
-                iso_y += self.settings.window_height // 2
-                
-                pygame.draw.circle(self.screen, ColorScheme.BLUE, (int(iso_x), int(iso_y)), 6)
+        self.renderer.render_items(self.items)
         
-        # Отрисовка всех панелей интерфейса
-        self._render_status_panel()
-        self._render_inventory_panel()
-        self._render_genetics_panel()
-        self._render_emotions_panel()
-        self._render_minimap()
+        # Отрисовка HUD: статус, инвентарь и гены (через выделенные классы)
+        self.status_hud.render(self.player)
+        try:
+            from core.database_manager import database_manager
+            self.inventory_hud.render(self.player, database_manager)
+        except Exception:
+            pass
+        self.genetics_hud.render(self.player)
+        self.ai_hud.render(self.player)
         
         # Отрисовка подсказки управления
         self._render_controls_help()
@@ -1126,7 +1096,7 @@ class GameInterface:
     
     def _render_beacon_info(self):
         """Отрисовка информации о маяках"""
-        if hasattr(self.fonts, 'small'):
+        if 'small' in self.fonts:
             beacon_info = self.beacon_system.get_beacon_info()
             
             y_offset = self.settings.window_height - 150
@@ -1151,12 +1121,12 @@ class GameInterface:
         self.screen.blit(panel_surface, (10, 10))
         
         # Заголовок панели
-        if hasattr(self.fonts, 'main'):
+        if 'main' in self.fonts:
             title = self.fonts['main'].render("СТАТУС ИГРОКА", True, ColorScheme.WHITE)
             self.screen.blit(title, (20, 15))
         
         # Статистика игрока
-        if hasattr(self.fonts, 'small'):
+        if 'small' in self.fonts:
             y_offset = 40
             
             # Здоровье
@@ -1226,7 +1196,7 @@ class GameInterface:
     
     def _render_controls_help(self):
         """Отрисовка подсказки управления"""
-        if hasattr(self.fonts, 'small'):
+        if 'small' in self.fonts:
             help_texts = [
                 "Управление:",
                 "1-4 - Создать объекты",
@@ -1318,24 +1288,39 @@ class GameInterface:
                 y_offset = 50
                 
                 if inventory:
-                    # Показываем первые 6 предметов
-                    for i, (item_id, quantity) in enumerate(inventory.items()[:6]):
-                        # Получаем информацию о предмете
+                    # Координаты для отрисовки и хитбоксов
+                    mouse_pos = pygame.mouse.get_pos()
+                    self._inventory_item_rects = []
+                    for i, (item_id, quantity) in enumerate(list(inventory.items())[:8]):
                         from core.database_manager import database_manager
                         item_info = database_manager.get_item(item_id)
                         weapon_info = database_manager.get_weapon(item_id)
-                        
-                        if item_info:
-                            item_name = item_info.get("name", item_id)
-                        elif weapon_info:
-                            item_name = weapon_info.get("name", item_id)
-                        else:
-                            item_name = item_id
-                        
-                        # Отображаем предмет
+                        item_name = (item_info or weapon_info or {}).get("name", item_id)
                         item_text = f"{item_name} x{quantity}"
                         item_surf = self.fonts["small"].render(item_text, True, ColorScheme.WHITE)
-                        self.screen.blit(item_surf, (panel.x + 10, panel.y + y_offset + i * 20))
+                        draw_y = panel.y + y_offset + i * 22
+                        self.screen.blit(item_surf, (panel.x + 10, draw_y))
+                        # Сохраняем прямоугольник для наведения
+                        rect = item_surf.get_rect(topleft=(panel.x + 10, draw_y))
+                        self._inventory_item_rects.append((rect, item_id))
+                    
+                    # Подсказка при наведении
+                    for rect, item_id in self._inventory_item_rects:
+                        if rect.collidepoint(mouse_pos):
+                            from core.database_manager import database_manager
+                            info = database_manager.get_item(item_id) or database_manager.get_weapon(item_id) or {}
+                            tooltip_lines = []
+                            if "name" in info:
+                                tooltip_lines.append(info["name"])
+                            if "rarity" in info:
+                                tooltip_lines.append(f"Редкость: {info['rarity']}")
+                            if "value" in info:
+                                tooltip_lines.append(f"Цена: {info['value']}")
+                            if "damage" in info:
+                                tooltip_lines.append(f"Урон: {info['damage']}")
+                            if "effects" in info and info["effects"]:
+                                tooltip_lines.append(f"Эффекты: {', '.join(info['effects'])}")
+                            self._render_tooltip(mouse_pos, tooltip_lines)
                 else:
                     empty_text = self.fonts["small"].render("Инвентарь пуст", True, ColorScheme.GRAY)
                     self.screen.blit(empty_text, (panel.x + 10, panel.y + y_offset))
@@ -1401,6 +1386,28 @@ class GameInterface:
                 error_text = f"Ошибка генетики: {str(e)[:20]}"
                 error_surf = self.fonts["small"].render(error_text, True, ColorScheme.RED)
                 self.screen.blit(error_surf, (panel.x + 10, panel.y + 50))
+
+    def _render_tooltip(self, mouse_pos, lines):
+        """Отрисовка всплывающей подсказки возле курсора"""
+        if not lines:
+            return
+        padding = 8
+        max_w = 0
+        surfaces = []
+        for line in lines:
+            surf = self.fonts["small"].render(str(line), True, ColorScheme.WHITE)
+            surfaces.append(surf)
+            max_w = max(max_w, surf.get_width())
+        height = sum(s.get_height() for s in surfaces) + padding * 2
+        width = max_w + padding * 2
+        x, y = mouse_pos
+        tooltip_rect = pygame.Rect(x + 16, y + 16, width, height)
+        pygame.draw.rect(self.screen, ColorScheme.DARK_GRAY, tooltip_rect)
+        pygame.draw.rect(self.screen, ColorScheme.WHITE, tooltip_rect, 1)
+        cy = tooltip_rect.y + padding
+        for surf in surfaces:
+            self.screen.blit(surf, (tooltip_rect.x + padding, cy))
+            cy += surf.get_height()
     
     def _render_emotions_panel(self):
         """Отрисовка панели эмоций"""
@@ -1892,7 +1899,7 @@ class GameInterface:
                         (minimap_x, minimap_y, minimap_size, minimap_size), 2)
         
         # Заголовок мини-карты
-        if hasattr(self.fonts, 'small'):
+        if 'small' in self.fonts:
             title = self.fonts['small'].render("МИНИ-КАРТА", True, ColorScheme.WHITE)
             self.screen.blit(title, (minimap_x + 5, minimap_y + 5))
         

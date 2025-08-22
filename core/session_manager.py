@@ -335,6 +335,15 @@ class SessionManager:
             
             # Обновляем слот
             if self.active_slot:
+                # Если в прогрессе есть уровень игрока, обновим его в слоте
+                try:
+                    player_level = 0
+                    if isinstance(session_data.progress_data, dict):
+                        player_level = int(session_data.progress_data.get('player_level', 0))
+                    if player_level:
+                        self.active_slot.player_level = player_level
+                except Exception:
+                    pass
                 self.active_slot.last_played = datetime.now()
                 self._save_slot_to_db(self.active_slot)
             
