@@ -167,6 +167,11 @@ class GameInterface:
         self.entities = []
         self.current_cycle = 1
         
+        # Игровые объекты по умолчанию (безопасная инициализация)
+        self.obstacles = []  # Препятствия (ловушки, геобарьеры)
+        self.chests = []     # Сундуки с предметами
+        self.items = []      # Предметы на карте
+        
         # UI элементы
         self.buttons = {}
         self.panels = {}
@@ -273,6 +278,28 @@ class GameInterface:
             elif self.game_state in [GameState.INVENTORY, GameState.GENETICS, GameState.EMOTIONS, GameState.EVOLUTION]:
                 self.game_state = GameState.PLAYING
         
+        elif key == pygame.K_c and self.game_state == GameState.PLAYING:
+            # Центрировать камеру на персонаже
+            if self.player:
+                iso_x, iso_y = self.isometric_projection.world_to_iso(
+                    self.player.position.x, self.player.position.y, self.player.position.z
+                )
+                # Центрируем так, чтобы персонаж был в центре экрана
+                self.isometric_projection.camera_x = iso_x - self.settings.window_width // 2
+                self.isometric_projection.camera_y = iso_y - self.settings.window_height // 2
+        
+        # Свободная камера (стрелки)
+        elif self.game_state == GameState.PLAYING:
+            camera_speed = 20
+            if key in (pygame.K_LEFT, pygame.K_a):
+                self.isometric_projection.camera_x -= camera_speed
+            elif key in (pygame.K_RIGHT, pygame.K_d):
+                self.isometric_projection.camera_x += camera_speed
+            elif key in (pygame.K_UP, pygame.K_w):
+                self.isometric_projection.camera_y -= camera_speed
+            elif key in (pygame.K_DOWN, pygame.K_s):
+                self.isometric_projection.camera_y += camera_speed
+        
         elif key == pygame.K_i and self.game_state == GameState.PLAYING:
             self.game_state = GameState.INVENTORY
         
@@ -334,7 +361,7 @@ class GameInterface:
             elif self.buttons["continue_game"].collidepoint(pos):
                 self._continue_game()
             elif self.buttons["load_game"].collidepoint(pos):
-                self._show_save_slots()
+                self._show_save_slots(mode="load")
             elif self.buttons["settings"].collidepoint(pos):
                 self.game_state = GameState.SETTINGS
             elif self.buttons["exit"].collidepoint(pos):
@@ -348,25 +375,30 @@ class GameInterface:
             if self.pause_buttons["resume"].collidepoint(pos):
                 self.game_state = GameState.PLAYING
             elif self.pause_buttons["save"].collidepoint(pos):
-                self._show_save_slots()
+                self.save_slots_return_state = GameState.PAUSED
+                self._show_save_slots(mode="save")
             elif self.pause_buttons["load"].collidepoint(pos):
-                self._show_save_slots()
+                self.save_slots_return_state = GameState.PAUSED
+                self._show_save_slots(mode="load")
             elif self.pause_buttons["settings"].collidepoint(pos):
                 self.game_state = GameState.SETTINGS
             elif self.pause_buttons["main_menu"].collidepoint(pos):
                 self.game_state = GameState.MAIN_MENU
         
         elif self.game_state == GameState.SAVE_SLOTS and hasattr(self, 'save_slot_buttons'):
-            # Обработка кликов по слотам сохранения
+            # Обработка кликов по слотам сохранения/загрузки
             for slot_id, button in self.save_slot_buttons.items():
                 if button.collidepoint(pos):
                     if slot_id == "back":
-                        self.game_state = GameState.MAIN_MENU
-                    elif hasattr(self, 'player') and self.player and self.session_manager.active_session:
-                        self._save_to_slot(slot_id)
+                        # Возврат в указанное состояние (по умолчанию главное меню)
+                        target_state = getattr(self, 'save_slots_return_state', GameState.MAIN_MENU)
+                        self.game_state = target_state
                     else:
-                        # Если нет активной игры, загружаем игру из слота
-                        self._load_from_slot(slot_id)
+                        mode = getattr(self, 'save_slots_mode', 'save')
+                        if mode == 'save':
+                            self._save_to_slot(slot_id)
+                        else:
+                            self._load_from_slot(slot_id)
                     break
     
     def _handle_mouse_motion(self, pos):
@@ -376,23 +408,12 @@ class GameInterface:
     def _start_new_game(self):
         """Начало новой игры"""
         try:
-            # Получаем доступный слот для новой игры (всегда найдется)
-            available_slot = self.session_manager.get_available_slot_for_new_game()
-            
-            # Если слот занят, показываем предупреждение
-            existing_slots = self.session_manager.get_save_slots_info()
-            existing_slot = next((s for s in existing_slots if s['slot_id'] == available_slot), None)
-            if existing_slot:
-                print(f"Перезаписываем сохранение в слоте {available_slot}: {existing_slot['save_name']}")
-            
-            # Создаём новую сессию
-            session_data = self.session_manager.create_new_session(
-                slot_id=available_slot,
-                save_name=f"Save {available_slot}",
+            # Создаём временную сессию без записи в слоты
+            session_data = self.session_manager.create_temporary_session(
                 world_seed=random.randint(1, 999999)
             )
             
-            # Инициализируем контент для новой сессии
+            # Инициализируем контент для новой сессии (без привязки к слоту)
             initial_content = self.content_generator.initialize_session_content(
                 session_data.session_uuid, 
                 level=1
@@ -422,10 +443,8 @@ class GameInterface:
                 position=(0, 0, 0)
             )
             
-            # Инициализация ИИ для игрока (автономное движение)
+            # ИИ
             self.player_ai = AdaptiveAISystem("PLAYER_001")
-            
-            # Флаг автономного движения (по умолчанию включен)
             self.autonomous_movement_enabled = True
             
             # Генерация мира
@@ -435,7 +454,7 @@ class GameInterface:
                 difficulty=1.0
             )
             
-            # Создание врагов из сессионного контента
+            # Создание врагов из контента
             self.entities = []
             session_enemies = self.session_manager.get_session_content("enemies")
             for i, enemy_data in enumerate(session_enemies):
@@ -447,14 +466,12 @@ class GameInterface:
                 )
                 self.entities.append(enemy)
             
-            print(f"Создано {len(self.entities)} врагов на карте")
+            # Игровые объекты
+            self.obstacles = []
+            self.chests = []
+            self.items = []
             
-            # Инициализация игровых объектов
-            self.obstacles = []  # Препятствия (ловушки, геобарьеры)
-            self.chests = []     # Сундуки с предметами
-            self.items = []      # Предметы на карте
-            
-            # Инициализация систем
+            # Системы
             self.effect_db = EffectDatabase()
             self.genetic_system = AdvancedGeneticSystem(self.effect_db)
             self.emotion_system = AdvancedEmotionSystem(self.effect_db)
@@ -463,34 +480,26 @@ class GameInterface:
             self.event_system = GlobalEventSystem(self.effect_db)
             self.difficulty_system = DynamicDifficultySystem()
             
+            # Изометрия/рендер/прогрессия
+            self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
+            self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
+            self.isometric_renderer = IsometricRenderer(self.isometric_projection)
+            self.player_sprite = CharacterSprite("graphics/player")
+            self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
+            self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
+            self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
+            self.level_progression.start_level(1)
+            
+            # В игру
+            self.game_state = GameState.PLAYING
+            logger.info("Новая игра начата (временная сессия)")
+            
+            # Обновить окружение ИИ
+            if hasattr(self, 'player_ai'):
+                self.player_ai.update_environment_info(self.player, self)
         except Exception as e:
             logger.error(f"Ошибка создания новой игры: {e}")
             self.game_state = GameState.MAIN_MENU
-            return
-        
-        # Изометрические системы
-        self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
-        self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
-        self.isometric_renderer = IsometricRenderer(self.isometric_projection)
-        
-        # Система анимации спрайтов
-        self.player_sprite = CharacterSprite("graphics/player")
-        
-        # Система прогрессии уровней
-        self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
-        self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
-        self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
-        
-        # Начинаем первый уровень
-        self.level_progression.start_level(1)
-        
-        # Переходим в игровое состояние
-        self.game_state = GameState.PLAYING
-        logger.info(f"Новая игра создана в слоте {available_slot}")
-        
-        # Инициализируем ИИ с информацией об окружении
-        if hasattr(self, 'player_ai'):
-            self.player_ai.update_environment_info(self.player, self)
     
     def _load_existing_game(self, slot_id: int):
         """Загрузка существующей игры"""
@@ -499,33 +508,56 @@ class GameInterface:
             session_data = self.session_manager.load_session(slot_id)
             if not session_data:
                 logger.error(f"Не удалось загрузить сессию из слота {slot_id}")
-                return
+                return False
             
-            # Восстанавливаем игровые данные
-            player_data = session_data.player_data
-            world_data = session_data.world_data
-            inventory_data = session_data.inventory_data
-            progress_data = session_data.progress_data
+            # Восстанавливаем игровые данные с учетом возможных старых форматов
+            player_data = session_data.player_data or {}
+            world_data = session_data.world_data or {}
+            inventory_data = session_data.inventory_data or {}
+            progress_data = session_data.progress_data or {}
             
-            # Создание игрока с восстановленными данными
+            # Имя и уровень игрока
+            player_name = player_data.get("name", "Игрок") if isinstance(player_data, dict) else "Игрок"
+            player_level = 1
+            if isinstance(player_data, dict):
+                player_level = player_data.get("level", 1)
+            if isinstance(progress_data, dict):
+                player_level = progress_data.get("player_level", player_level)
+            
+            # Позиция игрока
+            px = py = pz = 0
+            if isinstance(player_data, dict):
+                pos = player_data.get("position", (0, 0, 0))
+                if isinstance(pos, dict):
+                    px = pos.get("x", 0); py = pos.get("y", 0); pz = pos.get("z", 0)
+                elif isinstance(pos, (list, tuple)) and len(pos) >= 3:
+                    px, py, pz = pos[0], pos[1], pos[2]
+            
+            # Создание игрока
             self.player = AdvancedGameEntity(
                 entity_id="PLAYER_001",
                 entity_type="player",
-                name=player_data.get("name", "Игрок"),
-                position=(
-                    player_data.get("position", {}).get("x", 0),
-                    player_data.get("position", {}).get("y", 0),
-                    player_data.get("position", {}).get("z", 0)
-                )
+                name=player_name,
+                position=(px, py, pz)
             )
+            # Устанавливаем уровень
+            setattr(self.player, 'level', player_level)
             
             # Восстанавливаем характеристики игрока
-            if "health" in player_data:
-                self.player.health = player_data["health"]
-            if "mana" in player_data:
-                self.player.mana = player_data["mana"]
-            if "level" in player_data:
-                self.player.level = player_data["level"]
+            if isinstance(player_data, dict):
+                stats_block = player_data.get("stats", {}) if isinstance(player_data.get("stats", {}), dict) else {}
+                if stats_block:
+                    self.player.stats.health = stats_block.get("health", self.player.stats.health)
+                    self.player.stats.max_health = stats_block.get("max_health", self.player.stats.max_health)
+                    self.player.stats.stamina = stats_block.get("stamina", self.player.stats.stamina)
+                    self.player.stats.max_stamina = stats_block.get("max_stamina", self.player.stats.max_stamina)
+                    self.player.stats.mana = stats_block.get("mana", self.player.stats.mana)
+                    self.player.stats.max_mana = stats_block.get("max_mana", self.player.stats.max_mana)
+                # Инвентарь
+                inv = player_data.get("inventory", {})
+                if isinstance(inv, dict):
+                    for item_id, quantity in inv.items():
+                        self.player.inventory_system.add_item(item_id, quantity)
             
             # Инициализация ИИ для игрока
             self.player_ai = AdaptiveAISystem("PLAYER_001")
@@ -535,7 +567,7 @@ class GameInterface:
             self.entities = []
             session_enemies = self.session_manager.get_session_content("enemies")
             for i, enemy_data in enumerate(session_enemies):
-                if not enemy_data.get("is_defeated", False):  # Только не побежденные враги
+                if isinstance(enemy_data, dict) and not enemy_data.get("is_defeated", False):
                     enemy = AdvancedGameEntity(
                         entity_id=f"ENEMY_{i:03d}",
                         entity_type="enemy",
@@ -544,7 +576,7 @@ class GameInterface:
                     )
                     self.entities.append(enemy)
             
-            # Инициализация систем
+            # Системы
             self.effect_db = EffectDatabase()
             self.genetic_system = AdvancedGeneticSystem(self.effect_db)
             self.emotion_system = AdvancedEmotionSystem(self.effect_db)
@@ -557,26 +589,26 @@ class GameInterface:
             self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
             self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
             self.isometric_renderer = IsometricRenderer(self.isometric_projection)
-            
-            # Система анимации спрайтов
             self.player_sprite = CharacterSprite("graphics/player")
             
-            # Система прогрессии уровней
+            # Прогресс: уровень мира
+            cur_level = 1
+            if isinstance(progress_data, dict):
+                cur_level = progress_data.get("current_level", cur_level)
             self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
             self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
             self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
-            
-            # Восстанавливаем прогресс
-            if progress_data.get("current_level"):
-                self.level_progression.start_level(progress_data["current_level"])
+            self.level_progression.start_level(cur_level)
             
             # Переходим в игровое состояние
             self.game_state = GameState.PLAYING
             logger.info(f"Игра загружена из слота {slot_id}")
+            return True
             
         except Exception as e:
             logger.error(f"Ошибка загрузки игры: {e}")
             self.game_state = GameState.MAIN_MENU
+            return False
     
     def _generate_items_for_new_game(self):
         """Генерация предметов для новой игры"""
@@ -610,21 +642,25 @@ class GameInterface:
             return False
         
         try:
-            save_data = {
-                "player": {
-                    "entity_id": self.player.id,
-                    "name": self.player.name,
-                    "position": (self.player.position.x, self.player.position.y, self.player.position.z),
-                    "stats": {
-                        "health": self.player.stats.health,
-                        "max_health": self.player.stats.max_health,
-                        "stamina": self.player.stats.stamina,
-                        "max_stamina": self.player.stats.max_stamina,
-                        "mana": self.player.stats.mana,
-                        "max_mana": self.player.stats.max_mana
-                    },
-                    "inventory": self.player.inventory_system.get_inventory_data()
+            # Обновляем данные активной сессии
+            session = self.session_manager.active_session
+            
+            session.player_data = {
+                "entity_id": self.player.id,
+                "name": self.player.name,
+                "position": (self.player.position.x, self.player.position.y, self.player.position.z),
+                "stats": {
+                    "health": self.player.stats.health,
+                    "max_health": self.player.stats.max_health,
+                    "stamina": self.player.stats.stamina,
+                    "max_stamina": self.player.stats.max_stamina,
+                    "mana": self.player.stats.mana,
+                    "max_mana": self.player.stats.max_mana
                 },
+                "inventory": self.player.inventory_system.get_inventory_data()
+            }
+            
+            session.world_data = {
                 "entities": [
                     {
                         "entity_id": entity.id,
@@ -637,14 +673,20 @@ class GameInterface:
                     }
                     for entity in self.entities
                 ],
-                "current_cycle": getattr(self, 'current_cycle', 1),
+                "current_cycle": getattr(self, 'current_cycle', 1)
+            }
+            
+            session.inventory_data = session.player_data.get("inventory", {})
+            session.progress_data = {
                 "world_seed": getattr(self, 'world_seed', 12345),
                 "play_time": getattr(self, 'play_time', 0.0),
                 "player_level": getattr(self, 'player_level', 1)
             }
+            session.generation_seed = getattr(self, 'world_seed', 0)
+            session.current_level = getattr(self, 'current_level', 1) if hasattr(self, 'current_level') else 1
             
             # Сохраняем через менеджер сессий
-            success = self.session_manager.save_session(save_data)
+            success = self.session_manager.save_session(session)
             
             if success:
                 logger.info("Игра сохранена успешно")
@@ -725,6 +767,18 @@ class GameInterface:
             # Правильный расчет delta_time
             delta_time = self.clock.get_time() / 1000.0  # Преобразуем мс в секунды
             
+            # Непрерывное управление камерой (WASD/стрелки)
+            keys = pygame.key.get_pressed()
+            cam_speed = 300.0  # пикс/сек
+            if keys[pygame.K_LEFT] or keys[pygame.K_a]:
+                self.isometric_projection.camera_x -= cam_speed * delta_time
+            if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+                self.isometric_projection.camera_x += cam_speed * delta_time
+            if keys[pygame.K_UP] or keys[pygame.K_w]:
+                self.isometric_projection.camera_y -= cam_speed * delta_time
+            if keys[pygame.K_DOWN] or keys[pygame.K_s]:
+                self.isometric_projection.camera_y += cam_speed * delta_time
+            
             # Автономное движение игрока
             if hasattr(self, 'player_ai') and hasattr(self, 'autonomous_movement_enabled') and self.autonomous_movement_enabled:
                 # Обновление ИИ игрока
@@ -735,8 +789,7 @@ class GameInterface:
                 
                 # Применяем движение только если оно значительное
                 if abs(dx) > 0.1 or abs(dy) > 0.1:
-                    # Применяем delta_time для плавного движения
-                    movement_speed = 50.0  # Увеличиваем скорость движения
+                    movement_speed = 50.0  # пикс/сек в мировых координатах
                     self.player.move_pygame(dx * delta_time * movement_speed, dy * delta_time * movement_speed)
                     
                     # Обновляем информацию об окружении для ИИ
@@ -767,8 +820,11 @@ class GameInterface:
                     else:
                         self.player_sprite.set_state(AnimationState.IDLE)
                 
-                # Обновляем позицию спрайта
-                self.player_sprite.set_position(self.player.position.x, self.player.position.y)
+                # Обновляем позицию спрайта в изометрических координатах
+                iso_x, iso_y = self.isometric_projection.world_to_iso(
+                    self.player.position.x, self.player.position.y, self.player.position.z
+                )
+                self.player_sprite.set_position(iso_x, iso_y)
                 self.player_sprite.update(delta_time)
             
             # Обновление врагов
@@ -1221,26 +1277,30 @@ class GameInterface:
         pygame.draw.rect(self.screen, ColorScheme.DARK_GRAY, panel)
         pygame.draw.rect(self.screen, ColorScheme.WHITE, panel, 2)
         
-        # Заголовок
         title = self.fonts["main"].render("СТАТИСТИКА", True, ColorScheme.WHITE)
-        title_rect = title.get_rect(center=(panel.centerx, panel.y + 20))
-        self.screen.blit(title, title_rect)
+        self.screen.blit(title, (panel.x + 10, panel.y + 10))
         
         if self.player:
             # Здоровье
             health_text = f"Здоровье: {self.player.stats.health:.0f}/{self.player.stats.max_health:.0f}"
             health_surf = self.fonts["small"].render(health_text, True, ColorScheme.HEALTH_COLOR)
-            self.screen.blit(health_surf, (panel.x + 10, panel.y + 50))
+            self.screen.blit(health_surf, (panel.x + 10, panel.y + 40))
             
-            # Энергия
-            energy_text = f"Энергия: {self.player.stats.stamina:.0f}/{self.player.stats.max_stamina:.0f}"
-            energy_surf = self.fonts["small"].render(energy_text, True, ColorScheme.ENERGY_COLOR)
-            self.screen.blit(energy_surf, (panel.x + 10, panel.y + 70))
+            # Мана
+            mana_text = f"Мана: {self.player.stats.mana:.0f}/{self.player.stats.max_mana:.0f}"
+            mana_surf = self.fonts["small"].render(mana_text, True, ColorScheme.ENERGY_COLOR)
+            self.screen.blit(mana_surf, (panel.x + 10, panel.y + 60))
             
-            # Цикл
-            cycle_text = f"Цикл: {self.current_cycle}"
-            cycle_surf = self.fonts["small"].render(cycle_text, True, ColorScheme.EVOLUTION_COLOR)
-            self.screen.blit(cycle_surf, (panel.x + 10, panel.y + 90))
+            # Выносливость
+            stam_text = f"Выносливость: {self.player.stats.stamina:.0f}/{self.player.stats.max_stamina:.0f}"
+            stam_surf = self.fonts["small"].render(stam_text, True, ColorScheme.STAMINA_COLOR)
+            self.screen.blit(stam_surf, (panel.x + 10, panel.y + 80))
+            
+            # Уровень персонажа
+            level_value = getattr(self.player, 'level', getattr(self.player.stats, 'level', 1))
+            level_text = f"Уровень: {level_value}"
+            level_surf = self.fonts["small"].render(level_text, True, ColorScheme.WHITE)
+            self.screen.blit(level_surf, (panel.x + 10, panel.y + 100))
     
     def _render_inventory_panel(self):
         """Отрисовка панели инвентаря"""
@@ -1646,7 +1706,7 @@ class GameInterface:
         # Отображение FPS
         fps_text = self.fonts["small"].render(f"FPS: {self.fps_counter}", True, ColorScheme.GRAY)
         self.screen.blit(fps_text, (10, self.settings.window_height - 30))
-
+    
     def _create_trap(self):
         """Создание ловушки"""
         try:
@@ -2082,12 +2142,13 @@ class GameInterface:
         except Exception as e:
             logger.error(f"Ошибка отображения информации о слотах: {e}")
     
-    def _show_save_slots(self):
-        """Показать экран выбора слотов сохранения"""
+    def _show_save_slots(self, mode: str = "save"):
+        """Показать экран выбора слотов сохранения/загрузки"""
+        self.save_slots_mode = mode  # "save" или "load"
         self.game_state = GameState.SAVE_SLOTS
         self._create_save_slot_buttons()
     
-    def _create_save_slot_buttons(self):
+    def _create_save_slot_buttons(self, mode: str = "save"):
         """Создание кнопок для слотов сохранения"""
         try:
             slots_info = self.session_manager.get_save_slots_info()
@@ -2098,14 +2159,19 @@ class GameInterface:
             start_x = (self.settings.window_width - button_width) // 2
             start_y = 200
             
+            rendered_count = 0
             for i, slot_info in enumerate(slots_info):
                 slot_id = slot_info['slot_id']
-                button = pygame.Rect(start_x, start_y + i * 80, button_width, button_height)
+                button = pygame.Rect(start_x, start_y + rendered_count * 80, button_width, button_height)
                 self.save_slot_buttons[slot_id] = button
-                
-                # Ограничиваем количество отображаемых слотов
-                if i >= 5:
+                rendered_count += 1
+                if rendered_count >= 5:
                     break
+            
+            # Кнопка назад — ниже последнего слота
+            back_y = start_y + rendered_count * 80 + 40
+            back_button = pygame.Rect((self.settings.window_width - 200) // 2, back_y, 200, 50)
+            self.save_slot_buttons["back"] = back_button
         except Exception as e:
             logger.error(f"Ошибка создания кнопок слотов: {e}")
             self.save_slot_buttons = {}
@@ -2113,7 +2179,8 @@ class GameInterface:
     def _render_save_slots(self):
         """Отрисовка экрана выбора слотов сохранения"""
         # Заголовок
-        title = self.fonts["large"].render("ВЫБОР СЛОТА СОХРАНЕНИЯ", True, ColorScheme.WHITE)
+        title_text = "ВЫБОР СЛОТА СОХРАНЕНИЯ" if getattr(self, 'save_slots_mode', 'save') == 'save' else "ВЫБОР СЛОТА ЗАГРУЗКИ"
+        title = self.fonts["large"].render(title_text, True, ColorScheme.WHITE)
         title_rect = title.get_rect(center=(self.settings.window_width // 2, 100))
         self.screen.blit(title, title_rect)
         
@@ -2121,40 +2188,23 @@ class GameInterface:
             slots_info = self.session_manager.get_save_slots_info()
             
             if not slots_info:
-                no_saves_text = self.fonts["main"].render("Нет доступных сохранений", True, ColorScheme.GRAY)
+                no_text_label = "Нет доступных сохранений" if getattr(self, 'save_slots_mode', 'save') == 'load' else "Слоты не созданы"
+                no_saves_text = self.fonts["main"].render(no_text_label, True, ColorScheme.GRAY)
                 no_saves_rect = no_saves_text.get_rect(center=(self.settings.window_width // 2, 300))
                 self.screen.blit(no_saves_text, no_saves_rect)
-                
-                # Кнопка возврата
-                back_button = pygame.Rect((self.settings.window_width - 200) // 2, 400, 200, 50)
-                pygame.draw.rect(self.screen, ColorScheme.BLUE, back_button)
-                pygame.draw.rect(self.screen, ColorScheme.WHITE, back_button, 2)
-                
-                back_text = self.fonts["main"].render("НАЗАД", True, ColorScheme.WHITE)
-                back_rect = back_text.get_rect(center=back_button.center)
-                self.screen.blit(back_text, back_rect)
-                
-                if not hasattr(self, 'save_slot_buttons'):
-                    self.save_slot_buttons = {}
-                self.save_slot_buttons["back"] = back_button
-                return
             
             # Отрисовка слотов
             for slot_id, button in self.save_slot_buttons.items():
                 if slot_id == "back":
                     continue
-                    
+                
                 # Находим информацию о слоте
                 slot_info = next((s for s in slots_info if s['slot_id'] == slot_id), None)
                 if not slot_info:
                     continue
                 
                 # Цвет кнопки в зависимости от состояния
-                if slot_info.get('is_active', False):
-                    color = ColorScheme.GREEN
-                else:
-                    color = ColorScheme.GRAY
-                
+                color = ColorScheme.GREEN if slot_info.get('is_active', False) else ColorScheme.GRAY
                 pygame.draw.rect(self.screen, color, button)
                 pygame.draw.rect(self.screen, ColorScheme.WHITE, button, 2)
                 
@@ -2170,33 +2220,35 @@ class GameInterface:
                 info_rect = info_surf.get_rect(center=(button.centerx, button.centery + 20))
                 self.screen.blit(info_surf, info_rect)
             
-            # Кнопка возврата
-            back_button = pygame.Rect((self.settings.window_width - 200) // 2, 600, 200, 50)
-            pygame.draw.rect(self.screen, ColorScheme.BLUE, back_button)
-            pygame.draw.rect(self.screen, ColorScheme.WHITE, back_button, 2)
-            
-            back_text = self.fonts["main"].render("НАЗАД", True, ColorScheme.WHITE)
-            back_rect = back_text.get_rect(center=back_button.center)
-            self.screen.blit(back_text, back_rect)
-            
-            self.save_slot_buttons["back"] = back_button
+            # Рендер кнопки назад из заранее созданных кнопок
+            if "back" in self.save_slot_buttons:
+                back_button = self.save_slot_buttons["back"]
+                pygame.draw.rect(self.screen, ColorScheme.BLUE, back_button)
+                pygame.draw.rect(self.screen, ColorScheme.WHITE, back_button, 2)
+                back_text = self.fonts["main"].render("НАЗАД", True, ColorScheme.WHITE)
+                back_rect = back_text.get_rect(center=back_button.center)
+                self.screen.blit(back_text, back_rect)
             
         except Exception as e:
             logger.error(f"Ошибка отображения слотов сохранения: {e}")
     
     def _save_to_slot(self, slot_id: int):
-        """Сохранение игры в указанный слот"""
+        """Сохранение игры в указанный слот (не сбрасывает сессию)"""
         try:
             if slot_id == "back":
-                self.game_state = GameState.MAIN_MENU
+                self.game_state = GameState.PAUSED
                 return
             
-            # Сохраняем игру
-            if self._save_game():
-                print(f"Игра сохранена в слот {slot_id}!")
-                self.game_state = GameState.MAIN_MENU
+            # Привязываем активную сессию к выбранному слоту (создаст/заменит слот)
+            if self.session_manager.bind_active_session_to_slot(slot_id, save_name=f"Save {slot_id}"):
+                # Сохраняем данные игры
+                if self._save_game():
+                    print(f"Игра сохранена в слот {slot_id}!")
+                    self.game_state = GameState.PAUSED
+                else:
+                    print(f"Ошибка сохранения в слот {slot_id}!")
             else:
-                print(f"Ошибка сохранения в слот {slot_id}!")
+                print(f"Не удалось привязать сессию к слоту {slot_id}!")
                 
         except Exception as e:
             logger.error(f"Ошибка сохранения в слот {slot_id}: {e}")
@@ -2206,7 +2258,8 @@ class GameInterface:
         """Загрузка игры из указанного слота"""
         try:
             if slot_id == "back":
-                self.game_state = GameState.MAIN_MENU
+                # Возврат в паузу/меню
+                self.game_state = GameState.PAUSED if hasattr(self, 'pause_buttons') else GameState.MAIN_MENU
                 return
             
             # Загружаем игру
@@ -2219,6 +2272,26 @@ class GameInterface:
         except Exception as e:
             logger.error(f"Ошибка загрузки из слота {slot_id}: {e}")
             print(f"Ошибка загрузки: {e}")
+    
+    def _quick_save(self):
+        """Быстрое сохранение активной сессии (без выбора слота)."""
+        try:
+            if not self.session_manager.active_session:
+                return False
+            return self.session_manager.save_session(self.session_manager.active_session)
+        except Exception as e:
+            logger.error(f"Ошибка быстрого сохранения: {e}")
+            return False
+    
+    def _quick_load(self):
+        """Быстрая загрузка текущей активной сессии (если есть привязанный слот)."""
+        try:
+            if self.session_manager.active_slot:
+                return self._load_existing_game(self.session_manager.active_slot.slot_id)
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка быстрой загрузки: {e}")
+            return False
 
 
 def main():

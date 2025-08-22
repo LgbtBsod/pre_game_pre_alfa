@@ -637,9 +637,21 @@ class AdaptiveAISystem:
             if not hasattr(entity1, 'position') or not hasattr(entity2, 'position'):
                 return float('inf')
             
-            dx = entity1.position[0] - entity2.position[0]
-            dy = entity1.position[1] - entity2.position[1]
-            return math.sqrt(dx * dx + dy * dy)
+            pos1 = entity1.position
+            pos2 = entity2.position
+            
+            # Поддержка EntityPosition и кортежей
+            if hasattr(pos1, 'x') and hasattr(pos1, 'y'):
+                x1, y1 = pos1.x, pos1.y
+            else:
+                x1, y1 = pos1[0], pos1[1]
+            
+            if hasattr(pos2, 'x') and hasattr(pos2, 'y'):
+                x2, y2 = pos2.x, pos2.y
+            else:
+                x2, y2 = pos2[0], pos2[1]
+            
+            return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         except Exception as e:
             logger.error(f"Ошибка расчета расстояния: {e}")
             return float('inf')

@@ -24,9 +24,6 @@ class ConfigType(Enum):
     ITEMS = "items_config"
     AI = "ai_config"
     UI = "ui_config"
-    AUDIO = "audio_config"
-    GRAPHICS = "graphics_config"
-    NETWORK = "network_config"
 
 
 class ConfigSource(Enum):
@@ -156,45 +153,6 @@ class ConfigFactory:
                     "font_size": 16,
                     "show_fps": False,
                     "show_debug": False
-                }
-            ),
-            
-            ConfigType.AUDIO: ConfigDefinition(
-                config_type=ConfigType.AUDIO,
-                source=ConfigSource.FILE,
-                path="audio_config.json",
-                required=False,
-                auto_reload=False,
-                default_data={
-                    "sample_rate": 44100,
-                    "channels": 2,
-                    "buffer_size": 1024
-                }
-            ),
-            
-            ConfigType.GRAPHICS: ConfigDefinition(
-                config_type=ConfigType.GRAPHICS,
-                source=ConfigSource.FILE,
-                path="graphics_config.json",
-                required=False,
-                auto_reload=False,
-                default_data={
-                    "texture_quality": "high",
-                    "shadow_quality": "medium",
-                    "particle_effects": True
-                }
-            ),
-            
-            ConfigType.NETWORK: ConfigDefinition(
-                config_type=ConfigType.NETWORK,
-                source=ConfigSource.FILE,
-                path="network_config.json",
-                required=False,
-                auto_reload=False,
-                default_data={
-                    "server_address": "localhost",
-                    "port": 8080,
-                    "timeout": 30
                 }
             )
         }

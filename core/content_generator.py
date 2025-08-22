@@ -682,15 +682,15 @@ class ContentGenerator:
         
         return f"{prefix} {suffix}"
     
-    def generate_enemy(self, biome: str = "forest", level: int = 1) -> GeneratedEnemy:
+    def generate_enemy(self, biome: str = "forest", level: int = 1, enemy_type: str = None) -> GeneratedEnemy:
         """Генерация врага"""
         try:
-            # Выбор типа врага на основе биома
+            # Выбор типа врага на основе биома (если не указан явно)
             biome_template = self.biome_templates.get(biome, self.biome_templates[BiomeType.FOREST.value])
-            enemy_type = self.random_generator.choice(biome_template["enemy_types"])
+            chosen_enemy_type = enemy_type or self.random_generator.choice(biome_template["enemy_types"])
             
             # Получение шаблона врага
-            enemy_template = self.enemy_templates.get(enemy_type, self.enemy_templates["neutral"])
+            enemy_template = self.enemy_templates.get(chosen_enemy_type, self.enemy_templates["neutral"])
             
             # Генерация характеристик
             stats = {}
@@ -707,15 +707,15 @@ class ContentGenerator:
             abilities = self._generate_abilities(enemy_template["abilities"])
             
             # Генерация внешнего вида
-            appearance = self._generate_enemy_appearance(enemy_type, biome)
+            appearance = self._generate_enemy_appearance(chosen_enemy_type, biome)
             
             # Генерация паттерна поведения
-            behavior_pattern = self._generate_behavior_pattern(enemy_type)
+            behavior_pattern = self._generate_behavior_pattern(chosen_enemy_type)
             
             enemy = GeneratedEnemy(
                 id=f"ENEMY_{uuid.uuid4().hex[:8]}",
-                name=self._generate_enemy_name(enemy_type),
-                enemy_type=enemy_type,
+                name=self._generate_enemy_name(chosen_enemy_type),
+                enemy_type=chosen_enemy_type,
                 biome=biome,
                 level=level,
                 stats=stats,
@@ -726,7 +726,7 @@ class ContentGenerator:
                 behavior_pattern=behavior_pattern
             )
             
-            logger.info(f"Сгенерирован враг: {enemy.name} (тип: {enemy_type}, уровень: {level})")
+            logger.info(f"Сгенерирован враг: {enemy.name} (тип: {chosen_enemy_type}, уровень: {level})")
             return enemy
             
         except Exception as e:

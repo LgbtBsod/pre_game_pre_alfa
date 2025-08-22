@@ -73,6 +73,61 @@ class SessionManager:
         
         logger.info(f"Менеджер сессий инициализирован: {self.save_dir}")
     
+    def create_temporary_session(self, world_seed: int = None) -> SessionData:
+        """Создать временную сессию без записи в слоты сохранения.
+        Не создает запись в таблице save_slots. Используется для новой игры до явного сохранения.
+        """
+        session_uuid = str(uuid.uuid4())
+        session_data = SessionData(
+            session_uuid=session_uuid,
+            slot_id=0,
+            state=SessionState.NEW,
+            created_at=datetime.now(),
+            last_saved=datetime.now(),
+            generation_seed=world_seed or 0,
+            current_level=1
+        )
+
+        # Устанавливаем как активную без активного слота
+        self.active_session = session_data
+        self.active_slot = None
+        logger.info(f"Создана временная сессия: {session_uuid}")
+        return session_data
+
+    def bind_active_session_to_slot(self, slot_id: int, save_name: str) -> bool:
+        """Привязать активную сессию к слоту сохранения, создав/заменив запись в save_slots.
+        Не меняет session_uuid; просто создает слот и помечает его активным.
+        """
+        if not self.active_session:
+            logger.error("Нет активной сессии для привязки к слоту")
+            return False
+
+        try:
+            # Если слот занят, удаляем его (пользователь осознанно выбрал слот)
+            if not self._is_slot_available(slot_id):
+                self.delete_session(slot_id)
+
+            save_slot = SaveSlot(
+                slot_id=slot_id,
+                session_uuid=self.active_session.session_uuid,
+                save_name=save_name,
+                created_at=datetime.now(),
+                last_played=datetime.now(),
+                player_level=1,
+                world_seed=self.active_session.generation_seed or 0,
+                play_time=0.0,
+                is_active=True
+            )
+
+            self._save_slot_to_db(save_slot)
+            self.active_slot = save_slot
+            # обновляем slot_id у активной сессии
+            self.active_session.slot_id = slot_id
+            logger.info(f"Сессия {self.active_session.session_uuid} привязана к слоту {slot_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка привязки сессии к слоту {slot_id}: {e}")
+            return False
     def _init_session_database(self):
         """Инициализация базы данных сессий"""
         if not self.db_path.exists():
