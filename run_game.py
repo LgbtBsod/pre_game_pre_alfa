@@ -14,6 +14,12 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Настройка логирования с принудительной кодировкой UTF-8
+# Гарантируем существование директории logs до конфигурации логгера
+try:
+    Path('logs').mkdir(exist_ok=True)
+except Exception:
+    pass
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -57,6 +63,29 @@ def create_directories():
     for directory in directories:
         Path(directory).mkdir(exist_ok=True)
         logger.info(f"Директория {directory} готова")
+
+
+def sanity_check_assets() -> bool:
+    """Быстрая проверка ключевых ассетов (шрифты, спрайты, звуки)."""
+    try:
+        from core.resource_loader import ResourceLoader
+        loader = ResourceLoader()
+        # Шрифт
+        font_ok = Path("graphics/fonts/PixeloidSans.ttf").exists()
+        # Проверяем наличие директорий/файлов спрайтов без загрузки в pygame (до init display)
+        sprites_ok = Path("graphics/player").exists()
+        # Звук (не критично при headless)
+        sound_path = Path("audio/hit.wav")
+        sounds_ok = sound_path.exists()
+        ok = font_ok and sprites_ok and sounds_ok
+        if not ok:
+            logger.warning(f"Проверка ассетов: font={font_ok}, sprites={sprites_ok}, sounds={sounds_ok}")
+        else:
+            logger.info("Проверка ассетов пройдена успешно")
+        return True
+    except Exception as e:
+        logger.warning(f"Проверка ассетов завершилась с предупреждением: {e}")
+        return True
 
 
 def run_graphical_interface():
@@ -205,6 +234,8 @@ def main():
     
     # Создание директорий
     create_directories()
+    # Быстрая проверка ассетов
+    sanity_check_assets()
     
     # Проверка зависимостей
     if not check_dependencies():

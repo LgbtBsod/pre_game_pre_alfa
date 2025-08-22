@@ -11,9 +11,12 @@ import logging
 
 from .entity_system import EntityManager, EntityFactory
 from .resource_loader import ResourceLoader
-from .error_handler import ErrorHandler, ErrorType, ErrorSeverity
+from .error_handler import error_handler, ErrorType, ErrorSeverity
 from .components.transform_component import Vector3
-from config.config_factory import config_factory, ConfigType
+from config.config_manager import config_manager
+from .events import EventType
+from .game_state import GameStateManager, GameState
+from ui.renderer import GameRenderer
 
 logger = logging.getLogger(__name__)
 
@@ -216,14 +219,20 @@ class RenderSystem:
             'ui': [],
             'overlay': []
         }
+        self._game_renderer = None
     
     def set_screen(self, screen) -> None:
         """Установка экрана для отрисовки"""
         self.screen = screen
+        # Recreate renderer if dependencies are resolvable by caller later
     
     def set_camera_offset(self, offset: Tuple[float, float]) -> None:
         """Установка смещения камеры"""
         self.camera_offset = offset
+
+    def set_game_renderer(self, renderer: GameRenderer) -> None:
+        """Подключить высокоуровневый рендерер сцен."""
+        self._game_renderer = renderer
     
     def add_to_layer(self, layer: str, renderable) -> None:
         """Добавление объекта для отрисовки в слой"""
@@ -248,54 +257,56 @@ class RenderSystem:
                         renderable.render(self.screen, self.camera_offset)
                     elif callable(renderable):
                         renderable(self.screen, self.camera_offset)
-                        
+            # Дополнительно: если подключен GameRenderer, можно вызвать преднастроенные группы
+            if self._game_renderer and hasattr(self._game_renderer, 'render_grid'):
+                # Ничего не вызываем по умолчанию, оставляем точку расширения
+                pass
         except Exception as e:
             logger.error(f"Ошибка рендеринга: {e}")
 
 
-class GameStateManager:
+class StateAdapter:
     """
-    Менеджер состояния игры.
-    Отвечает только за управление состоянием игры.
+    Адаптер над GameStateManager для совместимости с существующими обработчиками.
     """
-    
     def __init__(self):
-        self.current_state = "menu"
-        self.previous_state = None
-        self.state_handlers = {}
-        self.state_data = {}
+        self.manager = GameStateManager()
+        self.state_handlers: Dict[GameState, callable] = {}
     
     def register_state_handler(self, state: str, handler: callable) -> None:
-        """Регистрация обработчика состояния"""
-        self.state_handlers[state] = handler
+        # Принимаем строковые состояния и маппим на Enum
+        enum_state = self._to_enum(state)
+        self.state_handlers[enum_state] = handler
     
     def change_state(self, new_state: str, data: Any = None) -> None:
-        """Смена состояния игры"""
-        self.previous_state = self.current_state
-        self.current_state = new_state
-        
-        if data:
-            self.state_data[new_state] = data
-        
-        logger.info(f"Состояние игры изменено: {self.previous_state} -> {new_state}")
+        enum_state = self._to_enum(new_state)
+        self.manager.change_state(enum_state, data or {})
+        logger.info(f"Состояние игры изменено: {enum_state.name}")
     
     def get_current_state(self) -> str:
-        """Получение текущего состояния"""
-        return self.current_state
+        return self.manager.get_current_state().name.lower()
     
     def get_state_data(self, state: str = None) -> Any:
-        """Получение данных состояния"""
-        if state is None:
-            state = self.current_state
-        return self.state_data.get(state)
+        current = self.manager.get_current_state() if state is None else self._to_enum(state)
+        return self.manager.get_state_data(current)
     
     def update_state(self, delta_time: float) -> None:
-        """Обновление текущего состояния"""
-        if self.current_state in self.state_handlers:
+        current = self.manager.get_current_state()
+        handler = self.state_handlers.get(current)
+        if handler:
             try:
-                self.state_handlers[self.current_state](delta_time)
+                handler(delta_time)
             except Exception as e:
-                logger.error(f"Ошибка обновления состояния {self.current_state}: {e}")
+                logger.error(f"Ошибка обновления состояния {current.name}: {e}")
+    
+    def _to_enum(self, state: str) -> GameState:
+        mapping = {
+            'menu': GameState.MAIN_MENU,
+            'playing': GameState.PLAYING,
+            'paused': GameState.PAUSED,
+            'inventory': GameState.INVENTORY,
+        }
+        return mapping.get(state, GameState.MAIN_MENU)
 
 
 class GameSystems:
@@ -309,15 +320,15 @@ class GameSystems:
         self.world_manager = WorldManager()
         self.event_system = EventSystem()
         self.render_system = RenderSystem()
-        self.state_manager = GameStateManager()
+        self.state_manager = StateAdapter()
         
         # Системы сущностей
         self.resource_loader = ResourceLoader()
         self.entity_manager = EntityManager()
         self.entity_factory = EntityFactory(self.entity_manager, self.resource_loader)
         
-        # Обработчик ошибок
-        self.error_handler = ErrorHandler()
+        # Обработчик ошибок (централизованный)
+        # Используем глобальный error_handler
         
         # Время игры
         self.game_time = 0.0
@@ -338,9 +349,8 @@ class GameSystems:
     def initialize(self) -> bool:
         """Инициализация всех систем"""
         try:
-            # Загружаем конфигурацию
-            game_config = config_factory.create_config(ConfigType.GAME_SETTINGS)
-            self.target_fps = game_config.get('display', {}).get('render_fps', 60)
+            # Загружаем конфигурацию через единый config_manager
+            self.target_fps = config_manager.get_int('game', config_manager.Keys.GameDisplay.RENDER_FPS, 60)
             self.frame_time = 1.0 / self.target_fps
             
             # Создаем мир
@@ -356,7 +366,7 @@ class GameSystems:
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.CONFIGURATION,
                 f"Ошибка инициализации игровых систем: {str(e)}",
                 exception=e,
@@ -366,9 +376,9 @@ class GameSystems:
     
     def _register_event_handlers(self):
         """Регистрация обработчиков событий"""
-        self.event_system.register_handler('entity_created', self._on_entity_created)
-        self.event_system.register_handler('entity_destroyed', self._on_entity_destroyed)
-        self.event_system.register_handler('world_changed', self._on_world_changed)
+        self.event_system.register_handler(EventType.ENTITY_CREATED.value, self._on_entity_created)
+        self.event_system.register_handler(EventType.ENTITY_DESTROYED.value, self._on_entity_destroyed)
+        self.event_system.register_handler(EventType.WORLD_CHANGED.value, self._on_world_changed)
     
     def _register_state_handlers(self):
         """Регистрация обработчиков состояний"""
@@ -396,7 +406,7 @@ class GameSystems:
             self.state_manager.update_state(delta_time)
             
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.UNKNOWN,
                 f"Ошибка обновления игровых систем: {str(e)}",
                 exception=e,
@@ -408,7 +418,7 @@ class GameSystems:
         try:
             self.render_system.render()
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.RENDERING,
                 f"Ошибка рендеринга: {str(e)}",
                 exception=e,
@@ -448,7 +458,7 @@ class GameSystems:
             'fps': self.fps,
             'world': self.world_manager.get_world_info(),
             'entities': self.entity_manager.get_statistics(),
-            'errors': self.error_handler.get_error_statistics()
+            'errors': error_handler.get_error_statistics()
         }
     
     def cleanup(self) -> None:

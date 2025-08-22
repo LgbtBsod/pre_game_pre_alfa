@@ -37,20 +37,10 @@ from ui.renderer import GameRenderer
 from config.config_manager import config_manager
 
 
-class GameState(Enum):
-    """Состояния игры"""
-    MAIN_MENU = "main_menu"
-    PLAYING = "playing"
-    PAUSED = "paused"
-    INVENTORY = "inventory"
-    GENETICS = "genetics"
-    EMOTIONS = "emotions"
-    EVOLUTION = "evolution"
-    SETTINGS = "settings"
-    LOADING = "loading"
-    LEVEL_STATISTICS = "level_statistics"
-    NEXT_LEVEL = "next_level"
-    SAVE_SLOTS = "save_slots"
+from core.game_state import GameState
+from core.scene_manager import SceneManager
+from ui.menu_scene import MenuScene
+from ui.pause_scene import PauseScene
 
 
 @dataclass
@@ -143,6 +133,15 @@ class GameInterface:
         # Шрифты
         self.fonts = self._load_fonts()
         
+        # Базовая изометрическая проекция до создания UI/рендерера
+        try:
+            self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
+            self.isometric_renderer = IsometricRenderer(self.isometric_projection)
+        except Exception as e:
+            logger.error(f"Ошибка инициализации изометрии: {e}")
+            self.isometric_projection = None
+            self.isometric_renderer = None
+
         # Игровые системы
         self.effect_db = EffectDatabase()
         self.genetic_system = AdvancedGeneticSystem(self.effect_db)
@@ -180,6 +179,17 @@ class GameInterface:
         self.buttons = {}
         self.panels = {}
         self._create_ui_elements()
+        
+        # Регистрация сцен
+        try:
+            self.scene_manager = SceneManager()
+            self.menu_scene = MenuScene(self.scene_manager, self)
+            self.pause_scene = PauseScene(self.scene_manager, self)
+            self.scene_manager.register_scene('menu', self.menu_scene)
+            self.scene_manager.register_scene('pause', self.pause_scene)
+            self.scene_manager.switch_scene('menu')
+        except Exception as e:
+            logger.error(f"Ошибка регистрации сцен: {e}")
         
         # Статистика
         self.fps_counter = 0
@@ -398,7 +408,7 @@ class GameInterface:
             elif self.pause_buttons["main_menu"].collidepoint(pos):
                 self.game_state = GameState.MAIN_MENU
         
-        elif self.game_state == GameState.SAVE_SLOTS and hasattr(self, 'save_slot_buttons'):
+        elif self.game_state == GameState.SAVE_MENU and hasattr(self, 'save_slot_buttons'):
             # Обработка кликов по слотам сохранения/загрузки
             for slot_id, button in self.save_slot_buttons.items():
                 if button.collidepoint(pos):
@@ -940,7 +950,7 @@ class GameInterface:
             self._render_level_statistics()
         elif self.game_state == GameState.NEXT_LEVEL:
             self._render_next_level()
-        elif self.game_state == GameState.SAVE_SLOTS:
+        elif self.game_state == GameState.SAVE_MENU:
             self._render_save_slots()
         
         # Обновление экрана
@@ -2152,7 +2162,7 @@ class GameInterface:
     def _show_save_slots(self, mode: str = "save"):
         """Показать экран выбора слотов сохранения/загрузки"""
         self.save_slots_mode = mode  # "save" или "load"
-        self.game_state = GameState.SAVE_SLOTS
+        self.game_state = GameState.SAVE_MENU
         self._create_save_slot_buttons()
     
     def _create_save_slot_buttons(self, mode: str = "save"):

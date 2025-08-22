@@ -59,6 +59,50 @@ class ConfigManager:
                     return default
             
             return value
+
+    # Typed accessors
+    def get_int(self, config_name: str, key: str, default: int = 0) -> int:
+        value = self.get(config_name, key, default)
+        try:
+            return int(value)
+        except Exception:
+            return default
+
+    def get_float(self, config_name: str, key: str, default: float = 0.0) -> float:
+        value = self.get(config_name, key, default)
+        try:
+            return float(value)
+        except Exception:
+            return default
+
+    def get_bool(self, config_name: str, key: str, default: bool = False) -> bool:
+        value = self.get(config_name, key, default)
+        try:
+            if isinstance(value, bool):
+                return value
+            if isinstance(value, (int, float)):
+                return bool(value)
+            if isinstance(value, str):
+                return value.strip().lower() in {"1", "true", "yes", "on"}
+            return default
+        except Exception:
+            return default
+
+    def get_str(self, config_name: str, key: str, default: str = "") -> str:
+        value = self.get(config_name, key, default)
+        try:
+            return str(value)
+        except Exception:
+            return default
+
+    # Centralized keys (minimal set for display)
+    class Keys:
+        class GameDisplay:
+            WINDOW_WIDTH = 'display.window_width'
+            WINDOW_HEIGHT = 'display.window_height'
+            FULLSCREEN = 'display.fullscreen'
+            VSYNC = 'display.vsync'
+            RENDER_FPS = 'display.render_fps'
     
     def get_section(self, config_name: str, section: str) -> Dict[str, Any]:
         """Получить секцию конфигурации"""

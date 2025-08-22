@@ -10,8 +10,9 @@ from typing import Optional
 import logging
 
 from .game_systems import GameSystems
-from .error_handler import ErrorHandler, ErrorType, ErrorSeverity
-from config.config_factory import config_factory, ConfigType
+from .error_handler import error_handler, ErrorType, ErrorSeverity
+from config.config_manager import config_manager
+from ui.ui_hud import UIHud
 
 logger = logging.getLogger(__name__)
 
@@ -30,12 +31,12 @@ class RefactoredGameLoop:
         # Игровые системы
         self.game_systems = GameSystems()
         
-        # Обработчик ошибок
-        self.error_handler = ErrorHandler()
+        # Обработчик ошибок: используем централизованный экземпляр
         
         # Pygame компоненты
         self.screen = None
         self.clock = None
+        self.ui_hud = None
         
         # Время
         self.last_frame_time = time.time()
@@ -59,12 +60,13 @@ class RefactoredGameLoop:
             # Настраиваем рендерер
             if self.screen:
                 self.game_systems.render_system.set_screen(self.screen)
+                self.ui_hud = UIHud(self.screen)
             
             logger.info("Игровой цикл успешно инициализирован")
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.UNKNOWN,
                 f"Критическая ошибка инициализации игрового цикла: {str(e)}",
                 exception=e,
@@ -78,9 +80,13 @@ class RefactoredGameLoop:
             if not pygame.get_init():
                 pygame.init()
             
-            # Загружаем конфигурацию
-            game_config = config_factory.create_config(ConfigType.GAME_SETTINGS)
-            display_config = game_config.get('display', {})
+            # Загружаем конфигурацию через единый менеджер
+            display_config = {
+                'window_width': config_manager.get_int('game', config_manager.Keys.GameDisplay.WINDOW_WIDTH, 1280),
+                'window_height': config_manager.get_int('game', config_manager.Keys.GameDisplay.WINDOW_HEIGHT, 720),
+                'fullscreen': config_manager.get_bool('game', config_manager.Keys.GameDisplay.FULLSCREEN, False),
+                'vsync': config_manager.get_bool('game', config_manager.Keys.GameDisplay.VSYNC, True),
+            }
             
             # Настройки окна
             window_width = display_config.get('window_width', 1280)
@@ -105,7 +111,7 @@ class RefactoredGameLoop:
             return True
             
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.CONFIGURATION,
                 f"Ошибка инициализации pygame: {str(e)}",
                 exception=e,
@@ -147,7 +153,7 @@ class RefactoredGameLoop:
         except KeyboardInterrupt:
             logger.info("Игровой цикл прерван пользователем")
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.UNKNOWN,
                 f"Критическая ошибка в игровом цикле: {str(e)}",
                 exception=e,
@@ -177,7 +183,7 @@ class RefactoredGameLoop:
                     self._handle_mouse_motion(event)
                     
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.UNKNOWN,
                 f"Ошибка обработки событий: {str(e)}",
                 exception=e,
@@ -222,7 +228,7 @@ class RefactoredGameLoop:
             self.accumulated_time += delta_time
             
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.UNKNOWN,
                 f"Ошибка обновления игровой логики: {str(e)}",
                 exception=e,
@@ -242,65 +248,21 @@ class RefactoredGameLoop:
             self.game_systems.render()
             
             # Отрисовываем UI
-            self._render_ui()
+            if self.ui_hud:
+                self.ui_hud.render_debug(self.game_systems.get_statistics(), self.is_paused)
             
             # Обновляем экран
             pygame.display.flip()
             
         except Exception as e:
-            self.error_handler.handle_error(
+            error_handler.handle_error(
                 ErrorType.RENDERING,
                 f"Ошибка отрисовки: {str(e)}",
                 exception=e,
                 severity=ErrorSeverity.ERROR
             )
     
-    def _render_ui(self) -> None:
-        """Отрисовка пользовательского интерфейса"""
-        try:
-            if not self.screen:
-                return
-            
-            # Получаем статистику
-            stats = self.game_systems.get_statistics()
-            
-            # Отрисовываем FPS
-            if stats.get('fps', 0) > 0:
-                font = pygame.font.Font(None, 24)
-                fps_text = font.render(f"FPS: {stats['fps']}", True, (255, 255, 255))
-                self.screen.blit(fps_text, (10, 10))
-            
-            # Отрисовываем информацию о мире
-            world_info = stats.get('world', {})
-            if world_info:
-                font = pygame.font.Font(None, 20)
-                world_text = font.render(
-                    f"Мир: {world_info.get('name', 'Unknown')} | "
-                    f"День: {world_info.get('day_cycle', 0)} | "
-                    f"Погода: {world_info.get('weather', 'Unknown')}", 
-                    True, (255, 255, 255)
-                )
-                self.screen.blit(world_text, (10, 40))
-            
-            # Отрисовываем информацию о сущностях
-            entity_stats = stats.get('entities', {})
-            if entity_stats:
-                font = pygame.font.Font(None, 20)
-                entity_text = font.render(
-                    f"Сущности: {entity_stats.get('total_entities', 0)}", 
-                    True, (255, 255, 255)
-                )
-                self.screen.blit(entity_text, (10, 70))
-            
-            # Отрисовываем статус паузы
-            if self.is_paused:
-                font = pygame.font.Font(None, 36)
-                pause_text = font.render("ПАУЗА", True, (255, 255, 0))
-                text_rect = pause_text.get_rect(center=(self.screen.get_width() // 2, 50))
-                self.screen.blit(pause_text, text_rect)
-                
-        except Exception as e:
-            logger.error(f"Ошибка отрисовки UI: {e}")
+    # UI rendering extracted to UIHud
     
     def _show_debug_info(self) -> None:
         """Показать отладочную информацию"""

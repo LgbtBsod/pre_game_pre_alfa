@@ -1,4 +1,5 @@
 import pygame
+import logging
 from typing import Optional
 from core.scene_manager import Scene
 from core.input_manager import InputManager, InputAction
@@ -10,6 +11,7 @@ class PauseScene(Scene):
     def __init__(self, scene_manager, game_manager):
         super().__init__(scene_manager)
         self.game_manager = game_manager
+        self.logger = logging.getLogger(__name__)
         self.input_manager: Optional[InputManager] = None
         self.font: Optional[pygame.font.Font] = None
         self.overlay_surface: Optional[pygame.Surface] = None
@@ -49,7 +51,7 @@ class PauseScene(Scene):
     
     def _toggle_pause(self) -> None:
         """Toggle pause state"""
-        if self.game_manager.state_manager.is_state(GameState.PAUSED):
+        if self.game_manager.state_manager.is_in_state(GameState.PAUSED):
             # Resume game
             self.game_manager.state_manager.change_state(GameState.PLAYING)
             self.game_manager.audio_manager.unpause_music()

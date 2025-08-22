@@ -1,8 +1,9 @@
 import pygame
+import logging
 from typing import Optional, List, Tuple
-from code.core.scene_manager import Scene
-from code.core.input_manager import InputManager, InputAction
-from code.core.game_state import GameState
+from core.scene_manager import Scene
+from core.input_manager import InputManager, InputAction
+from core.game_state import GameState
 
 class MenuItem:
     """Represents a menu item"""
@@ -22,6 +23,7 @@ class MenuScene(Scene):
     def __init__(self, scene_manager, game_manager):
         super().__init__(scene_manager)
         self.game_manager = game_manager
+        self.logger = logging.getLogger(__name__)
         self.input_manager: Optional[InputManager] = None
         self.font: Optional[pygame.font.Font] = None
         self.title_font: Optional[pygame.font.Font] = None

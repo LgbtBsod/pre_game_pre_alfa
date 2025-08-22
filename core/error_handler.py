@@ -82,8 +82,9 @@ class ErrorHandler:
         error_logger = logging.getLogger('error_handler')
         error_logger.setLevel(logging.DEBUG)
         
-        # Файловый обработчик
-        file_handler = logging.FileHandler(self.log_file, encoding='utf-8')
+        # Файловый обработчик с ротацией
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler(self.log_file, maxBytes=1_000_000, backupCount=5, encoding='utf-8')
         file_handler.setLevel(logging.DEBUG)
         
         # Форматтер

@@ -321,7 +321,7 @@ class AdaptiveAISystem:
             min_distance = float('inf')
             for other_entity in world.entities:
                 if other_entity != entity and hasattr(other_entity, 'position'):
-                    distance = self._calculate_distance(entity.position, other_entity.position)
+                    distance = self._distance(entity, other_entity)
                     min_distance = min(min_distance, distance)
             
             return min_distance if min_distance != float('inf') else 100.0
@@ -337,7 +337,7 @@ class AdaptiveAISystem:
             nearby_count = 0
             for other_entity in world.entities:
                 if other_entity != entity and hasattr(other_entity, 'position'):
-                    distance = self._calculate_distance(entity.position, other_entity.position)
+                    distance = self._distance(entity, other_entity)
                     if distance < 50:  # Радиус 50 единиц
                         nearby_count += 1
             
@@ -345,28 +345,35 @@ class AdaptiveAISystem:
         except:
             return 0
     
-    def _calculate_distance(self, pos1, pos2) -> float:
-        """Расчёт расстояния между позициями"""
+    def _get_xy(self, obj) -> Tuple[float, float]:
+        """Извлечь координаты x, y из сущности, позиции dataclass или tuple/list."""
         try:
-            # Проверяем, является ли позиция EntityPosition или tuple/list
-            if hasattr(pos1, 'x') and hasattr(pos1, 'y'):
-                # EntityPosition dataclass
-                x1, y1 = pos1.x, pos1.y
-            else:
-                # tuple/list
-                x1, y1 = pos1[0], pos1[1]
-            
-            if hasattr(pos2, 'x') and hasattr(pos2, 'y'):
-                # EntityPosition dataclass
-                x2, y2 = pos2.x, pos2.y
-            else:
-                # tuple/list
-                x2, y2 = pos2[0], pos2[1]
-            
-            return math.sqrt((x1 - x2)**2 + (y1 - y2)**2)
+            # Сущность с полем position
+            if hasattr(obj, 'position'):
+                pos = obj.position
+                if hasattr(pos, 'x') and hasattr(pos, 'y'):
+                    return float(pos.x), float(pos.y)
+                return float(pos[0]), float(pos[1])
+            # Уже передан dataclass позиции
+            if hasattr(obj, 'x') and hasattr(obj, 'y'):
+                return float(obj.x), float(obj.y)
+            # Кортеж/список
+            return float(obj[0]), float(obj[1])
+        except Exception as e:
+            logger.error(f"Ошибка извлечения координат: {e}")
+            return float('inf'), float('inf')
+
+    def _distance(self, a, b) -> float:
+        """Унифицированный расчет расстояния между двумя объектами/позициями."""
+        try:
+            x1, y1 = self._get_xy(a)
+            x2, y2 = self._get_xy(b)
+            if any(v == float('inf') for v in (x1, y1, x2, y2)):
+                return float('inf')
+            return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         except Exception as e:
             logger.error(f"Ошибка расчета расстояния: {e}")
-            return 100.0
+            return float('inf')
     
     def _choose_action(self, current_state: int, delta_time: float) -> AIAction:
         """Выбор действия"""
@@ -510,7 +517,7 @@ class AdaptiveAISystem:
             
             for other_entity in world.entities:
                 if other_entity != entity and hasattr(other_entity, 'type') and other_entity.type == 'enemy':
-                    distance = self._calculate_distance(entity, other_entity)
+                    distance = self._distance(entity, other_entity)
                     if distance < min_distance:
                         min_distance = distance
                         nearest_enemy = other_entity
@@ -530,7 +537,7 @@ class AdaptiveAISystem:
             min_distance = float('inf')
             
             for item in world.items:
-                distance = self._calculate_distance(entity, item)
+                distance = self._distance(entity, item)
                 if distance < min_distance:
                     min_distance = distance
                     nearest_item = item
@@ -550,7 +557,7 @@ class AdaptiveAISystem:
             min_distance = float('inf')
             
             for obstacle in world.obstacles:
-                distance = self._calculate_distance(entity, obstacle)
+                distance = self._distance(entity, obstacle)
                 if distance < min_distance:
                     min_distance = distance
                     nearest_obstacle = obstacle
@@ -607,7 +614,7 @@ class AdaptiveAISystem:
                 return False
             
             # Простая проверка расстояния
-            distance = self._calculate_distance(entity, obstacle)
+            distance = self._distance(entity, obstacle)
             return distance < 50  # Порог коллизии
         except Exception as e:
             logger.error(f"Ошибка проверки коллизии: {e}")
@@ -631,30 +638,7 @@ class AdaptiveAISystem:
             logger.error(f"Ошибка расчета направления избегания: {e}")
             return current_dx, current_dy
     
-    def _calculate_distance(self, entity1, entity2) -> float:
-        """Расчет расстояния между сущностями"""
-        try:
-            if not hasattr(entity1, 'position') or not hasattr(entity2, 'position'):
-                return float('inf')
-            
-            pos1 = entity1.position
-            pos2 = entity2.position
-            
-            # Поддержка EntityPosition и кортежей
-            if hasattr(pos1, 'x') and hasattr(pos1, 'y'):
-                x1, y1 = pos1.x, pos1.y
-            else:
-                x1, y1 = pos1[0], pos1[1]
-            
-            if hasattr(pos2, 'x') and hasattr(pos2, 'y'):
-                x2, y2 = pos2.x, pos2.y
-            else:
-                x2, y2 = pos2[0], pos2[1]
-            
-            return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-        except Exception as e:
-            logger.error(f"Ошибка расчета расстояния: {e}")
-            return float('inf')
+    # Удалено дублирование расчета расстояния: используйте _distance
     
     def _execute_movement(self, entity, world) -> float:
         """Выполнение движения"""
@@ -753,7 +737,7 @@ class AdaptiveAISystem:
         try:
             # Поиск ближайшего предмета для взаимодействия
             nearest_item = self._get_nearest_item(entity, world)
-            if nearest_item and self._calculate_distance(entity, nearest_item) < 30:
+            if nearest_item and self._distance(entity, nearest_item) < 30:
                 # Взаимодействие с предметом
                 return 2.0  # Награда за взаимодействие
             return 0.0
