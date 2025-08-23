@@ -182,9 +182,9 @@ class AILearningHUD:
             last_reward = getattr(player.ai_system, 'last_reward', 0.0)
 
             self.screen.blit(small.render(f"Уровень обучения: {level}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 18
-            self.screen.blit(small.render(f"Эпизоды: {episodes}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 18
-            self.screen.blit(small.render(f"Эпсилон: {epsilon:.2f}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 18
-            self.screen.blit(small.render(f"Последняя награда: {last_reward:.2f}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 18
+            self.screen.blit(small.render(f"Эпизоды: {episodes}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 36
+            self.screen.blit(small.render(f"Эпсилон: {epsilon:.2f}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 54
+            self.screen.blit(small.render(f"Последняя награда: {last_reward:.2f}", True, self.colors.LIGHT_GRAY), (self.panel.x + 10, y)); y += 72
         except Exception:
             pass
 

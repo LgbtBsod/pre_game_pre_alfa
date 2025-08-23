@@ -77,10 +77,10 @@ class InputManager:
         
         # Привязки мыши по умолчанию
         self.default_mouse_bindings = {
-            InputAction.ATTACK: [pygame.BUTTONLEFT],
-            InputAction.INTERACT: [pygame.BUTTONRIGHT],
-            InputAction.SCROLL_UP: [pygame.BUTTONWHEELUP],
-            InputAction.SCROLL_DOWN: [pygame.BUTTONWHEELDOWN]
+            InputAction.ATTACK: [1],  # Левая кнопка мыши
+            InputAction.INTERACT: [3],  # Правая кнопка мыши
+            InputAction.SCROLL_UP: [4],  # Колесо мыши вверх
+            InputAction.SCROLL_DOWN: [5]  # Колесо мыши вниз
         }
         
         # Текущие привязки

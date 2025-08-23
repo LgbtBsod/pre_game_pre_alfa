@@ -32,41 +32,30 @@ class DatabaseInitializer:
         self._initialized = False
         self._connection = None
     
-    def initialize_database(self, force_recreate: bool = False) -> bool:
+    def initialize_database(self) -> bool:
         """
         Инициализация базы данных
-        
-        Args:
-            force_recreate: Принудительно пересоздать базу данных
-            
-        Returns:
-            True если инициализация прошла успешно
+        Создает схему БД БЕЗ заполнения начальными данными
         """
         try:
-            logger.info("Начинаем инициализацию базы данных...")
-            
-            # Проверяем существование базы данных
-            if self.db_path.exists() and not force_recreate:
-                if self._check_database_integrity():
-                    logger.info("База данных уже существует и корректна")
-                    self._initialized = True
-                    return True
-                else:
-                    logger.warning("База данных повреждена, пересоздаем...")
+            if self._initialized:
+                logger.info("База данных уже инициализирована")
+                return True
             
             # Создаем новую базу данных
             if self._create_database_schema():
-                if self._populate_initial_data():
-                    if self._create_secure_database():
-                        self._initialized = True
-                        logger.info("База данных успешно инициализирована")
-                        return True
+                # НЕ заполняем начальными данными при инициализации
+                # Данные будут генерироваться для каждой сессии отдельно
+                if self._create_secure_database():
+                    self._initialized = True
+                    logger.info("База данных успешно инициализирована без начальных данных")
+                    return True
             
             logger.error("Ошибка инициализации базы данных")
             return False
             
         except Exception as e:
-            logger.error(f"Критическая ошибка инициализации базы данных: {e}")
+            logger.error(f"Ошибка инициализации базы данных: {e}")
             return False
     
     def _create_database_schema(self) -> bool:
@@ -657,7 +646,7 @@ class DatabaseInitializer:
             cursor.execute("""
                 INSERT INTO session_data (session_uuid, slot_id, state, created_at, last_saved)
                 VALUES (?, 1, ?, ?, ?)
-            """, (session_uuid, "active", time.time(), time.time()))
+            """, (session_uuid, "active", datetime.now().isoformat(), datetime.now().isoformat()))
             
             conn.commit()
             logger.info(f"Создана сессия: {session_name} ({session_uuid})")
@@ -681,7 +670,7 @@ class DatabaseInitializer:
                 UPDATE session_data 
                 SET player_data = ?, last_saved = ?
                 WHERE session_uuid = ?
-            """, (json.dumps(data), time.time(), session_uuid))
+            """, (json.dumps(data), datetime.now().isoformat(), session_uuid))
             
             conn.commit()
             return True

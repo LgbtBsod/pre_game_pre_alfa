@@ -1,720 +1,464 @@
+#!/usr/bin/env python3
 """
-Система управления игровыми сессиями с поддержкой множественных слотов сохранения.
-Обеспечивает изоляцию данных между сессиями и правильную генерацию контента.
+Система управления игровыми сессиями.
+Управляет временными сессиями и сохранением контента в БД.
 """
 
 import uuid
 import json
-import sqlite3
+import time
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, asdict
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
+import sqlite3
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
-
-
-class SessionState(Enum):
-    """Состояния игровой сессии"""
-    NEW = "new"
-    ACTIVE = "active"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    SAVED = "saved"
-
-
-@dataclass
-class SaveSlot:
-    """Слот сохранения"""
-    slot_id: int
-    session_uuid: str
-    save_name: str
-    created_at: datetime
-    last_played: datetime
-    player_level: int
-    world_seed: int
-    play_time: float
-    is_active: bool = True
 
 
 @dataclass
 class SessionData:
     """Данные игровой сессии"""
     session_uuid: str
-    slot_id: int
-    state: SessionState
-    created_at: datetime
-    last_saved: datetime
-    player_data: Dict[str, Any] = field(default_factory=dict)
-    world_data: Dict[str, Any] = field(default_factory=dict)
-    inventory_data: Dict[str, Any] = field(default_factory=dict)
-    progress_data: Dict[str, Any] = field(default_factory=dict)
+    slot_id: Optional[int] = None
+    save_name: str = ""
+    world_seed: int = 0
+    player_data: Dict[str, Any] = None
+    world_data: Dict[str, Any] = None
+    inventory_data: Dict[str, Any] = None
+    progress_data: Dict[str, Any] = None
     generation_seed: int = 0
     current_level: int = 1
+    created_at: str = ""
+    last_saved: str = ""
+    state: str = "active"
+    
+    def __post_init__(self):
+        if self.player_data is None:
+            self.player_data = {}
+        if self.world_data is None:
+            self.world_data = {}
+        if self.inventory_data is None:
+            self.inventory_data = {}
+        if self.progress_data is None:
+            self.progress_data = {}
+        if not self.created_at:
+            self.created_at = datetime.now().isoformat()
+        if not self.last_saved:
+            self.last_saved = datetime.now().isoformat()
 
 
 class SessionManager:
     """Менеджер игровых сессий"""
     
-    def __init__(self, save_dir: str = "save", max_slots: int = 10):
-        self.save_dir = Path(save_dir)
-        self.save_dir.mkdir(exist_ok=True)
-        self.max_slots = max_slots
+    def __init__(self, db_path: str = "data/game_data.db"):
+        self.db_path = Path(db_path)
+        self.db_path.parent.mkdir(parents=True, exist_ok=True)
         
-        # База данных сессий
-        self.db_path = Path("data/game_data.db")
-        self._init_session_database()
+        # Текущая активная сессия
+        self.current_session: Optional[SessionData] = None
         
-        # Активная сессия
-        self.active_session: Optional[SessionData] = None
-        self.active_slot: Optional[SaveSlot] = None
+        # Временное хранилище контента сессии (не в БД)
+        self.session_content: Dict[str, List[Dict]] = {
+            "items": [],
+            "enemies": [],
+            "skills": [],
+            "genes": [],
+            "accessories": []
+        }
         
-        logger.info(f"Менеджер сессий инициализирован: {self.save_dir}")
+        # Инициализация БД
+        self._init_database()
+        
+        logger.info("SessionManager инициализирован")
+    
+    def _init_database(self):
+        """Инициализация базы данных"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS sessions (
+                        session_uuid TEXT PRIMARY KEY,
+                        slot_id INTEGER,
+                        save_name TEXT,
+                        world_seed INTEGER,
+                        player_data TEXT,
+                        world_data TEXT,
+                        inventory_data TEXT,
+                        progress_data TEXT,
+                        generation_seed INTEGER,
+                        current_level INTEGER,
+                        created_at TEXT,
+                        last_saved TEXT,
+                        state TEXT
+                    )
+                """)
+                
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS session_content (
+                        session_uuid TEXT,
+                        content_type TEXT,
+                        content_data TEXT,
+                        FOREIGN KEY (session_uuid) REFERENCES sessions (session_uuid)
+                    )
+                """)
+                
+                conn.commit()
+                logger.info("База данных сессий инициализирована")
+                
+        except Exception as e:
+            logger.error(f"Ошибка инициализации БД сессий: {e}")
     
     def create_temporary_session(self, world_seed: int = None) -> SessionData:
-        """Создать временную сессию без записи в слоты сохранения.
-        Не создает запись в таблице save_slots. Используется для новой игры до явного сохранения.
-        """
+        """Создает временную сессию (не сохраняется в БД)"""
+        if world_seed is None:
+            world_seed = int(time.time()) % 1000000
+        
         session_uuid = str(uuid.uuid4())
-        session_data = SessionData(
+        
+        self.current_session = SessionData(
             session_uuid=session_uuid,
-            slot_id=0,
-            state=SessionState.NEW,
-            created_at=datetime.now(),
-            last_saved=datetime.now(),
-            generation_seed=world_seed or 0,
-            current_level=1
+            world_seed=world_seed,
+            generation_seed=world_seed,
+            save_name=f"Временная сессия {datetime.now().strftime('%H:%M')}",
+            state="temporary"
         )
-
-        # Устанавливаем как активную без активного слота
-        self.active_session = session_data
-        self.active_slot = None
+        
+        # Очищаем временное хранилище контента
+        self.session_content = {
+            "items": [],
+            "enemies": [],
+            "skills": [],
+            "genes": [],
+            "accessories": []
+        }
+        
         logger.info(f"Создана временная сессия: {session_uuid}")
-        return session_data
-
-    def bind_active_session_to_slot(self, slot_id: int, save_name: str) -> bool:
-        """Привязать активную сессию к слоту сохранения, создав/заменив запись в save_slots.
-        Не меняет session_uuid; просто создает слот и помечает его активным.
-        """
-        if not self.active_session:
-            logger.error("Нет активной сессии для привязки к слоту")
-            return False
-
-        try:
-            # Если слот занят, удаляем его (пользователь осознанно выбрал слот)
-            if not self._is_slot_available(slot_id):
-                self.delete_session(slot_id)
-
-            save_slot = SaveSlot(
-                slot_id=slot_id,
-                session_uuid=self.active_session.session_uuid,
-                save_name=save_name,
-                created_at=datetime.now(),
-                last_played=datetime.now(),
-                player_level=1,
-                world_seed=self.active_session.generation_seed or 0,
-                play_time=0.0,
-                is_active=True
-            )
-
-            self._save_slot_to_db(save_slot)
-            self.active_slot = save_slot
-            # обновляем slot_id у активной сессии
-            self.active_session.slot_id = slot_id
-            logger.info(f"Сессия {self.active_session.session_uuid} привязана к слоту {slot_id}")
-            return True
-        except Exception as e:
-            logger.error(f"Ошибка привязки сессии к слоту {slot_id}: {e}")
-            return False
-    def _init_session_database(self):
-        """Инициализация базы данных сессий"""
-        if not self.db_path.exists():
-            logger.error(f"База данных не найдена: {self.db_path}")
-            return
-        
-        logger.info("База данных сессий готова к использованию")
+        return self.current_session
     
-    def _is_slot_available(self, slot_id: int) -> bool:
-        """Проверка доступности слота"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT COUNT(*) FROM save_slots WHERE slot_id = ? AND is_active = 1", (slot_id,))
-        count = cursor.fetchone()[0]
-        conn.close()
-        
-        return count == 0
+    def add_session_content(self, content_type: str, content_data: Dict[str, Any]):
+        """Добавляет контент в текущую сессию (временное хранилище)"""
+        if content_type in self.session_content:
+            self.session_content[content_type].append(content_data)
+            logger.debug(f"Добавлен контент типа {content_type} в сессию")
+        else:
+            logger.warning(f"Неизвестный тип контента: {content_type}")
     
-    def _save_slot_to_db(self, save_slot: SaveSlot):
-        """Сохранение слота в БД"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT OR REPLACE INTO save_slots 
-            (slot_id, session_uuid, save_name, created_at, last_played, 
-             player_level, world_seed, play_time, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            save_slot.slot_id, save_slot.session_uuid, save_slot.save_name,
-            save_slot.created_at.isoformat(), save_slot.last_played.isoformat(),
-            save_slot.player_level, save_slot.world_seed, save_slot.play_time,
-            1 if save_slot.is_active else 0
-        ))
-        
-        conn.commit()
-        conn.close()
+    def get_session_content(self, content_type: str) -> List[Dict[str, Any]]:
+        """Получает контент текущей сессии"""
+        return self.session_content.get(content_type, [])
     
-    def _save_session_to_db(self, session_data: SessionData):
-        """Сохранение данных сессии в БД"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT OR REPLACE INTO session_data 
-            (session_uuid, slot_id, state, created_at, last_saved, player_data, 
-             world_data, inventory_data, progress_data, generation_seed, current_level)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            session_data.session_uuid, session_data.slot_id, session_data.state.value,
-            session_data.created_at.isoformat(), session_data.last_saved.isoformat(),
-            json.dumps(session_data.player_data), json.dumps(session_data.world_data),
-            json.dumps(session_data.inventory_data), json.dumps(session_data.progress_data),
-            session_data.generation_seed, session_data.current_level
-        ))
-        
-        conn.commit()
-        conn.close()
-    
-    def create_new_session(self, slot_id: int, save_name: str, world_seed: int = None) -> SessionData:
-        """Создание новой игровой сессии"""
-        try:
-            # Если слот занят, удаляем старую сессию
-            if not self._is_slot_available(slot_id):
-                logger.info(f"Слот {slot_id} занят, удаляем старую сессию")
-                self.delete_session(slot_id)
-            
-            # Генерируем UUID сессии
-            session_uuid = str(uuid.uuid4())
-            
-            # Создаём слот сохранения
-            save_slot = SaveSlot(
-                slot_id=slot_id,
-                session_uuid=session_uuid,
-                save_name=save_name,
-                created_at=datetime.now(),
-                last_played=datetime.now(),
-                player_level=1,
-                world_seed=world_seed or 0,
-                play_time=0.0,
-                is_active=True
-            )
-            
-            # Создаём данные сессии
-            session_data = SessionData(
-                session_uuid=session_uuid,
-                slot_id=slot_id,
-                state=SessionState.NEW,
-                created_at=datetime.now(),
-                last_saved=datetime.now(),
-                generation_seed=world_seed or 0,
-                current_level=1
-            )
-            
-            # Сохраняем в БД
-            self._save_slot_to_db(save_slot)
-            self._save_session_to_db(session_data)
-            
-            # Устанавливаем как активную сессию
-            self.active_session = session_data
-            self.active_slot = save_slot
-            
-            logger.info(f"Создана новая сессия: {session_uuid} в слоте {slot_id}")
-            return session_data
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания сессии: {e}")
-            raise
-    
-    def load_session(self, slot_id: int) -> Optional[SessionData]:
-        """Загрузка существующей сессии"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Получаем данные слота
-            cursor.execute("""
-                SELECT session_uuid, save_name, created_at, last_played, 
-                       player_level, world_seed, play_time, is_active
-                FROM save_slots WHERE slot_id = ? AND is_active = 1
-            """, (slot_id,))
-            
-            slot_data = cursor.fetchone()
-            if not slot_data:
-                logger.warning(f"Слот {slot_id} не найден или неактивен")
-                return None
-            
-            session_uuid, save_name, created_at, last_played, player_level, world_seed, play_time, is_active = slot_data
-            
-            # Получаем данные сессии
-            cursor.execute("""
-                SELECT state, created_at, last_saved, player_data, world_data, 
-                       inventory_data, progress_data, generation_seed, current_level
-                FROM session_data WHERE session_uuid = ?
-            """, (session_uuid,))
-            
-            session_row = cursor.fetchone()
-            if not session_row:
-                logger.error(f"Данные сессии {session_uuid} не найдены")
-                return None
-            
-            state, sess_created_at, last_saved, player_data, world_data, inventory_data, progress_data, generation_seed, current_level = session_row
-            
-            # Создаём объекты
-            save_slot = SaveSlot(
-                slot_id=slot_id,
-                session_uuid=session_uuid,
-                save_name=save_name,
-                created_at=datetime.fromisoformat(created_at),
-                last_played=datetime.fromisoformat(last_played),
-                player_level=player_level,
-                world_seed=world_seed,
-                play_time=play_time,
-                is_active=bool(is_active)
-            )
-            
-            session_data = SessionData(
-                session_uuid=session_uuid,
-                slot_id=slot_id,
-                state=SessionState(state),
-                created_at=datetime.fromisoformat(sess_created_at),
-                last_saved=datetime.fromisoformat(last_saved),
-                player_data=json.loads(player_data) if player_data else {},
-                world_data=json.loads(world_data) if world_data else {},
-                inventory_data=json.loads(inventory_data) if inventory_data else {},
-                progress_data=json.loads(progress_data) if progress_data else {},
-                generation_seed=generation_seed,
-                current_level=current_level
-            )
-            
-            # Обновляем время последней игры
-            save_slot.last_played = datetime.now()
-            self._save_slot_to_db(save_slot)
-            
-            # Устанавливаем как активную сессию
-            self.active_session = session_data
-            self.active_slot = save_slot
-            
-            logger.info(f"Загружена сессия: {session_uuid} из слота {slot_id}")
-            return session_data
-            
-        except Exception as e:
-            logger.error(f"Ошибка загрузки сессии: {e}")
-            return None
-        finally:
-            conn.close()
-    
-    def save_session(self, session_data: SessionData = None):
-        """Сохранение текущей сессии"""
-        if session_data is None:
-            session_data = self.active_session
-        
-        if not session_data:
+    def save_session_to_slot(self, slot_id: int, save_name: str = None) -> bool:
+        """Сохраняет текущую сессию в слот (записывает в БД)"""
+        if not self.current_session:
             logger.error("Нет активной сессии для сохранения")
             return False
         
         try:
-            # Обновляем время сохранения
-            session_data.last_saved = datetime.now()
-            session_data.state = SessionState.SAVED
+            # Обновляем данные сессии
+            self.current_session.slot_id = slot_id
+            if save_name:
+                self.current_session.save_name = save_name
+            self.current_session.state = "saved"
+            self.current_session.last_saved = datetime.now().isoformat()
             
             # Сохраняем в БД
-            self._save_session_to_db(session_data)
-            
-            # Обновляем слот
-            if self.active_slot:
-                # Если в прогрессе есть уровень игрока, обновим его в слоте
-                try:
-                    player_level = 0
-                    if isinstance(session_data.progress_data, dict):
-                        player_level = int(session_data.progress_data.get('player_level', 0))
-                    if player_level:
-                        self.active_slot.player_level = player_level
-                except Exception:
-                    pass
-                self.active_slot.last_played = datetime.now()
-                self._save_slot_to_db(self.active_slot)
-            
-            logger.info(f"Сессия {session_data.session_uuid} сохранена")
+            with sqlite3.connect(self.db_path) as conn:
+                # Сохраняем основную информацию о сессии
+                conn.execute("""
+                    INSERT OR REPLACE INTO sessions 
+                    (session_uuid, slot_id, save_name, world_seed, player_data, world_data, 
+                     inventory_data, progress_data, generation_seed, current_level, 
+                     created_at, last_saved, state)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    self.current_session.session_uuid,
+                    self.current_session.slot_id,
+                    self.current_session.save_name,
+                    self.current_session.world_seed,
+                    json.dumps(self.current_session.player_data),
+                    json.dumps(self.current_session.world_data),
+                    json.dumps(self.current_session.inventory_data),
+                    json.dumps(self.current_session.progress_data),
+                    self.current_session.generation_seed,
+                    self.current_session.current_level,
+                    self.current_session.created_at,
+                    self.current_session.last_saved,
+                    self.current_session.state
+                ))
+                
+                # Сохраняем контент сессии в БД
+                conn.execute("DELETE FROM session_content WHERE session_uuid = ?", 
+                           (self.current_session.session_uuid,))
+                
+                for content_type, content_list in self.session_content.items():
+                    for content_item in content_list:
+                        conn.execute("""
+                            INSERT INTO session_content (session_uuid, content_type, content_data)
+                            VALUES (?, ?, ?)
+                        """, (
+                            self.current_session.session_uuid,
+                            content_type,
+                            json.dumps(content_item)
+                        ))
+                
+                conn.commit()
+                logger.info(f"Сессия сохранена в слот {slot_id}")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка сохранения сессии: {e}")
             return False
     
-    def add_session_content(self, content_type: str, content_data: Dict[str, Any]):
-        """Добавление сгенерированного контента в сессию"""
-        if not self.active_session:
-            logger.error("Нет активной сессии для добавления контента")
-            return False
-        
+    def load_session_from_slot(self, slot_id: int) -> Optional[SessionData]:
+        """Загружает сессию из слота"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            session_uuid = self.active_session.session_uuid
-            
-            if content_type == "items":
-                cursor.execute("""
-                    INSERT INTO session_items 
-                    (session_uuid, item_id, name, item_type, rarity, effects, value, weight, icon, is_obtained, obtained_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    session_uuid, content_data.get("id"), content_data.get("name"),
-                    content_data.get("item_type"), content_data.get("rarity"),
-                    json.dumps(content_data.get("effects", [])), content_data.get("value", 0),
-                    content_data.get("weight", 0.0), content_data.get("icon", ""),
-                    0, None
-                ))
-            
-            elif content_type == "enemies":
-                cursor.execute("""
-                    INSERT INTO session_enemies 
-                    (session_uuid, enemy_id, name, enemy_type, biome, level, stats, 
-                     resistances, weaknesses, abilities, appearance, behavior_pattern, is_defeated, defeated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    session_uuid, content_data.get("id"), content_data.get("name"),
-                    content_data.get("enemy_type"), content_data.get("biome"),
-                    content_data.get("level", 1), json.dumps(content_data.get("stats", {})),
-                    json.dumps(content_data.get("resistances", {})), json.dumps(content_data.get("weaknesses", {})),
-                    json.dumps(content_data.get("abilities", [])), json.dumps(content_data.get("appearance", {})),
-                    content_data.get("behavior_pattern", ""), 0, None
-                ))
-            
-            elif content_type == "weapons":
-                cursor.execute("""
-                    INSERT INTO session_weapons 
-                    (session_uuid, weapon_id, name, weapon_type, tier, damage, effects, 
-                     requirements, appearance, durability, is_obtained, obtained_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    session_uuid, content_data.get("id"), content_data.get("name"),
-                    content_data.get("weapon_type"), content_data.get("tier", 1),
-                    content_data.get("damage", 0.0), json.dumps(content_data.get("effects", [])),
-                    json.dumps(content_data.get("requirements", {})), json.dumps(content_data.get("appearance", {})),
-                    content_data.get("durability", 100), 0, None
-                ))
-            
-            elif content_type == "skills":
-                cursor.execute("""
-                    INSERT INTO session_skills 
-                    (session_uuid, skill_id, name, skill_type, element, target, base_damage, 
-                     base_healing, mana_cost, cooldown, range, accuracy, critical_chance, 
-                     critical_multiplier, is_learned, learned_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    session_uuid, content_data.get("id"), content_data.get("name"),
-                    content_data.get("type"), content_data.get("element", "physical"),
-                    content_data.get("target", "single_enemy"), content_data.get("base_damage", 0.0),
-                    content_data.get("base_healing", 0.0), content_data.get("mana_cost", 0.0),
-                    content_data.get("cooldown", 0.0), content_data.get("range", 1.0),
-                    content_data.get("accuracy", 1.0), content_data.get("critical_chance", 0.05),
-                    content_data.get("critical_multiplier", 1.5), 0, None
-                ))
-            
-            elif content_type == "genes":
-                cursor.execute("""
-                    INSERT INTO session_genes 
-                    (session_uuid, gene_id, name, gene_type, effect_type, value, rarity, 
-                     description, is_obtained, obtained_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    session_uuid, content_data.get("id"), content_data.get("name"),
-                    content_data.get("gene_type"), content_data.get("effect_type"),
-                    content_data.get("value", 0.0), content_data.get("rarity", "common"),
-                    content_data.get("description", ""), 0, None
-                ))
-            
-            conn.commit()
-            logger.debug(f"Добавлен {content_type}: {content_data.get('name', 'Unknown')}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления контента {content_type}: {e}")
-            return False
-        finally:
-            conn.close()
-    
-    def get_session_content(self, content_type: str) -> List[Dict[str, Any]]:
-        """Получение сгенерированного контента сессии"""
-        if not self.active_session:
-            logger.error("Нет активной сессии для получения контента")
-            return []
-        
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            session_uuid = self.active_session.session_uuid
-            content = []
-            
-            if content_type == "items":
-                cursor.execute("""
-                    SELECT item_id, name, item_type, rarity, effects, value, weight, icon, is_obtained, obtained_at
-                    FROM session_items WHERE session_uuid = ?
-                """, (session_uuid,))
+            with sqlite3.connect(self.db_path) as conn:
+                # Загружаем основную информацию о сессии
+                cursor = conn.execute("""
+                    SELECT session_uuid, save_name, world_seed, player_data, world_data,
+                           inventory_data, progress_data, generation_seed, current_level,
+                           created_at, last_saved, state
+                    FROM sessions WHERE slot_id = ?
+                """, (slot_id,))
                 
-                for row in cursor.fetchall():
-                    content.append({
-                        "id": row[0], "name": row[1], "item_type": row[2], "rarity": row[3],
-                        "effects": json.loads(row[4]) if row[4] else [], "value": row[5],
-                        "weight": row[6], "icon": row[7], "is_obtained": bool(row[8]),
-                        "obtained_at": row[9]
-                    })
-            
-            elif content_type == "enemies":
-                cursor.execute("""
-                    SELECT enemy_id, name, enemy_type, biome, level, stats, resistances, 
-                           weaknesses, abilities, appearance, behavior_pattern, is_defeated, defeated_at
-                    FROM session_enemies WHERE session_uuid = ?
-                """, (session_uuid,))
+                row = cursor.fetchone()
+                if not row:
+                    logger.warning(f"Слот {slot_id} не найден")
+                    return None
                 
-                for row in cursor.fetchall():
-                    content.append({
-                        "id": row[0], "name": row[1], "enemy_type": row[2], "biome": row[3],
-                        "level": row[4], "stats": json.loads(row[5]) if row[5] else {},
-                        "resistances": json.loads(row[6]) if row[6] else {},
-                        "weaknesses": json.loads(row[7]) if row[7] else {},
-                        "abilities": json.loads(row[8]) if row[8] else [],
-                        "appearance": json.loads(row[9]) if row[9] else {},
-                        "behavior_pattern": row[10], "is_defeated": bool(row[11]),
-                        "defeated_at": row[12]
-                    })
-            
-            elif content_type == "weapons":
-                cursor.execute("""
-                    SELECT weapon_id, name, weapon_type, tier, damage, effects, requirements, 
-                           appearance, durability, is_obtained, obtained_at
-                    FROM session_weapons WHERE session_uuid = ?
-                """, (session_uuid,))
-                
-                for row in cursor.fetchall():
-                    content.append({
-                        "id": row[0], "name": row[1], "weapon_type": row[2], "tier": row[3],
-                        "damage": row[4], "effects": json.loads(row[5]) if row[5] else [],
-                        "requirements": json.loads(row[6]) if row[6] else {},
-                        "appearance": json.loads(row[7]) if row[7] else {},
-                        "durability": row[8], "is_obtained": bool(row[9]), "obtained_at": row[10]
-                    })
-            
-            elif content_type == "skills":
-                cursor.execute("""
-                    SELECT skill_id, name, skill_type, element, target, base_damage, base_healing,
-                           mana_cost, cooldown, range, accuracy, critical_chance, critical_multiplier,
-                           is_learned, learned_at
-                    FROM session_skills WHERE session_uuid = ?
-                """, (session_uuid,))
-                
-                for row in cursor.fetchall():
-                    content.append({
-                        "id": row[0], "name": row[1], "type": row[2], "element": row[3],
-                        "target": row[4], "base_damage": row[5], "base_healing": row[6],
-                        "mana_cost": row[7], "cooldown": row[8], "range": row[9],
-                        "accuracy": row[10], "critical_chance": row[11], "critical_multiplier": row[12],
-                        "is_learned": bool(row[13]), "learned_at": row[14]
-                    })
-            
-            elif content_type == "genes":
-                cursor.execute("""
-                    SELECT gene_id, name, gene_type, effect_type, value, rarity, description,
-                           is_obtained, obtained_at
-                    FROM session_genes WHERE session_uuid = ?
-                """, (session_uuid,))
-                
-                for row in cursor.fetchall():
-                    content.append({
-                        "id": row[0], "name": row[1], "gene_type": row[2], "effect_type": row[3],
-                        "value": row[4], "rarity": row[5], "description": row[6],
-                        "is_obtained": bool(row[7]), "obtained_at": row[8]
-                    })
-            
-            conn.close()
-            return content
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения контента {content_type}: {e}")
-            return []
-    
-    def get_available_slots(self) -> List[SaveSlot]:
-        """Получение списка доступных слотов"""
-        try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT slot_id, session_uuid, save_name, created_at, last_played,
-                       player_level, world_seed, play_time, is_active
-                FROM save_slots WHERE is_active = 1 ORDER BY slot_id
-            """)
-            
-            slots = []
-            for row in cursor.fetchall():
-                slot = SaveSlot(
-                    slot_id=row[0], session_uuid=row[1], save_name=row[2],
-                    created_at=datetime.fromisoformat(row[3]),
-                    last_played=datetime.fromisoformat(row[4]),
-                    player_level=row[5], world_seed=row[6], play_time=row[7],
-                    is_active=bool(row[8])
+                # Создаем объект сессии
+                session_data = SessionData(
+                    session_uuid=row[0],
+                    slot_id=slot_id,
+                    save_name=row[1],
+                    world_seed=row[2],
+                    player_data=json.loads(row[3]) if row[3] else {},
+                    world_data=json.loads(row[4]) if row[4] else {},
+                    inventory_data=json.loads(row[5]) if row[5] else {},
+                    progress_data=json.loads(row[6]) if row[6] else {},
+                    generation_seed=row[7],
+                    current_level=row[8],
+                    created_at=row[9],
+                    last_saved=row[10],
+                    state=row[11]
                 )
-                slots.append(slot)
-            
-            conn.close()
-            return slots
+                
+                # Загружаем контент сессии
+                cursor = conn.execute("""
+                    SELECT content_type, content_data FROM session_content 
+                    WHERE session_uuid = ?
+                """, (session_data.session_uuid,))
+                
+                self.session_content = {
+                    "items": [],
+                    "enemies": [],
+                    "skills": [],
+                    "genes": [],
+                    "accessories": []
+                }
+                
+                for content_type, content_data in cursor.fetchall():
+                    if content_type in self.session_content:
+                        self.session_content[content_type].append(json.loads(content_data))
+                
+                self.current_session = session_data
+                logger.info(f"Сессия загружена из слота {slot_id}")
+                return session_data
             
         except Exception as e:
-            logger.error(f"Ошибка получения слотов: {e}")
-            return []
+            logger.error(f"Ошибка загрузки сессии: {e}")
+            return None
     
     def get_save_slots_info(self) -> List[Dict[str, Any]]:
-        """Получение информации о слотах сохранения для UI"""
+        """Получает информацию о слотах сохранения"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute("""
-                SELECT slot_id, session_uuid, save_name, created_at, last_played,
-                       player_level, world_seed, play_time, is_active
-                FROM save_slots WHERE is_active = 1 ORDER BY slot_id
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.execute("""
+                    SELECT slot_id, save_name, current_level, last_saved, state
+                    FROM sessions WHERE slot_id IS NOT NULL
+                    ORDER BY slot_id
             """)
             
             slots_info = []
             for row in cursor.fetchall():
-                slot_info = {
-                    'slot_id': row[0],
-                    'session_uuid': row[1],
-                    'save_name': row[2] or f"Сохранение {row[0]}",
-                    'created_at': row[3],
-                    'last_played': row[4],
-                    'level': row[5] or 1,
-                    'world_seed': row[6] or 0,
-                    'play_time': row[7] or 0.0,
-                    'is_active': bool(row[8])
-                }
-                slots_info.append(slot_info)
-            
-            conn.close()
+                    slots_info.append({
+                        "slot_id": row[0],
+                        "save_name": row[1],
+                        "level": row[2],
+                        "last_saved": row[3],
+                        "state": row[4]
+                    })
+                
             return slots_info
             
         except Exception as e:
             logger.error(f"Ошибка получения информации о слотах: {e}")
             return []
     
-    def get_free_slot(self) -> Optional[int]:
-        """Получение свободного слота"""
-        used_slots = {slot.slot_id for slot in self.get_available_slots()}
-        
-        for slot_id in range(1, self.max_slots + 1):
-            if slot_id not in used_slots:
-                return slot_id
-        
-        return None
-    
-    def get_available_slot_for_new_game(self) -> int:
-        """Получение доступного слота для новой игры (всегда возвращает слот)"""
-        # Сначала пытаемся найти свободный слот
-        free_slot = self.get_free_slot()
-        if free_slot is not None:
-            return free_slot
-        
-        # Если свободных слотов нет, используем слот 1 (перезапишем его)
-        return 1
-    
-    def delete_session(self, slot_id: int) -> bool:
-        """Удаление сессии"""
+    def delete_save_slot(self, slot_id: int) -> bool:
+        """Удаляет слот сохранения"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Получаем UUID сессии
-            cursor.execute("SELECT session_uuid FROM save_slots WHERE slot_id = ?", (slot_id,))
-            result = cursor.fetchone()
-            
-            if not result:
-                logger.warning(f"Слот {slot_id} не найден")
-                return False
-            
-            session_uuid = result[0]
-            
-            # Удаляем все данные сессии
-            cursor.execute("DELETE FROM session_items WHERE session_uuid = ?", (session_uuid,))
-            cursor.execute("DELETE FROM session_enemies WHERE session_uuid = ?", (session_uuid,))
-            cursor.execute("DELETE FROM session_weapons WHERE session_uuid = ?", (session_uuid,))
-            cursor.execute("DELETE FROM session_skills WHERE session_uuid = ?", (session_uuid,))
-            cursor.execute("DELETE FROM session_genes WHERE session_uuid = ?", (session_uuid,))
-            cursor.execute("DELETE FROM session_data WHERE session_uuid = ?", (session_uuid,))
-            cursor.execute("DELETE FROM save_slots WHERE slot_id = ?", (slot_id,))
-            
-            conn.commit()
-            conn.close()
-            
-            logger.info(f"Сессия в слоте {slot_id} удалена")
-            return True
+            with sqlite3.connect(self.db_path) as conn:
+                # Получаем session_uuid для удаления связанного контента
+                cursor = conn.execute("SELECT session_uuid FROM sessions WHERE slot_id = ?", (slot_id,))
+                row = cursor.fetchone()
+                
+                if row:
+                    session_uuid = row[0]
+                    # Удаляем контент сессии
+                    conn.execute("DELETE FROM session_content WHERE session_uuid = ?", (session_uuid,))
+                    # Удаляем сессию
+                    conn.execute("DELETE FROM sessions WHERE slot_id = ?", (slot_id,))
+                    conn.commit()
+                    
+                    logger.info(f"Слот {slot_id} удален")
+                    return True
+                else:
+                    logger.warning(f"Слот {slot_id} не найден")
+                    return False
             
         except Exception as e:
-            logger.error(f"Ошибка удаления сессии: {e}")
+            logger.error(f"Ошибка удаления слота: {e}")
             return False
     
-    def get_session_statistics(self) -> Dict[str, Any]:
-        """Получение статистики сессий"""
-        if not self.active_session:
-            return {}
+    def update_session_data(self, player_data: Dict[str, Any] = None, 
+                          world_data: Dict[str, Any] = None,
+                          inventory_data: Dict[str, Any] = None,
+                          progress_data: Dict[str, Any] = None):
+        """Обновляет данные текущей сессии"""
+        if not self.current_session:
+            logger.warning("Нет активной сессии для обновления")
+            return
         
+        if player_data:
+            self.current_session.player_data.update(player_data)
+        if world_data:
+            self.current_session.world_data.update(world_data)
+        if inventory_data:
+            self.current_session.inventory_data.update(inventory_data)
+        if progress_data:
+            self.current_session.progress_data.update(progress_data)
+        
+        self.current_session.last_saved = datetime.now().isoformat()
+        logger.debug("Данные сессии обновлены")
+    
+    def get_current_session(self) -> Optional[SessionData]:
+        """Получает текущую активную сессию"""
+        return self.current_session
+    
+    def clear_current_session(self):
+        """Очищает текущую сессию"""
+        self.current_session = None
+        self.session_content = {
+            "items": [],
+            "enemies": [],
+            "skills": [],
+            "genes": [],
+            "accessories": []
+        }
+        logger.info("Текущая сессия очищена")
+
+    def create_save_slot(self, save_name: str = None) -> int:
+        """Создает новый слот сохранения и возвращает его ID"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            session_uuid = self.active_session.session_uuid
-            
-            stats = {
-                "session_uuid": session_uuid,
-                "slot_id": self.active_session.slot_id,
-                "items_count": 0,
-                "enemies_count": 0,
-                "weapons_count": 0,
-                "skills_count": 0,
-                "genes_count": 0,
-                "obtained_items": 0,
-                "defeated_enemies": 0,
-                "learned_skills": 0
-            }
-            
-            # Подсчитываем контент
-            for content_type in ["items", "enemies", "weapons", "skills", "genes"]:
-                table_name = f"session_{content_type}"
-                cursor.execute(f"SELECT COUNT(*) FROM {table_name} WHERE session_uuid = ?", (session_uuid,))
-                count = cursor.fetchone()[0]
-                stats[f"{content_type}_count"] = count
+            with sqlite3.connect(self.db_path) as conn:
+                # Находим следующий свободный slot_id
+                cursor = conn.execute("SELECT MAX(slot_id) FROM save_slots")
+                max_slot = cursor.fetchone()[0]
+                new_slot_id = (max_slot or 0) + 1
                 
-                # Подсчитываем полученные/изученные
-                if content_type == "items":
-                    cursor.execute("SELECT COUNT(*) FROM session_items WHERE session_uuid = ? AND is_obtained = 1", (session_uuid,))
-                    stats["obtained_items"] = cursor.fetchone()[0]
-                elif content_type == "enemies":
-                    cursor.execute("SELECT COUNT(*) FROM session_enemies WHERE session_uuid = ? AND is_defeated = 1", (session_uuid,))
-                    stats["defeated_enemies"] = cursor.fetchone()[0]
-                elif content_type == "skills":
-                    cursor.execute("SELECT COUNT(*) FROM session_skills WHERE session_uuid = ? AND is_learned = 1", (session_uuid,))
-                    stats["learned_skills"] = cursor.fetchone()[0]
-            
-            conn.close()
-            return stats
+                # Создаем новый слот
+                session_uuid = str(uuid.uuid4())
+                save_name = save_name or f"Сохранение {new_slot_id}"
+                
+                conn.execute("""
+                    INSERT INTO save_slots 
+                    (slot_id, session_uuid, save_name, created_at, last_played, player_level, world_seed, play_time, is_active)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    new_slot_id,
+                    session_uuid,
+                    save_name,
+                    datetime.now().isoformat(),
+                    datetime.now().isoformat(),
+                    1,  # player_level
+                    0,  # world_seed
+                    0.0,  # play_time
+                    1   # is_active
+                ))
+                
+                conn.commit()
+                logger.info(f"Создан новый слот сохранения: {new_slot_id}")
+                return new_slot_id
+                
+        except Exception as e:
+            logger.error(f"Ошибка создания слота сохранения: {e}")
+            return -1
+
+    def get_available_save_slots(self) -> List[Dict[str, Any]]:
+        """Получает список доступных слотов сохранения"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.execute("""
+                    SELECT slot_id, save_name, created_at, last_played, player_level, play_time, is_active
+                    FROM save_slots 
+                    WHERE is_active = 1
+                    ORDER BY slot_id
+                """)
+                
+                slots = []
+                for row in cursor.fetchall():
+                    slots.append({
+                        "slot_id": row[0],
+                        "save_name": row[1],
+                        "created_at": row[2],
+                        "last_played": row[3],
+                        "player_level": row[4],
+                        "play_time": row[5],
+                        "is_active": bool(row[6])
+                    })
+                
+                return slots
             
         except Exception as e:
-            logger.error(f"Ошибка получения статистики: {e}")
-            return {}
+            logger.error(f"Ошибка получения слотов сохранения: {e}")
+            return []
+
+    def initialize_default_slots(self):
+        """Инициализирует 5 слотов сохранения по умолчанию"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                # Проверяем, есть ли уже слоты
+                cursor = conn.execute("SELECT COUNT(*) FROM save_slots")
+                slot_count = cursor.fetchone()[0]
+                
+                if slot_count == 0:
+                    # Создаем 5 слотов по умолчанию
+                    for i in range(1, 6):
+                        session_uuid = str(uuid.uuid4())
+                        conn.execute("""
+                            INSERT INTO save_slots 
+                            (slot_id, session_uuid, save_name, created_at, last_played, player_level, world_seed, play_time, is_active)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            i,
+                            session_uuid,
+                            f"Слот {i}",
+                            datetime.now().isoformat(),
+                            datetime.now().isoformat(),
+                            1,
+                            0,
+                            0.0,
+                            1
+                        ))
+                    
+                    conn.commit()
+                    logger.info("Создано 5 слотов сохранения по умолчанию")
+                
+        except Exception as e:
+            logger.error(f"Ошибка инициализации слотов по умолчанию: {e}")
 
 
 # Глобальный экземпляр менеджера сессий

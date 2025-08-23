@@ -31,7 +31,7 @@ from .content_generator import (
 )
 
 from .evolution_system import (
-    EvolutionStage, EvolutionBonus, EvolutionData, 
+    EvolutionStage, EvolutionBonusType, EvolutionBonus, EvolutionData, 
     EvolutionPath, EvolutionCycleSystem
 )
 

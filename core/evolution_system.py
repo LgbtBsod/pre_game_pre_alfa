@@ -28,7 +28,7 @@ class EvolutionStage(Enum):
     TRANSCENDENCE = "transcendence"
 
 
-class EvolutionBonus(Enum):
+class EvolutionBonusType(Enum):
     """Типы эволюционных бонусов"""
     GENE_SLOTS = "gene_slots"
     MUTATION_RESISTANCE = "mutation_resistance"

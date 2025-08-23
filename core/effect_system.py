@@ -55,6 +55,9 @@ class EffectCode(Enum):
     DAMAGE_BOOST = "COMBAT_301"
     DEFENSE_BOOST = "COMBAT_302"
     SPEED_BOOST = "COMBAT_303"
+    
+    # Базовые эффекты игрока
+    PLAYER_BASE_BOOST = "PLAYER_BASE_BOOST"
 
 
 @dataclass
@@ -193,6 +196,11 @@ class EffectDatabase:
             Effect("", EffectCode.SPEED_BOOST.value, "Ускорение", 
                   EffectType.COMBAT.value, "speed", 40.0, True, 15.0, 1.0, 1,
                   "Увеличивает скорость на 40% на 15 секунд"),
+            
+            # Базовые эффекты игрока
+            Effect("", EffectCode.PLAYER_BASE_BOOST.value, "Базовое усиление игрока", 
+                  EffectType.UTILITY.value, "all_stats", 10.0, True, 0.0, 1.0, 1,
+                  "Базовое увеличение всех характеристик на 10%"),
         ]
         
         for effect in standard_effects:

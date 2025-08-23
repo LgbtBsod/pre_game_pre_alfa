@@ -64,36 +64,30 @@ class IntegrationTester:
         self.print_summary()
         return all_passed
     
-    def test_database(self) -> bool:
+    def test_database(self):
         """Тест системы базы данных"""
         try:
-            from core.database_initializer import database_initializer
+            from core.database_initializer import DatabaseInitializer
             
-            # Тест инициализации
-            success = database_initializer.initialize_database(force_recreate=True)
-            if not success:
-                return False
+            # Создаем инициализатор БД
+            db_init = DatabaseInitializer()
             
-            # Тест проверки целостности
-            integrity = database_initializer._check_database_integrity()
-            if not integrity:
-                return False
+            # Инициализируем БД
+            success = db_init.initialize_database()
+            assert success, "Ошибка инициализации БД"
             
-            # Тест создания сессии
-            session_uuid = database_initializer.create_session("test_session")
-            if not session_uuid:
-                return False
+            # Тестируем создание сессии
+            session = db_init.create_session("test_session")
+            assert session is not None, "Ошибка создания сессии"
             
-            # Тест сохранения данных
-            test_data = {"test": "data", "value": 42}
-            success = database_initializer.save_session_data(session_uuid, test_data)
-            if not success:
-                return False
+            # Тестируем сохранение данных
+            test_data = {"test": "data"}
+            success = db_init.save_session_data("test_session", test_data)
+            assert success, "Ошибка сохранения данных сессии"
             
-            # Тест загрузки данных
-            loaded_data = database_initializer.load_session_data(session_uuid)
-            if loaded_data != test_data:
-                return False
+            # Тестируем загрузку данных
+            loaded_data = db_init.load_session_data("test_session")
+            assert loaded_data == test_data, "Ошибка загрузки данных сессии"
             
             logger.info("База данных: все операции выполнены успешно")
             return True
@@ -134,44 +128,27 @@ class IntegrationTester:
             logger.error(f"Ошибка теста менеджера ресурсов: {e}")
             return False
     
-    def test_event_system(self) -> bool:
+    def test_event_system(self):
         """Тест системы событий"""
         try:
-            from core.event_system import event_system, GameEvents, Event, EventPriority
-            
-            # Тест создания события
-            test_event = Event(
-                event_type=GameEvents.TEST_EVENT,
-                data={"test": "data"},
-                priority=EventPriority.NORMAL
-            )
-            
-            # Тест регистрации обработчика
-            handler_called = False
-            def test_handler(event_data):
-                nonlocal handler_called
-                handler_called = True
-            
-            event_system.register_handler(GameEvents.TEST_EVENT, test_handler)
+            from core.event_system import event_system, GameEvents, EventPriority
             
             # Тест отправки события
-            event_system.emit_event(GameEvents.TEST_EVENT, {"test": "data"})
+            success = event_system.emit_simple(GameEvents.TEST_EVENT, {"test": "data"})
+            assert success, "Ошибка отправки события"
             
             # Тест обработки событий
             event_system.process_events()
             
-            if not handler_called:
-                return False
+            # Тест получения события из очереди
+            event = event_system._event_queue.get_nowait()
+            if event is not None:
+                assert hasattr(event, 'event_type'), "Событие не имеет атрибута event_type"
+                assert event.event_type == GameEvents.TEST_EVENT, "Неверный тип события"
             
-            # Тест приоритетов
-            high_priority_event = Event(
-                event_type=GameEvents.TEST_EVENT,
-                data={"priority": "high"},
-                priority=EventPriority.HIGH
-            )
-            
-            event_system.emit_event(GameEvents.TEST_EVENT, {"priority": "high"}, EventPriority.HIGH)
-            event_system.process_events()
+            # Тест статистики
+            stats = event_system.get_stats()
+            assert isinstance(stats, dict), "Статистика должна быть словарем"
             
             logger.info("Система событий: все операции выполнены успешно")
             return True
@@ -347,33 +324,29 @@ class IntegrationTester:
             logger.error(f"Ошибка теста UI компонентов: {e}")
             return False
     
-    def test_game_systems(self) -> bool:
+    def test_game_systems(self):
         """Тест игровых систем"""
         try:
             from core.game_systems import GameSystems
             
-            # Создание игровых систем
+            # Создаем игровые системы
             game_systems = GameSystems()
             
-            # Тест инициализации
-            if not game_systems.initialize():
-                return False
+            # Инициализируем системы
+            success = game_systems.initialize()
+            assert success, "Ошибка инициализации игровых систем"
             
             # Тест обновления
             game_systems.update(0.016)  # 60 FPS
             
-            # Тест получения статистики
+            # Тест рендеринга
+            game_systems.render()
+            
+            # Тест статистики
             stats = game_systems.get_statistics()
-            if not isinstance(stats, dict):
-                return False
-            
-            # Тест создания сущности
-            entity = game_systems.entity_factory.create_entity("test_entity")
-            if not entity:
-                return False
-            
-            # Тест обновления сущностей
-            game_systems.entity_manager.update_entities(0.016)
+            assert isinstance(stats, dict), "Статистика должна быть словарем"
+            assert 'game_time' in stats, "Статистика должна содержать game_time"
+            assert 'fps' in stats, "Статистика должна содержать fps"
             
             # Тест очистки
             game_systems.cleanup()

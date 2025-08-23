@@ -31,7 +31,7 @@ class MenuScene(Scene):
         self.selected_index = 0
 
         
-    def initialize(self) -> None:
+    def initialize(self) -> bool:
         """Initialize the menu scene"""
         try:
             self.logger.info("Starting menu scene initialization")
@@ -60,11 +60,13 @@ class MenuScene(Scene):
             self.logger.info("Input handlers setup completed")
             
             self.logger.info("Menu scene initialized successfully")
+            return True
             
         except Exception as e:
             self.logger.error(f"Failed to initialize menu scene: {e}")
             import traceback
             self.logger.error(f"Traceback: {traceback.format_exc()}")
+            return False
     
     def _create_menu_items(self) -> None:
         """Create menu items"""

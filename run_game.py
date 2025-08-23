@@ -59,21 +59,18 @@ def check_dependencies() -> bool:
 
 def initialize_database() -> bool:
     """Инициализация базы данных"""
+    # Инициализация базы данных
+    logger.info("Инициализация базы данных...")
     try:
         from core.database_initializer import database_initializer
-        
-        logger.info("Инициализация базы данных...")
-        success = database_initializer.initialize_database()
-        
-        if success:
+        if database_initializer.initialize_database():
             logger.info("База данных инициализирована успешно")
+            return True
         else:
             logger.error("Ошибка инициализации базы данных")
-        
-        return success
-        
+            return False
     except Exception as e:
-        logger.error(f"Критическая ошибка инициализации базы данных: {e}")
+        logger.error(f"Ошибка инициализации базы данных: {e}")
         return False
 
 
@@ -111,11 +108,6 @@ def sanity_check_assets() -> bool:
 def run_graphical_interface():
     """Запуск графического интерфейса"""
     try:
-        # Инициализируем базу данных
-        if not initialize_database():
-            logger.error("Не удалось инициализировать базу данных")
-            return False
-        
         # Инициализируем системы
         from core.resource_manager import resource_manager
         from core.event_system import event_system
@@ -306,6 +298,11 @@ def main():
     # Проверка зависимостей
     if not check_dependencies():
         print("❌ Критические зависимости не найдены. Установите необходимые пакеты.")
+        return 1
+    
+    # Инициализация базы данных
+    if not initialize_database():
+        print("❌ Не удалось инициализировать базу данных")
         return 1
     
     # Определение режима запуска

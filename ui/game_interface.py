@@ -32,6 +32,7 @@ from ui.camera import Camera
 from core.sprite_animation import CharacterSprite, Direction, AnimationState
 from core.movement_system import MovementSystem
 from core.level_progression import LevelProgressionSystem, StatisticsRenderer, LevelTransitionManager
+from core.input_manager import InputManager
 from ui.hud import StatusHUD, InventoryHUD, GeneticsHUD, AILearningHUD, DebugHUD
 from ui.renderer import GameRenderer
 from config.config_manager import config_manager
@@ -150,6 +151,9 @@ class GameInterface:
         self.evolution_system = EvolutionCycleSystem(self.effect_db)
         self.event_system = GlobalEventSystem(self.effect_db)
         
+        # Система управления вводом
+        self.input_manager = InputManager()
+        
         # Новые системы
         from core.computer_vision_system import ComputerVisionSystem
         from core.object_creation_system import ObjectCreationSystem
@@ -160,6 +164,9 @@ class GameInterface:
         # Система управления сессиями
         from core.session_manager import session_manager
         self.session_manager = session_manager
+        
+        # Инициализация слотов сохранения по умолчанию
+        self.session_manager.initialize_default_slots()
         
         # Инициализация системы сложности с обработкой ошибок
         try:
@@ -550,34 +557,16 @@ class GameInterface:
     def _start_new_game(self):
         """Начало новой игры"""
         try:
-            # Создаём временную сессию без записи в слоты
-            session_data = self.session_manager.create_temporary_session(
-                world_seed=random.randint(1, 999999)
-            )
+            # Создание новой сессии
+            self.session_manager.create_temporary_session()
             
-            # Инициализируем контент для новой сессии (без привязки к слоту)
-            initial_content = self.content_generator.initialize_session_content(
-                session_data.session_uuid, 
+            # Инициализация контента для сессии
+            self.content_generator.initialize_session_content(
+                self.session_manager.current_session.session_uuid,
                 level=1
             )
             
-            # Добавляем сгенерированный контент в сессию
-            for item in initial_content.get("items", []):
-                self.session_manager.add_session_content("items", item)
-            
-            for weapon in initial_content.get("weapons", []):
-                self.session_manager.add_session_content("weapons", weapon)
-            
-            for enemy in initial_content.get("enemies", []):
-                self.session_manager.add_session_content("enemies", enemy)
-            
-            for skill in initial_content.get("skills", []):
-                self.session_manager.add_session_content("skills", skill)
-            
-            for gene in initial_content.get("genes", []):
-                self.session_manager.add_session_content("genes", gene)
-            
-            # Создание игрока с автономным ИИ
+            # Создание игрока
             self.player = AdvancedGameEntity(
                 entity_id="PLAYER_001",
                 entity_type="player",
@@ -585,18 +574,24 @@ class GameInterface:
                 position=(0, 0, 0)
             )
             
-            # ИИ
-            self.player_ai = AdaptiveAISystem("PLAYER_001")
+            # Инициализация систем игрока (уже происходит в конструкторе)
+            # self.player.initialize_systems()  # Удалено - инициализация происходит в конструкторе
+            
+            # Создание ИИ для игрока
+            self.player_ai = AdaptiveAISystem("PLAYER_001", self.effect_db)
+            # Инициализация происходит в конструкторе, дополнительная инициализация не требуется
+            
+            # Включение автономного движения
             self.autonomous_movement_enabled = True
             
-            # Генерация мира
+            # Генерация мира с увеличенным размером (в 100 раз больше)
             world = self.content_generator.generate_world(
                 biome="forest",
-                size="medium",
+                size="massive",  # Изменено с "medium" на "massive"
                 difficulty=1.0
             )
             
-            # Создание врагов из контента
+            # Создание врагов из контента сессии
             self.entities = []
             session_enemies = self.session_manager.get_session_content("enemies")
             for i, enemy_data in enumerate(session_enemies):
@@ -604,7 +599,7 @@ class GameInterface:
                     entity_id=f"ENEMY_{i:03d}",
                     entity_type="enemy",
                     name=enemy_data.get("name", f"Враг {i+1}"),
-                    position=(random.randint(-200, 200), random.randint(-200, 200), 0)
+                    position=(random.randint(-2000, 2000), random.randint(-2000, 2000), 0)  # Увеличенный диапазон
                 )
                 self.entities.append(enemy)
             
@@ -613,35 +608,49 @@ class GameInterface:
             self.chests = []
             self.items = []
             
-            # Системы
-            self.effect_db = EffectDatabase()
-            self.genetic_system = AdvancedGeneticSystem(self.effect_db)
-            self.emotion_system = AdvancedEmotionSystem(self.effect_db)
-            self.content_generator = ContentGenerator(session_data.generation_seed)
-            self.evolution_system = EvolutionCycleSystem(self.effect_db)
-            self.event_system = GlobalEventSystem(self.effect_db)
-            self.difficulty_system = DynamicDifficultySystem()
+            # Создание маяков в увеличенном мире
+            self.beacon_system = BeaconNavigationSystem(
+                world_width=10000,  # Увеличенный размер мира
+                world_height=10000
+            )
             
-            # Изометрия/рендер/прогрессия
-            self.isometric_projection = IsometricProjection(tile_width=64, tile_height=32)
-            self.beacon_system = BeaconNavigationSystem(world_width=1000, world_height=1000)
+            # Инициализация изометрической проекции с увеличенными границами
+            self.isometric_projection = IsometricProjection(
+                tile_width=64,  # Размер тайла
+                tile_height=32
+            )
+            
+            # Инициализация рендерера
             self.isometric_renderer = IsometricRenderer(self.isometric_projection)
+            
+            # Создание спрайта игрока
             self.player_sprite = CharacterSprite("graphics/player")
+            self.player_sprite.set_position(0, 0)
+            
+            # Инициализация систем движения
             self.movement_system = MovementSystem()
-            self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
-            self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
-            self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
-            self.level_progression.start_level(1)
             
-            # В игру
+            # Инициализация систем прогрессии
+            self.level_progression = LevelProgressionSystem()
+            self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts)
+            self.level_transition_manager = LevelTransitionManager(self.screen, self.fonts)
+            
+            # Инициализация систем создания объектов
+            from core.object_creation_system import ObjectCreationSystem
+            self.object_creation = ObjectCreationSystem()
+            
+            # Инициализация компьютерного зрения
+            from core.computer_vision_system import ComputerVisionSystem
+            self.computer_vision = ComputerVisionSystem()
+            
+            # Переход к игровому состоянию
             self.game_state = GameState.PLAYING
-            logger.info("Новая игра начата (временная сессия)")
             
-            # Обновить окружение ИИ
-            if hasattr(self, 'player_ai'):
-                self.player_ai.update_environment_info(self.player, self)
+            logger.info("Новая игра успешно создана")
+            
         except Exception as e:
             logger.error(f"Ошибка создания новой игры: {e}")
+            # В случае ошибки возвращаемся в главное меню
             self.game_state = GameState.MAIN_MENU
     
     def _load_existing_game(self, slot_id: int):
@@ -1140,30 +1149,9 @@ class GameInterface:
         self._render_save_slots_info()
     
     def _render_game(self):
-        """Отрисовка игрового экрана в изометрии"""
-        # Темно-серый фон
-        self.screen.fill((40, 40, 40))
-        
-        # Фокусировка камеры на игроке
-        if self.player and hasattr(self.player, 'position'):
-            self.isometric_projection.focus_on_point(
-                self.player.position.x, 
-                self.player.position.y,
-                self.settings.window_width,
-                self.settings.window_height
-            )
-            
-            # Обновление маяков
-            self.beacon_system.update_beacon_signals(
-                (self.player.position.x, self.player.position.y, self.player.position.z)
-            )
-            
-            # Проверка обнаружения новых маяков
-            discovered_beacon = self.beacon_system.discover_beacon(
-                (self.player.position.x, self.player.position.y, self.player.position.z)
-            )
-            if discovered_beacon:
-                print(f"Обнаружен маяк: {discovered_beacon.id} ({discovered_beacon.beacon_type.value})")
+        """Отрисовка игровой сцены"""
+        # Очистка экрана
+        self.screen.fill(ColorScheme.BLACK)
         
         # Отрисовка сетки тайлов (опционально)
         self.renderer.render_grid()
@@ -1171,47 +1159,79 @@ class GameInterface:
         # Отрисовка маяков
         self._render_beacons()
         
-        # Отрисовка игрока спрайтом (или fallback)
+        # Отрисовка игрока
         if self.player and hasattr(self, 'player_sprite'):
-            pi_x, pi_y = self.isometric_projection.world_to_iso(self.player.position.x, self.player.position.y, self.player.position.z)
-            sx, sy = self.camera.world_iso_to_screen(pi_x, pi_y)
-            self.player_sprite.set_position(sx, sy)
-            self.player_sprite.update(self.clock.get_time() / 1000.0)
-            self.player_sprite.render(self.screen, (0, 0))
-        elif self.player and hasattr(self.player, 'position'):
-            # Fallback: отрисовка простой формы если спрайт недоступен
-            self.isometric_renderer.render_entity(
-                self.screen,
-                (self.player.position.x, self.player.position.y, self.player.position.z),
-                ColorScheme.GREEN,
-                size=16
-            )
-            
-            # Имя игрока
+            # Получаем изометрические координаты игрока
             iso_x, iso_y = self.isometric_projection.world_to_iso(
                 self.player.position.x, self.player.position.y, self.player.position.z
             )
-            iso_x += self.settings.window_width // 2
-            iso_y += self.settings.window_height // 2
             
-            if 'small' in self.fonts:
-                name_text = self.fonts['small'].render(self.player.name, True, ColorScheme.WHITE)
-                self.screen.blit(name_text, (int(iso_x) - 20, int(iso_y) - 40))
+            # Центрируем позицию на экране
+            screen_x = iso_x + self.settings.window_width // 2
+            screen_y = iso_y + self.settings.window_height // 2
+            
+            # Обновляем позицию спрайта
+            self.player_sprite.set_position(screen_x, screen_y)
+            
+            # Отрисовываем спрайт игрока
+            self.player_sprite.render(self.screen)
         
         # Отрисовка врагов в изометрии
-        self.renderer.render_enemies(self.entities)
+        for entity in self.entities:
+            if hasattr(entity, 'position'):
+                # Получаем изометрические координаты врага
+                iso_x, iso_y = self.isometric_projection.world_to_iso(
+                    entity.position.x, entity.position.y, entity.position.z
+                )
+                
+                # Центрируем позицию на экране
+                screen_x = iso_x + self.settings.window_width // 2
+                screen_y = iso_y + self.settings.window_height // 2
+                
+                # Отрисовываем врага как простой круг
+                pygame.draw.circle(self.screen, ColorScheme.RED, (int(screen_x), int(screen_y)), 10)
+                
+                # Отрисовываем имя врага
+                if 'small' in self.fonts and hasattr(entity, 'name'):
+                    name_text = self.fonts['small'].render(entity.name, True, ColorScheme.WHITE)
+                    self.screen.blit(name_text, (int(screen_x) - 20, int(screen_y) - 25))
         
         # Отрисовка созданных объектов
         self._render_created_objects()
         
         # Отрисовка препятствий в изометрии
-        self.renderer.render_obstacles(self.obstacles)
+        for obstacle in self.obstacles:
+            if 'position' in obstacle:
+                pos = obstacle['position']
+                iso_x, iso_y = self.isometric_projection.world_to_iso(pos[0], pos[1], pos[2])
+                screen_x = iso_x + self.settings.window_width // 2
+                screen_y = iso_y + self.settings.window_height // 2
+                
+                # Отрисовываем препятствие
+                color = ColorScheme.ORANGE if obstacle.get('type') == 'trap' else ColorScheme.GRAY
+                pygame.draw.rect(self.screen, color, (int(screen_x) - 5, int(screen_y) - 5, 10, 10))
         
         # Отрисовка сундуков в изометрии
-        self.renderer.render_chests(self.chests)
+        for chest in self.chests:
+            if 'position' in chest:
+                pos = chest['position']
+                iso_x, iso_y = self.isometric_projection.world_to_iso(pos[0], pos[1], pos[2])
+                screen_x = iso_x + self.settings.window_width // 2
+                screen_y = iso_y + self.settings.window_height // 2
+                
+                # Отрисовываем сундук
+                pygame.draw.rect(self.screen, ColorScheme.YELLOW, (int(screen_x) - 8, int(screen_y) - 8, 16, 16))
         
         # Отрисовка предметов на карте в изометрии
-        self.renderer.render_items(self.items)
+        for item in self.items:
+            if 'position' in item:
+                pos = item['position']
+                iso_x, iso_y = self.isometric_projection.world_to_iso(pos[0], pos[1], pos[2])
+                screen_x = iso_x + self.settings.window_width // 2
+                screen_y = iso_y + self.settings.window_height // 2
+                
+                # Отрисовываем предмет
+                pygame.draw.circle(self.screen, ColorScheme.GREEN, (int(screen_x), int(screen_y)), 5)
         
         # Отрисовка HUD: статус, инвентарь и гены (через выделенные классы)
         self.status_hud.render(self.player)
@@ -1231,8 +1251,8 @@ class GameInterface:
     
     def _render_isometric_grid(self):
         """Отрисовка изометрической сетки"""
-        # Простая сетка для демонстрации
-        grid_size = 10
+        # Увеличенная сетка для большого мира
+        grid_size = 10000  # Увеличено с 10 до 100
         for x in range(-grid_size, grid_size + 1):
             for y in range(-grid_size, grid_size + 1):
                 if (x + y) % 2 == 0:
@@ -1247,20 +1267,38 @@ class GameInterface:
     def _render_beacons(self):
         """Отрисовка маяков"""
         for beacon in self.beacon_system.beacons.values():
-            # Сдвиг для центрирования экрана
-            adjusted_position = (
-                beacon.position[0] - self.settings.window_width // 2,
-                beacon.position[1] - self.settings.window_height // 2,
-                beacon.position[2]
+            # Получаем изометрические координаты маяка
+            iso_x, iso_y = self.isometric_projection.world_to_iso(
+                beacon.position[0], beacon.position[1], beacon.position[2]
             )
-            self.isometric_renderer.render_beacon(self.screen, beacon)
+            
+            # Центрируем позицию на экране
+            screen_x = iso_x + self.settings.window_width // 2
+            screen_y = iso_y + self.settings.window_height // 2
+            
+            # Отрисовываем маяк
+            color = ColorScheme.BLUE if beacon.discovered else ColorScheme.GRAY
+            pygame.draw.circle(self.screen, color, (int(screen_x), int(screen_y)), 15)
+            
+            # Отрисовываем ID маяка
+            if 'small' in self.fonts:
+                beacon_text = self.fonts['small'].render(f"B{beacon.id}", True, ColorScheme.WHITE)
+                self.screen.blit(beacon_text, (int(screen_x) - 10, int(screen_y) - 8))
     
     def _render_beacon_info(self):
         """Отрисовка информации о маяках"""
         if 'small' in self.fonts:
             beacon_info = self.beacon_system.get_beacon_info()
             
-            y_offset = self.settings.window_height - 150
+            # Создаем полупрозрачную панель для информации
+            panel_width = 300
+            panel_height = 80
+            panel = pygame.Surface((panel_width, panel_height))
+            panel.set_alpha(180)
+            panel.fill(ColorScheme.DARK_GRAY)
+            self.screen.blit(panel, (10, self.settings.window_height - panel_height - 10))
+            
+            y_offset = self.settings.window_height - panel_height + 10
             info_texts = [
                 f"Маяков обнаружено: {beacon_info['discovered_beacons']}/{beacon_info['total_beacons']}",
                 f"Активная цель: {beacon_info['active_target'] or 'Нет'}"
@@ -1268,7 +1306,7 @@ class GameInterface:
             
             for i, text in enumerate(info_texts):
                 info_surface = self.fonts['small'].render(text, True, ColorScheme.WHITE)
-                self.screen.blit(info_surface, (10, y_offset + i * 20))
+                self.screen.blit(info_surface, (20, y_offset + i * 20))
     
     def _render_created_objects(self):
         """Отрисовка созданных объектов"""
@@ -1415,24 +1453,33 @@ class GameInterface:
     def _render_controls_help(self):
         """Отрисовка подсказки управления"""
         if 'small' in self.fonts:
-            help_texts = [
+            # Создаем полупрозрачную панель для подсказок
+            panel_width = 400
+            panel_height = 200
+            panel = pygame.Surface((panel_width, panel_height))
+            panel.set_alpha(180)
+            panel.fill(ColorScheme.DARK_GRAY)
+            self.screen.blit(panel, (self.settings.window_width - panel_width - 10, self.settings.window_height - panel_height - 100))
+            
+            y_offset = self.settings.window_height - panel_height - 80
+            controls = [
                 "Управление:",
-                "1-4 - Создать объекты",
-                "5-8 - Активировать эмоции",
-                "M - К обнаруженному маяку",
-                "X - Отменить навигацию",
-                "+/- - Масштаб",
-                "SPACE - Автономность",
-                "ESC - Пауза",
-                "",
-                "Найдите скрытый маяк!"
+                "WASD/Стрелки - Движение",
+                "C - Центрировать камеру",
+                "M - Навигация к маяку",
+                "1-4 - Создание объектов",
+                "5-8 - Эмоции",
+                "I - Инвентарь",
+                "G - Гены",
+                "E - Эмоции",
+                "V - Эволюция",
+                "Пробел - Автономность"
             ]
             
-            y_offset = self.settings.window_height - 220
-            for i, text in enumerate(help_texts):
-                color = ColorScheme.WHITE if i == 0 else ColorScheme.LIGHT_GRAY
-                help_surface = self.fonts['small'].render(text, True, color)
-                self.screen.blit(help_surface, (self.settings.window_width - 220, y_offset + i * 20))
+            for i, control in enumerate(controls):
+                color = ColorScheme.YELLOW if i == 0 else ColorScheme.WHITE
+                control_surface = self.fonts['small'].render(control, True, color)
+                self.screen.blit(control_surface, (self.settings.window_width - panel_width, y_offset + i * 18))
     
     def _render_entity(self, entity, screen_pos):
         """Отрисовка сущности"""
