@@ -260,6 +260,29 @@ class SessionManager:
             logger.error(f"Ошибка создания сессии: {e}")
             return None
     
+    def load_session_by_slot(self, slot_id: int) -> Optional[SessionData]:
+        """Загрузка сессии по номеру слота"""
+        try:
+            # Ищем любую активную сессию в указанном слоте
+            with sqlite3.connect(str(self.db_path)) as conn:
+                cursor = conn.execute("""
+                    SELECT save_name FROM sessions 
+                    WHERE slot_id = ? AND state = 'active'
+                    ORDER BY last_saved DESC LIMIT 1
+                """, (slot_id,))
+                
+                row = cursor.fetchone()
+                if row:
+                    save_name = row[0]
+                    return self.load_session(save_name, slot_id)
+                else:
+                    logger.warning(f"Нет активных сессий в слоте {slot_id}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"Ошибка загрузки сессии по слоту {slot_id}: {e}")
+            return None
+    
     def load_session(self, save_name: str, slot_id: int = None) -> Optional[SessionData]:
         """Загрузка существующей сессии с оптимизацией"""
         try:

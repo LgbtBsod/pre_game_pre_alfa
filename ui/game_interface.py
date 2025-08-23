@@ -660,11 +660,13 @@ class GameInterface:
         """Начало новой игры"""
         try:
             # Создание новой сессии
-            self.session_manager.create_temporary_session()
+            session_data = self.session_manager.create_temporary_session()
+            if not session_data:
+                raise Exception("Не удалось создать временную сессию")
             
             # Инициализация контента для сессии
             self.content_generator.initialize_session_content(
-                self.session_manager.current_session.session_uuid,
+                session_data.session_uuid,
                 level=1
             )
             
@@ -735,7 +737,7 @@ class GameInterface:
             # Инициализация систем прогрессии
             self.level_progression = LevelProgressionSystem(self.content_generator, self.effect_db)
             self.statistics_renderer = StatisticsRenderer(self.screen, self.fonts["main"])
-            self.level_transition_manager = LevelTransitionManager(self.screen, self.fonts["main"])
+            self.level_transition_manager = LevelTransitionManager(self.level_progression, self.statistics_renderer)
             
             # Инициализация систем создания объектов
             from core.object_creation_system import ObjectCreationSystem
@@ -759,7 +761,7 @@ class GameInterface:
         """Загрузка существующей игры"""
         try:
             # Загружаем сессию
-            session_data = self.session_manager.load_session(slot_id)
+            session_data = self.session_manager.load_session_by_slot(slot_id)
             if not session_data:
                 logger.error(f"Не удалось загрузить сессию из слота {slot_id}")
                 return False
@@ -1005,15 +1007,29 @@ class GameInterface:
     
     def _continue_game(self):
         """Продолжение игры"""
-        import os
-        if os.path.exists("save/game_save.json"):
-            if self._load_game():
-                self.game_state = GameState.PLAYING
+        try:
+            # Пытаемся найти последнее сохранение
+            save_slots = self.session_manager.get_save_slots()
+            if save_slots:
+                # Берем самое последнее сохранение
+                latest_save = save_slots[0]
+                slot_id = latest_save['slot_id']
+                
+                if self._load_existing_game(slot_id):
+                    self.game_state = GameState.PLAYING
+                    logger.info(f"Игра продолжена из слота {slot_id}")
+                else:
+                    # Если загрузка не удалась, создаем новую игру
+                    logger.warning("Не удалось загрузить последнее сохранение, создаем новую игру")
+                    self._start_new_game()
             else:
-                # Если загрузка не удалась, создаем новую игру
+                # Если сохранений нет, создаем новую игру
+                logger.info("Сохранений не найдено, создаем новую игру")
                 self._start_new_game()
-        else:
-            # Если сохранения нет, создаем новую игру
+                
+        except Exception as e:
+            logger.error(f"Ошибка продолжения игры: {e}")
+            # В случае ошибки создаем новую игру
             self._start_new_game()
     
     def _update(self):
