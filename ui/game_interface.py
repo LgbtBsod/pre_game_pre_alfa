@@ -151,6 +151,34 @@ class GameInterface:
         self.evolution_system = EvolutionCycleSystem(self.effect_db)
         self.event_system = GlobalEventSystem(self.effect_db)
         
+        # Улучшенные системы (Enhanced Edition)
+        try:
+            from core.generational_memory_system import GenerationalMemorySystem
+            from core.emotional_ai_influence import EmotionalAIInfluenceSystem
+            from core.enhanced_combat_learning import EnhancedCombatLearningSystem
+            from core.enhanced_content_generator import EnhancedContentGenerator
+            from core.enhanced_skill_system import SkillManager, SkillLearningAI
+            
+            # Инициализация улучшенных систем
+            self.memory_system = GenerationalMemorySystem("save")
+            self.emotional_ai_system = EmotionalAIInfluenceSystem(self.memory_system)
+            self.enhanced_combat_system = EnhancedCombatLearningSystem(self.memory_system, self.emotional_ai_system)
+            self.enhanced_content_generator = EnhancedContentGenerator(self.memory_system)
+            self.skill_manager = SkillManager(self.memory_system, self.emotional_ai_system)
+            self.skill_learning_ai = SkillLearningAI(self.memory_system, self.emotional_ai_system)
+            
+            logger.info("✅ Enhanced Edition системы инициализированы")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить Enhanced Edition системы: {e}")
+            # Используем None для индикации отсутствия улучшенных систем
+            self.memory_system = None
+            self.emotional_ai_system = None
+            self.enhanced_combat_system = None
+            self.enhanced_content_generator = None
+            self.skill_manager = None
+            self.skill_learning_ai = None
+        
         # Система управления вводом
         self.input_manager = InputManager()
         
@@ -474,7 +502,7 @@ class GameInterface:
     def _add_enemy(self):
         """Создает врага рядом с игроком"""
         try:
-            if not hasattr(self, 'object_creation') or not self.player:
+            if not self.player:
                 return
             
             # Позиция рядом с игроком
@@ -483,21 +511,51 @@ class GameInterface:
                         player_pos[1] + random.randint(-60, 60), 
                         player_pos[2])
             
-            # Выбираем случайного врага
-            enemy_templates = ["enemy_goblin", "enemy_orc", "enemy_skeleton"]
-            template_id = random.choice(enemy_templates)
+            # Используем Enhanced Content Generator если доступен
+            if self.enhanced_content_generator:
+                try:
+                    from core.enhanced_content_generator import BiomeType
+                    # Генерируем врага с помощью улучшенной системы
+                    enemy = self.enhanced_content_generator.generate_enemy(
+                        BiomeType.FOREST,  # Упрощенно используем лес
+                        1,  # Уровень
+                        {"level_width": 1000, "level_height": 1000}
+                    )
+                    
+                    # Создаем игровую сущность из сгенерированного врага
+                    from core.advanced_entity import AdvancedGameEntity
+                    game_enemy = AdvancedGameEntity(
+                        entity_id=enemy.guid,
+                        entity_type="enemy",
+                        name=enemy.name,
+                        position=enemy_pos
+                    )
+                    
+                    # Добавляем в список сущностей
+                    self.entities.append(game_enemy)
+                    logger.info(f"✨ Enhanced враг создан: {enemy.name} [{enemy.enemy_type.value}]")
+                    return
+                    
+                except Exception as e:
+                    logger.debug(f"Ошибка Enhanced генератора: {e}, используем fallback")
             
-            # Создаем врага
-            from core.object_creation_system import ObjectCreationRequest
-            request = ObjectCreationRequest(
-                template_id=template_id,
-                position=enemy_pos,
-                creator_id="PLAYER_001"
-            )
-            
-            created_enemy = self.object_creation.create_object(request, time.time())
-            if created_enemy:
-                print(f"Создан враг: {created_enemy.name} в позиции {enemy_pos}")
+            # Fallback к оригинальной системе
+            if hasattr(self, 'object_creation'):
+                # Выбираем случайного врага
+                enemy_templates = ["enemy_goblin", "enemy_orc", "enemy_skeleton"]
+                template_id = random.choice(enemy_templates)
+                
+                # Создаем врага
+                from core.object_creation_system import ObjectCreationRequest
+                request = ObjectCreationRequest(
+                    template_id=template_id,
+                    position=enemy_pos,
+                    creator_id="PLAYER_001"
+                )
+                
+                created_enemy = self.object_creation.create_object(request, time.time())
+                if created_enemy:
+                    logger.info(f"Создан враг: {created_enemy.name} в позиции {enemy_pos}")
             
         except Exception as e:
             logger.error(f"Ошибка создания врага: {e}")
@@ -1078,6 +1136,56 @@ class GameInterface:
                 self.difficulty_system.update(delta_time, player_data, world_state)
             except TypeError:
                 self.difficulty_system.update(delta_time)
+            
+            # Обновление Enhanced Edition систем
+            try:
+                if self.memory_system:
+                    self.memory_system.cleanup_expired_memories()
+                
+                if self.enhanced_combat_system and self.player:
+                    # Симуляция боевого контекста для обучения
+                    from core.enhanced_combat_learning import CombatContext, CombatPhase, CombatTactic
+                    combat_context = CombatContext(
+                        entity_id=self.player.entity_id,
+                        target_id="ENVIRONMENT",
+                        current_phase=CombatPhase.ADAPT,
+                        active_tactic=CombatTactic.ADAPTIVE_EVOLUTION,
+                        health_percent=self.player.stats.health / self.player.stats.max_health,
+                        stamina_percent=1.0,  # Упрощенно
+                        distance_to_target=100.0,
+                        target_health_percent=1.0,
+                        environmental_hazards=[],
+                        available_cover=[],
+                        emotional_state="neutral",
+                        combat_duration=delta_time,
+                        pattern_success_history=[]
+                    )
+                    
+                    # Получаем решение от системы боевого обучения
+                    decision = self.enhanced_combat_system.make_combat_decision(
+                        self.player.entity_id, 
+                        combat_context
+                    )
+                    
+                    # Имитируем результат для обучения
+                    result = {"success": True, "experience_gained": 10}
+                    self.enhanced_combat_system.learn_from_combat_result(
+                        self.player.entity_id, 
+                        combat_context, 
+                        decision, 
+                        result
+                    )
+                
+                if self.skill_learning_ai and self.player:
+                    # Обновляем AI обучения навыкам
+                    self.skill_learning_ai.analyze_player_performance(
+                        self.player.entity_id, 
+                        {"combat_effectiveness": 0.8, "adaptation_rate": 0.6},
+                        time.time()
+                    )
+                    
+            except Exception as e:
+                logger.debug(f"Ошибка обновления Enhanced Edition систем: {e}")
     
     def _render(self):
         """Отрисовка игры"""
@@ -1536,6 +1644,35 @@ class GameInterface:
             level_text = f"Уровень: {level_value}"
             level_surf = self.fonts["small"].render(level_text, True, ColorScheme.WHITE)
             self.screen.blit(level_surf, (panel.x + 10, panel.y + 100))
+            
+            # Enhanced Edition информация
+            if self.memory_system:
+                y_pos = 130
+                # Память поколений
+                try:
+                    memory_stats = self.memory_system.get_memory_statistics()
+                    memory_text = f"Поколение: {memory_stats['current_generation']}"
+                    memory_surf = self.fonts["small"].render(memory_text, True, ColorScheme.EVOLUTION_COLOR)
+                    self.screen.blit(memory_surf, (panel.x + 10, panel.y + y_pos))
+                    
+                    # Количество воспоминаний
+                    total_memories = memory_stats['total_memories']
+                    memories_text = f"Воспоминания: {total_memories}"
+                    memories_surf = self.fonts["small"].render(memories_text, True, ColorScheme.GENETIC_COLOR)
+                    self.screen.blit(memories_surf, (panel.x + 10, panel.y + y_pos + 20))
+                    
+                except Exception as e:
+                    pass
+            
+            # Информация о навыках
+            if self.skill_manager:
+                try:
+                    learned_skills = len(getattr(self.skill_manager, 'learned_skills', []))
+                    skills_text = f"Навыки: {learned_skills}"
+                    skills_surf = self.fonts["small"].render(skills_text, True, ColorScheme.BLUE)
+                    self.screen.blit(skills_surf, (panel.x + 10, panel.y + 170))
+                except Exception as e:
+                    pass
     
     def _render_inventory_panel(self):
         """Отрисовка панели инвентаря"""

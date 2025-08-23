@@ -1,0 +1,125 @@
+# AI-EVOLVE: Enhanced Edition - Зависимости
+# Основные игровые библиотеки
+
+# Игровой движок
+pygame>=2.5.0
+
+# Математические вычисления
+numpy>=1.24.0
+
+# Обработка изображений
+Pillow>=10.0.0
+
+# Логирование и отладка
+colorlog>=6.7.0
+
+# Конфигурация
+PyYAML>=6.0
+
+# JSON обработка (встроен в Python 3.6+)
+# json
+
+# Временные метки (встроен в Python 3.3+)
+# time
+
+# Пути файлов (встроен в Python 3.4+)
+# pathlib
+
+# Логирование (встроен в Python 3.2+)
+# logging
+
+# Случайные числа (встроен в Python)
+# random
+
+# Математические функции (встроен в Python)
+# math
+
+# UUID генерация (встроен в Python 2.5+)
+# uuid
+
+# Хеширование (встроен в Python)
+# hashlib
+
+# Системные вызовы (встроен в Python)
+# sys
+
+# Операционная система (встроен в Python)
+# os
+
+# Типизация (встроен в Python 3.5+)
+# typing
+
+# Dataclasses (встроен в Python 3.7+)
+# dataclasses
+
+# Enums (встроен в Python 3.4+)
+# enum
+
+# Опциональные зависимости для разработки
+# Раскомментируйте при необходимости
+
+# Тестирование
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+
+# Линтинг и форматирование
+# flake8>=6.0.0
+# black>=23.0.0
+# isort>=5.12.0
+
+# Типизация
+# mypy>=1.0.0
+
+# Документация
+# sphinx>=6.0.0
+# sphinx-rtd-theme>=1.2.0
+
+# Профилирование
+# cProfile (встроен в Python)
+# memory_profiler>=0.60.0
+
+# Отладка
+# pdb (встроен в Python)
+# ipdb>=0.13.0
+
+# Визуализация (для отладки)
+# matplotlib>=3.6.0
+
+# Аудио обработка (опционально)
+# pydub>=0.25.0
+
+# Сжатие (опционально)
+# zlib (встроен в Python)
+
+# Сетевое взаимодействие (для будущих функций)
+# requests>=2.28.0
+# websockets>=11.0.0
+
+# База данных (опционально)
+# sqlite3 (встроен в Python)
+# pymongo>=4.3.0
+
+# Машинное обучение (для будущих улучшений ИИ)
+# scikit-learn>=1.2.0
+# tensorflow>=2.12.0
+# torch>=2.0.0
+
+# Комментарии по установке:
+# 
+# 1. Основные зависимости:
+#    pip install -r requirements_enhanced.txt
+#
+# 2. Только для разработки:
+#    pip install -r requirements_enhanced.txt --extra-index-url https://pypi.org/simple/
+#
+# 3. Для Windows пользователей:
+#    pip install pygame --pre
+#
+# 4. Для macOS пользователей:
+#    brew install pkg-config
+#    pip install pygame
+#
+# 5. Для Linux пользователей:
+#    sudo apt-get install python3-dev python3-pip python3-venv
+#    sudo apt-get install libsdl-dev libsdl-image1.2-dev libsdl-mixer1.2-dev libsdl-ttf2.0-dev
+#    pip install pygame

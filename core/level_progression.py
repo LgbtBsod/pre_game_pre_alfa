@@ -63,6 +63,7 @@ class LevelProgressionSystem:
         self.content_generator = content_generator
         self.effect_db = effect_db
         self.current_level = 1
+        self.level_state = LevelState
         self.level_start_time = time.time()
         self.level_statistics = LevelStatistics(
             level_number=1,
@@ -197,6 +198,8 @@ class LevelProgressionSystem:
         return player_data
     
     def get_statistics(self) -> LevelStatistics:
+        """Получение статистики текущего уровня"""
+        return self.level_statistics
         """Получение статистики текущего уровня"""
         return self.level_statistics
     

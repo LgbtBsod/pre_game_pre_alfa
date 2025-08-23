@@ -507,3 +507,33 @@ class GenerationalMemorySystem:
             "average_intensity": sum(m.intensity for m in self.memories.values()) / max(1, len(self.memories)),
             "total_emotional_impact": sum(m.emotional_impact for m in self.memories.values())
         }
+    
+    def cleanup_expired_memories(self):
+        """Очистка устаревших и слабых воспоминаний"""
+        current_time = time.time()
+        memories_to_remove = []
+        
+        for memory_id, memory in self.memories.items():
+            # Удаление очень старых воспоминаний (старше 24 часов)
+            if current_time - memory.created_at > 86400:  # 24 часа
+                if memory.intensity < 0.5:  # Только слабые
+                    memories_to_remove.append(memory_id)
+            
+            # Удаление очень слабых воспоминаний
+            elif memory.intensity < 0.1:
+                memories_to_remove.append(memory_id)
+            
+            # Удаление воспоминаний с низкой выживаемостью
+            elif memory.survival_value < 0.2:
+                memories_to_remove.append(memory_id)
+        
+        # Удаление отмеченных воспоминаний
+        for memory_id in memories_to_remove:
+            del self.memories[memory_id]
+        
+        if memories_to_remove:
+            logger.debug(f"Удалено {len(memories_to_remove)} устаревших воспоминаний")
+        
+        # Принудительное ограничение по типам
+        for memory_type in MemoryType:
+            self._enforce_memory_limits(memory_type)

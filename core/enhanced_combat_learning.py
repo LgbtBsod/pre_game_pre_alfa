@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Улучшенная система боевого обучения ИИ.
-Объединяет тактическое мышление, адаптацию к стилю игрока и эволюционное обучение.
-Вдохновлено механиками из Dark Souls, Bloodborne и Diablo.
+Расширенная система боевого обучения ИИ.
+Вдохновлено механиками из Hades, Returnal, Dark Souls.
+Включает адаптивные паттерны атак, контратаки и эволюцию тактик.
 """
 
 import random
@@ -22,812 +22,551 @@ logger = logging.getLogger(__name__)
 
 class CombatPhase(Enum):
     """Фазы боя"""
-    APPROACH = "approach"
-    ENGAGEMENT = "engagement"
-    SUSTAINED_COMBAT = "sustained_combat"
-    RETREAT = "retreat"
-    RECOVERY = "recovery"
-    COUNTER_ATTACK = "counter_attack"
+    APPROACH = "approach"           # Приближение к цели
+    ENGAGE = "engage"               # Вступление в бой
+    COMBAT = "combat"               # Активный бой
+    COUNTER = "counter"             # Контратака
+    RETREAT = "retreat"             # Отступление
+    RECOVER = "recover"             # Восстановление
+    ADAPT = "adapt"                 # Адаптация тактики
 
 
 class CombatTactic(Enum):
-    """Тактические подходы"""
-    AGGRESSIVE_RUSH = "aggressive_rush"
-    DEFENSIVE_STANCE = "defensive_stance"
-    MOBILE_HARASSMENT = "mobile_harassment"
-    AMBUSH_ATTACK = "ambush_attack"
-    SUPPORT_ROLE = "support_role"
-    TACTICAL_WITHDRAWAL = "tactical_withdrawal"
+    """Тактики боя"""
+    AGGRESSIVE_RUSH = "aggressive_rush"         # Агрессивный натиск
+    DEFENSIVE_STANCE = "defensive_stance"       # Оборонительная стойка
+    MOBILE_HARASSMENT = "mobile_harassment"     # Мобильное преследование
+    COUNTER_ATTACK = "counter_attack"           # Контратака
+    TRAP_AND_AMBUSH = "trap_and_ambush"        # Ловушка и засада
+    PSYCHOLOGICAL_WARFARE = "psychological_warfare"  # Психологическая война
+    ADAPTIVE_EVOLUTION = "adaptive_evolution"   # Адаптивная эволюция
 
 
-class PlayerStyle(Enum):
-    """Стили игры игрока"""
-    AGGRESSIVE = "aggressive"
-    DEFENSIVE = "defensive"
-    TACTICAL = "tactical"
-    MOBILE = "mobile"
-    SUPPORT = "support"
-    HYBRID = "hybrid"
+class VulnerabilityType(Enum):
+    """Типы уязвимостей"""
+    PHYSICAL = "physical"           # Физическая уязвимость
+    ELEMENTAL = "elemental"        # Элементальная уязвимость
+    TEMPORAL = "temporal"          # Временная уязвимость
+    POSITIONAL = "positional"      # Позиционная уязвимость
+    PSYCHOLOGICAL = "psychological" # Психологическая уязвимость
+
+
+@dataclass
+class CombatPattern:
+    """Боевой паттерн"""
+    id: str
+    name: str
+    actions: List[str]
+    success_rate: float
+    usage_count: int
+    last_used: float
+    adaptation_factor: float
+    emotional_triggers: List[str]
+    
+    def update_success_rate(self, success: bool):
+        """Обновление показателя успешности"""
+        if success:
+            self.success_rate = min(1.0, self.success_rate + 0.1)
+        else:
+            self.success_rate = max(0.0, self.success_rate - 0.15)
+        
+        self.usage_count += 1
+        self.last_used = time.time()
 
 
 @dataclass
 class CombatContext:
-    """Контекст боевой ситуации"""
-    combat_phase: CombatPhase
-    player_style: PlayerStyle
-    player_health_percent: float
-    player_stamina_percent: float
-    player_weapon_type: str
-    player_armor_type: str
-    player_buffs: List[str]
-    player_debuffs: List[str]
-    enemy_count: int
-    enemy_types: List[str]
+    """Контекст боя"""
+    entity_id: str
+    target_id: str
+    current_phase: CombatPhase
+    active_tactic: CombatTactic
+    health_percent: float
+    stamina_percent: float
+    distance_to_target: float
+    target_health_percent: float
     environmental_hazards: List[str]
     available_cover: List[str]
-    escape_routes: List[str]
-    tactical_advantages: List[str]
+    emotional_state: str
+    combat_duration: float
+    pattern_success_history: List[bool]
+    
+    def get_combat_intensity(self) -> float:
+        """Получение интенсивности боя"""
+        return min(1.0, (1.0 - self.health_percent) + (1.0 - self.stamina_percent) * 0.5)
 
 
 @dataclass
 class CombatDecision:
-    """Боевое решение ИИ"""
+    """Боевое решение"""
     action: str
     target: Optional[str]
-    priority: float
+    tactic: CombatTactic
     confidence: float
     reasoning: str
-    expected_outcome: str
-    risk_assessment: float
-    adaptation_factor: float
+    emotional_influence: float
+    memory_influence: float
+    adaptation_level: float
 
 
-@dataclass
-class PlayerPattern:
-    """Паттерн поведения игрока"""
-    style: PlayerStyle
-    preferred_weapons: List[str]
-    preferred_tactics: List[str]
-    aggression_level: float
-    caution_level: float
-    adaptability: float
-    predictability: float
-    learning_rate: float
-    pattern_strength: float
-
-
-class EnhancedCombatLearningAI:
-    """Улучшенная система боевого обучения ИИ"""
+class EnhancedCombatLearningSystem:
+    """Расширенная система боевого обучения"""
     
     def __init__(self, memory_system: GenerationalMemorySystem, 
                  emotional_system: EmotionalAIInfluenceSystem):
         self.memory_system = memory_system
         self.emotional_system = emotional_system
         
-        # Анализ стиля игрока
-        self.player_patterns: Dict[str, PlayerPattern] = {}
+        # Боевые паттерны
+        self.combat_patterns: Dict[str, CombatPattern] = {}
         
-        # Тактические базы данных
-        self.tactical_database = self._init_tactical_database()
+        # История боев
+        self.combat_history: Dict[str, List[Dict[str, Any]]] = {}
         
-        # Система адаптации
-        self.adaptation_rates = {
-            "aggressive": 0.8,
-            "defensive": 0.6,
-            "tactical": 0.7,
-            "mobile": 0.9,
-            "support": 0.5
-        }
+        # Адаптивные тактики
+        self.adaptive_tactics: Dict[str, Dict[str, float]] = {}
         
-        # Счетчики успешности тактик
-        self.tactic_success_rates: Dict[str, float] = {}
+        # Система контратак
+        self.counter_attack_system = CounterAttackSystem()
         
-        logger.info("Улучшенная система боевого обучения ИИ инициализирована")
+        # Система эволюции тактик
+        self.tactic_evolution_system = TacticEvolutionSystem()
+        
+        # Инициализация базовых паттернов
+        self._init_base_combat_patterns()
+        
+        logger.info("Расширенная система боевого обучения инициализирована")
     
-    def analyze_player_style(self, combat_data: List[Dict[str, Any]]) -> PlayerPattern:
-        """Анализ стиля игры игрока"""
-        if not combat_data:
-            return self._create_default_pattern()
-        
-        # Анализ агрессивности
-        aggression_score = self._calculate_aggression_score(combat_data)
-        
-        # Анализ осторожности
-        caution_score = self._calculate_caution_score(combat_data)
-        
-        # Анализ мобильности
-        mobility_score = self._calculate_mobility_score(combat_data)
-        
-        # Определение основного стиля
-        style = self._determine_player_style(aggression_score, caution_score, mobility_score)
-        
-        # Анализ предпочтений
-        weapon_preferences = self._analyze_weapon_preferences(combat_data)
-        tactical_preferences = self._analyze_tactical_preferences(combat_data)
-        
-        # Создание паттерна
-        pattern = PlayerPattern(
-            style=style,
-            preferred_weapons=weapon_preferences,
-            preferred_tactics=tactical_preferences,
-            aggression_level=aggression_score,
-            caution_level=caution_score,
-            adaptability=self._calculate_adaptability(combat_data),
-            predictability=self._calculate_predictability(combat_data),
-            learning_rate=self._calculate_learning_rate(combat_data),
-            pattern_strength=self._calculate_pattern_strength(combat_data)
-        )
-        
-        # Добавляем mobility_score как дополнительный атрибут
-        pattern.mobility_score = mobility_score
-        
-        return pattern
-    
-    def make_combat_decision(self, entity_id: str, context: CombatContext, 
-                           available_actions: List[str], current_time: float) -> CombatDecision:
+    def make_combat_decision(self, entity_id: str, context: CombatContext) -> CombatDecision:
         """Принятие боевого решения"""
-        # Получение релевантных воспоминаний
-        relevant_memories = self._get_combat_memories(context)
+        # Анализ текущей ситуации
+        situation_analysis = self._analyze_combat_situation(context)
         
-        # Анализ контекста
-        context_analysis = self._analyze_combat_context(context)
-        
-        # Применение эмоционального влияния
-        emotional_weights = self.emotional_system.get_emotionally_influenced_actions(
-            entity_id, available_actions, context_analysis, current_time
-        )
-        
-        # Тактический анализ
-        tactical_weights = self._calculate_tactical_weights(context, available_actions)
-        
-        # Адаптация к стилю игрока
-        adaptation_weights = self._calculate_adaptation_weights(context, available_actions)
-        
-        # Объединение весов
-        final_weights = self._combine_decision_weights(
-            emotional_weights, tactical_weights, adaptation_weights
-        )
+        # Выбор тактики
+        selected_tactic = self._select_combat_tactic(entity_id, context, situation_analysis)
         
         # Выбор действия
-        best_action = max(final_weights.items(), key=lambda x: x[1])[0]
+        selected_action = self._select_combat_action(entity_id, context, selected_tactic)
         
-        # Создание решения
-        decision = CombatDecision(
-            action=best_action,
-            target=self._select_target(best_action, context),
-            priority=final_weights[best_action],
-            confidence=self._calculate_confidence(final_weights, best_action),
-            reasoning=self._generate_reasoning(best_action, context, relevant_memories),
-            expected_outcome=self._predict_outcome(best_action, context),
-            risk_assessment=self._assess_risk(best_action, context),
-            adaptation_factor=self._calculate_adaptation_factor(context)
+        # Расчёт уверенности
+        confidence = self._calculate_decision_confidence(context, selected_action, selected_tactic)
+        
+        # Влияние эмоций и памяти
+        emotional_influence = self._get_emotional_influence(entity_id, context)
+        memory_influence = self._get_memory_influence(entity_id, context)
+        
+        # Уровень адаптации
+        adaptation_level = self._get_adaptation_level(entity_id, context)
+        
+        return CombatDecision(
+            action=selected_action,
+            target=context.target_id,
+            tactic=selected_tactic,
+            confidence=confidence,
+            reasoning=situation_analysis["reasoning"],
+            emotional_influence=emotional_influence,
+            memory_influence=memory_influence,
+            adaptation_level=adaptation_level
         )
-        
-        # Запись решения в память
-        self._record_combat_decision(entity_id, decision, context, current_time)
-        
-        return decision
     
-    def learn_from_combat_result(self, entity_id: str, decision: CombatDecision, 
-                               context: CombatContext, result: Dict[str, Any]):
+    def learn_from_combat_result(self, entity_id: str, context: CombatContext, 
+                                decision: CombatDecision, result: Dict[str, Any]):
         """Обучение на основе результата боя"""
-        # Анализ результата
+        # Обновление паттерна
+        if decision.action in self.combat_patterns:
+            pattern = self.combat_patterns[decision.action]
         success = result.get("success", False)
-        damage_dealt = result.get("damage_dealt", 0.0)
-        damage_taken = result.get("damage_taken", 0.0)
+            pattern.update_success_rate(success)
         
-        # Обновление статистики тактик
-        tactic_key = f"{decision.action}_{context.combat_phase.value}"
-        if tactic_key not in self.tactic_success_rates:
-            self.tactic_success_rates[tactic_key] = 0.5
-        
-        # Обновление успешности
-        if success:
-            self.tactic_success_rates[tactic_key] = min(1.0, 
-                self.tactic_success_rates[tactic_key] + 0.1)
-        else:
-            self.tactic_success_rates[tactic_key] = max(0.0, 
-                self.tactic_success_rates[tactic_key] - 0.05)
-        
-        # Запись опыта в память поколений
-        memory_content = {
+        # Запись в память поколений
+        combat_memory = {
+            "context": {
+                "phase": context.current_phase.value,
+                "tactic": context.active_tactic.value,
+                "health_percent": context.health_percent,
+                "target_health_percent": context.target_health_percent,
+                "distance": context.distance_to_target,
+                "duration": context.combat_duration
+            },
+            "decision": {
             "action": decision.action,
-            "context": context.__dict__,
+                "tactic": decision.tactic.value,
+                "confidence": decision.confidence
+            },
             "result": result,
-            "success": success,
-            "damage_ratio": damage_dealt / max(1.0, damage_taken),
-            "tactic_used": tactic_key
+            "timestamp": time.time()
         }
         
         self.memory_system.add_memory(
             memory_type=MemoryType.COMBAT_EXPERIENCE,
-            content=memory_content,
-            intensity=0.7 if success else 0.9,
-            emotional_impact=0.6 if success else 0.8
+            content=combat_memory,
+            intensity=context.get_combat_intensity(),
+            emotional_impact=decision.emotional_influence
         )
         
-        # Обновление паттерна игрока
-        self._update_player_pattern(context, result)
+        # Обновление адаптивных тактик
+        self._update_adaptive_tactics(entity_id, context, decision, result)
         
-        logger.debug(f"ИИ {entity_id} извлек урок из боевого решения: {decision.action}")
+        # Эволюция тактик
+        self.tactic_evolution_system.evolve_tactics(entity_id, context, result)
+        
+        logger.debug(f"Результат боя записан для {entity_id}: {result}")
     
-    def _init_tactical_database(self) -> Dict[str, Dict[str, Any]]:
-        """Инициализация тактической базы данных"""
-        return {
-            "aggressive_rush": {
-                "description": "Быстрая атака с максимальным уроном",
-                "best_against": ["defensive", "support"],
-                "worst_against": ["mobile", "tactical"],
-                "phase_effectiveness": {
-                    CombatPhase.APPROACH: 0.8,
-                    CombatPhase.ENGAGEMENT: 0.9,
-                    CombatPhase.SUSTAINED_COMBAT: 0.6,
-                    CombatPhase.RETREAT: 0.2,
-                    CombatPhase.RECOVERY: 0.3,
-                    CombatPhase.COUNTER_ATTACK: 0.7
-                },
-                "required_resources": ["high_stamina", "high_health"],
-                "risk_level": 0.8
-            },
-            "defensive_stance": {
-                "description": "Защитная позиция с контр-атаками",
-                "best_against": ["aggressive", "mobile"],
-                "worst_against": ["tactical", "support"],
-                "phase_effectiveness": {
-                    CombatPhase.APPROACH: 0.4,
-                    CombatPhase.ENGAGEMENT: 0.7,
-                    CombatPhase.SUSTAINED_COMBAT: 0.8,
-                    CombatPhase.RETREAT: 0.6,
-                    CombatPhase.RECOVERY: 0.9,
-                    CombatPhase.COUNTER_ATTACK: 0.8
-                },
-                "required_resources": ["medium_stamina", "high_health"],
-                "risk_level": 0.4
-            },
-            "mobile_harassment": {
-                "description": "Мобильная тактика с быстрыми ударами",
-                "best_against": ["defensive", "tactical"],
-                "worst_against": ["aggressive", "mobile"],
-                "phase_effectiveness": {
-                    CombatPhase.APPROACH: 0.9,
-                    CombatPhase.ENGAGEMENT: 0.7,
-                    CombatPhase.SUSTAINED_COMBAT: 0.5,
-                    CombatPhase.RETREAT: 0.8,
-                    CombatPhase.RECOVERY: 0.6,
-                    CombatPhase.COUNTER_ATTACK: 0.7
-                },
-                "required_resources": ["high_stamina", "medium_health"],
-                "risk_level": 0.6
-            },
-            "ambush_attack": {
-                "description": "Внезапная атака из укрытия",
-                "best_against": ["aggressive", "support"],
-                "worst_against": ["defensive", "tactical"],
-                "phase_effectiveness": {
-                    CombatPhase.APPROACH: 0.9,
-                    CombatPhase.ENGAGEMENT: 0.8,
-                    CombatPhase.SUSTAINED_COMBAT: 0.4,
-                    CombatPhase.RETREAT: 0.3,
-                    CombatPhase.RECOVERY: 0.2,
-                    CombatPhase.COUNTER_ATTACK: 0.5
-                },
-                "required_resources": ["medium_stamina", "medium_health"],
-                "risk_level": 0.7
-            },
-            "support_role": {
-                "description": "Поддерживающая роль с баффами",
-                "best_against": ["tactical", "defensive"],
-                "worst_against": ["aggressive", "mobile"],
-                "phase_effectiveness": {
-                    CombatPhase.APPROACH: 0.3,
-                    CombatPhase.ENGAGEMENT: 0.5,
-                    CombatPhase.SUSTAINED_COMBAT: 0.8,
-                    CombatPhase.RETREAT: 0.7,
-                    CombatPhase.RECOVERY: 0.9,
-                    CombatPhase.COUNTER_ATTACK: 0.4
-                },
-                "required_resources": ["low_stamina", "medium_health"],
-                "risk_level": 0.5
-            }
-        }
-    
-    def _calculate_aggression_score(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт агрессивности игрока"""
-        if not combat_data:
-            return 0.5
-        
-        aggression_indicators = []
-        
-        for data in combat_data:
-            # Частота атак
-            if "attack_frequency" in data:
-                aggression_indicators.append(data["attack_frequency"])
-            
-            # Расстояние атаки
-            if "attack_range" in data:
-                range_score = min(1.0, data["attack_range"] / 10.0)
-                aggression_indicators.append(range_score)
-            
-            # Использование агрессивных способностей
-            if "aggressive_abilities_used" in data:
-                aggression_indicators.append(data["aggressive_abilities_used"])
-        
-        if not aggression_indicators:
-            return 0.5
-        
-        return sum(aggression_indicators) / len(aggression_indicators)
-    
-    def _calculate_caution_score(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт осторожности игрока"""
-        if not combat_data:
-            return 0.5
-        
-        caution_indicators = []
-        
-        for data in combat_data:
-            # Частота блокирования
-            if "block_frequency" in data:
-                caution_indicators.append(data["block_frequency"])
-            
-            # Использование укрытий
-            if "cover_usage" in data:
-                caution_indicators.append(data["cover_usage"])
-            
-            # Расстояние до врагов
-            if "maintained_distance" in data:
-                distance_score = min(1.0, data["maintained_distance"] / 20.0)
-                caution_indicators.append(distance_score)
-        
-        if not caution_indicators:
-            return 0.5
-        
-        return sum(caution_indicators) / len(caution_indicators)
-    
-    def _calculate_mobility_score(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт мобильности игрока"""
-        if not combat_data:
-            return 0.5
-        
-        mobility_indicators = []
-        
-        for data in combat_data:
-            # Частота перемещений
-            if "movement_frequency" in data:
-                mobility_indicators.append(data["movement_frequency"])
-            
-            # Использование мобильных способностей
-            if "mobile_abilities_used" in data:
-                mobility_indicators.append(data["mobile_abilities_used"])
-            
-            # Эффективность уклонений
-            if "dodge_success_rate" in data:
-                mobility_indicators.append(data["dodge_success_rate"])
-        
-        if not mobility_indicators:
-            return 0.5
-        
-        return sum(mobility_indicators) / len(mobility_indicators)
-    
-    def _determine_player_style(self, aggression: float, caution: float, 
-                               mobility: float) -> PlayerStyle:
-        """Определение стиля игрока"""
-        # Нормализация значений
-        total = aggression + caution + mobility
-        if total == 0:
-            return PlayerStyle.HYBRID
-        
-        aggression_norm = aggression / total
-        caution_norm = caution / total
-        mobility_norm = mobility / total
-        
-        # Определение доминирующего стиля
-        if aggression_norm > 0.4:
-            return PlayerStyle.AGGRESSIVE
-        elif caution_norm > 0.4:
-            return PlayerStyle.DEFENSIVE
-        elif mobility_norm > 0.4:
-            return PlayerStyle.MOBILE
-        elif caution_norm > 0.3 and mobility_norm > 0.3:
-            return PlayerStyle.TACTICAL
-        elif caution_norm > 0.3 and aggression_norm < 0.2:
-            return PlayerStyle.SUPPORT
-        else:
-            return PlayerStyle.HYBRID
-    
-    def _analyze_weapon_preferences(self, combat_data: List[Dict[str, Any]]) -> List[str]:
-        """Анализ предпочтений в оружии"""
-        weapon_usage = {}
-        
-        for data in combat_data:
-            if "weapon_used" in data:
-                weapon = data["weapon_used"]
-                weapon_usage[weapon] = weapon_usage.get(weapon, 0) + 1
-        
-        # Сортировка по частоте использования
-        sorted_weapons = sorted(weapon_usage.items(), key=lambda x: x[1], reverse=True)
-        
-        # Возврат топ-3 предпочтений
-        return [weapon for weapon, _ in sorted_weapons[:3]]
-    
-    def _analyze_tactical_preferences(self, combat_data: List[Dict[str, Any]]) -> List[str]:
-        """Анализ тактических предпочтений"""
-        tactic_usage = {}
-        
-        for data in combat_data:
-            if "tactic_used" in data:
-                tactic = data["tactic_used"]
-                tactic_usage[tactic] = tactic_usage.get(tactic, 0) + 1
-        
-        # Сортировка по частоте использования
-        sorted_tactics = sorted(tactic_usage.items(), key=lambda x: x[1], reverse=True)
-        
-        # Возврат топ-3 предпочтений
-        return [tactic for tactic, _ in sorted_tactics[:3]]
-    
-    def _calculate_adaptability(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт адаптивности игрока"""
-        if len(combat_data) < 2:
-            return 0.5
-        
-        # Анализ изменения тактик
-        tactic_changes = 0
-        total_combats = len(combat_data) - 1
-        
-        for i in range(total_combats):
-            if combat_data[i].get("tactic_used") != combat_data[i+1].get("tactic_used"):
-                tactic_changes += 1
-        
-        adaptability = tactic_changes / total_combats
-        return min(1.0, adaptability * 2)  # Масштабирование
-    
-    def _calculate_predictability(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт предсказуемости игрока"""
-        if len(combat_data) < 2:
-            return 0.5
-        
-        # Анализ повторяющихся паттернов
-        pattern_repetitions = 0
-        total_patterns = len(combat_data) - 1
-        
-        for i in range(total_patterns):
-            if (combat_data[i].get("tactic_used") == combat_data[i+1].get("tactic_used") and
-                combat_data[i].get("weapon_used") == combat_data[i+1].get("weapon_used")):
-                pattern_repetitions += 1
-        
-        predictability = pattern_repetitions / total_patterns
-        return predictability
-    
-    def _calculate_learning_rate(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт скорости обучения игрока"""
-        if len(combat_data) < 3:
-            return 0.5
-        
-        # Анализ улучшения эффективности
-        early_performance = sum(data.get("success_rate", 0.5) 
-                              for data in combat_data[:len(combat_data)//2])
-        late_performance = sum(data.get("success_rate", 0.5) 
-                             for data in combat_data[len(combat_data)//2:])
-        
-        early_avg = early_performance / (len(combat_data) // 2)
-        late_avg = late_performance / (len(combat_data) // 2)
-        
-        improvement = (late_avg - early_avg) / max(early_avg, 0.1)
-        return max(0.0, min(1.0, improvement))
-    
-    def _calculate_pattern_strength(self, combat_data: List[Dict[str, Any]]) -> float:
-        """Расчёт силы паттерна"""
-        if len(combat_data) < 2:
-            return 0.5
-        
-        # Анализ консистентности поведения
-        consistent_actions = 0
-        total_actions = len(combat_data) - 1
-        
-        for i in range(total_actions):
-            if (combat_data[i].get("action_type") == combat_data[i+1].get("action_type") and
-                combat_data[i].get("target_type") == combat_data[i+1].get("target_type")):
-                consistent_actions += 1
-        
-        pattern_strength = consistent_actions / total_actions
-        return pattern_strength
-    
-    def _get_combat_memories(self, context: CombatContext) -> List[Any]:
-        """Получение релевантных боевых воспоминаний"""
-        memory_context = {
-            "player_style": context.player_style.value,
-            "combat_phase": context.combat_phase.value,
-            "enemy_types": context.enemy_types,
-            "weapon_type": context.player_weapon_type
+    def _analyze_combat_situation(self, context: CombatContext) -> Dict[str, Any]:
+        """Анализ боевой ситуации"""
+        analysis = {
+            "threat_level": "low",
+            "advantage": "neutral",
+            "recommended_phase": context.current_phase,
+            "reasoning": []
         }
         
-        return self.memory_system.get_relevant_memories(
-            memory_context, 
-            memory_types=[MemoryType.COMBAT_EXPERIENCE, MemoryType.ENEMY_PATTERNS],
-            limit=5
+        # Оценка угрозы
+        threat_factors = []
+        if context.health_percent < 0.3:
+            threat_factors.append("critical_health")
+        if context.stamina_percent < 0.2:
+            threat_factors.append("low_stamina")
+        if context.target_health_percent > 0.8:
+            threat_factors.append("strong_enemy")
+        
+        if len(threat_factors) >= 2:
+            analysis["threat_level"] = "high"
+            analysis["recommended_phase"] = CombatPhase.RETREAT
+            analysis["reasoning"].append("Multiple threat factors detected")
+        elif len(threat_factors) == 1:
+            analysis["threat_level"] = "medium"
+            analysis["reasoning"].append(f"Threat factor: {threat_factors[0]}")
+        
+        # Оценка преимущества
+        if context.health_percent > 0.7 and context.stamina_percent > 0.6:
+            if context.target_health_percent < 0.4:
+                analysis["advantage"] = "high"
+                analysis["recommended_phase"] = CombatPhase.ENGAGE
+                analysis["reasoning"].append("Favorable combat conditions")
+        
+        return analysis
+    
+    def _select_combat_tactic(self, entity_id: str, context: CombatContext, 
+                             analysis: Dict[str, Any]) -> CombatTactic:
+        """Выбор боевой тактики"""
+        available_tactics = list(CombatTactic)
+        
+        # Фильтрация по фазе
+        phase_tactics = {
+            CombatPhase.APPROACH: [CombatTactic.MOBILE_HARASSMENT, CombatTactic.TRAP_AND_AMBUSH],
+            CombatPhase.ENGAGE: [CombatTactic.AGGRESSIVE_RUSH, CombatTactic.DEFENSIVE_STANCE],
+            CombatPhase.COMBAT: [CombatTactic.AGGRESSIVE_RUSH, CombatTactic.COUNTER_ATTACK],
+            CombatPhase.COUNTER: [CombatTactic.COUNTER_ATTACK, CombatTactic.PSYCHOLOGICAL_WARFARE],
+            CombatPhase.RETREAT: [CombatTactic.DEFENSIVE_STANCE, CombatTactic.MOBILE_HARASSMENT],
+            CombatPhase.RECOVER: [CombatTactic.DEFENSIVE_STANCE, CombatTactic.ADAPTIVE_EVOLUTION],
+            CombatPhase.ADAPT: [CombatTactic.ADAPTIVE_EVOLUTION, CombatTactic.PSYCHOLOGICAL_WARFARE]
+        }
+        
+        phase_appropriate = phase_tactics.get(context.current_phase, available_tactics)
+        
+        # Применение адаптивных весов
+        tactic_weights = {}
+        for tactic in phase_appropriate:
+            weight = 1.0
+            
+            # Влияние успешности
+            if entity_id in self.adaptive_tactics:
+                if tactic.value in self.adaptive_tactics[entity_id]:
+                    weight *= self.adaptive_tactics[entity_id][tactic.value]
+            
+            # Влияние угрозы
+            if analysis["threat_level"] == "high":
+                if tactic in [CombatTactic.DEFENSIVE_STANCE, CombatTactic.RETREAT]:
+                    weight *= 1.5
+                elif tactic in [CombatTactic.AGGRESSIVE_RUSH]:
+                    weight *= 0.5
+            
+            tactic_weights[tactic] = weight
+        
+        # Выбор тактики с учётом весов
+        total_weight = sum(tactic_weights.values())
+        if total_weight > 0:
+            rand_val = random.random() * total_weight
+            current_weight = 0
+            for tactic, weight in tactic_weights.items():
+                current_weight += weight
+                if rand_val <= current_weight:
+                    return tactic
+        
+        return random.choice(phase_appropriate)
+    
+    def _select_combat_action(self, entity_id: str, context: CombatContext, 
+                             tactic: CombatTactic) -> str:
+        """Выбор боевого действия"""
+        tactic_actions = {
+            CombatTactic.AGGRESSIVE_RUSH: ["charge", "heavy_attack", "combo_attack"],
+            CombatTactic.DEFENSIVE_STANCE: ["defend", "block", "counter_ready"],
+            CombatTactic.MOBILE_HARASSMENT: ["dash", "quick_attack", "retreat"],
+            CombatTactic.COUNTER_ATTACK: ["wait", "counter_attack", "parry"],
+            CombatTactic.TRAP_AND_AMBUSH: ["hide", "set_trap", "ambush"],
+            CombatTactic.PSYCHOLOGICAL_WARFARE: ["intimidate", "feint", "distract"],
+            CombatTactic.ADAPTIVE_EVOLUTION: ["analyze", "adapt", "evolve"]
+        }
+        
+        available_actions = tactic_actions.get(tactic, ["attack", "defend"])
+        
+        # Применение эмоционального влияния
+        emotional_actions = self.emotional_system.get_emotionally_influenced_actions(
+            entity_id, available_actions, context.__dict__, time.time()
         )
+        
+        # Выбор действия с учётом эмоций
+        if emotional_actions:
+            actions = list(emotional_actions.keys())
+            weights = list(emotional_actions.values())
+            return random.choices(actions, weights=weights)[0]
+        
+        return random.choice(available_actions)
     
-    def _analyze_combat_context(self, context: CombatContext) -> Dict[str, Any]:
-        """Анализ боевого контекста"""
-        return {
-            "phase": context.combat_phase.value,
-            "player_style": context.player_style.value,
-            "player_health": context.player_health_percent,
-            "player_stamina": context.player_stamina_percent,
-            "enemy_count": context.enemy_count,
-            "hazards_present": len(context.environmental_hazards) > 0,
-            "cover_available": len(context.available_cover) > 0,
-            "escape_possible": len(context.escape_routes) > 0
-        }
-    
-    def _calculate_tactical_weights(self, context: CombatContext, 
-                                  available_actions: List[str]) -> Dict[str, float]:
-        """Расчёт тактических весов действий"""
-        weights = {action: 1.0 for action in available_actions}
-        
-        # Применение тактической базы данных
-        for action in available_actions:
-            if action in self.tactical_database:
-                tactic_data = self.tactical_database[action]
-                
-                # Эффективность в текущей фазе
-                phase_effectiveness = tactic_data["phase_effectiveness"].get(
-                    context.combat_phase, 0.5
-                )
-                
-                # Соответствие стилю игрока
-                style_effectiveness = self._calculate_style_effectiveness(
-                    action, context.player_style
-                )
-                
-                # Общий тактический вес
-                weights[action] = (phase_effectiveness + style_effectiveness) / 2
-        
-        return weights
-    
-    def _calculate_style_effectiveness(self, action: str, player_style: PlayerStyle) -> float:
-        """Расчёт эффективности действия против стиля игрока"""
-        if action not in self.tactical_database:
-            return 0.5
-        
-        tactic_data = self.tactical_database[action]
-        
-        # Проверка эффективности против стиля
-        if player_style.value in tactic_data["best_against"]:
-            return 0.9
-        elif player_style.value in tactic_data["worst_against"]:
-            return 0.3
-        else:
-            return 0.6
-    
-    def _calculate_adaptation_weights(self, context: CombatContext, 
-                                    available_actions: List[str]) -> Dict[str, float]:
-        """Расчёт весов адаптации к стилю игрока"""
-        weights = {action: 1.0 for action in available_actions}
-        
-        # Адаптация к агрессивному стилю
-        if context.player_style == PlayerStyle.AGGRESSIVE:
-            if "defend" in weights:
-                weights["defend"] *= 1.5
-            if "retreat" in weights:
-                weights["retreat"] *= 1.3
-            if "counter_attack" in weights:
-                weights["counter_attack"] *= 1.4
-        
-        # Адаптация к защитному стилю
-        elif context.player_style == PlayerStyle.DEFENSIVE:
-            if "aggressive_attack" in weights:
-                weights["aggressive_attack"] *= 1.4
-            if "flank" in weights:
-                weights["flank"] *= 1.3
-            if "debuff" in weights:
-                weights["debuff"] *= 1.2
-        
-        # Адаптация к мобильному стилю
-        elif context.player_style == PlayerStyle.MOBILE:
-            if "area_attack" in weights:
-                weights["area_attack"] *= 1.4
-            if "trap" in weights:
-                weights["trap"] *= 1.3
-            if "predict_movement" in weights:
-                weights["predict_movement"] *= 1.2
-        
-        return weights
-    
-    def _combine_decision_weights(self, emotional_weights: Dict[str, float],
-                                 tactical_weights: Dict[str, float],
-                                 adaptation_weights: Dict[str, float]) -> Dict[str, float]:
-        """Объединение весов решений"""
-        combined_weights = {}
-        
-        for action in emotional_weights.keys():
-            emotional = emotional_weights.get(action, 1.0)
-            tactical = tactical_weights.get(action, 1.0)
-            adaptation = adaptation_weights.get(action, 1.0)
-            
-            # Взвешенное среднее
-            combined_weights[action] = (
-                emotional * 0.3 + 
-                tactical * 0.4 + 
-                adaptation * 0.3
-            )
-        
-        return combined_weights
-    
-    def _select_target(self, action: str, context: CombatContext) -> Optional[str]:
-        """Выбор цели для действия"""
-        if not context.enemy_types:
-            return None
-        
-        # Простая логика выбора цели
-        if action in ["attack", "debuff", "focus_fire"]:
-            # Выбор самого слабого врага
-            return "weakest_enemy"
-        elif action in ["area_attack", "debuff_area"]:
-            # Выбор группы врагов
-            return "enemy_group"
-        elif action in ["support", "heal"]:
-            # Выбор союзника
-            return "ally"
-        
-        return None
-    
-    def _calculate_confidence(self, weights: Dict[str, float], 
-                            selected_action: str) -> float:
+    def _calculate_decision_confidence(self, context: CombatContext, 
+                                     action: str, tactic: CombatTactic) -> float:
         """Расчёт уверенности в решении"""
-        if not weights:
+        confidence = 0.5  # Базовая уверенность
+        
+        # Влияние здоровья
+        if context.health_percent > 0.7:
+            confidence += 0.2
+        elif context.health_percent < 0.3:
+            confidence -= 0.2
+        
+        # Влияние выносливости
+        if context.stamina_percent > 0.6:
+            confidence += 0.15
+        elif context.stamina_percent < 0.2:
+            confidence -= 0.15
+        
+        # Влияние истории успеха
+        if context.pattern_success_history:
+            recent_success_rate = sum(context.pattern_success_history[-5:]) / min(5, len(context.pattern_success_history[-5:]))
+            confidence += (recent_success_rate - 0.5) * 0.3
+        
+        return max(0.0, min(1.0, confidence))
+    
+    def _get_emotional_influence(self, entity_id: str, context: CombatContext) -> float:
+        """Получение влияния эмоций"""
+        try:
+            emotional_stats = self.emotional_system.get_emotional_statistics(entity_id)
+            emotional_balance = emotional_stats.get("emotional_balance", 0.5)
+            return emotional_balance
+        except Exception as e:
+            logger.warning(f"Ошибка получения эмоционального влияния: {e}")
             return 0.5
         
-        selected_weight = weights.get(selected_action, 0.0)
-        max_weight = max(weights.values())
-        
-        if max_weight == 0:
-            return 0.5
-        
-        # Нормализованная уверенность
-        confidence = selected_weight / max_weight
-        
-        # Дополнительная уверенность если вес значительно выше среднего
-        avg_weight = sum(weights.values()) / len(weights)
-        if selected_weight > avg_weight * 1.5:
-            confidence = min(1.0, confidence + 0.2)
-        
-        return confidence
-    
-    def _generate_reasoning(self, action: str, context: CombatContext, 
-                          memories: List[Any]) -> str:
-        """Генерация объяснения решения"""
-        reasoning_parts = []
-        
-        # Базовое объяснение
-        reasoning_parts.append(f"Выбрано действие '{action}' в фазе {context.combat_phase.value}")
-        
-        # Тактическое обоснование
-        if action in self.tactical_database:
-            tactic_data = self.tactical_database[action]
-            reasoning_parts.append(f"Тактика эффективна против стиля {context.player_style.value}")
-        
-        # Обоснование на основе памяти
-        if memories:
-            memory_count = len(memories)
-            reasoning_parts.append(f"Учтено {memory_count} предыдущих боевых опытов")
-        
-        # Контекстуальное обоснование
-        if context.enemy_count > 1:
-            reasoning_parts.append("Множественные враги требуют тактического подхода")
-        
-        if context.environmental_hazards:
-            reasoning_parts.append("Учтены опасности окружения")
-        
-        return ". ".join(reasoning_parts)
-    
-    def _predict_outcome(self, action: str, context: CombatContext) -> str:
-        """Предсказание результата действия"""
-        if action in self.tactical_database:
-            tactic_data = self.tactical_database[action]
-            risk_level = tactic_data["risk_level"]
+    def _get_memory_influence(self, entity_id: str, context: CombatContext) -> float:
+        """Получение влияния памяти"""
+        try:
+            # Поиск похожих ситуаций в памяти
+            similar_memories = self.memory_system.search_memories(
+                memory_type=MemoryType.COMBAT_EXPERIENCE,
+                search_criteria={
+                    "entity_id": entity_id,
+                    "phase": context.current_phase.value,
+                    "health_range": (context.health_percent - 0.1, context.health_percent + 0.1)
+                }
+            )
             
-            if risk_level > 0.7:
-                return "Высокий риск, но потенциально высокая награда"
-            elif risk_level > 0.4:
-                return "Умеренный риск с хорошими шансами на успех"
+            if similar_memories:
+                # Расчёт влияния на основе успешности похожих ситуаций
+                success_rate = sum(1 for mem in similar_memories if mem.get("result", {}).get("success", False)) / len(similar_memories)
+                return success_rate
+            
+            return 0.5
+        except Exception as e:
+            logger.warning(f"Ошибка получения влияния памяти: {e}")
+            return 0.5
+        
+    def _get_adaptation_level(self, entity_id: str, context: CombatContext) -> float:
+        """Получение уровня адаптации"""
+        if entity_id not in self.adaptive_tactics:
+            return 0.5
+        
+        # Расчёт среднего успеха тактик
+        tactic_successes = self.adaptive_tactics[entity_id].values()
+        if tactic_successes:
+            return sum(tactic_successes) / len(tactic_successes)
+        
+            return 0.5
+        
+    def _update_adaptive_tactics(self, entity_id: str, context: CombatContext, 
+                                decision: CombatDecision, result: Dict[str, Any]):
+        """Обновление адаптивных тактик"""
+        if entity_id not in self.adaptive_tactics:
+            self.adaptive_tactics[entity_id] = {}
+        
+        tactic_key = decision.tactic.value
+        success = result.get("success", False)
+        
+        if tactic_key not in self.adaptive_tactics[entity_id]:
+            self.adaptive_tactics[entity_id][tactic_key] = 0.5
+        
+        current_weight = self.adaptive_tactics[entity_id][tactic_key]
+        
+        # Обновление веса тактики
+        if success:
+            new_weight = min(1.0, current_weight + 0.1)
+        else:
+            new_weight = max(0.0, current_weight - 0.15)
+        
+        self.adaptive_tactics[entity_id][tactic_key] = new_weight
+    
+    def _init_base_combat_patterns(self):
+        """Инициализация базовых боевых паттернов"""
+        base_patterns = [
+            CombatPattern(
+                id="basic_attack",
+                name="Basic Attack",
+                actions=["attack"],
+                success_rate=0.6,
+                usage_count=0,
+                last_used=0,
+                adaptation_factor=0.1,
+                emotional_triggers=["rage", "excitement"]
+            ),
+            CombatPattern(
+                id="defensive_stance",
+                name="Defensive Stance",
+                actions=["defend", "block"],
+                success_rate=0.7,
+                usage_count=0,
+                last_used=0,
+                adaptation_factor=0.15,
+                emotional_triggers=["fear", "calmness"]
+            ),
+            CombatPattern(
+                id="mobile_combat",
+                name="Mobile Combat",
+                actions=["dash", "attack", "retreat"],
+                success_rate=0.5,
+                usage_count=0,
+                last_used=0,
+                adaptation_factor=0.2,
+                emotional_triggers=["curiosity", "excitement"]
+            )
+        ]
+        
+        for pattern in base_patterns:
+            self.combat_patterns[pattern.id] = pattern
+
+
+class CounterAttackSystem:
+    """Система контратак"""
+    
+    def __init__(self):
+        self.counter_opportunities: Dict[str, List[Dict[str, Any]]] = {}
+        self.counter_success_rate: Dict[str, float] = {}
+    
+    def detect_counter_opportunity(self, entity_id: str, context: CombatContext) -> bool:
+        """Обнаружение возможности контратаки"""
+        # Анализ действий противника
+        if context.current_phase == CombatPhase.DEFEND:
+            # Проверка уязвимости противника
+            if context.target_health_percent < 0.5:
+                return True
+        
+        return False
+    
+    def execute_counter_attack(self, entity_id: str, context: CombatContext) -> Dict[str, Any]:
+        """Выполнение контратаки"""
+        if not self.detect_counter_opportunity(entity_id, context):
+            return {"success": False, "reason": "No counter opportunity"}
+        
+        # Расчёт успешности контратаки
+        base_success = 0.6
+        health_bonus = (1.0 - context.health_percent) * 0.2
+        stamina_bonus = context.stamina_percent * 0.3
+        
+        success_rate = min(1.0, base_success + health_bonus + stamina_bonus)
+        success = random.random() < success_rate
+        
+        result = {
+            "success": success,
+            "damage_multiplier": 1.5 if success else 0.5,
+            "stamina_cost": 0.3,
+            "counter_type": "defensive_counter"
+        }
+        
+        # Обновление статистики
+        self._update_counter_statistics(entity_id, success)
+        
+        return result
+    
+    def _update_counter_statistics(self, entity_id: str, success: bool):
+        """Обновление статистики контратак"""
+        if entity_id not in self.counter_success_rate:
+            self.counter_success_rate[entity_id] = 0.5
+        
+        current_rate = self.counter_success_rate[entity_id]
+        if success:
+            new_rate = min(1.0, current_rate + 0.05)
             else:
-                return "Низкий риск, стабильный результат"
+            new_rate = max(0.0, current_rate - 0.1)
         
-        return "Стандартный результат"
+        self.counter_success_rate[entity_id] = new_rate
+
+
+class TacticEvolutionSystem:
+    """Система эволюции тактик"""
     
-    def _assess_risk(self, action: str, context: CombatContext) -> float:
-        """Оценка риска действия"""
-        base_risk = 0.5
-        
-        if action in self.tactical_database:
-            tactic_data = self.tactical_database[action]
-            base_risk = tactic_data["risk_level"]
-        
-        # Модификаторы риска
-        risk_modifiers = 1.0
-        
-        # Риск увеличивается при низком здоровье
-        if context.player_health_percent < 0.3:
-            risk_modifiers *= 1.5
-        
-        # Риск увеличивается при множественных врагах
-        if context.enemy_count > 2:
-            risk_modifiers *= 1.3
-        
-        # Риск уменьшается при наличии укрытий
-        if context.available_cover:
-            risk_modifiers *= 0.8
-        
-        return min(1.0, base_risk * risk_modifiers)
+    def __init__(self):
+        self.tactic_mutations: Dict[str, List[Dict[str, Any]]] = {}
+        self.evolution_history: Dict[str, List[str]] = {}
     
-    def _calculate_adaptation_factor(self, context: CombatContext) -> float:
-        """Расчёт фактора адаптации"""
-        # Базовый фактор
-        base_factor = 0.5
+    def evolve_tactics(self, entity_id: str, context: CombatContext, 
+                      result: Dict[str, Any]):
+        """Эволюция тактик на основе результатов"""
+        if entity_id not in self.evolution_history:
+            self.evolution_history[entity_id] = []
         
-        # Адаптация к стилю игрока
-        style_adaptation = self.adaptation_rates.get(context.player_style.value, 0.5)
-        
-        # Адаптация к фазе боя
-        phase_adaptation = {
-            CombatPhase.APPROACH: 0.6,
-            CombatPhase.ENGAGEMENT: 0.8,
-            CombatPhase.SUSTAINED_COMBAT: 0.9,
-            CombatPhase.RETREAT: 0.7,
-            CombatPhase.RECOVERY: 0.5,
-            CombatPhase.COUNTER_ATTACK: 0.8
-        }.get(context.combat_phase, 0.5)
-        
-        # Общий фактор адаптации
-        adaptation_factor = (base_factor + style_adaptation + phase_adaptation) / 3
-        
-        return adaptation_factor
+        # Анализ результата для эволюции
+        if result.get("success", False):
+            # Успешная тактика - улучшение
+            self._improve_successful_tactic(entity_id, context)
+        else:
+            # Неудачная тактика - мутация
+            self._mutate_failed_tactic(entity_id, context)
     
-    def _record_combat_decision(self, entity_id: str, decision: CombatDecision, 
-                              context: CombatContext, current_time: float):
-        """Запись боевого решения в память"""
-        memory_content = {
-            "entity_id": entity_id,
-            "action": decision.action,
-            "target": decision.target,
-            "confidence": decision.confidence,
-            "reasoning": decision.reasoning,
+    def _improve_successful_tactic(self, entity_id: str, context: CombatContext):
+        """Улучшение успешной тактики"""
+        tactic = context.active_tactic.value
+        
+        if entity_id not in self.tactic_mutations:
+            self.tactic_mutations[entity_id] = []
+        
+        improvement = {
+            "tactic": tactic,
+            "type": "improvement",
+            "timestamp": time.time(),
+            "context": context.__dict__
+        }
+        
+        self.tactic_mutations[entity_id].append(improvement)
+        self.evolution_history[entity_id].append(f"Improved {tactic}")
+        
+        logger.debug(f"Тактика {tactic} улучшена для {entity_id}")
+    
+    def _mutate_failed_tactic(self, entity_id: str, context: CombatContext):
+        """Мутация неудачной тактики"""
+        tactic = context.active_tactic.value
+        
+        if entity_id not in self.tactic_mutations:
+            self.tactic_mutations[entity_id] = []
+        
+        # Создание мутированной версии тактики
+        mutation = {
+            "tactic": tactic,
+            "type": "mutation",
+            "timestamp": time.time(),
             "context": context.__dict__,
-            "timestamp": current_time
+            "mutation_factor": random.uniform(0.1, 0.3)
         }
         
-        self.memory_system.add_memory(
-            memory_type=MemoryType.COMBAT_EXPERIENCE,
-            content=memory_content,
-            intensity=decision.confidence,
-            emotional_impact=0.5
-        )
-    
-    def _update_player_pattern(self, context: CombatContext, result: Dict[str, Any]):
-        """Обновление паттерна игрока"""
-        # Здесь можно добавить логику для динамического обновления
-        # понимания стиля игрока на основе результатов
-        pass
-    
-    def _create_default_pattern(self) -> PlayerPattern:
-        """Создание паттерна по умолчанию"""
-        return PlayerPattern(
-            style=PlayerStyle.HYBRID,
-            preferred_weapons=[],
-            preferred_tactics=[],
-            aggression_level=0.5,
-            caution_level=0.5,
-            adaptability=0.5,
-            predictability=0.5,
-            learning_rate=0.5,
-            pattern_strength=0.5
-        )
-    
-    def get_ai_statistics(self, entity_id: str) -> Dict[str, Any]:
-        """Получение статистики ИИ"""
-        return {
-            "tactic_success_rates": self.tactic_success_rates,
-            "player_patterns": {k: v.__dict__ for k, v in self.player_patterns.items()},
-            "total_decisions": len(self.tactic_success_rates),
-            "average_success_rate": sum(self.tactic_success_rates.values()) / max(1, len(self.tactic_success_rates))
-        }
+        self.tactic_mutations[entity_id].append(mutation)
+        self.evolution_history[entity_id].append(f"Mutated {tactic}")
+        
+        logger.debug(f"Тактика {tactic} мутирована для {entity_id}")

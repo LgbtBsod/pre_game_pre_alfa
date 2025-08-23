@@ -98,7 +98,7 @@ from .emotional_ai_influence import (
 from .enhanced_combat_learning import (
     CombatPhase as CombatLearningPhase, CombatTactic as CombatLearningTactic,
     CombatContext, CombatDecision as CombatLearningDecision,
-    PlayerStyle, PlayerPattern, EnhancedCombatLearningAI
+    EnhancedCombatLearningSystem
 )
 
 from .trap_and_hazard_system import (
@@ -175,7 +175,7 @@ __all__ = [
     'EmotionalAIInfluenceSystem',
     
     'CombatLearningPhase', 'CombatLearningTactic', 'CombatContext', 
-    'CombatLearningDecision', 'PlayerStyle', 'PlayerPattern', 'EnhancedCombatLearningAI',
+    'CombatLearningDecision', 'EnhancedCombatLearningSystem',
     
     'HazardType', 'TrapType', 'ChestType', 'HazardDifficulty',
     'HazardPattern', 'GeneratedHazard', 'ChestReward', 'GeneratedChest',
