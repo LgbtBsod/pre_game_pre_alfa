@@ -16,6 +16,8 @@ import numpy as np
 
 from .generational_memory_system import GenerationalMemorySystem, MemoryType
 from .emotional_ai_influence import EmotionalAIInfluenceSystem
+from .curse_blessing_system import CurseBlessingSystem
+from .risk_reward_system import RiskRewardSystem
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,14 @@ class CombatTactic(Enum):
     TRAP_AND_AMBUSH = "trap_and_ambush"        # Ловушка и засада
     PSYCHOLOGICAL_WARFARE = "psychological_warfare"  # Психологическая война
     ADAPTIVE_EVOLUTION = "adaptive_evolution"   # Адаптивная эволюция
+    # Новые тактики из культовых игр
+    BERSERKER_FURY = "berserker_fury"           # Ярость берсерка (Bloodborne)
+    PERFECT_DODGE = "perfect_dodge"             # Идеальное уклонение (Dark Souls)
+    DIVINE_WRATH = "divine_wrath"               # Божественный гнев (Hades)
+    CORRUPTION_SPREAD = "corruption_spread"     # Распространение порчи (Bloodborne)
+    TIME_DILATION = "time_dilation"             # Замедление времени (Returnal)
+    WEAPON_MASTERY = "weapon_mastery"           # Мастерство оружия (Hades)
+    RISK_ESCALATION = "risk_escalation"         # Эскалация риска (Risk of Rain 2)
 
 
 class VulnerabilityType(Enum):
@@ -113,9 +123,13 @@ class EnhancedCombatLearningSystem:
     """Расширенная система боевого обучения"""
     
     def __init__(self, memory_system: GenerationalMemorySystem, 
-                 emotional_system: EmotionalAIInfluenceSystem):
+                 emotional_system: EmotionalAIInfluenceSystem,
+                 curse_blessing_system: Optional[CurseBlessingSystem] = None,
+                 risk_reward_system: Optional[RiskRewardSystem] = None):
         self.memory_system = memory_system
         self.emotional_system = emotional_system
+        self.curse_blessing_system = curse_blessing_system
+        self.risk_reward_system = risk_reward_system
         
         # Боевые паттерны
         self.combat_patterns: Dict[str, CombatPattern] = {}
@@ -134,6 +148,15 @@ class EnhancedCombatLearningSystem:
         
         # Инициализация базовых паттернов
         self._init_base_combat_patterns()
+        
+        # Система адаптивных комбо (Hades)
+        self.combo_system = AdaptiveCombatComboSystem()
+        
+        # Система стресса в бою (Darkest Dungeon)
+        self.combat_stress_system = CombatStressSystem()
+        
+        # Система временных эффектов (Returnal)
+        self.temporal_combat_system = TemporalCombatSystem()
         
         logger.info("Расширенная система боевого обучения инициализирована")
     
@@ -154,6 +177,12 @@ class EnhancedCombatLearningSystem:
         # Влияние эмоций и памяти
         emotional_influence = self._get_emotional_influence(entity_id, context)
         memory_influence = self._get_memory_influence(entity_id, context)
+        
+        # Влияние проклятий и благословений
+        curse_blessing_influence = self._get_curse_blessing_influence(entity_id, context)
+        
+        # Влияние рисков и наград
+        risk_influence = self._get_risk_influence(entity_id, context)
         
         # Уровень адаптации
         adaptation_level = self._get_adaptation_level(entity_id, context)
@@ -176,7 +205,7 @@ class EnhancedCombatLearningSystem:
         if decision.action in self.combat_patterns:
             pattern = self.combat_patterns[decision.action]
         success = result.get("success", False)
-            pattern.update_success_rate(success)
+        pattern.update_success_rate(success)
         
         # Запись в память поколений
         combat_memory = {
@@ -392,6 +421,49 @@ class EnhancedCombatLearningSystem:
             return sum(tactic_successes) / len(tactic_successes)
         
             return 0.5
+    
+    def _get_curse_blessing_influence(self, entity_id: str, context: CombatContext) -> float:
+        """Получение влияния проклятий и благословений"""
+        if not self.curse_blessing_system:
+            return 0.5
+        
+        try:
+            effects_summary = self.curse_blessing_system.get_active_effects_summary()
+            multipliers = effects_summary.get("multipliers", {})
+            
+            # Расчёт общего влияния на основе множителей
+            combat_effectiveness = 1.0
+            combat_effectiveness *= multipliers.get("damage", 1.0)
+            combat_effectiveness *= multipliers.get("speed", 1.0)
+            combat_effectiveness *= multipliers.get("defense", 1.0)
+            
+            # Нормализация к диапазону 0-1
+            return max(0.0, min(1.0, combat_effectiveness))
+            
+        except Exception as e:
+            logger.warning(f"Ошибка получения влияния проклятий/благословений: {e}")
+            return 0.5
+    
+    def _get_risk_influence(self, entity_id: str, context: CombatContext) -> float:
+        """Получение влияния рисков"""
+        if not self.risk_reward_system:
+            return 0.5
+        
+        try:
+            risk_stats = self.risk_reward_system.get_risk_statistics()
+            current_risk = risk_stats.get("current_risk_level", 1.0)
+            
+            # Высокий риск увеличивает осторожность
+            if current_risk > 2.0:
+                return 0.3  # Осторожное поведение
+            elif current_risk < 0.5:
+                return 0.8  # Агрессивное поведение
+            else:
+                return 0.5  # Нейтральное поведение
+                
+        except Exception as e:
+            logger.warning(f"Ошибка получения влияния рисков: {e}")
+            return 0.5
         
     def _update_adaptive_tactics(self, entity_id: str, context: CombatContext, 
                                 decision: CombatDecision, result: Dict[str, Any]):
@@ -504,7 +576,7 @@ class CounterAttackSystem:
         current_rate = self.counter_success_rate[entity_id]
         if success:
             new_rate = min(1.0, current_rate + 0.05)
-            else:
+        else:
             new_rate = max(0.0, current_rate - 0.1)
         
         self.counter_success_rate[entity_id] = new_rate
@@ -570,3 +642,174 @@ class TacticEvolutionSystem:
         self.evolution_history[entity_id].append(f"Mutated {tactic}")
         
         logger.debug(f"Тактика {tactic} мутирована для {entity_id}")
+
+
+class AdaptiveCombatComboSystem:
+    """Система адаптивных боевых комбо (Hades)"""
+    
+    def __init__(self):
+        self.combo_chains: Dict[str, List[str]] = {}
+        self.combo_success_rates: Dict[str, float] = {}
+        self.active_combos: Dict[str, Dict[str, Any]] = {}
+    
+    def register_combo_attempt(self, entity_id: str, actions: List[str], success: bool):
+        """Регистрация попытки комбо"""
+        combo_key = "_".join(actions)
+        
+        if combo_key not in self.combo_success_rates:
+            self.combo_success_rates[combo_key] = 0.5
+        
+        # Обновление успешности комбо
+        current_rate = self.combo_success_rates[combo_key]
+        if success:
+            new_rate = min(1.0, current_rate + 0.1)
+        else:
+            new_rate = max(0.0, current_rate - 0.05)
+        
+        self.combo_success_rates[combo_key] = new_rate
+        logger.debug(f"Комбо {combo_key} обновлено: успешность {new_rate:.2f}")
+    
+    def suggest_next_action(self, entity_id: str, recent_actions: List[str]) -> Optional[str]:
+        """Предложение следующего действия для комбо"""
+        if len(recent_actions) < 2:
+            return None
+        
+        # Поиск успешных комбо, начинающихся с последних действий
+        pattern = "_".join(recent_actions[-2:])
+        
+        best_combo = None
+        best_success_rate = 0.0
+        
+        for combo_key, success_rate in self.combo_success_rates.items():
+            if combo_key.startswith(pattern) and success_rate > best_success_rate:
+                best_combo = combo_key
+                best_success_rate = success_rate
+        
+        if best_combo and best_success_rate > 0.6:
+            actions = best_combo.split("_")
+            if len(actions) > len(recent_actions):
+                return actions[len(recent_actions)]
+        
+        return None
+
+
+class CombatStressSystem:
+    """Система стресса в бою (Darkest Dungeon)"""
+    
+    def __init__(self):
+        self.entity_stress_levels: Dict[str, float] = {}
+        self.stress_modifiers: Dict[str, Dict[str, float]] = {}
+    
+    def add_stress(self, entity_id: str, amount: float, source: str = "combat"):
+        """Добавление стресса"""
+        if entity_id not in self.entity_stress_levels:
+            self.entity_stress_levels[entity_id] = 0.0
+        
+        self.entity_stress_levels[entity_id] = min(1.0, 
+            self.entity_stress_levels[entity_id] + amount)
+        
+        # Применение эффектов высокого стресса
+        if self.entity_stress_levels[entity_id] > 0.8:
+            self._apply_high_stress_effects(entity_id)
+        
+        logger.debug(f"Стресс {entity_id}: {self.entity_stress_levels[entity_id]:.2f} (+{amount} от {source})")
+    
+    def reduce_stress(self, entity_id: str, amount: float, source: str = "rest"):
+        """Снижение стресса"""
+        if entity_id not in self.entity_stress_levels:
+            return
+        
+        self.entity_stress_levels[entity_id] = max(0.0,
+            self.entity_stress_levels[entity_id] - amount)
+        
+        logger.debug(f"Стресс {entity_id} снижен: {self.entity_stress_levels[entity_id]:.2f} (-{amount} от {source})")
+    
+    def get_stress_modifiers(self, entity_id: str) -> Dict[str, float]:
+        """Получение модификаторов от стресса"""
+        stress_level = self.entity_stress_levels.get(entity_id, 0.0)
+        
+        if stress_level < 0.3:
+            return {"accuracy": 1.0, "damage": 1.0, "defense": 1.0}
+        elif stress_level < 0.6:
+            return {"accuracy": 0.9, "damage": 0.95, "defense": 0.9}
+        elif stress_level < 0.8:
+            return {"accuracy": 0.8, "damage": 0.9, "defense": 0.8}
+        else:
+            return {"accuracy": 0.6, "damage": 0.8, "defense": 0.7}
+    
+    def _apply_high_stress_effects(self, entity_id: str):
+        """Применение эффектов высокого стресса"""
+        # Случайные негативные эффекты при высоком стрессе
+        effects = ["panic", "paranoia", "despair", "madness"]
+        applied_effect = random.choice(effects)
+        
+        logger.info(f"Высокий стресс у {entity_id} вызвал эффект: {applied_effect}")
+
+
+class TemporalCombatSystem:
+    """Система временных эффектов в бою (Returnal)"""
+    
+    def __init__(self):
+        self.temporal_effects: Dict[str, Dict[str, Any]] = {}
+        self.time_distortions: Dict[str, float] = {}
+    
+    def apply_temporal_effect(self, entity_id: str, effect_type: str, 
+                             duration: float, intensity: float = 1.0):
+        """Применение временного эффекта"""
+        if entity_id not in self.temporal_effects:
+            self.temporal_effects[entity_id] = {}
+        
+        self.temporal_effects[entity_id][effect_type] = {
+            "duration": duration,
+            "intensity": intensity,
+            "start_time": time.time()
+        }
+        
+        logger.debug(f"Временной эффект {effect_type} применён к {entity_id}")
+    
+    def update_temporal_effects(self, delta_time: float):
+        """Обновление временных эффектов"""
+        current_time = time.time()
+        
+        for entity_id, effects in list(self.temporal_effects.items()):
+            for effect_type, effect_data in list(effects.items()):
+                # Проверка истечения времени
+                if current_time - effect_data["start_time"] > effect_data["duration"]:
+                    del effects[effect_type]
+                    logger.debug(f"Временной эффект {effect_type} истёк у {entity_id}")
+            
+            # Удаление пустых записей
+            if not effects:
+                del self.temporal_effects[entity_id]
+    
+    def get_time_multiplier(self, entity_id: str) -> float:
+        """Получение множителя времени"""
+        if entity_id not in self.temporal_effects:
+            return 1.0
+        
+        multiplier = 1.0
+        effects = self.temporal_effects[entity_id]
+        
+        if "time_dilation" in effects:
+            intensity = effects["time_dilation"]["intensity"]
+            multiplier *= (0.5 + 0.5 * intensity)  # Замедление
+        
+        if "time_acceleration" in effects:
+            intensity = effects["time_acceleration"]["intensity"]
+            multiplier *= (1.0 + 0.5 * intensity)  # Ускорение
+        
+        return multiplier
+    
+    def trigger_temporal_anomaly(self, entity_id: str) -> str:
+        """Активация временной аномалии"""
+        anomalies = [
+            "time_skip",      # Пропуск времени
+            "time_echo",      # Эхо времени (повтор действий)
+            "time_loop",      # Временная петля
+            "time_fracture"   # Разлом времени
+        ]
+        
+        anomaly = random.choice(anomalies)
+        self.apply_temporal_effect(entity_id, anomaly, 10.0, 1.0)
+        
+        return anomaly

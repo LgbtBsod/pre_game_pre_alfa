@@ -3,6 +3,7 @@
 Управляет эмоциональными состояниями и их влиянием на характеристики.
 """
 
+from calendar import c
 import random
 import math
 from typing import Dict, List, Optional, Tuple, Any
@@ -28,6 +29,7 @@ class EmotionCode(Enum):
     JOY = "EMO_108"
     SURPRISE = "EMO_109"
     DISGUST = "EMO_110"
+    CONFUSION = "EMO_111"
     
     # Комплексные эмоции
     PANIC = "EMO_201"  # Страх + Гнев
@@ -35,6 +37,16 @@ class EmotionCode(Enum):
     BATTLE_FURY = "EMO_203"  # Гнев + Возбуждение
     MEDITATIVE_STATE = "EMO_204"  # Спокойствие + Доверие
     PARANOIA = "EMO_205"  # Страх + Недоверие
+    
+    # Новые эмоции из культовых игр
+    BLOODLUST = "EMO_301"  # Жажда крови (Bloodborne)
+    DIVINE_FAVOR = "EMO_302"  # Божественная благосклонность (Hades)
+    COSMIC_DREAD = "EMO_303"  # Космический ужас (Bloodborne)
+    TEMPORAL_CONFUSION = "EMO_304"  # Временная путаница (Returnal)
+    ANCESTRAL_WISDOM = "EMO_305"  # Мудрость предков (Darkest Dungeon)
+    CORRUPTION_MADNESS = "EMO_306"  # Безумие от порчи (Bloodborne)
+    DIMENSIONAL_AWARENESS = "EMO_307"  # Измерительное осознание (Returnal)
+    EVOLUTIONARY_EUPHORIA = "EMO_308"  # Эволюционная эйфория
 
 
 class EmotionIntensity(Enum):
@@ -157,6 +169,31 @@ class AdvancedEmotionSystem:
                 "chance": 0.5,
                 "description": "Страх + Отвращение = Паранойя",
                 "effects": ["DETECTION_BOOST", "SPEED_REDUCTION"]
+            },
+            # Новые комбинации из культовых игр
+            (EmotionCode.RAGE.value, EmotionCode.JOY.value): {
+                "result": EmotionCode.BLOODLUST.value,
+                "chance": 0.7,
+                "description": "Гнев + Радость = Жажда крови (+50% урон, -20% защита)",
+                "effects": [EffectCode.DAMAGE_BOOST.value, "BLOODLUST_EFFECT"]
+            },
+            (EmotionCode.TRUST.value, EmotionCode.JOY.value): {
+                "result": EmotionCode.DIVINE_FAVOR.value,
+                "chance": 0.6,
+                "description": "Доверие + Радость = Божественная благосклонность",
+                "effects": ["DIVINE_PROTECTION", "BLESSING_BOOST"]
+            },
+            (EmotionCode.FEAR.value, EmotionCode.CURIOSITY.value): {
+                "result": EmotionCode.COSMIC_DREAD.value,
+                "chance": 0.8,
+                "description": "Страх + Любопытство = Космический ужас",
+                "effects": ["COSMIC_INSIGHT", "SANITY_DRAIN"]
+            },
+            (EmotionCode.SURPRISE.value, EmotionCode.CONFUSION.value): {
+                "result": EmotionCode.TEMPORAL_CONFUSION.value,
+                "chance": 0.5,
+                "description": "Удивление + Путаница = Временная дезориентация",
+                "effects": ["TIME_DISTORTION", "REALITY_SHIFT"]
             }
         }
         
@@ -166,7 +203,13 @@ class AdvancedEmotionSystem:
             "defensive": [EmotionCode.FEAR.value, EmotionCode.CALMNESS.value],
             "explorative": [EmotionCode.CURIOSITY.value, EmotionCode.TRUST.value],
             "social": [EmotionCode.TRUST.value, EmotionCode.JOY.value],
-            "cautious": [EmotionCode.FEAR.value, EmotionCode.CURIOSITY.value]
+            "cautious": [EmotionCode.FEAR.value, EmotionCode.CURIOSITY.value],
+            # Новые паттерны из культовых игр
+            "bloodthirsty": [EmotionCode.BLOODLUST.value, EmotionCode.RAGE.value],
+            "enlightened": [EmotionCode.DIVINE_FAVOR.value, EmotionCode.ANCESTRAL_WISDOM.value],
+            "corrupted": [EmotionCode.CORRUPTION_MADNESS.value, EmotionCode.COSMIC_DREAD.value],
+            "transcendent": [EmotionCode.EVOLUTIONARY_EUPHORIA.value, EmotionCode.DIMENSIONAL_AWARENESS.value],
+            "temporally_aware": [EmotionCode.TEMPORAL_CONFUSION.value, EmotionCode.DIMENSIONAL_AWARENESS.value]
         }
         
         # Инициализация базовых эмоций

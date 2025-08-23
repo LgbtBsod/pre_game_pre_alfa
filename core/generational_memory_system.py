@@ -29,6 +29,17 @@ class MemoryType(Enum):
     EMOTIONAL_TRAUMA = "emotional_trauma"
     EVOLUTIONARY_SUCCESS = "evolutionary_success"
     SURVIVAL_STRATEGIES = "survival_strategies"
+    # Новые типы памяти из культовых игр
+    ANCESTRAL_WISDOM = "ancestral_wisdom"        # Darkest Dungeon
+    LOOP_KNOWLEDGE = "loop_knowledge"            # Loop Hero / Returnal
+    CORRUPTION_PATTERNS = "corruption_patterns"  # Bloodborne
+    BOSS_MECHANICS = "boss_mechanics"            # Dark Souls
+    WEAPON_MASTERY = "weapon_mastery"            # Hades
+    CURSE_EXPERIENCE = "curse_experience"        # Binding of Isaac
+    RISK_ASSESSMENT = "risk_assessment"          # Risk of Rain 2
+    SECRET_KNOWLEDGE = "secret_knowledge"        # Enter the Gungeon
+    SYNERGY_DISCOVERY = "synergy_discovery"      # Hades / Risk of Rain 2
+    DIMENSIONAL_SHIFTS = "dimensional_shifts"    # Returnal
 
 
 class MemoryIntensity(Enum):
@@ -184,8 +195,17 @@ class GenerationalMemorySystem:
         # Эволюция памяти
         self._evolve_memories(survival_rate)
         
+        # Обработка достижений (механика из Hades)
+        self._process_achievements(achievements)
+        
         # Создание новых кластеров
         self._create_memory_clusters()
+        
+        # Создание родовых воспоминаний (Darkest Dungeon)
+        self._create_ancestral_memories()
+        
+        # Обработка петлевых знаний (Returnal/Loop Hero)
+        self._process_loop_knowledge()
         
         # Переход к новому поколению
         self.current_generation += 1
@@ -537,3 +557,198 @@ class GenerationalMemorySystem:
         # Принудительное ограничение по типам
         for memory_type in MemoryType:
             self._enforce_memory_limits(memory_type)
+    
+    def _process_achievements(self, achievements: List[str]):
+        """Обработка достижений (механика из Hades)"""
+        for achievement in achievements:
+            memory_content = {
+                "achievement": achievement,
+                "generation": self.current_generation,
+                "timestamp": time.time(),
+                "legacy_bonus": self._calculate_legacy_bonus(achievement)
+            }
+            
+            self.add_memory(
+                memory_type=MemoryType.ANCESTRAL_WISDOM,
+                content=memory_content,
+                intensity=0.8,
+                emotional_impact=0.5
+            )
+    
+    def _create_ancestral_memories(self):
+        """Создание родовых воспоминаний (Darkest Dungeon)"""
+        # Анализ самых важных воспоминаний текущего поколения
+        important_memories = [
+            memory for memory in self.memories.values()
+            if memory.survival_value > 0.7 and memory.intensity > 0.6
+        ]
+        
+        if len(important_memories) >= 3:
+            # Создание родового воспоминания
+            ancestral_content = {
+                "source_memories": [m.id for m in important_memories[:3]],
+                "generation": self.current_generation,
+                "wisdom_type": self._determine_wisdom_type(important_memories),
+                "legacy_strength": sum(m.intensity for m in important_memories[:3]) / 3,
+                "timestamp": time.time()
+            }
+            
+            self.add_memory(
+                memory_type=MemoryType.ANCESTRAL_WISDOM,
+                content=ancestral_content,
+                intensity=min(1.0, ancestral_content["legacy_strength"] * 1.2),
+                emotional_impact=0.4
+            )
+    
+    def _process_loop_knowledge(self):
+        """Обработка петлевых знаний (Returnal/Loop Hero)"""
+        # Поиск повторяющихся паттернов между поколениями
+        pattern_memories = [
+            memory for memory in self.memories.values()
+            if memory.memory_type in [MemoryType.COMBAT_EXPERIENCE, MemoryType.ENEMY_PATTERNS]
+        ]
+        
+        # Группировка по схожему контенту
+        patterns = {}
+        for memory in pattern_memories:
+            pattern_key = self._extract_pattern_key(memory)
+            if pattern_key not in patterns:
+                patterns[pattern_key] = []
+            patterns[pattern_key].append(memory)
+        
+        # Создание петлевых знаний для часто встречающихся паттернов
+        for pattern_key, pattern_memories in patterns.items():
+            if len(pattern_memories) >= 2:
+                loop_content = {
+                    "pattern": pattern_key,
+                    "occurrences": len(pattern_memories),
+                    "success_rate": self._calculate_pattern_success_rate(pattern_memories),
+                    "optimal_response": self._determine_optimal_response(pattern_memories),
+                    "generation": self.current_generation,
+                    "timestamp": time.time()
+                }
+                
+                self.add_memory(
+                    memory_type=MemoryType.LOOP_KNOWLEDGE,
+                    content=loop_content,
+                    intensity=min(1.0, len(pattern_memories) * 0.2),
+                    emotional_impact=0.3
+                )
+    
+    def _calculate_legacy_bonus(self, achievement: str) -> float:
+        """Расчёт бонуса наследия"""
+        legacy_bonuses = {
+            "first_boss_kill": 0.3,
+            "perfect_run": 0.5,
+            "secret_discovery": 0.2,
+            "evolution_mastery": 0.4,
+            "corruption_resistance": 0.3,
+            "dimensional_traveler": 0.6
+        }
+        return legacy_bonuses.get(achievement, 0.1)
+    
+    def _determine_wisdom_type(self, memories: List[GenerationalMemory]) -> str:
+        """Определение типа мудрости"""
+        memory_types = [m.memory_type for m in memories]
+        
+        if MemoryType.COMBAT_EXPERIENCE in memory_types:
+            return "combat_wisdom"
+        elif MemoryType.ENEMY_PATTERNS in memory_types:
+            return "tactical_wisdom"
+        elif MemoryType.EMOTIONAL_TRAUMA in memory_types:
+            return "survival_wisdom"
+        else:
+            return "general_wisdom"
+    
+    def _extract_pattern_key(self, memory: GenerationalMemory) -> str:
+        """Извлечение ключа паттерна"""
+        content = memory.content
+        if "enemy_type" in content:
+            return f"enemy_{content['enemy_type']}"
+        elif "action" in content:
+            return f"action_{content['action']}"
+        elif "situation" in content:
+            return f"situation_{content['situation']}"
+        else:
+            return "general_pattern"
+    
+    def _calculate_pattern_success_rate(self, memories: List[GenerationalMemory]) -> float:
+        """Расчёт успешности паттерна"""
+        successful = sum(1 for m in memories if m.content.get("success", False))
+        return successful / len(memories) if memories else 0.0
+    
+    def _determine_optimal_response(self, memories: List[GenerationalMemory]) -> str:
+        """Определение оптимального ответа на паттерн"""
+        # Анализ наиболее успешных действий
+        successful_memories = [m for m in memories if m.content.get("success", False)]
+        if successful_memories:
+            actions = [m.content.get("action", "unknown") for m in successful_memories]
+            # Возвращаем наиболее частое действие
+            return max(set(actions), key=actions.count)
+        return "defensive_stance"
+    
+    def search_memories(self, memory_type: Optional[MemoryType] = None, 
+                       search_criteria: Dict[str, Any] = None,
+                       include_ancestral: bool = True) -> List[GenerationalMemory]:
+        """Расширенный поиск воспоминаний"""
+        results = []
+        
+        for memory in self.memories.values():
+            # Фильтр по типу памяти
+            if memory_type and memory.memory_type != memory_type:
+                continue
+            
+            # Фильтр по критериям поиска
+            if search_criteria:
+                match = True
+                for key, value in search_criteria.items():
+                    if key not in memory.content:
+                        match = False
+                        break
+                    
+                    memory_value = memory.content[key]
+                    if isinstance(value, tuple) and len(value) == 2:
+                        # Диапазон значений
+                        if not (value[0] <= memory_value <= value[1]):
+                            match = False
+                            break
+                    elif memory_value != value:
+                        match = False
+                        break
+                
+                if not match:
+                    continue
+            
+            results.append(memory)
+        
+        # Включение родовых воспоминаний
+        if include_ancestral:
+            ancestral_memories = [
+                m for m in self.memories.values()
+                if m.memory_type == MemoryType.ANCESTRAL_WISDOM
+            ]
+            results.extend(ancestral_memories)
+        
+        return results
+    
+    def get_loop_insights(self, situation_type: str) -> Dict[str, Any]:
+        """Получение петлевых инсайтов для ситуации"""
+        loop_memories = [
+            m for m in self.memories.values()
+            if m.memory_type == MemoryType.LOOP_KNOWLEDGE
+            and situation_type in m.content.get("pattern", "")
+        ]
+        
+        if not loop_memories:
+            return {}
+        
+        # Находим наиболее релевантное петлевое знание
+        best_memory = max(loop_memories, key=lambda m: m.intensity)
+        
+        return {
+            "pattern": best_memory.content.get("pattern"),
+            "success_rate": best_memory.content.get("success_rate", 0.5),
+            "optimal_response": best_memory.content.get("optimal_response", "wait"),
+            "confidence": best_memory.intensity,
+            "occurrences": best_memory.content.get("occurrences", 1)
+        }

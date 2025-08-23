@@ -35,6 +35,15 @@ class BiomeType(Enum):
     SPACE = "space"
     CORRUPTED = "corrupted"
     SANCTUARY = "sanctuary"
+    # Новые биомы из культовых игр
+    BLOODBORNE_CATHEDRAL = "bloodborne_cathedral"    # Bloodborne
+    HADES_TARTARUS = "hades_tartarus"                # Hades
+    ISAAC_BASEMENT = "isaac_basement"                # Binding of Isaac
+    GUNGEON_CHAMBERS = "gungeon_chambers"            # Enter the Gungeon
+    RETURNAL_ATROPOS = "returnal_atropos"           # Returnal
+    LOOP_HERO_PATH = "loop_hero_path"               # Loop Hero
+    RISK_OF_RAIN_PLANET = "risk_of_rain_planet"     # Risk of Rain 2
+    DARKEST_DUNGEON_RUINS = "darkest_dungeon_ruins" # Darkest Dungeon
 
 
 class EnemyType(Enum):
@@ -49,6 +58,19 @@ class EnemyType(Enum):
     CORRUPTED = "corrupted"
     EVOLVED = "evolved"
     LEGENDARY = "legendary"
+    # Новые типы врагов из культовых игр
+    BLOODBORNE_BEAST = "bloodborne_beast"           # Bloodborne
+    HADES_SHADE = "hades_shade"                     # Hades
+    ISAAC_MONSTER = "isaac_monster"                 # Binding of Isaac
+    GUNGEON_BULLET_KIN = "gungeon_bullet_kin"       # Enter the Gungeon
+    RETURNAL_XENOMORPH = "returnal_xenomorph"       # Returnal
+    LOOP_HERO_LOOP_ENTITY = "loop_hero_loop_entity" # Loop Hero
+    RISK_OF_RAIN_CONSTRUCT = "risk_of_rain_construct" # Risk of Rain 2
+    DARKEST_DUNGEON_ABOMINATION = "darkest_dungeon_abomination" # Darkest Dungeon
+    VAMPIRE_SURVIVORS_SWARM = "vampire_survivors_swarm" # Vampire Survivors
+    DIMENSIONAL_HORROR = "dimensional_horror"        # Cosmic horror
+    TIME_WRAITH = "time_wraith"                     # Temporal enemy
+    EVOLUTION_CATALYST = "evolution_catalyst"        # Эволюционный катализатор
 
 
 class TrapType(Enum):
@@ -63,6 +85,18 @@ class TrapType(Enum):
     FIRE = "fire"
     PSYCHOLOGICAL = "psychological"
     TEMPORAL = "temporal"
+    # Новые типы ловушек из культовых игр
+    BLOODBORNE_INSIGHT_TRAP = "bloodborne_insight_trap"     # Bloodborne
+    HADES_DIVINE_PUNISHMENT = "hades_divine_punishment"     # Hades
+    ISAAC_CURSE_ROOM = "isaac_curse_room"                   # Binding of Isaac
+    GUNGEON_BULLET_HELL = "gungeon_bullet_hell"             # Enter the Gungeon
+    RETURNAL_MALFUNCTION = "returnal_malfunction"           # Returnal
+    LOOP_HERO_LOOP_TRAP = "loop_hero_loop_trap"             # Loop Hero
+    RISK_OF_RAIN_VOID_TRAP = "risk_of_rain_void_trap"       # Risk of Rain 2
+    DARKEST_DUNGEON_STRESS_TRAP = "darkest_dungeon_stress_trap" # Darkest Dungeon
+    DIMENSIONAL_RIFT = "dimensional_rift"                   # Измерительный разлом
+    MEMORY_WIPE = "memory_wipe"                             # Стирание памяти
+    EVOLUTION_CORRUPTION = "evolution_corruption"           # Эволюционная порча
 
 
 class ChestType(Enum):
