@@ -43,6 +43,17 @@ from core.scene_manager import SceneManager
 from ui.menu_scene import MenuScene
 from ui.pause_scene import PauseScene
 
+# Enhanced Edition системы
+try:
+    from core.enhanced_game_master import EnhancedGameMaster, GamePhase, DifficultyMode
+    from core.curse_blessing_system import CurseBlessingSystem
+    from core.risk_reward_system import RiskRewardSystem
+    from core.meta_progression_system import MetaProgressionSystem
+    from ui.enhanced_event_handler import EnhancedEventHandler
+    ENHANCED_EDITION_AVAILABLE = True
+except ImportError:
+    ENHANCED_EDITION_AVAILABLE = False
+
 
 @dataclass
 class GameSettings:
@@ -106,6 +117,8 @@ class GameInterface:
     """Главный класс игрового интерфейса"""
     
     def __init__(self, settings: Optional[GameSettings] = None):
+        global ENHANCED_EDITION_AVAILABLE
+        
         try:
             self.settings = settings or GameSettings.from_config()
         except Exception as e:
@@ -152,6 +165,40 @@ class GameInterface:
         self.event_system = GlobalEventSystem(self.effect_db)
         
         # Улучшенные системы (Enhanced Edition)
+        self.enhanced_game_master = None
+        self.curse_blessing_system = None
+        self.risk_reward_system = None
+        self.meta_progression_system = None
+        
+        if ENHANCED_EDITION_AVAILABLE:
+            try:
+                # Инициализация Enhanced Game Master
+                self.enhanced_game_master = EnhancedGameMaster(
+                    self.settings.window_width, 
+                    self.settings.window_height
+                )
+                
+                # Получаем доступ к подсистемам Enhanced Edition
+                self.curse_blessing_system = self.enhanced_game_master.curse_blessing_system
+                self.risk_reward_system = self.enhanced_game_master.risk_reward_system
+                self.meta_progression_system = self.enhanced_game_master.meta_progression_system
+                
+                # Инициализируем обработчик событий Enhanced Edition
+                self.enhanced_event_handler = EnhancedEventHandler(self)
+                
+                logger.info("✨ Enhanced Edition активирован!")
+                logger.info(f"   - Game Master инициализирован")
+                logger.info(f"   - Curse/Blessing система доступна")
+                logger.info(f"   - Risk/Reward система доступна")
+                logger.info(f"   - Meta Progression система доступна")
+                logger.info(f"   - Event Handler инициализирован")
+                
+            except Exception as e:
+                logger.error(f"❌ Ошибка инициализации Enhanced Edition: {e}")
+                self.enhanced_game_master = None
+                ENHANCED_EDITION_AVAILABLE = False
+        
+        # Остальные улучшенные системы
         try:
             from core.generational_memory_system import GenerationalMemorySystem
             from core.emotional_ai_influence import EmotionalAIInfluenceSystem
@@ -1139,6 +1186,16 @@ class GameInterface:
             
             # Обновление Enhanced Edition систем
             try:
+                # Обновление Enhanced Game Master
+                if self.enhanced_game_master:
+                    input_events = []  # В реальной игре здесь были бы события ввода
+                    master_update_result = self.enhanced_game_master.update(delta_time, input_events)
+                    
+                    # Обработка событий от Enhanced Game Master
+                    if master_update_result.get("events") and hasattr(self, 'enhanced_event_handler'):
+                        for event in master_update_result["events"]:
+                            self.enhanced_event_handler.handle_enhanced_event(event)
+                
                 if self.memory_system:
                     self.memory_system.cleanup_expired_memories()
                 

@@ -23,6 +23,14 @@ class SpatialObjectType(Enum):
     TRIGGER = "trigger"
 
 
+class SpatialIndex(Enum):
+    """Типы пространственных индексов"""
+    QUADTREE = "quadtree"
+    GRID = "grid"
+    RTREE = "rtree"
+    HASH = "hash"
+
+
 @dataclass
 class BoundingBox:
     """Ограничивающий прямоугольник"""

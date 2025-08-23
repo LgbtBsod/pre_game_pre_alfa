@@ -47,6 +47,17 @@ class SocialAction(Enum):
     ALLIANCE = "alliance"
 
 
+class NPCPersonality(Enum):
+    """Типы личности NPC"""
+    AGGRESSIVE = "aggressive"
+    FRIENDLY = "friendly"
+    CAUTIOUS = "cautious"
+    GREEDY = "greedy"
+    HELPFUL = "helpful"
+    SUSPICIOUS = "suspicious"
+    NEUTRAL = "neutral"
+
+
 @dataclass
 class Faction:
     """Фракция"""

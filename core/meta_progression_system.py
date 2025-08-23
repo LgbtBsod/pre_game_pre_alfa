@@ -76,6 +76,47 @@ class MetaUpgrade:
 
 
 @dataclass
+class InheritanceTrait:
+    """Наследственная черта"""
+    trait_id: str
+    name: str
+    description: str
+    trait_type: str  # "positive", "negative", "neutral"
+    rarity: str     # "common", "uncommon", "rare", "legendary"
+    
+    # Эффекты черты
+    stat_modifiers: Dict[str, float] = field(default_factory=dict)
+    behavior_modifiers: Dict[str, Any] = field(default_factory=dict)
+    special_abilities: List[str] = field(default_factory=list)
+    
+    # Условия получения
+    unlock_conditions: Dict[str, Any] = field(default_factory=dict)
+    inheritance_chance: float = 0.3  # Шанс наследования
+    
+    def get_inheritance_probability(self, generation: int, 
+                                  parent_traits: List[str]) -> float:
+        """Расчёт вероятности наследования"""
+        base_chance = self.inheritance_chance
+        
+        # Бонус за поколения
+        generation_bonus = min(generation * 0.05, 0.3)
+        
+        # Бонус если черта была у родителей
+        parent_bonus = 0.2 if self.trait_id in parent_traits else 0.0
+        
+        # Штраф за редкость
+        rarity_penalty = {
+            "common": 0.0,
+            "uncommon": -0.1,
+            "rare": -0.2,
+            "legendary": -0.3
+        }.get(self.rarity, 0.0)
+        
+        final_chance = base_chance + generation_bonus + parent_bonus + rarity_penalty
+        return max(0.0, min(1.0, final_chance))
+
+
+@dataclass
 class Achievement:
     """Мета-достижение"""
     id: str

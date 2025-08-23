@@ -74,6 +74,32 @@ class CraftingTool:
 
 
 @dataclass
+class CraftingStation:
+    """Станция крафтинга"""
+    station_id: str
+    name: str
+    description: str
+    station_type: str
+    recipes_unlocked: List[str] = field(default_factory=list)
+    quality_bonus: float = 0.0
+    speed_bonus: float = 0.0
+    durability: float = 100.0
+    max_durability: float = 100.0
+    upgrade_level: int = 1
+    
+    def can_craft_recipe(self, recipe_id: str) -> bool:
+        """Проверка возможности крафтинга рецепта на станции"""
+        return recipe_id in self.recipes_unlocked
+    
+    def get_station_bonuses(self) -> Dict[str, float]:
+        """Получение бонусов станции"""
+        return {
+            "quality_bonus": self.quality_bonus * self.upgrade_level,
+            "speed_bonus": self.speed_bonus * self.upgrade_level
+        }
+
+
+@dataclass
 class CraftingRecipe:
     """Рецепт крафтинга"""
     recipe_id: str

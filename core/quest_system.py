@@ -375,3 +375,7 @@ class QuestManager:
             "unlocked_achievements": self.total_achievements_unlocked,
             "total_achievements": len(self.achievements)
         }
+
+
+# Алиас для совместимости
+QuestSystem = QuestManager

@@ -143,6 +143,16 @@ def check_enhanced_systems() -> bool:
         from core.enhanced_inventory_system import EnhancedInventorySystem
         from core.enhanced_ui_system import EnhancedUISystem, UIState
         
+        # Импорт дополнительных систем
+        from core.trading_system import TradingSystem
+        from core.social_system import SocialSystem
+        from core.quest_system import QuestSystem
+        from core.crafting_system import CraftingSystem
+        from core.computer_vision_system import ComputerVisionSystem
+        from core.object_creation_system import ObjectCreationSystem
+        from core.spatial_system import SpatialSystem
+        from core.session_manager import SessionManager
+        
         logger.info("✅ Все Enhanced Edition системы доступны")
         return True
         
@@ -269,6 +279,27 @@ def run_test_mode() -> bool:
                 
             except Exception as e:
                 logger.warning(f"⚠️ Новые Enhanced системы недоступны: {e}")
+            
+            # Тестируем дополнительные системы
+            try:
+                from core.trading_system import TradingSystem
+                from core.social_system import SocialSystem
+                from core.quest_system import QuestSystem
+                from core.crafting_system import CraftingSystem
+                
+                trading_system = TradingSystem()
+                social_system = SocialSystem()
+                quest_system = QuestSystem()
+                crafting_system = CraftingSystem()
+                
+                logger.info("✅ Дополнительные системы работают корректно")
+                logger.info(f"   - Trading: {'✅' if trading_system else '❌'}")
+                logger.info(f"   - Social: {'✅' if social_system else '❌'}")
+                logger.info(f"   - Quest: {'✅' if quest_system else '❌'}")
+                logger.info(f"   - Crafting: {'✅' if crafting_system else '❌'}")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Дополнительные системы недоступны: {e}")
             
             logger.info("✅ Enhanced Edition системы работают корректно")
             

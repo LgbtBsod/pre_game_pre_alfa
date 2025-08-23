@@ -17,6 +17,33 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+@dataclass  
+class UserSession:
+    """Пользовательская сессия"""
+    session_id: str
+    user_id: str = "default"
+    start_time: float = 0.0
+    last_activity: float = 0.0
+    is_active: bool = True
+    session_data: Dict[str, Any] = None
+    
+    def __post_init__(self):
+        if self.session_data is None:
+            self.session_data = {}
+        if self.start_time == 0.0:
+            self.start_time = time.time()
+        if self.last_activity == 0.0:
+            self.last_activity = time.time()
+    
+    def update_activity(self):
+        """Обновление времени последней активности"""
+        self.last_activity = time.time()
+    
+    def get_duration(self) -> float:
+        """Получение длительности сессии"""
+        return time.time() - self.start_time
+
+
 @dataclass
 class SessionData:
     """Данные игровой сессии"""

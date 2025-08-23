@@ -109,6 +109,18 @@ from .trap_and_hazard_system import (
 
 from .database_manager import DatabaseManager, database_manager
 
+# Дополнительные системы
+from .trading_system import TradingSystem, ItemCategory, TradeType
+from .social_system import SocialSystem, RelationshipType, NPCPersonality
+from .quest_system import QuestSystem, QuestType, QuestStatus
+from .crafting_system import CraftingSystem, CraftingRecipe, CraftingStation
+from .computer_vision_system import ComputerVisionSystem, VisionAction
+from .object_creation_system import ObjectCreationSystem, ObjectType
+from .secure_database import SecureDatabase
+from .spatial_system import SpatialSystem, SpatialIndex
+from .session_manager import SessionManager, UserSession
+from .event_system import EventSystem, EventPriority
+
 # Новые системы Enhanced Edition
 from .curse_blessing_system import (
     CurseType, BlessingType, CurseBlessingEffect, CurseBlessingSystem
@@ -210,6 +222,18 @@ __all__ = [
     
     # Менеджер базы данных
     'DatabaseManager', 'database_manager',
+    
+    # Дополнительные системы
+    'TradingSystem', 'ItemCategory', 'TradeType',
+    'SocialSystem', 'RelationshipType', 'NPCPersonality',
+    'QuestSystem', 'QuestType', 'QuestStatus',
+    'CraftingSystem', 'CraftingRecipe', 'CraftingStation',
+    'ComputerVisionSystem', 'VisionAction',
+    'ObjectCreationSystem', 'ObjectType',
+    'SecureDatabase',
+    'SpatialSystem', 'SpatialIndex',
+    'SessionManager', 'UserSession',
+    'EventSystem', 'EventPriority',
     
     # Новые системы Enhanced Edition
     'CurseType', 'BlessingType', 'CurseBlessingEffect', 'CurseBlessingSystem',
