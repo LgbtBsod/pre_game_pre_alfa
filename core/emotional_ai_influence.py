@@ -422,9 +422,17 @@ class EmotionalAIInfluenceSystem:
                                    context: Dict[str, Any], intensity: float):
         """Запись эмоционального опыта в память поколений"""
         try:
+            # Преобразование контекста в сериализуемый формат
+            serializable_context = {}
+            for key, value in context.items():
+                if isinstance(value, (int, float, str, bool, list, dict)):
+                    serializable_context[key] = value
+                else:
+                    serializable_context[key] = str(value)
+            
             memory_content = {
                 "trigger_type": trigger_type,
-                "context": context,
+                "context": serializable_context,
                 "intensity": intensity,
                 "entity_id": entity_id,
                 "timestamp": time.time()

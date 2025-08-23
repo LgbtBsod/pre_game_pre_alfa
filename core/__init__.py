@@ -84,6 +84,29 @@ from .enhanced_combat_ai import (
     CombatDecision, EnhancedCombatAI
 )
 
+# Новые системы
+from .generational_memory_system import (
+    MemoryType, MemoryIntensity, GenerationalMemory, 
+    MemoryCluster, GenerationalMemorySystem
+)
+
+from .emotional_ai_influence import (
+    EmotionalInfluenceType, EmotionalModifier, EmotionalAIState,
+    EmotionalAIInfluenceSystem
+)
+
+from .enhanced_combat_learning import (
+    CombatPhase as CombatLearningPhase, CombatTactic as CombatLearningTactic,
+    CombatContext, CombatDecision as CombatLearningDecision,
+    PlayerStyle, PlayerPattern, EnhancedCombatLearningAI
+)
+
+from .trap_and_hazard_system import (
+    HazardType, TrapType, ChestType, HazardDifficulty,
+    HazardPattern, GeneratedHazard, ChestReward, GeneratedChest,
+    TrapAndHazardSystem
+)
+
 from .database_manager import DatabaseManager, database_manager
 
 # Основные классы для импорта
@@ -143,6 +166,20 @@ __all__ = [
     # Улучшенный боевой ИИ
     'CombatPhase', 'CombatTactic', 'EnhancedCombatContext',
     'CombatDecision', 'EnhancedCombatAI',
+    
+    # Новые системы
+    'MemoryType', 'MemoryIntensity', 'GenerationalMemory', 
+    'MemoryCluster', 'GenerationalMemorySystem',
+    
+    'EmotionalInfluenceType', 'EmotionalModifier', 'EmotionalAIState',
+    'EmotionalAIInfluenceSystem',
+    
+    'CombatLearningPhase', 'CombatLearningTactic', 'CombatContext', 
+    'CombatLearningDecision', 'PlayerStyle', 'PlayerPattern', 'EnhancedCombatLearningAI',
+    
+    'HazardType', 'TrapType', 'ChestType', 'HazardDifficulty',
+    'HazardPattern', 'GeneratedHazard', 'ChestReward', 'GeneratedChest',
+    'TrapAndHazardSystem',
     
     # Менеджер базы данных
     'DatabaseManager', 'database_manager',

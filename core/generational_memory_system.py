@@ -417,10 +417,31 @@ class GenerationalMemorySystem:
         """Сохранение данных поколения"""
         generation_file = self.save_directory / f"generation_{self.current_generation}.json"
         
+        # Преобразование в сериализуемый формат
+        serializable_memories = []
+        for memory in self.memories.values():
+            memory_dict = {}
+            for key, value in memory.__dict__.items():
+                if isinstance(value, (int, float, str, bool, list, dict)):
+                    memory_dict[key] = value
+                else:
+                    memory_dict[key] = str(value)
+            serializable_memories.append(memory_dict)
+        
+        serializable_clusters = []
+        for cluster in self.memory_clusters.values():
+            cluster_dict = {}
+            for key, value in cluster.__dict__.items():
+                if isinstance(value, (int, float, str, bool, list, dict)):
+                    cluster_dict[key] = value
+                else:
+                    cluster_dict[key] = str(value)
+            serializable_clusters.append(cluster_dict)
+        
         generation_data = {
             "generation": self.current_generation,
-            "memories": [memory.__dict__ for memory in self.memories.values()],
-            "clusters": [cluster.__dict__ for cluster in self.memory_clusters.values()],
+            "memories": serializable_memories,
+            "clusters": serializable_clusters,
             "timestamp": time.time()
         }
         
