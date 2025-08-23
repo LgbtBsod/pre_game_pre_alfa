@@ -16,6 +16,8 @@ from .components.transform_component import Vector3
 from config.config_manager import config_manager
 from .events import EventType
 from .game_state import GameStateManager, GameState
+
+from .event_system import event_system, GameEvents
 from ui.renderer import GameRenderer
 
 logger = logging.getLogger(__name__)
@@ -156,53 +158,7 @@ class WorldManager:
         }
 
 
-class EventSystem:
-    """
-    Система событий.
-    Отвечает только за управление событиями.
-    """
-    
-    def __init__(self):
-        self.event_handlers: Dict[str, List[callable]] = {}
-        self.event_queue = []
-        self.event_history = []
-    
-    def register_handler(self, event_type: str, handler: callable) -> None:
-        """Регистрация обработчика события"""
-        if event_type not in self.event_handlers:
-            self.event_handlers[event_type] = []
-        self.event_handlers[event_type].append(handler)
-    
-    def emit_event(self, event_type: str, data: Any = None) -> None:
-        """Отправка события"""
-        event = {
-            'type': event_type,
-            'data': data,
-            'timestamp': time.time()
-        }
-        
-        self.event_queue.append(event)
-        logger.debug(f"Событие добавлено в очередь: {event_type}")
-    
-    def process_events(self) -> None:
-        """Обработка событий в очереди"""
-        while self.event_queue:
-            event = self.event_queue.pop(0)
-            
-            # Добавляем в историю
-            self.event_history.append(event)
-            
-            # Вызываем обработчики
-            if event['type'] in self.event_handlers:
-                for handler in self.event_handlers[event['type']]:
-                    try:
-                        handler(event['data'])
-                    except Exception as e:
-                        logger.error(f"Ошибка в обработчике события {event['type']}: {e}")
-            
-            logger.debug(f"Событие обработано: {event['type']}")
-
-
+# EventSystem теперь импортируется из core.event_system
 class RenderSystem:
     """
     Система рендеринга.
@@ -318,7 +274,7 @@ class GameSystems:
     def __init__(self):
         # Инициализация систем
         self.world_manager = WorldManager()
-        self.event_system = EventSystem()
+        self.event_system = event_system
         self.render_system = RenderSystem()
         self.state_manager = StateAdapter()
         

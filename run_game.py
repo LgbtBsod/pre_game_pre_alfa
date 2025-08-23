@@ -57,6 +57,26 @@ def check_dependencies() -> bool:
     return True
 
 
+def initialize_database() -> bool:
+    """Инициализация базы данных"""
+    try:
+        from core.database_initializer import database_initializer
+        
+        logger.info("Инициализация базы данных...")
+        success = database_initializer.initialize_database()
+        
+        if success:
+            logger.info("База данных инициализирована успешно")
+        else:
+            logger.error("Ошибка инициализации базы данных")
+        
+        return success
+        
+    except Exception as e:
+        logger.error(f"Критическая ошибка инициализации базы данных: {e}")
+        return False
+
+
 def create_directories():
     """Создание необходимых директорий"""
     directories = ['logs', 'save', 'data']
@@ -91,11 +111,34 @@ def sanity_check_assets() -> bool:
 def run_graphical_interface():
     """Запуск графического интерфейса"""
     try:
+        # Инициализируем базу данных
+        if not initialize_database():
+            logger.error("Не удалось инициализировать базу данных")
+            return False
+        
+        # Инициализируем системы
+        from core.resource_manager import resource_manager
+        from core.event_system import event_system
+        from core.spatial_system import SpatialSystem, BoundingBox
+        
+        # Запускаем систему событий
+        event_system.start_processing()
+        
+        # Создаем пространственную систему
+        world_bounds = BoundingBox(0, 0, 10000, 10000)  # 10k x 10k мир
+        spatial_system = SpatialSystem(world_bounds)
+        
         from ui.game_interface import GameInterface
         logger.info("Запуск графического интерфейса...")
         
         game = GameInterface()
         game.run()
+        
+        # Завершаем системы
+        event_system.shutdown()
+        resource_manager.shutdown()
+        
+        return True
         
     except Exception as e:
         logger.error(f"Ошибка запуска GUI: {e}")
@@ -108,7 +151,7 @@ def run_graphical_interface():
 def run_console_mode():
     """Запуск консольного режима"""
     try:
-        from core.refactored_game_loop import RefactoredGameLoop
+        from core.game_loop import RefactoredGameLoop
         logger.info("Запуск консольного режима...")
         
         game_loop = RefactoredGameLoop(use_pygame=False)

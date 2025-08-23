@@ -1,8 +1,8 @@
 """
-Игровое меню с оптимизированной архитектурой
+Игровое меню с оптимизированной архитектурой для pygame
 """
 
-import tkinter as tk
+import pygame
 from typing import Callable, Dict, Any, Optional, List
 from dataclasses import dataclass
 from enum import Enum
@@ -10,7 +10,6 @@ from enum import Enum
 
 class MenuState(Enum):
     """Состояния меню"""
-
     MAIN = "main"
     SUBMENU = "submenu"
     HIDDEN = "hidden"
@@ -19,7 +18,6 @@ class MenuState(Enum):
 @dataclass
 class MenuItem:
     """Элемент меню"""
-
     label: str
     action: Callable
     icon: Optional[str] = None
@@ -30,10 +28,10 @@ class MenuItem:
 
 
 class GameMenu:
-    """Игровое меню с оптимизированной архитектурой"""
+    """Игровое меню с оптимизированной архитектурой для pygame"""
 
-    def __init__(self, parent_canvas: tk.Canvas, width: int, height: int):
-        self.parent_canvas = parent_canvas
+    def __init__(self, screen: pygame.Surface, width: int, height: int):
+        self.screen = screen
         self.width = width
         self.height = height
         self.state = MenuState.HIDDEN
@@ -49,45 +47,37 @@ class GameMenu:
         self.hover_index = -1
 
         # Стили
-        self.styles = {
-            "colors": {
-                "bg": "#2a2a2a",
-                "bg_hover": "#3a3a3a",
-                "bg_selected": "#4a4a4a",
-                "text": "#ffffff",
-                "text_disabled": "#666666",
-                "accent": "#4a9eff",
-                "border": "#555555",
-                "overlay": "#000000",
-            },
-            "fonts": {
-                "title": ("Arial", 18, "bold"),
-                "menu": ("Arial", 12),
-                "submenu": ("Arial", 10),
-                "description": ("Arial", 9),
-            },
-            "layout": {
-                "menu_width": 400,
-                "menu_height": 500,
-                "item_height": 40,
-                "item_spacing": 10,
-                "padding": 20,
-            },
+        self.colors = {
+            "bg": (42, 42, 42),
+            "bg_hover": (58, 58, 58),
+            "bg_selected": (74, 74, 74),
+            "text": (255, 255, 255),
+            "text_disabled": (102, 102, 102),
+            "accent": (74, 158, 255),
+            "border": (85, 85, 85),
+            "overlay": (0, 0, 0, 128),
         }
 
-        # Привязываем события
-        self._bind_events()
+        # Шрифты
+        self.fonts = {
+            "title": pygame.font.Font(None, 36),
+            "menu": pygame.font.Font(None, 24),
+            "submenu": pygame.font.Font(None, 20),
+            "description": pygame.font.Font(None, 18),
+        }
+
+        # Размеры
+        self.layout = {
+            "menu_width": 400,
+            "menu_height": 500,
+            "item_height": 40,
+            "item_spacing": 10,
+            "padding": 20,
+        }
 
         # Инициализируем меню
         self._init_main_menu()
         self._init_submenus()
-
-    def _bind_events(self):
-        """Привязка событий к canvas"""
-        self.parent_canvas.bind("<Button-1>", self._on_click)
-        self.parent_canvas.bind("<Motion>", self._on_mouse_move)
-        self.parent_canvas.bind("<Key>", self._on_key)
-        self.parent_canvas.bind("<Escape>", self.hide)
 
     def _init_main_menu(self):
         """Инициализация главного меню"""
@@ -98,38 +88,31 @@ class GameMenu:
             "inventory": MenuItem(
                 "Инвентарь",
                 lambda: self.show_submenu("inventory"),
-                shortcut="I",
-                description="Управление предметами",
+                description="Управление предметами"
             ),
-            "character": MenuItem(
-                "Персонаж",
-                lambda: self.show_submenu("character"),
-                shortcut="C",
-                description="Характеристики персонажа",
+            "genetics": MenuItem(
+                "Генетика",
+                lambda: self.show_submenu("genetics"),
+                description="Генетические модификации"
             ),
-            "skills": MenuItem(
-                "Умения",
-                lambda: self.show_submenu("skills"),
-                shortcut="K",
-                description="Управление способностями",
+            "ai_learning": MenuItem(
+                "ИИ Обучение",
+                lambda: self.show_submenu("ai_learning"),
+                description="Настройки ИИ"
             ),
             "settings": MenuItem(
                 "Настройки",
                 lambda: self.show_submenu("settings"),
-                shortcut="S",
-                description="Настройки игры",
+                description="Параметры игры"
             ),
             "save": MenuItem(
-                "Сохранить",
-                lambda: None,
-                shortcut="F5",
-                description="Сохранить прогресс",
+                "Сохранить", self._save_game, shortcut="F5", description="Сохранить игру"
+            ),
+            "load": MenuItem(
+                "Загрузить", self._load_game, shortcut="F9", description="Загрузить игру"
             ),
             "quit": MenuItem(
-                "Выйти в главное меню",
-                lambda: None,
-                shortcut="Q",
-                description="Вернуться в главное меню",
+                "Выход", self._quit_game, shortcut="F10", description="Выйти из игры"
             ),
         }
 
@@ -137,558 +120,234 @@ class GameMenu:
         """Инициализация подменю"""
         self.submenus = {
             "inventory": {
-                "weapons": MenuItem(
-                    "Оружие", lambda: None, description="Боевое снаряжение"
-                ),
-                "armor": MenuItem(
-                    "Броня", lambda: None, description="Защитное снаряжение"
-                ),
-                "consumables": MenuItem(
-                    "Расходники", lambda: None, description="Зелья и свитки"
-                ),
-                "materials": MenuItem(
-                    "Материалы", lambda: None, description="Крафтовые ресурсы"
-                ),
+                "view": MenuItem("Просмотр", lambda: None, description="Просмотр инвентаря"),
+                "sort": MenuItem("Сортировка", lambda: None, description="Сортировка предметов"),
+                "use": MenuItem("Использовать", lambda: None, description="Использовать предмет"),
+                "drop": MenuItem("Выбросить", lambda: None, description="Выбросить предмет"),
+                "back": MenuItem("Назад", lambda: self.show_main_menu(), description="Вернуться в главное меню"),
             },
-            "character": {
-                "attributes": MenuItem(
-                    "Характеристики", lambda: None, description="Основные параметры"
-                ),
-                "stats": MenuItem(
-                    "Статистика", lambda: None, description="Игровая статистика"
-                ),
-                "equipment": MenuItem(
-                    "Экипировка", lambda: None, description="Надетые предметы"
-                ),
-                "leveling": MenuItem(
-                    "Прокачка", lambda: None, description="Развитие персонажа"
-                ),
+            "genetics": {
+                "view": MenuItem("Просмотр генов", lambda: None, description="Просмотр активных генов"),
+                "modify": MenuItem("Модификация", lambda: None, description="Изменение генов"),
+                "stability": MenuItem("Стабильность", lambda: None, description="Управление стабильностью"),
+                "back": MenuItem("Назад", lambda: self.show_main_menu(), description="Вернуться в главное меню"),
             },
-            "skills": {
-                "combat": MenuItem(
-                    "Боевые", lambda: None, description="Атакующие способности"
-                ),
-                "passive": MenuItem(
-                    "Пассивные", lambda: None, description="Постоянные эффекты"
-                ),
-                "special": MenuItem(
-                    "Особые", lambda: None, description="Уникальные умения"
-                ),
+            "ai_learning": {
+                "status": MenuItem("Статус", lambda: None, description="Статус обучения ИИ"),
+                "parameters": MenuItem("Параметры", lambda: None, description="Настройки ИИ"),
+                "training": MenuItem("Обучение", lambda: None, description="Управление обучением"),
+                "back": MenuItem("Назад", lambda: self.show_main_menu(), description="Вернуться в главное меню"),
             },
             "settings": {
-                "graphics": MenuItem(
-                    "Графика", lambda: None, description="Настройки отображения"
-                ),
-                "audio": MenuItem("Звук", lambda: None, description="Аудио настройки"),
-                "controls": MenuItem(
-                    "Управление", lambda: None, description="Настройки управления"
-                ),
-                "gameplay": MenuItem(
-                    "Игровой процесс", lambda: None, description="Игровые настройки"
-                ),
+                "graphics": MenuItem("Графика", lambda: None, description="Настройки графики"),
+                "audio": MenuItem("Звук", lambda: None, description="Настройки звука"),
+                "controls": MenuItem("Управление", lambda: None, description="Настройки управления"),
+                "back": MenuItem("Назад", lambda: self.show_main_menu(), description="Вернуться в главное меню"),
             },
         }
 
-    def show(self, x: int = None, y: int = None):
+    def show(self):
         """Показать меню"""
-        if self.visible:
-            return
-
         self.visible = True
         self.state = MenuState.MAIN
-        self.current_submenu = None
         self.selected_index = 0
-        self.hover_index = -1
-
-        # Позиционируем меню по центру или по указанным координатам
-        if x is None:
-            x = (self.width - self.styles["layout"]["menu_width"]) // 2
-        if y is None:
-            y = (self.height - self.styles["layout"]["menu_height"]) // 2
-
-        self._draw_menu()
 
     def hide(self):
         """Скрыть меню"""
-        if not self.visible:
-            return
-
         self.visible = False
         self.state = MenuState.HIDDEN
+
+    def show_main_menu(self):
+        """Показать главное меню"""
+        self.state = MenuState.MAIN
         self.current_submenu = None
         self.selected_index = 0
-        self.hover_index = -1
-
-        # Очищаем меню с canvas
-        self.parent_canvas.delete("menu")
-
-    def toggle(self):
-        """Переключить видимость меню"""
-        if self.visible:
-            self.hide()
-        else:
-            self.show()
-
-    def _draw_menu(self):
-        """Отрисовка меню с оптимизацией"""
-        # Очищаем предыдущее меню
-        self.parent_canvas.delete("menu")
-
-        if not self.visible:
-            return
-
-        # Отрисовываем полупрозрачный фон
-        self._draw_overlay()
-
-        # Отрисовываем основное меню или подменю
-        if self.state == MenuState.MAIN:
-            self._draw_main_menu()
-        elif self.state == MenuState.SUBMENU:
-            self._draw_submenu()
-
-    def _draw_overlay(self):
-        """Отрисовка полупрозрачного фона"""
-        self.parent_canvas.create_rectangle(
-            0,
-            0,
-            self.width,
-            self.height,
-            fill=self.styles["colors"]["overlay"],
-            stipple="gray25",
-            tags="menu",
-        )
-
-    def _draw_main_menu(self):
-        """Отрисовка главного меню"""
-        layout = self.styles["layout"]
-        colors = self.styles["colors"]
-        fonts = self.styles["fonts"]
-
-        # Позиция меню
-        menu_x = (self.width - layout["menu_width"]) // 2
-        menu_y = (self.height - layout["menu_height"]) // 2
-
-        # Фон меню
-        self.parent_canvas.create_rectangle(
-            menu_x,
-            menu_y,
-            menu_x + layout["menu_width"],
-            menu_y + layout["menu_height"],
-            fill=colors["bg"],
-            outline=colors["border"],
-            width=2,
-            tags="menu",
-        )
-
-        # Заголовок
-        self.parent_canvas.create_text(
-            menu_x + layout["menu_width"] // 2,
-            menu_y + 30,
-            text="ИГРОВОЕ МЕНЮ",
-            font=fonts["title"],
-            fill=colors["text"],
-            tags="menu",
-        )
-
-        # Разделитель
-        self.parent_canvas.create_line(
-            menu_x + layout["padding"],
-            menu_y + 60,
-            menu_x + layout["menu_width"] - layout["padding"],
-            menu_y + 60,
-            fill=colors["border"],
-            width=2,
-            tags="menu",
-        )
-
-        # Элементы меню
-        self._draw_menu_items(
-            menu_x,
-            menu_y + 80,
-            self.menu_items,
-            layout["item_height"],
-            layout["item_spacing"],
-        )
-
-    def _draw_submenu(self):
-        """Отрисовка подменю"""
-        if not self.current_submenu or self.current_submenu not in self.submenus:
-            return
-
-        layout = self.styles["layout"]
-        colors = self.styles["colors"]
-        fonts = self.styles["fonts"]
-
-        # Позиция меню
-        menu_x = (self.width - layout["menu_width"]) // 2
-        menu_y = (self.height - layout["menu_height"]) // 2
-
-        # Фон меню
-        self.parent_canvas.create_rectangle(
-            menu_x,
-            menu_y,
-            menu_x + layout["menu_width"],
-            menu_y + layout["menu_height"],
-            fill=colors["bg"],
-            outline=colors["border"],
-            width=2,
-            tags="menu",
-        )
-
-        # Кнопка "Назад"
-        back_btn_x = menu_x + layout["padding"]
-        back_btn_y = menu_y + layout["padding"]
-        back_btn_width = 80
-        back_btn_height = 30
-
-        self.parent_canvas.create_rectangle(
-            back_btn_x,
-            back_btn_y,
-            back_btn_x + back_btn_width,
-            back_btn_y + back_btn_height,
-            fill=colors["bg_hover"],
-            outline=colors["border"],
-            tags="menu",
-        )
-
-        self.parent_canvas.create_text(
-            back_btn_x + back_btn_width // 2,
-            back_btn_y + back_btn_height // 2,
-            text="← Назад",
-            font=fonts["submenu"],
-            fill=colors["text"],
-            tags="menu",
-        )
-
-        # Заголовок подменю
-        submenu_name = self.current_submenu.title()
-        self.parent_canvas.create_text(
-            menu_x + layout["menu_width"] // 2,
-            menu_y + 30,
-            text=submenu_name,
-            font=fonts["title"],
-            fill=colors["text"],
-            tags="menu",
-        )
-
-        # Разделитель
-        self.parent_canvas.create_line(
-            menu_x + layout["padding"],
-            menu_y + 60,
-            menu_x + layout["menu_width"] - layout["padding"],
-            menu_y + 60,
-            fill=colors["border"],
-            width=2,
-            tags="menu",
-        )
-
-        # Элементы подменю
-        self._draw_menu_items(
-            menu_x,
-            menu_y + 80,
-            self.submenus[self.current_submenu],
-            layout["item_height"],
-            layout["item_spacing"],
-        )
-
-    def _draw_menu_items(
-        self, x: int, y: int, items: Dict[str, MenuItem], item_height: int, spacing: int
-    ):
-        """Отрисовка элементов меню"""
-        colors = self.styles["colors"]
-        fonts = self.styles["fonts"]
-        layout = self.styles["layout"]
-
-        items_list = list(items.items())
-
-        for i, (key, item) in enumerate(items_list):
-            item_y = y + i * (item_height + spacing)
-
-            # Определяем цвет фона
-            if i == self.selected_index:
-                bg_color = colors["bg_selected"]
-            elif i == self.hover_index:
-                bg_color = colors["bg_hover"]
-            else:
-                bg_color = colors["bg"]
-
-            # Фон элемента
-            self.parent_canvas.create_rectangle(
-                x + layout["padding"],
-                item_y,
-                x + layout["menu_width"] - layout["padding"],
-                item_y + item_height,
-                fill=bg_color,
-                outline=colors["border"],
-                tags=f"menu_item_{key}",
-            )
-
-            # Текст
-            text_color = colors["text"] if item.enabled else colors["text_disabled"]
-            self.parent_canvas.create_text(
-                x + layout["padding"] + 10,
-                item_y + item_height // 2,
-                text=item.label,
-                font=fonts["menu"],
-                fill=text_color,
-                anchor="w",
-                tags="menu",
-            )
-
-            # Описание (если есть)
-            if item.description:
-                self.parent_canvas.create_text(
-                    x + layout["padding"] + 10,
-                    item_y + item_height // 2 + 15,
-                    text=item.description,
-                    font=fonts["description"],
-                    fill=colors["text_disabled"],
-                    anchor="w",
-                    tags="menu",
-                )
-
-            # Горячая клавиша
-            if item.shortcut:
-                self.parent_canvas.create_text(
-                    x + layout["menu_width"] - layout["padding"] - 10,
-                    item_y + item_height // 2,
-                    text=item.shortcut,
-                    font=fonts["submenu"],
-                    fill=colors["accent"],
-                    anchor="e",
-                    tags="menu",
-                )
 
     def show_submenu(self, submenu_name: str):
         """Показать подменю"""
         if submenu_name in self.submenus:
-            self.current_submenu = submenu_name
             self.state = MenuState.SUBMENU
+            self.current_submenu = submenu_name
             self.selected_index = 0
-            self.hover_index = -1
-            self._draw_menu()
 
-    def _on_click(self, event):
-        """Обработка клика мыши"""
+    def handle_event(self, event: pygame.event.Event) -> bool:
+        """Обработка событий pygame"""
         if not self.visible:
-            return
+            return False
 
-        x, y = event.x, event.y
-        layout = self.styles["layout"]
+        if event.type == pygame.KEYDOWN:
+            return self._handle_keydown(event)
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            return self._handle_mouse_click(event)
+        elif event.type == pygame.MOUSEMOTION:
+            return self._handle_mouse_motion(event)
 
-        # Позиция меню
-        menu_x = (self.width - layout["menu_width"]) // 2
-        menu_y = (self.height - layout["menu_height"]) // 2
+        return False
 
-        if self.state == MenuState.SUBMENU:
-            # Проверяем клик по кнопке "Назад"
-            back_btn_x = menu_x + layout["padding"]
-            back_btn_y = menu_y + layout["padding"]
-            if (
-                back_btn_x <= x <= back_btn_x + 80
-                and back_btn_y <= y <= back_btn_y + 30
-            ):
-                self.current_submenu = None
-                self.state = MenuState.MAIN
-                self.selected_index = 0
-                self._draw_menu()
-                return
-
-            # Проверяем клик по элементам подменю
-            items = self.submenus[self.current_submenu]
-            self._handle_item_click(x, y, menu_x, menu_y, items, 80)
-        else:
-            # Проверяем клик по элементам главного меню
-            self._handle_item_click(x, y, menu_x, menu_y, self.menu_items, 80)
-
-    def _handle_item_click(
-        self,
-        x: int,
-        y: int,
-        menu_x: int,
-        menu_y: int,
-        items: Dict[str, MenuItem],
-        start_y: int,
-    ):
-        """Обработка клика по элементам меню"""
-        layout = self.styles["layout"]
-        items_list = list(items.items())
-
-        for i, (key, item) in enumerate(items_list):
-            item_y = (
-                menu_y + start_y + i * (layout["item_height"] + layout["item_spacing"])
-            )
-
-            if (
-                menu_x + layout["padding"]
-                <= x
-                <= menu_x + layout["menu_width"] - layout["padding"]
-                and item_y <= y <= item_y + layout["item_height"]
-            ):
-                if item.enabled and item.action:
-                    item.action()
-                return
-
-    def _on_mouse_move(self, event):
-        """Обработка движения мыши для hover эффектов"""
-        if not self.visible:
-            return
-
-        x, y = event.x, event.y
-        layout = self.styles["layout"]
-
-        # Позиция меню
-        menu_x = (self.width - layout["menu_width"]) // 2
-        menu_y = (self.height - layout["menu_height"]) // 2
-
-        # Определяем, над каким элементом находится мышь
-        if self.state == MenuState.SUBMENU:
-            items = self.submenus[self.current_submenu]
-            start_y = 80
-        else:
-            items = self.menu_items
-            start_y = 80
-
-        items_list = list(items.items())
-        new_hover_index = -1
-
-        for i, (key, item) in enumerate(items_list):
-            item_y = (
-                menu_y + start_y + i * (layout["item_height"] + layout["item_spacing"])
-            )
-
-            if (
-                menu_x + layout["padding"]
-                <= x
-                <= menu_x + layout["menu_width"] - layout["padding"]
-                and item_y <= y <= item_y + layout["item_height"]
-            ):
-                new_hover_index = i
-                break
-
-        # Обновляем hover индекс только если он изменился
-        if new_hover_index != self.hover_index:
-            self.hover_index = new_hover_index
-            self._draw_menu()
-
-    def _on_key(self, event):
+    def _handle_keydown(self, event: pygame.event.Event) -> bool:
         """Обработка нажатий клавиш"""
-        if not self.visible:
-            return
-
-        key = event.keysym.lower()
-
-        # Навигация по меню
-        if key == "up":
-            self._navigate_up()
-        elif key == "down":
-            self._navigate_down()
-        elif key == "return" or key == "space":
-            self._select_current_item()
-        elif key == "escape":
+        if event.key == pygame.K_ESCAPE:
             if self.state == MenuState.SUBMENU:
-                self.show_submenu(self.current_submenu)  # Возврат в главное меню
+                self.show_main_menu()
             else:
                 self.hide()
-        elif key == "left" and self.state == MenuState.SUBMENU:
-            self.current_submenu = None
-            self.state = MenuState.MAIN
-            self.selected_index = 0
-            self._draw_menu()
-        elif key == "right" and self.state == MenuState.MAIN:
-            # Можно добавить логику для быстрого перехода в подменю
-            pass
+            return True
+        elif event.key == pygame.K_UP:
+            self._move_selection(-1)
+            return True
+        elif event.key == pygame.K_DOWN:
+            self._move_selection(1)
+            return True
+        elif event.key == pygame.K_RETURN:
+            self._execute_selected_item()
+            return True
 
-        # Проверяем горячие клавиши
-        self._check_hotkeys(key)
+        return False
 
-    def _navigate_up(self):
-        """Навигация вверх по меню"""
-        if self.state == MenuState.MAIN:
-            items_count = len(self.menu_items)
+    def _handle_mouse_click(self, event: pygame.event.Event) -> bool:
+        """Обработка кликов мыши"""
+        if event.button == 1:  # Левый клик
+            mouse_pos = pygame.mouse.get_pos()
+            clicked_item = self._get_item_at_position(mouse_pos)
+            if clicked_item:
+                self._execute_item(clicked_item)
+                return True
+        return False
+
+    def _handle_mouse_motion(self, event: pygame.event.Event) -> bool:
+        """Обработка движения мыши"""
+        mouse_pos = pygame.mouse.get_pos()
+        hover_item = self._get_item_at_position(mouse_pos)
+        if hover_item:
+            self.hover_index = hover_item
         else:
-            items_count = len(self.submenus[self.current_submenu])
+            self.hover_index = -1
+        return False
 
-        self.selected_index = (self.selected_index - 1) % items_count
-        self._draw_menu()
-
-    def _navigate_down(self):
-        """Навигация вниз по меню"""
+    def _move_selection(self, direction: int):
+        """Перемещение выбора"""
         if self.state == MenuState.MAIN:
-            items_count = len(self.menu_items)
+            items = list(self.menu_items.values())
         else:
-            items_count = len(self.submenus[self.current_submenu])
+            items = list(self.submenus[self.current_submenu].values())
 
-        self.selected_index = (self.selected_index + 1) % items_count
-        self._draw_menu()
+        if items:
+            self.selected_index = (self.selected_index + direction) % len(items)
 
-    def _select_current_item(self):
-        """Выбор текущего элемента меню"""
+    def _execute_selected_item(self):
+        """Выполнение выбранного элемента"""
         if self.state == MenuState.MAIN:
-            items_list = list(self.menu_items.items())
+            items = list(self.menu_items.values())
         else:
-            items_list = list(self.submenus[self.current_submenu].items())
+            items = list(self.submenus[self.current_submenu].values())
 
-        if 0 <= self.selected_index < len(items_list):
-            key, item = items_list[self.selected_index]
-            if item.enabled and item.action:
+        if 0 <= self.selected_index < len(items):
+            self._execute_item(items[self.selected_index])
+
+    def _execute_item(self, item: MenuItem):
+        """Выполнение элемента меню"""
+        if item.enabled and item.action:
+            try:
                 item.action()
+            except Exception as e:
+                print(f"Ошибка выполнения действия меню: {e}")
 
-    def _check_hotkeys(self, key: str):
-        """Проверка горячих клавиш"""
-        # Проверяем горячие клавиши главного меню
-        for menu_key, item in self.menu_items.items():
-            if item.shortcut and item.shortcut.lower() == key:
-                if item.enabled and item.action:
-                    item.action()
-                return
+    def _get_item_at_position(self, pos: tuple) -> Optional[int]:
+        """Получение элемента по позиции мыши"""
+        x, y = pos
+        
+        # Вычисляем позицию меню
+        menu_x = (self.width - self.layout["menu_width"]) // 2
+        menu_y = (self.height - self.layout["menu_height"]) // 2
+        
+        if not (menu_x <= x <= menu_x + self.layout["menu_width"] and
+                menu_y <= y <= menu_y + self.layout["menu_height"]):
+            return None
 
-        # Проверяем горячие клавиши подменю
-        if self.state == MenuState.SUBMENU:
-            for submenu_key, item in self.submenus[self.current_submenu].items():
-                if item.shortcut and item.shortcut.lower() == key:
-                    if item.enabled and item.action:
-                        item.action()
-                    return
+        # Вычисляем индекс элемента
+        item_y = y - menu_y - self.layout["padding"]
+        if item_y < 0:
+            return None
 
-    def update_menu_items(self, new_items: Dict[str, MenuItem]):
-        """Обновить элементы меню"""
-        self.menu_items.update(new_items)
-        if self.visible:
-            self._draw_menu()
+        item_index = item_y // (self.layout["item_height"] + self.layout["item_spacing"])
+        
+        if self.state == MenuState.MAIN:
+            items = list(self.menu_items.values())
+        else:
+            items = list(self.submenus[self.current_submenu].values())
 
-    def set_callback(self, menu_key: str, callback: Callable):
-        """Установить callback для элемента меню"""
-        if menu_key in self.menu_items:
-            self.menu_items[menu_key].action = callback
-        elif menu_key in self.submenus:
-            for submenu_key, item in self.submenus[menu_key].items():
-                if submenu_key == menu_key:
-                    item.action = callback
-                    break
+        if 0 <= item_index < len(items):
+            return item_index
+        return None
 
-    def add_menu_item(self, key: str, item: MenuItem):
-        """Добавить новый элемент меню"""
-        self.menu_items[key] = item
-        if self.visible:
-            self._draw_menu()
+    def render(self):
+        """Отрисовка меню"""
+        if not self.visible:
+            return
 
-    def remove_menu_item(self, key: str):
-        """Удалить элемент меню"""
-        if key in self.menu_items:
-            del self.menu_items[key]
-            if self.visible:
-                self._draw_menu()
+        # Создаем поверхность для меню
+        menu_surface = pygame.Surface((self.layout["menu_width"], self.layout["menu_height"]))
+        menu_surface.set_alpha(230)  # Полупрозрачность
+        menu_surface.fill(self.colors["bg"])
 
-    def render(self, render_manager):
-        """Рендеринг меню (для совместимости)"""
-        if self.visible:
-            self._draw_menu()
+        # Позиция меню
+        menu_x = (self.width - self.layout["menu_width"]) // 2
+        menu_y = (self.height - self.layout["menu_height"]) // 2
 
-    def get_current_state(self) -> MenuState:
-        """Получение текущего состояния меню"""
-        return self.state
+        # Заголовок
+        title_text = "МЕНЮ ИГРЫ" if self.state == MenuState.MAIN else self.current_submenu.upper()
+        title_surface = self.fonts["title"].render(title_text, True, self.colors["text"])
+        title_rect = title_surface.get_rect(centerx=self.layout["menu_width"]//2, y=self.layout["padding"])
+        menu_surface.blit(title_surface, title_rect)
 
-    def is_visible(self) -> bool:
-        """Проверка видимости меню"""
-        return self.visible
+        # Элементы меню
+        if self.state == MenuState.MAIN:
+            items = list(self.menu_items.values())
+        else:
+            items = list(self.submenus[self.current_submenu].values())
+
+        y = self.layout["padding"] + 50
+        for i, item in enumerate(items):
+            # Фон элемента
+            item_rect = pygame.Rect(10, y, self.layout["menu_width"] - 20, self.layout["item_height"])
+            
+            if i == self.selected_index:
+                pygame.draw.rect(menu_surface, self.colors["bg_selected"], item_rect)
+            elif i == self.hover_index:
+                pygame.draw.rect(menu_surface, self.colors["bg_hover"], item_rect)
+            
+            pygame.draw.rect(menu_surface, self.colors["border"], item_rect, 1)
+
+            # Текст элемента
+            color = self.colors["text"] if item.enabled else self.colors["text_disabled"]
+            text_surface = self.fonts["menu"].render(item.label, True, color)
+            text_rect = text_surface.get_rect(x=20, centery=y + self.layout["item_height"]//2)
+            menu_surface.blit(text_surface, text_rect)
+
+            # Горячая клавиша
+            if item.shortcut:
+                shortcut_surface = self.fonts["description"].render(f"[{item.shortcut}]", True, self.colors["accent"])
+                shortcut_rect = shortcut_surface.get_rect(right=self.layout["menu_width"] - 20, centery=y + self.layout["item_height"]//2)
+                menu_surface.blit(shortcut_surface, shortcut_rect)
+
+            y += self.layout["item_height"] + self.layout["item_spacing"]
+
+        # Отображаем меню на экране
+        self.screen.blit(menu_surface, (menu_x, menu_y))
+
+    def _save_game(self):
+        """Сохранение игры"""
+        print("Сохранение игры...")
+        # Здесь будет логика сохранения
+
+    def _load_game(self):
+        """Загрузка игры"""
+        print("Загрузка игры...")
+        # Здесь будет логика загрузки
+
+    def _quit_game(self):
+        """Выход из игры"""
+        print("Выход из игры...")
+        pygame.quit()
+        import sys
+        sys.exit(0)

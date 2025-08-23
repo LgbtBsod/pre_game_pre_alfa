@@ -32,7 +32,7 @@ from ui.camera import Camera
 from core.sprite_animation import CharacterSprite, Direction, AnimationState
 from core.movement_system import MovementSystem
 from core.level_progression import LevelProgressionSystem, StatisticsRenderer, LevelTransitionManager
-from ui.hud import StatusHUD, InventoryHUD, GeneticsHUD, AILearningHUD
+from ui.hud import StatusHUD, InventoryHUD, GeneticsHUD, AILearningHUD, DebugHUD
 from ui.renderer import GameRenderer
 from config.config_manager import config_manager
 
@@ -46,9 +46,9 @@ from ui.pause_scene import PauseScene
 @dataclass
 class GameSettings:
     """Настройки игры"""
-    window_width: int = 1280
-    window_height: int = 720
-    fps: int = 60
+    window_width: int = 1600
+    window_height: int = 900
+    fps: int = 120
     fullscreen: bool = False
     vsync: bool = True
     music_volume: float = 0.7
