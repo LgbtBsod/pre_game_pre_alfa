@@ -1,0 +1,169 @@
+{
+  "object_limits": {
+    "trap": 50,
+    "enemy": 100,
+    "chest": 30,
+    "item": 200,
+    "obstacle": 100,
+    "beacon": 20,
+    "decoration": 150,
+    "interactive": 50
+  },
+  "creation_costs": {
+    "trap_spike": {
+      "gold": 10,
+      "materials": {
+        "iron": 2,
+        "wood": 1
+      }
+    },
+    "trap_explosive": {
+      "gold": 25,
+      "materials": {
+        "gunpowder": 3,
+        "iron": 1
+      }
+    },
+    "trap_poison": {
+      "gold": 15,
+      "materials": {
+        "poison": 2,
+        "wood": 2
+      }
+    },
+    "enemy_goblin": {
+      "gold": 5,
+      "materials": {}
+    },
+    "enemy_orc": {
+      "gold": 15,
+      "materials": {}
+    },
+    "enemy_skeleton": {
+      "gold": 10,
+      "materials": {}
+    },
+    "chest_wooden": {
+      "gold": 5,
+      "materials": {
+        "wood": 3
+      }
+    },
+    "chest_iron": {
+      "gold": 20,
+      "materials": {
+        "iron": 4,
+        "wood": 1
+      }
+    },
+    "chest_magical": {
+      "gold": 50,
+      "materials": {
+        "magic_crystal": 2,
+        "iron": 2
+      }
+    },
+    "item_health_potion": {
+      "gold": 8,
+      "materials": {
+        "herbs": 2,
+        "water": 1
+      }
+    },
+    "item_mana_potion": {
+      "gold": 10,
+      "materials": {
+        "magic_herbs": 2,
+        "water": 1
+      }
+    },
+    "obstacle_rock": {
+      "gold": 0,
+      "materials": {}
+    },
+    "obstacle_tree": {
+      "gold": 0,
+      "materials": {}
+    }
+  },
+  "skill_requirements": {
+    "trap_spike": 1,
+    "trap_explosive": 3,
+    "trap_poison": 2,
+    "enemy_goblin": 0,
+    "enemy_orc": 0,
+    "enemy_skeleton": 0,
+    "chest_wooden": 0,
+    "chest_iron": 2,
+    "chest_magical": 5,
+    "item_health_potion": 1,
+    "item_mana_potion": 2,
+    "obstacle_rock": 0,
+    "obstacle_tree": 0
+  },
+  "creation_settings": {
+    "default_scale": 1.0,
+    "default_rotation": 0.0,
+    "position_randomization": 50.0,
+    "enable_customization": true,
+    "enable_batch_creation": false,
+    "max_batch_size": 10
+  },
+  "object_properties": {
+    "trap": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 0,
+      "interaction_range": 2.0
+    },
+    "enemy": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 300,
+      "interaction_range": 5.0
+    },
+    "chest": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 600,
+      "interaction_range": 3.0
+    },
+    "item": {
+      "lifetime": 3600,
+      "auto_destroy": true,
+      "respawn_time": 0,
+      "interaction_range": 2.0
+    },
+    "obstacle": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 0,
+      "interaction_range": 1.0
+    },
+    "beacon": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 0,
+      "interaction_range": 4.0
+    },
+    "decoration": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 0,
+      "interaction_range": 1.0
+    },
+    "interactive": {
+      "lifetime": -1,
+      "auto_destroy": false,
+      "respawn_time": 0,
+      "interaction_range": 2.0
+    }
+  },
+  "performance_settings": {
+    "enable_object_tracking": true,
+    "enable_statistics": true,
+    "enable_save_load": true,
+    "auto_save_interval": 300,
+    "max_objects_in_memory": 1000
+  }
+}

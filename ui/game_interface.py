@@ -150,6 +150,13 @@ class GameInterface:
         self.evolution_system = EvolutionCycleSystem(self.effect_db)
         self.event_system = GlobalEventSystem(self.effect_db)
         
+        # Новые системы
+        from core.computer_vision_system import ComputerVisionSystem
+        from core.object_creation_system import ObjectCreationSystem
+        
+        self.computer_vision = ComputerVisionSystem("PLAYER_VISION")
+        self.object_creation = ObjectCreationSystem()
+        
         # Система управления сессиями
         from core.session_manager import session_manager
         self.session_manager = session_manager
@@ -375,6 +382,118 @@ class GameInterface:
         
         # Обработка ввода для прогрессии уровней
         self._handle_level_progression_input(key)
+    
+    def _create_trap(self):
+        """Создает ловушку рядом с игроком"""
+        try:
+            if not hasattr(self, 'object_creation') or not self.player:
+                return
+            
+            # Позиция рядом с игроком
+            player_pos = (self.player.position.x, self.player.position.y, self.player.position.z)
+            trap_pos = (player_pos[0] + random.randint(-50, 50), 
+                       player_pos[1] + random.randint(-50, 50), 
+                       player_pos[2])
+            
+            # Создаем ловушку
+            from core.object_creation_system import ObjectCreationRequest
+            request = ObjectCreationRequest(
+                template_id="trap_spike",
+                position=trap_pos,
+                creator_id="PLAYER_001"
+            )
+            
+            created_trap = self.object_creation.create_object(request, time.time())
+            if created_trap:
+                print(f"Создана ловушка: {created_trap.name} в позиции {trap_pos}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания ловушки: {e}")
+    
+    def _create_geo_barrier(self):
+        """Создает геобарьер рядом с игроком"""
+        try:
+            if not hasattr(self, 'object_creation') or not self.player:
+                return
+            
+            # Позиция рядом с игроком
+            player_pos = (self.player.position.x, self.player.position.y, self.player.position.z)
+            barrier_pos = (player_pos[0] + random.randint(-30, 30), 
+                          player_pos[1] + random.randint(-30, 30), 
+                          player_pos[2])
+            
+            # Создаем препятствие
+            from core.object_creation_system import ObjectCreationRequest
+            request = ObjectCreationRequest(
+                template_id="obstacle_rock",
+                position=barrier_pos,
+                creator_id="PLAYER_001"
+            )
+            
+            created_barrier = self.object_creation.create_object(request, time.time())
+            if created_barrier:
+                print(f"Создан геобарьер: {created_barrier.name} в позиции {barrier_pos}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания геобарьера: {e}")
+    
+    def _create_chest(self):
+        """Создает сундук рядом с игроком"""
+        try:
+            if not hasattr(self, 'object_creation') or not self.player:
+                return
+            
+            # Позиция рядом с игроком
+            player_pos = (self.player.position.x, self.player.position.y, self.player.position.z)
+            chest_pos = (player_pos[0] + random.randint(-40, 40), 
+                        player_pos[1] + random.randint(-40, 40), 
+                        player_pos[2])
+            
+            # Создаем сундук
+            from core.object_creation_system import ObjectCreationRequest
+            request = ObjectCreationRequest(
+                template_id="chest_wooden",
+                position=chest_pos,
+                creator_id="PLAYER_001"
+            )
+            
+            created_chest = self.object_creation.create_object(request, time.time())
+            if created_chest:
+                print(f"Создан сундук: {created_chest.name} в позиции {chest_pos}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания сундука: {e}")
+    
+    def _add_enemy(self):
+        """Создает врага рядом с игроком"""
+        try:
+            if not hasattr(self, 'object_creation') or not self.player:
+                return
+            
+            # Позиция рядом с игроком
+            player_pos = (self.player.position.x, self.player.position.y, self.player.position.z)
+            enemy_pos = (player_pos[0] + random.randint(-60, 60), 
+                        player_pos[1] + random.randint(-60, 60), 
+                        player_pos[2])
+            
+            # Выбираем случайного врага
+            enemy_templates = ["enemy_goblin", "enemy_orc", "enemy_skeleton"]
+            template_id = random.choice(enemy_templates)
+            
+            # Создаем врага
+            from core.object_creation_system import ObjectCreationRequest
+            request = ObjectCreationRequest(
+                template_id=template_id,
+                position=enemy_pos,
+                creator_id="PLAYER_001"
+            )
+            
+            created_enemy = self.object_creation.create_object(request, time.time())
+            if created_enemy:
+                print(f"Создан враг: {created_enemy.name} в позиции {enemy_pos}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания врага: {e}")
     
     def _handle_mouse_click(self, pos):
         """Обработка кликов мыши"""
@@ -868,6 +987,35 @@ class GameInterface:
                 if hasattr(item, 'update'):
                     item.update(delta_time)
             
+            # Обновление компьютерного зрения
+            if hasattr(self, 'computer_vision') and self.player:
+                # Собираем все объекты в мире для анализа
+                world_objects = []
+                
+                # Добавляем врагов
+                world_objects.extend(self.entities)
+                
+                # Добавляем созданные объекты
+                if hasattr(self, 'object_creation'):
+                    for obj in self.object_creation.created_objects.values():
+                        if obj.is_active:
+                            world_objects.append(obj)
+                
+                # Добавляем препятствия, сундуки, предметы
+                world_objects.extend(self.obstacles)
+                world_objects.extend(self.chests)
+                world_objects.extend(self.items)
+                
+                # Обновляем поле зрения
+                player_pos = (self.player.position.x, self.player.position.y, self.player.position.z)
+                self.computer_vision.update_visual_field(player_pos, world_objects, time.time())
+                
+                # Принимаем визуальное решение
+                visual_action = self.computer_vision.make_visual_decision(time.time())
+                
+                # Очищаем старую память
+                self.computer_vision.cleanup_old_memory(time.time())
+            
             # Подготовка состояния мира для глобальных событий
             world_state = {
                 "mutation_level": getattr(self.player, "mutation_level", 0.0),
@@ -1053,6 +1201,9 @@ class GameInterface:
         # Отрисовка врагов в изометрии
         self.renderer.render_enemies(self.entities)
         
+        # Отрисовка созданных объектов
+        self._render_created_objects()
+        
         # Отрисовка препятствий в изометрии
         self.renderer.render_obstacles(self.obstacles)
         
@@ -1118,6 +1269,47 @@ class GameInterface:
             for i, text in enumerate(info_texts):
                 info_surface = self.fonts['small'].render(text, True, ColorScheme.WHITE)
                 self.screen.blit(info_surface, (10, y_offset + i * 20))
+    
+    def _render_created_objects(self):
+        """Отрисовка созданных объектов"""
+        try:
+            if not hasattr(self, 'object_creation'):
+                return
+            
+            # Получаем все активные объекты
+            all_objects = []
+            for obj_type in self.object_creation.templates.keys():
+                objects = self.object_creation.get_objects_by_type(obj_type)
+                all_objects.extend(objects)
+            
+            # Отрисовываем каждый объект
+            for obj in all_objects:
+                if not obj.is_visible or not obj.is_active:
+                    continue
+                
+                # Определяем цвет объекта
+                color = obj.appearance.get('color', (128, 128, 128))
+                size = obj.appearance.get('size', 10.0)
+                
+                # Отрисовываем в изометрии
+                self.isometric_renderer.render_entity(
+                    self.screen,
+                    obj.position,
+                    color,
+                    size=int(size)
+                )
+                
+                # Отрисовываем имя объекта
+                if 'small' in self.fonts and obj.name:
+                    iso_x, iso_y = self.isometric_projection.world_to_iso(*obj.position)
+                    iso_x += self.settings.window_width // 2
+                    iso_y += self.settings.window_height // 2
+                    
+                    name_text = self.fonts['small'].render(obj.name, True, ColorScheme.WHITE)
+                    self.screen.blit(name_text, (int(iso_x) - 20, int(iso_y) - 40))
+                    
+        except Exception as e:
+            logger.error(f"Ошибка отрисовки созданных объектов: {e}")
     
     def _render_status_panel(self):
         """Отрисовка панели состояния"""
@@ -1198,6 +1390,22 @@ class GameInterface:
             # Количество препятствий
             obstacles_text = self.fonts['small'].render(f"Препятствий: {len(self.obstacles)}", True, ColorScheme.ORANGE)
             self.screen.blit(obstacles_text, (20, y_offset))
+            y_offset += 20
+            
+            # Количество созданных объектов
+            if hasattr(self, 'object_creation'):
+                created_objects_count = len([obj for obj in self.object_creation.created_objects.values() if obj.is_active])
+                created_text = self.fonts['small'].render(f"Созданных объектов: {created_objects_count}", True, ColorScheme.PURPLE)
+                self.screen.blit(created_text, (20, y_offset))
+                y_offset += 20
+            
+            # Информация о компьютерном зрении
+            if hasattr(self, 'computer_vision'):
+                vision_analysis = self.computer_vision.get_visual_analysis()
+                detected_objects = vision_analysis.get('detected_objects', 0)
+                threat_level = vision_analysis.get('threat_level', 0.0)
+                vision_text = self.fonts['small'].render(f"Объектов видно: {detected_objects}, Угроза: {threat_level:.1f}", True, ColorScheme.BLUE)
+                self.screen.blit(vision_text, (20, y_offset))
             y_offset += 20
             
             # Количество сундуков

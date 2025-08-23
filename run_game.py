@@ -134,14 +134,37 @@ def run_test_mode():
         from core.emotion_system import AdvancedEmotionSystem
         from core.ai_system import AdaptiveAISystem
         
+        # Тестирование новых систем
+        from core.quest_system import QuestManager
+        from core.trading_system import TradingSystem
+        from core.crafting_system import CraftingSystem
+        from core.social_system import SocialSystem
+        from core.computer_vision_system import ComputerVisionSystem
+        from core.object_creation_system import ObjectCreationSystem
+        
         # Создание тестовых экземпляров
         effect_db = EffectDatabase()
         genetic_system = AdvancedGeneticSystem(effect_db)
         emotion_system = AdvancedEmotionSystem(effect_db)
         ai_system = AdaptiveAISystem(entity_id="TEST_AI")
         
+        # Создание новых систем
+        quest_manager = QuestManager()
+        trading_system = TradingSystem()
+        crafting_system = CraftingSystem()
+        social_system = SocialSystem()
+        computer_vision = ComputerVisionSystem("TEST_VISION")
+        object_creation = ObjectCreationSystem()
+        
         logger.info("Все основные системы инициализированы успешно")
         print("✓ Все основные системы работают корректно")
+        print("✓ Новые системы расширения:")
+        print("  - Система квестов и достижений")
+        print("  - Система торговли и экономики")
+        print("  - Система крафтинга и ремёсел")
+        print("  - Система социального взаимодействия")
+        print("  - Система компьютерного зрения для ИИ")
+        print("  - Система создания объектов")
         
         # Тестирование базы данных
         try:

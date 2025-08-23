@@ -1,0 +1,92 @@
+{
+  "crafting_system": {
+    "max_crafting_queue": 10,
+    "skill_experience_multiplier": 1.0,
+    "quality_bonus_cap": 0.5,
+    "failure_material_loss": 0.5
+  },
+  "crafting_categories": {
+    "weaponsmithing": {
+      "description": "Создание оружия",
+      "base_success_chance": 0.8,
+      "experience_gain": 1.0,
+      "tools": ["hammer", "anvil", "forge"]
+    },
+    "armorsmithing": {
+      "description": "Создание брони",
+      "base_success_chance": 0.75,
+      "experience_gain": 1.0,
+      "tools": ["hammer", "anvil", "forge"]
+    },
+    "alchemy": {
+      "description": "Создание зелий и эликсиров",
+      "base_success_chance": 0.85,
+      "experience_gain": 1.2,
+      "tools": ["mortar", "cauldron", "alembic"]
+    },
+    "enchanting": {
+      "description": "Наложение заклинаний на предметы",
+      "base_success_chance": 0.7,
+      "experience_gain": 1.5,
+      "tools": ["enchanting_table", "crystal", "rune_stone"]
+    },
+    "genetic_engineering": {
+      "description": "Генетические эксперименты",
+      "base_success_chance": 0.6,
+      "experience_gain": 2.0,
+      "tools": ["gene_lab", "microscope", "dna_analyzer"]
+    },
+    "nanotech": {
+      "description": "Нанотехнологии",
+      "base_success_chance": 0.5,
+      "experience_gain": 2.5,
+      "tools": ["nanoforge", "quantum_computer", "molecular_assembler"]
+    }
+  },
+  "workstations": {
+    "forge": {
+      "name": "Кузница",
+      "category": "weaponsmithing",
+      "efficiency_bonus": 1.0,
+      "quality_bonus": 0.0,
+      "upgrades": ["better_anvil", "magical_forge", "quantum_forge"]
+    },
+    "alchemy_lab": {
+      "name": "Алхимическая лаборатория",
+      "category": "alchemy",
+      "efficiency_bonus": 1.0,
+      "quality_bonus": 0.0,
+      "upgrades": ["better_cauldron", "magical_lab", "quantum_lab"]
+    },
+    "gene_lab": {
+      "name": "Генетическая лаборатория",
+      "category": "genetic_engineering",
+      "efficiency_bonus": 1.0,
+      "quality_bonus": 0.0,
+      "upgrades": ["advanced_microscope", "quantum_analyzer", "ai_assistant"]
+    }
+  },
+  "tools": {
+    "hammer": {
+      "name": "Молот",
+      "category": "weaponsmithing",
+      "efficiency": 1.0,
+      "durability": 100,
+      "quality_bonus": 0.0
+    },
+    "mortar": {
+      "name": "Ступка",
+      "category": "alchemy",
+      "efficiency": 1.0,
+      "durability": 100,
+      "quality_bonus": 0.0
+    },
+    "gene_lab": {
+      "name": "Генетическая лаборатория",
+      "category": "genetic_engineering",
+      "efficiency": 1.0,
+      "durability": 100,
+      "quality_bonus": 0.0
+    }
+  }
+}
