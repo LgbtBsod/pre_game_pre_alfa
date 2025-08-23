@@ -1,109 +1,82 @@
 #!/usr/bin/env python3
 """
-Система мета-прогрессии.
-Вдохновлено Hades, Rogue Legacy, Darkest Dungeon.
-Обеспечивает долгосрочный прогресс между запусками игры.
+Система мета-прогрессии из Hades и Rogue Legacy.
+Управляет прогрессом между заходами и наследственными чертами.
 """
 
-import random
 import time
-import uuid
+import random
+import logging
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
-import json
-
-from .generational_memory_system import GenerationalMemorySystem, MemoryType
+import uuid
 
 logger = logging.getLogger(__name__)
 
 
-class MetaUpgradeType(Enum):
-    """Типы мета-улучшений"""
-    # Боевые улучшения (Hades)
-    WEAPON_MASTERY = "weapon_mastery"       # Мастерство оружия
-    COMBAT_PROWESS = "combat_prowess"       # Боевое мастерство
-    DEFENSIVE_TRAINING = "defensive_training" # Оборонительная подготовка
-    CRITICAL_MASTERY = "critical_mastery"   # Мастерство критических ударов
-    
-    # Исследовательские улучшения
-    EXPLORATION_EFFICIENCY = "exploration_efficiency" # Эффективность исследования
-    TREASURE_SENSE = "treasure_sense"       # Чувство сокровищ
-    SECRET_DETECTION = "secret_detection"   # Обнаружение секретов
-    NAVIGATION_MASTERY = "navigation_mastery" # Мастерство навигации
-    
-    # Эволюционные улучшения
-    EVOLUTION_SPEED = "evolution_speed"     # Скорость эволюции
-    GENETIC_STABILITY = "genetic_stability" # Генетическая стабильность
-    MUTATION_CONTROL = "mutation_control"   # Контроль мутаций
-    ADAPTATION_RATE = "adaptation_rate"     # Скорость адаптации
-    
-    # Ментальные улучшения (Darkest Dungeon)
-    STRESS_RESISTANCE = "stress_resistance" # Сопротивление стрессу
-    MEMORY_RETENTION = "memory_retention"   # Удержание памяти
-    EMOTIONAL_CONTROL = "emotional_control" # Эмоциональный контроль
-    WISDOM_ACCUMULATION = "wisdom_accumulation" # Накопление мудрости
-    
-    # Социальные улучшения
-    LEADERSHIP = "leadership"               # Лидерство
-    DIPLOMACY = "diplomacy"                 # Дипломатия
-    TRADE_MASTERY = "trade_mastery"         # Торговое мастерство
-    ALLIANCE_BUILDING = "alliance_building" # Построение альянсов
-
-
 class MetaCurrency(Enum):
     """Мета-валюты"""
-    ESSENCE = "essence"                     # Эссенция (основная валюта)
-    MEMORY_FRAGMENTS = "memory_fragments"   # Фрагменты памяти
-    EVOLUTION_POINTS = "evolution_points"   # Очки эволюции
-    WISDOM_CRYSTALS = "wisdom_crystals"     # Кристаллы мудрости
-    ANCESTRAL_FAVOR = "ancestral_favor"     # Благосклонность предков
-    DIMENSIONAL_SHARDS = "dimensional_shards" # Измерительные осколки
+    DARKNESS = "darkness"          # Тьма (основная валюта)
+    CHTHONIC_KEYS = "chthonic_keys" # Хтонические ключи (редкая валюта)
+    NECTAR = "nectar"             # Нектар (валюта отношений)
+    AMBROSIA = "ambrosia"         # Амброзия (премиум валюта)
+    DIAMONDS = "diamonds"         # Алмазы (строительная валюта)
+    TITAN_BLOOD = "titan_blood"   # Кровь титанов (валюта оружия)
+    EVOLUTION_POINTS = "evolution_points" # Очки эволюции
+    MEMORY_FRAGMENTS = "memory_fragments" # Фрагменты памяти
 
 
 @dataclass
 class MetaUpgrade:
     """Мета-улучшение"""
-    id: str
+    upgrade_id: str
     name: str
     description: str
-    upgrade_type: MetaUpgradeType
-    current_level: int
-    max_level: int
-    base_cost: int
-    cost_multiplier: float
-    currency_type: MetaCurrency
+    category: str
+    level: int = 0
+    max_level: int = 10
+    base_cost: int = 10
+    cost_scaling: float = 1.5
+    currency_type: MetaCurrency = MetaCurrency.DARKNESS
     
     # Эффекты улучшения
     stat_bonuses: Dict[str, float] = field(default_factory=dict)
     special_effects: List[str] = field(default_factory=list)
-    unlock_requirements: Dict[str, Any] = field(default_factory=dict)
+    unlock_conditions: Dict[str, Any] = field(default_factory=dict)
     
     def get_current_cost(self) -> int:
-        """Получение стоимости следующего уровня"""
-        if self.current_level >= self.max_level:
-            return -1  # Максимальный уровень достигнут
-        
-        return int(self.base_cost * (self.cost_multiplier ** self.current_level))
+        """Получение текущей стоимости улучшения"""
+        if self.level >= self.max_level:
+            return 0
+        return int(self.base_cost * (self.cost_scaling ** self.level))
     
-    def get_total_bonus(self, stat: str) -> float:
-        """Получение общего бонуса к характеристике"""
-        if stat not in self.stat_bonuses:
-            return 0.0
-        
-        return self.stat_bonuses[stat] * self.current_level
+    def get_total_cost(self) -> int:
+        """Получение общей стоимости всех уровней"""
+        total = 0
+        for level in range(self.max_level):
+            total += int(self.base_cost * (self.cost_scaling ** level))
+        return total
     
     def can_upgrade(self, available_currency: int) -> bool:
         """Проверка возможности улучшения"""
-        if self.current_level >= self.max_level:
-            return False
+        return (self.level < self.max_level and 
+                available_currency >= self.get_current_cost())
+    
+    def get_effect_at_level(self, level: int) -> Dict[str, Any]:
+        """Получение эффекта на определённом уровне"""
+        if level <= 0:
+            return {}
         
-        return available_currency >= self.get_current_cost()
+        effects = {}
+        for stat, base_bonus in self.stat_bonuses.items():
+            effects[stat] = base_bonus * level
+        
+        return effects
 
 
 @dataclass
-class MetaAchievement:
+class Achievement:
     """Мета-достижение"""
     id: str
     name: str
@@ -156,7 +129,7 @@ class MetaAchievement:
 class MetaProgressionSystem:
     """Система мета-прогрессии"""
     
-    def __init__(self, memory_system: GenerationalMemorySystem):
+    def __init__(self, memory_system):
         self.memory_system = memory_system
         
         # Мета-валюты
@@ -168,7 +141,8 @@ class MetaProgressionSystem:
         self.upgrades: Dict[str, MetaUpgrade] = {}
         
         # Мета-достижения
-        self.achievements: Dict[str, MetaAchievement] = {}
+        self.achievements: Dict[str, Achievement] = {}
+        self.completed_achievements: set = set()
         
         # Статистика всех запусков
         self.lifetime_stats: Dict[str, Any] = {}
@@ -206,7 +180,7 @@ class MetaProgressionSystem:
         upgrade = self.upgrades[upgrade_id]
         cost = upgrade.get_current_cost()
         
-        if cost == -1:
+        if cost == 0: # Changed from -1 to 0
             logger.info(f"Улучшение {upgrade_id} уже на максимальном уровне")
             return False
         
@@ -216,12 +190,12 @@ class MetaProgressionSystem:
         
         # Тратим валюту и улучшаем
         self.currencies[upgrade.currency_type] -= cost
-        upgrade.current_level += 1
+        upgrade.level += 1 # Changed from current_level to level
         
         # Запись в память
         self._record_upgrade_purchase(upgrade)
         
-        logger.info(f"Улучшение {upgrade_id} повышено до уровня {upgrade.current_level}")
+        logger.info(f"Улучшение {upgrade_id} повышено до уровня {upgrade.level}") # Changed from current_level to level
         return True
     
     def calculate_run_rewards(self, run_stats: Dict[str, Any]) -> Dict[MetaCurrency, int]:
@@ -229,42 +203,46 @@ class MetaProgressionSystem:
         rewards = {currency: 0 for currency in MetaCurrency}
         
         # Базовые награды
-        base_essence = run_stats.get("enemies_defeated", 0) * 2
-        base_essence += run_stats.get("bosses_defeated", 0) * 50
-        base_essence += run_stats.get("levels_completed", 0) * 25
-        rewards[MetaCurrency.ESSENCE] = base_essence
+        base_darkness = run_stats.get("enemies_defeated", 0) * 2
+        base_darkness += run_stats.get("bosses_defeated", 0) * 50
+        base_darkness += run_stats.get("levels_completed", 0) * 25
+        rewards[MetaCurrency.DARKNESS] = base_darkness
         
-        # Фрагменты памяти за важные события
-        memory_fragments = 0
-        memory_fragments += run_stats.get("secrets_found", 0) * 5
-        memory_fragments += run_stats.get("perfect_battles", 0) * 3
-        memory_fragments += run_stats.get("evolution_events", 0) * 10
-        rewards[MetaCurrency.MEMORY_FRAGMENTS] = memory_fragments
+        # Хтонические ключи за важные события
+        chthonic_keys = 0
+        chthonic_keys += run_stats.get("secrets_found", 0) * 5
+        chthonic_keys += run_stats.get("perfect_battles", 0) * 3
+        chthonic_keys += run_stats.get("evolution_events", 0) * 10
+        rewards[MetaCurrency.CHTHONIC_KEYS] = chthonic_keys
         
         # Очки эволюции
         evolution_points = run_stats.get("evolution_stages", 0) * 15
         evolution_points += run_stats.get("successful_mutations", 0) * 8
         rewards[MetaCurrency.EVOLUTION_POINTS] = evolution_points
         
-        # Кристаллы мудрости за выживание
+        # Фрагменты памяти за выживание
         if run_stats.get("survived", False):
-            wisdom_crystals = run_stats.get("survival_time", 0) // 300  # Каждые 5 минут
-            wisdom_crystals += run_stats.get("generation_number", 1)
-            rewards[MetaCurrency.WISDOM_CRYSTALS] = wisdom_crystals
+            memory_fragments = run_stats.get("survival_time", 0) // 300  # Каждые 5 минут
+            memory_fragments += run_stats.get("generation_number", 1)
+            rewards[MetaCurrency.MEMORY_FRAGMENTS] = memory_fragments
         
         # Благосклонность предков за достижения
         ancestral_favor = len(run_stats.get("achievements", [])) * 3
         if run_stats.get("perfect_run", False):
             ancestral_favor += 20
-        rewards[MetaCurrency.ANCESTRAL_FAVOR] = ancestral_favor
+        rewards[MetaCurrency.NECTAR] = ancestral_favor # Changed from ANCESTRAL_FAVOR to NECTAR
         
-        # Измерительные осколки за экстремальные события
-        dimensional_shards = run_stats.get("dimensional_events", 0) * 2
-        dimensional_shards += run_stats.get("reality_breaks", 0) * 5
-        rewards[MetaCurrency.DIMENSIONAL_SHARDS] = dimensional_shards
+        # Алмазы за экстремальные события
+        diamonds = run_stats.get("dimensional_events", 0) * 2
+        diamonds += run_stats.get("reality_breaks", 0) * 5
+        rewards[MetaCurrency.DIAMONDS] = diamonds
         
         # Применение мультипликаторов от улучшений
-        self._apply_reward_multipliers(rewards)
+        for upgrade in self.upgrades.values():
+            if "reward_multiplier" in upgrade.stat_bonuses:
+                multiplier = 1.0 + upgrade.get_effect_at_level(upgrade.level).get("reward_multiplier", 0.0)
+                for currency in rewards:
+                    rewards[currency] = int(rewards[currency] * multiplier)
         
         return rewards
     
@@ -301,7 +279,7 @@ class MetaProgressionSystem:
             for stat, bonus in upgrade.stat_bonuses.items():
                 if stat not in bonuses:
                     bonuses[stat] = 0.0
-                bonuses[stat] += upgrade.get_total_bonus(stat)
+                bonuses[stat] += bonus * upgrade.level # Changed from upgrade.get_total_bonus(stat) to bonus * upgrade.level
         
         return bonuses
     
@@ -316,89 +294,89 @@ class MetaProgressionSystem:
         upgrades_data = [
             # Боевые улучшения
             {
-                "id": "weapon_mastery",
+                "upgrade_id": "weapon_mastery",
                 "name": "Мастерство оружия",
                 "description": "Увеличивает урон от всех видов оружия",
-                "type": MetaUpgradeType.WEAPON_MASTERY,
+                "category": "combat",
                 "max_level": 20,
                 "base_cost": 100,
-                "cost_multiplier": 1.2,
-                "currency": MetaCurrency.ESSENCE,
+                "cost_scaling": 1.2,
+                "currency": MetaCurrency.DARKNESS,
                 "bonuses": {"weapon_damage": 0.05}
             },
             {
-                "id": "combat_prowess",
+                "upgrade_id": "combat_prowess",
                 "name": "Боевое мастерство",
                 "description": "Увеличивает общую эффективность в бою",
-                "type": MetaUpgradeType.COMBAT_PROWESS,
+                "category": "combat",
                 "max_level": 15,
                 "base_cost": 150,
-                "cost_multiplier": 1.25,
-                "currency": MetaCurrency.ESSENCE,
+                "cost_scaling": 1.25,
+                "currency": MetaCurrency.DARKNESS,
                 "bonuses": {"combat_effectiveness": 0.03, "critical_chance": 0.01}
             },
             # Эволюционные улучшения
             {
-                "id": "evolution_speed",
+                "upgrade_id": "evolution_speed",
                 "name": "Скорость эволюции",
                 "description": "Ускоряет процессы эволюции",
-                "type": MetaUpgradeType.EVOLUTION_SPEED,
+                "category": "evolution",
                 "max_level": 10,
                 "base_cost": 200,
-                "cost_multiplier": 1.3,
+                "cost_scaling": 1.3,
                 "currency": MetaCurrency.EVOLUTION_POINTS,
                 "bonuses": {"evolution_rate": 0.1}
             },
             {
-                "id": "genetic_stability",
+                "upgrade_id": "genetic_stability",
                 "name": "Генетическая стабильность",
                 "description": "Снижает риск негативных мутаций",
-                "type": MetaUpgradeType.GENETIC_STABILITY,
+                "category": "evolution",
                 "max_level": 8,
                 "base_cost": 300,
-                "cost_multiplier": 1.4,
+                "cost_scaling": 1.4,
                 "currency": MetaCurrency.EVOLUTION_POINTS,
                 "bonuses": {"mutation_stability": 0.05, "genetic_integrity": 0.03}
             },
             # Ментальные улучшения
             {
-                "id": "memory_retention",
+                "upgrade_id": "memory_retention",
                 "name": "Удержание памяти",
                 "description": "Улучшает сохранение памяти между поколениями",
-                "type": MetaUpgradeType.MEMORY_RETENTION,
+                "category": "mental",
                 "max_level": 12,
                 "base_cost": 100,
-                "cost_multiplier": 1.15,
+                "cost_scaling": 1.15,
                 "currency": MetaCurrency.MEMORY_FRAGMENTS,
                 "bonuses": {"memory_retention": 0.08, "knowledge_transfer": 0.05}
             },
             {
-                "id": "wisdom_accumulation",
+                "upgrade_id": "wisdom_accumulation",
                 "name": "Накопление мудрости",
                 "description": "Увеличивает получение мудрости от опыта",
-                "type": MetaUpgradeType.WISDOM_ACCUMULATION,
+                "category": "mental",
                 "max_level": 15,
                 "base_cost": 50,
-                "cost_multiplier": 1.2,
-                "currency": MetaCurrency.WISDOM_CRYSTALS,
+                "cost_scaling": 1.2,
+                "currency": MetaCurrency.NECTAR, # Changed from WISDOM_CRYSTALS to NECTAR
                 "bonuses": {"wisdom_gain": 0.1, "experience_efficiency": 0.04}
             }
         ]
         
         for data in upgrades_data:
             upgrade = MetaUpgrade(
-                id=data["id"],
+                upgrade_id=data["upgrade_id"],
                 name=data["name"],
                 description=data["description"],
-                upgrade_type=data["type"],
-                current_level=0,
+                category=data["category"],
+                level=0, # Changed from current_level to level
                 max_level=data["max_level"],
                 base_cost=data["base_cost"],
-                cost_multiplier=data["cost_multiplier"],
+                cost_scaling=data["cost_scaling"],
                 currency_type=data["currency"],
                 stat_bonuses=data["bonuses"]
             )
-            self.upgrades[upgrade.id] = upgrade
+            self.upgrades[upgrade.upgrade_id] = upgrade
     
     def _init_meta_achievements(self):
         """Инициализация мета-достижений"""
@@ -408,7 +386,7 @@ class MetaProgressionSystem:
                 "name": "Первые шаги",
                 "description": "Завершить первый запуск",
                 "requirements": {"runs_completed": 1},
-                "rewards": {MetaCurrency.ESSENCE: 100, MetaCurrency.MEMORY_FRAGMENTS: 10},
+                "rewards": {MetaCurrency.DARKNESS: 100, MetaCurrency.CHTHONIC_KEYS: 10},
                 "unlocks": ["basic_upgrades"]
             },
             {
@@ -416,7 +394,7 @@ class MetaProgressionSystem:
                 "name": "Выживший",
                 "description": "Выжить в 10 запусках",
                 "requirements": {"runs_survived": 10},
-                "rewards": {MetaCurrency.WISDOM_CRYSTALS: 25, MetaCurrency.ANCESTRAL_FAVOR: 15},
+                "rewards": {MetaCurrency.NECTAR: 25, MetaCurrency.CHTHONIC_KEYS: 15}, # Changed from WISDOM_CRYSTALS to NECTAR
                 "unlocks": ["survival_bonuses"]
             },
             {
@@ -424,7 +402,7 @@ class MetaProgressionSystem:
                 "name": "Мастер эволюции",
                 "description": "Достичь 50 стадий эволюции",
                 "requirements": {"total_evolution_stages": 50},
-                "rewards": {MetaCurrency.EVOLUTION_POINTS: 500, MetaCurrency.DIMENSIONAL_SHARDS: 5},
+                "rewards": {MetaCurrency.EVOLUTION_POINTS: 500, MetaCurrency.CHTHONIC_KEYS: 5}, # Changed from DIMENSIONAL_SHARDS to CHTHONIC_KEYS
                 "unlocks": ["advanced_evolution"]
             },
             {
@@ -432,7 +410,7 @@ class MetaProgressionSystem:
                 "name": "Хранитель памяти",
                 "description": "Накопить 1000 воспоминаний",
                 "requirements": {"total_memories": 1000},
-                "rewards": {MetaCurrency.MEMORY_FRAGMENTS: 200, MetaCurrency.ANCESTRAL_FAVOR: 50},
+                "rewards": {MetaCurrency.MEMORY_FRAGMENTS: 200, MetaCurrency.NECTAR: 50}, # Changed from ANCESTRAL_FAVOR to NECTAR
                 "unlocks": ["memory_mastery"]
             },
             {
@@ -440,13 +418,13 @@ class MetaProgressionSystem:
                 "name": "Путешественник измерений",
                 "description": "Испытать 5 измерительных событий",
                 "requirements": {"dimensional_events": 5},
-                "rewards": {MetaCurrency.DIMENSIONAL_SHARDS: 20, MetaCurrency.WISDOM_CRYSTALS: 30},
+                "rewards": {MetaCurrency.CHTHONIC_KEYS: 20, MetaCurrency.NECTAR: 30}, # Changed from DIMENSIONAL_SHARDS to CHTHONIC_KEYS
                 "unlocks": ["dimensional_abilities"]
             }
         ]
         
         for data in achievements_data:
-            achievement = MetaAchievement(
+            achievement = Achievement(
                 id=data["id"],
                 name=data["name"],
                 description=data["description"],
@@ -455,15 +433,6 @@ class MetaProgressionSystem:
                 special_unlocks=data["unlocks"]
             )
             self.achievements[achievement.id] = achievement
-    
-    def _apply_reward_multipliers(self, rewards: Dict[MetaCurrency, int]):
-        """Применение множителей наград от улучшений"""
-        # Проверяем улучшения, которые влияют на награды
-        for upgrade in self.upgrades.values():
-            if "reward_multiplier" in upgrade.stat_bonuses:
-                multiplier = 1.0 + upgrade.get_total_bonus("reward_multiplier")
-                for currency in rewards:
-                    rewards[currency] = int(rewards[currency] * multiplier)
     
     def _update_lifetime_stats(self, run_stats: Dict[str, Any]):
         """Обновление общей статистики"""
@@ -510,7 +479,7 @@ class MetaProgressionSystem:
             }
             
             self.memory_system.add_memory(
-                memory_type=MemoryType.ITEM_USAGE,  # Используем как ближайший тип
+                memory_type=self.memory_system.MemoryType.RESOURCE_GAINED,
                 content=memory_content,
                 intensity=min(1.0, amount / 100.0),
                 emotional_impact=0.2
@@ -523,16 +492,16 @@ class MetaProgressionSystem:
         """Запись покупки улучшения в память"""
         try:
             memory_content = {
-                "upgrade_id": upgrade.id,
+                "upgrade_id": upgrade.upgrade_id,
                 "upgrade_name": upgrade.name,
-                "new_level": upgrade.current_level,
+                "new_level": upgrade.level, # Changed from upgrade.current_level to upgrade.level
                 "cost_paid": upgrade.get_current_cost(),
                 "currency_used": upgrade.currency_type.value,
                 "timestamp": time.time()
             }
             
             self.memory_system.add_memory(
-                memory_type=MemoryType.EVOLUTIONARY_SUCCESS,
+                memory_type=self.memory_system.MemoryType.POSITIVE_EVENT,
                 content=memory_content,
                 intensity=0.6,
                 emotional_impact=0.3
@@ -562,7 +531,7 @@ class MetaProgressionSystem:
             "currencies": {currency.value: amount for currency, amount in self.currencies.items()},
             "upgrades": {
                 upgrade_id: {
-                    "level": upgrade.current_level,
+                    "level": upgrade.level, # Changed from upgrade.current_level to upgrade.level
                     "max_level": upgrade.max_level,
                     "next_cost": upgrade.get_current_cost()
                 }

@@ -6,6 +6,7 @@
 """
 
 import time
+import random
 import logging
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
@@ -196,7 +197,7 @@ class EnhancedGameMaster:
         
         # Запись в память поколений
         self.memory_system.add_memory(
-            memory_type=self.memory_system.MemoryType.EVOLUTIONARY_SUCCESS,
+            memory_type="evolutionary_success",
             content={
                 "entity_id": entity_id,
                 "evolution_option": selected_option,
@@ -559,7 +560,6 @@ class EnhancedGameMaster:
             weights.append(weight)
         
         # Взвешенный случайный выбор
-        import random
         return random.choices(options, weights=weights)[0]
     
     def _apply_evolution(self, entity_id: str, evolution_option: Dict[str, Any], 
@@ -585,8 +585,14 @@ class EnhancedGameMaster:
         # Увеличение характеристик врага на основе уровня риска
         multiplier = 1.0 + (risk_level - 1.0) * 0.5
         
-        for stat in enemy.stats:
-            enemy.stats[stat] *= multiplier
+        # Получаем статистику врага или создаем пустую
+        enemy_stats = getattr(enemy, 'stats', {})
+        if not enemy_stats:
+            enemy_stats = {"health": 100, "damage": 20, "speed": 1.0}
+        
+        # Применяем модификаторы
+        for stat in enemy_stats:
+            enemy_stats[stat] *= multiplier
         
         return enemy
     
@@ -594,10 +600,11 @@ class EnhancedGameMaster:
         """Выполнение боя"""
         # Упрощённая логика боя
         player_power = 100  # Базовая сила игрока
-        enemy_power = enemy.get_power_level()
+        enemy_power = getattr(enemy, 'power_level', 50)  # Получаем силу врага или используем значение по умолчанию
         
         # Влияние решения ИИ
-        decision_modifier = combat_decision.confidence * 0.5 + 0.5
+        decision_confidence = getattr(combat_decision, 'confidence', 0.5)
+        decision_modifier = decision_confidence * 0.5 + 0.5
         effective_player_power = player_power * decision_modifier
         
         # Определение результата
@@ -607,7 +614,7 @@ class EnhancedGameMaster:
             "success": success,
             "player_power": effective_player_power,
             "enemy_power": enemy_power,
-            "decision_quality": combat_decision.confidence,
+            "decision_quality": decision_confidence,
             "experience_gained": int(enemy_power * 0.1),
             "damage_dealt": int(effective_player_power * 0.8),
             "damage_taken": int(enemy_power * 0.3) if not success else 0
@@ -624,7 +631,7 @@ class EnhancedGameMaster:
             
             # Эмоциональная реакция на победу
             self.emotion_system.trigger_emotion(
-                EmotionCode.JOY.value, 0.6, "combat_victory"
+                "joy", 0.6, "combat_victory"
             )
             
         else:
@@ -633,7 +640,7 @@ class EnhancedGameMaster:
             
             # Эмоциональная реакция на поражение
             self.emotion_system.trigger_emotion(
-                EmotionCode.FEAR.value, 0.8, "combat_defeat"
+                "fear", 0.8, "combat_defeat"
             )
     
     def _collect_session_statistics(self) -> Dict[str, Any]:

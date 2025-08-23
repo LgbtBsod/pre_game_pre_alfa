@@ -1,216 +1,234 @@
 #!/usr/bin/env python3
 """
-Система рисков и наград.
-Вдохновлено Risk of Rain 2, Vampire Survivors, Darkest Dungeon.
-Управляет динамическим балансом сложности и наград.
+Система рисков и наград из Spelunky и Hades.
+Управляет динамическим балансом сложности и вознаграждений.
 """
 
+import time
 import random
 import math
-import time
-from typing import Dict, List, Optional, Any, Tuple
+import logging
+from typing import Dict, List, Optional, Any, Tuple, Set
 from dataclasses import dataclass, field
 from enum import Enum
-import logging
-
-from .generational_memory_system import GenerationalMemorySystem, MemoryType
-from .curse_blessing_system import CurseBlessingSystem, CurseType, BlessingType
+import uuid
 
 logger = logging.getLogger(__name__)
 
 
 class RiskLevel(Enum):
     """Уровни риска"""
-    SAFE = "safe"           # Безопасно
-    LOW = "low"             # Низкий риск
-    MODERATE = "moderate"   # Умеренный риск
-    HIGH = "high"           # Высокий риск
-    EXTREME = "extreme"     # Экстремальный риск
-    SUICIDAL = "suicidal"   # Самоубийственный риск
+    MINIMAL = "minimal"      # 0.5x награды, 0.7x сложность
+    LOW = "low"              # 0.8x награды, 0.9x сложность
+    NORMAL = "normal"        # 1.0x награды, 1.0x сложность
+    HIGH = "high"            # 1.3x награды, 1.2x сложность
+    EXTREME = "extreme"      # 1.8x награды, 1.5x сложность
+    NIGHTMARE = "nightmare"  # 2.5x награды, 2.0x сложность
 
 
-class RewardTier(Enum):
-    """Уровни наград"""
-    COMMON = "common"       # Обычные
-    UNCOMMON = "uncommon"   # Необычные
-    RARE = "rare"           # Редкие
-    EPIC = "epic"           # Эпические
-    LEGENDARY = "legendary" # Легендарные
-    MYTHIC = "mythic"       # Мифические
+class RiskCategory(Enum):
+    """Категории рисков"""
+    COMBAT = "combat"              # Боевые риски
+    EXPLORATION = "exploration"    # Исследовательские риски
+    TIME_PRESSURE = "time_pressure" # Временные ограничения
+    RESOURCE_SCARCITY = "resource_scarcity" # Нехватка ресурсов
+    ENVIRONMENTAL = "environmental" # Экологические опасности
+    CURSE = "curse"               # Проклятия
+    SACRIFICE = "sacrifice"       # Жертвоприношения
+    GAMBLE = "gamble"             # Азартные игры
 
 
 @dataclass
 class RiskFactor:
     """Фактор риска"""
+    factor_id: str
     name: str
     description: str
-    risk_multiplier: float
-    duration: float
-    stacks: int
-    max_stacks: int
+    category: RiskCategory
+    risk_multiplier: float  # Множитель риска (1.0 = нейтральный)
+    reward_multiplier: float  # Множитель награды
+    duration: float = -1  # Длительность в секундах (-1 = постоянный)
+    start_time: float = field(default_factory=time.time)
+    stacks: int = 1
     
-    def get_effective_multiplier(self) -> float:
-        """Получение эффективного множителя риска"""
-        return 1.0 + (self.risk_multiplier - 1.0) * min(self.stacks, self.max_stacks)
+    # Условия активации и деактивации
+    activation_conditions: Dict[str, Any] = field(default_factory=dict)
+    deactivation_conditions: Dict[str, Any] = field(default_factory=dict)
+    
+    # Дополнительные эффекты
+    special_effects: List[str] = field(default_factory=list)
+    
+    def is_expired(self) -> bool:
+        """Проверка истечения фактора риска"""
+        if self.duration < 0:
+            return False
+        return time.time() - self.start_time >= self.duration
+    
+    def get_effective_risk_multiplier(self) -> float:
+        """Получение эффективного множителя риска с учётом стаков"""
+        base_multiplier = self.risk_multiplier
+        
+        if self.stacks > 1:
+            # Убывающая отдача от стаков
+            stack_bonus = (self.stacks - 1) * 0.2
+            return base_multiplier * (1.0 + stack_bonus)
+        
+        return base_multiplier
+    
+    def get_effective_reward_multiplier(self) -> float:
+        """Получение эффективного множителя награды с учётом стаков"""
+        base_multiplier = self.reward_multiplier
+        
+        if self.stacks > 1:
+            # Убывающая отдача от стаков
+            stack_bonus = (self.stacks - 1) * 0.15
+            return base_multiplier * (1.0 + stack_bonus)
+        
+        return base_multiplier
 
 
 @dataclass
 class RiskRewardEvent:
-    """Событие риска/награды"""
-    id: str
-    name: str
-    description: str
+    """Событие риска и награды"""
+    event_id: str
+    event_type: str
     risk_level: RiskLevel
-    potential_rewards: List[str]
-    risk_factors: List[str]
-    success_rate: float
-    failure_consequences: List[str]
-    memory_impact: float
-    emotional_impact: float
+    potential_rewards: List[Dict[str, Any]]
+    risk_factors: List[str]  # ID факторов риска
+    timestamp: float = field(default_factory=time.time)
+    completed: bool = False
+    success: bool = False
+    actual_rewards: List[Dict[str, Any]] = field(default_factory=list)
 
 
 class RiskRewardSystem:
     """Система рисков и наград"""
     
-    def __init__(self, memory_system: GenerationalMemorySystem,
-                 curse_blessing_system: CurseBlessingSystem):
+    def __init__(self, memory_system, curse_blessing_system):
         self.memory_system = memory_system
         self.curse_blessing_system = curse_blessing_system
-        
-        # Текущий уровень риска
-        self.current_risk_level: float = 1.0
         
         # Активные факторы риска
         self.active_risk_factors: Dict[str, RiskFactor] = {}
         
-        # Множитель наград
-        self.reward_multiplier: float = 1.0
+        # История событий
+        self.event_history: List[RiskRewardEvent] = []
         
-        # История рисков
-        self.risk_history: List[Dict[str, Any]] = []
+        # Статистика
+        self.total_risks_taken = 0
+        self.total_rewards_earned = 0
+        self.successful_risk_events = 0
+        self.failed_risk_events = 0
         
-        # Система адаптивной сложности
-        self.adaptive_difficulty = AdaptiveDifficultySystem()
+        # Конфигурация
+        self._initialize_risk_configs()
         
-        # Система испытаний
-        self.challenge_system = ChallengeSystem()
+        # Текущий уровень риска
+        self._current_risk_level = RiskLevel.NORMAL
         
-        # Инициализация событий
-        self._init_risk_reward_events()
-        
-        logger.info("Система рисков и наград инициализирована")
+        logger.info("🎯 Система рисков и наград инициализирована")
     
     def calculate_current_risk(self) -> float:
         """Расчёт текущего уровня риска"""
-        base_risk = self.current_risk_level
+        if not self.active_risk_factors:
+            return 1.0
         
-        # Влияние активных факторов риска
+        total_risk = 1.0
+        
         for factor in self.active_risk_factors.values():
-            base_risk *= factor.get_effective_multiplier()
+            total_risk *= factor.get_effective_risk_multiplier()
         
-        # Влияние проклятий
-        curse_effects = self.curse_blessing_system.get_active_effects_summary()
-        curse_count = len(curse_effects.get("curses", []))
-        if curse_count > 0:
-            base_risk *= (1.0 + curse_count * 0.2)
-        
-        # Влияние времени (как в Risk of Rain 2)
-        time_factor = min(2.0, 1.0 + time.time() / 3600)  # Увеличение со временем
-        base_risk *= time_factor
-        
-        return base_risk
+        return total_risk
     
     def calculate_reward_multiplier(self) -> float:
-        """Расчёт множителя наград"""
-        risk_level = self.calculate_current_risk()
+        """Расчёт множителя награды"""
+        if not self.active_risk_factors:
+            return 1.0
         
-        # Базовый множитель на основе риска
-        base_multiplier = 1.0 + math.log(risk_level) * 0.5
+        total_reward = 1.0
         
-        # Влияние благословений
-        blessing_effects = self.curse_blessing_system.get_active_effects_summary()
-        blessing_count = len(blessing_effects.get("blessings", []))
-        if blessing_count > 0:
-            base_multiplier *= (1.0 + blessing_count * 0.1)
+        for factor in self.active_risk_factors.values():
+            total_reward *= factor.get_effective_reward_multiplier()
         
-        # Влияние памяти поколений
-        memory_stats = self.memory_system.get_memory_statistics()
-        generation_bonus = 1.0 + (memory_stats["current_generation"] - 1) * 0.05
-        base_multiplier *= generation_bonus
-        
-        return max(1.0, base_multiplier)
+        return total_reward
     
-    def add_risk_factor(self, name: str, description: str, multiplier: float,
-                       duration: float = -1, max_stacks: int = 5):
+    def add_risk_factor(self, name: str, description: str = None, 
+                       multiplier: float = 1.2, duration: float = 300.0,
+                       category: RiskCategory = RiskCategory.COMBAT) -> str:
         """Добавление фактора риска"""
-        if name in self.active_risk_factors:
-            # Увеличиваем стаки существующего фактора
-            factor = self.active_risk_factors[name]
-            factor.stacks = min(factor.max_stacks, factor.stacks + 1)
-        else:
-            # Создаём новый фактор
-            factor = RiskFactor(
-                name=name,
-                description=description,
-                risk_multiplier=multiplier,
-                duration=duration,
-                stacks=1,
-                max_stacks=max_stacks
-            )
-            self.active_risk_factors[name] = factor
+        factor_id = str(uuid.uuid4())
         
-        # Обновляем общий уровень риска
-        self.current_risk_level = self.calculate_current_risk()
+        factor = RiskFactor(
+            factor_id=factor_id,
+            name=name,
+            description=description or f"Фактор риска: {name}",
+            category=category,
+            risk_multiplier=multiplier,
+            reward_multiplier=1.0,
+            duration=duration
+        )
+        
+        self.active_risk_factors[factor_id] = factor
+        self._update_risk_level()
         
         logger.info(f"Добавлен фактор риска: {name} (множитель: {multiplier})")
+        return factor_id
     
-    def remove_risk_factor(self, name: str):
+    def remove_risk_factor(self, factor_id: str):
         """Удаление фактора риска"""
-        if name in self.active_risk_factors:
-            del self.active_risk_factors[name]
-            self.current_risk_level = self.calculate_current_risk()
-            logger.info(f"Удалён фактор риска: {name}")
+        if factor_id in self.active_risk_factors:
+            del self.active_risk_factors[factor_id]
+            self._update_risk_level()
+            logger.info(f"Удалён фактор риска: {factor_id}")
     
     def trigger_risk_event(self, event_type: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """Активация события риска"""
-        risk_level = self.calculate_current_risk()
-        reward_multiplier = self.calculate_reward_multiplier()
+        # Поиск подходящего события
+        suitable_events = self._find_suitable_events(event_type)
         
-        # Выбор события на основе уровня риска
-        event = self._select_risk_event(risk_level, event_type)
-        if not event:
-            return {"success": False, "reason": "No suitable event found"}
+        if not suitable_events:
+            return {"success": False, "reason": "No suitable events"}
+        
+        # Выбор случайного события
+        event = random.choice(suitable_events)
         
         # Расчёт шанса успеха
-        success_chance = event.success_rate / risk_level
-        success = random.random() < success_chance
+        base_success_rate = 0.5
+        risk_modifier = self.calculate_current_risk()
+        final_success_rate = max(0.1, min(0.9, base_success_rate / risk_modifier))
         
-        result = {
-            "event_id": event.id,
-            "event_name": event.name,
-            "success": success,
-            "risk_level": risk_level,
-            "reward_multiplier": reward_multiplier,
-            "rewards": [],
-            "consequences": []
-        }
+        # Определение результата
+        success = random.random() < final_success_rate
         
+        # Расчёт наград
         if success:
-            # Успешное событие - даём награды
+            reward_multiplier = self.calculate_reward_multiplier()
+            enhanced_rewards = []
+            
             for reward in event.potential_rewards:
                 enhanced_reward = self._enhance_reward(reward, reward_multiplier)
-                result["rewards"].append(enhanced_reward)
+                enhanced_rewards.append(enhanced_reward)
+            
+            result = {
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "success": True,
+                "rewards": enhanced_rewards,
+                "risk_level": event.risk_level.value
+            }
         else:
-            # Неудачное событие - применяем последствия
-            for consequence in event.failure_consequences:
-                applied_consequence = self._apply_consequence(consequence, risk_level)
-                result["consequences"].append(applied_consequence)
+            result = {
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "success": False,
+                "risk_level": event.risk_level.value
+            }
         
         # Запись в память
         self._record_risk_event(event, result, context)
         
-        # Обновление адаптивной сложности
-        self.adaptive_difficulty.update_difficulty(success, risk_level)
+        # Обновление уровня риска
+        self._update_risk_level()
         
         return result
     
@@ -254,248 +272,139 @@ class RiskRewardSystem:
         
         return opportunities
     
-    def _init_risk_reward_events(self):
-        """Инициализация событий риска/награды"""
+    def _initialize_risk_configs(self):
+        """Инициализация конфигураций рисков"""
         self.risk_events = [
             RiskRewardEvent(
-                id="cursed_treasure",
-                name="Проклятое сокровище",
-                description="Сундук излучает тёмную ауру. Открыть?",
+                event_id="cursed_treasure",
+                event_type="treasure",
                 risk_level=RiskLevel.HIGH,
-                potential_rewards=["legendary_item", "curse_immunity", "dark_power"],
-                risk_factors=["corruption", "curse_application"],
-                success_rate=0.4,
-                failure_consequences=["apply_curse", "lose_health", "corruption_spread"],
-                memory_impact=0.8,
-                emotional_impact=0.6
+                potential_rewards=[{"type": "legendary_item", "value": 1000}],
+                risk_factors=["corruption", "curse_application"]
             ),
             RiskRewardEvent(
-                id="boss_challenge",
-                name="Вызов боссу",
-                description="Бросить вызов могущественному боссу",
+                event_id="boss_challenge",
+                event_type="boss",
                 risk_level=RiskLevel.EXTREME,
-                potential_rewards=["boss_essence", "evolution_catalyst", "legendary_weapon"],
-                risk_factors=["mortal_danger", "equipment_damage"],
-                success_rate=0.2,
-                failure_consequences=["severe_injury", "equipment_loss", "memory_trauma"],
-                memory_impact=1.0,
-                emotional_impact=0.9
+                potential_rewards=[{"type": "boss_essence", "value": 2000}],
+                risk_factors=["mortal_danger", "equipment_damage"]
             ),
             RiskRewardEvent(
-                id="dimensional_rift",
-                name="Измерительный разлом",
-                description="Портал в неизвестное измерение",
-                risk_level=RiskLevel.SUICIDAL,
-                potential_rewards=["dimensional_artifact", "reality_shard", "cosmic_knowledge"],
-                risk_factors=["dimensional_instability", "reality_distortion"],
-                success_rate=0.1,
-                failure_consequences=["dimensional_trap", "reality_fracture", "existence_threat"],
-                memory_impact=1.2,
-                emotional_impact=1.0
+                event_id="dimensional_rift",
+                event_type="rift",
+                risk_level=RiskLevel.NIGHTMARE,
+                potential_rewards=[{"type": "dimensional_artifact", "value": 1500}],
+                risk_factors=["dimensional_instability", "reality_distortion"]
             ),
             RiskRewardEvent(
-                id="evolution_gamble",
-                name="Эволюционная азартная игра",
-                description="Рискнуть текущей эволюцией ради большего прогресса",
-                risk_level=RiskLevel.MODERATE,
-                potential_rewards=["rapid_evolution", "genetic_stability", "adaptation_boost"],
-                risk_factors=["evolution_instability", "genetic_damage"],
-                success_rate=0.6,
-                failure_consequences=["evolution_regression", "genetic_corruption", "adaptation_loss"],
-                memory_impact=0.7,
-                emotional_impact=0.5
+                event_id="evolution_gamble",
+                event_type="gamble",
+                risk_level=RiskLevel.HIGH,
+                potential_rewards=[{"type": "rapid_evolution", "value": 800}],
+                risk_factors=["evolution_instability", "genetic_damage"]
             )
         ]
     
-    def _select_risk_event(self, risk_level: float, event_type: str) -> Optional[RiskRewardEvent]:
-        """Выбор события риска"""
+    def _find_suitable_events(self, event_type: str) -> List[RiskRewardEvent]:
+        """Поиск подходящих событий"""
         suitable_events = []
         
         for event in self.risk_events:
             # Фильтрация по типу события
-            if event_type != "any" and event_type not in event.id:
+            if event_type != "any" and event_type not in event.event_type:
                 continue
             
-            # Фильтрация по уровню риска
-            event_risk_value = self._risk_level_to_value(event.risk_level)
-            if abs(event_risk_value - risk_level) <= 1.0:
+            # Проверка уровня риска
+            if event.risk_level.value <= self._current_risk_level.value:
                 suitable_events.append(event)
         
-        return random.choice(suitable_events) if suitable_events else None
+        return suitable_events
     
     def _risk_level_to_value(self, risk_level: RiskLevel) -> float:
         """Преобразование уровня риска в числовое значение"""
         mapping = {
-            RiskLevel.SAFE: 0.5,
-            RiskLevel.LOW: 1.0,
-            RiskLevel.MODERATE: 2.0,
-            RiskLevel.HIGH: 3.0,
-            RiskLevel.EXTREME: 4.0,
-            RiskLevel.SUICIDAL: 5.0
+            RiskLevel.MINIMAL: 0.5,
+            RiskLevel.LOW: 0.8,
+            RiskLevel.NORMAL: 1.0,
+            RiskLevel.HIGH: 1.3,
+            RiskLevel.EXTREME: 1.8,
+            RiskLevel.NIGHTMARE: 2.5
         }
         return mapping.get(risk_level, 1.0)
     
-    def _enhance_reward(self, reward: str, multiplier: float) -> Dict[str, Any]:
+    def _enhance_reward(self, reward: Dict[str, Any], multiplier: float) -> Dict[str, Any]:
         """Усиление награды"""
-        base_value = 100  # Базовая ценность
+        base_value = reward.get("value", 100)
         enhanced_value = base_value * multiplier
         
         # Определение уровня награды
-        if enhanced_value >= 1000:
-            tier = RewardTier.MYTHIC
-        elif enhanced_value >= 500:
-            tier = RewardTier.LEGENDARY
-        elif enhanced_value >= 250:
-            tier = RewardTier.EPIC
-        elif enhanced_value >= 125:
-            tier = RewardTier.RARE
-        elif enhanced_value >= 75:
-            tier = RewardTier.UNCOMMON
+        if enhanced_value < 200:
+            tier = "common"
+        elif enhanced_value < 500:
+            tier = "uncommon"
+        elif enhanced_value < 1000:
+            tier = "rare"
+        elif enhanced_value < 2000:
+            tier = "epic"
+        elif enhanced_value < 5000:
+            tier = "legendary"
         else:
-            tier = RewardTier.COMMON
+            tier = "mythic"
         
         return {
-            "type": reward,
-            "tier": tier.value,
+            "type": reward["type"],
+            "tier": tier,
             "value": enhanced_value,
+            "original_value": base_value,
             "multiplier": multiplier
         }
     
-    def _apply_consequence(self, consequence: str, risk_level: float) -> Dict[str, Any]:
-        """Применение последствия"""
-        severity = min(1.0, risk_level / 5.0)  # Нормализация к 0-1
-        
-        consequence_effects = {
-            "apply_curse": {
-                "action": "apply_random_curse",
-                "intensity": severity,
-                "description": f"Применено случайное проклятие (интенсивность: {severity:.1f})"
-            },
-            "lose_health": {
-                "action": "health_damage",
-                "value": severity * 50,
-                "description": f"Потеря {severity * 50:.0f} здоровья"
-            },
-            "equipment_damage": {
-                "action": "equipment_degradation",
-                "value": severity * 0.3,
-                "description": f"Повреждение снаряжения ({severity * 30:.0f}%)"
-            },
-            "memory_trauma": {
-                "action": "memory_loss",
-                "value": severity * 0.2,
-                "description": f"Травматическая потеря памяти ({severity * 20:.0f}%)"
-            }
-        }
-        
-        return consequence_effects.get(consequence, {
-            "action": "unknown",
-            "description": f"Неизвестное последствие: {consequence}"
-        })
-    
-    def _record_risk_event(self, event: RiskRewardEvent, result: Dict[str, Any],
+    def _record_risk_event(self, event: RiskRewardEvent, result: Dict[str, Any], 
                           context: Dict[str, Any]):
         """Запись события риска в память"""
         try:
             memory_content = {
-                "event_id": event.id,
-                "event_name": event.name,
+                "event_id": event.event_id,
+                "event_type": event.event_type,
                 "success": result["success"],
-                "risk_level": result["risk_level"],
-                "reward_multiplier": result["reward_multiplier"],
-                "rewards_count": len(result["rewards"]),
-                "consequences_count": len(result["consequences"]),
-                "context": context,
-                "timestamp": time.time()
+                "risk_level": event.risk_level.value,
+                "context": context
             }
             
-            self.memory_system.add_memory(
-                memory_type=MemoryType.RISK_ASSESSMENT,
-                content=memory_content,
-                intensity=event.memory_impact,
-                emotional_impact=event.emotional_impact
-            )
-            
             # Добавляем в историю
-            self.risk_history.append(memory_content)
+            self.event_history.append(event)
             
         except Exception as e:
-            logger.error(f"Ошибка записи события риска в память: {e}")
+            logger.error(f"Ошибка записи события риска: {e}")
+    
+    def _update_risk_level(self):
+        """Обновление текущего уровня риска"""
+        current_risk = self.calculate_current_risk()
+        self._current_risk_level = self._calculate_risk_level(current_risk)
+    
+    def _calculate_risk_level(self, risk_value: float) -> RiskLevel:
+        """Расчёт уровня риска по значению"""
+        if risk_value < 0.8:
+            return RiskLevel.MINIMAL
+        elif risk_value < 1.1:
+            return RiskLevel.LOW
+        elif risk_value < 1.3:
+            return RiskLevel.NORMAL
+        elif risk_value < 1.7:
+            return RiskLevel.HIGH
+        elif risk_value < 2.2:
+            return RiskLevel.EXTREME
+        else:
+            return RiskLevel.NIGHTMARE
     
     def get_risk_statistics(self) -> Dict[str, Any]:
         """Получение статистики рисков"""
         return {
-            "current_risk_level": self.calculate_current_risk(),
+            "current_risk_level": self._current_risk_level.value,
+            "risk_multiplier": self.calculate_current_risk(),
             "reward_multiplier": self.calculate_reward_multiplier(),
             "active_risk_factors": len(self.active_risk_factors),
-            "total_events": len(self.risk_history),
-            "success_rate": sum(1 for event in self.risk_history if event.get("success", False)) / max(1, len(self.risk_history)),
-            "average_risk": sum(event.get("risk_level", 1.0) for event in self.risk_history) / max(1, len(self.risk_history))
+            "total_events": len(self.event_history),
+            "success_rate": sum(1 for event in self.event_history if event.success) / max(1, len(self.event_history)),
+            "average_risk": sum(self._risk_level_to_value(event.risk_level) for event in self.event_history) / max(1, len(self.event_history))
         }
-
-
-class AdaptiveDifficultySystem:
-    """Система адаптивной сложности"""
-    
-    def __init__(self):
-        self.difficulty_level = 1.0
-        self.success_history = []
-        self.adjustment_rate = 0.1
-    
-    def update_difficulty(self, success: bool, risk_level: float):
-        """Обновление сложности на основе результатов"""
-        self.success_history.append(success)
-        
-        # Ограничиваем историю последними 20 событиями
-        if len(self.success_history) > 20:
-            self.success_history.pop(0)
-        
-        # Расчёт текущего коэффициента успеха
-        if len(self.success_history) >= 5:
-            success_rate = sum(self.success_history[-10:]) / min(10, len(self.success_history))
-            
-            # Корректировка сложности
-            if success_rate > 0.7:  # Слишком легко
-                self.difficulty_level += self.adjustment_rate
-            elif success_rate < 0.3:  # Слишком сложно
-                self.difficulty_level -= self.adjustment_rate
-            
-            # Ограничиваем диапазон сложности
-            self.difficulty_level = max(0.5, min(3.0, self.difficulty_level))
-
-
-class ChallengeSystem:
-    """Система испытаний"""
-    
-    def __init__(self):
-        self.active_challenges = []
-        self.completed_challenges = []
-    
-    def generate_challenge(self, risk_level: float) -> Dict[str, Any]:
-        """Генерация испытания"""
-        challenges = [
-            {
-                "name": "Выживание без лечения",
-                "description": "Пройди уровень не используя лечение",
-                "risk_bonus": 1.5,
-                "reward_bonus": 2.0,
-                "conditions": ["no_healing"]
-            },
-            {
-                "name": "Скоростной забег",
-                "description": "Завершить за ограниченное время",
-                "risk_bonus": 1.3,
-                "reward_bonus": 1.8,
-                "conditions": ["time_limit"]
-            },
-            {
-                "name": "Минималист",
-                "description": "Использовать только базовое оружие",
-                "risk_bonus": 1.4,
-                "reward_bonus": 1.9,
-                "conditions": ["basic_weapon_only"]
-            }
-        ]
-        
-        suitable_challenges = [c for c in challenges if c["risk_bonus"] <= risk_level]
-        return random.choice(suitable_challenges) if suitable_challenges else challenges[0]

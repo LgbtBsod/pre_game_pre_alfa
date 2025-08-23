@@ -135,6 +135,14 @@ def check_enhanced_systems() -> bool:
         from core.enhanced_content_generator import EnhancedContentGenerator
         from core.enhanced_skill_system import SkillManager, SkillLearningAI
         
+        # Импорт новых систем Enhanced Edition
+        from core.enhanced_game_master import EnhancedGameMaster, GamePhase, DifficultyMode
+        from core.curse_blessing_system import CurseBlessingSystem, CurseType, BlessingType
+        from core.risk_reward_system import RiskRewardSystem, RiskLevel
+        from core.meta_progression_system import MetaProgressionSystem, MetaCurrency
+        from core.enhanced_inventory_system import EnhancedInventorySystem
+        from core.enhanced_ui_system import EnhancedUISystem, UIState
+        
         logger.info("✅ Все Enhanced Edition системы доступны")
         return True
         
@@ -240,6 +248,28 @@ def run_test_mode() -> bool:
             memory_system = GenerationalMemorySystem("test_save")
             combat_system = EnhancedCombatLearningSystem(memory_system, None)
             
+            # Тестируем новые системы Enhanced Edition
+            try:
+                from core.enhanced_game_master import EnhancedGameMaster
+                from core.curse_blessing_system import CurseBlessingSystem
+                from core.risk_reward_system import RiskRewardSystem
+                from core.meta_progression_system import MetaProgressionSystem
+                
+                # Создаем тестовые экземпляры
+                game_master = EnhancedGameMaster(1600, 900)
+                curse_blessing_system = CurseBlessingSystem(memory_system)
+                risk_reward_system = RiskRewardSystem(memory_system, curse_blessing_system)
+                meta_progression_system = MetaProgressionSystem(memory_system)
+                
+                logger.info("✅ Все новые Enhanced Edition системы работают корректно")
+                logger.info(f"   - Game Master: {'✅' if game_master else '❌'}")
+                logger.info(f"   - Curse/Blessing: {'✅' if curse_blessing_system else '❌'}")
+                logger.info(f"   - Risk/Reward: {'✅' if risk_reward_system else '❌'}")
+                logger.info(f"   - Meta Progression: {'✅' if meta_progression_system else '❌'}")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Новые Enhanced системы недоступны: {e}")
+            
             logger.info("✅ Enhanced Edition системы работают корректно")
             
         except Exception as e:
@@ -284,6 +314,43 @@ def run_demo_mode() -> bool:
             logger.info(f"   Воспоминаний: {memory_stats['total_memories']}")
             logger.info(f"   Кластеров: {memory_stats['total_clusters']}")
             
+            # Демонстрируем новые системы Enhanced Edition
+            try:
+                from core.enhanced_game_master import EnhancedGameMaster
+                from core.curse_blessing_system import CurseBlessingSystem
+                from core.risk_reward_system import RiskRewardSystem
+                from core.meta_progression_system import MetaProgressionSystem
+                
+                # Создаем демо-системы
+                game_master = EnhancedGameMaster(1600, 900)
+                curse_blessing_system = CurseBlessingSystem(memory_system)
+                risk_reward_system = RiskRewardSystem(memory_system, curse_blessing_system)
+                meta_progression_system = MetaProgressionSystem(memory_system)
+                
+                # Демонстрируем проклятия и благословения
+                curse_id = curse_blessing_system.apply_random_curse(intensity_range=(0.5, 1.0))
+                blessing_id = curse_blessing_system.apply_random_blessing(intensity_range=(0.5, 1.0))
+                
+                logger.info(f"🎭 Enhanced системы демонстрированы:")
+                logger.info(f"   - Game Master: {'✅' if game_master else '❌'}")
+                logger.info(f"   - Проклятие применено: {curse_id[:8] if curse_id else '❌'}")
+                logger.info(f"   - Благословение применено: {blessing_id[:8] if blessing_id else '❌'}")
+                
+                # Демонстрируем систему рисков и наград
+                risk_event = risk_reward_system.create_risk_reward_event(
+                    "demo_treasure", 
+                    [{"type": "demo_item", "value": 100}],
+                    risk_reward_system._current_risk_level
+                )
+                logger.info(f"   - Событие риска создано: {risk_event[:8] if risk_event else '❌'}")
+                
+                # Демонстрируем мета-прогрессию
+                meta_stats = meta_progression_system.get_meta_statistics()
+                logger.info(f"   - Мета-прогрессия: {meta_stats.get('total_runs', 0)} заходов")
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Демонстрация новых Enhanced систем недоступна: {e}")
+            
         except Exception as e:
             logger.warning(f"⚠️ Enhanced демо недоступно: {e}")
             
@@ -316,6 +383,10 @@ def show_help():
    • Улучшенная боевая система с обучением
    • Продвинутая генерация контента
    • Система навыков с AI-обучением
+   • Система проклятий и благословений (The Binding of Isaac)
+   • Система рисков и наград (Spelunky, Hades)
+   • Мета-прогрессия между заходами (Rogue Legacy)
+   • Enhanced Game Master - координация всех систем
 
 📋 ИСПОЛЬЗОВАНИЕ:
     python main.py [режим]

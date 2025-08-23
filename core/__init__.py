@@ -109,6 +109,33 @@ from .trap_and_hazard_system import (
 
 from .database_manager import DatabaseManager, database_manager
 
+# Новые системы Enhanced Edition
+from .curse_blessing_system import (
+    CurseType, BlessingType, CurseBlessingEffect, CurseBlessingSystem
+)
+
+from .risk_reward_system import (
+    RiskLevel, RiskCategory, RiskFactor, RiskRewardEvent, RiskRewardSystem
+)
+
+from .meta_progression_system import (
+    MetaCurrency, MetaUpgrade, InheritanceTrait, Achievement, MetaProgressionSystem
+)
+
+from .enhanced_content_generator import EnhancedContentGenerator
+
+from .enhanced_skill_system import (
+    SkillManager, SkillLearningAI
+)
+
+from .enhanced_inventory_system import EnhancedInventorySystem
+
+from .enhanced_ui_system import EnhancedUISystem, UIState
+
+from .enhanced_game_master import (
+    GamePhase, DifficultyMode, GameSession, EnhancedGameMaster
+)
+
 # Основные классы для импорта
 __all__ = [
     # Системы эффектов
@@ -183,4 +210,14 @@ __all__ = [
     
     # Менеджер базы данных
     'DatabaseManager', 'database_manager',
+    
+    # Новые системы Enhanced Edition
+    'CurseType', 'BlessingType', 'CurseBlessingEffect', 'CurseBlessingSystem',
+    'RiskLevel', 'RiskCategory', 'RiskFactor', 'RiskRewardEvent', 'RiskRewardSystem',
+    'MetaCurrency', 'MetaUpgrade', 'InheritanceTrait', 'Achievement', 'MetaProgressionSystem',
+    'EnhancedContentGenerator',
+    'SkillManager', 'SkillLearningAI',
+    'EnhancedInventorySystem',
+    'EnhancedUISystem', 'UIState',
+    'GamePhase', 'DifficultyMode', 'GameSession', 'EnhancedGameMaster',
 ]
