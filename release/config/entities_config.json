@@ -1,0 +1,92 @@
+{
+  "player": {
+    "base_stats": {
+      "health": 100,
+      "mana": 50,
+      "stamina": 100,
+      "movement_speed": 2.0,
+      "attack_speed": 1.0,
+      "defense": 5,
+      "magic_resistance": 3
+    },
+    "leveling": {
+      "base_experience": 100,
+      "experience_multiplier": 1.2,
+      "max_level": 100,
+      "attribute_points_per_level": 5,
+      "skill_points_per_level": 2
+    },
+    "inventory": {
+      "max_slots": 20,
+      "weight_limit": 100.0,
+      "equipment_slots": 8
+    }
+  },
+  "enemy": {
+    "base_stats": {
+      "health": 50,
+      "mana": 20,
+      "stamina": 80,
+      "movement_speed": 1.5,
+      "attack_speed": 0.8,
+      "defense": 3,
+      "magic_resistance": 2
+    },
+    "ai_behavior": {
+      "aggro_range": 10.0,
+      "chase_range": 15.0,
+      "return_range": 20.0,
+      "patrol_radius": 5.0,
+      "attack_cooldown": 1.5
+    },
+    "loot": {
+      "gold_min": 5,
+      "gold_max": 25,
+      "experience": 20,
+      "drop_chance": 0.3
+    }
+  },
+  "boss": {
+    "base_stats": {
+      "health": 500,
+      "mana": 200,
+      "stamina": 300,
+      "movement_speed": 1.2,
+      "attack_speed": 0.6,
+      "defense": 15,
+      "magic_resistance": 10
+    },
+    "ai_behavior": {
+      "aggro_range": 20.0,
+      "chase_range": 30.0,
+      "return_range": 40.0,
+      "patrol_radius": 10.0,
+      "attack_cooldown": 2.0,
+      "special_attack_cooldown": 10.0
+    },
+    "loot": {
+      "gold_min": 100,
+      "gold_max": 500,
+      "experience": 200,
+      "drop_chance": 1.0,
+      "rare_item_chance": 0.3
+    }
+  },
+  "npc": {
+    "base_stats": {
+      "health": 80,
+      "mana": 40,
+      "stamina": 60,
+      "movement_speed": 1.0,
+      "attack_speed": 0.5,
+      "defense": 2,
+      "magic_resistance": 1
+    },
+    "interaction": {
+      "dialogue_enabled": true,
+      "quest_giver": false,
+      "merchant": false,
+      "trainer": false
+    }
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "social_system": {
+    "max_active_events": 10,
+    "event_duration_multiplier": 1.0,
+    "relationship_decay_rate": 0.1,
+    "diplomatic_action_cooldown": 300
+  },
+  "faction_types": {
+    "evolutionists": {
+      "description": "Сторонники быстрой эволюции",
+      "personality_traits": ["ambition", "innovation", "ruthlessness"],
+      "preferred_actions": ["genetic_experiments", "evolution_acceleration"],
+      "disliked_actions": ["tradition_preservation", "slow_evolution"]
+    },
+    "traditionalists": {
+      "description": "Защитники традиций",
+      "personality_traits": ["wisdom", "patience", "conservatism"],
+      "preferred_actions": ["tradition_preservation", "slow_evolution"],
+      "disliked_actions": ["genetic_experiments", "rapid_change"]
+    },
+    "technocrats": {
+      "description": "Поклонники технологий",
+      "personality_traits": ["innovation", "efficiency", "pragmatism"],
+      "preferred_actions": ["technological_advancement", "automation"],
+      "disliked_actions": ["magical_practices", "inefficiency"]
+    },
+    "mystics": {
+      "description": "Мистики и маги",
+      "personality_traits": ["intuition", "spirituality", "mysticism"],
+      "preferred_actions": ["magical_practices", "spiritual_development"],
+      "disliked_actions": ["technological_advancement", "materialism"]
+    }
+  },
+  "social_actions": {
+    "greet": {
+      "base_success_chance": 0.9,
+      "relationship_change": 5.0,
+      "cooldown": 60
+    },
+    "trade": {
+      "base_success_chance": 0.7,
+      "relationship_change": 10.0,
+      "cooldown": 300
+    },
+    "help": {
+      "base_success_chance": 0.8,
+      "relationship_change": 15.0,
+      "cooldown": 600
+    },
+    "gift": {
+      "base_success_chance": 0.8,
+      "relationship_change": 20.0,
+      "cooldown": 1800
+    },
+    "diplomacy": {
+      "base_success_chance": 0.6,
+      "relationship_change": 25.0,
+      "cooldown": 3600
+    },
+    "alliance": {
+      "base_success_chance": 0.3,
+      "relationship_change": 50.0,
+      "cooldown": 7200
+    },
+    "attack": {
+      "base_success_chance": 0.6,
+      "relationship_change": -30.0,
+      "cooldown": 300
+    },
+    "espionage": {
+      "base_success_chance": 0.4,
+      "relationship_change": -20.0,
+      "cooldown": 1800
+    }
+  },
+  "event_types": {
+    "faction_meeting": {
+      "title": "Встреча фракций",
+      "description": "Представители фракций собираются для обсуждения",
+      "duration": 3600,
+      "min_participants": 2,
+      "max_participants": 5,
+      "relationship_impact": 10.0
+    },
+    "trade_agreement": {
+      "title": "Торговое соглашение",
+      "description": "Фракции заключают торговое соглашение",
+      "duration": 1800,
+      "min_participants": 2,
+      "max_participants": 3,
+      "relationship_impact": 15.0
+    },
+    "alliance_formation": {
+      "title": "Образование альянса",
+      "description": "Фракции объединяются в альянс",
+      "duration": 7200,
+      "min_participants": 2,
+      "max_participants": 4,
+      "relationship_impact": 50.0
+    },
+    "conflict_resolution": {
+      "title": "Разрешение конфликта",
+      "description": "Попытка мирного разрешения конфликта",
+      "duration": 5400,
+      "min_participants": 2,
+      "max_participants": 6,
+      "relationship_impact": 20.0
+    }
+  },
+  "npc_roles": {
+    "leader": {
+      "influence_multiplier": 2.0,
+      "relationship_impact": 1.5,
+      "decision_power": 1.0
+    },
+    "advisor": {
+      "influence_multiplier": 1.5,
+      "relationship_impact": 1.2,
+      "decision_power": 0.7
+    },
+    "merchant": {
+      "influence_multiplier": 1.0,
+      "relationship_impact": 1.0,
+      "decision_power": 0.3
+    },
+    "soldier": {
+      "influence_multiplier": 0.8,
+      "relationship_impact": 0.8,
+      "decision_power": 0.2
+    }
+  }
+}

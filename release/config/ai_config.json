@@ -1,0 +1,53 @@
+{
+  "core": {
+    "update_frequency": 0.1,
+    "decision_delay": 0.5,
+    "memory_duration": 30.0,
+    "debug_enabled": false
+  },
+  "learning": {
+    "learning_rate": 0.1,
+    "memory_decay_rate": 0.05,
+    "pattern_recognition_threshold": 0.7,
+    "adaptation_speed": 0.3,
+    "forgetting_threshold": 0.1
+  },
+  "behavior": {
+    "aggro_range": 10.0,
+    "chase_range": 15.0,
+    "return_range": 20.0,
+    "patrol_radius": 5.0,
+    "attack_cooldown": 1.5,
+    "flee_health_threshold": 0.3,
+    "group_behavior_enabled": true,
+    "cooperation_threshold": 0.6
+  },
+  "emotions": {
+    "enabled": true,
+    "base_emotions": ["anger", "fear", "joy", "sadness", "surprise"],
+    "emotion_decay_rate": 0.02,
+    "emotion_influence_threshold": 0.5,
+    "personality_traits": ["aggressive", "cautious", "curious", "loyal"]
+  },
+  "memory": {
+    "max_memories": 100,
+    "memory_importance_threshold": 0.3,
+    "associative_memory_enabled": true,
+    "spatial_memory_enabled": true,
+    "temporal_memory_enabled": true
+  },
+  "decision_making": {
+    "utility_function_enabled": true,
+    "risk_assessment_enabled": true,
+    "planning_horizon": 5,
+    "decision_tree_depth": 3,
+    "randomness_factor": 0.1
+  },
+  "pattern_recognition": {
+    "enabled": true,
+    "min_pattern_length": 3,
+    "max_pattern_length": 10,
+    "similarity_threshold": 0.8,
+    "learning_from_patterns": true
+  }
+}
