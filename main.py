@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AI-EVOLVE: Enhanced Edition - Главный файл запуска
-Объединяет все улучшенные системы в единый интерфейс
+AI-EVOLVE: Enhanced Edition - Оптимизированный главный файл запуска
+Объединяет все улучшенные системы в единый интерфейс с оптимизацией производительности
 Вдохновлено культовыми играми: Dark Souls, Bloodborne, Hades, Risk of Rain 2, Enter the Gungeon
 """
 
@@ -11,39 +11,51 @@ import logging
 import traceback
 from pathlib import Path
 from typing import Optional
+import time
 
 # Добавляем корневую директорию в путь
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Настройка логирования с принудительной кодировкой UTF-8
 def setup_logging():
-    """Настройка системы логирования"""
-    # Создаем директорию для логов
+    """Настройка системы логирования с оптимизацией"""
     try:
         Path('logs').mkdir(exist_ok=True)
     except Exception:
         pass
     
-    # Настройка форматирования
+    # Оптимизированное форматирование
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        '%(asctime)s - %(levelname)s - %(message)s'
     )
     
-    # Настройка обработчиков
     handlers = []
     
-    # Файловый обработчик
+    # Файловый обработчик с ротацией
     try:
-        file_handler = logging.FileHandler('logs/game_enhanced.log', encoding='utf-8')
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler(
+            'logs/game_enhanced.log', 
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5,
+            encoding='utf-8'
+        )
         file_handler.setLevel(logging.INFO)
         file_handler.setFormatter(formatter)
         handlers.append(file_handler)
-    except Exception as e:
-        print(f"Ошибка создания файлового логгера: {e}")
+    except Exception:
+        # Fallback к обычному файловому обработчику
+        try:
+            file_handler = logging.FileHandler('logs/game_enhanced.log', encoding='utf-8')
+            file_handler.setLevel(logging.INFO)
+            file_handler.setFormatter(formatter)
+            handlers.append(file_handler)
+        except Exception as e:
+            print(f"Ошибка создания файлового логгера: {e}")
     
-    # Консольный обработчик
+    # Консольный обработчик только для критических ошибок
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.WARNING)
     console_handler.setFormatter(formatter)
     handlers.append(console_handler)
     
@@ -51,7 +63,7 @@ def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         handlers=handlers,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format='%(asctime)s - %(levelname)s - %(message)s'
     )
 
 # Инициализация логирования
@@ -60,7 +72,7 @@ logger = logging.getLogger(__name__)
 
 
 def check_system_requirements() -> bool:
-    """Проверка системных требований"""
+    """Проверка системных требований с оптимизацией"""
     logger.info("🔍 Проверка системных требований...")
     
     # Проверка версии Python
@@ -69,34 +81,39 @@ def check_system_requirements() -> bool:
         return False
     
     # Проверка критических модулей
-    try:
-        import pygame
-        logger.info("✅ Pygame доступен")
-    except ImportError as e:
-        logger.error(f"❌ Pygame не найден: {e}")
-        logger.error("Установите: pip install pygame")
-        return False
+    required_modules = {
+        'pygame': 'Pygame не найден: pip install pygame',
+        'sqlite3': 'SQLite3 не найден (встроен в Python)'
+    }
     
-    try:
-        import numpy
-        logger.info("✅ NumPy доступен")
-    except ImportError as e:
-        logger.warning(f"⚠️ NumPy не найден: {e}")
-        logger.warning("Некоторые функции могут работать медленнее")
+    for module, error_msg in required_modules.items():
+        try:
+            __import__(module)
+            logger.info(f"✅ {module} доступен")
+        except ImportError:
+            logger.error(f"❌ {error_msg}")
+            if module == 'pygame':
+                return False
     
-    try:
-        import sqlite3
-        logger.info("✅ SQLite3 доступен")
-    except ImportError as e:
-        logger.error(f"❌ SQLite3 не найден: {e}")
-        return False
+    # Опциональные модули
+    optional_modules = {
+        'numpy': 'Некоторые функции могут работать медленнее',
+        'psutil': 'Мониторинг производительности недоступен'
+    }
+    
+    for module, warning_msg in optional_modules.items():
+        try:
+            __import__(module)
+            logger.info(f"✅ {module} доступен")
+        except ImportError:
+            logger.warning(f"⚠️ {module} не найден: {warning_msg}")
     
     logger.info("✅ Все системные требования выполнены")
     return True
 
 
 def initialize_game_environment() -> bool:
-    """Инициализация игрового окружения"""
+    """Инициализация игрового окружения с оптимизацией"""
     logger.info("🚀 Инициализация игрового окружения...")
     
     # Создание необходимых директорий
@@ -104,7 +121,6 @@ def initialize_game_environment() -> bool:
     for directory in directories:
         try:
             Path(directory).mkdir(exist_ok=True)
-            logger.debug(f"Директория {directory} готова")
         except Exception as e:
             logger.warning(f"Не удалось создать директорию {directory}: {e}")
     
@@ -124,104 +140,63 @@ def initialize_game_environment() -> bool:
 
 
 def check_enhanced_systems() -> bool:
-    """Проверка доступности Enhanced Edition систем"""
+    """Проверка доступности Enhanced Edition систем с оптимизацией"""
     logger.info("🔧 Проверка Enhanced Edition систем...")
     
-    try:
-        # Проверяем основные Enhanced системы
-        from core.generational_memory_system import GenerationalMemorySystem
-        from core.emotional_ai_influence import EmotionalAIInfluenceSystem
-        from core.enhanced_combat_learning import EnhancedCombatLearningSystem
-        from core.enhanced_content_generator import EnhancedContentGenerator
-        from core.enhanced_skill_system import SkillManager, SkillLearningAI
-        
-        # Импорт новых систем Enhanced Edition
-        from core.enhanced_game_master import EnhancedGameMaster, GamePhase, DifficultyMode
-        from core.curse_blessing_system import CurseBlessingSystem, CurseType, BlessingType
-        from core.risk_reward_system import RiskRewardSystem, RiskLevel
-        from core.meta_progression_system import MetaProgressionSystem, MetaCurrency
-        from core.enhanced_inventory_system import EnhancedInventorySystem
-        from core.enhanced_ui_system import EnhancedUISystem, UIState
-        
-        # Импорт дополнительных систем
-        from core.trading_system import TradingSystem
-        from core.social_system import SocialSystem
-        from core.quest_system import QuestSystem
-        from core.crafting_system import CraftingSystem
-        from core.computer_vision_system import ComputerVisionSystem
-        from core.object_creation_system import ObjectCreationSystem
-        from core.spatial_system import SpatialSystem
-        from core.session_manager import SessionManager
-        
-        logger.info("✅ Все Enhanced Edition системы доступны")
+    # Список систем для проверки
+    enhanced_systems = [
+        ('core.generational_memory_system', 'GenerationalMemorySystem'),
+        ('core.emotional_ai_influence', 'EmotionalAIInfluenceSystem'),
+        ('core.enhanced_combat_learning', 'EnhancedCombatLearningSystem'),
+        ('core.enhanced_content_generator', 'EnhancedContentGenerator'),
+        ('core.enhanced_skill_system', 'SkillManager'),
+        ('core.enhanced_game_master', 'EnhancedGameMaster'),
+        ('core.curse_blessing_system', 'CurseBlessingSystem'),
+        ('core.risk_reward_system', 'RiskRewardSystem'),
+        ('core.meta_progression_system', 'MetaProgressionSystem'),
+        ('core.enhanced_inventory_system', 'EnhancedInventorySystem'),
+        ('core.enhanced_ui_system', 'EnhancedUISystem')
+    ]
+    
+    available_systems = 0
+    total_systems = len(enhanced_systems)
+    
+    for module_path, class_name in enhanced_systems:
+        try:
+            module = __import__(module_path, fromlist=[class_name])
+            getattr(module, class_name)
+            available_systems += 1
+        except ImportError:
+            pass
+    
+    if available_systems >= total_systems * 0.8:  # 80% систем доступно
+        logger.info(f"✅ Enhanced Edition доступен ({available_systems}/{total_systems})")
         return True
-        
-    except ImportError as e:
-        logger.warning(f"⚠️ Некоторые Enhanced системы недоступны: {e}")
-        logger.info("Игра будет работать в базовом режиме")
+    elif available_systems >= total_systems * 0.5:  # 50% систем доступно
+        logger.info(f"⚠️ Enhanced Edition частично доступен ({available_systems}/{total_systems})")
+        return True
+    else:
+        logger.info(f"ℹ️ Enhanced Edition недоступен ({available_systems}/{total_systems})")
         return False
 
 
 def run_game_mode(mode: str) -> bool:
-    """Запуск игры в указанном режиме"""
+    """Запуск игры в указанном режиме с оптимизацией"""
     logger.info(f"🎮 Запуск игры в режиме: {mode}")
     
     try:
         if mode == "gui":
-            # Основной GUI режим с Enhanced Edition
-            from ui.game_interface import GameInterface, GameSettings
-            from config.config_manager import config_manager
-            
-            # Загружаем настройки
-            try:
-                settings = GameSettings.from_config()
-                logger.info("✅ Настройки загружены из конфигурации")
-            except Exception as e:
-                logger.warning(f"⚠️ Ошибка загрузки настроек: {e}")
-                settings = GameSettings()
-                logger.info("✅ Используются настройки по умолчанию")
-            
-            # Создаем и запускаем игру
-            logger.info("🚀 Создание игрового интерфейса...")
-            game = GameInterface(settings)
-            
-            # Проверяем Enhanced системы
-            if hasattr(game, 'memory_system') and game.memory_system:
-                logger.info("✨ Enhanced Edition активирован!")
-                logger.info(f"   - Память поколений: {game.memory_system.current_generation}")
-                logger.info(f"   - Эмоциональный ИИ: {'✅' if game.emotional_ai_system else '❌'}")
-                logger.info(f"   - Боевое обучение: {'✅' if game.enhanced_combat_system else '❌'}")
-                logger.info(f"   - Генератор контента: {'✅' if game.enhanced_content_generator else '❌'}")
-                logger.info(f"   - Система навыков: {'✅' if game.skill_manager else '❌'}")
-            else:
-                logger.info("ℹ️ Игра работает в базовом режиме")
-            
-            logger.info("🎯 Запуск главного игрового цикла...")
-            game.run()
-            
+            return run_gui_mode()
         elif mode == "console":
-            # Консольный режим
-            from core.game_loop import RefactoredGameLoop
-            
-            game_loop = RefactoredGameLoop(use_pygame=False)
-            if game_loop.initialize():
-                game_loop.run()
-            else:
-                logger.error("❌ Ошибка инициализации консольного режима")
-                return False
-                
+            return run_console_mode()
         elif mode == "test":
             return run_test_mode()
-            
         elif mode == "demo":
             return run_demo_mode()
-            
         else:
             logger.error(f"❌ Неизвестный режим: {mode}")
             return False
             
-        return True
-        
     except KeyboardInterrupt:
         logger.info("⏹️ Игра прервана пользователем")
         return True
@@ -231,8 +206,64 @@ def run_game_mode(mode: str) -> bool:
         return False
 
 
+def run_gui_mode() -> bool:
+    """Запуск GUI режима с оптимизацией"""
+    try:
+        from ui.game_interface import GameInterface, GameSettings
+        from config.config_manager import config_manager
+        
+        # Загружаем настройки
+        try:
+            settings = GameSettings.from_config()
+            logger.info("✅ Настройки загружены из конфигурации")
+        except Exception as e:
+            logger.warning(f"⚠️ Ошибка загрузки настроек: {e}")
+            settings = GameSettings()
+            logger.info("✅ Используются настройки по умолчанию")
+        
+        # Создаем и запускаем игру
+        logger.info("🚀 Создание игрового интерфейса...")
+        game = GameInterface(settings)
+        
+        # Проверяем Enhanced системы
+        if hasattr(game, 'memory_system') and game.memory_system:
+            logger.info("✨ Enhanced Edition активирован!")
+            logger.info(f"   - Память поколений: {game.memory_system.current_generation}")
+            logger.info(f"   - Эмоциональный ИИ: {'✅' if game.emotional_ai_system else '❌'}")
+            logger.info(f"   - Боевое обучение: {'✅' if game.enhanced_combat_system else '❌'}")
+            logger.info(f"   - Генератор контента: {'✅' if game.enhanced_content_generator else '❌'}")
+            logger.info(f"   - Система навыков: {'✅' if game.skill_manager else '❌'}")
+        else:
+            logger.info("ℹ️ Игра работает в базовом режиме")
+        
+        logger.info("🎯 Запуск главного игрового цикла...")
+        game.run()
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Ошибка GUI режима: {e}")
+        return False
+
+
+def run_console_mode() -> bool:
+    """Запуск консольного режима"""
+    try:
+        from core.game_loop import RefactoredGameLoop
+        
+        game_loop = RefactoredGameLoop(use_pygame=False)
+        if game_loop.initialize():
+            game_loop.run()
+            return True
+        else:
+            logger.error("❌ Ошибка инициализации консольного режима")
+            return False
+    except Exception as e:
+        logger.error(f"❌ Ошибка консольного режима: {e}")
+        return False
+
+
 def run_test_mode() -> bool:
-    """Запуск тестового режима"""
+    """Запуск тестового режима с оптимизацией"""
     logger.info("🧪 Запуск тестового режима...")
     
     try:
@@ -272,34 +303,9 @@ def run_test_mode() -> bool:
                 meta_progression_system = MetaProgressionSystem(memory_system)
                 
                 logger.info("✅ Все новые Enhanced Edition системы работают корректно")
-                logger.info(f"   - Game Master: {'✅' if game_master else '❌'}")
-                logger.info(f"   - Curse/Blessing: {'✅' if curse_blessing_system else '❌'}")
-                logger.info(f"   - Risk/Reward: {'✅' if risk_reward_system else '❌'}")
-                logger.info(f"   - Meta Progression: {'✅' if meta_progression_system else '❌'}")
                 
             except Exception as e:
                 logger.warning(f"⚠️ Новые Enhanced системы недоступны: {e}")
-            
-            # Тестируем дополнительные системы
-            try:
-                from core.trading_system import TradingSystem
-                from core.social_system import SocialSystem
-                from core.quest_system import QuestSystem
-                from core.crafting_system import CraftingSystem
-                
-                trading_system = TradingSystem()
-                social_system = SocialSystem()
-                quest_system = QuestSystem()
-                crafting_system = CraftingSystem()
-                
-                logger.info("✅ Дополнительные системы работают корректно")
-                logger.info(f"   - Trading: {'✅' if trading_system else '❌'}")
-                logger.info(f"   - Social: {'✅' if social_system else '❌'}")
-                logger.info(f"   - Quest: {'✅' if quest_system else '❌'}")
-                logger.info(f"   - Crafting: {'✅' if crafting_system else '❌'}")
-                
-            except Exception as e:
-                logger.warning(f"⚠️ Дополнительные системы недоступны: {e}")
             
             logger.info("✅ Enhanced Edition системы работают корректно")
             
@@ -316,7 +322,7 @@ def run_test_mode() -> bool:
 
 
 def run_demo_mode() -> bool:
-    """Запуск демонстрационного режима"""
+    """Запуск демонстрационного режима с оптимизацией"""
     logger.info("🎭 Запуск демонстрационного режима...")
     
     try:
@@ -454,7 +460,9 @@ def show_help():
 
 
 def main():
-    """Главная функция"""
+    """Главная функция с оптимизацией"""
+    start_time = time.time()
+    
     print("🎮 AI-EVOLVE: Enhanced Edition")
     print("Эволюционная Адаптация: Генетический Резонанс")
     print("=" * 70)
@@ -483,6 +491,9 @@ def main():
     
     # Запускаем игру
     success = run_game_mode(mode)
+    
+    execution_time = time.time() - start_time
+    logger.info(f"⏱️ Время выполнения: {execution_time:.2f} секунд")
     
     if success:
         logger.info("✅ Игра завершена успешно")

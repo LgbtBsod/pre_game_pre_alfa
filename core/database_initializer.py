@@ -260,6 +260,7 @@ class DatabaseInitializer:
                 effects TEXT,
                 value INTEGER DEFAULT 0,
                 weight REAL DEFAULT 0.0,
+                level_requirement INTEGER DEFAULT 1,
                 icon TEXT,
                 description TEXT
             )
@@ -275,6 +276,7 @@ class DatabaseInitializer:
                 mana_cost INTEGER DEFAULT 0,
                 cooldown REAL DEFAULT 0.0,
                 range REAL DEFAULT 1.0,
+                level_requirement INTEGER DEFAULT 1,
                 description TEXT,
                 icon TEXT
             )
@@ -463,16 +465,16 @@ class DatabaseInitializer:
     def _populate_items(self, cursor):
         """Заполнение таблицы предметов"""
         items_data = [
-            ("health_potion", "Зелье здоровья", "consumable", "common", "", 10, 0.5, "", "Восстанавливает здоровье"),
-            ("mana_potion", "Зелье маны", "consumable", "common", "", 15, 0.5, "", "Восстанавливает ману"),
-            ("strength_potion", "Зелье силы", "consumable", "rare", "", 25, 0.5, "", "Временно увеличивает силу"),
-            ("gold_coin", "Золотая монета", "currency", "common", "", 1, 0.0, "", "Валюта игры"),
-            ("gem_red", "Красный камень", "material", "rare", "", 50, 0.1, "", "Драгоценный камень")
+            ("health_potion", "Зелье здоровья", "consumable", "common", "", 10, 0.5, 1, "", "Восстанавливает здоровье"),
+            ("mana_potion", "Зелье маны", "consumable", "common", "", 15, 0.5, 1, "", "Восстанавливает ману"),
+            ("strength_potion", "Зелье силы", "consumable", "rare", "", 25, 0.5, 3, "", "Временно увеличивает силу"),
+            ("gold_coin", "Золотая монета", "currency", "common", "", 1, 0.0, 1, "", "Валюта игры"),
+            ("gem_red", "Красный камень", "material", "rare", "", 50, 0.1, 5, "", "Драгоценный камень")
         ]
         
         cursor.executemany("""
-            INSERT INTO items (item_id, name, item_type, rarity, effects, value, weight, icon, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO items (item_id, name, item_type, rarity, effects, value, weight, level_requirement, icon, description)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, items_data)
         
         logger.info(f"Добавлено {len(items_data)} предметов")
@@ -480,16 +482,16 @@ class DatabaseInitializer:
     def _populate_skills(self, cursor):
         """Заполнение таблицы навыков"""
         skills_data = [
-            ("basic_attack", "Базовая атака", "physical", 0, 0.0, 1.0, "Обычная атака", ""),
-            ("fire_ball", "Огненный шар", "magical", 15, 3.0, 5.0, "Магическая атака огнем", ""),
-            ("ice_shard", "Ледяной осколок", "magical", 10, 2.0, 4.0, "Магическая атака льдом", ""),
-            ("heal", "Исцеление", "healing", 20, 5.0, 3.0, "Восстанавливает здоровье", ""),
-            ("lightning_bolt", "Молния", "magical", 25, 4.0, 6.0, "Электрическая атака", "")
+            ("basic_attack", "Базовая атака", "physical", 0, 0.0, 1.0, 1, "Обычная атака", ""),
+            ("fire_ball", "Огненный шар", "magical", 15, 3.0, 5.0, 3, "Магическая атака огнем", ""),
+            ("ice_shard", "Ледяной осколок", "magical", 10, 2.0, 4.0, 2, "Магическая атака льдом", ""),
+            ("heal", "Исцеление", "healing", 20, 5.0, 3.0, 5, "Восстанавливает здоровье", ""),
+            ("lightning_bolt", "Молния", "magical", 25, 4.0, 6.0, 7, "Электрическая атака", "")
         ]
         
         cursor.executemany("""
-            INSERT INTO skills (skill_id, name, skill_type, mana_cost, cooldown, range, description, icon)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO skills (skill_id, name, skill_type, mana_cost, cooldown, range, level_requirement, description, icon)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, skills_data)
         
         logger.info(f"Добавлено {len(skills_data)} навыков")

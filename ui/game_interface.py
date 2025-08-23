@@ -237,11 +237,8 @@ class GameInterface:
         self.object_creation = ObjectCreationSystem()
         
         # Система управления сессиями
-        from core.session_manager import session_manager
-        self.session_manager = session_manager
-        
-        # Инициализация слотов сохранения по умолчанию
-        self.session_manager.initialize_default_slots()
+        from core.session_manager import SessionManager
+        self.session_manager = SessionManager()
         
         # Инициализация системы сложности с обработкой ошибок
         try:
@@ -2592,7 +2589,7 @@ class GameInterface:
         """Отрисовка информации о слотах сохранения в главном меню"""
         try:
             # Получаем информацию о слотах
-            slots_info = self.session_manager.get_save_slots_info()
+            slots_info = self.session_manager.get_save_slots()
             
             if slots_info:
                 y_offset = 500
@@ -2601,7 +2598,7 @@ class GameInterface:
                 y_offset += 25
                 
                 for slot_info in slots_info[:3]:  # Показываем первые 3 слота
-                    slot_text = f"Слот {slot_info['slot_id']}: {slot_info['save_name']} (Уровень {slot_info.get('level', 1)})"
+                    slot_text = f"Слот {slot_info['slot_id']}: {slot_info['save_name']} (Уровень {slot_info.get('current_level', 1)})"
                     slot_surf = self.fonts["small"].render(slot_text, True, ColorScheme.LIGHT_GRAY)
                     self.screen.blit(slot_surf, (20, y_offset))
                     y_offset += 20
@@ -2617,7 +2614,7 @@ class GameInterface:
     def _create_save_slot_buttons(self, mode: str = "save"):
         """Создание кнопок для слотов сохранения"""
         try:
-            slots_info = self.session_manager.get_save_slots_info()
+            slots_info = self.session_manager.get_save_slots()
             
             self.save_slot_buttons = {}
             button_width = 400
@@ -2651,7 +2648,7 @@ class GameInterface:
         self.screen.blit(title, title_rect)
         
         try:
-            slots_info = self.session_manager.get_save_slots_info()
+            slots_info = self.session_manager.get_save_slots()
             
             if not slots_info:
                 no_text_label = "Нет доступных сохранений" if getattr(self, 'save_slots_mode', 'save') == 'load' else "Слоты не созданы"
@@ -2681,7 +2678,7 @@ class GameInterface:
                 self.screen.blit(slot_surf, slot_rect)
                 
                 # Дополнительная информация
-                info_text = f"Уровень: {slot_info.get('level', 1)} | Время: {slot_info.get('play_time', 0):.0f}с"
+                info_text = f"Уровень: {slot_info.get('current_level', 1)} | Время: {slot_info.get('play_time', 0):.0f}с"
                 info_surf = self.fonts["small"].render(info_text, True, ColorScheme.LIGHT_GRAY)
                 info_rect = info_surf.get_rect(center=(button.centerx, button.centery + 20))
                 self.screen.blit(info_surf, info_rect)
