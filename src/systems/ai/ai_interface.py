@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import logging
+from ...core.interfaces import ISystem
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,7 @@ class AISystemFactory:
         else:
             raise ValueError(f"Неизвестный тип AI системы: {system_type}")
 
-class AISystemManager:
+class AISystemManager(ISystem):
     """
     Менеджер AI систем
     Координирует работу различных AI систем
@@ -172,6 +173,36 @@ class AISystemManager:
         self.ai_systems: Dict[str, AISystemInterface] = {}
         self.entity_mappings: Dict[str, str] = {}  # entity_id -> system_name
         self.logger = logging.getLogger(__name__)
+        self.is_initialized = False
+    
+    def initialize(self) -> bool:
+        """Инициализация AI системы"""
+        try:
+            self.is_initialized = True
+            self.logger.info("AI система успешно инициализирована")
+            return True
+        except Exception as e:
+            self.logger.error(f"Ошибка инициализации AI системы: {e}")
+            return False
+    
+    def update(self, delta_time: float) -> None:
+        """Обновление AI системы"""
+        if not self.is_initialized:
+            return
+        
+        try:
+            self.update_all_systems(delta_time)
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления AI системы: {e}")
+    
+    def cleanup(self) -> None:
+        """Очистка AI системы"""
+        try:
+            self.cleanup()
+            self.is_initialized = False
+            self.logger.info("AI система очищена")
+        except Exception as e:
+            self.logger.error(f"Ошибка очистки AI системы: {e}")
     
     def add_system(self, name: str, ai_system: AISystemInterface) -> bool:
         """Добавление AI системы"""

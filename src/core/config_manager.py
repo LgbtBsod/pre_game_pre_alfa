@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 from dataclasses import dataclass, asdict
+from .interfaces import IConfigManager
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class PerformanceConfig:
     texture_quality: str = "high"
     shadow_quality: str = "medium"
 
-class ConfigManager:
+class ConfigManager(IConfigManager):
     """Менеджер конфигурации игры"""
     
     def __init__(self, config_dir: Optional[Path] = None):
@@ -98,6 +99,111 @@ class ConfigManager:
             
             logger.info("Конфигурация успешно загружена")
             return self._loaded_config
+        except:
+            logger.error("Ошибка загрузки конфигурации")
+    
+    # Реализация интерфейса IConfigManager
+    def save_config(self, config: Dict[str, Any]) -> bool:
+        """Сохранение конфигурации"""
+        try:
+            # Обновляем внутренние конфигурации
+            if 'display' in config:
+                for key, value in config['display'].items():
+                    if hasattr(self.display_config, key):
+                        setattr(self.display_config, key, value)
+            
+            if 'audio' in config:
+                for key, value in config['audio'].items():
+                    if hasattr(self.audio_config, key):
+                        setattr(self.audio_config, key, value)
+            
+            if 'gameplay' in config:
+                for key, value in config['gameplay'].items():
+                    if hasattr(self.gameplay_config, key):
+                        setattr(self.gameplay_config, key, value)
+            
+            if 'ai' in config:
+                for key, value in config['ai'].items():
+                    if hasattr(self.ai_config, key):
+                        setattr(self.ai_config, key, value)
+            
+            if 'performance' in config:
+                for key, value in config['performance'].items():
+                    if hasattr(self.performance_config, key):
+                        setattr(self.performance_config, key, value)
+            
+            # Сохраняем в файлы
+            self._save_display_config()
+            self._save_audio_config()
+            self._save_gameplay_config()
+            self._save_ai_config()
+            self._save_performance_config()
+            
+            logger.info("Конфигурация успешно сохранена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения конфигурации: {e}")
+            return False
+    
+    def get_value(self, key: str, default: Any = None) -> Any:
+        """Получение значения конфигурации"""
+        try:
+            # Разбираем ключ (например: "display.window_width")
+            if '.' in key:
+                section, param = key.split('.', 1)
+                if section == 'display' and hasattr(self.display_config, param):
+                    return getattr(self.display_config, param)
+                elif section == 'audio' and hasattr(self.audio_config, param):
+                    return getattr(self.audio_config, param)
+                elif section == 'gameplay' and hasattr(self.gameplay_config, param):
+                    return getattr(self.gameplay_config, param)
+                elif section == 'ai' and hasattr(self.ai_config, param):
+                    return getattr(self.ai_config, param)
+                elif section == 'performance' and hasattr(self.performance_config, param):
+                    return getattr(self.performance_config, param)
+            else:
+                # Прямой доступ к загруженной конфигурации
+                return self._loaded_config.get(key, default)
+            
+            return default
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения значения {key}: {e}")
+            return default
+    
+    def set_value(self, key: str, value: Any) -> bool:
+        """Установка значения конфигурации"""
+        try:
+            # Разбираем ключ (например: "display.window_width")
+            if '.' in key:
+                section, param = key.split('.', 1)
+                if section == 'display' and hasattr(self.display_config, param):
+                    setattr(self.display_config, param, value)
+                    self._save_display_config()
+                    return True
+                elif section == 'audio' and hasattr(self.audio_config, param):
+                    setattr(self.audio_config, param, value)
+                    self._save_audio_config()
+                    return True
+                elif section == 'gameplay' and hasattr(self.gameplay_config, param):
+                    setattr(self.gameplay_config, param, value)
+                    self._save_gameplay_config()
+                    return True
+                elif section == 'ai' and hasattr(self.ai_config, param):
+                    setattr(self.ai_config, param, value)
+                    self._save_ai_config()
+                    return True
+                elif section == 'performance' and hasattr(self.performance_config, param):
+                    setattr(self.performance_config, param, value)
+                    self._save_performance_config()
+                    return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка установки значения {key}: {e}")
+            return False
             
         except Exception as e:
             logger.error(f"Ошибка загрузки конфигурации: {e}")

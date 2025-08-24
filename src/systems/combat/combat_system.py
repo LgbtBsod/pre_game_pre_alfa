@@ -10,6 +10,7 @@ import math
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from ...core.interfaces import ISystem
 
 logger = logging.getLogger(__name__)
 
@@ -90,26 +91,55 @@ class CombatAction:
         if self.effects is None:
             self.effects = []
 
-class CombatSystem:
+class CombatSystem(ISystem):
     """Система боя"""
     
     def __init__(self):
         self.combat_entities: Dict[str, Dict[str, Any]] = {}
         self.active_combats: Dict[str, Dict[str, Any]] = {}
-        self.combat_history: List[Dict[str, Any]] = []
+        self.combat_history: List[Dict[str, Any]] = {}
         self.attack_cooldowns: Dict[str, float] = {}
+        self.is_initialized = False
         
         logger.info("Система боя инициализирована")
     
     def initialize(self) -> bool:
         """Инициализация системы боя"""
         try:
+            self.is_initialized = True
             logger.info("Система боя успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы боя: {e}")
             return False
+    
+    def update(self, delta_time: float) -> None:
+        """Обновление системы боя"""
+        if not self.is_initialized:
+            return
+        
+        try:
+            # Обновляем кулдауны атак
+            for entity_id in self.attack_cooldowns:
+                self.attack_cooldowns[entity_id] = max(0.0, self.attack_cooldowns[entity_id] - delta_time)
+            
+            # Обновляем эффекты
+            for entity_id, entity_data in self.combat_entities.items():
+                self._update_entity_effects(entity_id, entity_data, delta_time)
+            
+            # Обновляем активные бои
+            for combat_id in list(self.active_combats.keys()):
+                combat = self.active_combats[combat_id]
+                combat["start_time"] += delta_time
+                combat["rounds"] += 1
+                
+                # Проверяем условия завершения боя
+                if self._should_end_combat(combat):
+                    self._end_combat(combat_id)
+                    
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы боя: {e}")
     
     def register_entity(self, entity_id: str, entity_data: Dict[str, Any]):
         """Регистрация сущности в системе боя"""

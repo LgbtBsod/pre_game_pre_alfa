@@ -28,7 +28,7 @@ class PerformanceMetrics:
     entities_count: int = 0
     particles_count: int = 0
 
-class PerformanceManager:
+class PerformanceManager(IPerformanceManager):
     """Менеджер производительности"""
     
     def __init__(self):
@@ -75,12 +75,59 @@ class PerformanceManager:
             # Инициализация Pygame метрик
             self._initialize_pygame_metrics()
             
-            logger.info("Менеджер производительности успешно инициализирован")
-            return True
-            
+                    logger.info("Менеджер производительности успешно инициализирован")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Ошибка инициализации менеджера производительности: {e}")
+        return False
+    
+    # Реализация интерфейса IPerformanceManager
+    def get_fps(self) -> float:
+        """Получение FPS"""
+        return self.current_metrics.fps
+    
+    def get_frame_time(self) -> float:
+        """Получение времени кадра"""
+        return self.current_metrics.frame_time
+    
+    def get_memory_usage(self) -> Dict[str, Any]:
+        """Получение использования памяти"""
+        try:
+            memory = psutil.virtual_memory()
+            return {
+                'total': memory.total,
+                'available': memory.available,
+                'used': memory.used,
+                'percent': memory.percent
+            }
         except Exception as e:
-            logger.error(f"Ошибка инициализации менеджера производительности: {e}")
-            return False
+            logger.error(f"Ошибка получения информации о памяти: {e}")
+            return {}
+    
+    def start_profiling(self, name: str) -> None:
+        """Начало профилирования"""
+        if not hasattr(self, 'profiling_data'):
+            self.profiling_data = {}
+        
+        self.profiling_data[name] = {
+            'start_time': time.time(),
+            'start_frame': self.frame_count
+        }
+        logger.debug(f"Начато профилирование: {name}")
+    
+    def end_profiling(self, name: str) -> None:
+        """Завершение профилирования"""
+        if hasattr(self, 'profiling_data') and name in self.profiling_data:
+            profile = self.profiling_data[name]
+            end_time = time.time()
+            end_frame = self.frame_count
+            
+            duration = end_time - profile['start_time']
+            frames = end_frame - profile['start_frame']
+            
+            logger.debug(f"Профилирование {name}: {duration:.3f}s, {frames} кадров")
+            del self.profiling_data[name]
     
     def _gather_system_info(self):
         """Сбор информации о системе"""

@@ -9,6 +9,7 @@ import random
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
+from ...core.interfaces import ISystem
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ class EvolutionRequirement:
         if self.conditions is None:
             self.conditions = []
 
-class EvolutionSystem:
+class EvolutionSystem(ISystem):
     """Система эволюции существ"""
     
     def __init__(self):
@@ -71,6 +72,7 @@ class EvolutionSystem:
         self.stage_stats: Dict[EvolutionStage, EvolutionStats] = {}
         self.evolution_requirements: Dict[EvolutionStage, EvolutionRequirement] = {}
         self.mutation_chances: Dict[str, float] = {}
+        self.is_initialized = False
         
         logger.info("Система эволюции инициализирована")
     
@@ -82,12 +84,36 @@ class EvolutionSystem:
             self._setup_evolution_requirements()
             self._setup_mutation_chances()
             
+            self.is_initialized = True
             logger.info("Система эволюции успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы эволюции: {e}")
             return False
+    
+    def update(self, delta_time: float) -> None:
+        """Обновление системы эволюции"""
+        if not self.is_initialized:
+            return
+        
+        try:
+            # Обновляем активные эволюции
+            self._update_active_evolutions(delta_time)
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы эволюции: {e}")
+    
+    def cleanup(self) -> None:
+        """Очистка системы эволюции"""
+        try:
+            self.is_initialized = False
+            self.evolution_paths.clear()
+            self.stage_stats.clear()
+            self.evolution_requirements.clear()
+            self.mutation_chances.clear()
+            logger.info("Система эволюции очищена")
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы эволюции: {e}")
     
     def _setup_evolution_paths(self):
         """Настройка путей эволюции"""

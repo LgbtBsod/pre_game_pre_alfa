@@ -9,6 +9,7 @@ import random
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
+from ...core.interfaces import ISystem
 
 logger = logging.getLogger(__name__)
 
@@ -94,10 +95,11 @@ class CraftingResult:
         if self.materials_used is None:
             self.materials_used = {}
 
-class CraftingSystem:
+class CraftingSystem(ISystem):
     """Система крафтинга"""
     
     def __init__(self):
+        self.is_initialized = False
         self.items: Dict[str, Item] = {}
         self.recipes: Dict[str, Recipe] = {}
         self.crafting_stations: Dict[str, Dict[str, Any]] = {}
@@ -113,12 +115,36 @@ class CraftingSystem:
             self._setup_default_recipes()
             self._setup_crafting_stations()
             
+            self.is_initialized = True
             logger.info("Система крафтинга успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы крафтинга: {e}")
             return False
+    
+    def update(self, delta_time: float) -> None:
+        """Обновление системы крафтинга"""
+        if not self.is_initialized:
+            return
+        
+        try:
+            # Обновляем активные крафтинги
+            self._update_active_craftings(delta_time)
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы крафтинга: {e}")
+    
+    def cleanup(self) -> None:
+        """Очистка системы крафтинга"""
+        try:
+            self.is_initialized = False
+            self.items.clear()
+            self.recipes.clear()
+            self.crafting_stations.clear()
+            self.active_craftings.clear()
+            logger.info("Система крафтинга очищена")
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы крафтинга: {e}")
     
     def _setup_default_items(self):
         """Настройка базовых предметов"""
