@@ -17,6 +17,8 @@ class Scene(ABC):
         self.name = name
         self.scene_manager = None
         self.is_initialized = False
+        self.scene_root = None  # Корневой узел сцены
+        self.ui_root = None     # Корневой узел UI сцены
         
     @abstractmethod
     def initialize(self) -> bool:
@@ -42,6 +44,19 @@ class Scene(ABC):
     def cleanup(self):
         """Очистка сцены"""
         pass
+    
+    def set_visible(self, visible: bool):
+        """Установка видимости сцены"""
+        if self.scene_root:
+            if visible:
+                self.scene_root.show()
+            else:
+                self.scene_root.hide()
+        if self.ui_root:
+            if visible:
+                self.ui_root.show()
+            else:
+                self.ui_root.hide()
 
 class SceneManager:
     """Менеджер сцен для Panda3D"""
@@ -60,6 +75,10 @@ class SceneManager:
         self.transition_type = "instant"
         self.transition_progress = 0.0
         
+        # Корневые узлы для сцен
+        self.scenes_root = None
+        self.ui_root = None
+        
         logger.info("Менеджер сцен Panda3D инициализирован")
     
     def initialize(self) -> bool:
@@ -67,8 +86,9 @@ class SceneManager:
         try:
             logger.info("Инициализация менеджера сцен...")
             
-            # Создание корневого узла для сцен
+            # Создание корневых узлов
             self.scenes_root = self.render_node.attachNewNode("scenes_root")
+            self.ui_root = self.render_node.attachNewNode("ui_root")
             
             logger.info("Менеджер сцен успешно инициализирован")
             return True
@@ -84,12 +104,22 @@ class SceneManager:
             return False
         
         scene.scene_manager = self
+        
+        # Создаем корневые узлы для сцены
+        if self.scenes_root:
+            scene.scene_root = self.scenes_root.attachNewNode(f"scene_{name}")
+        if self.ui_root:
+            scene.ui_root = self.ui_root.attachNewNode(f"ui_{name}")
+        
         self.scenes[name] = scene
         
         # Инициализация сцены
         if not scene.initialize():
             logger.error(f"Не удалось инициализировать сцену {name}")
             return False
+        
+        # По умолчанию сцена невидима
+        scene.set_visible(False)
         
         logger.info(f"Сцена {name} зарегистрирована и инициализирована")
         return True
@@ -101,6 +131,13 @@ class SceneManager:
         
         scene = self.scenes[name]
         scene.cleanup()
+        
+        # Удаляем узлы сцены
+        if scene.scene_root:
+            scene.scene_root.removeNode()
+        if scene.ui_root:
+            scene.ui_root.removeNode()
+        
         del self.scenes[name]
         
         logger.info(f"Сцена {name} удалена")
@@ -112,12 +149,14 @@ class SceneManager:
             logger.error(f"Сцена {name} не найдена")
             return False
         
-        # Сохраняем предыдущую сцену
+        # Скрываем предыдущую активную сцену
         if self.active_scene:
+            self.active_scene.set_visible(False)
             self.previous_scene = self.active_scene
         
-        # Устанавливаем новую активную сцену
+        # Показываем новую активную сцену
         self.active_scene = self.scenes[name]
+        self.active_scene.set_visible(True)
         
         logger.info(f"Активная сцена изменена на {name}")
         return True
@@ -137,19 +176,25 @@ class SceneManager:
         self.transition_type = transition_type
         self.transition_progress = 0.0
         
-        # Сохраняем предыдущую сцену
+        # Скрываем предыдущую активную сцену
         if self.active_scene:
+            self.active_scene.set_visible(False)
             self.previous_scene = self.active_scene
         
-        # Устанавливаем новую активную сцену
+        # Показываем новую активную сцену
         self.active_scene = self.scenes[name]
+        self.active_scene.set_visible(True)
+        
+        # Завершаем переход для мгновенного переключения
+        if transition_type == "instant":
+            self.transitioning = False
         
         logger.info(f"Переключение на сцену {name} с переходом {transition_type}")
         return True
     
     def update(self, delta_time: float):
         """Обновление менеджера сцен"""
-        # Обновление перехода
+        # Обновление переходов
         if self.transitioning:
             self._update_transition(delta_time)
         
@@ -159,18 +204,12 @@ class SceneManager:
     
     def _update_transition(self, delta_time: float):
         """Обновление перехода между сценами"""
-        if self.transition_type == "instant":
-            self.transition_progress = 1.0
-        elif self.transition_type == "fade":
+        if self.transition_type == "fade":
             self.transition_progress += delta_time / 0.5  # 0.5 секунды на переход
-        elif self.transition_type == "slide":
-            self.transition_progress += delta_time / 0.3  # 0.3 секунды на переход
-        
-        # Завершение перехода
-        if self.transition_progress >= 1.0:
-            self.transitioning = False
-            self.transition_progress = 1.0
-            logger.debug("Переход между сценами завершен")
+            
+            if self.transition_progress >= 1.0:
+                self.transitioning = False
+                self.transition_progress = 1.0
     
     def render(self, render_node):
         """Отрисовка активной сцены"""
@@ -178,35 +217,23 @@ class SceneManager:
             self.active_scene.render(render_node)
     
     def handle_event(self, event):
-        """Обработка событий"""
+        """Обработка событий активной сцены"""
         if self.active_scene:
             self.active_scene.handle_event(event)
-    
-    def get_scene(self, name: str) -> Optional[Scene]:
-        """Получение сцены по имени"""
-        return self.scenes.get(name)
-    
-    def get_active_scene_name(self) -> Optional[str]:
-        """Получение имени активной сцены"""
-        if self.active_scene:
-            return self.active_scene.name
-        return None
-    
-    def get_scene_names(self) -> list:
-        """Получение списка имен всех сцен"""
-        return list(self.scenes.keys())
-    
-    def is_scene_active(self, name: str) -> bool:
-        """Проверка, является ли сцена активной"""
-        return self.active_scene and self.active_scene.name == name
     
     def cleanup(self):
         """Очистка менеджера сцен"""
         logger.info("Очистка менеджера сцен...")
         
-        # Очистка всех сцен
+        # Очищаем все сцены
         for scene in self.scenes.values():
             scene.cleanup()
+        
+        # Очищаем корневые узлы
+        if self.scenes_root:
+            self.scenes_root.removeNode()
+        if self.ui_root:
+            self.ui_root.removeNode()
         
         self.scenes.clear()
         self.active_scene = None

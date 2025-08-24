@@ -1,87 +1,99 @@
 #!/usr/bin/env python3
 """
-Game Systems - Основные игровые системы
+Systems Package - Игровые системы
 """
 
-# Основные системы
+# Импорт существующих систем
 from .evolution.evolution_system import EvolutionSystem
 from .combat.combat_system import CombatSystem
 from .crafting.crafting_system import CraftingSystem
 from .inventory.inventory_system import InventorySystem
 
-# AI система (используется через интерфейс)
-from .ai.ai_interface import (
-    AISystemInterface, AISystemFactory, AISystemManager,
-    AIState, AIPersonality, ActionType, AIDecision, AIEntity
+# Импорт новых систем
+from .effects.effect_system import (
+    Effect, SpecialEffect, EffectCategory, DamageType, TargetType, TriggerType,
+    EffectVisuals, EffectBalance, EffectCondition, HealthCondition, ElementCondition,
+    OptimizedTriggerSystem, CombinationSystem, EffectStatistics
 )
 
-# Перечисления и классы данных
-from .evolution.evolution_system import (
-    EvolutionStage,
-    EvolutionType,
-    EvolutionStats,
-    EvolutionRequirement
+from .items.item_system import (
+    BaseItem, Weapon, Armor, Accessory, Consumable, ItemFactory,
+    ItemRarity, ItemType, ItemStats
 )
 
-from .combat.combat_system import (
-    CombatState,
-    AttackType,
-    DamageType as CombatDamageType,
-    CombatStats,
-    AttackResult,
-    CombatAction
+from .skills.skill_system import (
+    Skill, CombatSkill, UtilitySkill, SkillTree, SkillFactory,
+    SkillType, SkillTarget, SkillRequirements, SkillCooldown
 )
 
-from .crafting.crafting_system import (
-    ItemType,
-    ItemRarity,
-    CraftingDifficulty,
-    Item,
-    Recipe,
-    CraftingResult
+from .ai.ai_entity import (
+    AIEntity, EntityType, MemoryType, MemoryEntry, GenerationMemory
 )
 
-from .inventory.inventory_system import (
-    ItemCategory,
-    InventorySlot,
-    Inventory
+from .genome.genome_system import (
+    Gene, Chromosome, Genome, GenomeManager, genome_manager,
+    GeneType, GeneDominance
 )
 
+# Экспорт всех систем
 __all__ = [
-    # Основные системы
-    "EvolutionSystem",
-    "CombatSystem",
-    "CraftingSystem",
-    "InventorySystem",
+    # Существующие системы
+    'EvolutionSystem',
+    'CombatSystem', 
+    'CraftingSystem',
+    'InventorySystem',
     
-    # AI система
-    "AISystemInterface",
-    "AISystemFactory", 
-    "AISystemManager",
-    "AIState",
-    "AIPersonality",
-    "ActionType",
-    "AIDecision",
-    "AIEntity",
+    # Система эффектов
+    'Effect',
+    'SpecialEffect',
+    'EffectCategory',
+    'DamageType',
+    'TargetType',
+    'TriggerType',
+    'EffectVisuals',
+    'EffectBalance',
+    'EffectCondition',
+    'HealthCondition',
+    'ElementCondition',
+    'OptimizedTriggerSystem',
+    'CombinationSystem',
+    'EffectStatistics',
     
-    # Перечисления и классы данных
-    "EvolutionStage",
-    "EvolutionType", 
-    "EvolutionStats",
-    "EvolutionRequirement",
-    "CombatState",
-    "AttackType",
-    "CombatDamageType",
-    "CombatStats",
-    "AttackResult",
-    "CombatAction",
-    "ItemType",
-    "ItemRarity",
-    "CraftingDifficulty",
-    "Item",
-    "Recipe",
-    "CraftingResult",
-    "ItemCategory",
-    "InventorySlot",
-    "Inventory"
+    # Система предметов
+    'BaseItem',
+    'Weapon',
+    'Armor',
+    'Accessory',
+    'Consumable',
+    'ItemFactory',
+    'ItemRarity',
+    'ItemType',
+    'ItemStats',
+    
+    # Система скиллов
+    'Skill',
+    'CombatSkill',
+    'UtilitySkill',
+    'SkillTree',
+    'SkillFactory',
+    'SkillType',
+    'SkillTarget',
+    'SkillRequirements',
+    'SkillCooldown',
+    
+    # Система AI Entity
+    'AIEntity',
+    'EntityType',
+    'MemoryType',
+    'MemoryEntry',
+    'GenerationMemory',
+    
+    # Система генома
+    'Gene',
+    'Chromosome',
+    'Genome',
+    'GenomeManager',
+    'genome_manager',
+    'GeneType',
+    'GeneDominance'
 ]

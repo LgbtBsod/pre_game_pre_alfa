@@ -52,34 +52,46 @@ class SettingsScene(Scene):
     
     def _create_ui_elements(self):
         """Создание UI элементов настроек"""
-        # Заголовок
+        # Используем корневой узел UI сцены
+        parent_node = self.ui_root if self.ui_root else None
+        
+        # Современный неоновый заголовок
         self.title_text = OnscreenText(
-            text="Settings",
+            text="⚙️ SETTINGS",
             pos=(0, 0.8),
-            scale=0.08,
-            fg=(1, 1, 1, 1),
+            scale=0.1,
+            fg=(0, 255, 255, 1),  # Неоновый голубой
             align=TextNode.ACenter,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.8),  # Тень
+            shadowOffset=(0.02, 0.02)  # Смещение тени
         )
         
         # Громкость
         OnscreenText(
-            text="Volume:",
+            text="🔊 VOLUME",
             pos=(-0.8, 0.5),
-            scale=0.05,
-            fg=(1, 1, 1, 1),
+            scale=0.06,
+            fg=(255, 100, 255, 1),  # Неоновый розовый
             align=TextNode.ALeft,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.6),
+            shadowOffset=(0.01, 0.01)
         )
         
         # Общая громкость
         OnscreenText(
-            text="Master:",
+            text="🎚️ Master:",
             pos=(-0.8, 0.3),
-            scale=0.04,
-            fg=(1, 1, 1, 1),
+            scale=0.045,
+            fg=(255, 255, 100, 1),  # Неоновый желтый
             align=TextNode.ALeft,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.5),
+            shadowOffset=(0.01, 0.01)
         )
         
         self.master_volume_slider = DirectSlider(
@@ -89,19 +101,26 @@ class SettingsScene(Scene):
             orientation="horizontal",
             pos=(0, 0, 0.3),
             scale=0.3,
-            thumb_frameColor=(0.5, 0.5, 0.5, 1),
+            thumb_frameColor=(0, 255, 255, 0.8),  # Неоновый голубой
             thumb_relief=1,
-            command=self._update_master_volume
+            command=self._update_master_volume,
+            parent=parent_node,
+            frameColor=(50, 50, 50, 0.3),  # Полупрозрачный фон
+            trough_relief=1,
+            trough_frameColor=(30, 30, 30, 0.5)
         )
         
         # Громкость музыки
         OnscreenText(
-            text="Music:",
+            text="🎵 Music:",
             pos=(-0.8, 0.1),
-            scale=0.04,
-            fg=(1, 1, 1, 1),
+            scale=0.045,
+            fg=(100, 255, 100, 1),  # Неоновый зеленый
             align=TextNode.ALeft,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.5),
+            shadowOffset=(0.01, 0.01)
         )
         
         self.music_volume_slider = DirectSlider(
@@ -111,19 +130,26 @@ class SettingsScene(Scene):
             orientation="horizontal",
             pos=(0, 0, 0.1),
             scale=0.3,
-            thumb_frameColor=(0.5, 0.5, 0.5, 1),
+            thumb_frameColor=(100, 255, 100, 0.8),  # Неоновый зеленый
             thumb_relief=1,
-            command=self._update_music_volume
+            command=self._update_music_volume,
+            parent=parent_node,
+            frameColor=(50, 50, 50, 0.3),
+            trough_relief=1,
+            trough_frameColor=(30, 30, 30, 0.5)
         )
         
         # Громкость эффектов
         OnscreenText(
-            text="SFX:",
+            text="🔊 SFX:",
             pos=(-0.8, -0.1),
-            scale=0.04,
-            fg=(1, 1, 1, 1),
+            scale=0.045,
+            fg=(255, 150, 50, 1),  # Неоновый оранжевый
             align=TextNode.ALeft,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.5),
+            shadowOffset=(0.01, 0.01)
         )
         
         self.sfx_volume_slider = DirectSlider(
@@ -133,28 +159,39 @@ class SettingsScene(Scene):
             orientation="horizontal",
             pos=(0, 0, -0.1),
             scale=0.3,
-            thumb_frameColor=(0.5, 0.5, 0.5, 1),
+            thumb_frameColor=(255, 150, 50, 0.8),  # Неоновый оранжевый
             thumb_relief=1,
-            command=self._update_sfx_volume
+            command=self._update_sfx_volume,
+            parent=parent_node,
+            frameColor=(50, 50, 50, 0.3),
+            trough_relief=1,
+            trough_frameColor=(30, 30, 30, 0.5)
         )
         
         # Графика
         OnscreenText(
-            text="Graphics:",
+            text="🎮 GRAPHICS",
             pos=(-0.8, -0.4),
-            scale=0.05,
-            fg=(1, 1, 1, 1),
+            scale=0.06,
+            fg=(150, 100, 255, 1),  # Неоновый фиолетовый
             align=TextNode.ALeft,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.6),
+            shadowOffset=(0.01, 0.01)
         )
         
         # Полноэкранный режим
         self.fullscreen_checkbox = DirectCheckBox(
-            text="Fullscreen Mode",
+            text="🖥️ Fullscreen Mode",
             pos=(-0.8, 0, -0.6),
-            scale=0.04,
+            scale=0.045,
             command=self._toggle_fullscreen,
-            indicatorValue=0
+            indicatorValue=0,
+            parent=parent_node,
+            text_fg=(255, 255, 255, 1),
+            frameColor=(50, 50, 50, 0.3),
+            indicator_frameColor=(0, 255, 255, 0.8)
         )
         
         # Вертикальная синхронизация
@@ -163,7 +200,8 @@ class SettingsScene(Scene):
             pos=(-0.8, 0, -0.7),
             scale=0.04,
             command=self._toggle_vsync,
-            indicatorValue=1
+            indicatorValue=1,
+            parent=parent_node
         )
         
         # Кнопки
@@ -191,28 +229,33 @@ class SettingsScene(Scene):
     
     def _update_master_volume(self):
         """Обновление общей громкости"""
-        volume = self.master_volume_slider['value']
-        logger.info(f"Общая громкость изменена: {volume}")
+        if self.master_volume_slider:
+            volume = self.master_volume_slider['value']
+            logger.info(f"Общая громкость изменена: {volume}")
     
     def _update_music_volume(self):
         """Обновление громкости музыки"""
-        volume = self.music_volume_slider['value']
-        logger.info(f"Громкость музыки изменена: {volume}")
+        if self.music_volume_slider:
+            volume = self.music_volume_slider['value']
+            logger.info(f"Громкость музыки изменена: {volume}")
     
     def _update_sfx_volume(self):
         """Обновление громкости эффектов"""
-        volume = self.sfx_volume_slider['value']
-        logger.info(f"Громкость эффектов изменена: {volume}")
+        if self.sfx_volume_slider:
+            volume = self.sfx_volume_slider['value']
+            logger.info(f"Громкость эффектов изменена: {volume}")
     
-    def _toggle_fullscreen(self):
+    def _toggle_fullscreen(self, is_checked=None):
         """Переключение полноэкранного режима"""
-        fullscreen = self.fullscreen_checkbox['indicatorValue']
-        logger.info(f"Fullscreen mode: {fullscreen}")
+        if is_checked is None:
+            is_checked = self.fullscreen_checkbox['indicatorValue']
+        logger.info(f"Fullscreen mode: {is_checked}")
     
-    def _toggle_vsync(self):
+    def _toggle_vsync(self, is_checked=None):
         """Переключение вертикальной синхронизации"""
-        vsync = self.vsync_checkbox['indicatorValue']
-        logger.info(f"Vertical sync: {vsync}")
+        if is_checked is None:
+            is_checked = self.vsync_checkbox['indicatorValue']
+        logger.info(f"Vertical sync: {is_checked}")
     
     def _apply_settings(self):
         """Применение настроек"""

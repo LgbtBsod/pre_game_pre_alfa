@@ -17,9 +17,12 @@ ROOT_DIR = Path(__file__).parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
 def setup_logging():
-    """Настройка системы логирования"""
+    """Настройка системы логирования с очисткой старых логов"""
     log_dir = ROOT_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
+    
+    # Очистка старых логов
+    cleanup_old_logs(log_dir)
     
     # Форматтер для логов
     formatter = logging.Formatter(
@@ -48,6 +51,34 @@ def setup_logging():
     
     # Отключаем логи от сторонних библиотек
     logging.getLogger('panda3d').setLevel(logging.WARNING)
+
+def cleanup_old_logs(log_dir: Path):
+    """Очистка старых логов"""
+    try:
+        # Получаем все файлы логов
+        log_files = list(log_dir.glob("*.log"))
+        
+        if not log_files:
+            return
+        
+        # Сортируем по размеру (от большего к меньшему)
+        log_files.sort(key=lambda x: x.stat().st_size, reverse=True)
+        
+        # Удаляем старые логи, оставляя только 5 самых больших (важных)
+        files_to_remove = log_files[5:]
+        
+        for log_file in files_to_remove:
+            try:
+                log_file.unlink()
+                print(f"🗑️  Удален старый лог: {log_file.name}")
+            except Exception as e:
+                print(f"⚠️  Не удалось удалить лог {log_file.name}: {e}")
+        
+        if files_to_remove:
+            print(f"🧹 Очищено {len(files_to_remove)} старых логов")
+        
+    except Exception as e:
+        print(f"⚠️  Ошибка при очистке логов: {e}")
 
 def check_python_version() -> bool:
     """Проверка версии Python"""

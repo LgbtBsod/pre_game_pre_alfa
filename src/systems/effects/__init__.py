@@ -1,24 +1,27 @@
 #!/usr/bin/env python3
 """
-Effects System - Система эффектов и спецэффектов
+Effects System Package
 """
 
 from .effect_system import (
-    Effect,
-    SpecialEffect,
-    EffectCategory,
-    TargetType,
-    DamageType,
-    TriggerSystem,
-    EffectSystem
+    Effect, SpecialEffect, EffectCategory, DamageType, TargetType, TriggerType,
+    EffectVisuals, EffectBalance, EffectCondition, HealthCondition, ElementCondition,
+    OptimizedTriggerSystem, CombinationSystem, EffectStatistics
 )
 
 __all__ = [
-    "Effect",
-    "SpecialEffect", 
-    "EffectCategory",
-    "TargetType",
-    "DamageType",
-    "TriggerSystem",
-    "EffectSystem"
+    'Effect',
+    'SpecialEffect', 
+    'EffectCategory',
+    'DamageType',
+    'TargetType',
+    'TriggerType',
+    'EffectVisuals',
+    'EffectBalance',
+    'EffectCondition',
+    'HealthCondition',
+    'ElementCondition',
+    'OptimizedTriggerSystem',
+    'CombinationSystem',
+    'EffectStatistics'
 ]

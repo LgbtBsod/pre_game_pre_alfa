@@ -1,36 +1,21 @@
 #!/usr/bin/env python3
 """
-Skills System - Система навыков и способностей
+Skills System Package
 """
 
-from .enhanced_skill_system import (
-    Skill,
-    WeaponAttackSkill,
-    ComboSkill,
-    SkillType,
-    TargetSelection,
-    SkillCategory,
-    SkillRequirements,
-    SkillCooldown,
-    SkillRange,
-    SkillScaling,
-    AIPriority,
-    SkillFactory,
-    EnhancedSkillSystem
+from .skill_system import (
+    Skill, CombatSkill, UtilitySkill, SkillTree, SkillFactory,
+    SkillType, SkillTarget, SkillRequirements, SkillCooldown
 )
 
 __all__ = [
-    "Skill",
-    "WeaponAttackSkill",
-    "ComboSkill",
-    "SkillType",
-    "TargetSelection",
-    "SkillCategory",
-    "SkillRequirements",
-    "SkillCooldown",
-    "SkillRange",
-    "SkillScaling",
-    "AIPriority",
-    "SkillFactory",
-    "EnhancedSkillSystem"
+    'Skill',
+    'CombatSkill',
+    'UtilitySkill',
+    'SkillTree',
+    'SkillFactory',
+    'SkillType',
+    'SkillTarget',
+    'SkillRequirements',
+    'SkillCooldown'
 ]

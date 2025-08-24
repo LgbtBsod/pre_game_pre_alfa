@@ -168,6 +168,21 @@ class PyTorchAISystem:
         
         logger.info("PyTorch AI система инициализирована")
     
+    def initialize(self) -> bool:
+        """Инициализация AI системы"""
+        try:
+            logger.info("Инициализация PyTorch AI системы...")
+            
+            if not PYTORCH_AVAILABLE:
+                logger.warning("PyTorch недоступен, используется базовая AI система")
+            
+            logger.info("PyTorch AI система успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации PyTorch AI системы: {e}")
+            return False
+    
     def register_entity(self, entity_id: str, entity_data: Dict[str, Any], 
                        memory_group: str = "default") -> bool:
         """Регистрация сущности в AI системе"""

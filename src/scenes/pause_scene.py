@@ -44,47 +44,56 @@ class PauseScene(Scene):
     
     def _create_ui_elements(self):
         """Создание UI элементов паузы"""
-        # Заголовок паузы
+        # Используем корневой узел UI сцены
+        parent_node = self.ui_root if self.ui_root else None
+        
+        # Современный неоновый заголовок паузы
         self.pause_text = OnscreenText(
-            text="PAUSED",
+            text="⏸️ PAUSED",
             pos=(0, 0.5),
-            scale=0.1,
-            fg=(1, 1, 0, 1),
+            scale=0.12,
+            fg=(255, 255, 0, 1),  # Неоновый желтый
             align=TextNode.ACenter,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.8),
+            shadowOffset=(0.02, 0.02)
         )
         
         # Кнопка "Продолжить"
         self.resume_button = DirectButton(
-            text="Resume",
+            text="▶️ RESUME",
             pos=(0, 0, 0.1),
-            scale=0.06,
+            scale=0.07,
             command=self._resume_game,
-            frameColor=(0.2, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(0, 255, 100, 0.8),  # Неоновый зеленый
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         # Кнопка "Настройки"
         self.settings_button = DirectButton(
-            text="Settings",
+            text="⚙️ SETTINGS",
             pos=(0, 0, -0.1),
-            scale=0.06,
+            scale=0.07,
             command=self._open_settings,
-            frameColor=(0.2, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(255, 100, 255, 0.8),  # Неоновый розовый
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         # Кнопка "Главное меню"
         self.menu_button = DirectButton(
-            text="Main Menu",
+            text="🏠 MAIN MENU",
             pos=(0, 0, -0.3),
-            scale=0.06,
+            scale=0.07,
             command=self._return_to_menu,
-            frameColor=(0.2, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(100, 100, 255, 0.8),  # Неоновый синий
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         logger.debug("UI элементы паузы созданы")

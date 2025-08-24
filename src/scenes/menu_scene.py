@@ -46,47 +46,56 @@ class MenuScene(Scene):
     
     def _create_ui_elements(self):
         """Создание UI элементов меню"""
-        # Заголовок
+        # Используем корневой узел UI сцены
+        parent_node = self.ui_root if self.ui_root else None
+        
+        # Современный неоновый заголовок
         self.title_text = OnscreenText(
-            text="AI-EVOLVE Enhanced Edition",
+            text="🤖 AI-EVOLVE ENHANCED EDITION",
             pos=(0, 0.7),
-            scale=0.08,
-            fg=(1, 1, 1, 1),
+            scale=0.1,
+            fg=(0, 255, 255, 1),  # Неоновый голубой
             align=TextNode.ACenter,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.8),
+            shadowOffset=(0.02, 0.02)
         )
         
         # Кнопка "Начать игру"
         self.start_button = DirectButton(
-            text="Start Game",
+            text="🚀 START GAME",
             pos=(0, 0, 0.2),
-            scale=0.06,
+            scale=0.07,
             command=self._start_game,
-            frameColor=(0.2, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(0, 255, 100, 0.8),  # Неоновый зеленый
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         # Кнопка "Настройки"
         self.settings_button = DirectButton(
-            text="Settings",
+            text="⚙️ SETTINGS",
             pos=(0, 0, 0),
-            scale=0.06,
+            scale=0.07,
             command=self._open_settings,
-            frameColor=(0.2, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(255, 100, 255, 0.8),  # Неоновый розовый
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         # Кнопка "Выход"
         self.quit_button = DirectButton(
-            text="Quit",
+            text="❌ QUIT",
             pos=(0, 0, -0.2),
-            scale=0.06,
+            scale=0.07,
             command=self._quit_game,
-            frameColor=(0.2, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(255, 100, 100, 0.8),  # Неоновый красный
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         logger.debug("UI элементы меню созданы")

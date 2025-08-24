@@ -63,24 +63,33 @@ class LoadScene(Scene):
     
     def _create_ui_elements(self):
         """Создание UI элементов загрузки"""
-        # Заголовок
+        # Используем корневой узел UI сцены
+        parent_node = self.ui_root if self.ui_root else None
+        
+        # Современный неоновый заголовок
         self.title_text = OnscreenText(
-            text="Load Game",
+            text="💾 LOAD GAME",
             pos=(0, 0.8),
-            scale=0.08,
-            fg=(1, 1, 1, 1),
+            scale=0.1,
+            fg=(0, 255, 255, 1),  # Неоновый голубой
             align=TextNode.ACenter,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.8),
+            shadowOffset=(0.02, 0.02)
         )
         
         # Список сохранений
         OnscreenText(
-            text="Available saves:",
+            text="📁 AVAILABLE SAVES:",
             pos=(-0.8, 0.5),
-            scale=0.05,
-            fg=(1, 1, 1, 1),
+            scale=0.06,
+            fg=(255, 100, 255, 1),  # Неоновый розовый
             align=TextNode.ALeft,
-            mayChange=False
+            mayChange=False,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.6),
+            shadowOffset=(0.01, 0.01)
         )
         
         # Создаем простой список сохранений
@@ -88,49 +97,58 @@ class LoadScene(Scene):
         
         # Кнопки
         self.load_button = DirectButton(
-            text="Load",
+            text="🚀 LOAD",
             pos=(-0.3, 0, -0.7),
-            scale=0.05,
+            scale=0.06,
             command=self._load_selected_save,
-            frameColor=(0.2, 0.6, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(0, 255, 100, 0.8),  # Неоновый зеленый
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         self.delete_button = DirectButton(
-            text="Delete",
+            text="🗑️ DELETE",
             pos=(0, 0, -0.7),
-            scale=0.05,
+            scale=0.06,
             command=self._delete_selected_save,
-            frameColor=(0.6, 0.2, 0.2, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(255, 100, 100, 0.8),  # Неоновый красный
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         self.back_button = DirectButton(
-            text="Back",
+            text="⬅️ BACK",
             pos=(0.3, 0, -0.7),
-            scale=0.05,
+            scale=0.06,
             command=self._go_back,
-            frameColor=(0.4, 0.4, 0.4, 1),
-            text_fg=(1, 1, 1, 1),
-            relief=1
+            frameColor=(100, 100, 255, 0.8),  # Неоновый синий
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
         )
         
         logger.debug("UI элементы загрузки созданы")
     
     def _create_save_list(self):
         """Создание списка сохранений"""
+        # Используем корневой узел UI сцены
+        parent_node = self.ui_root if self.ui_root else None
+        
         # Простая реализация списка сохранений
         y_pos = 0.3
         for i, save in enumerate(self.save_files):
             save_text = OnscreenText(
-                text=f"{save['name']} - Level {save['level']} ({save['date']})",
+                text=f"💾 {save['name']} - Level {save['level']} ({save['date']})",
                 pos=(-0.8, y_pos),
-                scale=0.04,
-                fg=(1, 1, 1, 1),
+                scale=0.045,
+                fg=(255, 255, 100, 1),  # Неоновый желтый
                 align=TextNode.ALeft,
-                mayChange=False
+                mayChange=False,
+                parent=parent_node,
+                shadow=(0, 0, 0, 0.5),
+                shadowOffset=(0.01, 0.01)
             )
             
             # Создаем невидимую кнопку для выбора
@@ -141,7 +159,8 @@ class LoadScene(Scene):
                 command=self._select_save,
                 extraArgs=[i],
                 frameColor=(0, 0, 0, 0),
-                relief=0
+                relief=0,
+                parent=parent_node
             )
             
             y_pos -= 0.1

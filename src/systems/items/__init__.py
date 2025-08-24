@@ -1,32 +1,21 @@
 #!/usr/bin/env python3
 """
-Items System - Система предметов и экипировки
+Items System Package
 """
 
-from .enhanced_item_system import (
-    BaseItem,
-    Weapon,
-    Armor,
-    Accessory,
-    Consumable,
-    ItemType,
-    ItemRarity,
-    ItemSlot,
-    ItemStats,
-    ItemFactory,
-    EnhancedItemSystem
+from .item_system import (
+    BaseItem, Weapon, Armor, Accessory, Consumable, ItemFactory,
+    ItemRarity, ItemType, ItemStats
 )
 
 __all__ = [
-    "BaseItem",
-    "Weapon",
-    "Armor", 
-    "Accessory",
-    "Consumable",
-    "ItemType",
-    "ItemRarity",
-    "ItemSlot",
-    "ItemStats",
-    "ItemFactory",
-    "EnhancedItemSystem"
+    'BaseItem',
+    'Weapon',
+    'Armor', 
+    'Accessory',
+    'Consumable',
+    'ItemFactory',
+    'ItemRarity',
+    'ItemType',
+    'ItemStats'
 ]
