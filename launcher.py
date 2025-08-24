@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-AI-EVOLVE: Enhanced Edition - Оптимизированный Launcher
-Запускает игру с новой централизованной архитектурой и простыми объектами
+AI-EVOLVE Enhanced Edition - Launcher
+Основной файл запуска игры с новой модульной архитектурой
 """
 
 import os
@@ -10,31 +10,32 @@ import time
 import logging
 import traceback
 from pathlib import Path
+from typing import Optional
 
 # Добавляем корневую директорию в путь
 ROOT_DIR = Path(__file__).parent
-sys.path.insert(0, str(ROOT_DIR))
+sys.path.insert(0, str(ROOT_DIR / "src"))
 
 def setup_logging():
-    """Настройка логирования"""
+    """Настройка системы логирования"""
     log_dir = ROOT_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
     
-    # Создаем форматтер
+    # Форматтер для логов
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
     
-    # Настройка файлового обработчика
+    # Файловый обработчик
     file_handler = logging.FileHandler(
-        log_dir / f"ai_evolve_optimized_{time.strftime('%Y%m%d_%H%M%S')}.log",
+        log_dir / f"ai_evolve_{time.strftime('%Y%m%d_%H%M%S')}.log",
         encoding='utf-8'
     )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     
-    # Настройка консольного обработчика
+    # Консольный обработчик
     console_handler = logging.StreamHandler()
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(formatter)
@@ -47,9 +48,8 @@ def setup_logging():
     
     # Отключаем логи от сторонних библиотек
     logging.getLogger('pygame').setLevel(logging.WARNING)
-    logging.getLogger('PIL').setLevel(logging.WARNING)
 
-def check_python_version():
+def check_python_version() -> bool:
     """Проверка версии Python"""
     if sys.version_info < (3, 8):
         print("❌ Ошибка: Требуется Python 3.8 или выше")
@@ -57,28 +57,40 @@ def check_python_version():
         return False
     return True
 
-def check_dependencies():
+def check_dependencies() -> bool:
     """Проверка зависимостей"""
-    required_packages = [
-        'pygame',
-        'numpy',
-        'psutil'
-    ]
+    required_packages = ['pygame', 'numpy']
+    optional_packages = ['psutil', 'PIL']
     
-    missing_packages = []
+    missing_required = []
+    missing_optional = []
+    
     for package in required_packages:
         try:
             __import__(package)
+            print(f"✅ {package} - доступен")
         except ImportError:
-            missing_packages.append(package)
+            missing_required.append(package)
+            print(f"❌ {package} - отсутствует")
     
-    if missing_packages:
-        print("❌ Отсутствуют необходимые пакеты:")
-        for package in missing_packages:
-            print(f"   - {package}")
-        print("\nУстановите их командой:")
-        print(f"pip install {' '.join(missing_packages)}")
+    for package in optional_packages:
+        try:
+            __import__(package)
+            print(f"✅ {package} - доступен (опционально)")
+        except ImportError:
+            missing_optional.append(package)
+            print(f"⚠️  {package} - отсутствует (опционально)")
+    
+    if missing_required:
+        print(f"\n❌ Отсутствуют необходимые пакеты: {', '.join(missing_required)}")
+        print("Установите их командой:")
+        print(f"pip install {' '.join(missing_required)}")
         return False
+    
+    if missing_optional:
+        print(f"\n⚠️  Отсутствуют опциональные пакеты: {', '.join(missing_optional)}")
+        print("Некоторые функции могут работать медленнее")
+        print(f"pip install {' '.join(missing_optional)}")
     
     return True
 
@@ -88,110 +100,86 @@ def create_directories():
         "logs",
         "saves",
         "config",
-        "graphics",
-        "audio",
-        "data"
+        "assets/audio",
+        "assets/graphics",
+        "assets/data",
+        "assets/maps"
     ]
     
     for directory in directories:
         dir_path = ROOT_DIR / directory
-        dir_path.mkdir(exist_ok=True)
+        dir_path.mkdir(parents=True, exist_ok=True)
+        print(f"📁 Создана директория: {directory}")
 
-def initialize_database():
-    """Инициализация базы данных"""
+def initialize_game():
+    """Инициализация игры"""
     try:
-        from core.database_manager import DatabaseManager
-        db_manager = DatabaseManager()
-        db_manager.initialize()
-        logging.info("База данных инициализирована")
-        return True
-    except Exception as e:
-        logging.error(f"Ошибка инициализации базы данных: {e}")
-        return False
-
-def show_banner():
-    """Отображение баннера"""
-    banner = """
-    ╔══════════════════════════════════════════════════════════════╗
-    ║                                                              ║
-    ║  █████  ██ ███████ ███████ ██   ██ ██    ██ ███████ ██   ██ ║
-    ║ ██   ██ ██ ██      ██      ███  ██ ██    ██ ██      ███  ██ ║
-    ║ ███████ ██ ███████ ███████ ████ ██ ██    ██ ███████ ████ ██ ║
-    ║ ██   ██ ██      ██      ██ ██ ████ ██    ██      ██ ██ ████ ║
-    ║ ██   ██ ██ ███████ ███████ ██  ████  ██████  ███████ ██  ███ ║
-    ║                                                              ║
-    ║                    Enhanced Edition                          ║
-    ║                                                              ║
-    ║  🚀 Оптимизированная архитектура                             ║
-    ║  🎯 Улучшенная производительность                            ║
-    ║  🛡️  Повышенная надежность                                  ║
-    ║  🎨 Простые объекты с цветовой индикацией                   ║
-    ║  🖥️  Современный HUD и UI                                   ║
-    ║                                                              ║
-    ╚══════════════════════════════════════════════════════════════╝
-    """
-    print(banner)
-
-def run_game():
-    """Запуск игры"""
-    try:
-        from core.game_engine import GameEngine
-        
-        # Создаем и запускаем движок
-        engine = GameEngine()
-        exit_code = engine.run()
-        
-        return exit_code
-        
-    except Exception as e:
-        logging.error(f"Критическая ошибка запуска игры: {e}")
-        logging.error(traceback.format_exc())
-        return 1
-
-def main():
-    """Главная функция"""
-    start_time = time.time()
-    
-    try:
-        # Отображение баннера
-        show_banner()
-        
-        # Настройка логирования
-        setup_logging()
-        logger = logging.getLogger(__name__)
-        logger.info("🎯 Запуск AI-EVOLVE: Enhanced Edition (Оптимизированная версия)")
-        
-        # Проверки
-        if not check_python_version():
-            return 1
-        
-        if not check_dependencies():
-            return 1
+        print("🚀 Инициализация AI-EVOLVE Enhanced Edition...")
         
         # Создание директорий
         create_directories()
-        logger.info("📁 Директории созданы")
         
-        # Инициализация базы данных
-        if not initialize_database():
-            logger.warning("⚠️  База данных не инициализирована, продолжаем без неё")
+        # Импорт и инициализация игрового движка
+        from core.game_engine import GameEngine
+        from core.config_manager import ConfigManager
         
-        # Запуск игры
-        logger.info("🚀 Запуск игрового движка...")
-        exit_code = run_game()
+        # Загрузка конфигурации
+        config_manager = ConfigManager()
+        config = config_manager.load_config()
         
-        # Завершение
-        total_time = time.time() - start_time
-        logger.info(f"✅ Игра завершена за {total_time:.2f} секунд")
+        # Создание игрового движка
+        engine = GameEngine(config)
         
-        return exit_code
+        print("✅ Игра успешно инициализирована!")
+        return engine
+        
+    except Exception as e:
+        print(f"❌ Ошибка инициализации: {e}")
+        logging.error(f"Ошибка инициализации: {e}")
+        traceback.print_exc()
+        return None
+
+def main():
+    """Главная функция"""
+    print("🎮 AI-EVOLVE Enhanced Edition")
+    print("=" * 50)
+    
+    # Настройка логирования
+    setup_logging()
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Проверка версии Python
+        if not check_python_version():
+            return 1
+        
+        # Проверка зависимостей
+        if not check_dependencies():
+            return 1
+        
+        print("\n🔍 Проверка завершена успешно!")
+        print("\n📂 Создание структуры проекта...")
+        
+        # Инициализация игры
+        engine = initialize_game()
+        if not engine:
+            return 1
+        
+        print("\n🎯 Запуск игрового цикла...")
+        
+        # Запуск игрового цикла
+        engine.run()
+        
+        return 0
         
     except KeyboardInterrupt:
-        logger.info("⏹️  Игра прервана пользователем")
+        print("\n\n⏹️  Игра остановлена пользователем")
         return 0
+        
     except Exception as e:
-        logging.error(f"❌ Критическая ошибка: {e}")
-        logging.error(traceback.format_exc())
+        print(f"\n❌ Критическая ошибка: {e}")
+        logger.error(f"Критическая ошибка: {e}")
+        traceback.print_exc()
         return 1
 
 if __name__ == "__main__":

@@ -1,0 +1,133 @@
+2025-08-24 04:24:06 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-24 04:24:06 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-24 04:24:06 - core.game_engine - INFO - Игровой движок инициализирован
+2025-08-24 04:24:06 - core.game_engine - INFO - Начало инициализации игрового движка...
+2025-08-24 04:24:06 - core.game_engine - INFO - Pygame успешно инициализирован
+2025-08-24 04:24:06 - core.resource_manager - INFO - Менеджер ресурсов инициализирован
+2025-08-24 04:24:06 - core.resource_manager - INFO - Инициализация менеджера ресурсов...
+2025-08-24 04:24:06 - core.resource_manager - DEBUG - Создана директория: graphics
+2025-08-24 04:24:06 - core.resource_manager - DEBUG - Создана директория: audio
+2025-08-24 04:24:06 - core.resource_manager - DEBUG - Создана директория: data
+2025-08-24 04:24:06 - core.resource_manager - DEBUG - Создана директория: maps
+2025-08-24 04:24:06 - core.resource_manager - DEBUG - Создана директория: fonts
+2025-08-24 04:24:06 - core.resource_manager - INFO - Найдено ресурсов: 0
+2025-08-24 04:24:06 - core.resource_manager - WARNING - Файл изображения не найден: assets\graphics\ui\button.png
+2025-08-24 04:24:06 - core.resource_manager - WARNING - Файл изображения не найден: assets\graphics\ui\background.png
+2025-08-24 04:24:06 - core.resource_manager - WARNING - Файл звука не найден: assets\audio\ui\click.wav
+2025-08-24 04:24:06 - core.resource_manager - WARNING - Файл шрифта не найден: assets\fonts\main.ttf
+2025-08-24 04:24:06 - core.resource_manager - INFO - Менеджер ресурсов успешно инициализирован
+2025-08-24 04:24:06 - core.performance_manager - INFO - Менеджер производительности инициализирован
+2025-08-24 04:24:06 - core.performance_manager - INFO - Инициализация менеджера производительности...
+2025-08-24 04:24:06 - core.performance_manager - INFO - Системная информация: {'cpu_count': 12, 'cpu_freq': 3912.0, 'memory_total': 34244075520, 'memory_available': 20915679232, 'disk_total': 239150370816, 'disk_free': 150861680640}
+2025-08-24 04:24:06 - core.performance_manager - INFO - Мониторинг производительности запущен
+2025-08-24 04:24:06 - core.performance_manager - WARNING - Не удалось получить Pygame информацию: does not exist in vidinfo
+2025-08-24 04:24:06 - core.performance_manager - INFO - Менеджер производительности успешно инициализирован
+2025-08-24 04:24:06 - core.scene_manager - INFO - Менеджер сцен инициализирован
+2025-08-24 04:24:06 - core.scene_manager - INFO - Инициализация менеджера сцен...
+2025-08-24 04:24:06 - src.scenes.menu_scene - INFO - Сцена главного меню создана
+2025-08-24 04:24:06 - core.scene_manager - INFO - Сцена menu зарегистрирована
+2025-08-24 04:24:06 - src.scenes.game_scene - INFO - Игровая сцена создана
+2025-08-24 04:24:06 - core.scene_manager - INFO - Сцена game зарегистрирована
+2025-08-24 04:24:06 - src.scenes.pause_scene - INFO - Сцена паузы создана
+2025-08-24 04:24:06 - core.scene_manager - INFO - Сцена pause зарегистрирована
+2025-08-24 04:24:06 - core.scene_manager - INFO - Менеджер сцен успешно инициализирован
+2025-08-24 04:24:06 - core.game_engine - INFO - Все менеджеры успешно инициализированы
+2025-08-24 04:24:06 - src.scenes.menu_scene - INFO - Сцена главного меню создана
+2025-08-24 04:24:06 - core.scene_manager - WARNING - Сцена menu уже зарегистрирована, перезаписываем
+2025-08-24 04:24:06 - src.scenes.menu_scene - INFO - Очистка сцены главного меню...
+2025-08-24 04:24:06 - src.core.scene_manager - INFO - Сцена menu очищена
+2025-08-24 04:24:06 - src.scenes.menu_scene - INFO - Сцена главного меню очищена
+2025-08-24 04:24:06 - core.scene_manager - INFO - Сцена menu зарегистрирована
+2025-08-24 04:24:06 - src.scenes.game_scene - INFO - Игровая сцена создана
+2025-08-24 04:24:06 - core.scene_manager - WARNING - Сцена game уже зарегистрирована, перезаписываем
+2025-08-24 04:24:06 - src.scenes.game_scene - INFO - Очистка игровой сцены...
+2025-08-24 04:24:06 - src.core.scene_manager - INFO - Сцена game очищена
+2025-08-24 04:24:06 - src.scenes.game_scene - INFO - Игровая сцена очищена
+2025-08-24 04:24:06 - core.scene_manager - INFO - Сцена game зарегистрирована
+2025-08-24 04:24:06 - src.scenes.pause_scene - INFO - Сцена паузы создана
+2025-08-24 04:24:06 - core.scene_manager - WARNING - Сцена pause уже зарегистрирована, перезаписываем
+2025-08-24 04:24:06 - src.scenes.pause_scene - INFO - Очистка сцены паузы...
+2025-08-24 04:24:06 - src.core.scene_manager - INFO - Сцена pause очищена
+2025-08-24 04:24:06 - src.scenes.pause_scene - INFO - Сцена паузы очищена
+2025-08-24 04:24:06 - core.scene_manager - INFO - Сцена pause зарегистрирована
+2025-08-24 04:24:06 - src.scenes.menu_scene - INFO - Инициализация сцены главного меню...
+2025-08-24 04:24:06 - src.scenes.menu_scene - DEBUG - Шрифты созданы
+2025-08-24 04:24:06 - src.scenes.menu_scene - DEBUG - Создано 5 кнопок
+2025-08-24 04:24:06 - src.scenes.menu_scene - DEBUG - Фон меню создан
+2025-08-24 04:24:06 - src.scenes.menu_scene - INFO - Сцена главного меню успешно инициализирована
+2025-08-24 04:24:06 - src.core.scene_manager - INFO - Сцена menu активирована
+2025-08-24 04:24:06 - core.scene_manager - INFO - Активная сцена изменена на menu
+2025-08-24 04:24:06 - core.game_engine - INFO - Сцены успешно инициализированы
+2025-08-24 04:24:06 - core.game_engine - INFO - Игровой движок успешно инициализирован
+2025-08-24 04:24:06 - core.game_engine - INFO - Запуск игрового цикла
+2025-08-24 04:24:06 - core.performance_manager - WARNING - FPS ниже порога: 2.3 < 30.0
+2025-08-24 04:24:06 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 500, 'shadow_quality': 'medium', 'texture_quality': 'medium', 'anti_aliasing': False}
+2025-08-24 04:24:06 - core.performance_manager - INFO - Уровень качества изменен: high -> medium
+2025-08-24 04:24:06 - core.performance_manager - INFO - Автоматическое снижение качества до medium
+2025-08-24 04:24:06 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 1000, 'shadow_quality': 'high', 'texture_quality': 'high', 'anti_aliasing': True}
+2025-08-24 04:24:06 - core.performance_manager - INFO - Уровень качества изменен: medium -> high
+2025-08-24 04:24:06 - core.performance_manager - INFO - Автоматическое повышение качества до high
+2025-08-24 04:24:10 - core.game_engine - DEBUG - FPS: 118
+2025-08-24 04:24:13 - src.scenes.menu_scene - INFO - Выполняется действие: new_game
+2025-08-24 04:24:13 - src.scenes.menu_scene - INFO - Запрошен переход к сцене: game
+2025-08-24 04:24:13 - src.core.scene_manager - INFO - Сцена menu деактивирована
+2025-08-24 04:24:13 - src.scenes.game_scene - INFO - Инициализация игровой сцены...
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Шрифты созданы
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Фон игры создан
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Игровые системы инициализированы
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Тестовый игрок создан
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Создано 3 тестовых NPC
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Создано 4 UI элементов
+2025-08-24 04:24:13 - src.scenes.game_scene - DEBUG - Начальные объекты созданы
+2025-08-24 04:24:13 - src.scenes.game_scene - INFO - Игровая сцена успешно инициализирована
+2025-08-24 04:24:13 - src.core.scene_manager - INFO - Сцена game активирована
+2025-08-24 04:24:13 - core.scene_manager - INFO - Активная сцена изменена на game
+2025-08-24 04:24:20 - core.game_engine - DEBUG - FPS: 118
+2025-08-24 04:24:30 - core.game_engine - DEBUG - FPS: 117
+2025-08-24 04:24:30 - src.scenes.game_scene - INFO - Переход к сцене паузы
+2025-08-24 04:24:30 - src.core.scene_manager - INFO - Сцена game деактивирована
+2025-08-24 04:24:30 - src.scenes.pause_scene - INFO - Инициализация сцены паузы...
+2025-08-24 04:24:30 - src.scenes.pause_scene - DEBUG - Шрифты созданы
+2025-08-24 04:24:30 - src.scenes.pause_scene - DEBUG - Создано 5 кнопок паузы
+2025-08-24 04:24:30 - src.scenes.pause_scene - DEBUG - Фон паузы создан
+2025-08-24 04:24:30 - src.scenes.pause_scene - INFO - Сцена паузы успешно инициализирована
+2025-08-24 04:24:30 - src.core.scene_manager - INFO - Сцена pause активирована
+2025-08-24 04:24:30 - core.scene_manager - INFO - Активная сцена изменена на pause
+2025-08-24 04:24:33 - src.scenes.pause_scene - INFO - Выполняется действие паузы: resume
+2025-08-24 04:24:33 - src.scenes.pause_scene - INFO - Запрошен переход к сцене: game
+2025-08-24 04:24:33 - src.core.scene_manager - INFO - Сцена pause деактивирована
+2025-08-24 04:24:33 - src.core.scene_manager - INFO - Сцена game активирована
+2025-08-24 04:24:33 - core.scene_manager - INFO - Активная сцена изменена на game
+2025-08-24 04:24:39 - core.game_engine - INFO - Игра поставлена на паузу
+2025-08-24 04:24:39 - src.scenes.game_scene - INFO - Возврат в главное меню
+2025-08-24 04:24:39 - src.core.scene_manager - INFO - Сцена game деактивирована
+2025-08-24 04:24:39 - src.core.scene_manager - INFO - Сцена menu активирована
+2025-08-24 04:24:39 - core.scene_manager - INFO - Активная сцена изменена на menu
+2025-08-24 04:24:40 - core.game_engine - INFO - Игра возобновлена
+2025-08-24 04:24:40 - src.scenes.menu_scene - INFO - Выполняется действие: quit
+2025-08-24 04:24:40 - core.performance_manager - WARNING - FPS ниже порога: 2.0 < 30.0
+2025-08-24 04:24:40 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 500, 'shadow_quality': 'medium', 'texture_quality': 'medium', 'anti_aliasing': False}
+2025-08-24 04:24:40 - core.performance_manager - INFO - Уровень качества изменен: high -> medium
+2025-08-24 04:24:40 - core.performance_manager - INFO - Автоматическое снижение качества до medium
+2025-08-24 04:24:40 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 1000, 'shadow_quality': 'high', 'texture_quality': 'high', 'anti_aliasing': True}
+2025-08-24 04:24:40 - core.performance_manager - INFO - Уровень качества изменен: medium -> high
+2025-08-24 04:24:40 - core.performance_manager - INFO - Автоматическое повышение качества до high
+2025-08-24 04:24:40 - core.game_engine - INFO - Очистка ресурсов игрового движка...
+2025-08-24 04:24:40 - core.scene_manager - INFO - Очистка менеджера сцен...
+2025-08-24 04:24:40 - src.core.scene_manager - INFO - Сцена menu деактивирована
+2025-08-24 04:24:40 - src.scenes.menu_scene - INFO - Очистка сцены главного меню...
+2025-08-24 04:24:40 - src.core.scene_manager - INFO - Сцена menu очищена
+2025-08-24 04:24:40 - src.scenes.menu_scene - INFO - Сцена главного меню очищена
+2025-08-24 04:24:40 - src.scenes.game_scene - INFO - Очистка игровой сцены...
+2025-08-24 04:24:40 - src.core.scene_manager - INFO - Сцена game очищена
+2025-08-24 04:24:40 - src.scenes.game_scene - INFO - Игровая сцена очищена
+2025-08-24 04:24:40 - src.scenes.pause_scene - INFO - Очистка сцены паузы...
+2025-08-24 04:24:40 - src.core.scene_manager - INFO - Сцена pause очищена
+2025-08-24 04:24:40 - src.scenes.pause_scene - INFO - Сцена паузы очищена
+2025-08-24 04:24:40 - core.scene_manager - INFO - Менеджер сцен очищен
+2025-08-24 04:24:40 - core.resource_manager - INFO - Очистка менеджера ресурсов...
+2025-08-24 04:24:40 - core.resource_manager - INFO - Все кэши очищены
+2025-08-24 04:24:40 - core.resource_manager - INFO - Менеджер ресурсов очищен
+2025-08-24 04:24:40 - core.performance_manager - INFO - Очистка менеджера производительности...
+2025-08-24 04:24:40 - core.performance_manager - INFO - Менеджер производительности очищен
+2025-08-24 04:24:40 - core.game_engine - INFO - Ресурсы успешно очищены

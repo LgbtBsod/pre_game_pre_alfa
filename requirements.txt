@@ -1,0 +1,19 @@
+# AI-EVOLVE Enhanced Edition - Dependencies
+# Core dependencies
+pygame>=2.5.0
+numpy>=1.24.0
+psutil>=5.9.0
+
+# Optional dependencies for enhanced features
+pillow>=10.0.0  # Image processing
+tiledtmxloader>=3.0.0  # TMX map loading
+sqlite3  # Built-in Python module
+
+# Development dependencies
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
+pytorch>=2.0.0
+pyopengl>=3.1.0
+panda3d>=1.10.0
