@@ -1,317 +1,92 @@
 #!/usr/bin/env python3
 """
-Система генома - управление генетическим кодом сущностей для эволюции
+Система генома - управление генетической информацией сущностей
 """
 
 import logging
-import random
-import json
-import os
 import time
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-from enum import Enum
-import math
+import random
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    GeneType, GeneRarity, StatType, BASE_STATS,
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
 
-class GeneType(Enum):
-    """Типы генов"""
-    STRENGTH = "strength"           # Сила
-    AGILITY = "agility"            # Ловкость
-    INTELLIGENCE = "intelligence"  # Интеллект
-    VITALITY = "vitality"          # Жизнеспособность
-    RESISTANCE = "resistance"      # Сопротивление
-    ADAPTATION = "adaptation"      # Адаптация
-    MUTATION = "mutation"          # Мутация
-    EVOLUTION = "evolution"        # Эволюция
-
-class GeneDominance(Enum):
-    """Доминантность генов"""
-    RECESSIVE = "recessive"    # Рецессивный
-    CODOMINANT = "codominant"  # Кодоминантный
-    DOMINANT = "dominant"      # Доминантный
+@dataclass
+class GeneSequence:
+    """Последовательность генов"""
+    sequence_id: str
+    genes: List[str] = field(default_factory=list)
+    length: int = 0
+    complexity: float = 0.0
+    stability: float = 1.0
+    generation: int = 1
 
 @dataclass
-class Gene:
-    """Ген"""
-    id: str
+class GeneticTrait:
+    """Генетический признак"""
+    trait_id: str
     name: str
-    gene_type: GeneType
-    dominance: GeneDominance
-    value: float  # Значение гена (0.0 - 1.0)
-    mutation_rate: float  # Шанс мутации
     description: str
-    effects: Dict[str, float]  # Эффекты гена на характеристики
-    
-    def to_dict(self) -> Dict[str, Any]:
-        data = asdict(self)
-        data['gene_type'] = self.gene_type.value
-        data['dominance'] = self.dominance.value
-        return data
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Gene':
-        data['gene_type'] = GeneType(data['gene_type'])
-        data['dominance'] = GeneDominance(data['dominance'])
-        return cls(**data)
+    gene_sequence: str
+    expression_level: float = 1.0
+    dominant: bool = False
+    inherited: bool = False
+    mutation_rate: float = 0.01
+    active: bool = True
 
 @dataclass
-class Chromosome:
-    """Хромосома"""
-    id: str
-    genes: List[Gene]
-    
-    def to_dict(self) -> Dict[str, Any]:
-        return {
-            'id': self.id,
-            'genes': [gene.to_dict() for gene in self.genes]
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Chromosome':
-        genes = [Gene.from_dict(gene_data) for gene_data in data['genes']]
-        return cls(data['id'], genes)
-
-class Genome:
-    """Геном сущности"""
-    
-    def __init__(self, entity_id: str, parent_genomes: Optional[List['Genome']] = None):
-        self.entity_id = entity_id
-        self.chromosomes: List[Chromosome] = []
-        self.generation = 0
-        self.mutation_count = 0
-        
-        if parent_genomes:
-            self._inherit_from_parents(parent_genomes)
-        else:
-            self._generate_random_genome()
-        
-        logger.info(f"Геном создан для {entity_id}: {len(self.chromosomes)} хромосом")
-    
-    def _generate_random_genome(self):
-        """Генерация случайного генома"""
-        # Создаем базовые хромосомы
-        chromosome_types = ['physical', 'mental', 'special']
-        
-        for chrom_type in chromosome_types:
-            genes = []
-            
-            # Гены для физических характеристик
-            if chrom_type == 'physical':
-                genes.extend([
-                    Gene(f"{chrom_type}_strength", "Физическая сила", GeneType.STRENGTH, 
-                         GeneDominance.DOMINANT, random.uniform(0.3, 0.8), 0.05,
-                         "Увеличивает физическую силу", {'strength': 0.1, 'health': 0.05}),
-                    Gene(f"{chrom_type}_agility", "Физическая ловкость", GeneType.AGILITY,
-                         GeneDominance.CODOMINANT, random.uniform(0.3, 0.8), 0.06,
-                         "Увеличивает ловкость", {'agility': 0.1, 'speed': 0.05}),
-                    Gene(f"{chrom_type}_vitality", "Жизнеспособность", GeneType.VITALITY,
-                         GeneDominance.DOMINANT, random.uniform(0.4, 0.9), 0.04,
-                         "Увеличивает здоровье", {'health': 0.15, 'regeneration': 0.02})
-                ])
-            
-            # Гены для ментальных характеристик
-            elif chrom_type == 'mental':
-                genes.extend([
-                    Gene(f"{chrom_type}_intelligence", "Интеллект", GeneType.INTELLIGENCE,
-                         GeneDominance.DOMINANT, random.uniform(0.3, 0.8), 0.05,
-                         "Увеличивает интеллект", {'intelligence': 0.1, 'mana': 0.05}),
-                    Gene(f"{chrom_type}_adaptation", "Адаптация", GeneType.ADAPTATION,
-                         GeneDominance.CODOMINANT, random.uniform(0.2, 0.7), 0.08,
-                         "Улучшает адаптацию", {'learning_rate': 0.1, 'skill_mastery': 0.05}),
-                    Gene(f"{chrom_type}_resistance", "Сопротивление", GeneType.RESISTANCE,
-                         GeneDominance.RECESSIVE, random.uniform(0.3, 0.8), 0.03,
-                         "Увеличивает сопротивление", {'resistance': 0.1, 'defense': 0.05})
-                ])
-            
-            # Специальные гены
-            elif chrom_type == 'special':
-                genes.extend([
-                    Gene(f"{chrom_type}_mutation", "Мутагенность", GeneType.MUTATION,
-                         GeneDominance.RECESSIVE, random.uniform(0.1, 0.5), 0.15,
-                         "Увеличивает шанс мутаций", {'mutation_rate': 0.2, 'evolution_speed': 0.1}),
-                    Gene(f"{chrom_type}_evolution", "Эволюционный потенциал", GeneType.EVOLUTION,
-                         GeneDominance.CODOMINANT, random.uniform(0.2, 0.6), 0.12,
-                         "Ускоряет эволюцию", {'evolution_rate': 0.15, 'skill_discovery': 0.1})
-                ])
-            
-            chromosome = Chromosome(f"{chrom_type}_chromosome", genes)
-            self.chromosomes.append(chromosome)
-    
-    def _inherit_from_parents(self, parent_genomes: List['Genome']):
-        """Наследование от родителей"""
-        if not parent_genomes:
-            self._generate_random_genome()
-            return
-        
-        # Выбираем лучшие гены от родителей
-        for chrom_type in ['physical', 'mental', 'special']:
-            parent_genes = []
-            
-            # Собираем все гены данного типа от родителей
-            for parent in parent_genomes:
-                for chromosome in parent.chromosomes:
-                    if chrom_type in chromosome.id:
-                        parent_genes.extend(chromosome.genes)
-            
-            if not parent_genes:
-                continue
-            
-            # Создаем новую хромосому с лучшими генами
-            inherited_genes = []
-            gene_types = set(gene.gene_type for gene in parent_genes)
-            
-            for gene_type in gene_types:
-                type_genes = [g for g in parent_genes if g.gene_type == gene_type]
-                
-                if type_genes:
-                    # Выбираем лучший ген (с наивысшим значением)
-                    best_gene = max(type_genes, key=lambda g: g.value)
-                    
-                    # Применяем мутации
-                    mutated_gene = self._mutate_gene(best_gene)
-                    inherited_genes.append(mutated_gene)
-            
-            if inherited_genes:
-                chromosome = Chromosome(f"{chrom_type}_chromosome", inherited_genes)
-                self.chromosomes.append(chromosome)
-        
-        self.generation = max(p.generation for p in parent_genomes) + 1
-        logger.info(f"Геном унаследован от {len(parent_genomes)} родителей, поколение: {self.generation}")
-    
-    def _mutate_gene(self, gene: Gene) -> Gene:
-        """Мутация гена"""
-        if random.random() < gene.mutation_rate:
-            # Создаем мутировавший ген
-            mutation_factor = random.uniform(0.8, 1.2)
-            new_value = max(0.0, min(1.0, gene.value * mutation_factor))
-            
-            mutated_gene = Gene(
-                id=gene.id,
-                name=gene.name,
-                gene_type=gene.gene_type,
-                dominance=gene.dominance,
-                value=new_value,
-                mutation_rate=gene.mutation_rate * random.uniform(0.9, 1.1),
-                description=gene.description,
-                effects=gene.effects.copy()
-            )
-            
-            self.mutation_count += 1
-            logger.debug(f"Ген {gene.name} мутировал: {gene.value:.3f} -> {new_value:.3f}")
-            return mutated_gene
-        
-        return gene
-    
-    def get_stat_boosts(self) -> Dict[str, float]:
-        """Получение бонусов к характеристикам от генома"""
-        boosts = {}
-        
-        for chromosome in self.chromosomes:
-            for gene in chromosome.genes:
-                for stat, boost in gene.effects.items():
-                    if stat not in boosts:
-                        boosts[stat] = 0.0
-                    boosts[stat] += boost * gene.value
-        
-        return boosts
-    
-    def get_skill_genes(self) -> List[Gene]:
-        """Получение генов, связанных со скиллами"""
-        skill_genes = []
-        
-        for chromosome in self.chromosomes:
-            for gene in chromosome.genes:
-                if gene.gene_type in [GeneType.INTELLIGENCE, GeneType.ADAPTATION, GeneType.EVOLUTION]:
-                    skill_genes.append(gene)
-        
-        return skill_genes
-    
-    def can_learn_skill(self, skill_requirements: Dict[str, float]) -> bool:
-        """Проверка возможности изучения скилла"""
-        stat_boosts = self.get_stat_boosts()
-        
-        for stat, required_value in skill_requirements.items():
-            current_value = stat_boosts.get(stat, 0.0)
-            if current_value < required_value:
-                return False
-        
-        return True
-    
-    def get_evolution_potential(self) -> float:
-        """Получение эволюционного потенциала"""
-        evolution_genes = [g for g in self.get_skill_genes() if g.gene_type == GeneType.EVOLUTION]
-        
-        if not evolution_genes:
-            return 0.0
-        
-        total_potential = sum(g.value for g in evolution_genes)
-        return total_potential / len(evolution_genes)
-    
-    def get_mutation_potential(self) -> float:
-        """Получение потенциала мутаций"""
-        mutation_genes = []
-        
-        for chromosome in self.chromosomes:
-            for gene in chromosome.genes:
-                if gene.gene_type == GeneType.MUTATION:
-                    mutation_genes.append(gene)
-        
-        if not mutation_genes:
-            return 0.0
-        
-        total_potential = sum(g.value for g in mutation_genes)
-        return total_potential / len(mutation_genes)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Сохранение генома в словарь"""
-        return {
-            'entity_id': self.entity_id,
-            'generation': self.generation,
-            'mutation_count': self.mutation_count,
-            'chromosomes': [chrom.to_dict() for chrom in self.chromosomes]
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Genome':
-        """Загрузка генома из словаря"""
-        genome = cls.__new__(cls)
-        genome.entity_id = data['entity_id']
-        genome.generation = data['generation']
-        genome.mutation_count = data['mutation_count']
-        genome.chromosomes = [Chromosome.from_dict(chrom_data) for chrom_data in data['chromosomes']]
-        return genome
+class GenomeProfile:
+    """Профиль генома сущности"""
+    entity_id: str
+    genome_id: str
+    gene_sequences: List[GeneSequence] = field(default_factory=list)
+    traits: List[GeneticTrait] = field(default_factory=list)
+    mutation_count: int = 0
+    recombination_count: int = 0
+    last_update: float = field(default_factory=time.time)
+    generation: int = 1
 
 class GenomeSystem(ISystem):
-    """Система управления геномами"""
+    """Система управления геномом"""
     
     def __init__(self):
         self._system_name = "genome"
-        self._system_priority = SystemPriority.NORMAL
+        self._system_priority = SystemPriority.HIGH
         self._system_state = SystemState.UNINITIALIZED
         self._dependencies = []
         
-        # Геномы сущностей
-        self.genomes: Dict[str, Genome] = {}
+        # Профили геномов сущностей
+        self.genome_profiles: Dict[str, GenomeProfile] = {}
         
-        # Пул доступных генов
-        self.gene_pool: List[Gene] = []
+        # Генетические шаблоны
+        self.genetic_templates: Dict[str, Dict[str, Any]] = {}
         
-        # История эволюции
-        self.evolution_history: List[Dict[str, Any]] = []
+        # История генетических изменений
+        self.genetic_history: List[Dict[str, Any]] = []
         
-        # Активные эволюции геномов
-        self.active_evolutions: Dict[str, Dict[str, Any]] = {}
+        # Настройки системы
+        self.system_settings = {
+            'max_genes_per_entity': SYSTEM_LIMITS["max_genes_per_entity"],
+            'mutation_rate': PROBABILITY_CONSTANTS["base_mutation_rate"],
+            'recombination_rate': PROBABILITY_CONSTANTS["base_recombination_rate"],
+            'gene_expression_threshold': 0.5,
+            'genome_complexity_limit': 1000,
+            'trait_activation_chance': 0.7
+        }
         
         # Статистика системы
         self.system_stats = {
             'genomes_count': 0,
-            'evolutions_completed': 0,
-            'mutations_triggered': 0,
-            'active_evolutions': 0,
+            'total_genes': 0,
+            'mutations_occurred': 0,
+            'recombinations_occurred': 0,
+            'traits_activated': 0,
             'update_time': 0.0
         }
         
@@ -338,11 +113,11 @@ class GenomeSystem(ISystem):
         try:
             logger.info("Инициализация системы генома...")
             
-            # Инициализируем пул генов
-            self._initialize_gene_pool()
+            # Настраиваем систему
+            self._setup_genome_system()
             
-            # Загружаем сохраненные геномы
-            self._load_saved_genomes()
+            # Загружаем генетические шаблоны
+            self._load_genetic_templates()
             
             self._system_state = SystemState.READY
             logger.info("Система генома успешно инициализирована")
@@ -361,13 +136,15 @@ class GenomeSystem(ISystem):
             
             start_time = time.time()
             
-            # Обновляем активные эволюции
-            self._update_active_evolutions(delta_time)
+            # Обновляем экспрессию генов
+            self._update_gene_expression(delta_time)
             
-            # Проверяем возможности эволюции
-            self._check_evolution_opportunities()
+            # Проверяем мутации
+            self._check_mutations(delta_time)
             
             # Обновляем статистику системы
+            self._update_system_stats()
+            
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
@@ -405,21 +182,18 @@ class GenomeSystem(ISystem):
         try:
             logger.info("Очистка системы генома...")
             
-            # Сохраняем геномы перед очисткой
-            self._save_genomes()
-            
             # Очищаем все данные
-            self.genomes.clear()
-            self.gene_pool.clear()
-            self.evolution_history.clear()
-            self.active_evolutions.clear()
+            self.genome_profiles.clear()
+            self.genetic_templates.clear()
+            self.genetic_history.clear()
             
             # Сбрасываем статистику
             self.system_stats = {
                 'genomes_count': 0,
-                'evolutions_completed': 0,
-                'mutations_triggered': 0,
-                'active_evolutions': 0,
+                'total_genes': 0,
+                'mutations_occurred': 0,
+                'recombinations_occurred': 0,
+                'traits_activated': 0,
                 'update_time': 0.0
             }
             
@@ -438,9 +212,9 @@ class GenomeSystem(ISystem):
             'state': self.system_state.value,
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
-            'genomes_count': len(self.genomes),
-            'gene_pool_size': len(self.gene_pool),
-            'active_evolutions': len(self.active_evolutions),
+            'genomes_count': len(self.genome_profiles),
+            'genetic_templates': len(self.genetic_templates),
+            'total_genes': self.system_stats['total_genes'],
             'stats': self.system_stats
         }
     
@@ -449,325 +223,623 @@ class GenomeSystem(ISystem):
         try:
             if event_type == "entity_created":
                 return self._handle_entity_created(event_data)
-            elif event_type == "entity_experience_gained":
-                return self._handle_entity_experience_gained(event_data)
-            elif event_type == "genome_evolution_triggered":
-                return self._handle_genome_evolution_triggered(event_data)
-            elif event_type == "genome_mutation_triggered":
-                return self._handle_genome_mutation_triggered(event_data)
+            elif event_type == "entity_destroyed":
+                return self._handle_entity_destroyed(event_data)
+            elif event_type == "reproduction":
+                return self._handle_reproduction(event_data)
+            elif event_type == "environment_change":
+                return self._handle_environment_change(event_data)
             else:
                 return False
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def create_genome(self, entity_id: str, parent_ids: Optional[List[str]] = None) -> Optional[Genome]:
-        """Создание нового генома"""
+    def _setup_genome_system(self) -> None:
+        """Настройка системы генома"""
         try:
-            if entity_id in self.genomes:
-                logger.warning(f"Геном для сущности {entity_id} уже существует")
-                return self.genomes[entity_id]
+            # Инициализируем базовые настройки
+            logger.debug("Система генома настроена")
+        except Exception as e:
+            logger.warning(f"Не удалось настроить систему генома: {e}")
+    
+    def _load_genetic_templates(self) -> None:
+        """Загрузка генетических шаблонов"""
+        try:
+            # Шаблоны для разных типов сущностей
+            self.genetic_templates = {
+                'basic': {
+                    'gene_types': [GeneType.PHYSICAL, GeneType.MENTAL, GeneType.ENERGY],
+                    'complexity_range': (10, 50),
+                    'mutation_rate': 0.01,
+                    'trait_count': 5
+                },
+                'advanced': {
+                    'gene_types': [GeneType.PHYSICAL, GeneType.MENTAL, GeneType.ENERGY, GeneType.SPECIAL],
+                    'complexity_range': (30, 100),
+                    'mutation_rate': 0.015,
+                    'trait_count': 8
+                },
+                'elite': {
+                    'gene_types': [GeneType.PHYSICAL, GeneType.MENTAL, GeneType.ENERGY, GeneType.SPECIAL, GeneType.LEGENDARY],
+                    'complexity_range': (80, 200),
+                    'mutation_rate': 0.02,
+                    'trait_count': 12
+                }
+            }
             
-            parent_genomes = []
-            if parent_ids:
-                for parent_id in parent_ids:
-                    if parent_id in self.genomes:
-                        parent_genomes.append(self.genomes[parent_id])
-            
-            genome = Genome(entity_id, parent_genomes)
-            self.genomes[entity_id] = genome
-            
-            # Записываем в историю эволюции
-            self.evolution_history.append({
-                'entity_id': entity_id,
-                'generation': genome.generation,
-                'mutation_count': genome.mutation_count,
-                'parent_ids': parent_ids or [],
-                'timestamp': time.time()
-            })
-            
-            # Обновляем статистику
-            self.system_stats['genomes_count'] = len(self.genomes)
-            
-            logger.info(f"Создан геном для {entity_id} (поколение {genome.generation})")
-            return genome
+            logger.info(f"Загружено {len(self.genetic_templates)} генетических шаблонов")
             
         except Exception as e:
-            logger.error(f"Ошибка создания генома для {entity_id}: {e}")
-            return None
+            logger.error(f"Ошибка загрузки генетических шаблонов: {e}")
     
-    def get_genome(self, entity_id: str) -> Optional[Genome]:
-        """Получение генома сущности"""
-        return self.genomes.get(entity_id)
-    
-    def evolve_genome(self, entity_id: str, experience_gained: float) -> bool:
-        """Эволюция генома на основе опыта"""
-        try:
-            genome = self.get_genome(entity_id)
-            if not genome:
-                return False
-            
-            # Проверяем возможность эволюции
-            evolution_potential = genome.get_evolution_potential()
-            mutation_potential = genome.get_mutation_potential()
-            
-            # Шанс эволюции зависит от опыта и потенциала
-            evolution_chance = min(0.1 + experience_gained * 0.01 + evolution_potential * 0.2, 0.5)
-            
-            if random.random() < evolution_chance:
-                # Эволюционируем геном
-                self._evolve_genome(genome, experience_gained)
-                self.system_stats['evolutions_completed'] += 1
-                return True
-            
-            # Шанс мутации
-            mutation_chance = mutation_potential * 0.1
-            if random.random() < mutation_chance:
-                # Мутируем случайный ген
-                self._mutate_random_gene(genome)
-                self.system_stats['mutations_triggered'] += 1
-                return True
-            
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка эволюции генома для {entity_id}: {e}")
-            return False
-    
-    def _evolve_genome(self, genome: Genome, experience_gained: float):
-        """Эволюция генома"""
-        try:
-            # Улучшаем случайный ген
-            all_genes = []
-            for chromosome in genome.chromosomes:
-                all_genes.extend(chromosome.genes)
-            
-            if all_genes:
-                gene_to_evolve = random.choice(all_genes)
-                evolution_factor = 1.0 + experience_gained * 0.01
-                
-                gene_to_evolve.value = min(1.0, gene_to_evolve.value * evolution_factor)
-                
-                logger.info(f"Геном {genome.entity_id} эволюционировал: {gene_to_evolve.name} улучшен")
-                
-        except Exception as e:
-            logger.warning(f"Ошибка эволюции генома: {e}")
-    
-    def _mutate_random_gene(self, genome: Genome):
-        """Мутация случайного гена"""
-        try:
-            all_genes = []
-            for chromosome in genome.chromosomes:
-                all_genes.extend(chromosome.genes)
-            
-            if all_genes:
-                gene_to_mutate = random.choice(all_genes)
-                original_value = gene_to_mutate.value
-                
-                # Мутация
-                mutation_factor = random.uniform(0.7, 1.3)
-                gene_to_mutate.value = max(0.0, min(1.0, gene_to_mutate.value * mutation_factor))
-                
-                genome.mutation_count += 1
-                
-                logger.info(f"Ген {gene_to_mutate.name} в геноме {genome.entity_id} мутировал: {original_value:.3f} -> {gene_to_mutate.value:.3f}")
-                
-        except Exception as e:
-            logger.warning(f"Ошибка мутации гена: {e}")
-    
-    def get_best_genomes(self, count: int = 5) -> List[Genome]:
-        """Получение лучших геномов"""
-        try:
-            all_genomes = list(self.genomes.values())
-            
-            # Сортируем по поколению и количеству мутаций
-            all_genomes.sort(key=lambda g: (g.generation, g.mutation_count), reverse=True)
-            
-            return all_genomes[:count]
-            
-        except Exception as e:
-            logger.warning(f"Ошибка получения лучших геномов: {e}")
-            return []
-    
-    def _initialize_gene_pool(self):
-        """Инициализация пула доступных генов"""
-        try:
-            # Базовые гены для всех типов
-            base_genes = [
-                # Физические гены
-                Gene("base_strength", "Базовая сила", GeneType.STRENGTH, GeneDominance.DOMINANT,
-                     0.5, 0.05, "Базовая физическая сила", {'strength': 0.1}),
-                Gene("base_agility", "Базовая ловкость", GeneType.AGILITY, GeneDominance.CODOMINANT,
-                     0.5, 0.06, "Базовая ловкость", {'agility': 0.1}),
-                Gene("base_vitality", "Базовая жизнеспособность", GeneType.VITALITY, GeneDominance.DOMINANT,
-                     0.5, 0.04, "Базовая жизнеспособность", {'health': 0.1}),
-                
-                # Ментальные гены
-                Gene("base_intelligence", "Базовый интеллект", GeneType.INTELLIGENCE, GeneDominance.DOMINANT,
-                     0.5, 0.05, "Базовый интеллект", {'intelligence': 0.1}),
-                Gene("base_adaptation", "Базовая адаптация", GeneType.ADAPTATION, GeneDominance.CODOMINANT,
-                     0.5, 0.08, "Базовая адаптация", {'learning_rate': 0.1}),
-                Gene("base_resistance", "Базовое сопротивление", GeneType.RESISTANCE, GeneDominance.RECESSIVE,
-                     0.5, 0.03, "Базовое сопротивление", {'resistance': 0.1}),
-                
-                # Специальные гены
-                Gene("base_mutation", "Базовая мутагенность", GeneType.MUTATION, GeneDominance.RECESSIVE,
-                     0.3, 0.15, "Базовая мутагенность", {'mutation_rate': 0.1}),
-                Gene("base_evolution", "Базовый эволюционный потенциал", GeneType.EVOLUTION, GeneDominance.CODOMINANT,
-                     0.4, 0.12, "Базовый эволюционный потенциал", {'evolution_rate': 0.1})
-            ]
-            
-            self.gene_pool.extend(base_genes)
-            logger.info(f"Инициализирован пул из {len(self.gene_pool)} генов")
-            
-        except Exception as e:
-            logger.warning(f"Не удалось инициализировать пул генов: {e}")
-    
-    def _update_active_evolutions(self, delta_time: float) -> None:
-        """Обновление активных эволюций"""
+    def _update_gene_expression(self, delta_time: float) -> None:
+        """Обновление экспрессии генов"""
         try:
             current_time = time.time()
             
-            # Обновляем прогресс эволюций
-            for entity_id, evolution_data in list(self.active_evolutions.items()):
-                # Проверяем, не истекло ли время
-                if current_time - evolution_data.get('start_time', 0) > 600:  # 10 минут
-                    del self.active_evolutions[entity_id]
-                    continue
+            for entity_id, profile in self.genome_profiles.items():
+                # Обновляем время последнего обновления
+                profile.last_update = current_time
                 
-                # Обновляем прогресс
-                evolution_data['progress'] = min(1.0, evolution_data.get('progress', 0.0) + delta_time * 0.1)
+                # Обновляем экспрессию признаков
+                for trait in profile.traits:
+                    if trait.active:
+                        # Случайные изменения экспрессии
+                        expression_change = random.uniform(-0.05, 0.05)
+                        trait.expression_level = max(0.0, min(2.0, trait.expression_level + expression_change))
                 
         except Exception as e:
-            logger.warning(f"Ошибка обновления активных эволюций: {e}")
+            logger.warning(f"Ошибка обновления экспрессии генов: {e}")
     
-    def _check_evolution_opportunities(self) -> None:
-        """Проверка возможностей эволюции"""
+    def _check_mutations(self, delta_time: float) -> None:
+        """Проверка мутаций"""
         try:
-            # Здесь можно добавить логику для автоматической проверки
-            # всех геномов на возможность эволюции
-            pass
-        except Exception as e:
-            logger.warning(f"Ошибка проверки возможностей эволюции: {e}")
-    
-    def _save_genomes(self) -> None:
-        """Сохранение геномов"""
-        try:
-            save_dir = "saves/genomes/default"
-            os.makedirs(save_dir, exist_ok=True)
-            
-            # Сохраняем геномы
-            genomes_data = {
-                entity_id: genome.to_dict() 
-                for entity_id, genome in self.genomes.items()
-            }
-            
-            with open(f"{save_dir}/genomes.json", 'w', encoding='utf-8') as f:
-                json.dump(genomes_data, f, indent=2, ensure_ascii=False)
-            
-            # Сохраняем историю эволюции
-            with open(f"{save_dir}/evolution_history.json", 'w', encoding='utf-8') as f:
-                json.dump(self.evolution_history, f, indent=2, ensure_ascii=False)
-            
-            logger.info(f"Геномы сохранены")
-            
-        except Exception as e:
-            logger.error(f"Ошибка сохранения геномов: {e}")
-    
-    def _load_saved_genomes(self) -> None:
-        """Загрузка сохраненных геномов"""
-        try:
-            save_dir = "saves/genomes/default"
-            
-            # Загружаем геномы
-            genomes_file = f"{save_dir}/genomes.json"
-            if os.path.exists(genomes_file):
-                with open(genomes_file, 'r', encoding='utf-8') as f:
-                    genomes_data = json.load(f)
+            for entity_id, profile in self.genome_profiles.items():
+                # Проверяем мутации для каждого признака
+                for trait in profile.traits:
+                    if random.random() < trait.mutation_rate * delta_time:
+                        self._trigger_trait_mutation(entity_id, trait)
                 
-                for entity_id, genome_data in genomes_data.items():
-                    genome = Genome.from_dict(genome_data)
-                    self.genomes[entity_id] = genome
-            
-            # Загружаем историю эволюции
-            history_file = f"{save_dir}/evolution_history.json"
-            if os.path.exists(history_file):
-                with open(history_file, 'r', encoding='utf-8') as f:
-                    self.evolution_history = json.load(f)
-            
-            logger.info(f"Загружено {len(self.genomes)} геномов")
+                # Проверяем мутации последовательностей
+                for sequence in profile.gene_sequences:
+                    if random.random() < self.system_settings['mutation_rate'] * delta_time:
+                        self._trigger_sequence_mutation(entity_id, sequence)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка проверки мутаций: {e}")
+    
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            self.system_stats['genomes_count'] = len(self.genome_profiles)
+            self.system_stats['total_genes'] = sum(len(profile.traits) for profile in self.genome_profiles.values())
             
         except Exception as e:
-            logger.warning(f"Не удалось загрузить сохраненные геномы: {e}")
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
     
     def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события создания сущности"""
         try:
             entity_id = event_data.get('entity_id')
-            parent_ids = event_data.get('parent_ids', [])
+            genome_template = event_data.get('genome_template', 'basic')
+            parent_genomes = event_data.get('parent_genomes', [])
             
             if entity_id:
-                # Создаем геном для новой сущности
-                genome = self.create_genome(entity_id, parent_ids)
-                return genome is not None
+                if parent_genomes:
+                    return self.create_inherited_genome(entity_id, parent_genomes)
+                else:
+                    return self.create_genome_from_template(entity_id, genome_template)
             return False
             
         except Exception as e:
             logger.error(f"Ошибка обработки события создания сущности: {e}")
             return False
     
-    def _handle_entity_experience_gained(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события получения опыта сущностью"""
+    def _handle_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения сущности"""
         try:
             entity_id = event_data.get('entity_id')
-            experience_gained = event_data.get('experience_gained', 0)
             
-            if entity_id and experience_gained:
-                # Проверяем возможность эволюции генома
-                return self.evolve_genome(entity_id, experience_gained)
+            if entity_id:
+                return self.destroy_genome(entity_id)
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события получения опыта: {e}")
+            logger.error(f"Ошибка обработки события уничтожения сущности: {e}")
             return False
     
-    def _handle_genome_evolution_triggered(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события запуска эволюции генома"""
+    def _handle_reproduction(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события размножения"""
         try:
-            entity_id = event_data.get('entity_id')
-            evolution_type = event_data.get('evolution_type', 'natural')
+            parent1_id = event_data.get('parent1_id')
+            parent2_id = event_data.get('parent2_id')
+            offspring_id = event_data.get('offspring_id')
             
-            if entity_id:
-                # Создаем активную эволюцию
-                self.active_evolutions[entity_id] = {
-                    'type': evolution_type,
-                    'start_time': time.time(),
-                    'progress': 0.0
-                }
-                
-                self.system_stats['active_evolutions'] = len(self.active_evolutions)
+            if parent1_id and parent2_id and offspring_id:
+                return self.create_offspring_genome(offspring_id, parent1_id, parent2_id)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события размножения: {e}")
+            return False
+    
+    def _handle_environment_change(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события изменения окружения"""
+        try:
+            environment_type = event_data.get('environment_type')
+            affected_entities = event_data.get('affected_entities', [])
+            
+            if environment_type and affected_entities:
+                # Адаптируем геномы к новому окружению
+                for entity_id in affected_entities:
+                    if entity_id in self.genome_profiles:
+                        self._adapt_to_environment(entity_id, environment_type)
                 return True
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события запуска эволюции генома: {e}")
+            logger.error(f"Ошибка обработки события изменения окружения: {e}")
             return False
     
-    def _handle_genome_mutation_triggered(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события запуска мутации генома"""
+    def create_genome_from_template(self, entity_id: str, template_name: str = 'basic') -> bool:
+        """Создание генома из шаблона"""
         try:
-            entity_id = event_data.get('entity_id')
-            mutation_type = event_data.get('mutation_type', 'random')
+            if entity_id in self.genome_profiles:
+                logger.warning(f"Геном для сущности {entity_id} уже существует")
+                return False
             
-            if entity_id:
-                # Принудительно мутируем геном
-                genome = self.get_genome(entity_id)
-                if genome:
-                    self._mutate_random_gene(genome)
-                    self.system_stats['mutations_triggered'] += 1
-                    return True
-            return False
+            if template_name not in self.genetic_templates:
+                logger.warning(f"Генетический шаблон {template_name} не найден")
+                template_name = 'basic'
+            
+            template = self.genetic_templates[template_name]
+            
+            # Создаем профиль генома
+            profile = GenomeProfile(
+                entity_id=entity_id,
+                genome_id=f"genome_{entity_id}_{int(time.time() * 1000)}"
+            )
+            
+            # Создаем последовательности генов
+            for i in range(template['trait_count']):
+                gene_type = random.choice(template['gene_types'])
+                sequence = GeneSequence(
+                    sequence_id=f"seq_{i}_{entity_id}",
+                    genes=[f"gene_{j}_{gene_type.value}" for j in range(random.randint(5, 15))],
+                    length=random.randint(5, 15),
+                    complexity=random.uniform(*template['complexity_range']),
+                    stability=random.uniform(0.8, 1.0),
+                    generation=1
+                )
+                profile.gene_sequences.append(sequence)
+            
+            # Создаем генетические признаки
+            for i in range(template['trait_count']):
+                trait = GeneticTrait(
+                    trait_id=f"trait_{i}_{entity_id}",
+                    name=f"Признак {i+1}",
+                    description=f"Автоматически сгенерированный признак {i+1}",
+                    gene_sequence=profile.gene_sequences[i].sequence_id,
+                    expression_level=random.uniform(0.5, 1.5),
+                    dominant=random.random() < 0.3,
+                    inherited=False,
+                    mutation_rate=template['mutation_rate'],
+                    active=random.random() < self.system_settings['trait_activation_chance']
+                )
+                profile.traits.append(trait)
+            
+            # Добавляем в систему
+            self.genome_profiles[entity_id] = profile
+            
+            logger.info(f"Создан геном для сущности {entity_id} из шаблона {template_name}")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события запуска мутации генома: {e}")
+            logger.error(f"Ошибка создания генома для {entity_id}: {e}")
+            return False
+    
+    def create_inherited_genome(self, entity_id: str, parent_genomes: List[str]) -> bool:
+        """Создание наследуемого генома"""
+        try:
+            if entity_id in self.genome_profiles:
+                logger.warning(f"Геном для сущности {entity_id} уже существует")
+                return False
+            
+            if not parent_genomes:
+                logger.warning("Не указаны родительские геномы")
+                return False
+            
+            # Получаем родительские профили
+            parent_profiles = []
+            for parent_id in parent_genomes:
+                if parent_id in self.genome_profiles:
+                    parent_profiles.append(self.genome_profiles[parent_id])
+                else:
+                    logger.warning(f"Родительский геном {parent_id} не найден")
+            
+            if not parent_profiles:
+                logger.warning("Не найдено ни одного родительского генома")
+                return self.create_genome_from_template(entity_id, 'basic')
+            
+            # Создаем профиль потомка
+            profile = GenomeProfile(
+                entity_id=entity_id,
+                genome_id=f"genome_{entity_id}_{int(time.time() * 1000)}",
+                generation=max(p.generation for p in parent_profiles) + 1
+            )
+            
+            # Наследуем признаки от родителей
+            for parent_profile in parent_profiles:
+                for trait in parent_profile.traits:
+                    if random.random() < 0.5:  # 50% шанс наследования
+                        inherited_trait = GeneticTrait(
+                            trait_id=f"inherited_{trait.trait_id}_{entity_id}",
+                            name=trait.name,
+                            description=trait.description,
+                            gene_sequence=trait.gene_sequence,
+                            expression_level=trait.expression_level * random.uniform(0.8, 1.2),
+                            dominant=trait.dominant,
+                            inherited=True,
+                            mutation_rate=trait.mutation_rate,
+                            active=trait.active
+                        )
+                        profile.traits.append(inherited_trait)
+            
+            # Создаем новые последовательности на основе родительских
+            for parent_profile in parent_profiles:
+                for sequence in parent_profile.gene_sequences:
+                    if random.random() < 0.7:  # 70% шанс наследования последовательности
+                        new_sequence = GeneSequence(
+                            sequence_id=f"inherited_{sequence.sequence_id}_{entity_id}",
+                            genes=sequence.genes.copy(),
+                            length=sequence.length,
+                            complexity=sequence.complexity * random.uniform(0.9, 1.1),
+                            stability=sequence.stability * random.uniform(0.95, 1.05),
+                            generation=profile.generation
+                        )
+                        profile.gene_sequences.append(new_sequence)
+            
+            # Добавляем в систему
+            self.genome_profiles[entity_id] = profile
+            
+            logger.info(f"Создан наследуемый геном для {entity_id} от {len(parent_profiles)} родителей")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания наследуемого генома для {entity_id}: {e}")
+            return False
+    
+    def create_offspring_genome(self, offspring_id: str, parent1_id: str, parent2_id: str) -> bool:
+        """Создание генома потомка"""
+        try:
+            return self.create_inherited_genome(offspring_id, [parent1_id, parent2_id])
+        except Exception as e:
+            logger.error(f"Ошибка создания генома потомка {offspring_id}: {e}")
+            return False
+    
+    def destroy_genome(self, entity_id: str) -> bool:
+        """Уничтожение генома"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return False
+            
+            # Удаляем профиль
+            del self.genome_profiles[entity_id]
+            
+            logger.info(f"Геном сущности {entity_id} уничтожен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения генома {entity_id}: {e}")
+            return False
+    
+    def _trigger_trait_mutation(self, entity_id: str, trait: GeneticTrait) -> None:
+        """Запуск мутации признака"""
+        try:
+            # Создаем мутированный признак
+            mutated_trait = GeneticTrait(
+                trait_id=f"mutated_{trait.trait_id}",
+                name=f"Мутированный {trait.name}",
+                description=f"Мутированная версия {trait.description}",
+                gene_sequence=trait.gene_sequence,
+                expression_level=trait.expression_level * random.uniform(0.5, 2.0),
+                dominant=trait.dominant,
+                inherited=trait.inherited,
+                mutation_rate=trait.mutation_rate * 1.5,
+                active=trait.active
+            )
+            
+            # Заменяем старый признак
+            if entity_id in self.genome_profiles:
+                profile = self.genome_profiles[entity_id]
+                for i, old_trait in enumerate(profile.traits):
+                    if old_trait.trait_id == trait.trait_id:
+                        profile.traits[i] = mutated_trait
+                        break
+                
+                profile.mutation_count += 1
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.genetic_history.append({
+                'timestamp': current_time,
+                'action': 'trait_mutated',
+                'entity_id': entity_id,
+                'trait_id': trait.trait_id,
+                'mutation_type': 'expression_change'
+            })
+            
+            self.system_stats['mutations_occurred'] += 1
+            logger.debug(f"Признак {trait.trait_id} мутировал у сущности {entity_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка мутации признака {trait.trait_id} у {entity_id}: {e}")
+    
+    def _trigger_sequence_mutation(self, entity_id: str, sequence: GeneSequence) -> None:
+        """Запуск мутации последовательности"""
+        try:
+            # Мутируем последовательность
+            if random.random() < 0.3:  # 30% шанс изменения длины
+                new_length = max(1, sequence.length + random.randint(-2, 2))
+                sequence.length = new_length
+            
+            if random.random() < 0.4:  # 40% шанс изменения сложности
+                sequence.complexity *= random.uniform(0.8, 1.3)
+            
+            if random.random() < 0.5:  # 50% шанс изменения стабильности
+                sequence.stability *= random.uniform(0.9, 1.1)
+                sequence.stability = max(0.1, min(1.0, sequence.stability))
+            
+            # Добавляем или удаляем гены
+            if random.random() < 0.2:  # 20% шанс изменения генов
+                if random.random() < 0.5 and len(sequence.genes) < 20:
+                    # Добавляем ген
+                    new_gene = f"gene_{len(sequence.genes)}_{random.choice(list(GeneType)).value}"
+                    sequence.genes.append(new_gene)
+                elif len(sequence.genes) > 1:
+                    # Удаляем ген
+                    sequence.genes.pop(random.randint(0, len(sequence.genes) - 1))
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.genetic_history.append({
+                'timestamp': current_time,
+                'action': 'sequence_mutated',
+                'entity_id': entity_id,
+                'sequence_id': sequence.sequence_id,
+                'mutation_type': 'sequence_change'
+            })
+            
+            logger.debug(f"Последовательность {sequence.sequence_id} мутировала у сущности {entity_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка мутации последовательности {sequence.sequence_id} у {entity_id}: {e}")
+    
+    def _adapt_to_environment(self, entity_id: str, environment_type: str) -> None:
+        """Адаптация к окружению"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return
+            
+            profile = self.genome_profiles[entity_id]
+            
+            # Адаптируем признаки к окружению
+            for trait in profile.traits:
+                if random.random() < 0.3:  # 30% шанс адаптации
+                    # Изменяем экспрессию в зависимости от окружения
+                    if environment_type == "hostile":
+                        trait.expression_level *= random.uniform(1.1, 1.5)
+                    elif environment_type == "friendly":
+                        trait.expression_level *= random.uniform(0.8, 1.2)
+                    elif environment_type == "extreme":
+                        trait.expression_level *= random.uniform(1.2, 2.0)
+                    
+                    # Ограничиваем экспрессию
+                    trait.expression_level = max(0.1, min(3.0, trait.expression_level))
+            
+            # Создаем новый адаптационный признак
+            adaptation_trait = GeneticTrait(
+                trait_id=f"adaptation_{environment_type}_{entity_id}",
+                name=f"Адаптация к {environment_type}",
+                description=f"Адаптация к окружению типа {environment_type}",
+                gene_sequence=f"adapt_seq_{entity_id}",
+                expression_level=1.0,
+                dominant=False,
+                inherited=False,
+                mutation_rate=0.02,
+                active=True
+            )
+            
+            profile.traits.append(adaptation_trait)
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.genetic_history.append({
+                'timestamp': current_time,
+                'action': 'environment_adaptation',
+                'entity_id': entity_id,
+                'environment_type': environment_type,
+                'new_trait_id': adaptation_trait.trait_id
+            })
+            
+            logger.debug(f"Сущность {entity_id} адаптировалась к окружению {environment_type}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка адаптации {entity_id} к окружению {environment_type}: {e}")
+    
+    def get_genome_profile(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение профиля генома сущности"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return None
+            
+            profile = self.genome_profiles[entity_id]
+            
+            return {
+                'entity_id': profile.entity_id,
+                'genome_id': profile.genome_id,
+                'mutation_count': profile.mutation_count,
+                'recombination_count': profile.recombination_count,
+                'last_update': profile.last_update,
+                'generation': profile.generation,
+                'sequences_count': len(profile.gene_sequences),
+                'traits_count': len(profile.traits),
+                'active_traits_count': sum(1 for trait in profile.traits if trait.active)
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения профиля генома для {entity_id}: {e}")
+            return None
+    
+    def get_genetic_traits(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Получение генетических признаков сущности"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return []
+            
+            profile = self.genome_profiles[entity_id]
+            traits_info = []
+            
+            for trait in profile.traits:
+                traits_info.append({
+                    'trait_id': trait.trait_id,
+                    'name': trait.name,
+                    'description': trait.description,
+                    'gene_sequence': trait.gene_sequence,
+                    'expression_level': trait.expression_level,
+                    'dominant': trait.dominant,
+                    'inherited': trait.inherited,
+                    'mutation_rate': trait.mutation_rate,
+                    'active': trait.active
+                })
+            
+            return traits_info
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения генетических признаков для {entity_id}: {e}")
+            return []
+    
+    def get_gene_sequences(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Получение последовательностей генов сущности"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return []
+            
+            profile = self.genome_profiles[entity_id]
+            sequences_info = []
+            
+            for sequence in profile.gene_sequences:
+                sequences_info.append({
+                    'sequence_id': sequence.sequence_id,
+                    'genes_count': len(sequence.genes),
+                    'length': sequence.length,
+                    'complexity': sequence.complexity,
+                    'stability': sequence.stability,
+                    'generation': sequence.generation
+                })
+            
+            return sequences_info
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения последовательностей генов для {entity_id}: {e}")
+            return []
+    
+    def activate_trait(self, entity_id: str, trait_id: str) -> bool:
+        """Активация генетического признака"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return False
+            
+            profile = self.genome_profiles[entity_id]
+            trait_to_activate = None
+            
+            for trait in profile.traits:
+                if trait.trait_id == trait_id:
+                    trait_to_activate = trait
+                    break
+            
+            if not trait_to_activate:
+                return False
+            
+            if trait_to_activate.active:
+                logger.debug(f"Признак {trait_id} уже активен")
+                return True
+            
+            # Активируем признак
+            trait_to_activate.active = True
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.genetic_history.append({
+                'timestamp': current_time,
+                'action': 'trait_activated',
+                'entity_id': entity_id,
+                'trait_id': trait_id
+            })
+            
+            self.system_stats['traits_activated'] += 1
+            logger.debug(f"Признак {trait_id} активирован у сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка активации признака {trait_id} у {entity_id}: {e}")
+            return False
+    
+    def deactivate_trait(self, entity_id: str, trait_id: str) -> bool:
+        """Деактивация генетического признака"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return False
+            
+            profile = self.genome_profiles[entity_id]
+            trait_to_deactivate = None
+            
+            for trait in profile.traits:
+                if trait.trait_id == trait_id:
+                    trait_to_deactivate = trait
+                    break
+            
+            if not trait_to_deactivate:
+                return False
+            
+            if not trait_to_deactivate.active:
+                logger.debug(f"Признак {trait_id} уже неактивен")
+                return True
+            
+            # Деактивируем признак
+            trait_to_deactivate.active = False
+            
+            logger.debug(f"Признак {trait_id} деактивирован у сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка деактивации признака {trait_id} у {entity_id}: {e}")
+            return False
+    
+    def force_mutation(self, entity_id: str, trait_id: str) -> bool:
+        """Принудительная мутация признака"""
+        try:
+            if entity_id not in self.genome_profiles:
+                return False
+            
+            profile = self.genome_profiles[entity_id]
+            trait_to_mutate = None
+            
+            for trait in profile.traits:
+                if trait.trait_id == trait_id:
+                    trait_to_mutate = trait
+                    break
+            
+            if not trait_to_mutate:
+                return False
+            
+            # Запускаем мутацию
+            self._trigger_trait_mutation(entity_id, trait_to_mutate)
+            
+            logger.info(f"Принудительная мутация признака {trait_id} у сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка принудительной мутации признака {trait_id} у {entity_id}: {e}")
             return False

@@ -99,6 +99,53 @@ class ConfigManager(IConfigManager):
             
             logger.info("Конфигурация успешно загружена")
             return self._loaded_config
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки конфигурации: {e}")
+            return {}
+    
+    def get_config(self, key: str, default: Any = None) -> Any:
+        """Получение значения конфигурации"""
+        try:
+            keys = key.split('.')
+            value = self._loaded_config
+            
+            for k in keys:
+                if isinstance(value, dict) and k in value:
+                    value = value[k]
+                else:
+                    return default
+            
+            return value
+        except Exception as e:
+            logger.error(f"Ошибка получения конфигурации {key}: {e}")
+            return default
+    
+    def set_config(self, key: str, value: Any) -> bool:
+        """Установка значения конфигурации"""
+        try:
+            keys = key.split('.')
+            config = self._loaded_config
+            
+            # Проходим по всем ключам кроме последнего
+            for k in keys[:-1]:
+                if k not in config:
+                    config[k] = {}
+                config = config[k]
+            
+            # Устанавливаем значение
+            config[keys[-1]] = value
+            
+            # Сохраняем изменения
+            self._save_config()
+            
+            logger.debug(f"Конфигурация {key} установлена в {value}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка установки конфигурации {key}: {e}")
+            return False
+            return self._loaded_config
             return self._loaded_config
         except:
             logger.error("Ошибка загрузки конфигурации")

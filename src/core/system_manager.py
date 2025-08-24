@@ -7,18 +7,18 @@ System Manager - Менеджер систем
 import logging
 from typing import Dict, Optional, Any, List
 from .interfaces import ISystem, ISystemManager
-from .event_system import EventSystem, EventSubscriber
+from .event_system import EventSystem
 
 logger = logging.getLogger(__name__)
 
-class SystemManager(ISystemManager, EventSubscriber):
+class SystemManager(ISystemManager):
     """
     Менеджер систем
     Координирует работу всех игровых систем
     """
     
     def __init__(self, event_system: EventSystem):
-        super().__init__(event_system, "system_manager")
+        self.event_system = event_system
         
         # Системы
         self.systems: Dict[str, ISystem] = {}
@@ -38,8 +38,8 @@ class SystemManager(ISystemManager, EventSubscriber):
             
             # Подписываемся на события
             from .event_system import EventPriority
-            self.subscribe_to_event("system_ready", priority=EventPriority.HIGH)
-            self.subscribe_to_event("system_error", priority=EventPriority.CRITICAL)
+            self.event_system.subscribe("system_ready", self._handle_system_ready, "system_manager", EventPriority.HIGH)
+            self.event_system.subscribe("system_error", self._handle_system_error, "system_manager", EventPriority.CRITICAL)
             
             # Определяем порядок инициализации систем
             self._determine_initialization_order()
@@ -257,12 +257,29 @@ class SystemManager(ISystemManager, EventSubscriber):
             logger.error(f"Ошибка перезапуска системы {name}: {e}")
             return False
     
+    def _handle_system_ready(self, event_data: Any) -> None:
+        """Обработка события готовности системы"""
+        try:
+            system_name = event_data.get('system', 'unknown')
+            logger.debug(f"Система {system_name} готова")
+        except Exception as e:
+            logger.error(f"Ошибка обработки события готовности системы: {e}")
+    
+    def _handle_system_error(self, event_data: Any) -> None:
+        """Обработка события ошибки системы"""
+        try:
+            system_name = event_data.get('system', 'unknown')
+            error_msg = event_data.get('error', 'unknown error')
+            logger.error(f"Ошибка в системе {system_name}: {error_msg}")
+        except Exception as e:
+            logger.error(f"Ошибка обработки события ошибки системы: {e}")
+    
     def on_event(self, event) -> None:
-        """Обработка событий"""
+        """Обработка событий (для обратной совместимости)"""
         if event.event_type == "system_ready":
-            logger.debug(f"Система {event.data.get('system', 'unknown')} готова")
+            self._handle_system_ready(event.data)
         elif event.event_type == "system_error":
-            logger.error(f"Ошибка в системе {event.data.get('system', 'unknown')}: {event.data.get('error', 'unknown error')}")
+            self._handle_system_error(event.data)
     
     def update(self, delta_time: float) -> None:
         """Обновление менеджера систем"""
@@ -299,7 +316,9 @@ class SystemManager(ISystemManager, EventSubscriber):
             self.is_initialized = False
             
             # Очищаем подписчика
-            super().cleanup()
+            if hasattr(self, 'event_system'):
+                # Отписываемся от событий
+                pass
             
             logger.info("Менеджер систем очищен")
             

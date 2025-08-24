@@ -1,395 +1,57 @@
 #!/usr/bin/env python3
 """
-Система инвентаря - управление инвентарями и предметами сущностей
+Система инвентаря - управление предметами сущностей
 """
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from enum import Enum
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    ItemType, ItemRarity, ItemCategory, StatType, BASE_STATS,
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
 
-class ItemCategory(Enum):
-    """Категории предметов"""
-    WEAPON = "weapon"
-    ARMOR = "armor"
-    CONSUMABLE = "consumable"
-    MATERIAL = "material"
-    TOOL = "tool"
-    QUEST = "quest"
-    SPECIAL = "special"
-
+@dataclass
 class InventorySlot:
     """Слот инвентаря"""
-    
-    def __init__(self, slot_id: int):
-        self.slot_id = slot_id
-        self.item_id = None
-        self.quantity = 0
-        self.durability = 100.0
-        self.enchantments = []
-        self.locked = False
-    
-    def is_empty(self) -> bool:
-        """Проверка, пуст ли слот"""
-        return self.item_id is None or self.quantity <= 0
-    
-    def can_stack_with(self, item_id: str, quantity: int) -> bool:
-        """Проверка возможности стака с предметом"""
-        if self.is_empty():
-            return True
-        
-        if self.item_id != item_id:
-            return False
-        
-        # Проверяем максимальный размер стака
-        # Упрощенная реализация
-        return self.quantity + quantity <= 100
-    
-    def add_item(self, item_id: str, quantity: int = 1) -> int:
-        """Добавление предмета в слот"""
-        if self.locked:
-            return 0
-        
-        if self.is_empty():
-            self.item_id = item_id
-            self.quantity = quantity
-            return quantity
-        
-        if self.item_id == item_id:
-            # Добавляем к существующему стаку
-            added = min(quantity, 100 - self.quantity)
-            self.quantity += added
-            return added
-        
-        return 0
-    
-    def remove_item(self, quantity: int = 1) -> int:
-        """Удаление предмета из слота"""
-        if self.is_empty() or self.locked:
-            return 0
-        
-        removed = min(quantity, self.quantity)
-        self.quantity -= removed
-        
-        if self.quantity <= 0:
-            self.clear()
-        
-        return removed
-    
-    def clear(self):
-        """Очистка слота"""
-        self.item_id = None
-        self.quantity = 0
-        self.durability = 100.0
-        self.enchantments.clear()
-    
-    def get_info(self) -> Dict[str, Any]:
-        """Получение информации о слоте"""
-        return {
-            "slot_id": self.slot_id,
-            "item_id": self.item_id,
-            "quantity": self.quantity,
-            "durability": self.durability,
-            "enchantments": self.enchantments.copy(),
-            "locked": self.locked,
-            "empty": self.is_empty()
-        }
+    slot_id: int
+    item_id: Optional[str] = None
+    item_count: int = 0
+    is_locked: bool = False
+    lock_reason: str = ""
+    last_updated: float = field(default_factory=time.time)
 
+@dataclass
 class Inventory:
     """Инвентарь сущности"""
-    
-    def __init__(self, owner_id: str, max_slots: int = 20):
-        self.owner_id = owner_id
-        self.max_slots = max_slots
-        self.slots: List[InventorySlot] = []
-        self.equipped_items: Dict[str, str] = {}  # slot_type -> item_id
-        self.gold = 0
-        self.weight_limit = 100.0
-        self.current_weight = 0.0
-        
-        # Инициализация слотов
-        for i in range(max_slots):
-            self.slots.append(InventorySlot(i))
-        
-        logger.info(f"Инвентарь создан для {owner_id} с {max_slots} слотами")
-    
-    def add_item(self, item_id: str, quantity: int = 1) -> Tuple[bool, int]:
-        """Добавление предмета в инвентарь"""
-        if quantity <= 0:
-            return False, 0
-        
-        remaining_quantity = quantity
-        added_total = 0
-        
-        # Сначала пытаемся добавить к существующим стакам
-        for slot in self.slots:
-            if slot.can_stack_with(item_id, remaining_quantity):
-                added = slot.add_item(item_id, remaining_quantity)
-                remaining_quantity -= added
-                added_total += added
-                
-                if remaining_quantity <= 0:
-                    break
-        
-        # Затем ищем пустые слоты
-        if remaining_quantity > 0:
-            for slot in self.slots:
-                if slot.is_empty():
-                    added = slot.add_item(item_id, remaining_quantity)
-                    remaining_quantity -= added
-                    added_total += added
-                    
-                    if remaining_quantity <= 0:
-                        break
-        
-        if added_total > 0:
-            logger.debug(f"Добавлено {added_total}x {item_id} в инвентарь {self.owner_id}")
-        
-        return remaining_quantity == 0, added_total
-    
-    def remove_item(self, item_id: str, quantity: int = 1) -> Tuple[bool, int]:
-        """Удаление предмета из инвентаря"""
-        if quantity <= 0:
-            return False, 0
-        
-        remaining_quantity = quantity
-        removed_total = 0
-        
-        # Удаляем из слотов (сначала из последних)
-        for slot in reversed(self.slots):
-            if slot.item_id == item_id and not slot.is_empty():
-                removed = slot.remove_item(remaining_quantity)
-                remaining_quantity -= removed
-                removed_total += removed
-                
-                if remaining_quantity <= 0:
-                    break
-        
-        if removed_total > 0:
-            logger.debug(f"Удалено {removed_total}x {item_id} из инвентаря {self.owner_id}")
-        
-        return remaining_quantity == 0, removed_total
-    
-    def has_item(self, item_id: str, quantity: int = 1) -> bool:
-        """Проверка наличия предмета в инвентаре"""
-        total_quantity = 0
-        
-        for slot in self.slots:
-            if slot.item_id == item_id:
-                total_quantity += slot.quantity
-        
-        return total_quantity >= quantity
-    
-    def get_item_count(self, item_id: str) -> int:
-        """Получение количества предмета в инвентаре"""
-        total_quantity = 0
-        
-        for slot in self.slots:
-            if slot.item_id == item_id:
-                total_quantity += slot.quantity
-        
-        return total_quantity
-    
-    def find_item_slots(self, item_id: str) -> List[int]:
-        """Поиск слотов с указанным предметом"""
-        slots = []
-        
-        for slot in self.slots:
-            if slot.item_id == item_id:
-                slots.append(slot.slot_id)
-        
-        return slots
-    
-    def get_slot_info(self, slot_id: int) -> Optional[Dict[str, Any]]:
-        """Получение информации о слоте"""
-        if 0 <= slot_id < len(self.slots):
-            return self.slots[slot_id].get_info()
-        return None
-    
-    def move_item(self, from_slot: int, to_slot: int, quantity: int = 1) -> bool:
-        """Перемещение предмета между слотами"""
-        if (0 <= from_slot < len(self.slots) and 
-            0 <= to_slot < len(self.slots) and
-            from_slot != to_slot):
-            
-            from_slot_obj = self.slots[from_slot]
-            to_slot_obj = self.slots[to_slot]
-            
-            if from_slot_obj.is_empty() or from_slot_obj.locked or to_slot_obj.locked:
-                return False
-            
-            # Проверяем возможность перемещения
-            if to_slot_obj.is_empty():
-                # Перемещаем весь стак
-                to_slot_obj.item_id = from_slot_obj.item_id
-                to_slot_obj.quantity = from_slot_obj.quantity
-                to_slot_obj.durability = from_slot_obj.durability
-                to_slot_obj.enchantments = from_slot_obj.enchantments.copy()
-                from_slot_obj.clear()
-                return True
-            
-            elif to_slot_obj.item_id == from_slot_obj.item_id:
-                # Объединяем стаки
-                max_stack = 100  # Упрощенная реализация
-                space_available = max_stack - to_slot_obj.quantity
-                
-                if space_available > 0:
-                    move_quantity = min(quantity, from_slot_obj.quantity, space_available)
-                    
-                    to_slot_obj.quantity += move_quantity
-                    from_slot_obj.quantity -= move_quantity
-                    
-                    if from_slot_obj.quantity <= 0:
-                        from_slot_obj.clear()
-                    
-                    return True
-            
-            else:
-                # Меняем местами
-                temp_item_id = to_slot_obj.item_id
-                temp_quantity = to_slot_obj.quantity
-                temp_durability = to_slot_obj.durability
-                temp_enchantments = to_slot_obj.enchantments.copy()
-                
-                to_slot_obj.item_id = from_slot_obj.item_id
-                to_slot_obj.quantity = from_slot_obj.quantity
-                to_slot_obj.durability = from_slot_obj.durability
-                to_slot_obj.enchantments = from_slot_obj.enchantments.copy()
-                
-                from_slot_obj.item_id = temp_item_id
-                from_slot_obj.quantity = temp_quantity
-                from_slot_obj.durability = temp_durability
-                from_slot_obj.enchantments = temp_enchantments
-                
-                return True
-        
-        return False
-    
-    def equip_item(self, slot_id: int, equipment_slot: str) -> bool:
-        """Экипировка предмета"""
-        if 0 <= slot_id < len(self.slots):
-            slot = self.slots[slot_id]
-            
-            if slot.is_empty():
-                return False
-            
-            # Проверяем, можно ли экипировать этот предмет
-            if self._can_equip_item(slot.item_id, equipment_slot):
-                # Снимаем предыдущий предмет
-                if equipment_slot in self.equipped_items:
-                    old_item_id = self.equipped_items[equipment_slot]
-                    # Возвращаем в инвентарь (упрощенная реализация)
-                
-                # Экипируем новый предмет
-                self.equipped_items[equipment_slot] = slot.item_id
-                slot.clear()
-                
-                logger.debug(f"Предмет {slot.item_id} экипирован в слот {equipment_slot}")
-                return True
-        
-        return False
-    
-    def unequip_item(self, equipment_slot: str) -> bool:
-        """Снятие предмета"""
-        if equipment_slot in self.equipped_items:
-            item_id = self.equipped_items[equipment_slot]
-            
-            # Находим свободный слот
-            for slot in self.slots:
-                if slot.is_empty():
-                    slot.item_id = item_id
-                    slot.quantity = 1
-                    del self.equipped_items[equipment_slot]
-                    
-                    logger.debug(f"Предмет {item_id} снят из слота {equipment_slot}")
-                    return True
-        
-        return False
-    
-    def _can_equip_item(self, item_id: str, equipment_slot: str) -> bool:
-        """Проверка возможности экипировки предмета"""
-        # Упрощенная реализация
-        equipment_slot_types = {
-            "weapon": ["weapon"],
-            "armor": ["armor"],
-            "tool": ["tool"]
-        }
-        
-        if equipment_slot in equipment_slot_types:
-            # Проверяем тип предмета (упрощенно)
-            return True
-        
-        return False
-    
-    def get_inventory_info(self) -> Dict[str, Any]:
-        """Получение информации об инвентаре"""
-        slots_info = []
-        for slot in self.slots:
-            slots_info.append(slot.get_info())
-        
-        return {
-            "owner_id": self.owner_id,
-            "max_slots": self.max_slots,
-            "used_slots": len([s for s in self.slots if not s.is_empty()]),
-            "slots": slots_info,
-            "equipped_items": self.equipped_items.copy(),
-            "gold": self.gold,
-            "weight_limit": self.weight_limit,
-            "current_weight": self.current_weight
-        }
-    
-    def add_gold(self, amount: int) -> bool:
-        """Добавление золота"""
-        if amount > 0:
-            self.gold += amount
-            logger.debug(f"Добавлено {amount} золота в инвентарь {self.owner_id}")
-            return True
-        return False
-    
-    def remove_gold(self, amount: int) -> bool:
-        """Удаление золота"""
-        if amount > 0 and self.gold >= amount:
-            self.gold -= amount
-            logger.debug(f"Удалено {amount} золота из инвентаря {self.owner_id}")
-            return True
-        return False
-    
-    def has_gold(self, amount: int) -> bool:
-        """Проверка наличия золота"""
-        return self.gold >= amount
-    
-    def lock_slot(self, slot_id: int) -> bool:
-        """Блокировка слота"""
-        if 0 <= slot_id < len(self.slots):
-            self.slots[slot_id].locked = True
-            return True
-        return False
-    
-    def unlock_slot(self, slot_id: int) -> bool:
-        """Разблокировка слота"""
-        if 0 <= slot_id < len(self.slots):
-            self.slots[slot_id].locked = False
-            return True
-        return False
-    
-    def clear_inventory(self):
-        """Очистка всего инвентаря"""
-        for slot in self.slots:
-            slot.clear()
-        
-        self.equipped_items.clear()
-        self.gold = 0
-        self.current_weight = 0.0
-        
-        logger.info(f"Инвентарь {self.owner_id} очищен")
+    entity_id: str
+    slots: List[InventorySlot] = field(default_factory=list)
+    max_slots: int = SYSTEM_LIMITS["max_inventory_slots"]
+    max_weight: float = SYSTEM_LIMITS["max_inventory_weight"]
+    current_weight: float = 0.0
+    is_expandable: bool = True
+    expansion_cost: int = 100
+    last_update: float = field(default_factory=time.time)
+    inventory_history: List[Dict[str, Any]] = field(default_factory=list)
+
+@dataclass
+class ItemStack:
+    """Стек предметов"""
+    item_id: str
+    count: int
+    max_stack_size: int = SYSTEM_LIMITS["max_item_stack_size"]
+    quality: float = 1.0
+    durability: float = 1.0
+    created_time: float = field(default_factory=time.time)
+    last_used: float = field(default_factory=time.time)
 
 class InventorySystem(ISystem):
-    """Система управления инвентарями для всех сущностей"""
+    """Система управления инвентарями"""
     
     def __init__(self):
         self._system_name = "inventory"
@@ -400,16 +62,31 @@ class InventorySystem(ISystem):
         # Инвентари сущностей
         self.inventories: Dict[str, Inventory] = {}
         
-        # База данных предметов
-        self.item_database: Dict[str, Dict[str, Any]] = {}
+        # Предметы в инвентарях
+        self.item_stacks: Dict[str, ItemStack] = {}
+        
+        # История операций с инвентарем
+        self.inventory_history: List[Dict[str, Any]] = []
+        
+        # Настройки системы
+        self.system_settings = {
+            'default_slots': SYSTEM_LIMITS["default_inventory_slots"],
+            'max_slots': SYSTEM_LIMITS["max_inventory_slots"],
+            'max_weight': SYSTEM_LIMITS["max_inventory_weight"],
+            'max_stack_size': SYSTEM_LIMITS["max_item_stack_size"],
+            'weight_check_enabled': True,
+            'stacking_enabled': True,
+            'auto_sort_enabled': False
+        }
         
         # Статистика системы
         self.system_stats = {
-            'inventories_count': 0,
-            'items_total': 0,
-            'inventories_created': 0,
+            'total_inventories': 0,
+            'total_items': 0,
+            'total_weight': 0.0,
             'items_added': 0,
             'items_removed': 0,
+            'inventories_expanded': 0,
             'update_time': 0.0
         }
         
@@ -436,8 +113,11 @@ class InventorySystem(ISystem):
         try:
             logger.info("Инициализация системы инвентаря...")
             
-            # Настраиваем базу данных предметов
-            self._setup_item_database()
+            # Настраиваем систему
+            self._setup_inventory_system()
+            
+            # Создаем базовые шаблоны инвентарей
+            self._create_base_inventory_templates()
             
             self._system_state = SystemState.READY
             logger.info("Система инвентаря успешно инициализирована")
@@ -456,10 +136,15 @@ class InventorySystem(ISystem):
             
             start_time = time.time()
             
+            # Обновляем инвентари
+            self._update_inventories(delta_time)
+            
+            # Проверяем предметы на истечение срока
+            self._check_expired_items(delta_time)
+            
             # Обновляем статистику системы
             self._update_system_stats()
             
-            # Обновляем статистику системы
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
@@ -497,17 +182,19 @@ class InventorySystem(ISystem):
         try:
             logger.info("Очистка системы инвентаря...")
             
-            # Очищаем все инвентари
+            # Очищаем все данные
             self.inventories.clear()
-            self.item_database.clear()
+            self.item_stacks.clear()
+            self.inventory_history.clear()
             
             # Сбрасываем статистику
             self.system_stats = {
-                'inventories_count': 0,
-                'items_total': 0,
-                'inventories_created': 0,
+                'total_inventories': 0,
+                'total_items': 0,
+                'total_weight': 0.0,
                 'items_added': 0,
                 'items_removed': 0,
+                'inventories_expanded': 0,
                 'update_time': 0.0
             }
             
@@ -526,8 +213,9 @@ class InventorySystem(ISystem):
             'state': self.system_state.value,
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
-            'inventories_count': len(self.inventories),
-            'items_total': self.system_stats['items_total'],
+            'total_inventories': len(self.inventories),
+            'total_items': self.system_stats['total_items'],
+            'total_weight': self.system_stats['total_weight'],
             'stats': self.system_stats
         }
     
@@ -536,154 +224,80 @@ class InventorySystem(ISystem):
         try:
             if event_type == "entity_created":
                 return self._handle_entity_created(event_data)
-            elif event_type == "item_added":
-                return self._handle_item_added(event_data)
-            elif event_type == "item_removed":
-                return self._handle_item_removed(event_data)
-            elif event_type == "inventory_created":
-                return self._handle_inventory_created(event_data)
+            elif event_type == "entity_destroyed":
+                return self._handle_entity_destroyed(event_data)
+            elif event_type == "item_created":
+                return self._handle_item_created(event_data)
+            elif event_type == "item_destroyed":
+                return self._handle_item_destroyed(event_data)
+            elif event_type == "combat_ended":
+                return self._handle_combat_ended(event_data)
             else:
                 return False
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def create_inventory(self, owner_id: str, max_slots: int = 20) -> bool:
-        """Создание нового инвентаря"""
+    def _setup_inventory_system(self) -> None:
+        """Настройка системы инвентаря"""
         try:
-            if owner_id in self.inventories:
-                logger.warning(f"Инвентарь для {owner_id} уже существует")
-                return False
-            
-            inventory = Inventory(owner_id, max_slots)
-            self.inventories[owner_id] = inventory
-            
-            self.system_stats['inventories_count'] = len(self.inventories)
-            self.system_stats['inventories_created'] += 1
-            
-            logger.info(f"Создан инвентарь для {owner_id}")
-            return True
-            
+            # Инициализируем базовые настройки
+            logger.debug("Система инвентаря настроена")
         except Exception as e:
-            logger.error(f"Ошибка создания инвентаря для {owner_id}: {e}")
-            return False
+            logger.warning(f"Не удалось настроить систему инвентаря: {e}")
     
-    def remove_inventory(self, owner_id: str) -> bool:
-        """Удаление инвентаря"""
+    def _create_base_inventory_templates(self) -> None:
+        """Создание базовых шаблонов инвентарей"""
         try:
-            if owner_id in self.inventories:
-                del self.inventories[owner_id]
-                self.system_stats['inventories_count'] = len(self.inventories)
-                logger.info(f"Инвентарь {owner_id} удален")
-                return True
-            return False
-            
+            # Здесь можно создать базовые шаблоны для разных типов сущностей
+            logger.debug("Базовые шаблоны инвентарей созданы")
         except Exception as e:
-            logger.error(f"Ошибка удаления инвентаря {owner_id}: {e}")
-            return False
+            logger.warning(f"Не удалось создать базовые шаблоны инвентарей: {e}")
     
-    def get_inventory(self, owner_id: str) -> Optional[Inventory]:
-        """Получение инвентаря по ID владельца"""
-        return self.inventories.get(owner_id)
-    
-    def add_item_to_inventory(self, owner_id: str, item_id: str, quantity: int = 1) -> Tuple[bool, int]:
-        """Добавление предмета в инвентарь"""
+    def _update_inventories(self, delta_time: float) -> None:
+        """Обновление инвентарей"""
         try:
-            inventory = self.get_inventory(owner_id)
-            if not inventory:
-                logger.error(f"Инвентарь для {owner_id} не найден")
-                return False, 0
+            current_time = time.time()
             
-            success, added = inventory.add_item(item_id, quantity)
-            if success:
-                self.system_stats['items_added'] += added
-                self._update_system_stats()
-            
-            return success, added
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления предмета {item_id} в инвентарь {owner_id}: {e}")
-            return False, 0
-    
-    def remove_item_from_inventory(self, owner_id: str, item_id: str, quantity: int = 1) -> Tuple[bool, int]:
-        """Удаление предмета из инвентаря"""
-        try:
-            inventory = self.get_inventory(owner_id)
-            if not inventory:
-                logger.error(f"Инвентарь для {owner_id} не найден")
-                return False, 0
-            
-            success, removed = inventory.remove_item(item_id, quantity)
-            if success:
-                self.system_stats['items_removed'] += removed
-                self._update_system_stats()
-            
-            return success, removed
-            
-        except Exception as e:
-            logger.error(f"Ошибка удаления предмета {item_id} из инвентаря {owner_id}: {e}")
-            return False, 0
-    
-    def has_item_in_inventory(self, owner_id: str, item_id: str, quantity: int = 1) -> bool:
-        """Проверка наличия предмета в инвентаре"""
-        inventory = self.get_inventory(owner_id)
-        if not inventory:
-            return False
-        
-        return inventory.has_item(item_id, quantity)
-    
-    def get_item_info(self, item_id: str) -> Optional[Dict[str, Any]]:
-        """Получение информации о предмете"""
-        return self.item_database.get(item_id)
-    
-    def get_all_items(self) -> List[Dict[str, Any]]:
-        """Получение списка всех предметов"""
-        items = []
-        for item_id, item_data in self.item_database.items():
-            item_info = item_data.copy()
-            item_info["id"] = item_id
-            items.append(item_info)
-        
-        return items
-    
-    def search_items(self, query: str) -> List[Dict[str, Any]]:
-        """Поиск предметов по запросу"""
-        results = []
-        query_lower = query.lower()
-        
-        for item_id, item_data in self.item_database.items():
-            if (query_lower in item_data["name"].lower() or 
-                query_lower in item_data["description"].lower()):
+            for entity_id, inventory in self.inventories.items():
+                # Обновляем время последнего обновления
+                inventory.last_update = current_time
                 
-                item_info = item_data.copy()
-                item_info["id"] = item_id
-                results.append(item_info)
-        
-        return results
+                # Пересчитываем вес
+                self._recalculate_inventory_weight(inventory)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления инвентарей: {e}")
     
-    def get_items_by_category(self, category: ItemCategory) -> List[Dict[str, Any]]:
-        """Получение предметов по категории"""
-        results = []
-        
-        for item_id, item_data in self.item_database.items():
-            if item_data["category"] == category:
-                item_info = item_data.copy()
-                item_info["id"] = item_id
-                results.append(item_info)
-        
-        return results
-    
+    def _check_expired_items(self, delta_time: float) -> None:
+        """Проверка предметов на истечение срока"""
+        try:
+            current_time = time.time()
+            expired_items = []
+            
+            for item_id, item_stack in self.item_stacks.items():
+                # Проверяем срок годности (если есть)
+                if hasattr(item_stack, 'expiry_time') and item_stack.expiry_time > 0:
+                    if current_time > item_stack.expiry_time:
+                        expired_items.append(item_id)
+                
+                # Проверяем прочность
+                if item_stack.durability <= 0:
+                    expired_items.append(item_id)
+            
+            # Удаляем истекшие предметы
+            for item_id in expired_items:
+                self._remove_expired_item(item_id)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка проверки истекших предметов: {e}")
     
     def _update_system_stats(self) -> None:
         """Обновление статистики системы"""
         try:
-            total_items = 0
-            for inventory in self.inventories.values():
-                for slot in inventory.slots:
-                    if not slot.is_empty():
-                        total_items += slot.quantity
-            
-            self.system_stats['items_total'] = total_items
+            self.system_stats['total_inventories'] = len(self.inventories)
+            self.system_stats['total_items'] = len(self.item_stacks)
+            self.system_stats['total_weight'] = sum(inv.current_weight for inv in self.inventories.values())
             
         except Exception as e:
             logger.warning(f"Ошибка обновления статистики системы: {e}")
@@ -692,58 +306,643 @@ class InventorySystem(ISystem):
         """Обработка события создания сущности"""
         try:
             entity_id = event_data.get('entity_id')
-            max_slots = event_data.get('max_slots', 20)
+            inventory_config = event_data.get('inventory_config', {})
             
             if entity_id:
-                return self.create_inventory(entity_id, max_slots)
+                return self.create_inventory(entity_id, inventory_config)
             return False
             
         except Exception as e:
             logger.error(f"Ошибка обработки события создания сущности: {e}")
             return False
     
-    def _handle_item_added(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события добавления предмета"""
+    def _handle_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения сущности"""
         try:
             entity_id = event_data.get('entity_id')
-            item_id = event_data.get('item_id')
-            quantity = event_data.get('quantity', 1)
-            
-            if entity_id and item_id:
-                success, added = self.add_item_to_inventory(entity_id, item_id, quantity)
-                return success
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события добавления предмета: {e}")
-            return False
-    
-    def _handle_item_removed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события удаления предмета"""
-        try:
-            entity_id = event_data.get('entity_id')
-            item_id = event_data.get('item_id')
-            quantity = event_data.get('quantity', 1)
-            
-            if entity_id and item_id:
-                success, removed = self.remove_item_from_inventory(entity_id, item_id, quantity)
-                return success
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события удаления предмета: {e}")
-            return False
-    
-    def _handle_inventory_created(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события создания инвентаря"""
-        try:
-            entity_id = event_data.get('entity_id')
-            max_slots = event_data.get('max_slots', 20)
             
             if entity_id:
-                return self.create_inventory(entity_id, max_slots)
+                return self.destroy_inventory(entity_id)
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события создания инвентаря: {e}")
+            logger.error(f"Ошибка обработки события уничтожения сущности: {e}")
+            return False
+    
+    def _handle_item_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания предмета"""
+        try:
+            item_id = event_data.get('item_id')
+            item_data = event_data.get('item_data', {})
+            
+            if item_id and item_data:
+                # Здесь можно добавить логику для новых предметов
+                logger.debug(f"Обработано событие создания предмета {item_id}")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания предмета: {e}")
+            return False
+    
+    def _handle_item_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения предмета"""
+        try:
+            item_id = event_data.get('item_id')
+            
+            if item_id:
+                # Удаляем предмет из всех инвентарей
+                self._remove_item_from_all_inventories(item_id)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события уничтожения предмета: {e}")
+            return False
+    
+    def _handle_combat_ended(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события окончания боя"""
+        try:
+            combat_id = event_data.get('combat_id')
+            participants = event_data.get('participants')
+            loot = event_data.get('loot', {})
+            
+            if combat_id and participants and loot:
+                # Распределяем добычу между участниками
+                self._distribute_combat_loot(participants, loot)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события окончания боя: {e}")
+            return False
+    
+    def create_inventory(self, entity_id: str, config: Dict[str, Any] = None) -> bool:
+        """Создание инвентаря для сущности"""
+        try:
+            if entity_id in self.inventories:
+                logger.warning(f"Инвентарь для {entity_id} уже существует")
+                return False
+            
+            # Настройки по умолчанию
+            default_config = {
+                'max_slots': self.system_settings['default_slots'],
+                'max_weight': self.system_settings['max_weight'],
+                'is_expandable': True,
+                'expansion_cost': 100
+            }
+            
+            if config:
+                default_config.update(config)
+            
+            # Создаем слоты
+            slots = []
+            for i in range(default_config['max_slots']):
+                slot = InventorySlot(slot_id=i)
+                slots.append(slot)
+            
+            # Создаем инвентарь
+            inventory = Inventory(
+                entity_id=entity_id,
+                slots=slots,
+                max_slots=default_config['max_slots'],
+                max_weight=default_config['max_weight'],
+                is_expandable=default_config['is_expandable'],
+                expansion_cost=default_config['expansion_cost']
+            )
+            
+            # Добавляем в систему
+            self.inventories[entity_id] = inventory
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'inventory_created',
+                'entity_id': entity_id,
+                'max_slots': inventory.max_slots,
+                'max_weight': inventory.max_weight
+            })
+            
+            logger.info(f"Создан инвентарь для {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания инвентаря для {entity_id}: {e}")
+            return False
+    
+    def destroy_inventory(self, entity_id: str) -> bool:
+        """Уничтожение инвентаря сущности"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            
+            # Удаляем все предметы
+            for slot in inventory.slots:
+                if slot.item_id:
+                    self._remove_item_from_slot(entity_id, slot.slot_id)
+            
+            # Удаляем инвентарь
+            del self.inventories[entity_id]
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'inventory_destroyed',
+                'entity_id': entity_id
+            })
+            
+            logger.info(f"Инвентарь {entity_id} уничтожен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения инвентаря {entity_id}: {e}")
+            return False
+    
+    def add_item_to_inventory(self, entity_id: str, item_id: str, count: int = 1, 
+                             slot_id: Optional[int] = None, quality: float = 1.0) -> bool:
+        """Добавление предмета в инвентарь"""
+        try:
+            if entity_id not in self.inventories:
+                logger.warning(f"Инвентарь для {entity_id} не найден")
+                return False
+            
+            inventory = self.inventories[entity_id]
+            
+            # Проверяем вес
+            if self.system_settings['weight_check_enabled']:
+                item_weight = self._get_item_weight(item_id)
+                if inventory.current_weight + item_weight * count > inventory.max_weight:
+                    logger.warning(f"Недостаточно места по весу в инвентаре {entity_id}")
+                    return False
+            
+            # Ищем подходящий слот
+            target_slot = None
+            if slot_id is not None:
+                if 0 <= slot_id < len(inventory.slots):
+                    target_slot = inventory.slots[slot_id]
+                else:
+                    logger.warning(f"Неверный ID слота {slot_id}")
+                    return False
+            else:
+                # Ищем свободный слот или слот с тем же предметом
+                target_slot = self._find_suitable_slot(inventory, item_id, count)
+            
+            if not target_slot:
+                logger.warning(f"Нет свободного места в инвентаре {entity_id}")
+                return False
+            
+            # Добавляем предмет
+            if target_slot.item_id == item_id:
+                # Добавляем к существующему стеку
+                target_slot.item_count += count
+                target_slot.last_updated = time.time()
+                
+                # Обновляем стек предметов
+                stack_key = f"{entity_id}_{target_slot.slot_id}"
+                if stack_key in self.item_stacks:
+                    self.item_stacks[stack_key].count += count
+                    self.item_stacks[stack_key].last_used = time.time()
+                else:
+                    self.item_stacks[stack_key] = ItemStack(
+                        item_id=item_id,
+                        count=target_slot.item_count,
+                        quality=quality
+                    )
+            else:
+                # Создаем новый стек
+                target_slot.item_id = item_id
+                target_slot.item_count = count
+                target_slot.last_updated = time.time()
+                
+                # Создаем стек предметов
+                stack_key = f"{entity_id}_{target_slot.slot_id}"
+                self.item_stacks[stack_key] = ItemStack(
+                    item_id=item_id,
+                    count=count,
+                    quality=quality
+                )
+            
+            # Обновляем вес
+            self._recalculate_inventory_weight(inventory)
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'item_added',
+                'entity_id': entity_id,
+                'item_id': item_id,
+                'count': count,
+                'slot_id': target_slot.slot_id
+            })
+            
+            inventory.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'item_added',
+                'item_id': item_id,
+                'count': count,
+                'slot_id': target_slot.slot_id
+            })
+            
+            self.system_stats['items_added'] += 1
+            logger.debug(f"Добавлен предмет {item_id} в инвентарь {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления предмета {item_id} в инвентарь {entity_id}: {e}")
+            return False
+    
+    def remove_item_from_inventory(self, entity_id: str, item_id: str, count: int = 1, 
+                                  slot_id: Optional[int] = None) -> bool:
+        """Удаление предмета из инвентаря"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            
+            # Ищем слот с предметом
+            target_slot = None
+            if slot_id is not None:
+                if 0 <= slot_id < len(inventory.slots):
+                    target_slot = inventory.slots[slot_id]
+                else:
+                    return False
+            else:
+                # Ищем любой слот с нужным предметом
+                for slot in inventory.slots:
+                    if slot.item_id == item_id and slot.item_count > 0:
+                        target_slot = slot
+                        break
+            
+            if not target_slot or target_slot.item_id != item_id:
+                return False
+            
+            # Удаляем предметы
+            if target_slot.item_count <= count:
+                # Удаляем весь стек
+                removed_count = target_slot.item_count
+                target_slot.item_id = None
+                target_slot.item_count = 0
+                
+                # Удаляем стек предметов
+                stack_key = f"{entity_id}_{target_slot.slot_id}"
+                if stack_key in self.item_stacks:
+                    del self.item_stacks[stack_key]
+            else:
+                # Уменьшаем количество
+                target_slot.item_count -= count
+                removed_count = count
+                
+                # Обновляем стек предметов
+                stack_key = f"{entity_id}_{target_slot.slot_id}"
+                if stack_key in self.item_stacks:
+                    self.item_stacks[stack_key].count -= count
+            
+            target_slot.last_updated = time.time()
+            
+            # Обновляем вес
+            self._recalculate_inventory_weight(inventory)
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'item_removed',
+                'entity_id': entity_id,
+                'item_id': item_id,
+                'count': removed_count,
+                'slot_id': target_slot.slot_id
+            })
+            
+            inventory.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'item_removed',
+                'item_id': item_id,
+                'count': removed_count,
+                'slot_id': target_slot.slot_id
+            })
+            
+            self.system_stats['items_removed'] += 1
+            logger.debug(f"Удален предмет {item_id} из инвентаря {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления предмета {item_id} из инвентаря {entity_id}: {e}")
+            return False
+    
+    def _find_suitable_slot(self, inventory: Inventory, item_id: str, count: int) -> Optional[InventorySlot]:
+        """Поиск подходящего слота для предмета"""
+        try:
+            # Сначала ищем слот с тем же предметом
+            for slot in inventory.slots:
+                if slot.item_id == item_id and not slot.is_locked:
+                    # Проверяем, поместится ли еще
+                    current_stack = self.item_stacks.get(f"{inventory.entity_id}_{slot.slot_id}")
+                    if current_stack and current_stack.count + count <= current_stack.max_stack_size:
+                        return slot
+            
+            # Ищем свободный слот
+            for slot in inventory.slots:
+                if slot.item_id is None and not slot.is_locked:
+                    return slot
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Ошибка поиска подходящего слота: {e}")
+            return None
+    
+    def _remove_item_from_slot(self, entity_id: str, slot_id: int) -> bool:
+        """Удаление предмета из конкретного слота"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            if slot_id >= len(inventory.slots):
+                return False
+            
+            slot = inventory.slots[slot_id]
+            if not slot.item_id:
+                return False
+            
+            # Удаляем предмет
+            item_id = slot.item_id
+            count = slot.item_count
+            
+            slot.item_id = None
+            slot.item_count = 0
+            slot.last_updated = time.time()
+            
+            # Удаляем стек предметов
+            stack_key = f"{entity_id}_{slot_id}"
+            if stack_key in self.item_stacks:
+                del self.item_stacks[stack_key]
+            
+            # Обновляем вес
+            self._recalculate_inventory_weight(inventory)
+            
+            logger.debug(f"Удален предмет {item_id} из слота {slot_id} инвентаря {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления предмета из слота {slot_id} инвентаря {entity_id}: {e}")
+            return False
+    
+    def _remove_item_from_all_inventories(self, item_id: str) -> None:
+        """Удаление предмета из всех инвентарей"""
+        try:
+            for entity_id, inventory in self.inventories.items():
+                for slot in inventory.slots:
+                    if slot.item_id == item_id:
+                        self._remove_item_from_slot(entity_id, slot.slot_id)
+                        
+        except Exception as e:
+            logger.error(f"Ошибка удаления предмета {item_id} из всех инвентарей: {e}")
+    
+    def _remove_expired_item(self, item_id: str) -> None:
+        """Удаление истекшего предмета"""
+        try:
+            # Удаляем из всех инвентарей
+            self._remove_item_from_all_inventories(item_id)
+            
+            # Удаляем из стеков предметов
+            expired_stacks = [key for key, stack in self.item_stacks.items() if stack.item_id == item_id]
+            for key in expired_stacks:
+                del self.item_stacks[key]
+            
+            logger.debug(f"Удален истекший предмет {item_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления истекшего предмета {item_id}: {e}")
+    
+    def _distribute_combat_loot(self, participants: List[str], loot: Dict[str, Any]) -> None:
+        """Распределение добычи после боя"""
+        try:
+            if not participants or not loot:
+                return
+            
+            # Простое распределение - каждому участнику по предмету
+            for i, participant_id in enumerate(participants):
+                if participant_id in self.inventories:
+                    # Получаем предмет из добычи
+                    item_id = list(loot.keys())[i % len(loot)]
+                    item_data = loot[item_id]
+                    
+                    # Добавляем в инвентарь
+                    self.add_item_to_inventory(
+                        participant_id, 
+                        item_id, 
+                        count=item_data.get('count', 1),
+                        quality=item_data.get('quality', 1.0)
+                    )
+                    
+        except Exception as e:
+            logger.error(f"Ошибка распределения добычи: {e}")
+    
+    def _recalculate_inventory_weight(self, inventory: Inventory) -> None:
+        """Пересчет веса инвентаря"""
+        try:
+            total_weight = 0.0
+            
+            for slot in inventory.slots:
+                if slot.item_id:
+                    item_weight = self._get_item_weight(slot.item_id)
+                    total_weight += item_weight * slot.item_count
+            
+            inventory.current_weight = total_weight
+            
+        except Exception as e:
+            logger.warning(f"Ошибка пересчета веса инвентаря: {e}")
+    
+    def _get_item_weight(self, item_id: str) -> float:
+        """Получение веса предмета"""
+        try:
+            # Здесь должна быть логика получения веса предмета
+            # Пока возвращаем базовый вес
+            return 1.0
+            
+        except Exception as e:
+            logger.warning(f"Ошибка получения веса предмета {item_id}: {e}")
+            return 1.0
+    
+    def get_inventory_info(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации об инвентаре"""
+        try:
+            if entity_id not in self.inventories:
+                return None
+            
+            inventory = self.inventories[entity_id]
+            
+            return {
+                'entity_id': inventory.entity_id,
+                'max_slots': inventory.max_slots,
+                'used_slots': sum(1 for slot in inventory.slots if slot.item_id),
+                'max_weight': inventory.max_weight,
+                'current_weight': inventory.current_weight,
+                'is_expandable': inventory.is_expandable,
+                'expansion_cost': inventory.expansion_cost,
+                'last_update': inventory.last_update,
+                'slots': [
+                    {
+                        'slot_id': slot.slot_id,
+                        'item_id': slot.item_id,
+                        'item_count': slot.item_count,
+                        'is_locked': slot.is_locked,
+                        'lock_reason': slot.lock_reason,
+                        'last_updated': slot.last_updated
+                    }
+                    for slot in inventory.slots
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения информации об инвентаре {entity_id}: {e}")
+            return None
+    
+    def expand_inventory(self, entity_id: str, additional_slots: int = 1) -> bool:
+        """Расширение инвентаря"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            
+            if not inventory.is_expandable:
+                logger.warning(f"Инвентарь {entity_id} не может быть расширен")
+                return False
+            
+            if inventory.max_slots + additional_slots > self.system_settings['max_slots']:
+                logger.warning(f"Достигнут максимальный размер инвентаря")
+                return False
+            
+            # Добавляем новые слоты
+            for i in range(additional_slots):
+                new_slot_id = inventory.max_slots + i
+                new_slot = InventorySlot(slot_id=new_slot_id)
+                inventory.slots.append(new_slot)
+            
+            inventory.max_slots += additional_slots
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.inventory_history.append({
+                'timestamp': current_time,
+                'action': 'inventory_expanded',
+                'entity_id': entity_id,
+                'additional_slots': additional_slots,
+                'new_max_slots': inventory.max_slots
+            })
+            
+            self.system_stats['inventories_expanded'] += 1
+            logger.info(f"Инвентарь {entity_id} расширен на {additional_slots} слотов")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка расширения инвентаря {entity_id}: {e}")
+            return False
+    
+    def lock_slot(self, entity_id: str, slot_id: int, reason: str = "") -> bool:
+        """Блокировка слота инвентаря"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            if slot_id >= len(inventory.slots):
+                return False
+            
+            slot = inventory.slots[slot_id]
+            slot.is_locked = True
+            slot.lock_reason = reason
+            slot.last_updated = time.time()
+            
+            logger.debug(f"Заблокирован слот {slot_id} инвентаря {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка блокировки слота {slot_id} инвентаря {entity_id}: {e}")
+            return False
+    
+    def unlock_slot(self, entity_id: str, slot_id: int) -> bool:
+        """Разблокировка слота инвентаря"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            if slot_id >= len(inventory.slots):
+                return False
+            
+            slot = inventory.slots[slot_id]
+            slot.is_locked = False
+            slot.lock_reason = ""
+            slot.last_updated = time.time()
+            
+            logger.debug(f"Разблокирован слот {slot_id} инвентаря {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка разблокировки слота {slot_id} инвентаря {entity_id}: {e}")
+            return False
+    
+    def get_inventory_history(self, entity_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Получение истории инвентаря"""
+        try:
+            if entity_id not in self.inventories:
+                return []
+            
+            inventory = self.inventories[entity_id]
+            
+            # Возвращаем последние записи
+            return inventory.inventory_history[-limit:]
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения истории инвентаря для {entity_id}: {e}")
+            return []
+    
+    def clear_inventory(self, entity_id: str) -> bool:
+        """Очистка всего инвентаря"""
+        try:
+            if entity_id not in self.inventories:
+                return False
+            
+            inventory = self.inventories[entity_id]
+            
+            # Удаляем все предметы
+            for slot in inventory.slots:
+                if slot.item_id:
+                    self._remove_item_from_slot(entity_id, slot.slot_id)
+            
+            logger.info(f"Инвентарь {entity_id} очищен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки инвентаря {entity_id}: {e}")
+            return False
+    
+    def transfer_item(self, from_entity_id: str, to_entity_id: str, item_id: str, 
+                     count: int = 1, from_slot_id: Optional[int] = None) -> bool:
+        """Передача предмета между инвентарями"""
+        try:
+            # Удаляем из исходного инвентаря
+            if not self.remove_item_from_inventory(from_entity_id, item_id, count, from_slot_id):
+                return False
+            
+            # Добавляем в целевой инвентарь
+            if not self.add_item_to_inventory(to_entity_id, item_id, count):
+                # Если не удалось добавить, возвращаем обратно
+                self.add_item_to_inventory(from_entity_id, item_id, count, from_slot_id)
+                return False
+            
+            logger.debug(f"Предмет {item_id} передан от {from_entity_id} к {to_entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка передачи предмета {item_id}: {e}")
             return False

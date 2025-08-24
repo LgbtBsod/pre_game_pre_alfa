@@ -1,93 +1,100 @@
 #!/usr/bin/env python3
 """
-Система рендеринга - управление отрисовкой игровых объектов
+Система рендеринга - управление отображением игровых объектов
 """
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from enum import Enum
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    RenderQuality, RenderLayer, StatType, BASE_STATS,
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
 
-class RenderQuality(Enum):
-    """Качество рендеринга"""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    ULTRA = "ultra"
-
-class RenderLayer(Enum):
-    """Слои рендеринга"""
-    BACKGROUND = 0
-    TERRAIN = 1
-    OBJECTS = 2
-    ENTITIES = 3
-    EFFECTS = 4
-    UI = 5
-    OVERLAY = 6
-
 @dataclass
 class RenderObject:
-    """Объект рендеринга"""
+    """Объект для рендеринга"""
     object_id: str
-    object_type: str
-    position: Tuple[float, float, float]
-    rotation: Tuple[float, float, float]
-    scale: Tuple[float, float, float]
-    visible: bool
-    layer: RenderLayer
-    mesh_data: Optional[Dict[str, Any]] = None
-    texture_data: Optional[Dict[str, Any]] = None
-    shader_data: Optional[Dict[str, Any]] = None
-    animation_data: Optional[Dict[str, Any]] = None
+    entity_id: str
+    model_path: str = ""
+    texture_path: str = ""
+    position: tuple = (0.0, 0.0, 0.0)
+    rotation: tuple = (0.0, 0.0, 0.0)
+    scale: tuple = (1.0, 1.0, 1.0)
+    visible: bool = True
+    layer: RenderLayer = RenderLayer.MIDDLE
+    quality: RenderQuality = RenderQuality.MEDIUM
+    animation: str = ""
+    shader: str = ""
+    last_update: float = field(default_factory=time.time)
+    render_stats: Dict[str, Any] = field(default_factory=dict)
+
+
 
 @dataclass
-class RenderStats:
-    """Статистика рендеринга"""
-    frame_count: int = 0
-    draw_calls: int = 0
-    triangles: int = 0
-    vertices: int = 0
-    textures_loaded: int = 0
-    shaders_loaded: int = 0
-    fps: float = 0.0
-    frame_time: float = 0.0
+class Camera:
+    """Камера для рендеринга"""
+    camera_id: str
+    position: tuple = (0.0, 0.0, 0.0)
+    target: tuple = (0.0, 0.0, 0.0)
+    up: tuple = (0.0, 1.0, 0.0)
+    fov: float = 60.0
+    near_plane: float = 0.1
+    far_plane: float = 1000.0
+    active: bool = False
+    last_update: float = field(default_factory=time.time)
 
 class RenderSystem(ISystem):
-    """Система рендеринга с поддержкой Panda3D"""
+    """Система рендеринга"""
     
-    def __init__(self, render_node=None, window=None):
-        self._system_name = "render"
-        self._system_priority = SystemPriority.CRITICAL
+    def __init__(self):
+        self._system_name = "rendering"
+        self._system_priority = SystemPriority.HIGH
         self._system_state = SystemState.UNINITIALIZED
         self._dependencies = []
         
-        # Panda3D компоненты
-        self.render_node = render_node
-        self.window = window
-        
-        # Рендер объекты
+        # Объекты для рендеринга
         self.render_objects: Dict[str, RenderObject] = {}
-        self.render_layers: Dict[RenderLayer, List[str]] = {layer: [] for layer in RenderLayer}
+        
+
+        
+        # Камеры
+        self.cameras: Dict[str, Camera] = {}
         
         # Настройки рендеринга
-        self.render_quality = RenderQuality.MEDIUM
-        self.enable_shadows = True
-        self.enable_antialiasing = True
-        self.enable_bloom = False
-        self.enable_motion_blur = False
+        self.render_settings = {
+            'target_fps': SYSTEM_LIMITS["target_fps"],
+            'vsync_enabled': True,
+            'antialiasing': True,
+            'shadow_quality': RenderQuality.MEDIUM,
+            'texture_quality': RenderQuality.MEDIUM,
+            'model_quality': RenderQuality.MEDIUM,
+            'max_draw_distance': SYSTEM_LIMITS["max_draw_distance"],
+            'culling_enabled': True,
+            'occlusion_culling': True
+        }
         
-        # Статистика
-        self.render_stats = RenderStats()
-        self.last_frame_time = time.time()
+        # Статистика рендеринга
+        self.system_stats = {
+            'total_objects': 0,
+            'visible_objects': 0,
+            'active_cameras': 0,
+            'fps': 0.0,
+            'frame_time': 0.0,
+            'draw_calls': 0,
+            'triangles_rendered': 0,
+            'update_time': 0.0
+        }
         
-        # Шейдеры и текстуры
-        self.shaders: Dict[str, Any] = {}
-        self.textures: Dict[str, Any] = {}
+        # Panda3D компоненты
+        self.render = None
+        self.cam = None
+        self.win = None
         
         logger.info("Система рендеринга инициализирована")
     
@@ -112,18 +119,13 @@ class RenderSystem(ISystem):
         try:
             logger.info("Инициализация системы рендеринга...")
             
-            if not self.render_node:
-                logger.error("Render node не предоставлен")
-                return False
+            # Настраиваем систему
+            self._setup_render_system()
             
-            # Инициализируем базовые шейдеры
-            self._initialize_shaders()
+            # Создаем базовые камеры
+            self._create_base_cameras()
             
-            # Инициализируем базовые текстуры
-            self._initialize_textures()
-            
-            # Настраиваем качество рендеринга
-            self._configure_render_quality()
+
             
             self._system_state = SystemState.READY
             logger.info("Система рендеринга успешно инициализирована")
@@ -140,14 +142,20 @@ class RenderSystem(ISystem):
             if self._system_state != SystemState.READY:
                 return False
             
-            # Обновляем статистику
-            self._update_render_stats(delta_time)
+            start_time = time.time()
             
-            # Обновляем анимации
-            self._update_animations(delta_time)
+            # Обновляем объекты рендеринга
+            self._update_render_objects(delta_time)
             
-            # Обновляем эффекты
-            self._update_effects(delta_time)
+
+            
+            # Обновляем камеры
+            self._update_cameras(delta_time)
+            
+            # Обновляем статистику системы
+            self._update_system_stats()
+            
+            self.system_stats['update_time'] = time.time() - start_time
             
             return True
             
@@ -184,14 +192,21 @@ class RenderSystem(ISystem):
         try:
             logger.info("Очистка системы рендеринга...")
             
-            # Очищаем рендер объекты
+            # Очищаем все данные
             self.render_objects.clear()
-            for layer in self.render_layers:
-                self.render_layers[layer].clear()
+            self.cameras.clear()
             
-            # Очищаем шейдеры и текстуры
-            self.shaders.clear()
-            self.textures.clear()
+            # Сбрасываем статистику
+            self.system_stats = {
+                'total_objects': 0,
+                'visible_objects': 0,
+                'active_cameras': 0,
+                'fps': 0.0,
+                'frame_time': 0.0,
+                'draw_calls': 0,
+                'triangles_rendered': 0,
+                'update_time': 0.0
+            }
             
             self._system_state = SystemState.DESTROYED
             logger.info("Система рендеринга очищена")
@@ -208,381 +223,388 @@ class RenderSystem(ISystem):
             'state': self.system_state.value,
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
-            'render_objects_count': len(self.render_objects),
-            'render_quality': self.render_quality.value,
-            'shaders_count': len(self.shaders),
-            'textures_count': len(self.textures),
-            'fps': self.render_stats.fps,
-            'frame_time': self.render_stats.frame_time
+            'total_objects': len(self.render_objects),
+
+            'active_cameras': len([c for c in self.cameras.values() if c.active]),
+            'stats': self.system_stats
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
         try:
-            if event_type == "render_object_created":
-                return self._handle_object_created(event_data)
-            elif event_type == "render_object_updated":
-                return self._handle_object_updated(event_data)
-            elif event_type == "render_object_destroyed":
-                return self._handle_object_destroyed(event_data)
-            elif event_type == "render_quality_changed":
-                return self._handle_quality_changed(event_data)
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "entity_destroyed":
+                return self._handle_entity_destroyed(event_data)
+            elif event_type == "entity_moved":
+                return self._handle_entity_moved(event_data)
+
+            elif event_type == "camera_changed":
+                return self._handle_camera_changed(event_data)
             else:
                 return False
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def render_scene(self, scene_data: Dict[str, Any]) -> bool:
-        """Рендеринг сцены"""
+    def _setup_render_system(self) -> None:
+        """Настройка системы рендеринга"""
         try:
-            if not self.render_node:
-                return False
-            
-            # Очищаем предыдущий кадр
-            self._clear_frame()
-            
-            # Рендерим по слоям
-            for layer in RenderLayer:
-                self._render_layer(layer, scene_data)
-            
-            # Применяем пост-эффекты
-            self._apply_post_effects()
-            
-            # Обновляем статистику
-            self._update_frame_stats()
-            
-            return True
-            
+            # Здесь должна быть инициализация Panda3D
+            # Пока просто логируем
+            logger.debug("Система рендеринга настроена")
         except Exception as e:
-            logger.error(f"Ошибка рендеринга сцены: {e}")
-            return False
+            logger.warning(f"Не удалось настроить систему рендеринга: {e}")
     
-    def create_render_object(self, object_type: str, object_data: Dict[str, Any]) -> Any:
-        """Создание объекта рендеринга"""
+    def _create_base_cameras(self) -> None:
+        """Создание базовых камер"""
         try:
-            object_id = object_data.get('object_id', f"render_obj_{len(self.render_objects)}")
-            
-            render_object = RenderObject(
-                object_id=object_id,
-                object_type=object_type,
-                position=object_data.get('position', (0.0, 0.0, 0.0)),
-                rotation=object_data.get('rotation', (0.0, 0.0, 0.0)),
-                scale=object_data.get('scale', (1.0, 1.0, 1.0)),
-                visible=object_data.get('visible', True),
-                layer=RenderLayer(object_data.get('layer', RenderLayer.OBJECTS.value)),
-                mesh_data=object_data.get('mesh_data'),
-                texture_data=object_data.get('texture_data'),
-                shader_data=object_data.get('shader_data'),
-                animation_data=object_data.get('animation_data')
+            # Основная камера
+            main_camera = Camera(
+                camera_id="main_camera",
+                position=(0.0, -10.0, 5.0),
+                target=(0.0, 0.0, 0.0),
+                up=(0.0, 0.0, 1.0),
+                fov=60.0,
+                near_plane=0.1,
+                far_plane=1000.0,
+                active=True
             )
             
-            self.render_objects[object_id] = render_object
-            self.render_layers[render_object.layer].append(object_id)
+            # Камера для UI
+            ui_camera = Camera(
+                camera_id="ui_camera",
+                position=(0.0, 0.0, 1.0),
+                target=(0.0, 0.0, 0.0),
+                up=(0.0, 1.0, 0.0),
+                fov=90.0,
+                near_plane=0.1,
+                far_plane=10.0,
+                active=False
+            )
             
-            logger.debug(f"Создан рендер объект: {object_id}")
-            return object_id
+            # Добавляем камеры
+            self.cameras["main_camera"] = main_camera
+            self.cameras["ui_camera"] = ui_camera
+            
+            logger.info("Созданы базовые камеры")
             
         except Exception as e:
-            logger.error(f"Ошибка создания рендер объекта: {e}")
-            return None
+            logger.error(f"Ошибка создания базовых камер: {e}")
     
-    def update_render_object(self, object_id: str, object_data: Dict[str, Any]) -> bool:
-        """Обновление объекта рендеринга"""
+
+    
+    def _update_render_objects(self, delta_time: float) -> None:
+        """Обновление объектов рендеринга"""
         try:
-            if object_id not in self.render_objects:
+            current_time = time.time()
+            
+            for object_id, render_object in self.render_objects.items():
+                # Обновляем время последнего обновления
+                render_object.last_update = current_time
+                
+                # Здесь должна быть логика обновления Panda3D узлов
+                # Пока просто обновляем статистику
+                if render_object.visible:
+                    render_object.render_stats['last_rendered'] = current_time
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления объектов рендеринга: {e}")
+    
+
+    
+    def _update_cameras(self, delta_time: float) -> None:
+        """Обновление камер"""
+        try:
+            current_time = time.time()
+            
+            for camera_id, camera in self.cameras.items():
+                # Обновляем время последнего обновления
+                camera.last_update = current_time
+                
+                # Здесь должна быть логика обновления Panda3D камер
+                # Пока просто обновляем статистику
+                if camera.active:
+                    pass  # Камера активна
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления камер: {e}")
+    
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            self.system_stats['total_objects'] = len(self.render_objects)
+            self.system_stats['visible_objects'] = len([obj for obj in self.render_objects.values() if obj.visible])
+
+            self.system_stats['active_cameras'] = len([cam for cam in self.cameras.values() if cam.active])
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            render_data = event_data.get('render_data', {})
+            
+            if entity_id and render_data:
+                return self.create_render_object(entity_id, render_data)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            
+            if entity_id:
+                return self.destroy_render_object(entity_id)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события уничтожения сущности: {e}")
+            return False
+    
+    def _handle_entity_moved(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события движения сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            new_position = event_data.get('position')
+            new_rotation = event_data.get('rotation')
+            
+            if entity_id and new_position:
+                return self.update_render_object_position(entity_id, new_position, new_rotation)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события движения сущности: {e}")
+            return False
+    
+
+    
+    def _handle_camera_changed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события смены камеры"""
+        try:
+            camera_id = event_data.get('camera_id')
+            
+            if camera_id:
+                return self.switch_camera(camera_id)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события смены камеры: {e}")
+            return False
+    
+    def create_render_object(self, entity_id: str, render_data: Dict[str, Any]) -> bool:
+        """Создание объекта рендеринга"""
+        try:
+            if entity_id in self.render_objects:
+                logger.warning(f"Объект рендеринга для {entity_id} уже существует")
                 return False
             
-            render_object = self.render_objects[object_id]
+            # Создаем объект рендеринга
+            render_object = RenderObject(
+                object_id=f"render_{entity_id}",
+                entity_id=entity_id,
+                model_path=render_data.get('model_path', ''),
+                texture_path=render_data.get('texture_path', ''),
+                position=render_data.get('position', (0.0, 0.0, 0.0)),
+                rotation=render_data.get('rotation', (0.0, 0.0, 0.0)),
+                scale=render_data.get('scale', (1.0, 1.0, 1.0)),
+                visible=render_data.get('visible', True),
+                layer=RenderLayer(render_data.get('layer', RenderLayer.MIDDLE.value)),
+                quality=RenderQuality(render_data.get('quality', RenderQuality.MEDIUM.value)),
+                animation=render_data.get('animation', ''),
+                shader=render_data.get('shader', '')
+            )
             
-            # Обновляем свойства
-            if 'position' in object_data:
-                render_object.position = object_data['position']
-            if 'rotation' in object_data:
-                render_object.rotation = object_data['rotation']
-            if 'scale' in object_data:
-                render_object.scale = object_data['scale']
-            if 'visible' in object_data:
-                render_object.visible = object_data['visible']
-            if 'layer' in object_data:
-                # Перемещаем объект между слоями
-                old_layer = render_object.layer
-                new_layer = RenderLayer(object_data['layer'])
-                if old_layer != new_layer:
-                    self.render_layers[old_layer].remove(object_id)
-                    render_object.layer = new_layer
-                    self.render_layers[new_layer].append(object_id)
+            # Добавляем в систему
+            self.render_objects[render_object.object_id] = render_object
             
+            # Здесь должна быть логика создания Panda3D узла
+            # Пока просто логируем
+            
+            logger.info(f"Создан объект рендеринга для {entity_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка обновления рендер объекта {object_id}: {e}")
+            logger.error(f"Ошибка создания объекта рендеринга для {entity_id}: {e}")
             return False
     
-    def destroy_render_object(self, object_id: str) -> bool:
+    def destroy_render_object(self, entity_id: str) -> bool:
         """Уничтожение объекта рендеринга"""
         try:
-            if object_id not in self.render_objects:
+            # Ищем объект рендеринга
+            object_to_remove = None
+            for object_id, render_object in self.render_objects.items():
+                if render_object.entity_id == entity_id:
+                    object_to_remove = object_id
+                    break
+            
+            if not object_to_remove:
                 return False
             
-            render_object = self.render_objects[object_id]
+            # Здесь должна быть логика удаления Panda3D узла
+            # Пока просто удаляем из системы
             
-            # Удаляем из слоя
-            self.render_layers[render_object.layer].remove(object_id)
+            del self.render_objects[object_to_remove]
             
-            # Удаляем объект
-            del self.render_objects[object_id]
-            
-            logger.debug(f"Уничтожен рендер объект: {object_id}")
+            logger.info(f"Объект рендеринга для {entity_id} уничтожен")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка уничтожения рендер объекта {object_id}: {e}")
+            logger.error(f"Ошибка уничтожения объекта рендеринга для {entity_id}: {e}")
             return False
+    
+    def update_render_object_position(self, entity_id: str, new_position: tuple, 
+                                    new_rotation: Optional[tuple] = None) -> bool:
+        """Обновление позиции объекта рендеринга"""
+        try:
+            # Ищем объект рендеринга
+            render_object = None
+            for obj in self.render_objects.values():
+                if obj.entity_id == entity_id:
+                    render_object = obj
+                    break
+            
+            if not render_object:
+                return False
+            
+            # Обновляем позицию
+            render_object.position = new_position
+            if new_rotation:
+                render_object.rotation = new_rotation
+            
+            render_object.last_update = time.time()
+            
+            # Здесь должна быть логика обновления Panda3D узла
+            # Пока просто логируем
+            
+            logger.debug(f"Обновлена позиция объекта рендеринга для {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления позиции объекта рендеринга для {entity_id}: {e}")
+            return False
+    
+
+    
+    def switch_camera(self, camera_id: str) -> bool:
+        """Переключение камеры"""
+        try:
+            if camera_id not in self.cameras:
+                return False
+            
+            # Деактивируем все камеры
+            for camera in self.cameras.values():
+                camera.active = False
+            
+            # Активируем нужную камеру
+            target_camera = self.cameras[camera_id]
+            target_camera.active = True
+            target_camera.last_update = time.time()
+            
+            # Здесь должна быть логика переключения Panda3D камеры
+            # Пока просто логируем
+            
+            logger.info(f"Переключена на камеру {camera_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка переключения на камеру {camera_id}: {e}")
+            return False
+    
+    def get_render_object_info(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации об объекте рендеринга"""
+        try:
+            for render_object in self.render_objects.values():
+                if render_object.entity_id == entity_id:
+                    return {
+                        'object_id': render_object.object_id,
+                        'entity_id': render_object.entity_id,
+                        'model_path': render_object.model_path,
+                        'texture_path': render_object.texture_path,
+                        'position': render_object.position,
+                        'rotation': render_object.rotation,
+                        'scale': render_object.scale,
+                        'visible': render_object.visible,
+                        'layer': render_object.layer.value,
+                        'quality': render_object.quality.value,
+                        'animation': render_object.animation,
+                        'shader': render_object.shader,
+                        'last_update': render_object.last_update,
+                        'render_stats': render_object.render_stats
+                    }
+            return None
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения информации об объекте рендеринга для {entity_id}: {e}")
+            return None
+    
+
+    
+    def get_camera_info(self, camera_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации о камере"""
+        try:
+            if camera_id not in self.cameras:
+                return None
+            
+            camera = self.cameras[camera_id]
+            
+            return {
+                'camera_id': camera.camera_id,
+                'position': camera.position,
+                'target': camera.target,
+                'up': camera.up,
+                'fov': camera.fov,
+                'near_plane': camera.near_plane,
+                'far_plane': camera.far_plane,
+                'active': camera.active,
+                'last_update': camera.last_update
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения информации о камере {camera_id}: {e}")
+            return None
     
     def set_render_quality(self, quality: RenderQuality) -> bool:
         """Установка качества рендеринга"""
         try:
-            if quality == self.render_quality:
-                return True
+            self.render_settings['texture_quality'] = quality
+            self.render_settings['model_quality'] = quality
             
-            self.render_quality = quality
-            self._configure_render_quality()
+            # Здесь должна быть логика применения настроек качества
+            # Пока просто логируем
             
-            logger.info(f"Качество рендеринга изменено на {quality.value}")
+            logger.info(f"Установлено качество рендеринга: {quality.value}")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка изменения качества рендеринга: {e}")
+            logger.error(f"Ошибка установки качества рендеринга: {e}")
             return False
     
-    def get_render_stats(self) -> RenderStats:
-        """Получение статистики рендеринга"""
-        return self.render_stats
+
     
-    def _initialize_shaders(self) -> None:
-        """Инициализация базовых шейдеров"""
+    def get_visible_objects_count(self) -> int:
+        """Получение количества видимых объектов"""
         try:
-            # Базовые шейдеры для разных типов объектов
-            basic_shaders = {
-                'basic': {'vertex': 'basic.vert', 'fragment': 'basic.frag'},
-                'textured': {'vertex': 'textured.vert', 'fragment': 'textured.frag'},
-                'animated': {'vertex': 'animated.vert', 'fragment': 'animated.frag'},
-                'particle': {'vertex': 'particle.vert', 'fragment': 'particle.frag'}
-            }
-            
-            for shader_name, shader_files in basic_shaders.items():
-                # Здесь должна быть логика загрузки шейдеров Panda3D
-                self.shaders[shader_name] = shader_files
-                logger.debug(f"Загружен шейдер: {shader_name}")
-                
+            return len([obj for obj in self.render_objects.values() if obj.visible])
         except Exception as e:
-            logger.warning(f"Не удалось загрузить базовые шейдеры: {e}")
+            logger.error(f"Ошибка получения количества видимых объектов: {e}")
+            return 0
     
-    def _initialize_textures(self) -> None:
-        """Инициализация базовых текстур"""
+    def get_objects_by_layer(self, layer: RenderLayer) -> List[str]:
+        """Получение объектов по слою рендеринга"""
         try:
-            # Базовые текстуры
-            basic_textures = {
-                'default': 'textures/default.png',
-                'normal': 'textures/normal.png',
-                'specular': 'textures/specular.png'
-            }
-            
-            for texture_name, texture_path in basic_textures.items():
-                # Здесь должна быть логика загрузки текстур Panda3D
-                self.textures[texture_name] = texture_path
-                logger.debug(f"Загружена текстура: {texture_name}")
-                
+            return [
+                obj.object_id for obj in self.render_objects.values()
+                if obj.layer == layer
+            ]
         except Exception as e:
-            logger.warning(f"Не удалось загрузить базовые текстуры: {e}")
+            logger.error(f"Ошибка получения объектов по слою {layer.value}: {e}")
+            return []
     
-    def _configure_render_quality(self) -> None:
-        """Настройка качества рендеринга"""
-        try:
-            quality_settings = {
-                RenderQuality.LOW: {
-                    'shadow_quality': 'low',
-                    'texture_quality': 'low',
-                    'anti_aliasing': False,
-                    'bloom': False,
-                    'motion_blur': False
-                },
-                RenderQuality.MEDIUM: {
-                    'shadow_quality': 'medium',
-                    'texture_quality': 'medium',
-                    'anti_aliasing': True,
-                    'bloom': False,
-                    'motion_blur': False
-                },
-                RenderQuality.HIGH: {
-                    'shadow_quality': 'high',
-                    'texture_quality': 'high',
-                    'anti_aliasing': True,
-                    'bloom': True,
-                    'motion_blur': False
-                },
-                RenderQuality.ULTRA: {
-                    'shadow_quality': 'ultra',
-                    'texture_quality': 'ultra',
-                    'anti_aliasing': True,
-                    'bloom': True,
-                    'motion_blur': True
-                }
-            }
-            
-            settings = quality_settings.get(self.render_quality, quality_settings[RenderQuality.MEDIUM])
-            
-            self.enable_shadows = settings['shadow_quality'] != 'low'
-            self.enable_antialiasing = settings['anti_aliasing']
-            self.enable_bloom = settings['bloom']
-            self.enable_motion_blur = settings['motion_blur']
-            
-            logger.debug(f"Настроено качество рендеринга: {self.render_quality.value}")
-            
-        except Exception as e:
-            logger.warning(f"Не удалось настроить качество рендеринга: {e}")
-    
-    def _clear_frame(self) -> None:
-        """Очистка кадра"""
-        try:
-            if self.render_node:
-                # Panda3D очистка кадра
-                pass
-        except Exception as e:
-            logger.warning(f"Не удалось очистить кадр: {e}")
-    
-    def _render_layer(self, layer: RenderLayer, scene_data: Dict[str, Any]) -> None:
-        """Рендеринг слоя"""
-        try:
-            layer_objects = self.render_layers[layer]
-            
-            for object_id in layer_objects:
-                if object_id in self.render_objects:
-                    render_object = self.render_objects[object_id]
-                    if render_object.visible:
-                        self._render_object(render_object, scene_data)
-                        
-        except Exception as e:
-            logger.warning(f"Ошибка рендеринга слоя {layer.value}: {e}")
-    
-    def _render_object(self, render_object: RenderObject, scene_data: Dict[str, Any]) -> None:
-        """Рендеринг объекта"""
-        try:
-            # Здесь должна быть логика рендеринга Panda3D
-            # Обновляем статистику
-            self.render_stats.draw_calls += 1
-            
-        except Exception as e:
-            logger.warning(f"Ошибка рендеринга объекта {render_object.object_id}: {e}")
-    
-    def _apply_post_effects(self) -> None:
-        """Применение пост-эффектов"""
-        try:
-            if self.enable_bloom:
-                self._apply_bloom_effect()
-            
-            if self.enable_motion_blur:
-                self._apply_motion_blur_effect()
-                
-        except Exception as e:
-            logger.warning(f"Ошибка применения пост-эффектов: {e}")
-    
-    def _apply_bloom_effect(self) -> None:
-        """Применение эффекта bloom"""
-        try:
-            # Логика bloom эффекта Panda3D
-            pass
-        except Exception as e:
-            logger.warning(f"Ошибка применения bloom эффекта: {e}")
-    
-    def _apply_motion_blur_effect(self) -> None:
-        """Применение эффекта motion blur"""
-        try:
-            # Логика motion blur эффекта Panda3D
-            pass
-        except Exception as e:
-            logger.warning(f"Ошибка применения motion blur эффекта: {e}")
-    
-    def _update_render_stats(self, delta_time: float) -> None:
-        """Обновление статистики рендеринга"""
-        try:
-            current_time = time.time()
-            self.render_stats.frame_time = current_time - self.last_frame_time
-            
-            if self.render_stats.frame_time > 0:
-                self.render_stats.fps = 1.0 / self.render_stats.frame_time
-            
-            self.last_frame_time = current_time
-            
-        except Exception as e:
-            logger.warning(f"Ошибка обновления статистики рендеринга: {e}")
-    
-    def _update_animations(self, delta_time: float) -> None:
-        """Обновление анимаций"""
-        try:
-            for render_object in self.render_objects.values():
-                if render_object.animation_data:
-                    # Логика обновления анимаций Panda3D
-                    pass
-                    
-        except Exception as e:
-            logger.warning(f"Ошибка обновления анимаций: {e}")
-    
-    def _update_effects(self, delta_time: float) -> None:
-        """Обновление эффектов"""
-        try:
-            # Логика обновления эффектов рендеринга
-            pass
-        except Exception as e:
-            logger.warning(f"Ошибка обновления эффектов: {e}")
-    
-    def _update_frame_stats(self) -> None:
-        """Обновление статистики кадра"""
-        try:
-            self.render_stats.frame_count += 1
-            
-        except Exception as e:
-            logger.warning(f"Ошибка обновления статистики кадра: {e}")
-    
-    def _handle_object_created(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события создания объекта"""
-        try:
-            return self.create_render_object(
-                event_data.get('object_type', 'unknown'),
-                event_data
-            ) is not None
-        except Exception as e:
-            logger.error(f"Ошибка обработки события создания объекта: {e}")
-            return False
-    
-    def _handle_object_updated(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события обновления объекта"""
-        try:
-            object_id = event_data.get('object_id')
-            if object_id:
-                return self.update_render_object(object_id, event_data)
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка обработки события обновления объекта: {e}")
-            return False
-    
-    def _handle_object_destroyed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события уничтожения объекта"""
-        try:
-            object_id = event_data.get('object_id')
-            if object_id:
-                return self.destroy_render_object(object_id)
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка обработки события уничтожения объекта: {e}")
-            return False
-    
-    def _handle_quality_changed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события изменения качества"""
-        try:
-            quality = RenderQuality(event_data.get('quality', RenderQuality.MEDIUM.value))
-            return self.set_render_quality(quality)
-        except Exception as e:
-            logger.error(f"Ошибка обработки события изменения качества: {e}")
-            return False
+

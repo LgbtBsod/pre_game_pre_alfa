@@ -1,0 +1,1 @@
+2025-08-24 20:13:24 - root - ERROR - Ошибка инициализации: cannot import name 'IEventEmitter' from 'core.interfaces' (C:\Users\lgbtb\Desktop\AI-EVOLVE\src\core\interfaces.py)

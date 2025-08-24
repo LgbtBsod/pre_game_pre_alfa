@@ -1,113 +1,95 @@
 #!/usr/bin/env python3
 """
-Система эволюции - управление эволюцией существ и их характеристиками
+Система эволюции - управление эволюционными процессами сущностей
 """
 
 import logging
-import random
 import time
-from typing import Dict, List, Optional, Any
-from dataclasses import dataclass
-from enum import Enum
+import random
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    EvolutionStage, EvolutionType, GeneType, GeneRarity, StatType,
+    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
-
-class EvolutionStage(Enum):
-    """Стадии эволюции"""
-    EGG = "egg"
-    LARVA = "larva"
-    JUVENILE = "juvenile"
-    ADULT = "adult"
-    ELDER = "elder"
-    LEGENDARY = "legendary"
-
-class EvolutionType(Enum):
-    """Типы эволюции"""
-    NATURAL = "natural"      # Естественная эволюция
-    COMBAT = "combat"        # Эволюция через бой
-    ENVIRONMENTAL = "environmental"  # Эволюция через окружение
-    MUTATION = "mutation"    # Мутационная эволюция
-
-@dataclass
-class EvolutionStats:
-    """Статистика эволюции"""
-    health: int = 100
-    attack: int = 10
-    defense: int = 5
-    speed: int = 5
-    intelligence: int = 5
-    special_ability: str = "none"
-    
-    def __add__(self, other: 'EvolutionStats') -> 'EvolutionStats':
-        """Сложение статистик"""
-        return EvolutionStats(
-            health=self.health + other.health,
-            attack=self.attack + other.attack,
-            defense=self.defense + other.defense,
-            speed=self.speed + other.speed,
-            intelligence=self.intelligence + other.intelligence,
-            special_ability=other.special_ability if other.special_ability != "none" else self.special_ability
-        )
-
-@dataclass
-class EvolutionRequirement:
-    """Требования для эволюции"""
-    level: int = 1
-    experience: int = 0
-    items: List[str] = None
-    conditions: List[str] = None
-    
-    def __post_init__(self):
-        if self.items is None:
-            self.items = []
-        if self.conditions is None:
-            self.conditions = []
 
 @dataclass
 class EvolutionProgress:
     """Прогресс эволюции"""
     entity_id: str
     current_stage: EvolutionStage
-    target_stage: EvolutionStage
-    progress_percentage: float
-    requirements_met: bool
-    last_update: float
+    evolution_points: int = 0
+    required_points: int = 100
+    mutations_count: int = 0
+    adaptations_count: int = 0
+    last_evolution: float = 0.0
+    evolution_history: List[str] = field(default_factory=list)
+
+@dataclass
+class Gene:
+    """Генетическая информация"""
+    gene_id: str
+    gene_type: GeneType
+    rarity: GeneRarity
+    strength: float = 1.0
+    mutation_chance: float = 0.01
+    expression_level: float = 1.0
+    dominant: bool = False
+    active: bool = True
+    generation: int = 1
+
+@dataclass
+class EvolutionTrigger:
+    """Триггер эволюции"""
+    trigger_id: str
+    trigger_type: str
+    conditions: Dict[str, Any] = field(default_factory=dict)
+    probability: float = 1.0
+    cooldown: float = 0.0
+    last_triggered: float = 0.0
 
 class EvolutionSystem(ISystem):
-    """Система эволюции существ"""
+    """Система управления эволюцией"""
     
     def __init__(self):
         self._system_name = "evolution"
-        self._system_priority = SystemPriority.NORMAL
+        self._system_priority = SystemPriority.HIGH
         self._system_state = SystemState.UNINITIALIZED
         self._dependencies = []
         
-        # Пути эволюции
-        self.evolution_paths: Dict[str, List[EvolutionStage]] = {}
+        # Прогресс эволюции сущностей
+        self.evolution_progress: Dict[str, EvolutionProgress] = {}
         
-        # Статистики для каждой стадии
-        self.stage_stats: Dict[EvolutionStage, EvolutionStats] = {}
+        # Гены сущностей
+        self.entity_genes: Dict[str, List[Gene]] = {}
         
-        # Требования для эволюции
-        self.evolution_requirements: Dict[EvolutionStage, EvolutionRequirement] = {}
+        # Триггеры эволюции
+        self.evolution_triggers: List[EvolutionTrigger] = []
         
-        # Шансы мутаций
-        self.mutation_chances: Dict[str, float] = {}
+        # История эволюции
+        self.evolution_history: List[Dict[str, Any]] = []
         
-        # Активные эволюции
-        self.active_evolutions: Dict[str, EvolutionProgress] = {}
-        
-        # История эволюций
-        self.evolution_history: Dict[str, List[Dict[str, Any]]] = {}
+        # Настройки системы
+        self.system_settings = {
+            'max_evolution_stage': EvolutionStage.LEGENDARY,
+            'base_evolution_points': 100,
+            'mutation_chance': PROBABILITY_CONSTANTS["base_mutation_chance"],
+            'adaptation_chance': PROBABILITY_CONSTANTS["base_adaptation_chance"],
+            'gene_expression_rate': 0.1,
+            'evolution_cooldown': TIME_CONSTANTS["evolution_cooldown"]
+        }
         
         # Статистика системы
         self.system_stats = {
-            'entities_count': 0,
-            'evolutions_completed': 0,
-            'mutations_triggered': 0,
-            'active_evolutions': 0,
+            'entities_evolving': 0,
+            'total_evolutions': 0,
+            'mutations_occurred': 0,
+            'adaptations_occurred': 0,
+            'genes_activated': 0,
             'update_time': 0.0
         }
         
@@ -134,17 +116,11 @@ class EvolutionSystem(ISystem):
         try:
             logger.info("Инициализация системы эволюции...")
             
-            # Настраиваем пути эволюции
-            self._setup_evolution_paths()
+            # Настраиваем систему
+            self._setup_evolution_system()
             
-            # Настраиваем статистики для каждой стадии
-            self._setup_stage_stats()
-            
-            # Настраиваем требования для эволюции
-            self._setup_evolution_requirements()
-            
-            # Настраиваем шансы мутаций
-            self._setup_mutation_chances()
+            # Создаем базовые триггеры эволюции
+            self._create_base_triggers()
             
             self._system_state = SystemState.READY
             logger.info("Система эволюции успешно инициализирована")
@@ -163,13 +139,18 @@ class EvolutionSystem(ISystem):
             
             start_time = time.time()
             
-            # Обновляем активные эволюции
-            self._update_active_evolutions(delta_time)
+            # Обновляем прогресс эволюции
+            self._update_evolution_progress(delta_time)
             
-            # Проверяем возможность эволюции для всех сущностей
-            self._check_evolution_opportunities()
+            # Проверяем триггеры эволюции
+            self._check_evolution_triggers(delta_time)
+            
+            # Обновляем экспрессию генов
+            self._update_gene_expression(delta_time)
             
             # Обновляем статистику системы
+            self._update_system_stats()
+            
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
@@ -208,19 +189,18 @@ class EvolutionSystem(ISystem):
             logger.info("Очистка системы эволюции...")
             
             # Очищаем все данные
-            self.evolution_paths.clear()
-            self.stage_stats.clear()
-            self.evolution_requirements.clear()
-            self.mutation_chances.clear()
-            self.active_evolutions.clear()
+            self.evolution_progress.clear()
+            self.entity_genes.clear()
+            self.evolution_triggers.clear()
             self.evolution_history.clear()
             
             # Сбрасываем статистику
             self.system_stats = {
-                'entities_count': 0,
-                'evolutions_completed': 0,
-                'mutations_triggered': 0,
-                'active_evolutions': 0,
+                'entities_evolving': 0,
+                'total_evolutions': 0,
+                'mutations_occurred': 0,
+                'adaptations_occurred': 0,
+                'genes_activated': 0,
                 'update_time': 0.0
             }
             
@@ -239,9 +219,9 @@ class EvolutionSystem(ISystem):
             'state': self.system_state.value,
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
-            'evolution_paths_count': len(self.evolution_paths),
-            'stages_count': len(self.stage_stats),
-            'active_evolutions': len(self.active_evolutions),
+            'entities_evolving': len(self.evolution_progress),
+            'total_genes': sum(len(genes) for genes in self.entity_genes.values()),
+            'evolution_triggers': len(self.evolution_triggers),
             'stats': self.system_stats
         }
     
@@ -250,439 +230,685 @@ class EvolutionSystem(ISystem):
         try:
             if event_type == "entity_created":
                 return self._handle_entity_created(event_data)
-            elif event_type == "entity_level_up":
-                return self._handle_entity_level_up(event_data)
-            elif event_type == "entity_experience_gained":
-                return self._handle_entity_experience_gained(event_data)
-            elif event_type == "evolution_triggered":
-                return self._handle_evolution_triggered(event_data)
-            elif event_type == "mutation_triggered":
-                return self._handle_mutation_triggered(event_data)
+            elif event_type == "entity_destroyed":
+                return self._handle_entity_destroyed(event_data)
+            elif event_type == "experience_gained":
+                return self._handle_experience_gained(event_data)
+            elif event_type == "combat_ended":
+                return self._handle_combat_ended(event_data)
             else:
                 return False
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def can_evolve(self, entity: Dict[str, Any], target_stage: EvolutionStage) -> bool:
-        """Проверка возможности эволюции"""
-        if target_stage not in self.evolution_requirements:
-            return False
-        
-        req = self.evolution_requirements[target_stage]
-        
-        # Проверка уровня
-        if entity.get('level', 0) < req.level:
-            return False
-        
-        # Проверка опыта
-        if entity.get('experience', 0) < req.experience:
-            return False
-        
-        # Проверка предметов
-        if req.items:
-            inventory = entity.get('inventory', [])
-            for item in req.items:
-                if item not in inventory:
-                    return False
-        
-        # Проверка условий
-        if req.conditions:
-            for condition in req.conditions:
-                if not self._check_condition(entity, condition):
-                    return False
-        
-        return True
-    
-    def _check_condition(self, entity: Dict[str, Any], condition: str) -> bool:
-        """Проверка специального условия"""
-        if condition == "combat_mastery":
-            return entity.get('combat_wins', 0) >= 10
-        elif condition == "environmental_adaptation":
-            return entity.get('environment_exposure', 0) >= 100
-        elif condition == "social_bonding":
-            return entity.get('social_interactions', 0) >= 50
-        
-        return True
-    
-    def evolve(self, entity: Dict[str, Any], target_stage: EvolutionStage) -> bool:
-        """Эволюция существа"""
-        if not self.can_evolve(entity, target_stage):
-            logger.warning(f"Существо {entity.get('name', 'unknown')} не может эволюционировать в {target_stage.value}")
-            return False
-        
+    def _setup_evolution_system(self) -> None:
+        """Настройка системы эволюции"""
         try:
-            # Получаем статистики новой стадии
-            new_stats = self.stage_stats[target_stage]
+            # Инициализируем базовые настройки
+            logger.debug("Система эволюции настроена")
+        except Exception as e:
+            logger.warning(f"Не удалось настроить систему эволюции: {e}")
+    
+    def _create_base_triggers(self) -> None:
+        """Создание базовых триггеров эволюции"""
+        try:
+            # Триггер по уровню
+            level_trigger = EvolutionTrigger(
+                trigger_id="level_up",
+                trigger_type="level",
+                conditions={'min_level': 10},
+                probability=0.8,
+                cooldown=0.0
+            )
             
-            # Применяем эволюцию
-            old_stage = entity.get('evolution_stage', EvolutionStage.EGG)
-            entity['evolution_stage'] = target_stage
+            # Триггер по опыту
+            experience_trigger = EvolutionTrigger(
+                trigger_id="experience_milestone",
+                trigger_type="experience",
+                conditions={'min_experience': 1000},
+                probability=0.6,
+                cooldown=300.0  # 5 минут
+            )
             
-            # Обновляем базовые характеристики
-            entity['health'] = new_stats.health
-            entity['max_health'] = new_stats.health
-            entity['attack'] = new_stats.attack
-            entity['defense'] = new_stats.defense
-            entity['speed'] = new_stats.speed
-            entity['intelligence'] = new_stats.intelligence
+            # Триггер по выживанию
+            survival_trigger = EvolutionTrigger(
+                trigger_id="survival",
+                trigger_type="combat",
+                conditions={'combats_survived': 5, 'health_threshold': 0.2},
+                probability=0.4,
+                cooldown=600.0  # 10 минут
+            )
             
-            # Добавляем специальные способности
-            if new_stats.special_ability != "none":
-                if 'abilities' not in entity:
-                    entity['abilities'] = []
-                entity['abilities'].append(new_stats.special_ability)
+            # Триггер по адаптации
+            adaptation_trigger = EvolutionTrigger(
+                trigger_id="environment_adaptation",
+                trigger_type="environment",
+                conditions={'time_in_environment': 1800},  # 30 минут
+                probability=0.3,
+                cooldown=900.0  # 15 минут
+            )
             
-            # Записываем в историю
-            entity_id = entity.get('id', 'unknown')
-            if entity_id not in self.evolution_history:
-                self.evolution_history[entity_id] = []
+            self.evolution_triggers = [
+                level_trigger, experience_trigger, survival_trigger, adaptation_trigger
+            ]
             
-            evolution_record = {
-                'timestamp': time.time(),
-                'from_stage': old_stage.value,
-                'to_stage': target_stage.value,
-                'type': 'natural'
-            }
-            self.evolution_history[entity_id].append(evolution_record)
-            
-            # Обновляем статистику
-            self.system_stats['evolutions_completed'] += 1
-            
-            # Удаляем из активных эволюций
-            if entity_id in self.active_evolutions:
-                del self.active_evolutions[entity_id]
-                self.system_stats['active_evolutions'] = len(self.active_evolutions)
-            
-            # Логируем эволюцию
-            logger.info(f"Существо {entity.get('name', 'unknown')} эволюционировало с {old_stage.value} в {target_stage.value}")
-            
-            return True
+            logger.info(f"Создано {len(self.evolution_triggers)} базовых триггеров эволюции")
             
         except Exception as e:
-            logger.error(f"Ошибка эволюции существа {entity.get('name', 'unknown')}: {e}")
-            return False
+            logger.error(f"Ошибка создания базовых триггеров эволюции: {e}")
     
-    def check_mutation(self, entity: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Проверка мутации существа"""
-        mutation_roll = random.random()
-        
-        if mutation_roll < self.mutation_chances["special"]:
-            mutation = self._create_special_mutation(entity)
-        elif mutation_roll < self.mutation_chances["special"] + self.mutation_chances["positive"]:
-            mutation = self._create_positive_mutation(entity)
-        elif mutation_roll < self.mutation_chances["special"] + self.mutation_chances["positive"] + self.mutation_chances["negative"]:
-            mutation = self._create_negative_mutation(entity)
-        elif mutation_roll < self.mutation_chances["special"] + self.mutation_chances["positive"] + self.mutation_chances["negative"] + self.mutation_chances["neutral"]:
-            mutation = self._create_neutral_mutation(entity)
-        else:
-            return None
-        
-        # Записываем мутацию в историю
-        if mutation:
-            entity_id = entity.get('id', 'unknown')
-            if entity_id not in self.evolution_history:
-                self.evolution_history[entity_id] = []
-            
-            mutation_record = {
-                'timestamp': time.time(),
-                'type': 'mutation',
-                'mutation_data': mutation
-            }
-            self.evolution_history[entity_id].append(mutation_record)
-            
-            # Обновляем статистику
-            self.system_stats['mutations_triggered'] += 1
-        
-        return mutation
-    
-    def _create_positive_mutation(self, entity: Dict[str, Any]) -> Dict[str, Any]:
-        """Создание положительной мутации"""
-        mutations = [
-            {"stat": "attack", "bonus": 2, "name": "Усиленная атака"},
-            {"stat": "defense", "bonus": 2, "name": "Усиленная защита"},
-            {"stat": "speed", "bonus": 1, "name": "Увеличенная скорость"},
-            {"stat": "intelligence", "bonus": 1, "name": "Повышенный интеллект"}
-        ]
-        
-        mutation = random.choice(mutations)
-        entity[mutation["stat"]] += mutation["bonus"]
-        
-        logger.info(f"Положительная мутация: {mutation['name']} для {entity.get('name', 'unknown')}")
-        
-        return {
-            "type": "positive",
-            "name": mutation["name"],
-            "stat": mutation["stat"],
-            "bonus": mutation["bonus"]
-        }
-    
-    def _create_negative_mutation(self, entity: Dict[str, Any]) -> Dict[str, Any]:
-        """Создание отрицательной мутации"""
-        mutations = [
-            {"stat": "attack", "penalty": -1, "name": "Ослабленная атака"},
-            {"stat": "defense", "penalty": -1, "name": "Ослабленная защита"},
-            {"stat": "speed", "penalty": -1, "name": "Сниженная скорость"}
-        ]
-        
-        mutation = random.choice(mutations)
-        entity[mutation["stat"]] = max(1, entity[mutation["stat"]] + mutation["penalty"])
-        
-        logger.info(f"Отрицательная мутация: {mutation['name']} для {entity.get('name', 'unknown')}")
-        
-        return {
-            "type": "negative",
-            "name": mutation["name"],
-            "stat": mutation["stat"],
-            "penalty": mutation["penalty"]
-        }
-    
-    def _create_neutral_mutation(self, entity: Dict[str, Any]) -> Dict[str, Any]:
-        """Создание нейтральной мутации"""
-        mutations = [
-            {"name": "Изменение цвета", "effect": "Визуальное изменение"},
-            {"name": "Новый звук", "effect": "Звуковое изменение"},
-            {"name": "Особый запах", "effect": "Обонятельное изменение"}
-        ]
-        
-        mutation = random.choice(mutations)
-        
-        logger.info(f"Нейтральная мутация: {mutation['name']} для {entity.get('name', 'unknown')}")
-        
-        return {
-            "type": "neutral",
-            "name": mutation["name"],
-            "effect": mutation["effect"]
-        }
-    
-    def _create_special_mutation(self, entity: Dict[str, Any]) -> Dict[str, Any]:
-        """Создание специальной мутации"""
-        special_mutations = [
-            {"name": "Элементальная атака", "ability": "fire_breath", "description": "Дыхание огнем"},
-            {"name": "Телепортация", "ability": "teleport", "description": "Кратковременная телепортация"},
-            {"name": "Регенерация", "ability": "regeneration", "description": "Быстрое восстановление здоровья"}
-        ]
-        
-        mutation = random.choice(special_mutations)
-        
-        # Добавляем способность
-        if 'abilities' not in entity:
-            entity['abilities'] = []
-        entity['abilities'].append(mutation["ability"])
-        
-        logger.info(f"Специальная мутация: {mutation['name']} для {entity.get('name', 'unknown')}")
-        
-        return {
-            "type": "special",
-            "name": mutation["name"],
-            "ability": mutation["ability"],
-            "description": mutation["description"]
-        }
-    
-    def get_evolution_info(self, entity: Dict[str, Any]) -> Dict[str, Any]:
-        """Получение информации об эволюции существа"""
-        current_stage = entity.get('evolution_stage', EvolutionStage.EGG)
-        next_stage = self._get_next_stage(current_stage)
-        
-        info = {
-            "current_stage": current_stage.value,
-            "next_stage": next_stage.value if next_stage else None,
-            "can_evolve": False,
-            "requirements": None,
-            "progress": {}
-        }
-        
-        if next_stage:
-            info["can_evolve"] = self.can_evolve(entity, next_stage)
-            info["requirements"] = self.evolution_requirements[next_stage]
-            
-            # Прогресс к следующей стадии
-            req = self.evolution_requirements[next_stage]
-            info["progress"] = {
-                "level": min(100, (entity.get('level', 0) / req.level) * 100),
-                "experience": min(100, (entity.get('experience', 0) / req.experience) * 100)
-            }
-        
-        return info
-    
-    def _get_next_stage(self, current_stage: EvolutionStage) -> Optional[EvolutionStage]:
-        """Получение следующей стадии эволюции"""
-        # Находим путь эволюции для текущей стадии
-        for path in self.evolution_paths.values():
-            try:
-                current_index = path.index(current_stage)
-                if current_index + 1 < len(path):
-                    return path[current_index + 1]
-            except ValueError:
-                continue
-        
-        return None
-    
-    def _setup_evolution_paths(self):
-        """Настройка путей эволюции"""
-        # Базовые пути эволюции
-        self.evolution_paths = {
-            "basic": [EvolutionStage.EGG, EvolutionStage.LARVA, EvolutionStage.JUVENILE, EvolutionStage.ADULT],
-            "combat": [EvolutionStage.EGG, EvolutionStage.LARVA, EvolutionStage.JUVENILE, EvolutionStage.ADULT, EvolutionStage.ELDER],
-            "legendary": [EvolutionStage.EGG, EvolutionStage.LARVA, EvolutionStage.JUVENILE, EvolutionStage.ADULT, EvolutionStage.ELDER, EvolutionStage.LEGENDARY]
-        }
-    
-    def _setup_stage_stats(self):
-        """Настройка статистик для каждой стадии"""
-        self.stage_stats = {
-            EvolutionStage.EGG: EvolutionStats(health=50, attack=1, defense=1, speed=1, intelligence=1),
-            EvolutionStage.LARVA: EvolutionStats(health=75, attack=3, defense=2, speed=2, intelligence=2),
-            EvolutionStage.JUVENILE: EvolutionStats(health=100, attack=6, defense=4, speed=4, intelligence=4),
-            EvolutionStage.ADULT: EvolutionStats(health=150, attack=10, defense=7, speed=6, intelligence=6),
-            EvolutionStage.ELDER: EvolutionStats(health=200, attack=15, defense=10, speed=8, intelligence=8),
-            EvolutionStage.LEGENDARY: EvolutionStats(health=300, attack=25, defense=15, speed=12, intelligence=12, special_ability="legendary_power")
-        }
-    
-    def _setup_evolution_requirements(self):
-        """Настройка требований для эволюции"""
-        self.evolution_requirements = {
-            EvolutionStage.LARVA: EvolutionRequirement(level=5, experience=100),
-            EvolutionStage.JUVENILE: EvolutionRequirement(level=10, experience=500),
-            EvolutionStage.ADULT: EvolutionRequirement(level=20, experience=2000),
-            EvolutionStage.ELDER: EvolutionRequirement(level=35, experience=10000),
-            EvolutionStage.LEGENDARY: EvolutionRequirement(level=50, experience=50000, items=["legendary_crystal"])
-        }
-    
-    def _setup_mutation_chances(self):
-        """Настройка шансов мутаций"""
-        self.mutation_chances = {
-            "positive": 0.15,      # 15% шанс положительной мутации
-            "negative": 0.10,      # 10% шанс отрицательной мутации
-            "neutral": 0.05,       # 5% шанс нейтральной мутации
-            "special": 0.02        # 2% шанс специальной мутации
-        }
-    
-    def _update_active_evolutions(self, delta_time: float) -> None:
-        """Обновление активных эволюций"""
+    def _update_evolution_progress(self, delta_time: float) -> None:
+        """Обновление прогресса эволюции"""
         try:
             current_time = time.time()
             
-            # Обновляем прогресс эволюций
-            for entity_id, progress in list(self.active_evolutions.items()):
-                # Проверяем, не истекло ли время
-                if current_time - progress.last_update > 300:  # 5 минут
-                    del self.active_evolutions[entity_id]
+            for entity_id, progress in self.evolution_progress.items():
+                # Проверяем, не истек ли кулдаун эволюции
+                if current_time - progress.last_evolution < self.system_settings['evolution_cooldown']:
                     continue
                 
-                # Обновляем время последнего обновления
-                progress.last_update = current_time
+                # Проверяем, готовы ли к эволюции
+                if progress.evolution_points >= progress.required_points:
+                    if self._trigger_evolution(entity_id, progress):
+                        progress.last_evolution = current_time
+                        progress.evolution_points = 0
+                        progress.required_points = int(progress.required_points * 1.5)
                 
         except Exception as e:
-            logger.warning(f"Ошибка обновления активных эволюций: {e}")
+            logger.warning(f"Ошибка обновления прогресса эволюции: {e}")
     
-    def _check_evolution_opportunities(self) -> None:
-        """Проверка возможностей эволюции"""
+    def _check_evolution_triggers(self, delta_time: float) -> None:
+        """Проверка триггеров эволюции"""
         try:
-            # Здесь можно добавить логику для автоматической проверки
-            # всех сущностей на возможность эволюции
-            pass
+            current_time = time.time()
+            
+            for trigger in self.evolution_triggers:
+                # Проверяем кулдаун
+                if current_time - trigger.last_triggered < trigger.cooldown:
+                    continue
+                
+                # Проверяем условия
+                if self._check_trigger_conditions(trigger):
+                    # Пытаемся активировать триггер
+                    if random.random() < trigger.probability:
+                        self._activate_evolution_trigger(trigger)
+                        trigger.last_triggered = current_time
+                
         except Exception as e:
-            logger.warning(f"Ошибка проверки возможностей эволюции: {e}")
+            logger.warning(f"Ошибка проверки триггеров эволюции: {e}")
+    
+    def _update_gene_expression(self, delta_time: float) -> None:
+        """Обновление экспрессии генов"""
+        try:
+            for entity_id, genes in self.entity_genes.items():
+                for gene in genes:
+                    if not gene.active:
+                        continue
+                    
+                    # Обновляем уровень экспрессии
+                    expression_change = random.uniform(-0.1, 0.1) * self.system_settings['gene_expression_rate']
+                    gene.expression_level = max(0.0, min(2.0, gene.expression_level + expression_change))
+                    
+                    # Проверяем мутации
+                    if random.random() < gene.mutation_chance:
+                        self._trigger_gene_mutation(entity_id, gene)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления экспрессии генов: {e}")
+    
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            self.system_stats['entities_evolving'] = len(self.evolution_progress)
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
     
     def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события создания сущности"""
         try:
             entity_id = event_data.get('entity_id')
-            entity_data = event_data.get('entity_data', {})
+            initial_genes = event_data.get('initial_genes', [])
             
-            if entity_id and entity_data:
-                # Инициализируем эволюцию для новой сущности
-                evolution_stage = entity_data.get('evolution_stage', EvolutionStage.EGG)
-                entity_data['evolution_stage'] = evolution_stage
-                
-                # Создаем запись в истории
-                if entity_id not in self.evolution_history:
-                    self.evolution_history[entity_id] = []
-                
-                creation_record = {
-                    'timestamp': time.time(),
-                    'type': 'creation',
-                    'stage': evolution_stage.value
-                }
-                self.evolution_history[entity_id].append(creation_record)
-                
-                self.system_stats['entities_count'] += 1
-                return True
+            if entity_id:
+                return self.create_evolution_entity(entity_id, initial_genes)
             return False
             
         except Exception as e:
             logger.error(f"Ошибка обработки события создания сущности: {e}")
             return False
     
-    def _handle_entity_level_up(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события повышения уровня сущности"""
+    def _handle_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения сущности"""
         try:
             entity_id = event_data.get('entity_id')
-            new_level = event_data.get('new_level', 1)
             
-            if entity_id and new_level:
-                # Проверяем возможность эволюции
-                # Здесь можно добавить логику автоматической эволюции
-                return True
+            if entity_id:
+                return self.destroy_evolution_entity(entity_id)
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события повышения уровня: {e}")
+            logger.error(f"Ошибка обработки события уничтожения сущности: {e}")
             return False
     
-    def _handle_entity_experience_gained(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события получения опыта сущностью"""
+    def _handle_experience_gained(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события получения опыта"""
         try:
             entity_id = event_data.get('entity_id')
-            experience_gained = event_data.get('experience_gained', 0)
+            experience_amount = event_data.get('experience_amount', 0)
             
-            if entity_id and experience_gained:
-                # Проверяем возможность эволюции
-                # Здесь можно добавить логику автоматической эволюции
-                return True
+            if entity_id and experience_amount > 0:
+                return self.add_evolution_points(entity_id, experience_amount // 10)
             return False
             
         except Exception as e:
             logger.error(f"Ошибка обработки события получения опыта: {e}")
             return False
     
-    def _handle_evolution_triggered(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события запуска эволюции"""
+    def _handle_combat_ended(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события окончания боя"""
         try:
-            entity_id = event_data.get('entity_id')
-            target_stage = event_data.get('target_stage')
+            combat_id = event_data.get('combat_id')
+            participants = event_data.get('participants')
+            result = event_data.get('result')
             
-            if entity_id and target_stage:
-                # Создаем прогресс эволюции
-                progress = EvolutionProgress(
-                    entity_id=entity_id,
-                    current_stage=event_data.get('current_stage', EvolutionStage.EGG),
-                    target_stage=target_stage,
-                    progress_percentage=0.0,
-                    requirements_met=False,
-                    last_update=time.time()
-                )
-                
-                self.active_evolutions[entity_id] = progress
-                self.system_stats['active_evolutions'] = len(self.active_evolutions)
+            if combat_id and participants and result:
+                # Проверяем триггеры эволюции для участников
+                for participant_id in participants:
+                    if participant_id in self.evolution_progress:
+                        if result == "victory":
+                            # Победители получают бонусные очки эволюции
+                            self.add_evolution_points(participant_id, 25)
+                        else:
+                            # Проигравшие получают меньше очков, но могут адаптироваться
+                            self.add_evolution_points(participant_id, 5)
+                            if random.random() < self.system_settings['adaptation_chance']:
+                                self._trigger_adaptation(participant_id)
                 return True
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события запуска эволюции: {e}")
+            logger.error(f"Ошибка обработки события окончания боя: {e}")
             return False
     
-    def _handle_mutation_triggered(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события запуска мутации"""
+    def create_evolution_entity(self, entity_id: str, initial_genes: List[Dict[str, Any]] = None) -> bool:
+        """Создание сущности для эволюции"""
         try:
-            entity_id = event_data.get('entity_id')
-            mutation_type = event_data.get('mutation_type', 'random')
+            if entity_id in self.evolution_progress:
+                logger.warning(f"Сущность {entity_id} уже существует в системе эволюции")
+                return False
             
-            if entity_id and mutation_type:
-                # Здесь можно добавить логику для принудительной мутации
-                return True
-            return False
+            # Создаем прогресс эволюции
+            progress = EvolutionProgress(
+                entity_id=entity_id,
+                current_stage=EvolutionStage.BASIC,
+                required_points=self.system_settings['base_evolution_points']
+            )
+            
+            # Создаем базовые гены
+            base_genes = self._create_base_genes(entity_id)
+            
+            # Добавляем пользовательские гены
+            if initial_genes:
+                for gene_data in initial_genes:
+                    gene = Gene(
+                        gene_id=f"custom_{int(time.time() * 1000)}",
+                        gene_type=GeneType(gene_data.get('gene_type', GeneType.PHYSICAL.value)),
+                        rarity=GeneRarity(gene_data.get('rarity', GeneRarity.COMMON.value)),
+                        strength=gene_data.get('strength', 1.0),
+                        mutation_chance=gene_data.get('mutation_chance', 0.01),
+                        expression_level=gene_data.get('expression_level', 1.0),
+                        dominant=gene_data.get('dominant', False)
+                    )
+                    base_genes.append(gene)
+            
+            # Добавляем в систему
+            self.evolution_progress[entity_id] = progress
+            self.entity_genes[entity_id] = base_genes
+            
+            logger.info(f"Создана сущность {entity_id} для эволюции с {len(base_genes)} генами")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события запуска мутации: {e}")
+            logger.error(f"Ошибка создания сущности {entity_id} для эволюции: {e}")
+            return False
+    
+    def destroy_evolution_entity(self, entity_id: str) -> bool:
+        """Уничтожение сущности из системы эволюции"""
+        try:
+            if entity_id not in self.evolution_progress:
+                return False
+            
+            # Удаляем прогресс эволюции
+            del self.evolution_progress[entity_id]
+            
+            # Удаляем гены
+            if entity_id in self.entity_genes:
+                del self.entity_genes[entity_id]
+            
+            logger.info(f"Сущность {entity_id} удалена из системы эволюции")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления сущности {entity_id} из системы эволюции: {e}")
+            return False
+    
+    def add_evolution_points(self, entity_id: str, points: int) -> bool:
+        """Добавление очков эволюции"""
+        try:
+            if entity_id not in self.evolution_progress:
+                logger.warning(f"Сущность {entity_id} не найдена в системе эволюции")
+                return False
+            
+            progress = self.evolution_progress[entity_id]
+            progress.evolution_points += points
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.evolution_history.append({
+                'timestamp': current_time,
+                'action': 'points_gained',
+                'entity_id': entity_id,
+                'points': points,
+                'total_points': progress.evolution_points
+            })
+            
+            logger.debug(f"Сущность {entity_id} получила {points} очков эволюции")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления очков эволюции для {entity_id}: {e}")
+            return False
+    
+    def _create_base_genes(self, entity_id: str) -> List[Gene]:
+        """Создание базовых генов для сущности"""
+        try:
+            base_genes = []
+            
+            # Физические гены
+            physical_genes = [
+                Gene(
+                    gene_id=f"strength_{entity_id}",
+                    gene_type=GeneType.PHYSICAL,
+                    rarity=GeneRarity.COMMON,
+                    strength=1.0,
+                    mutation_chance=0.01
+                ),
+                Gene(
+                    gene_id=f"agility_{entity_id}",
+                    gene_type=GeneType.PHYSICAL,
+                    rarity=GeneRarity.COMMON,
+                    strength=1.0,
+                    mutation_chance=0.01
+                )
+            ]
+            
+            # Ментальные гены
+            mental_genes = [
+                Gene(
+                    gene_id=f"intelligence_{entity_id}",
+                    gene_type=GeneType.MENTAL,
+                    rarity=GeneRarity.COMMON,
+                    strength=1.0,
+                    mutation_chance=0.01
+                ),
+                Gene(
+                    gene_id=f"wisdom_{entity_id}",
+                    gene_type=GeneType.MENTAL,
+                    rarity=GeneRarity.COMMON,
+                    strength=1.0,
+                    mutation_chance=0.01
+                )
+            ]
+            
+            # Энергетические гены
+            energy_genes = [
+                Gene(
+                    gene_id=f"vitality_{entity_id}",
+                    gene_type=GeneType.ENERGY,
+                    rarity=GeneRarity.COMMON,
+                    strength=1.0,
+                    mutation_chance=0.01
+                )
+            ]
+            
+            # Специальные гены
+            special_genes = [
+                Gene(
+                    gene_id=f"adaptation_{entity_id}",
+                    gene_type=GeneType.SPECIAL,
+                    rarity=GeneRarity.UNCOMMON,
+                    strength=1.2,
+                    mutation_chance=0.02
+                )
+            ]
+            
+            base_genes = physical_genes + mental_genes + energy_genes + special_genes
+            
+            return base_genes
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания базовых генов для {entity_id}: {e}")
+            return []
+    
+    def _trigger_evolution(self, entity_id: str, progress: EvolutionProgress) -> bool:
+        """Запуск процесса эволюции"""
+        try:
+            current_stage = progress.current_stage
+            
+            # Определяем следующий этап эволюции
+            if current_stage == EvolutionStage.BASIC:
+                next_stage = EvolutionStage.ADVANCED
+            elif current_stage == EvolutionStage.ADVANCED:
+                next_stage = EvolutionStage.ELITE
+            elif current_stage == EvolutionStage.ELITE:
+                next_stage = EvolutionStage.MASTER
+            elif current_stage == EvolutionStage.MASTER:
+                next_stage = EvolutionStage.LEGENDARY
+            else:
+                logger.warning(f"Сущность {entity_id} уже достигла максимального этапа эволюции")
+                return False
+            
+            # Выполняем эволюцию
+            progress.current_stage = next_stage
+            progress.evolution_history.append(f"Эволюция в {next_stage.value}")
+            
+            # Активируем новые гены
+            new_genes = self._generate_evolution_genes(entity_id, next_stage)
+            if entity_id in self.entity_genes:
+                self.entity_genes[entity_id].extend(new_genes)
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.evolution_history.append({
+                'timestamp': current_time,
+                'action': 'evolution_completed',
+                'entity_id': entity_id,
+                'old_stage': current_stage.value,
+                'new_stage': next_stage.value,
+                'new_genes_count': len(new_genes)
+            })
+            
+            self.system_stats['total_evolutions'] += 1
+            logger.info(f"Сущность {entity_id} эволюционировала в {next_stage.value}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска эволюции для {entity_id}: {e}")
+            return False
+    
+    def _generate_evolution_genes(self, entity_id: str, stage: EvolutionStage) -> List[Gene]:
+        """Генерация новых генов при эволюции"""
+        try:
+            new_genes = []
+            
+            # Количество новых генов зависит от этапа
+            if stage == EvolutionStage.ADVANCED:
+                gene_count = 2
+            elif stage == EvolutionStage.ELITE:
+                gene_count = 3
+            elif stage == EvolutionStage.MASTER:
+                gene_count = 4
+            elif stage == EvolutionStage.LEGENDARY:
+                gene_count = 5
+            else:
+                gene_count = 1
+            
+            for i in range(gene_count):
+                # Случайно выбираем тип гена
+                gene_type = random.choice(list(GeneType))
+                
+                # Определяем редкость на основе этапа
+                if stage == EvolutionStage.LEGENDARY:
+                    rarity = random.choices(
+                        [GeneRarity.RARE, GeneRarity.EPIC, GeneRarity.LEGENDARY],
+                        weights=[0.4, 0.4, 0.2]
+                    )[0]
+                elif stage == EvolutionStage.MASTER:
+                    rarity = random.choices(
+                        [GeneRarity.UNCOMMON, GeneRarity.RARE, GeneRarity.EPIC],
+                        weights=[0.5, 0.3, 0.2]
+                    )[0]
+                else:
+                    rarity = random.choices(
+                        [GeneRarity.COMMON, GeneRarity.UNCOMMON, GeneRarity.RARE],
+                        weights=[0.6, 0.3, 0.1]
+                    )[0]
+                
+                # Создаем ген
+                gene = Gene(
+                    gene_id=f"evolution_{stage.value}_{i}_{entity_id}",
+                    gene_type=gene_type,
+                    rarity=rarity,
+                    strength=1.0 + (stage.value * 0.2),
+                    mutation_chance=0.01 + (stage.value * 0.005),
+                    expression_level=1.0,
+                    dominant=random.random() < 0.3,
+                    generation=stage.value
+                )
+                
+                new_genes.append(gene)
+            
+            return new_genes
+            
+        except Exception as e:
+            logger.error(f"Ошибка генерации генов эволюции для {entity_id}: {e}")
+            return []
+    
+    def _check_trigger_conditions(self, trigger: EvolutionTrigger) -> bool:
+        """Проверка условий триггера"""
+        try:
+            # Здесь должна быть логика проверки условий
+            # Пока просто возвращаем True для демонстрации
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки условий триггера {trigger.trigger_id}: {e}")
+            return False
+    
+    def _activate_evolution_trigger(self, trigger: EvolutionTrigger) -> None:
+        """Активация триггера эволюции"""
+        try:
+            # Здесь должна быть логика активации триггера
+            logger.debug(f"Активирован триггер эволюции {trigger.trigger_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка активации триггера {trigger.trigger_id}: {e}")
+    
+    def _trigger_gene_mutation(self, entity_id: str, gene: Gene) -> None:
+        """Запуск мутации гена"""
+        try:
+            # Создаем мутированный ген
+            mutated_gene = Gene(
+                gene_id=f"mutated_{gene.gene_id}",
+                gene_type=gene.gene_type,
+                rarity=gene.rarity,
+                strength=gene.strength * random.uniform(0.8, 1.5),
+                mutation_chance=gene.mutation_chance * 1.5,
+                expression_level=gene.expression_level * random.uniform(0.5, 2.0),
+                dominant=gene.dominant,
+                generation=gene.generation + 1
+            )
+            
+            # Заменяем старый ген
+            if entity_id in self.entity_genes:
+                genes = self.entity_genes[entity_id]
+                for i, old_gene in enumerate(genes):
+                    if old_gene.gene_id == gene.gene_id:
+                        genes[i] = mutated_gene
+                        break
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.evolution_history.append({
+                'timestamp': current_time,
+                'action': 'gene_mutated',
+                'entity_id': entity_id,
+                'gene_id': gene.gene_id,
+                'mutation_strength': mutated_gene.strength / gene.strength
+            })
+            
+            self.system_stats['mutations_occurred'] += 1
+            logger.debug(f"Ген {gene.gene_id} мутировал у сущности {entity_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка мутации гена {gene.gene_id} у {entity_id}: {e}")
+    
+    def _trigger_adaptation(self, entity_id: str) -> None:
+        """Запуск адаптации"""
+        try:
+            if entity_id not in self.entity_genes:
+                return
+            
+            # Создаем адаптационный ген
+            adaptation_gene = Gene(
+                gene_id=f"adaptation_{int(time.time() * 1000)}",
+                gene_type=GeneType.SPECIAL,
+                rarity=GeneRarity.UNCOMMON,
+                strength=1.3,
+                mutation_chance=0.015,
+                expression_level=1.0,
+                dominant=False,
+                generation=1
+            )
+            
+            # Добавляем ген
+            self.entity_genes[entity_id].append(adaptation_gene)
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.evolution_history.append({
+                'timestamp': current_time,
+                'action': 'adaptation_occurred',
+                'entity_id': entity_id,
+                'gene_id': adaptation_gene.gene_id
+            })
+            
+            self.system_stats['adaptations_occurred'] += 1
+            logger.debug(f"Произошла адаптация у сущности {entity_id}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка адаптации у сущности {entity_id}: {e}")
+    
+    def get_evolution_progress(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение прогресса эволюции сущности"""
+        try:
+            if entity_id not in self.evolution_progress:
+                return None
+            
+            progress = self.evolution_progress[entity_id]
+            
+            return {
+                'entity_id': progress.entity_id,
+                'current_stage': progress.current_stage.value,
+                'evolution_points': progress.evolution_points,
+                'required_points': progress.required_points,
+                'mutations_count': progress.mutations_count,
+                'adaptations_count': progress.adaptations_count,
+                'last_evolution': progress.last_evolution,
+                'evolution_history': progress.evolution_history
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения прогресса эволюции для {entity_id}: {e}")
+            return None
+    
+    def get_entity_genes(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Получение генов сущности"""
+        try:
+            if entity_id not in self.entity_genes:
+                return []
+            
+            genes_info = []
+            
+            for gene in self.entity_genes[entity_id]:
+                genes_info.append({
+                    'gene_id': gene.gene_id,
+                    'gene_type': gene.gene_type.value,
+                    'rarity': gene.rarity.value,
+                    'strength': gene.strength,
+                    'mutation_chance': gene.mutation_chance,
+                    'expression_level': gene.expression_level,
+                    'dominant': gene.dominant,
+                    'active': gene.active,
+                    'generation': gene.generation
+                })
+            
+            return genes_info
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения генов сущности {entity_id}: {e}")
+            return []
+    
+    def activate_gene(self, entity_id: str, gene_id: str) -> bool:
+        """Активация гена"""
+        try:
+            if entity_id not in self.entity_genes:
+                return False
+            
+            genes = self.entity_genes[entity_id]
+            gene_to_activate = None
+            
+            for gene in genes:
+                if gene.gene_id == gene_id:
+                    gene_to_activate = gene
+                    break
+            
+            if not gene_to_activate:
+                return False
+            
+            if gene_to_activate.active:
+                logger.debug(f"Ген {gene_id} уже активен")
+                return True
+            
+            # Активируем ген
+            gene_to_activate.active = True
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.evolution_history.append({
+                'timestamp': current_time,
+                'action': 'gene_activated',
+                'entity_id': entity_id,
+                'gene_id': gene_id
+            })
+            
+            self.system_stats['genes_activated'] += 1
+            logger.debug(f"Ген {gene_id} активирован у сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка активации гена {gene_id} у {entity_id}: {e}")
+            return False
+    
+    def deactivate_gene(self, entity_id: str, gene_id: str) -> bool:
+        """Деактивация гена"""
+        try:
+            if entity_id not in self.entity_genes:
+                return False
+            
+            genes = self.entity_genes[entity_id]
+            gene_to_deactivate = None
+            
+            for gene in genes:
+                if gene.gene_id == gene_id:
+                    gene_to_deactivate = gene
+                    break
+            
+            if not gene_to_deactivate:
+                return False
+            
+            if not gene_to_deactivate.active:
+                logger.debug(f"Ген {gene_id} уже неактивен")
+                return True
+            
+            # Деактивируем ген
+            gene_to_deactivate.active = False
+            
+            logger.debug(f"Ген {gene_id} деактивирован у сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка деактивации гена {gene_id} у {entity_id}: {e}")
             return False

@@ -10,78 +10,16 @@ import json
 import time
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, asdict
-from enum import Enum
 from pathlib import Path
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    ContentType, ContentRarity, EnemyType, BossType, DamageType,
+    ItemType, ItemRarity, ItemCategory, StatType,
+    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
-
-class ContentType(Enum):
-    """Типы контента"""
-    WEAPON = "weapon"
-    ARMOR = "armor"
-    ACCESSORY = "accessory"
-    CONSUMABLE = "consumable"
-    GENE = "gene"
-    SKILL = "skill"
-    EFFECT = "effect"
-    MATERIAL = "material"
-    ENEMY = "enemy"
-    BOSS = "boss"
-
-class ContentRarity(Enum):
-    """Редкость контента"""
-    COMMON = "common"
-    UNCOMMON = "uncommon"
-    RARE = "rare"
-    EPIC = "epic"
-    LEGENDARY = "legendary"
-
-class EnemyType(Enum):
-    """Типы врагов"""
-    MELEE = "melee"
-    RANGED = "ranged"
-    MAGIC = "magic"
-    FLYING = "flying"
-    UNDEAD = "undead"
-    BEAST = "beast"
-    HUMAN = "human"
-    DEMON = "demon"
-    DRAGON = "dragon"
-    GIANT = "giant"
-    ELF = "elf"
-    ORC = "orc"
-    TROLL = "troll"
-    GOBLIN = "goblin"
-    SKELETON = "skeleton"
-    ZOMBIE = "zombie"
-    WITCH = "witch"
-    WEREWOLF = "werewolf"
-    VAMPIRE = "vampire"
-    WITCH = "witch"
-    WEREWOLF = "werewolf"
-    VAMPIRE = "vampire"
-    
-
-class BossType(Enum):
-    """Типы боссов"""
-    MINI_BOSS = "mini_boss"
-    AREA_BOSS = "area_boss"
-    DUNGEON_BOSS = "dungeon_boss"
-    WORLD_BOSS = "world_boss"
-    FINAL_BOSS = "final_boss"
-
-class DamageType(Enum):
-    """Типы урона"""
-    PHYSICAL = "physical"
-    FIRE = "fire"
-    ICE = "ice"
-    LIGHTNING = "lightning"
-    POISON = "poison"
-    HOLY = "holy"
-    DARK = "dark"
-    ARCANE = "arcane"
 
 @dataclass
 class ContentItem:
@@ -98,74 +36,55 @@ class ContentItem:
     is_saved: bool = False  # Сохранен ли в слот
 
 @dataclass
-class EnemyData:
-    """Данные врага"""
-    enemy_type: EnemyType
-    base_health: int
-    base_mana: int
-    base_attack: int
-    base_defense: int
-    base_speed: float
-    base_intelligence: int
-    weaknesses: List[DamageType]
-    resistances: List[DamageType]
-    immunities: List[DamageType]
-    skills: List[str]  # UUID скиллов
-    loot_table: List[str]  # UUID предметов в луте
-    experience_reward: int
-    gold_reward: int
-    ai_behavior: str  # Тип поведения AI
-    spawn_conditions: Dict[str, Any]  # Условия появления
+class ContentSlot:
+    """Слот для сохранения контента"""
+    slot_id: str
+    slot_name: str
+    slot_type: str
+    is_occupied: bool = False
+    content_item: Optional[ContentItem] = None
+    save_timestamp: float = 0.0
 
 @dataclass
-class BossData:
-    """Данные босса"""
-    boss_type: BossType
-    base_health: int
-    base_mana: int
-    base_attack: int
-    base_defense: int
-    base_speed: float
-    base_intelligence: int
-    weaknesses: List[DamageType]
-    resistances: List[DamageType]
-    immunities: List[DamageType]
-    skills: List[str]  # UUID скиллов
-    special_abilities: List[str]  # UUID специальных способностей
-    phases: List[Dict[str, Any]]  # Фазы боя
-    loot_table: List[str]  # UUID предметов в луте
-    experience_reward: int
-    gold_reward: int
-    ai_behavior: str  # Тип поведения AI
-    spawn_conditions: Dict[str, Any]  # Условия появления
-    minion_spawns: List[Dict[str, Any]]  # Спавн миньонов
+class ContentSession:
+    """Сессия генерации контента"""
+    session_id: str
+    session_name: str
+    start_timestamp: float
+    end_timestamp: Optional[float] = None
+    content_generated: int = 0
+    content_saved: int = 0
+    generation_config: Dict[str, Any] = None
 
 class ContentDatabase(ISystem):
-    """Система базы данных для хранения процедурно сгенерированного контента"""
+    """Система базы данных контента с использованием централизованных констант"""
     
-    def __init__(self, db_path: str = None):
+    def __init__(self, db_path: str = "content.db"):
         self._system_name = "content_database"
         self._system_priority = SystemPriority.HIGH
         self._system_state = SystemState.UNINITIALIZED
         self._dependencies = []
         
-        if db_path is None:
-            db_path = "content_database.db"
-        self.db_path = db_path
+        self.db_path = Path(db_path)
         self.connection = None
+        self.cursor = None
+        
+        # Управление слотами и сессиями
+        self.content_slots: Dict[str, ContentSlot] = {}
+        self.content_sessions: Dict[str, ContentSession] = {}
         
         # Статистика системы
         self.system_stats = {
-            'sessions_count': 0,
-            'content_items_count': 0,
-            'enemies_count': 0,
-            'bosses_count': 0,
-            'total_sessions_created': 0,
-            'total_content_added': 0,
+            'total_items': 0,
+            'saved_items': 0,
+            'deleted_items': 0,
+            'sessions_created': 0,
+            'sessions_completed': 0,
+            'database_operations': 0,
             'update_time': 0.0
         }
         
-        logger.info("Система контента инициализирована")
+        logger.info("Система базы данных контента инициализирована")
     
     @property
     def system_name(self) -> str:
@@ -184,27 +103,30 @@ class ContentDatabase(ISystem):
         return self._dependencies
     
     def initialize(self) -> bool:
-        """Инициализация системы контента"""
+        """Инициализация системы базы данных контента"""
         try:
-            logger.info("Инициализация системы контента...")
+            logger.info("Инициализация системы базы данных контента...")
             
-            # Инициализируем базу данных
-            self._initialize_database()
+            # Создаем подключение к базе данных
+            self._create_database_connection()
             
-            # Обновляем статистику
-            self._update_system_stats()
+            # Инициализируем таблицы
+            self._initialize_database_tables()
+            
+            # Загружаем существующие данные
+            self._load_existing_data()
             
             self._system_state = SystemState.READY
-            logger.info("Система контента успешно инициализирована")
+            logger.info("Система базы данных контента успешно инициализирована")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации системы контента: {e}")
+            logger.error(f"Ошибка инициализации системы базы данных контента: {e}")
             self._system_state = SystemState.ERROR
             return False
     
     def update(self, delta_time: float) -> bool:
-        """Обновление системы контента"""
+        """Обновление системы базы данных контента"""
         try:
             if self._system_state != SystemState.READY:
                 return False
@@ -219,60 +141,63 @@ class ContentDatabase(ISystem):
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка обновления системы контента: {e}")
+            logger.error(f"Ошибка обновления системы базы данных контента: {e}")
             return False
     
     def pause(self) -> bool:
-        """Приостановка системы контента"""
+        """Приостановка системы базы данных контента"""
         try:
             if self._system_state == SystemState.READY:
                 self._system_state = SystemState.PAUSED
-                logger.info("Система контента приостановлена")
+                logger.info("Система базы данных контента приостановлена")
                 return True
             return False
         except Exception as e:
-            logger.error(f"Ошибка приостановки системы контента: {e}")
+            logger.error(f"Ошибка приостановки системы базы данных контента: {e}")
             return False
     
     def resume(self) -> bool:
-        """Возобновление системы контента"""
+        """Возобновление системы базы данных контента"""
         try:
             if self._system_state == SystemState.PAUSED:
                 self._system_state = SystemState.READY
-                logger.info("Система контента возобновлена")
+                logger.info("Система базы данных контента возобновлена")
                 return True
             return False
         except Exception as e:
-            logger.error(f"Ошибка возобновления системы контента: {e}")
+            logger.error(f"Ошибка возобновления системы базы данных контента: {e}")
             return False
     
     def cleanup(self) -> bool:
-        """Очистка системы контента"""
+        """Очистка системы базы данных контента"""
         try:
-            logger.info("Очистка системы контента...")
+            logger.info("Очистка системы базы данных контента...")
             
-            # Закрываем соединение с базой данных
+            # Закрываем подключение к базе данных
             if self.connection:
                 self.connection.close()
-                self.connection = None
+            
+            # Очищаем данные
+            self.content_slots.clear()
+            self.content_sessions.clear()
             
             # Сбрасываем статистику
             self.system_stats = {
-                'sessions_count': 0,
-                'content_items_count': 0,
-                'enemies_count': 0,
-                'bosses_count': 0,
-                'total_sessions_created': 0,
-                'total_content_added': 0,
+                'total_items': 0,
+                'saved_items': 0,
+                'deleted_items': 0,
+                'sessions_created': 0,
+                'sessions_completed': 0,
+                'database_operations': 0,
                 'update_time': 0.0
             }
             
             self._system_state = SystemState.DESTROYED
-            logger.info("Система контента очищена")
+            logger.info("Система базы данных контента очищена")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы контента: {e}")
+            logger.error(f"Ошибка очистки системы базы данных контента: {e}")
             return False
     
     def get_system_info(self) -> Dict[str, Any]:
@@ -282,60 +207,54 @@ class ContentDatabase(ISystem):
             'state': self.system_state.value,
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
-            'db_path': self.db_path,
-            'connection_active': self.connection is not None,
+            'database_path': str(self.db_path),
+            'slots_count': len(self.content_slots),
+            'sessions_count': len(self.content_sessions),
             'stats': self.system_stats
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
         try:
-            if event_type == "session_created":
-                return self._handle_session_created(event_data)
-            elif event_type == "content_added":
-                return self._handle_content_added(event_data)
-            elif event_type == "enemy_added":
-                return self._handle_enemy_added(event_data)
-            elif event_type == "boss_added":
-                return self._handle_boss_added(event_data)
+            if event_type == "content_item_created":
+                return self._handle_content_item_created(event_data)
+            elif event_type == "content_item_saved":
+                return self._handle_content_item_saved(event_data)
+            elif event_type == "content_item_deleted":
+                return self._handle_content_item_deleted(event_data)
+            elif event_type == "session_started":
+                return self._handle_session_started(event_data)
+            elif event_type == "session_completed":
+                return self._handle_session_completed(event_data)
             else:
                 return False
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def _initialize_database(self):
-        """Инициализация базы данных"""
+    def _create_database_connection(self) -> None:
+        """Создание подключения к базе данных"""
         try:
-            self.connection = sqlite3.connect(self.db_path)
-            self.connection.row_factory = sqlite3.Row
+            # Создаем директорию, если она не существует
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
             
-            # Создаем таблицы
-            self._create_tables()
-            logger.info("База данных контента инициализирована")
+            # Создаем подключение
+            self.connection = sqlite3.connect(str(self.db_path))
+            self.connection.row_factory = sqlite3.Row
+            self.cursor = self.connection.cursor()
+            
+            logger.debug(f"Подключение к базе данных создано: {self.db_path}")
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации базы данных: {e}")
+            logger.error(f"Ошибка создания подключения к базе данных: {e}")
             raise
     
-    def _create_tables(self):
-        """Создание таблиц базы данных"""
+    def _initialize_database_tables(self) -> None:
+        """Инициализация таблиц базы данных"""
         try:
-            cursor = self.connection.cursor()
-            
-            # Таблица сессий
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS sessions (
-                    session_id TEXT PRIMARY KEY,
-                    start_time REAL,
-                    current_level INTEGER DEFAULT 1,
-                    is_active BOOLEAN DEFAULT 1
-                )
-            """)
-            
             # Таблица контента
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS content (
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS content_items (
                     uuid TEXT PRIMARY KEY,
                     content_type TEXT NOT NULL,
                     name TEXT NOT NULL,
@@ -345,658 +264,691 @@ class ContentDatabase(ISystem):
                     session_id TEXT NOT NULL,
                     generation_timestamp REAL NOT NULL,
                     data TEXT NOT NULL,
-                    is_saved BOOLEAN DEFAULT 0,
-                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+                    is_saved BOOLEAN DEFAULT FALSE
                 )
             """)
             
-            # Таблица врагов (расширенная)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS enemies (
-                    uuid TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    enemy_type TEXT NOT NULL,
-                    level INTEGER DEFAULT 1,
-                    session_id TEXT NOT NULL,
-                    base_health INTEGER DEFAULT 100,
-                    base_mana INTEGER DEFAULT 50,
-                    base_attack INTEGER DEFAULT 20,
-                    base_defense INTEGER DEFAULT 10,
-                    base_speed REAL DEFAULT 1.0,
-                    base_intelligence INTEGER DEFAULT 10,
-                    weaknesses TEXT,  -- JSON список
-                    resistances TEXT,  -- JSON список
-                    immunities TEXT,   -- JSON список
-                    skills TEXT,       -- JSON список UUID
-                    loot_table TEXT,   -- JSON список UUID
-                    experience_reward INTEGER DEFAULT 100,
-                    gold_reward INTEGER DEFAULT 50,
-                    ai_behavior TEXT DEFAULT 'aggressive',
-                    spawn_conditions TEXT,  -- JSON
-                    generation_timestamp REAL NOT NULL,
-                    is_saved BOOLEAN DEFAULT 0,
-                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+            # Таблица слотов
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS content_slots (
+                    slot_id TEXT PRIMARY KEY,
+                    slot_name TEXT NOT NULL,
+                    slot_type TEXT NOT NULL,
+                    is_occupied BOOLEAN DEFAULT FALSE,
+                    content_uuid TEXT,
+                    save_timestamp REAL DEFAULT 0.0,
+                    FOREIGN KEY (content_uuid) REFERENCES content_items (uuid)
                 )
             """)
             
-            # Таблица боссов (расширенная)
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS bosses (
-                    uuid TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    boss_type TEXT NOT NULL,
-                    level INTEGER DEFAULT 1,
-                    session_id TEXT NOT NULL,
-                    base_health INTEGER DEFAULT 500,
-                    base_mana INTEGER DEFAULT 200,
-                    base_attack INTEGER DEFAULT 80,
-                    base_defense INTEGER DEFAULT 60,
-                    base_speed REAL DEFAULT 1.2,
-                    base_intelligence INTEGER DEFAULT 30,
-                    weaknesses TEXT,  -- JSON список
-                    resistances TEXT,  -- JSON список
-                    immunities TEXT,   -- JSON список
-                    skills TEXT,       -- JSON список UUID
-                    special_abilities TEXT,  -- JSON список UUID
-                    phases TEXT,       -- JSON список фаз
-                    loot_table TEXT,   -- JSON список UUID
-                    experience_reward INTEGER DEFAULT 1000,
-                    gold_reward INTEGER DEFAULT 500,
-                    ai_behavior TEXT DEFAULT 'boss',
-                    spawn_conditions TEXT,  -- JSON
-                    minion_spawns TEXT,    -- JSON список
-                    generation_timestamp REAL NOT NULL,
-                    is_saved BOOLEAN DEFAULT 0,
-                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+            # Таблица сессий
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS content_sessions (
+                    session_id TEXT PRIMARY KEY,
+                    session_name TEXT NOT NULL,
+                    start_timestamp REAL NOT NULL,
+                    end_timestamp REAL,
+                    content_generated INTEGER DEFAULT 0,
+                    content_saved INTEGER DEFAULT 0,
+                    generation_config TEXT
                 )
             """)
             
-            # Индексы для быстрого поиска
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_type ON content (content_type)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_session_id ON content (session_id)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_level_req ON content (level_requirement)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_rarity ON content (rarity)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_enemy_type ON enemies (enemy_type)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_enemy_level ON enemies (level)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_boss_type ON bosses (boss_type)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_boss_level ON bosses (level)")
+            # Создаем индексы для улучшения производительности
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_type ON content_items (content_type)")
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_rarity ON content_items (rarity)")
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_session ON content_items (session_id)")
+            self.cursor.execute("CREATE INDEX IF NOT EXISTS idx_slot_type ON content_slots (slot_type)")
             
+            # Сохраняем изменения
             self.connection.commit()
-            logger.debug("Таблицы базы данных созданы")
+            
+            logger.debug("Таблицы базы данных инициализированы")
             
         except Exception as e:
-            logger.error(f"Ошибка создания таблиц: {e}")
+            logger.error(f"Ошибка инициализации таблиц базы данных: {e}")
             raise
     
-    def create_session(self, session_id: str = None) -> str:
-        """Создание новой игровой сессии"""
+    def _load_existing_data(self) -> None:
+        """Загрузка существующих данных из базы данных"""
         try:
-            if session_id is None:
-                session_id = str(uuid.uuid4())
+            # Загружаем слоты
+            self.cursor.execute("SELECT * FROM content_slots")
+            for row in self.cursor.fetchall():
+                slot = ContentSlot(
+                    slot_id=row['slot_id'],
+                    slot_name=row['slot_name'],
+                    slot_type=row['slot_type'],
+                    is_occupied=bool(row['is_occupied']),
+                    save_timestamp=row['save_timestamp']
+                )
+                
+                # Загружаем связанный контент, если есть
+                if row['content_uuid']:
+                    content_item = self.get_content_item(row['content_uuid'])
+                    if content_item:
+                        slot.content_item = content_item
+                        slot.is_occupied = True
+                
+                self.content_slots[slot.slot_id] = slot
             
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO sessions (session_id, start_time, current_level, is_active)
-                VALUES (?, ?, ?, ?)
-            """, (session_id, time.time(), 1, True))
+            # Загружаем сессии
+            self.cursor.execute("SELECT * FROM content_sessions")
+            for row in self.cursor.fetchall():
+                session = ContentSession(
+                    session_id=row['session_id'],
+                    session_name=row['session_name'],
+                    start_timestamp=row['start_timestamp'],
+                    end_timestamp=row['end_timestamp'],
+                    content_generated=row['content_generated'],
+                    content_saved=row['content_saved'],
+                    generation_config=json.loads(row['generation_config']) if row['generation_config'] else None
+                )
+                self.content_sessions[session.session_id] = session
             
-            self.connection.commit()
-            self.system_stats['total_sessions_created'] += 1
+            # Обновляем статистику
+            self.cursor.execute("SELECT COUNT(*) as total FROM content_items")
+            self.system_stats['total_items'] = self.cursor.fetchone()['total']
             
-            logger.info(f"Создана новая сессия: {session_id}")
-            return session_id
+            self.cursor.execute("SELECT COUNT(*) as saved FROM content_items WHERE is_saved = 1")
+            self.system_stats['saved_items'] = self.cursor.fetchone()['saved']
+            
+            logger.info(f"Загружено {len(self.content_slots)} слотов и {len(self.content_sessions)} сессий")
             
         except Exception as e:
-            logger.error(f"Ошибка создания сессии: {e}")
+            logger.error(f"Ошибка загрузки существующих данных: {e}")
             raise
     
-    def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Получение информации о сессии"""
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
         try:
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                SELECT * FROM sessions WHERE session_id = ?
-            """, (session_id,))
+            # Обновляем статистику из базы данных
+            if self.cursor:
+                self.cursor.execute("SELECT COUNT(*) as total FROM content_items")
+                self.system_stats['total_items'] = self.cursor.fetchone()['total']
+                
+                self.cursor.execute("SELECT COUNT(*) as saved FROM content_items WHERE is_saved = 1")
+                self.system_stats['saved_items'] = self.system_stats['saved_items'] = self.cursor.fetchone()['saved']
             
-            row = cursor.fetchone()
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    
+    def _handle_content_item_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания элемента контента"""
+        try:
+            content_item = event_data.get('content_item')
+            if content_item:
+                # Сохраняем элемент в базу данных
+                self.save_content_item(content_item)
+                
+                # Обновляем статистику
+                self.system_stats['total_items'] += 1
+                
+                logger.debug(f"Обработано событие создания элемента контента: {content_item.uuid}")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания элемента контента: {e}")
+            return False
+    
+    def _handle_content_item_saved(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события сохранения элемента контента"""
+        try:
+            content_item = event_data.get('content_item')
+            slot_id = event_data.get('slot_id')
+            
+            if content_item and slot_id:
+                # Сохраняем элемент в слот
+                self.save_content_to_slot(content_item, slot_id)
+                
+                # Обновляем статистику
+                self.system_stats['saved_items'] += 1
+                
+                logger.debug(f"Обработано событие сохранения элемента контента: {content_item.uuid} в слот {slot_id}")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события сохранения элемента контента: {e}")
+            return False
+    
+    def _handle_content_item_deleted(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события удаления элемента контента"""
+        try:
+            content_uuid = event_data.get('content_uuid')
+            
+            if content_uuid:
+                # Удаляем элемент из базы данных
+                self.delete_content_item(content_uuid)
+                
+                # Обновляем статистику
+                self.system_stats['deleted_items'] += 1
+                
+                logger.debug(f"Обработано событие удаления элемента контента: {content_uuid}")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события удаления элемента контента: {e}")
+            return False
+    
+    def _handle_session_started(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события начала сессии"""
+        try:
+            session_data = event_data.get('session_data')
+            
+            if session_data:
+                # Создаем новую сессию
+                session = ContentSession(
+                    session_id=session_data.get('session_id', str(uuid.uuid4())),
+                    session_name=session_data.get('session_name', 'Unnamed Session'),
+                    start_timestamp=time.time(),
+                    generation_config=session_data.get('generation_config')
+                )
+                
+                # Сохраняем сессию в базу данных
+                self.save_session(session)
+                
+                # Добавляем в локальный словарь
+                self.content_sessions[session.session_id] = session
+                
+                # Обновляем статистику
+                self.system_stats['sessions_created'] += 1
+                
+                logger.debug(f"Обработано событие начала сессии: {session.session_id}")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события начала сессии: {e}")
+            return False
+    
+    def _handle_session_completed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события завершения сессии"""
+        try:
+            session_id = event_data.get('session_id')
+            
+            if session_id and session_id in self.content_sessions:
+                # Завершаем сессию
+                session = self.content_sessions[session_id]
+                session.end_timestamp = time.time()
+                
+                # Обновляем в базе данных
+                self.update_session(session)
+                
+                # Обновляем статистику
+                self.system_stats['sessions_completed'] += 1
+                
+                logger.debug(f"Обработано событие завершения сессии: {session_id}")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события завершения сессии: {e}")
+            return False
+    
+    def save_content_item(self, content_item: ContentItem) -> bool:
+        """Сохранение элемента контента в базу данных"""
+        try:
+            # Проверяем, существует ли уже элемент
+            self.cursor.execute("SELECT uuid FROM content_items WHERE uuid = ?", (content_item.uuid,))
+            if self.cursor.fetchone():
+                # Обновляем существующий элемент
+                self.cursor.execute("""
+                    UPDATE content_items SET
+                        content_type = ?, name = ?, description = ?, rarity = ?,
+                        level_requirement = ?, session_id = ?, generation_timestamp = ?,
+                        data = ?, is_saved = ?
+                    WHERE uuid = ?
+                """, (
+                    content_item.content_type.value,
+                    content_item.name,
+                    content_item.description,
+                    content_item.rarity.value,
+                    content_item.level_requirement,
+                    content_item.session_id,
+                    content_item.generation_timestamp,
+                    json.dumps(content_item.data),
+                    content_item.is_saved,
+                    content_item.uuid
+                ))
+            else:
+                # Создаем новый элемент
+                self.cursor.execute("""
+                    INSERT INTO content_items (
+                        uuid, content_type, name, description, rarity,
+                        level_requirement, session_id, generation_timestamp,
+                        data, is_saved
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    content_item.uuid,
+                    content_item.content_type.value,
+                    content_item.name,
+                    content_item.description,
+                    content_item.rarity.value,
+                    content_item.level_requirement,
+                    content_item.session_id,
+                    content_item.generation_timestamp,
+                    json.dumps(content_item.data),
+                    content_item.is_saved
+                ))
+            
+            # Сохраняем изменения
+            self.connection.commit()
+            
+            # Обновляем статистику
+            self.system_stats['database_operations'] += 1
+            
+            logger.debug(f"Элемент контента сохранен: {content_item.uuid}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения элемента контента: {e}")
+            return False
+    
+    def get_content_item(self, content_uuid: str) -> Optional[ContentItem]:
+        """Получение элемента контента по UUID"""
+        try:
+            self.cursor.execute("SELECT * FROM content_items WHERE uuid = ?", (content_uuid,))
+            row = self.cursor.fetchone()
+            
             if row:
-                return dict(row)
+                # Создаем объект ContentItem
+                content_item = ContentItem(
+                    uuid=row['uuid'],
+                    content_type=ContentType(row['content_type']),
+                    name=row['name'],
+                    description=row['description'],
+                    rarity=ContentRarity(row['rarity']),
+                    level_requirement=row['level_requirement'],
+                    session_id=row['session_id'],
+                    generation_timestamp=row['generation_timestamp'],
+                    data=json.loads(row['data']),
+                    is_saved=bool(row['is_saved'])
+                )
+                
+                return content_item
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения элемента контента: {e}")
+            return None
+    
+    def delete_content_item(self, content_uuid: str) -> bool:
+        """Удаление элемента контента"""
+        try:
+            # Удаляем из базы данных
+            self.cursor.execute("DELETE FROM content_items WHERE uuid = ?", (content_uuid,))
+            
+            # Удаляем из слотов, если есть
+            self.cursor.execute("UPDATE content_slots SET content_uuid = NULL, is_occupied = FALSE WHERE content_uuid = ?", (content_uuid,))
+            
+            # Сохраняем изменения
+            self.connection.commit()
+            
+            # Обновляем статистику
+            self.system_stats['database_operations'] += 1
+            
+            logger.debug(f"Элемент контента удален: {content_uuid}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления элемента контента: {e}")
+            return False
+    
+    def save_content_to_slot(self, content_item: ContentItem, slot_id: str) -> bool:
+        """Сохранение элемента контента в слот"""
+        try:
+            # Проверяем, существует ли слот
+            if slot_id not in self.content_slots:
+                logger.warning(f"Слот {slot_id} не найден")
+                return False
+            
+            slot = self.content_slots[slot_id]
+            
+            # Освобождаем слот, если он занят
+            if slot.is_occupied and slot.content_item:
+                slot.content_item.is_saved = False
+                self.save_content_item(slot.content_item)
+            
+            # Сохраняем новый элемент в слот
+            slot.content_item = content_item
+            slot.is_occupied = True
+            slot.save_timestamp = time.time()
+            
+            # Обновляем элемент контента
+            content_item.is_saved = True
+            self.save_content_item(content_item)
+            
+            # Обновляем слот в базе данных
+            self.cursor.execute("""
+                UPDATE content_slots SET
+                    is_occupied = ?, content_uuid = ?, save_timestamp = ?
+                WHERE slot_id = ?
+            """, (True, content_item.uuid, slot.save_timestamp, slot_id))
+            
+            # Сохраняем изменения
+            self.connection.commit()
+            
+            logger.debug(f"Элемент контента {content_item.uuid} сохранен в слот {slot_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения элемента контента в слот: {e}")
+            return False
+    
+    def get_content_from_slot(self, slot_id: str) -> Optional[ContentItem]:
+        """Получение элемента контента из слота"""
+        try:
+            if slot_id in self.content_slots:
+                slot = self.content_slots[slot_id]
+                if slot.is_occupied and slot.content_item:
+                    return slot.content_item
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения элемента контента из слота: {e}")
+            return None
+    
+    def create_slot(self, slot_id: str, slot_name: str, slot_type: str) -> bool:
+        """Создание нового слота"""
+        try:
+            if slot_id in self.content_slots:
+                logger.warning(f"Слот {slot_id} уже существует")
+                return False
+            
+            # Создаем слот в базе данных
+            self.cursor.execute("""
+                INSERT INTO content_slots (slot_id, slot_name, slot_type)
+                VALUES (?, ?, ?)
+            """, (slot_id, slot_name, slot_type))
+            
+            # Создаем локальный объект
+            slot = ContentSlot(
+                slot_id=slot_id,
+                slot_name=slot_name,
+                slot_type=slot_type
+            )
+            self.content_slots[slot_id] = slot
+            
+            # Сохраняем изменения
+            self.connection.commit()
+            
+            logger.debug(f"Создан новый слот: {slot_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания слота: {e}")
+            return False
+    
+    def delete_slot(self, slot_id: str) -> bool:
+        """Удаление слота"""
+        try:
+            if slot_id not in self.content_slots:
+                logger.warning(f"Слот {slot_id} не найден")
+                return False
+            
+            slot = self.content_slots[slot_id]
+            
+            # Освобождаем слот, если он занят
+            if slot.is_occupied and slot.content_item:
+                slot.content_item.is_saved = False
+                self.save_content_item(slot.content_item)
+            
+            # Удаляем слот из базы данных
+            self.cursor.execute("DELETE FROM content_slots WHERE slot_id = ?", (slot_id,))
+            
+            # Удаляем из локального словаря
+            del self.content_slots[slot_id]
+            
+            # Сохраняем изменения
+            self.connection.commit()
+            
+            logger.debug(f"Слот удален: {slot_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления слота: {e}")
+            return False
+    
+    def save_session(self, session: ContentSession) -> bool:
+        """Сохранение сессии в базу данных"""
+        try:
+            # Проверяем, существует ли уже сессия
+            self.cursor.execute("SELECT session_id FROM content_sessions WHERE session_id = ?", (session.session_id,))
+            if self.cursor.fetchone():
+                # Обновляем существующую сессию
+                self.cursor.execute("""
+                    UPDATE content_sessions SET
+                        session_name = ?, start_timestamp = ?, end_timestamp = ?,
+                        content_generated = ?, content_saved = ?, generation_config = ?
+                    WHERE session_id = ?
+                """, (
+                    session.session_name,
+                    session.start_timestamp,
+                    session.end_timestamp,
+                    session.content_generated,
+                    session.content_saved,
+                    json.dumps(session.generation_config) if session.generation_config else None,
+                    session.session_id
+                ))
+            else:
+                # Создаем новую сессию
+                self.cursor.execute("""
+                    INSERT INTO content_sessions (
+                        session_id, session_name, start_timestamp, end_timestamp,
+                        content_generated, content_saved, generation_config
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    session.session_id,
+                    session.session_name,
+                    session.start_timestamp,
+                    session.end_timestamp,
+                    session.content_generated,
+                    session.content_saved,
+                    json.dumps(session.generation_config) if session.generation_config else None
+                ))
+            
+            # Сохраняем изменения
+            self.connection.commit()
+            
+            # Обновляем статистику
+            self.system_stats['database_operations'] += 1
+            
+            logger.debug(f"Сессия сохранена: {session.session_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения сессии: {e}")
+            return False
+    
+    def update_session(self, session: ContentSession) -> bool:
+        """Обновление сессии"""
+        try:
+            return self.save_session(session)
+        except Exception as e:
+            logger.error(f"Ошибка обновления сессии: {e}")
+            return False
+    
+    def get_session(self, session_id: str) -> Optional[ContentSession]:
+        """Получение сессии по ID"""
+        try:
+            if session_id in self.content_sessions:
+                return self.content_sessions[session_id]
+            
             return None
             
         except Exception as e:
             logger.error(f"Ошибка получения сессии: {e}")
             return None
     
-    def update_session_level(self, session_id: str, new_level: int) -> bool:
-        """Обновление уровня сессии"""
+    def get_all_sessions(self) -> List[ContentSession]:
+        """Получение всех сессий"""
         try:
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                UPDATE sessions SET current_level = ? WHERE session_id = ?
-            """, (new_level, session_id))
-            
-            self.connection.commit()
-            logger.info(f"Уровень сессии {session_id} обновлен до {new_level}")
-            return True
-            
+            return list(self.content_sessions.values())
         except Exception as e:
-            logger.error(f"Ошибка обновления уровня сессии: {e}")
-            return False
-    
-    def add_content_item(self, content_item: Union[ContentItem, Dict[str, Any]]) -> bool:
-        """Добавление элемента контента в базу данных"""
-        try:
-            cursor = self.connection.cursor()
-            
-            # Поддерживаем как ContentItem, так и обычные словари
-            if isinstance(content_item, dict):
-                uuid_val = content_item['uuid']
-                content_type_val = content_item['content_type'].value if hasattr(content_item['content_type'], 'value') else content_item['content_type']
-                name_val = content_item['name']
-                description_val = content_item['description']
-                rarity_val = content_item['rarity'].value if hasattr(content_item['rarity'], 'value') else content_item['rarity']
-                level_req_val = content_item['level_requirement']
-                session_id_val = content_item['session_id']
-                generation_timestamp_val = content_item['generation_timestamp']
-                data_val = json.dumps(content_item['data'])
-                is_saved_val = content_item.get('is_saved', False)
-            else:
-                uuid_val = content_item.uuid
-                content_type_val = content_item.content_type.value
-                name_val = content_item.name
-                description_val = content_item.description
-                rarity_val = content_item.rarity.value
-                level_req_val = content_item.level_requirement
-                session_id_val = content_item.session_id
-                generation_timestamp_val = content_item.generation_timestamp
-                data_val = json.dumps(content_item.data)
-                is_saved_val = content_item.is_saved
-            
-            cursor.execute("""
-                INSERT OR REPLACE INTO content 
-                (uuid, content_type, name, description, rarity, level_requirement, 
-                 session_id, generation_timestamp, data, is_saved)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                uuid_val,
-                content_type_val,
-                name_val,
-                description_val,
-                rarity_val,
-                level_req_val,
-                session_id_val,
-                generation_timestamp_val,
-                data_val,
-                is_saved_val
-            ))
-            
-            self.connection.commit()
-            self.system_stats['total_content_added'] += 1
-            
-            logger.debug(f"Добавлен элемент контента: {name_val}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления элемента контента: {e}")
-            return False
-    
-    def add_enemy(self, enemy_uuid: str, name: str, enemy_type: EnemyType, level: int, 
-                  session_id: str, enemy_data: EnemyData) -> bool:
-        """Добавление врага в базу данных"""
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO enemies 
-                (uuid, name, enemy_type, level, session_id, base_health, base_mana,
-                 base_attack, base_defense, base_speed, base_intelligence,
-                 weaknesses, resistances, immunities, skills, loot_table,
-                 experience_reward, gold_reward, ai_behavior, spawn_conditions,
-                 generation_timestamp, is_saved)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                enemy_uuid, name, enemy_type.value, level, session_id,
-                enemy_data.base_health, enemy_data.base_mana,
-                enemy_data.base_attack, enemy_data.base_defense,
-                enemy_data.base_speed, enemy_data.base_intelligence,
-                json.dumps([w.value for w in enemy_data.weaknesses]),
-                json.dumps([r.value for r in enemy_data.resistances]),
-                json.dumps([i.value for i in enemy_data.immunities]),
-                json.dumps(enemy_data.skills),
-                json.dumps(enemy_data.loot_table),
-                enemy_data.experience_reward, enemy_data.gold_reward,
-                enemy_data.ai_behavior,
-                json.dumps(enemy_data.spawn_conditions),
-                time.time(), False
-            ))
-            
-            self.connection.commit()
-            logger.debug(f"Добавлен враг: {name}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления врага: {e}")
-            return False
-    
-    def add_boss(self, boss_uuid: str, name: str, boss_type: BossType, level: int,
-                 session_id: str, boss_data: BossData) -> bool:
-        """Добавление босса в базу данных"""
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                INSERT OR REPLACE INTO bosses 
-                (uuid, name, boss_type, level, session_id, base_health, base_mana,
-                 base_attack, base_defense, base_speed, base_intelligence,
-                 weaknesses, resistances, immunities, skills, special_abilities,
-                 phases, loot_table, experience_reward, gold_reward, ai_behavior,
-                 spawn_conditions, minion_spawns, generation_timestamp, is_saved)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                boss_uuid, name, boss_type.value, level, session_id,
-                boss_data.base_health, boss_data.base_mana,
-                boss_data.base_attack, boss_data.base_defense,
-                boss_data.base_speed, boss_data.base_intelligence,
-                json.dumps([w.value for w in boss_data.weaknesses]),
-                json.dumps([r.value for r in boss_data.resistances]),
-                json.dumps([i.value for i in boss_data.immunities]),
-                json.dumps(boss_data.skills),
-                json.dumps(boss_data.special_abilities),
-                json.dumps(boss_data.phases),
-                json.dumps(boss_data.loot_table),
-                boss_data.experience_reward, boss_data.gold_reward,
-                boss_data.ai_behavior,
-                json.dumps(boss_data.spawn_conditions),
-                json.dumps(boss_data.minion_spawns),
-                time.time(), False
-            ))
-            
-            self.connection.commit()
-            logger.debug(f"Добавлен босс: {name}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления босса: {e}")
-            return False
-    
-    def get_enemies_by_level(self, session_id: str, level: int, enemy_type: Optional[EnemyType] = None) -> List[Dict[str, Any]]:
-        """Получение врагов для определенного уровня"""
-        try:
-            cursor = self.connection.cursor()
-            
-            if enemy_type:
-                cursor.execute("""
-                    SELECT * FROM enemies 
-                    WHERE session_id = ? AND level <= ? AND enemy_type = ?
-                    ORDER BY level DESC, base_health DESC
-                """, (session_id, level, enemy_type.value))
-            else:
-                cursor.execute("""
-                    SELECT * FROM enemies 
-                    WHERE session_id = ? AND level <= ?
-                    ORDER BY level DESC, base_health DESC
-                """, (session_id, level))
-            
-            enemies = []
-            for row in cursor.fetchall():
-                row_dict = dict(row)
-                # Парсим JSON поля
-                row_dict['weaknesses'] = json.loads(row_dict['weaknesses'])
-                row_dict['resistances'] = json.loads(row_dict['resistances'])
-                row_dict['immunities'] = json.loads(row_dict['immunities'])
-                row_dict['skills'] = json.loads(row_dict['skills'])
-                row_dict['loot_table'] = json.loads(row_dict['loot_table'])
-                row_dict['spawn_conditions'] = json.loads(row_dict['spawn_conditions'])
-                enemies.append(row_dict)
-            
-            return enemies
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения врагов для уровня: {e}")
+            logger.error(f"Ошибка получения всех сессий: {e}")
             return []
     
-    def get_bosses_by_level(self, session_id: str, level: int, boss_type: Optional[BossType] = None) -> List[Dict[str, Any]]:
-        """Получение боссов для определенного уровня"""
+    def search_content_items(self, 
+                           content_type: Optional[ContentType] = None,
+                           rarity: Optional[ContentRarity] = None,
+                           min_level: Optional[int] = None,
+                           max_level: Optional[int] = None,
+                           session_id: Optional[str] = None) -> List[ContentItem]:
+        """Поиск элементов контента по критериям"""
         try:
-            cursor = self.connection.cursor()
-            
-            if boss_type:
-                cursor.execute("""
-                    SELECT * FROM bosses 
-                    WHERE session_id = ? AND level <= ? AND boss_type = ?
-                    ORDER BY level DESC, base_health DESC
-                """, (session_id, level, boss_type.value))
-            else:
-                cursor.execute("""
-                    SELECT * FROM bosses 
-                    WHERE session_id = ? AND level <= ?
-                    ORDER BY level DESC, base_health DESC
-                """, (session_id, level))
-            
-            bosses = []
-            for row in cursor.fetchall():
-                row_dict = dict(row)
-                # Парсим JSON поля
-                row_dict['weaknesses'] = json.loads(row_dict['weaknesses'])
-                row_dict['resistances'] = json.loads(row_dict['resistances'])
-                row_dict['immunities'] = json.loads(row_dict['immunities'])
-                row_dict['skills'] = json.loads(row_dict['skills'])
-                row_dict['special_abilities'] = json.loads(row_dict['special_abilities'])
-                row_dict['phases'] = json.loads(row_dict['phases'])
-                row_dict['loot_table'] = json.loads(row_dict['loot_table'])
-                row_dict['spawn_conditions'] = json.loads(row_dict['spawn_conditions'])
-                row_dict['minion_spawns'] = json.loads(row_dict['minion_spawns'])
-                bosses.append(row_dict)
-            
-            return bosses
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения боссов для уровня: {e}")
-            return []
-    
-    def get_content_by_session(self, session_id: str, content_type: Optional[ContentType] = None) -> List[ContentItem]:
-        """Получение контента для определенной сессии"""
-        try:
-            cursor = self.connection.cursor()
+            query = "SELECT * FROM content_items WHERE 1=1"
+            params = []
             
             if content_type:
-                cursor.execute("""
-                    SELECT * FROM content 
-                    WHERE session_id = ? AND content_type = ?
-                    ORDER BY generation_timestamp DESC
-                """, (session_id, content_type.value))
-            else:
-                cursor.execute("""
-                    SELECT * FROM content 
-                    WHERE session_id = ?
-                    ORDER BY generation_timestamp DESC
-                """, (session_id,))
+                query += " AND content_type = ?"
+                params.append(content_type.value)
             
-            content_items = []
-            for row in cursor.fetchall():
-                row_dict = dict(row)
-                content_item = ContentItem(
-                    uuid=row_dict['uuid'],
-                    content_type=ContentType(row_dict['content_type']),
-                    name=row_dict['name'],
-                    description=row_dict['description'],
-                    rarity=ContentRarity(row_dict['rarity']),
-                    level_requirement=row_dict['level_requirement'],
-                    session_id=row_dict['session_id'],
-                    generation_timestamp=row_dict['generation_timestamp'],
-                    data=json.loads(row_dict['data']),
-                    is_saved=bool(row_dict['is_saved'])
-                )
-                content_items.append(content_item)
+            if rarity:
+                query += " AND rarity = ?"
+                params.append(rarity.value)
             
-            return content_items
+            if min_level is not None:
+                query += " AND level_requirement >= ?"
+                params.append(min_level)
             
-        except Exception as e:
-            logger.error(f"Ошибка получения контента для сессии: {e}")
-            return []
-    
-    def get_content_by_level(self, session_id: str, level: int, content_type: Optional[ContentType] = None) -> List[ContentItem]:
-        """Получение контента для определенного уровня"""
-        try:
-            cursor = self.connection.cursor()
-            
-            if content_type:
-                cursor.execute("""
-                    SELECT * FROM content 
-                    WHERE session_id = ? AND level_requirement <= ? AND content_type = ?
-                    ORDER BY rarity DESC, generation_timestamp DESC
-                """, (session_id, level, content_type.value))
-            else:
-                cursor.execute("""
-                    SELECT * FROM content 
-                    WHERE session_id = ? AND level_requirement <= ?
-                    ORDER BY rarity DESC, generation_timestamp DESC
-                """, (session_id, level))
-            
-            content_items = []
-            for row in cursor.fetchall():
-                row_dict = dict(row)
-                content_item = ContentItem(
-                    uuid=row_dict['uuid'],
-                    content_type=ContentType(row_dict['content_type']),
-                    name=row_dict['name'],
-                    description=row_dict['description'],
-                    rarity=ContentRarity(row_dict['rarity']),
-                    level_requirement=row_dict['level_requirement'],
-                    session_id=row_dict['session_id'],
-                    generation_timestamp=row_dict['generation_timestamp'],
-                    data=json.loads(row_dict['data']),
-                    is_saved=bool(row_dict['is_saved'])
-                )
-                content_items.append(content_item)
-            
-            return content_items
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения контента для уровня: {e}")
-            return []
-    
-    def mark_content_as_saved(self, content_uuid: str, session_id: str) -> bool:
-        """Отметка контента как сохраненного в слот"""
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                UPDATE content SET is_saved = 1 
-                WHERE uuid = ? AND session_id = ?
-            """, (content_uuid, session_id))
-            
-            self.connection.commit()
-            logger.debug(f"Контент {content_uuid} отмечен как сохраненный")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка отметки контента как сохраненного: {e}")
-            return False
-    
-    def cleanup_unsaved_content(self, session_id: str) -> bool:
-        """Очистка несохраненного контента для сессии"""
-        try:
-            cursor = self.connection.cursor()
-            
-            # Очищаем несохраненный контент
-            cursor.execute("""
-                DELETE FROM content 
-                WHERE session_id = ? AND is_saved = 0
-            """)
-            content_deleted = cursor.rowcount
-            
-            # Очищаем несохраненных врагов
-            cursor.execute("""
-                DELETE FROM enemies 
-                WHERE session_id = ? AND is_saved = 0
-            """)
-            enemies_deleted = cursor.rowcount
-            
-            # Очищаем несохраненных боссов
-            cursor.execute("""
-                DELETE FROM bosses 
-                WHERE session_id = ? AND is_saved = 0
-            """)
-            bosses_deleted = cursor.rowcount
-            
-            self.connection.commit()
-            logger.info(f"Удалено {content_deleted} элементов контента, {enemies_deleted} врагов, {bosses_deleted} боссов для сессии {session_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка очистки несохраненного контента: {e}")
-            return False
-    
-    def get_session_statistics(self, session_id: str) -> Dict[str, Any]:
-        """Получение статистики сессии"""
-        try:
-            cursor = self.connection.cursor()
-            
-            # Общее количество контента
-            cursor.execute("""
-                SELECT COUNT(*) as total FROM content WHERE session_id = ?
-            """, (session_id,))
-            total_content = cursor.fetchone()['total']
-            
-            # Контент по типам
-            cursor.execute("""
-                SELECT content_type, COUNT(*) as count 
-                FROM content 
-                WHERE session_id = ?
-                GROUP BY content_type
-            """, (session_id,))
-            content_by_type = dict(cursor.fetchall())
-            
-            # Контент по редкости
-            cursor.execute("""
-                SELECT rarity, COUNT(*) as count 
-                FROM content 
-                WHERE session_id = ?
-                GROUP BY rarity
-            """, (session_id,))
-            content_by_rarity = dict(cursor.fetchall())
-            
-            # Количество врагов
-            cursor.execute("""
-                SELECT COUNT(*) as total FROM enemies WHERE session_id = ?
-            """, (session_id,))
-            total_enemies = cursor.fetchone()['total']
-            
-            # Количество боссов
-            cursor.execute("""
-                SELECT COUNT(*) as total FROM bosses WHERE session_id = ?
-            """, (session_id,))
-            total_bosses = cursor.fetchone()['total']
-            
-            # Уровень сессии
-            session_info = self.get_session(session_id)
-            current_level = session_info['current_level'] if session_info else 1
-            
-            return {
-                'session_id': session_id,
-                'current_level': current_level,
-                'total_content': total_content,
-                'content_by_type': content_by_type,
-                'content_by_rarity': content_by_rarity,
-                'total_enemies': total_enemies,
-                'total_bosses': total_bosses
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения статистики сессии: {e}")
-            return {}
-    
-    def get_content_by_uuid(self, uuid: str) -> Optional[Dict[str, Any]]:
-        """Получение контента по UUID"""
-        try:
-            cursor = self.connection.cursor()
-            cursor.execute("""
-                SELECT * FROM content WHERE uuid = ?
-            """, [uuid])
-            
-            row = cursor.fetchone()
-            if row:
-                return {
-                    'uuid': row[0],
-                    'content_type': row[1],
-                    'name': row[2],
-                    'description': row[3],
-                    'rarity': row[4],
-                    'level_requirement': row[5],
-                    'session_id': row[6],
-                    'generation_timestamp': row[7],
-                    'data': json.loads(row[8]) if row[8] else {}
-                }
-            return None
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения контента по UUID: {e}")
-            return None
-    
-    def _update_system_stats(self) -> None:
-        """Обновление статистики системы"""
-        try:
-            if not self.connection:
-                return
-            
-            cursor = self.connection.cursor()
-            
-            # Количество сессий
-            cursor.execute("SELECT COUNT(*) as total FROM sessions WHERE is_active = 1")
-            self.system_stats['sessions_count'] = cursor.fetchone()['total']
-            
-            # Количество элементов контента
-            cursor.execute("SELECT COUNT(*) as total FROM content")
-            self.system_stats['content_items_count'] = cursor.fetchone()['total']
-            
-            # Количество врагов
-            cursor.execute("SELECT COUNT(*) as total FROM enemies")
-            self.system_stats['enemies_count'] = cursor.fetchone()['total']
-            
-            # Количество боссов
-            cursor.execute("SELECT COUNT(*) as total FROM bosses")
-            self.system_stats['bosses_count'] = cursor.fetchone()['total']
-            
-        except Exception as e:
-            logger.warning(f"Ошибка обновления статистики системы: {e}")
-    
-    def _handle_session_created(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события создания сессии"""
-        try:
-            session_id = event_data.get('session_id')
+            if max_level is not None:
+                query += " AND level_requirement <= ?"
+                params.append(max_level)
             
             if session_id:
-                self.create_session(session_id)
-                return True
-            return False
+                query += " AND session_id = ?"
+                params.append(session_id)
+            
+            query += " ORDER BY generation_timestamp DESC"
+            
+            self.cursor.execute(query, params)
+            rows = self.cursor.fetchall()
+            
+            content_items = []
+            for row in rows:
+                content_item = ContentItem(
+                    uuid=row['uuid'],
+                    content_type=ContentType(row['content_type']),
+                    name=row['name'],
+                    description=row['description'],
+                    rarity=ContentRarity(row['rarity']),
+                    level_requirement=row['level_requirement'],
+                    session_id=row['session_id'],
+                    generation_timestamp=row['generation_timestamp'],
+                    data=json.loads(row['data']),
+                    is_saved=bool(row['is_saved'])
+                )
+                content_items.append(content_item)
+            
+            return content_items
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события создания сессии: {e}")
+            logger.error(f"Ошибка поиска элементов контента: {e}")
+            return []
+    
+    def get_content_statistics(self) -> Dict[str, Any]:
+        """Получение статистики контента"""
+        try:
+            stats = {}
+            
+            # Статистика по типам контента
+            self.cursor.execute("""
+                SELECT content_type, COUNT(*) as count
+                FROM content_items
+                GROUP BY content_type
+            """)
+            
+            for row in self.cursor.fetchall():
+                stats[f"{row['content_type']}_count"] = row['count']
+            
+            # Статистика по редкости
+            self.cursor.execute("""
+                SELECT rarity, COUNT(*) as count
+                FROM content_items
+                GROUP BY rarity
+            """)
+            
+            for row in self.cursor.fetchall():
+                stats[f"{row['rarity']}_count"] = row['count']
+            
+            # Статистика по уровням
+            self.cursor.execute("""
+                SELECT 
+                    CASE 
+                        WHEN level_requirement <= 5 THEN '1-5'
+                        WHEN level_requirement <= 10 THEN '6-10'
+                        WHEN level_requirement <= 20 THEN '11-20'
+                        ELSE '21+'
+                    END as level_range,
+                    COUNT(*) as count
+                FROM content_items
+                GROUP BY level_range
+            """)
+            
+            for row in self.cursor.fetchall():
+                stats[f"level_{row['level_range']}_count"] = row['count']
+            
+            # Общая статистика
+            stats['total_items'] = self.system_stats['total_items']
+            stats['saved_items'] = self.system_stats['saved_items']
+            stats['sessions_count'] = len(self.content_sessions)
+            stats['slots_count'] = len(self.content_slots)
+            
+            return stats
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения статистики контента: {e}")
+            return {}
+    
+    def backup_database(self, backup_path: str) -> bool:
+        """Создание резервной копии базы данных"""
+        try:
+            import shutil
+            
+            backup_file = Path(backup_path)
+            backup_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Создаем резервную копию
+            shutil.copy2(self.db_path, backup_file)
+            
+            logger.info(f"Резервная копия создана: {backup_path}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания резервной копии: {e}")
             return False
     
-    def _handle_content_added(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события добавления контента"""
+    def restore_database(self, backup_path: str) -> bool:
+        """Восстановление базы данных из резервной копии"""
         try:
-            content_item = event_data.get('content_item')
+            import shutil
             
-            if content_item:
-                return self.add_content_item(content_item)
-            return False
+            backup_file = Path(backup_path)
+            if not backup_file.exists():
+                logger.error(f"Файл резервной копии не найден: {backup_path}")
+                return False
+            
+            # Закрываем текущее подключение
+            if self.connection:
+                self.connection.close()
+            
+            # Восстанавливаем из резервной копии
+            shutil.copy2(backup_file, self.db_path)
+            
+            # Пересоздаем подключение
+            self._create_database_connection()
+            
+            # Перезагружаем данные
+            self._load_existing_data()
+            
+            logger.info(f"База данных восстановлена из резервной копии: {backup_path}")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события добавления контента: {e}")
-            return False
-    
-    def _handle_enemy_added(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события добавления врага"""
-        try:
-            enemy_uuid = event_data.get('enemy_uuid')
-            name = event_data.get('name')
-            enemy_type = event_data.get('enemy_type')
-            level = event_data.get('level')
-            session_id = event_data.get('session_id')
-            enemy_data = event_data.get('enemy_data')
-            
-            if enemy_uuid and name and enemy_type and level and session_id and enemy_data:
-                return self.add_enemy(enemy_uuid, name, enemy_type, level, session_id, enemy_data)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события добавления врага: {e}")
-            return False
-    
-    def _handle_boss_added(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события добавления босса"""
-        try:
-            boss_uuid = event_data.get('boss_uuid')
-            name = event_data.get('name')
-            boss_type = event_data.get('boss_type')
-            level = event_data.get('level')
-            session_id = event_data.get('session_id')
-            boss_data = event_data.get('boss_data')
-            
-            if boss_uuid and name and boss_type and level and session_id and boss_data:
-                return self.add_boss(boss_uuid, name, boss_type, level, session_id, boss_data)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события добавления босса: {e}")
+            logger.error(f"Ошибка восстановления базы данных: {e}")
             return False

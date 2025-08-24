@@ -1,114 +1,21 @@
 #!/usr/bin/env python3
 """
-Система характеристик сущностей - управление статистиками и характеристиками
+Система характеристик сущностей - управление статистиками и модификаторами
 """
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass
-from enum import Enum
-
+import random
+from typing import Dict, List, Optional, Any, Union
+from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    StatType, StatCategory, DamageType, BASE_STATS,
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
-
-class StatType(Enum):
-    """Типы характеристик"""
-    STRENGTH = "strength"           # Сила - влияет на физический урон и перенос веса
-    AGILITY = "agility"            # Ловкость - влияет на скорость, точность и уклонение
-    INTELLIGENCE = "intelligence"  # Интеллект - влияет на магический урон и ману
-    VITALITY = "vitality"          # Жизнеспособность - влияет на здоровье и регенерацию
-    WISDOM = "wisdom"              # Мудрость - влияет на магическую защиту и регенерацию маны
-    CHARISMA = "charisma"          # Харизма - влияет на торговлю и социальные взаимодействия
-    LUCK = "luck"                  # Удача - влияет на шанс критического удара и уклонения
-    ENDURANCE = "endurance"        # Выносливость - влияет на переносимый вес и скорость
-    PERCEPTION = "perception"      # Восприятие - влияет на обнаружение и реакцию на окружение
-    WILLPOWER = "willpower"        # Воля - влияет на сопротивление и регенерацию маны
-    STEALTH = "stealth"            # Скрытность - влияет на скрытность и обнаружение
-    TRICKERY = "trickery"          # Хитрость - влияет на хитрость и обман
-    DEXTERITY = "dexterity"        # Ловкость - влияет на скорость, точность и уклонение
-    CONSTITUTION = "constitution"  # Конституция - влияет на здоровье и регенерацию
-    PIRERCING = "piercing"          # Пробивание - влияет на пробивание брони
-    
-    # Боевые характеристики
-    ATTACK = "attack"              # Атака - базовый физический урон
-    DEFENSE = "defense"            # Защита - снижает получаемый урон
-    CRITICAL_CHANCE = "critical_chance"  # Шанс критического удара
-    CRITICAL_DAMAGE = "critical_damage"  # Множитель критического урона
-    DODGE_CHANCE = "dodge_chance"  # Шанс уклонения
-    BLOCK_CHANCE = "block_chance"  # Шанс блока
-    BREAK_DAMAGE = "break_damage"  # Урон при снятии endurance
-    BREAK_EFFECTIVENESS = "break_effectiveness"  # Эффективность уменьшения ednurance
-    ACURACY = "accuracy"          # Точность - влияет на точность атаки
-    RESISTANCE_EFFECT = "resistance_effect"      # Сопротивление эффектам - влияет на сопротивление эффектам
-    RESISTANCE_MAGIC = "resistance_magic"  # Сопротивление магии - влияет на сопротивление магическому урону
-    RESISTANCE_PHYSICAL = "resistance_physical"  # Сопротивление физическому урону - влияет на сопротивление физическому урону
-    RESISTANCE_POISON = "resistance_poison"  # Сопротивление яду - влияет на сопротивление яду
-    RESISTANCE_DARK = "resistance_dark"  # Сопротивление тьме - влияет на сопротивление тьме
-    RESISTANCE_LIGHTNING = "resistance_lightning"  # Сопротивление молнии - влияет на сопротивление молнии
-    RESISTANCE_FIRE = "resistance_fire"  # Сопротивление огню - влияет на сопротивление огню
-    RESISTANCE_ICE = "resistance_ice"  # Сопротивление льду - влияет на сопротивление льду
-    RESISTANCE_WATER = "resistance_water"  # Сопротивление воде - влияет на сопротивление воде
-    RESISTANCE_WIND = "resistance_wind"  # Сопротивление ветру - влияет на сопротивление ветру
-    RESISTANCE_EARTH = "resistance_earth"  # Сопротивление земле - влияет на сопротивление земле
-    RESISTANCE_ACID = "resistance_acid"  # Сопротивление кислоте - влияет на сопротивление кислоте
-    RESISTANCE_RADIATION = "resistance_radiation"  # Сопротивление радиации - влияет на сопротивление радиации
-    RESISTANCE_RADIOACTIVE = "resistance_radioactive"  # Сопротивление радиоактивности - влияет на сопротивление радиоактивности
-    FIRE_RES_PENETRATION = "fire_res_penetration"  # Сопротивление огню - влияет на сопротивление огню
-    ICE_RES_PENETRATION = "ice_res_penetration"  # Сопротивление льду - влияет на сопротивление льду
-    POISON_RES_PENETRATION = "poison_res_penetration"  # Сопротивление яду - влияет на сопротивление яду
-    DARK_RES_PENETRATION = "dark_res_penetration"  # Сопротивление тьме - влияет на сопротивление тьме
-    LIGHTNING_RES_PENETRATION = "lightning_res_penetration"  # Сопротивление молнии - влияет на сопротивление молнии
-    WATER_RES_PENETRATION = "water_res_penetration"  # Сопротивление воде - влияет на сопротивление воде
-    WIND_RES_PENETRATION = "wind_res_penetration"  # Сопротивление ветру - влияет на сопротивление ветру
-    EARTH_RES_PENETRATION = "earth_res_penetration"  # Сопротивление земле - влияет на сопротивление земле
-    ACID_RES_PENETRATION = "acid_res_penetration"  # Сопротивление кислоте - влияет на сопротивление кислоте
-    RADIATION_RES_PENETRATION = "radiation_res_penetration"  # Сопротивление радиации - влияет на сопротивление радиации
-    RADIOACTIVE_RES_PENETRATION = "radioactive_res_penetration"  # Сопротивление радиоактивности - влияет на сопротивление радиоактивности
-    FIRE_DAMAGE_PENETRATION = "fire_damage_penetration"  # Пробивание огнем - влияет на пробивание огнем
-    ICE_DAMAGE_PENETRATION = "ice_damage_penetration"  # Пробивание льдом - влияет на пробивание льдом
-    POISON_DAMAGE_PENETRATION = "poison_damage_penetration"  # Пробивание ядом - влияет на пробивание ядом
-    DARK_DAMAGE_PENETRATION = "dark_damage_penetration"  # Пробивание тьмой - влияет на пробивание тьмой
-    LIGHTNING_DAMAGE_PENETRATION = "lightning_damage_penetration"  # Пробивание молнией - влияет на пробивание молнией
-    WATER_DAMAGE_PENETRATION = "water_damage_penetration"  # Пробивание водой - влияет на пробивание водой
-    WIND_DAMAGE_PENETRATION = "wind_damage_penetration"  # Пробивание ветром - влияет на пробивание ветром
-    EARTH_DAMAGE_PENETRATION = "earth_damage_penetration"  # Пробивание землей - влияет на пробивание землей
-    ACID_DAMAGE_PENETRATION = "acid_damage_penetration"  # Пробивание кислотой - влияет на пробивание кислотой
-    RADIATION_DAMAGE_PENETRATION = "radiation_damage_penetration"  # Пробивание радиацией - влияет на пробивание радиацией
-    RADIOACTIVE_DAMAGE_PENETRATION = "radioactive_damage_penetration"  # Пробивание радиоактивностью - влияет на пробивание радиоактивностью
-    FIRE_DAMAGE_BOOST  = "fire_damage_boost"  # Усиление огнем - влияет на усиление огнем
-    ICE_DAMAGE_BOOST = "ice_damage_boost"  # Усиление льдом - влияет на усиление льдом
-    POISON_DAMAGE_BOOST = "poison_damage_boost"  # Усиление ядом - влияет на усиление ядом
-    DARK_DAMAGE_BOOST = "dark_damage_boost"  # Усиление тьмой - влияет на усиление тьмой
-    LIGHTNING_DAMAGE_BOOST = "lightning_damage_boost"  # Усиление молнией - влияет на усиление молнией
-    WATER_DAMAGE_BOOST = "water_damage_boost"  # Усиление водой - влияет на усиление водой
-    WIND_DAMAGE_BOOST = "wind_damage_boost"  # Усиление ветром - влияет на усиление ветром
-    EARTH_DAMAGE_BOOST = "earth_damage_boost"  # Усиление землей - влияет на усиление землей
-    ACID_DAMAGE_BOOST = "acid_damage_boost"  # Усиление кислотой - влияет на усиление кислотой
-    RADIATION_DAMAGE_BOOST = "radiation_damage_boost"  # Усиление радиацией - влияет на усиление радиацией
-    RADIOACTIVE_DAMAGE_BOOST = "radioactive_damage_boost"  # Усиление радиоактивностью - влияет на усиление радиоактивностью
-
-
-
-    # Вторичные характеристики
-    HEALTH = "health"              # Здоровье
-    MANA = "mana"                  # Мана
-    STAMINA = "stamina"            # Выносливость
-    HEALTH_REGEN = "health_regen"  # Регенерация здоровья
-    MANA_REGEN = "mana_regen"      # Регенерация маны
-    STAMINA_REGEN = "stamina_regen"  # Регенерация выносливости
-    SKILL_RECOVERY = "skill_recovery"  # Восстановление навыков
-    EFFECT_DURATION = "effect_duration"  # Длительность эффекта
-
-
-class StatCategory(Enum):
-    """Категории характеристик"""
-    PRIMARY = "primary"      # Основные характеристики
-    SECONDARY = "secondary"  # Вторичные характеристики
-    DERIVED = "derived"      # Производные характеристики
-    TEMPORARY = "temporary"  # Временные характеристики
 
 @dataclass
 class StatModifier:
@@ -116,54 +23,89 @@ class StatModifier:
     modifier_id: str
     stat_type: StatType
     value: float
-    modifier_type: str  # 'flat', 'percentage', 'multiplier'
+    modifier_type: str  # "flat", "percent", "multiplier"
     source: str
-    duration: float  # -1 для постоянных
-    timestamp: float
-    active: bool = True
+    duration: float = 0.0  # 0.0 = постоянный
+    start_time: float = field(default_factory=time.time)
+    stackable: bool = False
+    max_stacks: int = 1
+    current_stacks: int = 1
 
 @dataclass
 class EntityStats:
     """Характеристики сущности"""
     entity_id: str
-    base_stats: Dict[StatType, float]
-    current_stats: Dict[StatType, float]
-    max_stats: Dict[StatType, float]
-    stat_modifiers: List[StatModifier]
-    level: int
-    experience: int
-    experience_to_next: int
-    last_update: float
+    level: int = 1
+    experience: int = 0
+    experience_to_next: int = 100
+    
+    # Основные характеристики
+    health: int = BASE_STATS["health"]
+    max_health: int = BASE_STATS["health"]
+    mana: int = BASE_STATS["mana"]
+    max_mana: int = BASE_STATS["mana"]
+    stamina: int = BASE_STATS["stamina"]
+    max_stamina: int = BASE_STATS["stamina"]
+    
+    # Боевые характеристики
+    attack: int = BASE_STATS["attack"]
+    defense: int = BASE_STATS["defense"]
+    speed: float = BASE_STATS["speed"]
+    critical_chance: float = PROBABILITY_CONSTANTS["base_critical_chance"]
+    critical_multiplier: float = 2.0
+    dodge_chance: float = PROBABILITY_CONSTANTS["base_dodge_chance"]
+    block_chance: float = PROBABILITY_CONSTANTS["base_block_chance"]
+    
+    # Атрибуты
+    strength: int = BASE_STATS["strength"]
+    agility: int = BASE_STATS["agility"]
+    intelligence: int = BASE_STATS["intelligence"]
+    vitality: int = BASE_STATS["vitality"]
+    wisdom: int = BASE_STATS["wisdom"]
+    charisma: int = BASE_STATS["charisma"]
+    
+    # Сопротивления
+    resistances: Dict[DamageType, float] = field(default_factory=dict)
+    
+    # Дополнительные характеристики
+    luck: float = PROBABILITY_CONSTANTS["base_luck"]
+    reputation: int = 0
+    fame: int = 0
 
 class EntityStatsSystem(ISystem):
-    """Система характеристик сущностей"""
+    """Система управления характеристиками сущностей"""
     
     def __init__(self):
         self._system_name = "entity_stats"
-        self._system_priority = SystemPriority.NORMAL
+        self._system_priority = SystemPriority.HIGH
         self._system_state = SystemState.UNINITIALIZED
         self._dependencies = []
         
         # Характеристики сущностей
         self.entity_stats: Dict[str, EntityStats] = {}
         
-        # Шаблоны характеристик по уровням
-        self.level_templates: Dict[int, Dict[StatType, float]] = {}
+        # Модификаторы характеристик
+        self.stat_modifiers: Dict[str, List[StatModifier]] = {}
         
-        # Формулы расчета производных характеристик
-        self.derived_stat_formulas: Dict[StatType, str] = {}
+        # История изменений характеристик
+        self.stats_history: List[Dict[str, Any]] = []
         
         # Настройки системы
-        self.max_level = 100
-        self.base_experience = 100
-        self.experience_multiplier = 1.5
+        self.system_settings = {
+            'max_level': SYSTEM_LIMITS["max_entity_level"],
+            'experience_scaling': 1.5,
+            'stats_per_level': 5,
+            'modifier_cleanup_interval': TIME_CONSTANTS["modifier_cleanup_interval"],
+            'auto_regen_enabled': True,
+            'regen_interval': 1.0  # секунды
+        }
         
         # Статистика системы
         self.system_stats = {
             'entities_count': 0,
-            'stats_updated': 0,
-            'modifiers_applied': 0,
-            'levels_gained': 0,
+            'total_modifiers': 0,
+            'stats_updated_today': 0,
+            'levels_gained_today': 0,
             'update_time': 0.0
         }
         
@@ -186,104 +128,100 @@ class EntityStatsSystem(ISystem):
         return self._dependencies
     
     def initialize(self) -> bool:
-        """Инициализация системы характеристик сущностей"""
+        """Инициализация системы характеристик"""
         try:
-            logger.info("Инициализация системы характеристик сущностей...")
+            logger.info("Инициализация системы характеристик...")
             
-            # Инициализируем шаблоны уровней
-            self._initialize_level_templates()
-            
-            # Настраиваем формулы производных характеристик
-            self._setup_derived_stat_formulas()
-            
-            # Создаем базовые характеристики
-            self._create_base_stats()
+            # Настраиваем систему
+            self._setup_stats_system()
             
             self._system_state = SystemState.READY
-            logger.info("Система характеристик сущностей успешно инициализирована")
+            logger.info("Система характеристик успешно инициализирована")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации системы характеристик сущностей: {e}")
+            logger.error(f"Ошибка инициализации системы характеристик: {e}")
             self._system_state = SystemState.ERROR
             return False
     
     def update(self, delta_time: float) -> bool:
-        """Обновление системы характеристик сущностей"""
+        """Обновление системы характеристик"""
         try:
             if self._system_state != SystemState.READY:
                 return False
             
             start_time = time.time()
             
-            # Обновляем характеристики всех сущностей
-            self._update_all_entity_stats(delta_time)
+            # Обновляем модификаторы
+            self._update_stat_modifiers(delta_time)
             
-            # Обрабатываем истекшие модификаторы
-            self._process_expired_modifiers()
+            # Обновляем регенерацию
+            if self.system_settings['auto_regen_enabled']:
+                self._update_regeneration(delta_time)
+            
+            # Очищаем истекшие модификаторы
+            self._cleanup_expired_modifiers()
             
             # Обновляем статистику системы
+            self._update_system_stats()
+            
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка обновления системы характеристик сущностей: {e}")
+            logger.error(f"Ошибка обновления системы характеристик: {e}")
             return False
     
     def pause(self) -> bool:
-        """Приостановка системы характеристик сущностей"""
+        """Приостановка системы характеристик"""
         try:
             if self._system_state == SystemState.READY:
                 self._system_state = SystemState.PAUSED
-                logger.info("Система характеристик сущностей приостановлена")
+                logger.info("Система характеристик приостановлена")
                 return True
             return False
         except Exception as e:
-            logger.error(f"Ошибка приостановки системы характеристик сущностей: {e}")
+            logger.error(f"Ошибка приостановки системы характеристик: {e}")
             return False
     
     def resume(self) -> bool:
-        """Возобновление системы характеристик сущностей"""
+        """Возобновление системы характеристик"""
         try:
             if self._system_state == SystemState.PAUSED:
                 self._system_state = SystemState.READY
-                logger.info("Система характеристик сущностей возобновлена")
+                logger.info("Система характеристик возобновлена")
                 return True
             return False
         except Exception as e:
-            logger.error(f"Ошибка возобновления системы характеристик сущностей: {e}")
+            logger.error(f"Ошибка возобновления системы характеристик: {e}")
             return False
     
     def cleanup(self) -> bool:
-        """Очистка системы характеристик сущностей"""
+        """Очистка системы характеристик"""
         try:
-            logger.info("Очистка системы характеристик сущностей...")
+            logger.info("Очистка системы характеристик...")
             
-            # Очищаем характеристики сущностей
+            # Очищаем все данные
             self.entity_stats.clear()
-            
-            # Очищаем шаблоны
-            self.level_templates.clear()
-            
-            # Очищаем формулы
-            self.derived_stat_formulas.clear()
+            self.stat_modifiers.clear()
+            self.stats_history.clear()
             
             # Сбрасываем статистику
             self.system_stats = {
                 'entities_count': 0,
-                'stats_updated': 0,
-                'modifiers_applied': 0,
-                'levels_gained': 0,
+                'total_modifiers': 0,
+                'stats_updated_today': 0,
+                'levels_gained_today': 0,
                 'update_time': 0.0
             }
             
             self._system_state = SystemState.DESTROYED
-            logger.info("Система характеристик сущностей очищена")
+            logger.info("Система характеристик очищена")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы характеристик сущностей: {e}")
+            logger.error(f"Ошибка очистки системы характеристик: {e}")
             return False
     
     def get_system_info(self) -> Dict[str, Any]:
@@ -294,455 +232,629 @@ class EntityStatsSystem(ISystem):
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
             'entities_count': len(self.entity_stats),
-            'max_level': self.max_level,
-            'base_experience': self.base_experience,
+            'total_modifiers': sum(len(modifiers) for modifiers in self.stat_modifiers.values()),
             'stats': self.system_stats
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
         try:
-            if event_type == "entity_stats_created":
-                return self._handle_stats_created(event_data)
-            elif event_type == "entity_stats_updated":
-                return self._handle_stats_updated(event_data)
-            elif event_type == "entity_stats_destroyed":
-                return self._handle_stats_destroyed(event_data)
-            elif event_type == "stat_modifier_applied":
-                return self._handle_modifier_applied(event_data)
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "entity_destroyed":
+                return self._handle_entity_destroyed(event_data)
+            elif event_type == "experience_gained":
+                return self._handle_experience_gained(event_data)
+            elif event_type == "stats_modified":
+                return self._handle_stats_modified(event_data)
             else:
                 return False
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def create_entity_stats(self, entity_id: str, base_stats: Dict[str, Any]) -> bool:
-        """Создание характеристик сущности"""
+    def _setup_stats_system(self) -> None:
+        """Настройка системы характеристик"""
+        try:
+            # Инициализируем базовые настройки
+            logger.debug("Система характеристик настроена")
+        except Exception as e:
+            logger.warning(f"Не удалось настроить систему характеристик: {e}")
+    
+    def _update_stat_modifiers(self, delta_time: float) -> None:
+        """Обновление модификаторов характеристик"""
+        try:
+            current_time = time.time()
+            
+            for entity_id, modifiers in self.stat_modifiers.items():
+                for modifier in modifiers:
+                    # Проверяем, не истек ли модификатор
+                    if modifier.duration > 0 and current_time - modifier.start_time > modifier.duration:
+                        # Модификатор истек, будет удален в cleanup
+                        continue
+                    
+                    # Применяем модификатор к характеристикам
+                    self._apply_modifier_to_stats(entity_id, modifier)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления модификаторов характеристик: {e}")
+    
+    def _update_regeneration(self, delta_time: float) -> None:
+        """Обновление регенерации"""
+        try:
+            current_time = time.time()
+            
+            for entity_id, stats in self.entity_stats.items():
+                # Проверяем, нужно ли обновлять регенерацию
+                if hasattr(stats, '_last_regen_time'):
+                    if current_time - stats._last_regen_time < self.system_settings['regen_interval']:
+                        continue
+                else:
+                    stats._last_regen_time = current_time
+                
+                # Регенерация здоровья
+                if stats.health < stats.max_health:
+                    regen_amount = int(stats.vitality * 0.1) + 1
+                    stats.health = min(stats.max_health, stats.health + regen_amount)
+                
+                # Регенерация маны
+                if stats.mana < stats.max_mana:
+                    regen_amount = int(stats.intelligence * 0.1) + 1
+                    stats.mana = min(stats.max_mana, stats.mana + regen_amount)
+                
+                # Регенерация выносливости
+                if stats.stamina < stats.max_stamina:
+                    regen_amount = int(stats.agility * 0.1) + 1
+                    stats.stamina = min(stats.max_stamina, stats.stamina + regen_amount)
+                
+                stats._last_regen_time = current_time
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления регенерации: {e}")
+    
+    def _cleanup_expired_modifiers(self) -> None:
+        """Очистка истекших модификаторов"""
+        try:
+            current_time = time.time()
+            
+            for entity_id in list(self.stat_modifiers.keys()):
+                if entity_id not in self.stat_modifiers:
+                    continue
+                
+                # Удаляем истекшие модификаторы
+                valid_modifiers = [
+                    modifier for modifier in self.stat_modifiers[entity_id]
+                    if modifier.duration == 0.0 or current_time - modifier.start_time <= modifier.duration
+                ]
+                
+                if len(valid_modifiers) != len(self.stat_modifiers[entity_id]):
+                    removed_count = len(self.stat_modifiers[entity_id]) - len(valid_modifiers)
+                    self.stat_modifiers[entity_id] = valid_modifiers
+                    logger.debug(f"Удалено {removed_count} истекших модификаторов у {entity_id}")
+                
+                # Удаляем пустые записи
+                if not self.stat_modifiers[entity_id]:
+                    del self.stat_modifiers[entity_id]
+                
+        except Exception as e:
+            logger.warning(f"Ошибка очистки истекших модификаторов: {e}")
+    
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            self.system_stats['entities_count'] = len(self.entity_stats)
+            self.system_stats['total_modifiers'] = sum(len(modifiers) for modifiers in self.stat_modifiers.values())
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            initial_stats = event_data.get('initial_stats', {})
+            
+            if entity_id:
+                return self.create_entity_stats(entity_id, initial_stats)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            
+            if entity_id:
+                return self.destroy_entity_stats(entity_id)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события уничтожения сущности: {e}")
+            return False
+    
+    def _handle_experience_gained(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события получения опыта"""
+        try:
+            entity_id = event_data.get('entity_id')
+            experience_amount = event_data.get('experience_amount', 0)
+            
+            if entity_id and experience_amount > 0:
+                return self.add_experience(entity_id, experience_amount)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события получения опыта: {e}")
+            return False
+    
+    def _handle_stats_modified(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события изменения характеристик"""
+        try:
+            entity_id = event_data.get('entity_id')
+            stat_type = event_data.get('stat_type')
+            value = event_data.get('value')
+            modifier_type = event_data.get('modifier_type', 'flat')
+            source = event_data.get('source', 'system')
+            duration = event_data.get('duration', 0.0)
+            
+            if entity_id and stat_type and value is not None:
+                return self.add_stat_modifier(entity_id, stat_type, value, modifier_type, source, duration)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события изменения характеристик: {e}")
+            return False
+    
+    def create_entity_stats(self, entity_id: str, initial_stats: Dict[str, Any] = None) -> bool:
+        """Создание характеристик для сущности"""
         try:
             if entity_id in self.entity_stats:
                 logger.warning(f"Характеристики для сущности {entity_id} уже существуют")
                 return False
             
-            # Конвертируем строковые ключи в StatType
-            converted_base_stats = {}
-            for stat_key, stat_value in base_stats.items():
-                try:
-                    stat_type = StatType(stat_key)
-                    converted_base_stats[stat_type] = float(stat_value)
-                except ValueError:
-                    logger.warning(f"Неизвестный тип характеристики: {stat_key}")
-                    continue
-            
             # Создаем базовые характеристики
-            entity_stats = EntityStats(
-                entity_id=entity_id,
-                base_stats=converted_base_stats,
-                current_stats=converted_base_stats.copy(),
-                max_stats=converted_base_stats.copy(),
-                stat_modifiers=[],
-                level=1,
-                experience=0,
-                experience_to_next=self.base_experience,
-                last_update=time.time()
-            )
+            stats = EntityStats(entity_id=entity_id)
             
-            # Добавляем в систему
-            self.entity_stats[entity_id] = entity_stats
-            self.system_stats['entities_count'] = len(self.entity_stats)
+            # Применяем начальные характеристики
+            if initial_stats:
+                for key, value in initial_stats.items():
+                    if hasattr(stats, key):
+                        setattr(stats, key, value)
             
-            logger.info(f"Созданы характеристики для сущности: {entity_id}")
+            # Инициализируем сопротивления
+            stats.resistances = {
+                DamageType.PHYSICAL: 0.0,
+                DamageType.FIRE: 0.0,
+                DamageType.ICE: 0.0,
+                DamageType.LIGHTNING: 0.0,
+                DamageType.POISON: 0.0,
+                DamageType.HOLY: 0.0,
+                DamageType.DARK: 0.0,
+                DamageType.ARCANE: 0.0
+            }
+            
+            # Добавляем характеристики
+            self.entity_stats[entity_id] = stats
+            self.stat_modifiers[entity_id] = []
+            
+            logger.info(f"Созданы характеристики для сущности {entity_id}")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка создания характеристик для сущности {entity_id}: {e}")
             return False
     
-    def modify_entity_stats(self, entity_id: str, stat_modifications: Dict[str, Any]) -> bool:
-        """Модификация характеристик сущности"""
+    def destroy_entity_stats(self, entity_id: str) -> bool:
+        """Уничтожение характеристик сущности"""
         try:
             if entity_id not in self.entity_stats:
-                logger.warning(f"Характеристики для сущности {entity_id} не найдены")
                 return False
             
-            entity_stats = self.entity_stats[entity_id]
+            # Удаляем характеристики
+            del self.entity_stats[entity_id]
             
-            # Применяем модификации
-            for stat_key, modification in stat_modifications.items():
-                try:
-                    stat_type = StatType(stat_key)
-                    
-                    if 'value' in modification:
-                        # Прямое изменение базовой характеристики
-                        old_value = entity_stats.base_stats.get(stat_type, 0.0)
-                        new_value = old_value + modification['value']
-                        entity_stats.base_stats[stat_type] = max(0.0, new_value)
-                        
-                        # Обновляем текущие и максимальные значения
-                        entity_stats.current_stats[stat_type] = entity_stats.base_stats[stat_type]
-                        entity_stats.max_stats[stat_type] = entity_stats.base_stats[stat_type]
-                    
-                    if 'modifier' in modification:
-                        # Применяем модификатор
-                        modifier_data = modification['modifier']
-                        modifier = StatModifier(
-                            modifier_id=f"mod_{len(entity_stats.stat_modifiers)}",
-                            stat_type=stat_type,
-                            value=modifier_data.get('value', 0.0),
-                            modifier_type=modifier_data.get('type', 'flat'),
-                            source=modifier_data.get('source', 'unknown'),
-                            duration=modifier_data.get('duration', -1.0),
-                            timestamp=time.time()
-                        )
-                        
-                        entity_stats.stat_modifiers.append(modifier)
-                        self.system_stats['modifiers_applied'] += 1
-                        
-                except ValueError:
-                    logger.warning(f"Неизвестный тип характеристики: {stat_key}")
-                    continue
+            # Удаляем модификаторы
+            if entity_id in self.stat_modifiers:
+                del self.stat_modifiers[entity_id]
             
-            # Пересчитываем производные характеристики
-            self._recalculate_derived_stats(entity_stats)
-            
-            # Обновляем время последнего изменения
-            entity_stats.last_update = time.time()
-            
-            logger.debug(f"Характеристики сущности {entity_id} модифицированы")
+            logger.info(f"Уничтожены характеристики сущности {entity_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка модификации характеристик сущности {entity_id}: {e}")
+            logger.error(f"Ошибка уничтожения характеристик сущности {entity_id}: {e}")
             return False
-    
-    def get_entity_stats(self, entity_id: str) -> Dict[str, Any]:
-        """Получение характеристик сущности"""
-        try:
-            if entity_id not in self.entity_stats:
-                return {}
-            
-            entity_stats = self.entity_stats[entity_id]
-            
-            # Конвертируем StatType в строки для JSON
-            stats_data = {
-                'entity_id': entity_stats.entity_id,
-                'level': entity_stats.level,
-                'experience': entity_stats.experience,
-                'experience_to_next': entity_stats.experience_to_next,
-                'base_stats': {stat.value: value for stat, value in entity_stats.base_stats.items()},
-                'current_stats': {stat.value: value for stat, value in entity_stats.current_stats.items()},
-                'max_stats': {stat.value: value for stat, value in entity_stats.max_stats.items()},
-                'modifiers_count': len(entity_stats.stat_modifiers),
-                'last_update': entity_stats.last_update
-            }
-            
-            return stats_data
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения характеристик сущности {entity_id}: {e}")
-            return {}
-    
-    def calculate_derived_stats(self, entity_id: str) -> Dict[str, Any]:
-        """Расчет производных характеристик"""
-        try:
-            if entity_id not in self.entity_stats:
-                return {}
-            
-            entity_stats = self.entity_stats[entity_id]
-            
-            # Пересчитываем производные характеристики
-            self._recalculate_derived_stats(entity_stats)
-            
-            # Возвращаем обновленные характеристики
-            return self.get_entity_stats(entity_id)
-            
-        except Exception as e:
-            logger.error(f"Ошибка расчета производных характеристик для сущности {entity_id}: {e}")
-            return {}
     
     def add_experience(self, entity_id: str, experience_amount: int) -> bool:
         """Добавление опыта сущности"""
         try:
             if entity_id not in self.entity_stats:
+                logger.warning(f"Характеристики сущности {entity_id} не найдены")
                 return False
             
-            entity_stats = self.entity_stats[entity_id]
-            
-            # Добавляем опыт
-            entity_stats.experience += experience_amount
+            stats = self.entity_stats[entity_id]
+            stats.experience += experience_amount
             
             # Проверяем повышение уровня
-            while entity_stats.experience >= entity_stats.experience_to_next:
-                if self._level_up(entity_stats):
-                    self.system_stats['levels_gained'] += 1
+            while stats.experience >= stats.experience_to_next:
+                if self._level_up(entity_id):
+                    stats.experience -= stats.experience_to_next
+                    stats.experience_to_next = int(stats.experience_to_next * self.system_settings['experience_scaling'])
                 else:
                     break
             
-            logger.debug(f"Добавлен опыт {experience_amount} для сущности {entity_id}")
+            # Записываем в историю
+            current_time = time.time()
+            self.stats_history.append({
+                'timestamp': current_time,
+                'action': 'experience_gained',
+                'entity_id': entity_id,
+                'amount': experience_amount,
+                'new_total': stats.experience
+            })
+            
+            logger.debug(f"Сущность {entity_id} получила {experience_amount} опыта")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка добавления опыта для сущности {entity_id}: {e}")
+            logger.error(f"Ошибка добавления опыта сущности {entity_id}: {e}")
             return False
     
-    def _initialize_level_templates(self) -> None:
-        """Инициализация шаблонов уровней"""
-        try:
-            for level in range(1, self.max_level + 1):
-                # Базовые характеристики для уровня
-                level_stats = {
-                    StatType.STRENGTH: 10 + level * 2,
-                    StatType.AGILITY: 10 + level * 1.5,
-                    StatType.INTELLIGENCE: 10 + level * 1.8,
-                    StatType.VITALITY: 10 + level * 2.2,
-                    StatType.WISDOM: 10 + level * 1.3,
-                    StatType.CHARISMA: 10 + level * 1.0,
-                    StatType.LUCK: 5 + level * 0.5
-                }
-                
-                self.level_templates[level] = level_stats
-                
-            logger.debug("Шаблоны уровней инициализированы")
-            
-        except Exception as e:
-            logger.warning(f"Не удалось инициализировать шаблоны уровней: {e}")
-    
-    def _setup_derived_stat_formulas(self) -> None:
-        """Настройка формул производных характеристик"""
-        try:
-            # Формулы для расчета производных характеристик
-            self.derived_stat_formulas = {
-                StatType.HEALTH: "vitality * 10 + strength * 5",
-                StatType.MANA: "intelligence * 8 + wisdom * 4",
-                StatType.STAMINA: "vitality * 6 + agility * 3"
-            }
-            
-            logger.debug("Формулы производных характеристик настроены")
-            
-        except Exception as e:
-            logger.warning(f"Не удалось настроить формулы производных характеристик: {e}")
-    
-    def _create_base_stats(self) -> None:
-        """Создание базовых характеристик"""
-        try:
-            # Здесь можно создать базовые характеристики для разных типов сущностей
-            pass
-        except Exception as e:
-            logger.warning(f"Не удалось создать базовые характеристики: {e}")
-    
-    def _update_all_entity_stats(self, delta_time: float) -> None:
-        """Обновление характеристик всех сущностей"""
-        try:
-            for entity_stats in self.entity_stats.values():
-                self._update_entity_stats(entity_stats, delta_time)
-                self.system_stats['stats_updated'] += 1
-                
-        except Exception as e:
-            logger.warning(f"Ошибка обновления характеристик сущностей: {e}")
-    
-    def _update_entity_stats(self, entity_stats: EntityStats, delta_time: float) -> None:
-        """Обновление характеристик конкретной сущности"""
-        try:
-            # Восстанавливаем характеристики со временем
-            if entity_stats.current_stats.get(StatType.HEALTH, 0) < entity_stats.max_stats.get(StatType.HEALTH, 0):
-                recovery_rate = entity_stats.base_stats.get(StatType.VITALITY, 10) * 0.1 * delta_time
-                current_health = entity_stats.current_stats.get(StatType.HEALTH, 0)
-                max_health = entity_stats.max_stats.get(StatType.HEALTH, 0)
-                entity_stats.current_stats[StatType.HEALTH] = min(max_health, current_health + recovery_rate)
-            
-            if entity_stats.current_stats.get(StatType.MANA, 0) < entity_stats.max_stats.get(StatType.MANA, 0):
-                recovery_rate = entity_stats.base_stats.get(StatType.INTELLIGENCE, 10) * 0.05 * delta_time
-                current_mana = entity_stats.current_stats.get(StatType.MANA, 0)
-                max_mana = entity_stats.max_stats.get(StatType.MANA, 0)
-                entity_stats.current_stats[StatType.MANA] = min(max_mana, current_mana + recovery_rate)
-            
-            if entity_stats.current_stats.get(StatType.STAMINA, 0) < entity_stats.max_stats.get(StatType.STAMINA, 0):
-                recovery_rate = entity_stats.base_stats.get(StatType.VITALITY, 10) * 0.15 * delta_time
-                current_stamina = entity_stats.current_stats.get(StatType.STAMINA, 0)
-                max_stamina = entity_stats.max_stats.get(StatType.STAMINA, 0)
-                entity_stats.current_stats[StatType.STAMINA] = min(max_stamina, current_stamina + recovery_rate)
-                
-        except Exception as e:
-            logger.warning(f"Ошибка обновления характеристик сущности {entity_stats.entity_id}: {e}")
-    
-    def _process_expired_modifiers(self) -> None:
-        """Обработка истекших модификаторов"""
-        try:
-            current_time = time.time()
-            
-            for entity_stats in self.entity_stats.values():
-                # Удаляем истекшие модификаторы
-                expired_modifiers = []
-                for modifier in entity_stats.stat_modifiers:
-                    if modifier.duration > 0 and current_time - modifier.timestamp > modifier.duration:
-                        expired_modifiers.append(modifier)
-                        modifier.active = False
-                
-                # Удаляем истекшие модификаторы
-                for modifier in expired_modifiers:
-                    entity_stats.stat_modifiers.remove(modifier)
-                
-                # Пересчитываем характеристики если были удалены модификаторы
-                if expired_modifiers:
-                    self._recalculate_derived_stats(entity_stats)
-                    
-        except Exception as e:
-            logger.warning(f"Ошибка обработки истекших модификаторов: {e}")
-    
-    def _recalculate_derived_stats(self, entity_stats: EntityStats) -> None:
-        """Пересчет производных характеристик"""
-        try:
-            # Применяем все активные модификаторы
-            for modifier in entity_stats.stat_modifiers:
-                if modifier.active:
-                    self._apply_modifier(entity_stats, modifier)
-            
-            # Пересчитываем производные характеристики
-            for stat_type, formula in self.derived_stat_formulas.items():
-                value = self._evaluate_formula(formula, entity_stats.base_stats)
-                entity_stats.base_stats[stat_type] = value
-                entity_stats.current_stats[stat_type] = value
-                entity_stats.max_stats[stat_type] = value
-            
-            # Ограничиваем текущие значения максимальными
-            for stat_type in entity_stats.current_stats:
-                max_value = entity_stats.max_stats.get(stat_type, 0)
-                current_value = entity_stats.current_stats.get(stat_type, 0)
-                entity_stats.current_stats[stat_type] = min(max_value, current_value)
-                
-        except Exception as e:
-            logger.warning(f"Ошибка пересчета производных характеристик: {e}")
-    
-    def _apply_modifier(self, entity_stats: EntityStats, modifier: StatModifier) -> None:
-        """Применение модификатора"""
-        try:
-            stat_type = modifier.stat_type
-            
-            if modifier.modifier_type == 'flat':
-                # Плоское изменение
-                entity_stats.base_stats[stat_type] += modifier.value
-                
-            elif modifier.modifier_type == 'percentage':
-                # Процентное изменение
-                base_value = entity_stats.base_stats.get(stat_type, 0)
-                entity_stats.base_stats[stat_type] += base_value * modifier.value * 0.01
-                
-            elif modifier.modifier_type == 'multiplier':
-                # Множитель
-                base_value = entity_stats.base_stats.get(stat_type, 0)
-                entity_stats.base_stats[stat_type] *= modifier.value
-                
-        except Exception as e:
-            logger.warning(f"Ошибка применения модификатора: {e}")
-    
-    def _evaluate_formula(self, formula: str, base_stats: Dict[StatType, float]) -> float:
-        """Вычисление формулы"""
-        try:
-            # Простая замена переменных в формуле
-            result = formula
-            for stat_type, value in base_stats.items():
-                result = result.replace(stat_type.value, str(value))
-            
-            # Безопасное вычисление
-            try:
-                return eval(result)
-            except:
-                return 0.0
-                
-        except Exception as e:
-            logger.warning(f"Ошибка вычисления формулы {formula}: {e}")
-            return 0.0
-    
-    def _level_up(self, entity_stats: EntityStats) -> bool:
+    def _level_up(self, entity_id: str) -> bool:
         """Повышение уровня сущности"""
         try:
-            if entity_stats.level >= self.max_level:
+            if entity_id not in self.entity_stats:
                 return False
             
-            # Увеличиваем уровень
-            entity_stats.level += 1
+            stats = self.entity_stats[entity_id]
             
-            # Вычитаем потраченный опыт
-            entity_stats.experience -= entity_stats.experience_to_next
+            if stats.level >= self.system_settings['max_level']:
+                logger.debug(f"Сущность {entity_id} достигла максимального уровня")
+                return False
             
-            # Рассчитываем опыт для следующего уровня
-            entity_stats.experience_to_next = int(self.base_experience * 
-                                               (self.experience_multiplier ** (entity_stats.level - 1)))
+            old_level = stats.level
+            stats.level += 1
             
-            # Применяем характеристики нового уровня
-            if entity_stats.level in self.level_templates:
-                level_stats = self.level_templates[entity_stats.level]
-                for stat_type, stat_value in level_stats.items():
-                    if stat_type in entity_stats.base_stats:
-                        entity_stats.base_stats[stat_type] = stat_value
+            # Улучшаем характеристики
+            stats_points = self.system_settings['stats_per_level']
             
-            # Пересчитываем производные характеристики
-            self._recalculate_derived_stats(entity_stats)
+            # Распределяем очки характеристик
+            stats.strength += stats_points // 6
+            stats.agility += stats_points // 6
+            stats.intelligence += stats_points // 6
+            stats.vitality += stats_points // 6
+            stats.wisdom += stats_points // 6
+            stats.charisma += stats_points // 6
             
-            logger.info(f"Сущность {entity_stats.entity_id} повысила уровень до {entity_stats.level}")
+            # Улучшаем основные характеристики
+            stats.max_health += int(stats.vitality * 0.5)
+            stats.max_mana += int(stats.intelligence * 0.3)
+            stats.max_stamina += int(stats.agility * 0.2)
+            
+            # Восстанавливаем здоровье и ману
+            stats.health = stats.max_health
+            stats.mana = stats.max_mana
+            stats.stamina = stats.max_stamina
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.stats_history.append({
+                'timestamp': current_time,
+                'action': 'level_up',
+                'entity_id': entity_id,
+                'old_level': old_level,
+                'new_level': stats.level
+            })
+            
+            self.system_stats['levels_gained_today'] += 1
+            logger.info(f"Сущность {entity_id} повысила уровень до {stats.level}")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка повышения уровня для сущности {entity_stats.entity_id}: {e}")
+            logger.error(f"Ошибка повышения уровня сущности {entity_id}: {e}")
             return False
     
-    def _handle_stats_created(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события создания характеристик"""
+    def add_stat_modifier(self, entity_id: str, stat_type: StatType, value: float, 
+                         modifier_type: str = 'flat', source: str = 'system', duration: float = 0.0) -> bool:
+        """Добавление модификатора характеристики"""
         try:
-            entity_id = event_data.get('entity_id')
-            base_stats = event_data.get('base_stats', {})
+            if entity_id not in self.entity_stats:
+                logger.warning(f"Характеристики сущности {entity_id} не найдены")
+                return False
             
-            if entity_id and base_stats:
-                return self.create_entity_stats(entity_id, base_stats)
-            return False
+            # Создаем модификатор
+            modifier = StatModifier(
+                modifier_id=f"{source}_{int(time.time() * 1000)}",
+                stat_type=stat_type,
+                value=value,
+                modifier_type=modifier_type,
+                source=source,
+                duration=duration
+            )
+            
+            # Добавляем модификатор
+            if entity_id not in self.stat_modifiers:
+                self.stat_modifiers[entity_id] = []
+            
+            self.stat_modifiers[entity_id].append(modifier)
+            
+            # Применяем модификатор
+            self._apply_modifier_to_stats(entity_id, modifier)
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.stats_history.append({
+                'timestamp': current_time,
+                'action': 'modifier_added',
+                'entity_id': entity_id,
+                'stat_type': stat_type.value,
+                'value': value,
+                'modifier_type': modifier_type,
+                'source': source,
+                'duration': duration
+            })
+            
+            logger.debug(f"Добавлен модификатор {stat_type.value} для {entity_id}")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события создания характеристик: {e}")
+            logger.error(f"Ошибка добавления модификатора для {entity_id}: {e}")
             return False
     
-    def _handle_stats_updated(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события обновления характеристик"""
+    def _apply_modifier_to_stats(self, entity_id: str, modifier: StatModifier) -> None:
+        """Применение модификатора к характеристикам"""
         try:
-            entity_id = event_data.get('entity_id')
-            modifications = event_data.get('modifications', {})
+            if entity_id not in self.entity_stats:
+                return
             
-            if entity_id and modifications:
-                return self.modify_entity_stats(entity_id, modifications)
-            return False
+            stats = self.entity_stats[entity_id]
+            
+            if modifier.modifier_type == 'flat':
+                # Плоский модификатор
+                if modifier.stat_type == StatType.HEALTH:
+                    stats.health = max(0, min(stats.max_health, stats.health + int(modifier.value)))
+                elif modifier.stat_type == StatType.MANA:
+                    stats.mana = max(0, min(stats.max_mana, stats.mana + int(modifier.value)))
+                elif modifier.stat_type == StatType.STAMINA:
+                    stats.stamina = max(0, min(stats.max_stamina, stats.stamina + int(modifier.value)))
+                elif modifier.stat_type == StatType.ATTACK:
+                    stats.attack = max(0, stats.attack + int(modifier.value))
+                elif modifier.stat_type == StatType.DEFENSE:
+                    stats.defense = max(0, stats.defense + int(modifier.value))
+                elif modifier.stat_type == StatType.SPEED:
+                    stats.speed = max(0.1, stats.speed + modifier.value)
+                elif modifier.stat_type == StatType.STRENGTH:
+                    stats.strength = max(1, stats.strength + int(modifier.value))
+                elif modifier.stat_type == StatType.AGILITY:
+                    stats.agility = max(1, stats.agility + int(modifier.value))
+                elif modifier.stat_type == StatType.INTELLIGENCE:
+                    stats.intelligence = max(1, stats.intelligence + int(modifier.value))
+                elif modifier.stat_type == StatType.VITALITY:
+                    stats.vitality = max(1, stats.vitality + int(modifier.value))
+                elif modifier.stat_type == StatType.WISDOM:
+                    stats.wisdom = max(1, stats.wisdom + int(modifier.value))
+                elif modifier.stat_type == StatType.CHARISMA:
+                    stats.charisma = max(1, stats.charisma + int(modifier.value))
+            
+            elif modifier.modifier_type == 'percent':
+                # Процентный модификатор
+                if modifier.stat_type == StatType.HEALTH:
+                    stats.health = int(stats.health * (1 + modifier.value))
+                elif modifier.stat_type == StatType.MANA:
+                    stats.mana = int(stats.mana * (1 + modifier.value))
+                elif modifier.stat_type == StatType.STAMINA:
+                    stats.stamina = int(stats.stamina * (1 + modifier.value))
+                elif modifier.stat_type == StatType.ATTACK:
+                    stats.attack = int(stats.attack * (1 + modifier.value))
+                elif modifier.stat_type == StatType.DEFENSE:
+                    stats.defense = int(stats.defense * (1 + modifier.value))
+                elif modifier.stat_type == StatType.SPEED:
+                    stats.speed = stats.speed * (1 + modifier.value)
+            
+            elif modifier.modifier_type == 'multiplier':
+                # Множительный модификатор
+                if modifier.stat_type == StatType.HEALTH:
+                    stats.health = int(stats.health * modifier.value)
+                elif modifier.stat_type == StatType.MANA:
+                    stats.mana = int(stats.mana * modifier.value)
+                elif modifier.stat_type == StatType.STAMINA:
+                    stats.stamina = int(stats.stamina * modifier.value)
+                elif modifier.stat_type == StatType.ATTACK:
+                    stats.attack = int(stats.attack * modifier.value)
+                elif modifier.stat_type == StatType.DEFENSE:
+                    stats.defense = int(stats.defense * modifier.value)
+                elif modifier.stat_type == StatType.SPEED:
+                    stats.speed = stats.speed * modifier.value
+            
+            # Обновляем максимальные значения
+            if modifier.stat_type == StatType.HEALTH:
+                stats.health = min(stats.health, stats.max_health)
+            elif modifier.stat_type == StatType.MANA:
+                stats.mana = min(stats.mana, stats.max_mana)
+            elif modifier.stat_type == StatType.STAMINA:
+                stats.stamina = min(stats.stamina, stats.max_stamina)
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события обновления характеристик: {e}")
+            logger.error(f"Ошибка применения модификатора для {entity_id}: {e}")
+    
+    def get_entity_stats(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение характеристик сущности"""
+        try:
+            if entity_id not in self.entity_stats:
+                return None
+            
+            stats = self.entity_stats[entity_id]
+            
+            return {
+                'entity_id': stats.entity_id,
+                'level': stats.level,
+                'experience': stats.experience,
+                'experience_to_next': stats.experience_to_next,
+                'health': stats.health,
+                'max_health': stats.max_health,
+                'mana': stats.mana,
+                'max_mana': stats.max_mana,
+                'stamina': stats.stamina,
+                'max_stamina': stats.max_stamina,
+                'attack': stats.attack,
+                'defense': stats.defense,
+                'speed': stats.speed,
+                'critical_chance': stats.critical_chance,
+                'critical_multiplier': stats.critical_multiplier,
+                'dodge_chance': stats.dodge_chance,
+                'block_chance': stats.block_chance,
+                'strength': stats.strength,
+                'agility': stats.agility,
+                'intelligence': stats.intelligence,
+                'vitality': stats.vitality,
+                'wisdom': stats.wisdom,
+                'charisma': stats.charisma,
+                'resistances': {damage_type.value: value for damage_type, value in stats.resistances.items()},
+                'luck': stats.luck,
+                'reputation': stats.reputation,
+                'fame': stats.fame
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения характеристик сущности {entity_id}: {e}")
+            return None
+    
+    def get_stat_modifiers(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Получение модификаторов сущности"""
+        try:
+            if entity_id not in self.stat_modifiers:
+                return []
+            
+            modifiers_info = []
+            
+            for modifier in self.stat_modifiers[entity_id]:
+                modifiers_info.append({
+                    'modifier_id': modifier.modifier_id,
+                    'stat_type': modifier.stat_type.value,
+                    'value': modifier.value,
+                    'modifier_type': modifier.modifier_type,
+                    'source': modifier.source,
+                    'duration': modifier.duration,
+                    'start_time': modifier.start_time,
+                    'stackable': modifier.stackable,
+                    'max_stacks': modifier.max_stacks,
+                    'current_stacks': modifier.current_stacks
+                })
+            
+            return modifiers_info
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения модификаторов сущности {entity_id}: {e}")
+            return []
+    
+    def remove_stat_modifier(self, entity_id: str, modifier_id: str) -> bool:
+        """Удаление модификатора характеристики"""
+        try:
+            if entity_id not in self.stat_modifiers:
+                return False
+            
+            modifiers = self.stat_modifiers[entity_id]
+            modifier_to_remove = None
+            
+            for modifier in modifiers:
+                if modifier.modifier_id == modifier_id:
+                    modifier_to_remove = modifier
+                    break
+            
+            if not modifier_to_remove:
+                return False
+            
+            # Удаляем модификатор
+            modifiers.remove(modifier_to_remove)
+            
+            # Удаляем пустые записи
+            if not modifiers:
+                del self.stat_modifiers[entity_id]
+            
+            logger.debug(f"Удален модификатор {modifier_id} у {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления модификатора {modifier_id} у {entity_id}: {e}")
             return False
     
-    def _handle_stats_destroyed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события уничтожения характеристик"""
+    def set_stat_value(self, entity_id: str, stat_type: StatType, value: Any) -> bool:
+        """Установка значения характеристики"""
         try:
-            entity_id = event_data.get('entity_id')
+            if entity_id not in self.entity_stats:
+                logger.warning(f"Характеристики сущности {entity_id} не найдены")
+                return False
             
-            if entity_id and entity_id in self.entity_stats:
-                del self.entity_stats[entity_id]
-                self.system_stats['entities_count'] = len(self.entity_stats)
+            stats = self.entity_stats[entity_id]
+            
+            if hasattr(stats, stat_type.value):
+                old_value = getattr(stats, stat_type.value)
+                setattr(stats, stat_type.value, value)
+                
+                # Записываем в историю
+                current_time = time.time()
+                self.stats_history.append({
+                    'timestamp': current_time,
+                    'action': 'stat_set',
+                    'entity_id': entity_id,
+                    'stat_type': stat_type.value,
+                    'old_value': old_value,
+                    'new_value': value
+                })
+                
+                self.system_stats['stats_updated_today'] += 1
+                logger.debug(f"Характеристика {stat_type.value} сущности {entity_id} изменена с {old_value} на {value}")
                 return True
-            return False
-            
+            else:
+                logger.warning(f"Характеристика {stat_type.value} не найдена")
+                return False
+                
         except Exception as e:
-            logger.error(f"Ошибка обработки события уничтожения характеристик: {e}")
+            logger.error(f"Ошибка установки характеристики {stat_type.value} для {entity_id}: {e}")
             return False
     
-    def _handle_modifier_applied(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события применения модификатора"""
+    def calculate_damage(self, attacker_id: str, target_id: str, base_damage: int, 
+                        damage_type: DamageType) -> int:
+        """Расчет урона с учетом характеристик"""
         try:
-            entity_id = event_data.get('entity_id')
-            stat_type = event_data.get('stat_type')
-            modifier_data = event_data.get('modifier', {})
+            if attacker_id not in self.entity_stats or target_id not in self.entity_stats:
+                return base_damage
             
-            if entity_id and stat_type and modifier_data:
-                modifications = {
-                    stat_type: {'modifier': modifier_data}
-                }
-                return self.modify_entity_stats(entity_id, modifications)
-            return False
+            attacker_stats = self.entity_stats[attacker_id]
+            target_stats = self.entity_stats[target_id]
+            
+            # Базовый урон
+            final_damage = base_damage
+            
+            # Модификатор от атаки
+            attack_modifier = attacker_stats.attack / 100.0
+            final_damage = int(final_damage * (1 + attack_modifier))
+            
+            # Модификатор от защиты
+            defense_modifier = target_stats.defense / 100.0
+            final_damage = int(final_damage * (1 - defense_modifier))
+            
+            # Сопротивление к типу урона
+            if damage_type in target_stats.resistances:
+                resistance = target_stats.resistances[damage_type]
+                final_damage = int(final_damage * (1 - resistance))
+            
+            # Критический удар
+            if random.random() < attacker_stats.critical_chance:
+                final_damage = int(final_damage * attacker_stats.critical_multiplier)
+            
+            # Уклонение
+            if random.random() < target_stats.dodge_chance:
+                final_damage = 0
+            
+            # Блок
+            if random.random() < target_stats.block_chance:
+                final_damage = int(final_damage * 0.5)
+            
+            return max(1, final_damage)
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события применения модификатора: {e}")
-            return False
+            logger.error(f"Ошибка расчета урона: {e}")
+            return base_damage
 

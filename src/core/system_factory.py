@@ -20,23 +20,21 @@ class SystemFactory:
         
         # Стандартные пути к системам
         self.system_paths = {
-            'render': 'src.systems.rendering.render_system.RenderSystem',
-            'ui': 'src.systems.ui.ui_system.UISystem',
-            'ai': 'src.systems.ai.ai_system.AISystem',
-            'pytorch_ai': 'src.systems.ai.pytorch_ai_system.PyTorchAISystem',
-            'combat': 'src.systems.combat.combat_system.CombatSystem',
-            'content_database': 'src.systems.content.content_database.ContentDatabase',
-            'content_generator': 'src.systems.content.content_generator.ContentGenerator',
-            'ai_integration': 'src.systems.ai.ai_integration_system.AIIntegrationSystem',
-            'entity_stats': 'src.systems.entity.entity_stats_system.EntityStatsSystem',
-            'evolution': 'src.systems.evolution.evolution_system.EvolutionSystem',
-            'genome': 'src.systems.genome.genome_system.GenomeSystem',
-            'emotion': 'src.systems.emotion.emotion_system.EmotionSystem',
-            'skills': 'src.systems.skills.skill_system.SkillSystem',
-            'effects': 'src.systems.effects.effect_system.EffectSystem',
-            'items': 'src.systems.items.item_system.ItemSystem',
-            'inventory': 'src.systems.inventory.inventory_system.InventorySystem',
-            'crafting': 'src.systems.crafting.crafting_system.CraftingSystem'
+            'render': 'systems.rendering.render_system.RenderSystem',
+            'ui': 'systems.ui.ui_system.UISystem',
+            'ai': 'systems.ai.ai_system.AISystem',
+            'combat': 'systems.combat.combat_system.CombatSystem',
+            'content_database': 'systems.content.content_database.ContentDatabase',
+            'content_generator': 'systems.content.content_generator.ContentGenerator',
+            'entity_stats': 'systems.entity.entity_stats_system.EntityStatsSystem',
+            'evolution': 'systems.evolution.evolution_system.EvolutionSystem',
+            'genome': 'systems.genome.genome_system.GenomeSystem',
+            'emotion': 'systems.emotion.emotion_system.EmotionSystem',
+            'skills': 'systems.skills.skill_system.SkillSystem',
+            'effects': 'systems.effects.effect_system.EffectSystem',
+            'items': 'systems.items.item_system.ItemSystem',
+            'inventory': 'systems.inventory.inventory_system.InventorySystem',
+            'crafting': 'systems.crafting.crafting_system.CraftingSystem'
         }
         
         logger.info("Фабрика систем инициализирована")

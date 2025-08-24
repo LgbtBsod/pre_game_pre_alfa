@@ -15,7 +15,7 @@ from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from panda3d.core import WindowProperties
 
-from .interfaces import SystemState, ISystemManager, IEventEmitter
+from .interfaces import SystemState, ISystemManager, IEventSystem
 from .system_manager import SystemManager
 from .event_system import EventSystem
 from .config_manager import ConfigManager
@@ -82,7 +82,7 @@ class GameEngine(ShowBase):
             # Настройка задач
             self._setup_tasks()
             
-            self.current_state = GameState.MAIN_MENU
+            self.current_state = SystemState.READY
             logger.info("Игровой движок Panda3D успешно инициализирован")
             return True
             

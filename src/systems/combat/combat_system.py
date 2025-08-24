@@ -8,53 +8,29 @@ import time
 import random
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
-from enum import Enum
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    DamageType, CombatState, AttackType, StatType,
+    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
-
-class CombatState(Enum):
-    """Состояния боя"""
-    IDLE = "idle"
-    IN_COMBAT = "in_combat"
-    VICTORY = "victory"
-    DEFEAT = "defeat"
-    ESCAPED = "escaped"
-
-class AttackType(Enum):
-    """Типы атак"""
-    MELEE = "melee"
-    RANGED = "ranged"
-    MAGIC = "magic"
-    SPECIAL = "special"
-    COUNTER = "counter"
-
-class DamageType(Enum):
-    """Типы урона"""
-    PHYSICAL = "physical"
-    FIRE = "fire"
-    ICE = "ice"
-    LIGHTNING = "lightning"
-    POISON = "poison"
-    HOLY = "holy"
-    DARK = "dark"
-    ARCANE = "arcane"
 
 @dataclass
 class CombatStats:
     """Боевая статистика"""
-    health: int = 100
-    max_health: int = 100
-    mana: int = 50
-    max_mana: int = 50
-    attack: int = 20
-    defense: int = 10
-    speed: float = 1.0
-    critical_chance: float = 0.05
+    health: int = BASE_STATS["health"]
+    max_health: int = BASE_STATS["health"]
+    mana: int = BASE_STATS["mana"]
+    max_mana: int = BASE_STATS["mana"]
+    attack: int = BASE_STATS["attack"]
+    defense: int = BASE_STATS["defense"]
+    speed: float = BASE_STATS["speed"]
+    critical_chance: float = PROBABILITY_CONSTANTS["base_critical_chance"]
     critical_multiplier: float = 2.0
-    dodge_chance: float = 0.1
-    block_chance: float = 0.15
+    dodge_chance: float = PROBABILITY_CONSTANTS["base_dodge_chance"]
+    block_chance: float = PROBABILITY_CONSTANTS["base_block_chance"]
     block_reduction: float = 0.5
 
 @dataclass
@@ -99,8 +75,8 @@ class CombatSystem(ISystem):
         
         # Настройки системы
         self.combat_settings = {
-            'max_active_combats': 100,
-            'combat_timeout': 300.0,  # 5 минут
+            'max_active_combats': SYSTEM_LIMITS["max_active_combats"],
+            'combat_timeout': TIME_CONSTANTS["combat_timeout"],
             'auto_resolve_delay': 60.0,  # 1 минута
             'experience_multiplier': 1.0,
             'gold_multiplier': 1.0

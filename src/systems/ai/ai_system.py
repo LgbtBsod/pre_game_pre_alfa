@@ -1,86 +1,63 @@
 #!/usr/bin/env python3
 """
-Система AI - управление искусственным интеллектом для игровых сущностей
+Система искусственного интеллекта - управление AI сущностями
 """
 
 import logging
 import time
 import random
-from typing import Dict, List, Optional, Any, Union
+import math
+from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
-from enum import Enum
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import (
+    AIState, AIBehavior, AIDifficulty, StatType,
+    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+)
 
 logger = logging.getLogger(__name__)
-
-class AIState(Enum):
-    """Состояния AI"""
-    IDLE = "idle"
-    PATROLLING = "patrolling"
-    CHASING = "chasing"
-    ATTACKING = "attacking"
-    FLEEING = "fleeing"
-    SEARCHING = "searching"
-    RESTING = "resting"
-
-class AIBehavior(Enum):
-    """Типы поведения AI"""
-    PASSIVE = "passive"
-    AGGRESSIVE = "aggressive"
-    DEFENSIVE = "defensive"
-    CAUTIOUS = "cautious"
-    BERSERK = "berserk"
-    TACTICAL = "tactical"
-
-class AIDifficulty(Enum):
-    """Уровни сложности AI"""
-    EASY = "easy"
-    NORMAL = "normal"
-    HARD = "hard"
-    EXPERT = "expert"
-    MASTER = "master"
 
 @dataclass
 class AIConfig:
     """Конфигурация AI"""
     behavior: AIBehavior = AIBehavior.AGGRESSIVE
     difficulty: AIDifficulty = AIDifficulty.NORMAL
-    vision_range: float = 10.0
-    hearing_range: float = 15.0
-    attack_range: float = 2.0
-    chase_speed: float = 1.2
-    patrol_speed: float = 0.8
-    decision_delay: float = 0.5
-    memory_duration: float = 30.0
+    reaction_time: float = 0.5
+    decision_frequency: float = 1.0
+    memory_duration: float = 300.0  # 5 минут
     group_coordination: bool = False
+    retreat_threshold: float = 0.2
+    pursuit_range: float = 100.0
+    patrol_radius: float = 50.0
 
 @dataclass
 class AIMemory:
     """Память AI"""
     entity_id: str
-    memory_type: str
-    timestamp: float
-    data: Dict[str, Any] = field(default_factory=dict)
-    importance: float = 1.0
+    last_seen: float
+    last_position: Tuple[float, float, float]
+    threat_level: float
+    interaction_count: int = 0
+    damage_dealt: float = 0.0
+    damage_received: float = 0.0
 
 @dataclass
 class AIDecision:
     """Решение AI"""
-    decision_id: str
-    entity_id: str
-    action_type: str
-    target_id: Optional[str] = None
-    priority: float = 1.0
-    timestamp: float = field(default_factory=time.time)
-    data: Dict[str, Any] = field(default_factory=dict)
+    decision_type: str
+    target_entity: Optional[str]
+    action_data: Dict[str, Any]
+    priority: float
+    timestamp: float
+    executed: bool = False
 
 class AISystem(ISystem):
     """Система управления искусственным интеллектом"""
     
     def __init__(self):
         self._system_name = "ai"
-        self._system_priority = SystemPriority.NORMAL
+        self._system_priority = SystemPriority.HIGH
         self._system_state = SystemState.UNINITIALIZED
         self._dependencies = []
         
@@ -91,7 +68,7 @@ class AISystem(ISystem):
         self.ai_configs: Dict[str, AIConfig] = {}
         
         # Память AI
-        self.ai_memories: Dict[str, List[AIMemory]] = {}
+        self.ai_memories: Dict[str, Dict[str, AIMemory]] = {}
         
         # Решения AI
         self.ai_decisions: Dict[str, List[AIDecision]] = {}
@@ -101,21 +78,21 @@ class AISystem(ISystem):
         
         # Настройки системы
         self.system_settings = {
-            'max_ai_entities': 1000,
+            'max_ai_entities': SYSTEM_LIMITS["max_ai_entities"],
             'max_memory_per_entity': 100,
-            'max_decisions_per_entity': 50,
-            'decision_processing_rate': 10,  # решений в секунду
-            'memory_cleanup_interval': 60.0,  # секунды
-            'group_coordination_enabled': True
+            'decision_queue_size': 50,
+            'update_frequency': 0.1,  # 10 раз в секунду
+            'pathfinding_enabled': True,
+            'group_behavior_enabled': True
         }
         
         # Статистика системы
         self.system_stats = {
             'ai_entities_count': 0,
-            'ai_groups_count': 0,
             'total_decisions_made': 0,
-            'total_memories_stored': 0,
-            'active_behaviors': {},
+            'total_actions_executed': 0,
+            'average_reaction_time': 0.0,
+            'memory_usage': 0,
             'update_time': 0.0
         }
         
@@ -168,8 +145,12 @@ class AISystem(ISystem):
             # Обрабатываем решения
             self._process_ai_decisions(delta_time)
             
-            # Очищаем старую память
-            self._cleanup_old_memories()
+            # Обновляем память
+            self._update_ai_memory(delta_time)
+            
+            # Координируем группы
+            if self.system_settings['group_behavior_enabled']:
+                self._coordinate_ai_groups(delta_time)
             
             # Обновляем статистику системы
             self._update_system_stats()
@@ -211,7 +192,7 @@ class AISystem(ISystem):
         try:
             logger.info("Очистка системы AI...")
             
-            # Очищаем все данные
+            # Очищаем все AI сущности
             self.ai_entities.clear()
             self.ai_configs.clear()
             self.ai_memories.clear()
@@ -221,10 +202,10 @@ class AISystem(ISystem):
             # Сбрасываем статистику
             self.system_stats = {
                 'ai_entities_count': 0,
-                'ai_groups_count': 0,
                 'total_decisions_made': 0,
-                'total_memories_stored': 0,
-                'active_behaviors': {},
+                'total_actions_executed': 0,
+                'average_reaction_time': 0.0,
+                'memory_usage': 0,
                 'update_time': 0.0
             }
             
@@ -253,14 +234,16 @@ class AISystem(ISystem):
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
         try:
-            if event_type == "entity_created":
-                return self._handle_entity_created(event_data)
-            elif event_type == "entity_destroyed":
-                return self._handle_entity_destroyed(event_data)
-            elif event_type == "ai_event":
-                return self._handle_ai_event(event_data)
-            elif event_type == "combat_event":
-                return self._handle_combat_event(event_data)
+            if event_type == "ai_entity_created":
+                return self._handle_ai_entity_created(event_data)
+            elif event_type == "ai_entity_destroyed":
+                return self._handle_ai_entity_destroyed(event_data)
+            elif event_type == "entity_detected":
+                return self._handle_entity_detected(event_data)
+            elif event_type == "combat_started":
+                return self._handle_combat_started(event_data)
+            elif event_type == "combat_ended":
+                return self._handle_combat_ended(event_data)
             else:
                 return False
         except Exception as e:
@@ -280,17 +263,17 @@ class AISystem(ISystem):
         try:
             current_time = time.time()
             
-            for entity_id, ai_data in self.ai_entities.items():
-                # Проверяем, не истекло ли время последнего решения
-                if current_time - ai_data.get('last_decision_time', 0) >= ai_data.get('decision_delay', 1.0):
-                    # Принимаем новое решение
-                    decision = self._make_ai_decision(entity_id, ai_data)
-                    if decision:
-                        self._add_ai_decision(entity_id, decision)
-                        ai_data['last_decision_time'] = current_time
+            for entity_id, entity_data in self.ai_entities.items():
+                if entity_data['state'] == AIState.DEAD:
+                    continue
                 
-                # Обновляем состояние AI
-                self._update_ai_state(entity_id, ai_data, delta_time)
+                # Проверяем, нужно ли принимать решение
+                if current_time - entity_data['last_decision_time'] >= entity_data['config'].decision_frequency:
+                    self._make_ai_decision(entity_id, entity_data)
+                    entity_data['last_decision_time'] = current_time
+                
+                # Обновляем поведение
+                self._update_ai_behavior(entity_id, entity_data, delta_time)
                 
         except Exception as e:
             logger.warning(f"Ошибка обновления AI сущностей: {e}")
@@ -298,479 +281,680 @@ class AISystem(ISystem):
     def _process_ai_decisions(self, delta_time: float) -> None:
         """Обработка решений AI"""
         try:
-            # Ограничиваем количество обрабатываемых решений в секунду
-            max_decisions = int(self.system_settings['decision_processing_rate'] * delta_time)
-            processed = 0
+            current_time = time.time()
             
             for entity_id, decisions in self.ai_decisions.items():
-                if processed >= max_decisions:
-                    break
+                if entity_id not in self.ai_entities:
+                    continue
                 
-                # Обрабатываем решения по приоритету
-                sorted_decisions = sorted(decisions, key=lambda d: d.priority, reverse=True)
+                # Фильтруем невыполненные решения
+                pending_decisions = [d for d in decisions if not d.executed]
                 
-                for decision in sorted_decisions[:max_decisions - processed]:
+                # Сортируем по приоритету
+                pending_decisions.sort(key=lambda x: x.priority, reverse=True)
+                
+                # Выполняем решение с наивысшим приоритетом
+                if pending_decisions:
+                    decision = pending_decisions[0]
                     if self._execute_ai_decision(entity_id, decision):
-                        # Удаляем выполненное решение
-                        decisions.remove(decision)
-                        processed += 1
-                        
-                        if processed >= max_decisions:
-                            break
+                        decision.executed = True
+                        self.system_stats['total_actions_executed'] += 1
+                
+                # Очищаем старые решения
+                self.ai_decisions[entity_id] = [d for d in decisions if 
+                                               current_time - d.timestamp < 60.0]
                 
         except Exception as e:
             logger.warning(f"Ошибка обработки решений AI: {e}")
     
-    def _cleanup_old_memories(self) -> None:
-        """Очистка старой памяти"""
+    def _update_ai_memory(self, delta_time: float) -> None:
+        """Обновление памяти AI"""
         try:
             current_time = time.time()
-            memory_duration = self.system_settings['memory_cleanup_interval']
             
             for entity_id, memories in self.ai_memories.items():
-                # Удаляем старые воспоминания
-                memories[:] = [mem for mem in memories 
-                              if current_time - mem.timestamp < memory_duration]
+                # Удаляем устаревшие воспоминания
+                valid_memories = {}
+                for target_id, memory in memories.items():
+                    if current_time - memory.last_seen > memory.threat_level * 300.0:  # 5 минут * threat_level
+                        valid_memories[target_id] = memory
+                
+                self.ai_memories[entity_id] = valid_memories
                 
         except Exception as e:
-            logger.warning(f"Ошибка очистки старой памяти: {e}")
+            logger.warning(f"Ошибка обновления памяти AI: {e}")
+    
+    def _coordinate_ai_groups(self, delta_time: float) -> None:
+        """Координация групп AI"""
+        try:
+            for group_id, members in self.ai_groups.items():
+                if len(members) < 2:
+                    continue
+                
+                # Простая координация - лидер группы
+                leader = members[0]
+                if leader in self.ai_entities:
+                    leader_data = self.ai_entities[leader]
+                    
+                    # Члены группы следуют за лидером
+                    for member_id in members[1:]:
+                        if member_id in self.ai_entities:
+                            member_data = self.ai_entities[member_id]
+                            self._follow_leader(member_id, member_data, leader, leader_data)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка координации групп AI: {e}")
     
     def _update_system_stats(self) -> None:
         """Обновление статистики системы"""
         try:
             self.system_stats['ai_entities_count'] = len(self.ai_entities)
-            self.system_stats['ai_groups_count'] = len(self.ai_groups)
+            self.system_stats['memory_usage'] = sum(len(memories) for memories in self.ai_memories.values())
             
-            # Подсчитываем активные поведения
-            behaviors = {}
-            for ai_data in self.ai_entities.values():
-                behavior = ai_data.get('behavior', 'unknown')
-                behaviors[behavior] = behaviors.get(behavior, 0) + 1
-            
-            self.system_stats['active_behaviors'] = behaviors
-            
+            # Среднее время реакции
+            if self.system_stats['total_actions_executed'] > 0:
+                total_reaction_time = sum(
+                    entity_data['config'].reaction_time 
+                    for entity_data in self.ai_entities.values()
+                )
+                self.system_stats['average_reaction_time'] = total_reaction_time / len(self.ai_entities)
+                
         except Exception as e:
             logger.warning(f"Ошибка обновления статистики системы: {e}")
     
-    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события создания сущности"""
+    def _handle_ai_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания AI сущности"""
         try:
             entity_id = event_data.get('entity_id')
             ai_config = event_data.get('ai_config')
+            position = event_data.get('position', (0.0, 0.0, 0.0))
             
             if entity_id and ai_config:
-                return self.register_ai_entity(entity_id, ai_config)
+                return self.create_ai_entity(entity_id, ai_config, position)
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            logger.error(f"Ошибка обработки события создания AI сущности: {e}")
             return False
     
-    def _handle_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события уничтожения сущности"""
+    def _handle_ai_entity_destroyed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события уничтожения AI сущности"""
         try:
             entity_id = event_data.get('entity_id')
             
             if entity_id:
-                return self.unregister_ai_entity(entity_id)
+                return self.destroy_ai_entity(entity_id)
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки события уничтожения сущности: {e}")
+            logger.error(f"Ошибка обработки события уничтожения AI сущности: {e}")
             return False
     
-    def _handle_ai_event(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка AI события"""
+    def _handle_entity_detected(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события обнаружения сущности"""
         try:
-            entity_id = event_data.get('entity_id')
-            event_type = event_data.get('event_type')
-            event_data_dict = event_data.get('data', {})
+            detector_id = event_data.get('detector_id')
+            detected_id = event_data.get('detected_id')
+            position = event_data.get('position', (0.0, 0.0, 0.0))
+            threat_level = event_data.get('threat_level', 1.0)
             
-            if entity_id and event_type:
-                return self._process_ai_event(entity_id, event_type, event_data_dict)
+            if detector_id and detected_id:
+                return self.update_ai_memory(detector_id, detected_id, position, threat_level)
             return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки AI события: {e}")
+            logger.error(f"Ошибка обработки события обнаружения сущности: {e}")
             return False
     
-    def _handle_combat_event(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка боевого события"""
+    def _handle_combat_started(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события начала боя"""
         try:
-            # Обрабатываем боевые события
-            if event_type == "damage_taken":
-                # AI получил урон - возможно, нужно убежать
-                if entity_id in self.ai_entities:
-                    ai_data = self.ai_entities[entity_id]
-                    if ai_data['health'] < ai_data['max_health'] * 0.3:  # Меньше 30% здоровья
-                        decision = AIDecision(
-                            decision_id=f"flee_{int(time.time() * 1000)}",
-                            entity_id=entity_id,
-                            action_type="flee",
-                            priority=0.9
-                        )
-                        self._add_ai_decision(entity_id, decision)
+            combat_id = event_data.get('combat_id')
+            participants = event_data.get('participants')
             
-            return True
+            if combat_id and participants:
+                # AI сущности переходят в состояние боя
+                for participant_id in participants:
+                    if participant_id in self.ai_entities:
+                        self.ai_entities[participant_id]['state'] = AIState.IN_COMBAT
+                return True
+            return False
             
         except Exception as e:
-            logger.error(f"Ошибка обработки боевого события: {e}")
+            logger.error(f"Ошибка обработки события начала боя: {e}")
             return False
     
-    def register_ai_entity(self, entity_id: str, ai_config: Union[AIConfig, Dict[str, Any]]) -> bool:
-        """Регистрация AI сущности"""
+    def _handle_combat_ended(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события окончания боя"""
+        try:
+            combat_id = event_data.get('combat_id')
+            result = event_data.get('result')
+            participants = event_data.get('participants')
+            
+            if combat_id and participants:
+                # AI сущности возвращаются к обычному состоянию
+                for participant_id in participants:
+                    if participant_id in self.ai_entities:
+                        if result == "victory":
+                            self.ai_entities[participant_id]['state'] = AIState.IDLE
+                        else:
+                            self.ai_entities[participant_id]['state'] = AIState.RETREATING
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события окончания боя: {e}")
+            return False
+    
+    def create_ai_entity(self, entity_id: str, ai_config: AIConfig, position: Tuple[float, float, float]) -> bool:
+        """Создание AI сущности"""
         try:
             if entity_id in self.ai_entities:
-                logger.warning(f"AI сущность {entity_id} уже зарегистрирована")
+                logger.warning(f"AI сущность {entity_id} уже существует")
                 return False
             
             if len(self.ai_entities) >= self.system_settings['max_ai_entities']:
                 logger.warning("Достигнут лимит AI сущностей")
                 return False
             
-            # Создаем конфигурацию AI
-            if isinstance(ai_config, dict):
-                config = AIConfig(**ai_config)
-            else:
-                config = ai_config
-            
-            # Создаем AI данные
-            ai_data = {
+            # Создаем AI сущность
+            entity_data = {
                 'id': entity_id,
-                'config': config,
+                'config': ai_config,
+                'position': position,
                 'state': AIState.IDLE,
+                'last_decision_time': time.time(),
                 'current_target': None,
-                'last_decision_time': 0.0,
-                'behavior': config.behavior.value,
-                'difficulty': config.difficulty.value,
                 'patrol_points': [],
-                'current_patrol_index': 0,
-                'health': 100,
-                'max_health': 100,
-                'position': {'x': 0, 'y': 0, 'z': 0},
-                'last_known_player_position': None
+                'group_id': None
             }
             
-            self.ai_entities[entity_id] = ai_data
-            self.ai_configs[entity_id] = config
-            self.ai_memories[entity_id] = []
+            self.ai_entities[entity_id] = entity_data
+            self.ai_configs[entity_id] = ai_config
+            self.ai_memories[entity_id] = {}
             self.ai_decisions[entity_id] = []
             
-            logger.info(f"AI сущность {entity_id} зарегистрирована")
+            # Генерируем точки патрулирования
+            if ai_config.behavior == AIBehavior.PATROL:
+                self._generate_patrol_points(entity_id, position, ai_config.patrol_radius)
+            
+            logger.info(f"AI сущность {entity_id} создана")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка регистрации AI сущности {entity_id}: {e}")
+            logger.error(f"Ошибка создания AI сущности {entity_id}: {e}")
             return False
     
-    def unregister_ai_entity(self, entity_id: str) -> bool:
-        """Отмена регистрации AI сущности"""
+    def destroy_ai_entity(self, entity_id: str) -> bool:
+        """Уничтожение AI сущности"""
         try:
-            if entity_id in self.ai_entities:
-                del self.ai_entities[entity_id]
+            if entity_id not in self.ai_entities:
+                return False
             
-            if entity_id in self.ai_configs:
-                del self.ai_configs[entity_id]
+            # Удаляем из группы
+            if entity_id in self.ai_groups:
+                del self.ai_groups[entity_id]
             
-            if entity_id in self.ai_memories:
-                del self.ai_memories[entity_id]
+            # Очищаем данные
+            del self.ai_entities[entity_id]
+            del self.ai_configs[entity_id]
+            del self.ai_memories[entity_id]
+            del self.ai_decisions[entity_id]
             
-            if entity_id in self.ai_decisions:
-                del self.ai_decisions[entity_id]
-            
-            # Удаляем из групп
-            for group_id, members in list(self.ai_groups.items()):
-                if entity_id in members:
-                    members.remove(entity_id)
-                    if not members:
-                        del self.ai_groups[group_id]
-            
-            logger.info(f"AI сущность {entity_id} удалена")
+            logger.info(f"AI сущность {entity_id} уничтожена")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка удаления AI сущности {entity_id}: {e}")
+            logger.error(f"Ошибка уничтожения AI сущности {entity_id}: {e}")
             return False
     
-    def _make_ai_decision(self, entity_id: str, ai_data: Dict[str, Any]) -> Optional[AIDecision]:
+    def update_ai_memory(self, entity_id: str, target_id: str, position: Tuple[float, float, float], threat_level: float) -> bool:
+        """Обновление памяти AI"""
+        try:
+            if entity_id not in self.ai_memories:
+                return False
+            
+            current_time = time.time()
+            
+            # Создаем или обновляем воспоминание
+            memory = AIMemory(
+                entity_id=target_id,
+                last_seen=current_time,
+                last_position=position,
+                threat_level=threat_level
+            )
+            
+            # Если воспоминание уже существует, обновляем счетчики
+            if target_id in self.ai_memories[entity_id]:
+                old_memory = self.ai_memories[entity_id][target_id]
+                memory.interaction_count = old_memory.interaction_count + 1
+                memory.damage_dealt = old_memory.damage_dealt
+                memory.damage_received = old_memory.damage_received
+            
+            self.ai_memories[entity_id][target_id] = memory
+            
+            # Ограничиваем количество воспоминаний
+            if len(self.ai_memories[entity_id]) > self.system_settings['max_memory_per_entity']:
+                # Удаляем самое старое воспоминание
+                oldest_memory = min(
+                    self.ai_memories[entity_id].values(),
+                    key=lambda x: x.last_seen
+                )
+                del self.ai_memories[entity_id][oldest_memory.entity_id]
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления памяти AI: {e}")
+            return False
+    
+    def _make_ai_decision(self, entity_id: str, entity_data: Dict[str, Any]) -> None:
         """Принятие решения AI"""
         try:
-            config = ai_data['config']
-            current_state = ai_data['state']
+            config = entity_data['config']
+            current_state = entity_data['state']
             
-            # Простая логика принятия решений
+            # Анализируем окружение
+            threats = self._analyze_threats(entity_id)
+            opportunities = self._analyze_opportunities(entity_id)
+            
+            # Принимаем решение на основе поведения и состояния
             if current_state == AIState.IDLE:
-                # Проверяем, есть ли враги поблизости
-                nearby_enemies = self._detect_nearby_enemies(entity_id, config.vision_range)
-                if nearby_enemies:
-                    return AIDecision(
-                        decision_id=f"chase_{int(time.time() * 1000)}",
-                        entity_id=entity_id,
-                        action_type="chase",
-                        target_id=nearby_enemies[0],
-                        priority=0.8
+                if threats and config.behavior != AIBehavior.PASSIVE:
+                    decision = AIDecision(
+                        decision_type="engage",
+                        target_entity=threats[0]['entity_id'],
+                        action_data={'action': 'attack'},
+                        priority=threats[0]['threat_level'],
+                        timestamp=time.time()
+                    )
+                elif opportunities and config.behavior == AIBehavior.AGGRESSIVE:
+                    decision = AIDecision(
+                        decision_type="hunt",
+                        target_entity=opportunities[0]['entity_id'],
+                        action_data={'action': 'pursue'},
+                        priority=opportunities[0]['value'],
+                        timestamp=time.time()
+                    )
+                elif config.behavior == AIBehavior.PATROL:
+                    decision = AIDecision(
+                        decision_type="patrol",
+                        target_entity=None,
+                        action_data={'action': 'move_to_patrol_point'},
+                        priority=0.1,
+                        timestamp=time.time()
                     )
                 else:
-                    # Патрулируем
-                    return AIDecision(
-                        decision_id=f"patrol_{int(time.time() * 1000)}",
-                        entity_id=entity_id,
-                        action_type="patrol",
-                        priority=0.3
+                    return
+            
+            elif current_state == AIState.IN_COMBAT:
+                if threats:
+                    decision = AIDecision(
+                        decision_type="combat",
+                        target_entity=threats[0]['entity_id'],
+                        action_data={'action': 'attack'},
+                        priority=threats[0]['threat_level'] * 2,
+                        timestamp=time.time()
+                    )
+                else:
+                    decision = AIDecision(
+                        decision_type="return_to_idle",
+                        target_entity=None,
+                        action_data={'action': 'idle'},
+                        priority=0.5,
+                        timestamp=time.time()
                     )
             
-            elif current_state == AIState.CHASING:
-                # Проверяем, можем ли атаковать
-                if ai_data['current_target']:
-                    target_distance = self._calculate_distance(entity_id, ai_data['current_target'])
-                    if target_distance <= config.attack_range:
-                        return AIDecision(
-                            decision_id=f"attack_{int(time.time() * 1000)}",
-                            entity_id=entity_id,
-                            action_type="attack",
-                            target_id=ai_data['current_target'],
-                            priority=0.9
-                        )
+            elif current_state == AIState.RETREATING:
+                decision = AIDecision(
+                    decision_type="retreat",
+                    target_entity=None,
+                    action_data={'action': 'move_away'},
+                    priority=1.0,
+                    timestamp=time.time()
+                )
             
-            elif current_state == AIState.ATTACKING:
-                # Проверяем, не нужно ли отступить
-                if ai_data['current_target']:
-                    target_distance = self._calculate_distance(entity_id, ai_data['current_target'])
-                    if target_distance > config.attack_range:
-                        return AIDecision(
-                            decision_id=f"chase_{int(time.time() * 1000)}",
-                            entity_id=entity_id,
-                            action_type="chase",
-                            target_id=ai_data['current_target'],
-                            priority=0.7
-                        )
+            else:
+                return
             
-            return None
+            # Добавляем решение в очередь
+            self.ai_decisions[entity_id].append(decision)
+            self.system_stats['total_decisions_made'] += 1
+            
+            # Ограничиваем размер очереди
+            if len(self.ai_decisions[entity_id]) > self.system_settings['decision_queue_size']:
+                self.ai_decisions[entity_id] = self.ai_decisions[entity_id][-self.system_settings['decision_queue_size']:]
             
         except Exception as e:
             logger.error(f"Ошибка принятия решения AI для {entity_id}: {e}")
-            return None
+    
+    def _analyze_threats(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Анализ угроз для AI сущности"""
+        try:
+            threats = []
+            
+            if entity_id not in self.ai_memories:
+                return threats
+            
+            current_time = time.time()
+            
+            for target_id, memory in self.ai_memories[entity_id].items():
+                # Проверяем, не устарело ли воспоминание
+                if current_time - memory.last_seen > memory.threat_level * 300.0:
+                    continue
+                
+                # Рассчитываем уровень угрозы
+                threat_level = memory.threat_level
+                if memory.damage_received > 0:
+                    threat_level *= 1.5
+                
+                threats.append({
+                    'entity_id': target_id,
+                    'threat_level': threat_level,
+                    'position': memory.last_position,
+                    'last_seen': memory.last_seen
+                })
+            
+            # Сортируем по уровню угрозы
+            threats.sort(key=lambda x: x['threat_level'], reverse=True)
+            return threats
+            
+        except Exception as e:
+            logger.error(f"Ошибка анализа угроз для {entity_id}: {e}")
+            return []
+    
+    def _analyze_opportunities(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Анализ возможностей для AI сущности"""
+        try:
+            opportunities = []
+            
+            if entity_id not in self.ai_memories:
+                return opportunities
+            
+            current_time = time.time()
+            
+            for target_id, memory in self.ai_memories[entity_id].items():
+                # Проверяем, не устарело ли воспоминание
+                if current_time - memory.last_seen > memory.threat_level * 300.0:
+                    continue
+                
+                # Рассчитываем ценность цели
+                value = 1.0 / memory.threat_level  # Чем слабее цель, тем ценнее
+                if memory.damage_dealt > 0:
+                    value *= 1.2
+                
+                opportunities.append({
+                    'entity_id': target_id,
+                    'value': value,
+                    'position': memory.last_position,
+                    'last_seen': memory.last_seen
+                })
+            
+            # Сортируем по ценности
+            opportunities.sort(key=lambda x: x['value'], reverse=True)
+            return opportunities
+            
+        except Exception as e:
+            logger.error(f"Ошибка анализа возможностей для {entity_id}: {e}")
+            return []
     
     def _execute_ai_decision(self, entity_id: str, decision: AIDecision) -> bool:
         """Выполнение решения AI"""
         try:
-            if decision.action_type == "chase":
-                return self._execute_chase_action(entity_id, decision)
-            elif decision.action_type == "attack":
-                return self._execute_attack_action(entity_id, decision)
-            elif decision.action_type == "patrol":
-                return self._execute_patrol_action(entity_id, decision)
-            elif decision.action_type == "flee":
-                return self._execute_flee_action(entity_id, decision)
+            if entity_id not in self.ai_entities:
+                return False
+            
+            entity_data = self.ai_entities[entity_id]
+            
+            if decision.decision_type == "engage":
+                return self._execute_engage_action(entity_id, entity_data, decision)
+            elif decision.decision_type == "hunt":
+                return self._execute_hunt_action(entity_id, entity_data, decision)
+            elif decision.decision_type == "patrol":
+                return self._execute_patrol_action(entity_id, entity_data, decision)
+            elif decision.decision_type == "combat":
+                return self._execute_combat_action(entity_id, entity_data, decision)
+            elif decision.decision_type == "retreat":
+                return self._execute_retreat_action(entity_id, entity_data, decision)
+            elif decision.decision_type == "return_to_idle":
+                return self._execute_return_to_idle_action(entity_id, entity_data, decision)
             else:
-                logger.warning(f"Неизвестный тип действия AI: {decision.action_type}")
                 return False
                 
         except Exception as e:
-            logger.error(f"Ошибка выполнения решения AI {decision.decision_id}: {e}")
+            logger.error(f"Ошибка выполнения решения AI для {entity_id}: {e}")
             return False
     
-    def _execute_chase_action(self, entity_id: str, decision: AIDecision) -> bool:
-        """Выполнение действия преследования"""
-        try:
-            ai_data = self.ai_entities[entity_id]
-            ai_data['state'] = AIState.CHASING
-            ai_data['current_target'] = decision.target_id
-            
-            # Логируем действие
-            logger.debug(f"AI {entity_id} преследует {decision.target_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка выполнения действия преследования: {e}")
-            return False
-    
-    def _execute_attack_action(self, entity_id: str, decision: AIDecision) -> bool:
+    def _execute_engage_action(self, entity_id: str, entity_data: Dict[str, Any], decision: AIDecision) -> bool:
         """Выполнение действия атаки"""
         try:
-            ai_data = self.ai_entities[entity_id]
-            ai_data['state'] = AIState.ATTACKING
+            target_id = decision.target_entity
+            if not target_id:
+                return False
             
-            # Логируем действие
-            logger.debug(f"AI {entity_id} атакует {decision.target_id}")
+            # Переходим в состояние боя
+            entity_data['state'] = AIState.IN_COMBAT
+            entity_data['current_target'] = target_id
+            
+            # Двигаемся к цели
+            if target_id in self.ai_memories[entity_id]:
+                target_position = self.ai_memories[entity_id][target_id].last_position
+                self._move_to_position(entity_id, target_position)
+            
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка выполнения действия атаки: {e}")
+            logger.error(f"Ошибка выполнения действия атаки для {entity_id}: {e}")
             return False
     
-    def _execute_patrol_action(self, entity_id: str, decision: AIDecision) -> bool:
+    def _execute_hunt_action(self, entity_id: str, entity_data: Dict[str, Any], decision: AIDecision) -> bool:
+        """Выполнение действия охоты"""
+        try:
+            target_id = decision.target_entity
+            if not target_id:
+                return False
+            
+            # Двигаемся к цели
+            if target_id in self.ai_memories[entity_id]:
+                target_position = self.ai_memories[entity_id][target_id].last_position
+                self._move_to_position(entity_id, target_position)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка выполнения действия охоты для {entity_id}: {e}")
+            return False
+    
+    def _execute_patrol_action(self, entity_id: str, entity_data: Dict[str, Any], decision: AIDecision) -> bool:
         """Выполнение действия патрулирования"""
         try:
-            ai_data = self.ai_entities[entity_id]
-            ai_data['state'] = AIState.PATROLLING
+            if not entity_data['patrol_points']:
+                return False
             
-            # Логируем действие
-            logger.debug(f"AI {entity_id} патрулирует")
+            # Двигаемся к следующей точке патрулирования
+            next_point = entity_data['patrol_points'][0]
+            self._move_to_position(entity_id, next_point)
+            
+            # Перемещаем точку в конец списка
+            entity_data['patrol_points'] = entity_data['patrol_points'][1:] + [next_point]
+            
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка выполнения действия патрулирования: {e}")
+            logger.error(f"Ошибка выполнения действия патрулирования для {entity_id}: {e}")
             return False
     
-    def _execute_flee_action(self, entity_id: str, decision: AIDecision) -> bool:
-        """Выполнение действия бегства"""
+    def _execute_combat_action(self, entity_id: str, entity_data: Dict[str, Any], decision: AIDecision) -> bool:
+        """Выполнение боевого действия"""
         try:
-            ai_data = self.ai_entities[entity_id]
-            ai_data['state'] = AIState.FLEEING
-            ai_data['current_target'] = None
+            target_id = decision.target_entity
+            if not target_id:
+                return False
             
-            # Логируем действие
-            logger.debug(f"AI {entity_id} убегает")
+            # Выполняем атаку
+            # Здесь должна быть интеграция с системой боя
+            logger.debug(f"AI {entity_id} атакует {target_id}")
+            
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка выполнения действия бегства: {e}")
+            logger.error(f"Ошибка выполнения боевого действия для {entity_id}: {e}")
             return False
     
-    def _update_ai_state(self, entity_id: str, ai_data: Dict[str, Any], delta_time: float) -> None:
-        """Обновление состояния AI"""
+    def _execute_retreat_action(self, entity_id: str, entity_data: Dict[str, Any], decision: AIDecision) -> bool:
+        """Выполнение действия отступления"""
         try:
-            current_state = ai_data['state']
+            # Двигаемся в противоположном направлении от текущей позиции
+            current_pos = entity_data['position']
+            retreat_direction = (-current_pos[0], -current_pos[1], -current_pos[2])
+            retreat_position = tuple(p * 10.0 for p in retreat_direction)
             
-            if current_state == AIState.PATROLLING:
-                self._update_patrol_state(entity_id, ai_data, delta_time)
-            elif current_state == AIState.CHASING:
-                self._update_chase_state(entity_id, ai_data, delta_time)
-            elif current_state == AIState.ATTACKING:
-                self._update_attack_state(entity_id, ai_data, delta_time)
-            elif current_state == AIState.FLEEING:
-                self._update_flee_state(entity_id, ai_data, delta_time)
+            self._move_to_position(entity_id, retreat_position)
+            
+            # Через некоторое время возвращаемся к обычному состоянию
+            if random.random() < 0.1:  # 10% шанс
+                entity_data['state'] = AIState.IDLE
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка выполнения действия отступления для {entity_id}: {e}")
+            return False
+    
+    def _execute_return_to_idle_action(self, entity_id: str, entity_data: Dict[str, Any], decision: AIDecision) -> bool:
+        """Выполнение действия возврата к обычному состоянию"""
+        try:
+            entity_data['state'] = AIState.IDLE
+            entity_data['current_target'] = None
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка выполнения действия возврата к обычному состоянию для {entity_id}: {e}")
+            return False
+    
+    def _update_ai_behavior(self, entity_id: str, entity_data: Dict[str, Any], delta_time: float) -> None:
+        """Обновление поведения AI"""
+        try:
+            config = entity_data['config']
+            
+            # Обновляем позицию
+            if entity_data['state'] == AIState.IDLE and config.behavior == AIBehavior.PATROL:
+                # Простое патрулирование
+                pass
+            
+            # Проверяем условия отступления
+            if entity_data['state'] == AIState.IN_COMBAT:
+                # Проверяем здоровье и другие факторы
+                pass
                 
         except Exception as e:
-            logger.error(f"Ошибка обновления состояния AI {entity_id}: {e}")
+            logger.error(f"Ошибка обновления поведения AI для {entity_id}: {e}")
     
-    def _update_patrol_state(self, entity_id: str, ai_data: Dict[str, Any], delta_time: float) -> None:
-        """Обновление состояния патрулирования"""
+    def _move_to_position(self, entity_id: str, target_position: Tuple[float, float, float]) -> None:
+        """Движение AI к позиции"""
         try:
-            # Простая логика патрулирования
-            pass
+            if entity_id not in self.ai_entities:
+                return
+            
+            entity_data = self.ai_entities[entity_id]
+            current_pos = entity_data['position']
+            
+            # Простое движение - линейная интерполяция
+            # В реальной игре здесь должна быть система навигации
+            entity_data['position'] = target_position
+            
         except Exception as e:
-            logger.error(f"Ошибка обновления состояния патрулирования: {e}")
+            logger.error(f"Ошибка движения AI {entity_id}: {e}")
     
-    def _update_chase_state(self, entity_id: str, ai_data: Dict[str, Any], delta_time: float) -> None:
-        """Обновление состояния преследования"""
+    def _generate_patrol_points(self, entity_id: str, center_position: Tuple[float, float, float], radius: float) -> None:
+        """Генерация точек патрулирования"""
         try:
-            # Простая логика преследования
-            pass
-        except Exception as e:
-            logger.error(f"Ошибка обновления состояния преследования: {e}")
-    
-    def _update_attack_state(self, entity_id: str, ai_data: Dict[str, Any], delta_time: float) -> None:
-        """Обновление состояния атаки"""
-        try:
-            # Простая логика атаки
-            pass
-        except Exception as e:
-            logger.error(f"Ошибка обновления состояния атаки: {e}")
-    
-    def _update_flee_state(self, entity_id: str, ai_data: Dict[str, Any], delta_time: float) -> None:
-        """Обновление состояния бегства"""
-        try:
-            # Простая логика бегства
-            pass
-        except Exception as e:
-            logger.error(f"Ошибка обновления состояния бегства: {e}")
-    
-    def _detect_nearby_enemies(self, entity_id: str, vision_range: float) -> List[str]:
-        """Обнаружение врагов поблизости"""
-        try:
-            # Упрощенная реализация - возвращаем пустой список
-            return []
-        except Exception as e:
-            logger.error(f"Ошибка обнаружения врагов: {e}")
-            return []
-    
-    def _calculate_distance(self, entity_id: str, target_id: str) -> float:
-        """Расчет расстояния между сущностями"""
-        try:
-            # Упрощенная реализация - возвращаем случайное расстояние
-            return random.uniform(1.0, 20.0)
-        except Exception as e:
-            logger.error(f"Ошибка расчета расстояния: {e}")
-            return 10.0
-    
-    def _add_ai_decision(self, entity_id: str, decision: AIDecision) -> None:
-        """Добавление решения AI"""
-        try:
-            if entity_id in self.ai_decisions:
-                decisions = self.ai_decisions[entity_id]
+            if entity_id not in self.ai_entities:
+                return
+            
+            patrol_points = []
+            num_points = random.randint(3, 6)
+            
+            for i in range(num_points):
+                angle = (i / num_points) * 2 * math.pi
+                distance = random.uniform(radius * 0.5, radius)
                 
-                # Ограничиваем количество решений
-                if len(decisions) >= self.system_settings['max_decisions_per_entity']:
-                    # Удаляем самое старое решение с низким приоритетом
-                    decisions.sort(key=lambda d: (d.priority, d.timestamp))
-                    if decisions and decisions[0].priority < decision.priority:
-                        decisions.pop(0)
-                    else:
-                        return  # Не добавляем новое решение
+                x = center_position[0] + distance * math.cos(angle)
+                z = center_position[2] + distance * math.sin(angle)
+                y = center_position[1]  # Высота остается той же
                 
-                decisions.append(decision)
-                self.system_stats['total_decisions_made'] += 1
-                
+                patrol_points.append((x, y, z))
+            
+            self.ai_entities[entity_id]['patrol_points'] = patrol_points
+            
         except Exception as e:
-            logger.error(f"Ошибка добавления решения AI: {e}")
+            logger.error(f"Ошибка генерации точек патрулирования для {entity_id}: {e}")
     
-    def _process_ai_event(self, entity_id: str, event_type: str, event_data: Dict[str, Any]) -> bool:
-        """Обработка AI события"""
+    def _follow_leader(self, follower_id: str, follower_data: Dict[str, Any], leader_id: str, leader_data: Dict[str, Any]) -> None:
+        """Следование за лидером группы"""
         try:
-            # Создаем память о событии
-            memory = AIMemory(
-                entity_id=entity_id,
-                memory_type=event_type,
-                timestamp=time.time(),
-                data=event_data,
-                importance=event_data.get('importance', 1.0)
+            leader_pos = leader_data['position']
+            follower_pos = follower_data['position']
+            
+            # Двигаемся к лидеру, но с небольшим отступом
+            offset = 2.0
+            target_pos = (
+                leader_pos[0] + random.uniform(-offset, offset),
+                leader_pos[1],
+                leader_pos[2] + random.uniform(-offset, offset)
             )
             
-            if entity_id in self.ai_memories:
-                memories = self.ai_memories[entity_id]
-                
-                # Ограничиваем количество воспоминаний
-                if len(memories) >= self.system_settings['max_memory_per_entity']:
-                    # Удаляем самое старое воспоминание с низкой важностью
-                    memories.sort(key=lambda m: (m.importance, m.timestamp))
-                    if memories and memories[0].importance < memory.importance:
-                        memories.pop(0)
-                    else:
-                        return False
-                
-                memories.append(memory)
-                self.system_stats['total_memories_stored'] += 1
-                return True
-            
-            return False
+            self._move_to_position(follower_id, target_pos)
             
         except Exception as e:
-            logger.error(f"Ошибка обработки AI события: {e}")
-            return False
+            logger.error(f"Ошибка следования за лидером для {follower_id}: {e}")
     
-    def _process_combat_event(self, entity_id: str, event_type: str, combat_data: Dict[str, Any]) -> bool:
-        """Обработка боевого события"""
+    def create_ai_group(self, group_id: str, member_ids: List[str]) -> bool:
+        """Создание группы AI"""
         try:
-            # Обрабатываем боевые события
-            if event_type == "damage_taken":
-                # AI получил урон - возможно, нужно убежать
-                if entity_id in self.ai_entities:
-                    ai_data = self.ai_entities[entity_id]
-                    if ai_data['health'] < ai_data['max_health'] * 0.3:  # Меньше 30% здоровья
-                        decision = AIDecision(
-                            decision_id=f"flee_{int(time.time() * 1000)}",
-                            entity_id=entity_id,
-                            action_type="flee",
-                            priority=0.9
-                        )
-                        self._add_ai_decision(entity_id, decision)
+            if group_id in self.ai_groups:
+                logger.warning(f"Группа AI {group_id} уже существует")
+                return False
             
+            # Проверяем, что все участники существуют
+            valid_members = [mid for mid in member_ids if mid in self.ai_entities]
+            
+            if len(valid_members) < 2:
+                logger.warning(f"Недостаточно участников для группы {group_id}")
+                return False
+            
+            self.ai_groups[group_id] = valid_members
+            
+            # Устанавливаем групповую координацию
+            for member_id in valid_members:
+                if member_id in self.ai_entities:
+                    self.ai_entities[member_id]['group_id'] = group_id
+            
+            logger.info(f"Группа AI {group_id} создана с {len(valid_members)} участниками")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка обработки боевого события: {e}")
+            logger.error(f"Ошибка создания группы AI {group_id}: {e}")
+            return False
+    
+    def destroy_ai_group(self, group_id: str) -> bool:
+        """Уничтожение группы AI"""
+        try:
+            if group_id not in self.ai_groups:
+                return False
+            
+            # Убираем групповую координацию
+            for member_id in self.ai_groups[group_id]:
+                if member_id in self.ai_entities:
+                    self.ai_entities[member_id]['group_id'] = None
+            
+            del self.ai_groups[group_id]
+            
+            logger.info(f"Группа AI {group_id} уничтожена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения группы AI {group_id}: {e}")
             return False
     
     def get_ai_entity_info(self, entity_id: str) -> Optional[Dict[str, Any]]:
@@ -779,52 +963,38 @@ class AISystem(ISystem):
             if entity_id not in self.ai_entities:
                 return None
             
-            ai_data = self.ai_entities[entity_id]
-            config = self.ai_configs.get(entity_id)
+            entity_data = self.ai_entities[entity_id]
+            config = entity_data['config']
             
             return {
                 'id': entity_id,
-                'state': ai_data['state'].value,
-                'behavior': ai_data['behavior'],
-                'difficulty': ai_data['difficulty'],
-                'current_target': ai_data['current_target'],
-                'health': ai_data['health'],
-                'max_health': ai_data['max_health'],
-                'position': ai_data['position'],
-                'config': {
-                    'vision_range': config.vision_range,
-                    'hearing_range': config.hearing_range,
-                    'attack_range': config.attack_range,
-                    'chase_speed': config.chase_speed,
-                    'patrol_speed': config.patrol_speed
-                } if config else {},
-                'memories_count': len(self.ai_memories.get(entity_id, [])),
-                'decisions_count': len(self.ai_decisions.get(entity_id, []))
+                'behavior': config.behavior.value,
+                'difficulty': config.difficulty.value,
+                'state': entity_data['state'].value,
+                'position': entity_data['position'],
+                'current_target': entity_data['current_target'],
+                'group_id': entity_data['group_id'],
+                'patrol_points_count': len(entity_data['patrol_points']),
+                'memories_count': len(self.ai_memories.get(entity_id, {})),
+                'pending_decisions': len(self.ai_decisions.get(entity_id, []))
             }
             
         except Exception as e:
             logger.error(f"Ошибка получения информации об AI сущности {entity_id}: {e}")
             return None
     
-    def update_ai_entity_health(self, entity_id: str, health: int, max_health: int) -> bool:
-        """Обновление здоровья AI сущности"""
+    def update_ai_config(self, entity_id: str, new_config: AIConfig) -> bool:
+        """Обновление конфигурации AI"""
         try:
-            if entity_id in self.ai_entities:
-                self.ai_entities[entity_id]['health'] = health
-                self.ai_entities[entity_id]['max_health'] = max_health
-                return True
-            return False
+            if entity_id not in self.ai_entities:
+                return False
+            
+            self.ai_configs[entity_id] = new_config
+            self.ai_entities[entity_id]['config'] = new_config
+            
+            logger.info(f"Конфигурация AI для {entity_id} обновлена")
+            return True
+            
         except Exception as e:
-            logger.error(f"Ошибка обновления здоровья AI сущности {entity_id}: {e}")
-            return False
-    
-    def update_ai_entity_position(self, entity_id: str, position: Dict[str, float]) -> bool:
-        """Обновление позиции AI сущности"""
-        try:
-            if entity_id in self.ai_entities:
-                self.ai_entities[entity_id]['position'] = position
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка обновления позиции AI сущности {entity_id}: {e}")
+            logger.error(f"Ошибка обновления конфигурации AI для {entity_id}: {e}")
             return False

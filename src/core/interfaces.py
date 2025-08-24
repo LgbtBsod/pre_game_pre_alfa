@@ -1,30 +1,15 @@
 #!/usr/bin/env python3
 """
-Интерфейсы для игровых систем
+Основные интерфейсы для системы AI-EVOLVE
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Union
-from enum import Enum
+from typing import Dict, List, Any, Optional
+from .constants import SystemPriority, SystemState
 
-class SystemPriority(Enum):
-    """Приоритеты систем"""
-    CRITICAL = 0      # Критические системы (рендеринг, ввод)
-    HIGH = 1          # Высокий приоритет (физика, AI)
-    NORMAL = 2        # Обычный приоритет (игровая логика)
-    LOW = 3           # Низкий приоритет (UI, звук)
-    BACKGROUND = 4    # Фоновые задачи (сохранение, логирование)
-
-class SystemState(Enum):
-    """Состояния систем"""
-    UNINITIALIZED = "uninitialized"
-    INITIALIZING = "initializing"
-    READY = "ready"
-    RUNNING = "running"
-    PAUSED = "paused"
-    ERROR = "error"
-    SHUTTING_DOWN = "shutting_down"
-    DESTROYED = "destroyed"
+# ============================================================================
+# БАЗОВЫЙ ИНТЕРФЕЙС СИСТЕМЫ
+# ============================================================================
 
 class ISystem(ABC):
     """Базовый интерфейс для всех игровых систем"""
@@ -32,7 +17,7 @@ class ISystem(ABC):
     @property
     @abstractmethod
     def system_name(self) -> str:
-        """Уникальное имя системы"""
+        """Имя системы"""
         pass
     
     @property
@@ -88,62 +73,30 @@ class ISystem(ABC):
         """Обработка событий"""
         pass
 
-class IEventEmitter(ABC):
-    """Интерфейс для эмиттеров событий"""
-    
-    @abstractmethod
-    def emit(self, event_type: str, event_data: Any = None) -> bool:
-        """Эмиссия события"""
-        pass
-    
-    @abstractmethod
-    def subscribe(self, event_type: str, callback: callable) -> bool:
-        """Подписка на событие"""
-        pass
-    
-    @abstractmethod
-    def unsubscribe(self, event_type: str, callback: callable) -> bool:
-        """Отписка от события"""
-        pass
-
-class IEventSubscriber(ABC):
-    """Интерфейс для подписчиков событий"""
-    
-    @abstractmethod
-    def on_event(self, event_type: str, event_data: Any) -> None:
-        """Обработка события"""
-        pass
+# ============================================================================
+# ИНТЕРФЕЙСЫ УПРАВЛЕНИЯ РЕСУРСАМИ
+# ============================================================================
 
 class IResourceManager(ABC):
-    """Интерфейс для менеджера ресурсов"""
+    """Интерфейс для управления ресурсами"""
     
     @abstractmethod
-    def load_resource(self, resource_path: str, resource_type: str) -> Any:
+    def load_resource(self, resource_id: str) -> Any:
         """Загрузка ресурса"""
         pass
     
     @abstractmethod
-    def unload_resource(self, resource_path: str) -> bool:
+    def unload_resource(self, resource_id: str) -> bool:
         """Выгрузка ресурса"""
         pass
     
     @abstractmethod
-    def get_resource(self, resource_path: str) -> Optional[Any]:
-        """Получение ресурса"""
-        pass
-    
-    @abstractmethod
-    def preload_resources(self, resource_list: List[str]) -> bool:
-        """Предзагрузка ресурсов"""
+    def get_resource_info(self, resource_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации о ресурсе"""
         pass
 
 class IConfigManager(ABC):
-    """Интерфейс для менеджера конфигурации"""
-    
-    @abstractmethod
-    def load_config(self, config_path: str) -> bool:
-        """Загрузка конфигурации"""
-        pass
+    """Интерфейс для управления конфигурацией"""
     
     @abstractmethod
     def get_config(self, key: str, default: Any = None) -> Any:
@@ -156,67 +109,66 @@ class IConfigManager(ABC):
         pass
     
     @abstractmethod
-    def save_config(self) -> bool:
-        """Сохранение конфигурации"""
+    def load_config(self, config_path: str) -> bool:
+        """Загрузка конфигурации из файла"""
+        pass
+    
+    @abstractmethod
+    def save_config(self, config_path: str) -> bool:
+        """Сохранение конфигурации в файл"""
         pass
 
 class IPerformanceMonitor(ABC):
     """Интерфейс для мониторинга производительности"""
     
     @abstractmethod
-    def start_monitoring(self) -> bool:
-        """Запуск мониторинга"""
+    def start_timer(self, timer_name: str) -> None:
+        """Запуск таймера"""
         pass
     
     @abstractmethod
-    def stop_monitoring(self) -> bool:
-        """Остановка мониторинга"""
+    def stop_timer(self, timer_name: str) -> float:
+        """Остановка таймера и получение времени"""
         pass
     
     @abstractmethod
-    def get_performance_metrics(self) -> Dict[str, Any]:
-        """Получение метрик производительности"""
-        pass
-    
-    @abstractmethod
-    def optimize_performance(self) -> bool:
-        """Оптимизация производительности"""
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Получение статистики производительности"""
         pass
 
+# ============================================================================
+# ИНТЕРФЕЙСЫ УПРАВЛЕНИЯ СЦЕНОЙ
+# ============================================================================
+
 class ISceneManager(ABC):
-    """Интерфейс для менеджера сцен"""
+    """Интерфейс для управления сценами"""
     
     @abstractmethod
-    def create_scene(self, scene_name: str, scene_class: type) -> bool:
+    def create_scene(self, scene_id: str) -> bool:
         """Создание сцены"""
         pass
     
     @abstractmethod
-    def switch_scene(self, scene_name: str) -> bool:
-        """Переключение сцены"""
-        pass
-    
-    @abstractmethod
-    def get_current_scene(self) -> Optional[str]:
-        """Получение текущей сцены"""
-        pass
-    
-    @abstractmethod
-    def destroy_scene(self, scene_name: str) -> bool:
+    def destroy_scene(self, scene_id: str) -> bool:
         """Уничтожение сцены"""
+        pass
+    
+    @abstractmethod
+    def set_active_scene(self, scene_id: str) -> bool:
+        """Установка активной сцены"""
+        pass
+    
+    @abstractmethod
+    def get_active_scene(self) -> Optional[str]:
+        """Получение активной сцены"""
         pass
 
 class IGameEngine(ABC):
     """Интерфейс для игрового движка"""
     
     @abstractmethod
-    def initialize(self) -> bool:
-        """Инициализация движка"""
-        pass
-    
-    @abstractmethod
-    def run(self) -> bool:
-        """Запуск игрового цикла"""
+    def start(self) -> bool:
+        """Запуск движка"""
         pass
     
     @abstractmethod
@@ -225,17 +177,12 @@ class IGameEngine(ABC):
         pass
     
     @abstractmethod
-    def get_system_manager(self) -> 'ISystemManager':
-        """Получение менеджера систем"""
-        pass
-    
-    @abstractmethod
-    def get_scene_manager(self) -> ISceneManager:
-        """Получение менеджера сцен"""
+    def is_running(self) -> bool:
+        """Проверка, запущен ли движок"""
         pass
 
 class ISystemManager(ABC):
-    """Интерфейс для менеджера систем"""
+    """Интерфейс для управления системами"""
     
     @abstractmethod
     def register_system(self, system: ISystem) -> bool:
@@ -253,30 +200,24 @@ class ISystemManager(ABC):
         pass
     
     @abstractmethod
-    def update_all_systems(self, delta_time: float) -> bool:
-        """Обновление всех систем"""
-        pass
-    
-    @abstractmethod
-    def initialize_all_systems(self) -> bool:
-        """Инициализация всех систем"""
+    def get_all_systems(self) -> List[ISystem]:
+        """Получение всех систем"""
         pass
 
+# ============================================================================
+# ИНТЕРФЕЙСЫ ГЕНЕРАЦИИ КОНТЕНТА
+# ============================================================================
+
 class IContentGenerator(ABC):
-    """Интерфейс для генератора контента"""
+    """Интерфейс для генерации контента"""
     
     @abstractmethod
-    def generate_content(self, content_type: str, parameters: Dict[str, Any]) -> Any:
+    def generate_content(self, content_type: str, **kwargs) -> Any:
         """Генерация контента"""
         pass
     
     @abstractmethod
-    def validate_content(self, content: Any) -> bool:
-        """Валидация контента"""
-        pass
-    
-    @abstractmethod
-    def get_generation_statistics(self) -> Dict[str, Any]:
+    def get_generation_stats(self) -> Dict[str, Any]:
         """Получение статистики генерации"""
         pass
 
@@ -289,31 +230,25 @@ class IAIEntity(ABC):
         pass
     
     @abstractmethod
-    def update_emotion(self, stimulus: Dict[str, Any]) -> bool:
-        """Обновление эмоций"""
+    def update_behavior(self, delta_time: float) -> None:
+        """Обновление поведения"""
         pass
     
     @abstractmethod
-    def learn(self, experience: Dict[str, Any]) -> bool:
-        """Обучение на опыте"""
-        pass
-    
-    @abstractmethod
-    def get_memory(self) -> Dict[str, Any]:
-        """Получение памяти"""
+    def get_ai_state(self) -> str:
+        """Получение состояния AI"""
         pass
 
+# ============================================================================
+# ИНТЕРФЕЙСЫ БОЕВОЙ СИСТЕМЫ
+# ============================================================================
+
 class ICombatSystem(ABC):
-    """Интерфейс для системы боя"""
+    """Интерфейс для боевой системы"""
     
     @abstractmethod
-    def initiate_combat(self, attacker: str, target: str) -> bool:
-        """Инициация боя"""
-        pass
-    
-    @abstractmethod
-    def process_attack(self, attacker: str, target: str, attack_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Обработка атаки"""
+    def start_combat(self, participants: List[str]) -> str:
+        """Начало боя"""
         pass
     
     @abstractmethod
@@ -322,108 +257,114 @@ class ICombatSystem(ABC):
         pass
     
     @abstractmethod
-    def get_combat_status(self, combat_id: str) -> Optional[Dict[str, Any]]:
-        """Получение статуса боя"""
+    def perform_attack(self, attacker_id: str, target_id: str, attack_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Выполнение атаки"""
         pass
+    
+    @abstractmethod
+    def get_combat_info(self, combat_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации о бое"""
+        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ ИНВЕНТАРЯ
+# ============================================================================
 
 class IInventorySystem(ABC):
     """Интерфейс для системы инвентаря"""
     
     @abstractmethod
-    def add_item(self, entity_id: str, item: Dict[str, Any]) -> bool:
+    def create_inventory(self, owner_id: str, max_slots: int) -> bool:
+        """Создание инвентаря"""
+        pass
+    
+    @abstractmethod
+    def add_item(self, owner_id: str, item_id: str, quantity: int) -> bool:
         """Добавление предмета"""
         pass
     
     @abstractmethod
-    def remove_item(self, entity_id: str, item_id: str) -> bool:
+    def remove_item(self, owner_id: str, item_id: str, quantity: int) -> bool:
         """Удаление предмета"""
         pass
     
     @abstractmethod
-    def get_inventory(self, entity_id: str) -> List[Dict[str, Any]]:
-        """Получение инвентаря"""
+    def get_inventory_contents(self, owner_id: str) -> List[Dict[str, Any]]:
+        """Получение содержимого инвентаря"""
         pass
-    
-    @abstractmethod
-    def has_item(self, entity_id: str, item_id: str) -> bool:
-        """Проверка наличия предмета"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ КРАФТИНГА
+# ============================================================================
 
 class ICraftingSystem(ABC):
     """Интерфейс для системы крафтинга"""
     
     @abstractmethod
-    def can_craft(self, recipe_id: str, materials: List[str]) -> bool:
-        """Проверка возможности крафта"""
+    def can_craft(self, crafter_id: str, recipe_id: str) -> bool:
+        """Проверка возможности крафтинга"""
         pass
     
     @abstractmethod
-    def craft_item(self, recipe_id: str, materials: List[str]) -> Optional[Dict[str, Any]]:
-        """Крафт предмета"""
+    def start_crafting(self, crafter_id: str, recipe_id: str) -> str:
+        """Начало крафтинга"""
         pass
     
     @abstractmethod
-    def get_available_recipes(self, skill_level: int) -> List[Dict[str, Any]]:
-        """Получение доступных рецептов"""
+    def get_crafting_progress(self, craft_id: str) -> Optional[Dict[str, Any]]:
+        """Получение прогресса крафтинга"""
         pass
-    
-    @abstractmethod
-    def learn_recipe(self, entity_id: str, recipe_id: str) -> bool:
-        """Изучение рецепта"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ ЭВОЛЮЦИИ
+# ============================================================================
 
 class IEvolutionSystem(ABC):
     """Интерфейс для системы эволюции"""
     
     @abstractmethod
-    def evolve_entity(self, entity_id: str, evolution_path: str) -> bool:
-        """Эволюция сущности"""
+    def can_evolve(self, entity_id: str) -> bool:
+        """Проверка возможности эволюции"""
         pass
     
     @abstractmethod
-    def get_evolution_options(self, entity_id: str) -> List[Dict[str, Any]]:
-        """Получение вариантов эволюции"""
+    def trigger_evolution(self, entity_id: str) -> bool:
+        """Запуск эволюции"""
         pass
     
     @abstractmethod
-    def apply_mutation(self, entity_id: str, mutation_type: str) -> bool:
-        """Применение мутации"""
-        pass
-    
-    @abstractmethod
-    def get_evolution_progress(self, entity_id: str) -> Dict[str, Any]:
+    def get_evolution_progress(self, entity_id: str) -> Optional[Dict[str, Any]]:
         """Получение прогресса эволюции"""
         pass
 
 class IGenomeSystem(ABC):
-    """Интерфейс для системы генома"""
+    """Интерфейс для системы генов"""
     
     @abstractmethod
-    def create_genome(self, entity_id: str, parent_genomes: List[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Создание генома"""
+    def get_genome(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение генома"""
         pass
     
     @abstractmethod
-    def mutate_genome(self, genome: Dict[str, Any], mutation_rate: float) -> Dict[str, Any]:
+    def mutate_genome(self, entity_id: str, mutation_type: str) -> bool:
         """Мутация генома"""
         pass
     
     @abstractmethod
-    def crossover_genomes(self, genome1: Dict[str, Any], genome2: Dict[str, Any]) -> Dict[str, Any]:
-        """Скрещивание геномов"""
+    def get_genetic_traits(self, entity_id: str) -> List[Dict[str, Any]]:
+        """Получение генетических черт"""
         pass
-    
-    @abstractmethod
-    def get_genome_traits(self, genome: Dict[str, Any]) -> Dict[str, Any]:
-        """Получение черт генома"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ ЭМОЦИЙ
+# ============================================================================
 
 class IEmotionSystem(ABC):
     """Интерфейс для системы эмоций"""
     
     @abstractmethod
-    def update_emotion(self, entity_id: str, emotion_type: str, intensity: float) -> bool:
-        """Обновление эмоции"""
+    def add_emotion(self, entity_id: str, emotion_type: str, intensity: float) -> bool:
+        """Добавление эмоции"""
         pass
     
     @abstractmethod
@@ -432,43 +373,41 @@ class IEmotionSystem(ABC):
         pass
     
     @abstractmethod
-    def process_emotional_stimulus(self, entity_id: str, stimulus: Dict[str, Any]) -> bool:
-        """Обработка эмоционального стимула"""
-        pass
-    
-    @abstractmethod
-    def get_emotion_history(self, entity_id: str) -> List[Dict[str, Any]]:
-        """Получение истории эмоций"""
+    def update_emotions(self, delta_time: float) -> None:
+        """Обновление эмоций"""
         pass
 
+# ============================================================================
+# ИНТЕРФЕЙСЫ НАВЫКОВ
+# ============================================================================
+
 class ISkillSystem(ABC):
-    """Интерфейс для системы скиллов"""
+    """Интерфейс для системы навыков"""
     
     @abstractmethod
     def learn_skill(self, entity_id: str, skill_id: str) -> bool:
-        """Изучение скилла"""
+        """Изучение навыка"""
         pass
     
     @abstractmethod
-    def use_skill(self, entity_id: str, skill_id: str, target: str = None) -> bool:
-        """Использование скилла"""
+    def use_skill(self, entity_id: str, skill_id: str, target: Any = None) -> bool:
+        """Использование навыка"""
         pass
     
     @abstractmethod
-    def get_skill_level(self, entity_id: str, skill_id: str) -> int:
-        """Получение уровня скилла"""
+    def get_skill_tree(self, entity_id: str) -> Dict[str, Any]:
+        """Получение дерева навыков"""
         pass
-    
-    @abstractmethod
-    def upgrade_skill(self, entity_id: str, skill_id: str) -> bool:
-        """Улучшение скилла"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ ЭФФЕКТОВ
+# ============================================================================
 
 class IEffectSystem(ABC):
     """Интерфейс для системы эффектов"""
     
     @abstractmethod
-    def apply_effect(self, target_id: str, effect_type: str, effect_data: Dict[str, Any]) -> bool:
+    def apply_effect(self, target_id: str, effect_id: str, duration: float) -> bool:
         """Применение эффекта"""
         pass
     
@@ -481,23 +420,17 @@ class IEffectSystem(ABC):
     def get_active_effects(self, target_id: str) -> List[Dict[str, Any]]:
         """Получение активных эффектов"""
         pass
-    
-    @abstractmethod
-    def update_effects(self, delta_time: float) -> bool:
-        """Обновление эффектов"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ ПРЕДМЕТОВ
+# ============================================================================
 
 class IItemSystem(ABC):
     """Интерфейс для системы предметов"""
     
     @abstractmethod
-    def create_item(self, item_type: str, item_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_item(self, item_template: str, **kwargs) -> Optional[Any]:
         """Создание предмета"""
-        pass
-    
-    @abstractmethod
-    def modify_item(self, item_id: str, modifications: Dict[str, Any]) -> bool:
-        """Модификация предмета"""
         pass
     
     @abstractmethod
@@ -506,25 +439,29 @@ class IItemSystem(ABC):
         pass
     
     @abstractmethod
-    def get_item_properties(self, item_id: str) -> Dict[str, Any]:
-        """Получение свойств предмета"""
+    def get_item_info(self, item_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации о предмете"""
         pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ РЕНДЕРИНГА
+# ============================================================================
 
 class IRenderSystem(ABC):
     """Интерфейс для системы рендеринга"""
     
     @abstractmethod
-    def render_scene(self, scene_data: Dict[str, Any]) -> bool:
+    def render_scene(self, scene_id: str) -> bool:
         """Рендеринг сцены"""
         pass
     
     @abstractmethod
-    def create_render_object(self, object_type: str, object_data: Dict[str, Any]) -> Any:
+    def create_render_object(self, object_data: Dict[str, Any]) -> str:
         """Создание объекта рендеринга"""
         pass
     
     @abstractmethod
-    def update_render_object(self, object_id: str, object_data: Dict[str, Any]) -> bool:
+    def update_render_object(self, object_id: str, transform: Dict[str, Any]) -> bool:
         """Обновление объекта рендеринга"""
         pass
     
@@ -533,16 +470,20 @@ class IRenderSystem(ABC):
         """Уничтожение объекта рендеринга"""
         pass
 
+# ============================================================================
+# ИНТЕРФЕЙСЫ UI
+# ============================================================================
+
 class IUISystem(ABC):
     """Интерфейс для системы UI"""
     
     @abstractmethod
-    def create_ui_element(self, element_type: str, element_data: Dict[str, Any]) -> Any:
+    def create_ui_element(self, element_type: str, **kwargs) -> str:
         """Создание UI элемента"""
         pass
     
     @abstractmethod
-    def update_ui_element(self, element_id: str, element_data: Dict[str, Any]) -> bool:
+    def update_ui_element(self, element_id: str, **kwargs) -> bool:
         """Обновление UI элемента"""
         pass
     
@@ -556,71 +497,90 @@ class IUISystem(ABC):
         """Обработка UI событий"""
         pass
 
+# ============================================================================
+# ИНТЕРФЕЙСЫ AI
+# ============================================================================
+
 class IAISystem(ABC):
-    """Интерфейс для AI системы"""
+    """Интерфейс для системы AI"""
     
     @abstractmethod
-    def create_ai_entity(self, entity_id: str, ai_type: str) -> IAIEntity:
-        """Создание AI сущности"""
+    def register_ai_entity(self, entity_id: str, ai_config: Dict[str, Any]) -> bool:
+        """Регистрация AI сущности"""
         pass
     
     @abstractmethod
-    def update_ai_entities(self, delta_time: float) -> bool:
-        """Обновление AI сущностей"""
+    def unregister_ai_entity(self, entity_id: str) -> bool:
+        """Отмена регистрации AI сущности"""
         pass
     
     @abstractmethod
-    def get_ai_entity(self, entity_id: str) -> Optional[IAIEntity]:
-        """Получение AI сущности"""
+    def get_ai_entity_info(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение информации об AI сущности"""
         pass
-    
-    @abstractmethod
-    def destroy_ai_entity(self, entity_id: str) -> bool:
-        """Уничтожение AI сущности"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ БАЗЫ ДАННЫХ
+# ============================================================================
 
 class IContentDatabase(ABC):
     """Интерфейс для базы данных контента"""
     
     @abstractmethod
-    def store_content(self, content_id: str, content_data: Dict[str, Any]) -> bool:
-        """Сохранение контента"""
+    def create_session(self, session_id: str = None) -> str:
+        """Создание сессии"""
         pass
     
     @abstractmethod
-    def retrieve_content(self, content_id: str) -> Optional[Dict[str, Any]]:
-        """Получение контента"""
+    def add_content_item(self, content_item: Any) -> bool:
+        """Добавление элемента контента"""
         pass
     
     @abstractmethod
-    def search_content(self, search_criteria: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Поиск контента"""
+    def get_content_by_session(self, session_id: str, content_type: str = None) -> List[Any]:
+        """Получение контента по сессии"""
         pass
-    
-    @abstractmethod
-    def delete_content(self, content_id: str) -> bool:
-        """Удаление контента"""
-        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ ХАРАКТЕРИСТИК
+# ============================================================================
 
 class IEntityStatsSystem(ABC):
     """Интерфейс для системы характеристик сущностей"""
     
     @abstractmethod
-    def create_entity_stats(self, entity_id: str, base_stats: Dict[str, Any]) -> bool:
+    def create_entity_stats(self, entity_id: str, base_stats: Dict[str, float]) -> bool:
         """Создание характеристик сущности"""
         pass
     
     @abstractmethod
-    def modify_entity_stats(self, entity_id: str, stat_modifications: Dict[str, Any]) -> bool:
+    def modify_entity_stats(self, entity_id: str, stat_type: str, value: float, duration: float = 0.0) -> bool:
         """Модификация характеристик сущности"""
         pass
     
     @abstractmethod
-    def get_entity_stats(self, entity_id: str) -> Dict[str, Any]:
+    def get_entity_stats(self, entity_id: str) -> Optional[Dict[str, Any]]:
         """Получение характеристик сущности"""
+        pass
+
+# ============================================================================
+# ИНТЕРФЕЙСЫ СОБЫТИЙ
+# ============================================================================
+
+class IEventSystem(ABC):
+    """Интерфейс для системы событий"""
+    
+    @abstractmethod
+    def emit(self, event_type: str, event_data: Any) -> bool:
+        """Отправка события"""
         pass
     
     @abstractmethod
-    def calculate_derived_stats(self, entity_id: str) -> Dict[str, Any]:
-        """Расчет производных характеристик"""
+    def subscribe(self, event_type: str, callback: callable) -> bool:
+        """Подписка на событие"""
+        pass
+    
+    @abstractmethod
+    def unsubscribe(self, event_type: str, callback: callable) -> bool:
+        """Отписка от события"""
         pass

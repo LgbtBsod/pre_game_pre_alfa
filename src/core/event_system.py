@@ -10,7 +10,7 @@ from typing import Dict, List, Any, Callable, Optional
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from enum import Enum
-from .interfaces import IEventEmitter, IEventSubscriber
+from .interfaces import IEventSystem
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ class EventSubscription:
     priority: EventPriority
     subscriber_id: str
 
-class EventSystem(IEventEmitter):
+class EventSystem(IEventSystem):
     """
     Центральная система событий
     Обеспечивает связь между различными системами игры
@@ -64,8 +64,7 @@ class EventSystem(IEventEmitter):
             logger.error(f"Ошибка инициализации системы событий: {e}")
             return False
     
-    def emit_event(self, event_type: str, data: Any, source: str = "unknown", 
-                   priority: EventPriority = EventPriority.NORMAL) -> None:
+    def emit(self, event_type: str, event_data: Any) -> bool:
         """Эмиссия события"""
         if not self.is_initialized:
             logger.warning("Система событий не инициализирована")
@@ -266,49 +265,7 @@ class EventSystem(IEventEmitter):
         except Exception as e:
             logger.error(f"Ошибка очистки системы событий: {e}")
 
-class EventSubscriber(IEventSubscriber):
-    """
-    Базовый класс для подписчиков на события
-    Упрощает работу с системой событий
-    """
-    
-    def __init__(self, event_system: EventSystem, subscriber_id: str):
-        self.event_system = event_system
-        self.subscriber_id = subscriber_id
-        self.subscribed_events: List[str] = []
-    
-    def subscribe_to_event(self, event_type: str, callback: Callable = None, 
-                          priority: EventPriority = EventPriority.NORMAL) -> bool:
-        """Подписка на событие"""
-        if callback is None:
-            callback = self.on_event
-        
-        if self.event_system.subscribe(event_type, callback, self.subscriber_id, priority):
-            self.subscribed_events.append(event_type)
-            return True
-        return False
-    
-    def unsubscribe_from_event(self, event_type: str) -> bool:
-        """Отписка от события"""
-        if self.event_system.unsubscribe(event_type, self.on_event):
-            if event_type in self.subscribed_events:
-                self.subscribed_events.remove(event_type)
-            return True
-        return False
-    
-    def unsubscribe_from_all_events(self) -> int:
-        """Отписка от всех событий"""
-        removed_count = self.event_system.unsubscribe_all(self.subscriber_id)
-        self.subscribed_events.clear()
-        return removed_count
-    
-    def on_event(self, event: Event) -> None:
-        """Обработка события (переопределяется в наследниках)"""
-        logger.debug(f"Событие {event.event_type} получено подписчиком {self.subscriber_id}")
-    
-    def cleanup(self) -> None:
-        """Очистка подписчика"""
-        self.unsubscribe_from_all_events()
+
 
 # Глобальный экземпляр системы событий
 _global_event_system: Optional[EventSystem] = None
