@@ -8,23 +8,100 @@ import time
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
-class StatType(Enum):
+
+
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
-
+class StatType(Enum):
     """Типы характеристик"""
-    HEALTH = "health"
-    MANA = "mana"
-    STAMINA = "stamina"
-    STRENGTH = "strength"
-    AGILITY = "agility"
-    INTELLIGENCE = "intelligence"
-    VITALITY = "vitality"
-    WISDOM = "wisdom"
-    CHARISMA = "charisma"
-    LUCK = "luck"
+    STRENGTH = "strength"           # Сила - влияет на физический урон и перенос веса
+    AGILITY = "agility"            # Ловкость - влияет на скорость, точность и уклонение
+    INTELLIGENCE = "intelligence"  # Интеллект - влияет на магический урон и ману
+    VITALITY = "vitality"          # Жизнеспособность - влияет на здоровье и регенерацию
+    WISDOM = "wisdom"              # Мудрость - влияет на магическую защиту и регенерацию маны
+    CHARISMA = "charisma"          # Харизма - влияет на торговлю и социальные взаимодействия
+    LUCK = "luck"                  # Удача - влияет на шанс критического удара и уклонения
+    ENDURANCE = "endurance"        # Выносливость - влияет на переносимый вес и скорость
+    PERCEPTION = "perception"      # Восприятие - влияет на обнаружение и реакцию на окружение
+    WILLPOWER = "willpower"        # Воля - влияет на сопротивление и регенерацию маны
+    STEALTH = "stealth"            # Скрытность - влияет на скрытность и обнаружение
+    TRICKERY = "trickery"          # Хитрость - влияет на хитрость и обман
+    DEXTERITY = "dexterity"        # Ловкость - влияет на скорость, точность и уклонение
+    CONSTITUTION = "constitution"  # Конституция - влияет на здоровье и регенерацию
+    PIRERCING = "piercing"          # Пробивание - влияет на пробивание брони
+    
+    # Боевые характеристики
+    ATTACK = "attack"              # Атака - базовый физический урон
+    DEFENSE = "defense"            # Защита - снижает получаемый урон
+    CRITICAL_CHANCE = "critical_chance"  # Шанс критического удара
+    CRITICAL_DAMAGE = "critical_damage"  # Множитель критического урона
+    DODGE_CHANCE = "dodge_chance"  # Шанс уклонения
+    BLOCK_CHANCE = "block_chance"  # Шанс блока
+    BREAK_DAMAGE = "break_damage"  # Урон при снятии endurance
+    BREAK_EFFECTIVENESS = "break_effectiveness"  # Эффективность уменьшения ednurance
+    ACURACY = "accuracy"          # Точность - влияет на точность атаки
+    RESISTANCE_EFFECT = "resistance_effect"      # Сопротивление эффектам - влияет на сопротивление эффектам
+    RESISTANCE_MAGIC = "resistance_magic"  # Сопротивление магии - влияет на сопротивление магическому урону
+    RESISTANCE_PHYSICAL = "resistance_physical"  # Сопротивление физическому урону - влияет на сопротивление физическому урону
+    RESISTANCE_POISON = "resistance_poison"  # Сопротивление яду - влияет на сопротивление яду
+    RESISTANCE_DARK = "resistance_dark"  # Сопротивление тьме - влияет на сопротивление тьме
+    RESISTANCE_LIGHTNING = "resistance_lightning"  # Сопротивление молнии - влияет на сопротивление молнии
+    RESISTANCE_FIRE = "resistance_fire"  # Сопротивление огню - влияет на сопротивление огню
+    RESISTANCE_ICE = "resistance_ice"  # Сопротивление льду - влияет на сопротивление льду
+    RESISTANCE_WATER = "resistance_water"  # Сопротивление воде - влияет на сопротивление воде
+    RESISTANCE_WIND = "resistance_wind"  # Сопротивление ветру - влияет на сопротивление ветру
+    RESISTANCE_EARTH = "resistance_earth"  # Сопротивление земле - влияет на сопротивление земле
+    RESISTANCE_ACID = "resistance_acid"  # Сопротивление кислоте - влияет на сопротивление кислоте
+    RESISTANCE_RADIATION = "resistance_radiation"  # Сопротивление радиации - влияет на сопротивление радиации
+    RESISTANCE_RADIOACTIVE = "resistance_radioactive"  # Сопротивление радиоактивности - влияет на сопротивление радиоактивности
+    FIRE_RES_PENETRATION = "fire_res_penetration"  # Сопротивление огню - влияет на сопротивление огню
+    ICE_RES_PENETRATION = "ice_res_penetration"  # Сопротивление льду - влияет на сопротивление льду
+    POISON_RES_PENETRATION = "poison_res_penetration"  # Сопротивление яду - влияет на сопротивление яду
+    DARK_RES_PENETRATION = "dark_res_penetration"  # Сопротивление тьме - влияет на сопротивление тьме
+    LIGHTNING_RES_PENETRATION = "lightning_res_penetration"  # Сопротивление молнии - влияет на сопротивление молнии
+    WATER_RES_PENETRATION = "water_res_penetration"  # Сопротивление воде - влияет на сопротивление воде
+    WIND_RES_PENETRATION = "wind_res_penetration"  # Сопротивление ветру - влияет на сопротивление ветру
+    EARTH_RES_PENETRATION = "earth_res_penetration"  # Сопротивление земле - влияет на сопротивление земле
+    ACID_RES_PENETRATION = "acid_res_penetration"  # Сопротивление кислоте - влияет на сопротивление кислоте
+    RADIATION_RES_PENETRATION = "radiation_res_penetration"  # Сопротивление радиации - влияет на сопротивление радиации
+    RADIOACTIVE_RES_PENETRATION = "radioactive_res_penetration"  # Сопротивление радиоактивности - влияет на сопротивление радиоактивности
+    FIRE_DAMAGE_PENETRATION = "fire_damage_penetration"  # Пробивание огнем - влияет на пробивание огнем
+    ICE_DAMAGE_PENETRATION = "ice_damage_penetration"  # Пробивание льдом - влияет на пробивание льдом
+    POISON_DAMAGE_PENETRATION = "poison_damage_penetration"  # Пробивание ядом - влияет на пробивание ядом
+    DARK_DAMAGE_PENETRATION = "dark_damage_penetration"  # Пробивание тьмой - влияет на пробивание тьмой
+    LIGHTNING_DAMAGE_PENETRATION = "lightning_damage_penetration"  # Пробивание молнией - влияет на пробивание молнией
+    WATER_DAMAGE_PENETRATION = "water_damage_penetration"  # Пробивание водой - влияет на пробивание водой
+    WIND_DAMAGE_PENETRATION = "wind_damage_penetration"  # Пробивание ветром - влияет на пробивание ветром
+    EARTH_DAMAGE_PENETRATION = "earth_damage_penetration"  # Пробивание землей - влияет на пробивание землей
+    ACID_DAMAGE_PENETRATION = "acid_damage_penetration"  # Пробивание кислотой - влияет на пробивание кислотой
+    RADIATION_DAMAGE_PENETRATION = "radiation_damage_penetration"  # Пробивание радиацией - влияет на пробивание радиацией
+    RADIOACTIVE_DAMAGE_PENETRATION = "radioactive_damage_penetration"  # Пробивание радиоактивностью - влияет на пробивание радиоактивностью
+    FIRE_DAMAGE_BOOST  = "fire_damage_boost"  # Усиление огнем - влияет на усиление огнем
+    ICE_DAMAGE_BOOST = "ice_damage_boost"  # Усиление льдом - влияет на усиление льдом
+    POISON_DAMAGE_BOOST = "poison_damage_boost"  # Усиление ядом - влияет на усиление ядом
+    DARK_DAMAGE_BOOST = "dark_damage_boost"  # Усиление тьмой - влияет на усиление тьмой
+    LIGHTNING_DAMAGE_BOOST = "lightning_damage_boost"  # Усиление молнией - влияет на усиление молнией
+    WATER_DAMAGE_BOOST = "water_damage_boost"  # Усиление водой - влияет на усиление водой
+    WIND_DAMAGE_BOOST = "wind_damage_boost"  # Усиление ветром - влияет на усиление ветром
+    EARTH_DAMAGE_BOOST = "earth_damage_boost"  # Усиление землей - влияет на усиление землей
+    ACID_DAMAGE_BOOST = "acid_damage_boost"  # Усиление кислотой - влияет на усиление кислотой
+    RADIATION_DAMAGE_BOOST = "radiation_damage_boost"  # Усиление радиацией - влияет на усиление радиацией
+    RADIOACTIVE_DAMAGE_BOOST = "radioactive_damage_boost"  # Усиление радиоактивностью - влияет на усиление радиоактивностью
+
+
+
+    # Вторичные характеристики
+    HEALTH = "health"              # Здоровье
+    MANA = "mana"                  # Мана
+    STAMINA = "stamina"            # Выносливость
+    HEALTH_REGEN = "health_regen"  # Регенерация здоровья
+    MANA_REGEN = "mana_regen"      # Регенерация маны
+    STAMINA_REGEN = "stamina_regen"  # Регенерация выносливости
+    SKILL_RECOVERY = "skill_recovery"  # Восстановление навыков
+    EFFECT_DURATION = "effect_duration"  # Длительность эффекта
+
 
 class StatCategory(Enum):
     """Категории характеристик"""

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Content Database - База данных для процедурно сгенерированного контента
+Система контента - база данных для процедурно сгенерированного контента
 """
 
 import sqlite3
@@ -13,7 +13,7 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from pathlib import Path
 
-from ...core.interfaces import ISystem
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +48,21 @@ class EnemyType(Enum):
     BEAST = "beast"
     HUMAN = "human"
     DEMON = "demon"
+    DRAGON = "dragon"
+    GIANT = "giant"
+    ELF = "elf"
+    ORC = "orc"
+    TROLL = "troll"
+    GOBLIN = "goblin"
+    SKELETON = "skeleton"
+    ZOMBIE = "zombie"
+    WITCH = "witch"
+    WEREWOLF = "werewolf"
+    VAMPIRE = "vampire"
+    WITCH = "witch"
+    WEREWOLF = "werewolf"
+    VAMPIRE = "vampire"
+    
 
 class BossType(Enum):
     """Типы боссов"""
@@ -126,15 +141,169 @@ class BossData:
     minion_spawns: List[Dict[str, Any]]  # Спавн миньонов
 
 class ContentDatabase(ISystem):
-    """База данных для хранения процедурно сгенерированного контента"""
+    """Система базы данных для хранения процедурно сгенерированного контента"""
     
     def __init__(self, db_path: str = None):
+        self._system_name = "content_database"
+        self._system_priority = SystemPriority.HIGH
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
         if db_path is None:
             db_path = "content_database.db"
         self.db_path = db_path
         self.connection = None
-        self._initialize_database()
         
+        # Статистика системы
+        self.system_stats = {
+            'sessions_count': 0,
+            'content_items_count': 0,
+            'enemies_count': 0,
+            'bosses_count': 0,
+            'total_sessions_created': 0,
+            'total_content_added': 0,
+            'update_time': 0.0
+        }
+        
+        logger.info("Система контента инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def initialize(self) -> bool:
+        """Инициализация системы контента"""
+        try:
+            logger.info("Инициализация системы контента...")
+            
+            # Инициализируем базу данных
+            self._initialize_database()
+            
+            # Обновляем статистику
+            self._update_system_stats()
+            
+            self._system_state = SystemState.READY
+            logger.info("Система контента успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы контента: {e}")
+            self._system_state = SystemState.ERROR
+            return False
+    
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы контента"""
+        try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем статистику системы
+            self._update_system_stats()
+            
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы контента: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы контента"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система контента приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы контента: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы контента"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система контента возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы контента: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы контента"""
+        try:
+            logger.info("Очистка системы контента...")
+            
+            # Закрываем соединение с базой данных
+            if self.connection:
+                self.connection.close()
+                self.connection = None
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'sessions_count': 0,
+                'content_items_count': 0,
+                'enemies_count': 0,
+                'bosses_count': 0,
+                'total_sessions_created': 0,
+                'total_content_added': 0,
+                'update_time': 0.0
+            }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система контента очищена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы контента: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'db_path': self.db_path,
+            'connection_active': self.connection is not None,
+            'stats': self.system_stats
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "session_created":
+                return self._handle_session_created(event_data)
+            elif event_type == "content_added":
+                return self._handle_content_added(event_data)
+            elif event_type == "enemy_added":
+                return self._handle_enemy_added(event_data)
+            elif event_type == "boss_added":
+                return self._handle_boss_added(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
     def _initialize_database(self):
         """Инициализация базы данных"""
         try:
@@ -149,141 +318,122 @@ class ContentDatabase(ISystem):
             logger.error(f"Ошибка инициализации базы данных: {e}")
             raise
     
-    def initialize(self) -> bool:
-        """Инициализация системы"""
-        try:
-            # База данных уже инициализирована в конструкторе
-            return True
-        except Exception as e:
-            logger.error(f"Ошибка инициализации ContentDatabase: {e}")
-            return False
-    
-    def update(self, delta_time: float):
-        """Обновление системы"""
-        # База данных не требует постоянного обновления
-        pass
-    
-    def cleanup(self):
-        """Очистка системы"""
-        try:
-            if self.connection:
-                self.connection.close()
-                self.connection = None
-                logger.info("ContentDatabase очищена")
-        except Exception as e:
-            logger.error(f"Ошибка очистки ContentDatabase: {e}")
-    
     def _create_tables(self):
         """Создание таблиц базы данных"""
-        cursor = self.connection.cursor()
-        
-        # Таблица сессий
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS sessions (
-                session_id TEXT PRIMARY KEY,
-                start_time REAL,
-                current_level INTEGER DEFAULT 1,
-                is_active BOOLEAN DEFAULT 1
-            )
-        """)
-        
-        # Таблица контента
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS content (
-                uuid TEXT PRIMARY KEY,
-                content_type TEXT NOT NULL,
-                name TEXT NOT NULL,
-                description TEXT,
-                rarity TEXT NOT NULL,
-                level_requirement INTEGER DEFAULT 1,
-                session_id TEXT NOT NULL,
-                generation_timestamp REAL NOT NULL,
-                data TEXT NOT NULL,
-                is_saved BOOLEAN DEFAULT 0,
-                FOREIGN KEY (session_id) REFERENCES sessions (session_id)
-            )
-        """)
-        
-        # Таблица врагов (расширенная)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS enemies (
-                uuid TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                enemy_type TEXT NOT NULL,
-                level INTEGER DEFAULT 1,
-                session_id TEXT NOT NULL,
-                base_health INTEGER DEFAULT 100,
-                base_mana INTEGER DEFAULT 50,
-                base_attack INTEGER DEFAULT 20,
-                base_defense INTEGER DEFAULT 10,
-                base_speed REAL DEFAULT 1.0,
-                base_intelligence INTEGER DEFAULT 10,
-                weaknesses TEXT,  -- JSON список
-                resistances TEXT,  -- JSON список
-                immunities TEXT,   -- JSON список
-                skills TEXT,       -- JSON список UUID
-                loot_table TEXT,   -- JSON список UUID
-                experience_reward INTEGER DEFAULT 100,
-                gold_reward INTEGER DEFAULT 50,
-                ai_behavior TEXT DEFAULT 'aggressive',
-                spawn_conditions TEXT,  -- JSON
-                generation_timestamp REAL NOT NULL,
-                is_saved BOOLEAN DEFAULT 0,
-                FOREIGN KEY (session_id) REFERENCES sessions (session_id)
-            )
-        """)
-        
-        # Таблица боссов (расширенная)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS bosses (
-                uuid TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                boss_type TEXT NOT NULL,
-                level INTEGER DEFAULT 1,
-                session_id TEXT NOT NULL,
-                base_health INTEGER DEFAULT 500,
-                base_mana INTEGER DEFAULT 200,
-                base_attack INTEGER DEFAULT 80,
-                base_defense INTEGER DEFAULT 60,
-                base_speed REAL DEFAULT 1.2,
-                base_intelligence INTEGER DEFAULT 30,
-                weaknesses TEXT,  -- JSON список
-                resistances TEXT,  -- JSON список
-                immunities TEXT,   -- JSON список
-                skills TEXT,       -- JSON список UUID
-                special_abilities TEXT,  -- JSON список UUID
-                phases TEXT,       -- JSON список фаз
-                loot_table TEXT,   -- JSON список UUID
-                experience_reward INTEGER DEFAULT 1000,
-                gold_reward INTEGER DEFAULT 500,
-                ai_behavior TEXT DEFAULT 'boss',
-                spawn_conditions TEXT,  -- JSON
-                minion_spawns TEXT,    -- JSON список
-                generation_timestamp REAL NOT NULL,
-                is_saved BOOLEAN DEFAULT 0,
-                FOREIGN KEY (session_id) REFERENCES sessions (session_id)
-            )
-        """)
-        
-        # Индексы для быстрого поиска
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_type ON content (content_type)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_session_id ON content (session_id)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_level_req ON content (level_requirement)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_rarity ON content (rarity)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_enemy_type ON enemies (enemy_type)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_enemy_level ON enemies (level)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_boss_type ON bosses (boss_type)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_boss_level ON bosses (level)")
-        
-        self.connection.commit()
-        logger.debug("Таблицы базы данных созданы")
+        try:
+            cursor = self.connection.cursor()
+            
+            # Таблица сессий
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS sessions (
+                    session_id TEXT PRIMARY KEY,
+                    start_time REAL,
+                    current_level INTEGER DEFAULT 1,
+                    is_active BOOLEAN DEFAULT 1
+                )
+            """)
+            
+            # Таблица контента
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS content (
+                    uuid TEXT PRIMARY KEY,
+                    content_type TEXT NOT NULL,
+                    name TEXT NOT NULL,
+                    description TEXT,
+                    rarity TEXT NOT NULL,
+                    level_requirement INTEGER DEFAULT 1,
+                    session_id TEXT NOT NULL,
+                    generation_timestamp REAL NOT NULL,
+                    data TEXT NOT NULL,
+                    is_saved BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+                )
+            """)
+            
+            # Таблица врагов (расширенная)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS enemies (
+                    uuid TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    enemy_type TEXT NOT NULL,
+                    level INTEGER DEFAULT 1,
+                    session_id TEXT NOT NULL,
+                    base_health INTEGER DEFAULT 100,
+                    base_mana INTEGER DEFAULT 50,
+                    base_attack INTEGER DEFAULT 20,
+                    base_defense INTEGER DEFAULT 10,
+                    base_speed REAL DEFAULT 1.0,
+                    base_intelligence INTEGER DEFAULT 10,
+                    weaknesses TEXT,  -- JSON список
+                    resistances TEXT,  -- JSON список
+                    immunities TEXT,   -- JSON список
+                    skills TEXT,       -- JSON список UUID
+                    loot_table TEXT,   -- JSON список UUID
+                    experience_reward INTEGER DEFAULT 100,
+                    gold_reward INTEGER DEFAULT 50,
+                    ai_behavior TEXT DEFAULT 'aggressive',
+                    spawn_conditions TEXT,  -- JSON
+                    generation_timestamp REAL NOT NULL,
+                    is_saved BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+                )
+            """)
+            
+            # Таблица боссов (расширенная)
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS bosses (
+                    uuid TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    boss_type TEXT NOT NULL,
+                    level INTEGER DEFAULT 1,
+                    session_id TEXT NOT NULL,
+                    base_health INTEGER DEFAULT 500,
+                    base_mana INTEGER DEFAULT 200,
+                    base_attack INTEGER DEFAULT 80,
+                    base_defense INTEGER DEFAULT 60,
+                    base_speed REAL DEFAULT 1.2,
+                    base_intelligence INTEGER DEFAULT 30,
+                    weaknesses TEXT,  -- JSON список
+                    resistances TEXT,  -- JSON список
+                    immunities TEXT,   -- JSON список
+                    skills TEXT,       -- JSON список UUID
+                    special_abilities TEXT,  -- JSON список UUID
+                    phases TEXT,       -- JSON список фаз
+                    loot_table TEXT,   -- JSON список UUID
+                    experience_reward INTEGER DEFAULT 1000,
+                    gold_reward INTEGER DEFAULT 500,
+                    ai_behavior TEXT DEFAULT 'boss',
+                    spawn_conditions TEXT,  -- JSON
+                    minion_spawns TEXT,    -- JSON список
+                    generation_timestamp REAL NOT NULL,
+                    is_saved BOOLEAN DEFAULT 0,
+                    FOREIGN KEY (session_id) REFERENCES sessions (session_id)
+                )
+            """)
+            
+            # Индексы для быстрого поиска
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_type ON content (content_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_session_id ON content (session_id)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_level_req ON content (level_requirement)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_rarity ON content (rarity)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_enemy_type ON enemies (enemy_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_enemy_level ON enemies (level)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_boss_type ON bosses (boss_type)")
+            cursor.execute("CREATE INDEX IF NOT EXISTS idx_boss_level ON bosses (level)")
+            
+            self.connection.commit()
+            logger.debug("Таблицы базы данных созданы")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания таблиц: {e}")
+            raise
     
     def create_session(self, session_id: str = None) -> str:
         """Создание новой игровой сессии"""
-        if session_id is None:
-            session_id = str(uuid.uuid4())
-        
         try:
+            if session_id is None:
+                session_id = str(uuid.uuid4())
+            
             cursor = self.connection.cursor()
             cursor.execute("""
                 INSERT OR REPLACE INTO sessions (session_id, start_time, current_level, is_active)
@@ -291,6 +441,8 @@ class ContentDatabase(ISystem):
             """, (session_id, time.time(), 1, True))
             
             self.connection.commit()
+            self.system_stats['total_sessions_created'] += 1
+            
             logger.info(f"Создана новая сессия: {session_id}")
             return session_id
             
@@ -315,7 +467,7 @@ class ContentDatabase(ISystem):
             logger.error(f"Ошибка получения сессии: {e}")
             return None
     
-    def update_session_level(self, session_id: str, new_level: int):
+    def update_session_level(self, session_id: str, new_level: int) -> bool:
         """Обновление уровня сессии"""
         try:
             cursor = self.connection.cursor()
@@ -325,9 +477,11 @@ class ContentDatabase(ISystem):
             
             self.connection.commit()
             logger.info(f"Уровень сессии {session_id} обновлен до {new_level}")
+            return True
             
         except Exception as e:
             logger.error(f"Ошибка обновления уровня сессии: {e}")
+            return False
     
     def add_content_item(self, content_item: Union[ContentItem, Dict[str, Any]]) -> bool:
         """Добавление элемента контента в базу данных"""
@@ -377,6 +531,8 @@ class ContentDatabase(ISystem):
             ))
             
             self.connection.commit()
+            self.system_stats['total_content_added'] += 1
+            
             logger.debug(f"Добавлен элемент контента: {name_val}")
             return True
             
@@ -618,7 +774,7 @@ class ContentDatabase(ISystem):
             logger.error(f"Ошибка получения контента для уровня: {e}")
             return []
     
-    def mark_content_as_saved(self, content_uuid: str, session_id: str):
+    def mark_content_as_saved(self, content_uuid: str, session_id: str) -> bool:
         """Отметка контента как сохраненного в слот"""
         try:
             cursor = self.connection.cursor()
@@ -629,11 +785,13 @@ class ContentDatabase(ISystem):
             
             self.connection.commit()
             logger.debug(f"Контент {content_uuid} отмечен как сохраненный")
+            return True
             
         except Exception as e:
             logger.error(f"Ошибка отметки контента как сохраненного: {e}")
+            return False
     
-    def cleanup_unsaved_content(self, session_id: str):
+    def cleanup_unsaved_content(self, session_id: str) -> bool:
         """Очистка несохраненного контента для сессии"""
         try:
             cursor = self.connection.cursor()
@@ -661,9 +819,11 @@ class ContentDatabase(ISystem):
             
             self.connection.commit()
             logger.info(f"Удалено {content_deleted} элементов контента, {enemies_deleted} врагов, {bosses_deleted} боссов для сессии {session_id}")
+            return True
             
         except Exception as e:
             logger.error(f"Ошибка очистки несохраненного контента: {e}")
+            return False
     
     def get_session_statistics(self, session_id: str) -> Dict[str, Any]:
         """Получение статистики сессии"""
@@ -751,8 +911,92 @@ class ContentDatabase(ISystem):
             logger.error(f"Ошибка получения контента по UUID: {e}")
             return None
     
-    def close(self):
-        """Закрытие соединения с базой данных"""
-        if self.connection:
-            self.connection.close()
-            logger.info("Соединение с базой данных закрыто")
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            if not self.connection:
+                return
+            
+            cursor = self.connection.cursor()
+            
+            # Количество сессий
+            cursor.execute("SELECT COUNT(*) as total FROM sessions WHERE is_active = 1")
+            self.system_stats['sessions_count'] = cursor.fetchone()['total']
+            
+            # Количество элементов контента
+            cursor.execute("SELECT COUNT(*) as total FROM content")
+            self.system_stats['content_items_count'] = cursor.fetchone()['total']
+            
+            # Количество врагов
+            cursor.execute("SELECT COUNT(*) as total FROM enemies")
+            self.system_stats['enemies_count'] = cursor.fetchone()['total']
+            
+            # Количество боссов
+            cursor.execute("SELECT COUNT(*) as total FROM bosses")
+            self.system_stats['bosses_count'] = cursor.fetchone()['total']
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    
+    def _handle_session_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сессии"""
+        try:
+            session_id = event_data.get('session_id')
+            
+            if session_id:
+                self.create_session(session_id)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сессии: {e}")
+            return False
+    
+    def _handle_content_added(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события добавления контента"""
+        try:
+            content_item = event_data.get('content_item')
+            
+            if content_item:
+                return self.add_content_item(content_item)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события добавления контента: {e}")
+            return False
+    
+    def _handle_enemy_added(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события добавления врага"""
+        try:
+            enemy_uuid = event_data.get('enemy_uuid')
+            name = event_data.get('name')
+            enemy_type = event_data.get('enemy_type')
+            level = event_data.get('level')
+            session_id = event_data.get('session_id')
+            enemy_data = event_data.get('enemy_data')
+            
+            if enemy_uuid and name and enemy_type and level and session_id and enemy_data:
+                return self.add_enemy(enemy_uuid, name, enemy_type, level, session_id, enemy_data)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события добавления врага: {e}")
+            return False
+    
+    def _handle_boss_added(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события добавления босса"""
+        try:
+            boss_uuid = event_data.get('boss_uuid')
+            name = event_data.get('name')
+            boss_type = event_data.get('boss_type')
+            level = event_data.get('level')
+            session_id = event_data.get('session_id')
+            boss_data = event_data.get('boss_data')
+            
+            if boss_uuid and name and boss_type and level and session_id and boss_data:
+                return self.add_boss(boss_uuid, name, boss_type, level, session_id, boss_data)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события добавления босса: {e}")
+            return False

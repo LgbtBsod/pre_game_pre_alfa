@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Content Generator - Система процедурной генерации контента
+Система генерации контента - процедурная генерация игрового контента
 """
 
 import logging
@@ -19,7 +19,7 @@ from .content_constants import (
     RANDOM_GENERATOR, GenerationBiome, GenerationTime, GenerationWeather
 )
 
-from ...core.interfaces import ISystem
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,14 @@ class GenerationConfig:
     boss_count: int = 3
 
 class ContentGenerator(ISystem):
-    """Генератор процедурного контента с использованием констант и продвинутого рандома"""
+    """Система генерации процедурного контента с использованием констант и продвинутого рандома"""
     
     def __init__(self, content_database=None, seed: int = None):
+        self._system_name = "content_generator"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = ["content_database"]
+        
         self.content_db = content_database
         self.random_generator = RANDOM_GENERATOR
         if seed is not None:
@@ -60,25 +65,112 @@ class ContentGenerator(ISystem):
         self.item_generation_templates = self._load_item_generation_templates()
         self.unique_effect_templates = self._load_unique_effect_templates()
         
-        logger.info("Генератор контента инициализирован")
+        # Статистика системы
+        self.system_stats = {
+            'weapons_generated': 0,
+            'armors_generated': 0,
+            'accessories_generated': 0,
+            'consumables_generated': 0,
+            'genes_generated': 0,
+            'skills_generated': 0,
+            'effects_generated': 0,
+            'materials_generated': 0,
+            'enemies_generated': 0,
+            'bosses_generated': 0,
+            'total_generated': 0,
+            'generation_time': 0.0,
+            'update_time': 0.0
+        }
+        
+        logger.info("Система генерации контента инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
     
     def initialize(self) -> bool:
-        """Инициализация системы"""
+        """Инициализация системы генерации контента"""
         try:
-            # Генератор уже инициализирован в конструкторе
+            logger.info("Инициализация системы генерации контента...")
+            
+            # Проверяем зависимости
+            if not self.content_db:
+                logger.error("База данных контента не инициализирована")
+                self._system_state = SystemState.ERROR
+                return False
+            
+            # Загружаем шаблоны
+            self._load_all_templates()
+            
+            self._system_state = SystemState.READY
+            logger.info("Система генерации контента успешно инициализирована")
             return True
+            
         except Exception as e:
-            logger.error(f"Ошибка инициализации ContentGenerator: {e}")
+            logger.error(f"Ошибка инициализации системы генерации контента: {e}")
+            self._system_state = SystemState.ERROR
             return False
     
-    def update(self, delta_time: float):
-        """Обновление системы"""
-        # Генератор не требует постоянного обновления
-        pass
-    
-    def cleanup(self):
-        """Очистка системы"""
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы генерации контента"""
         try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем статистику системы
+            self._update_system_stats()
+            
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы генерации контента: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы генерации контента"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система генерации контента приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы генерации контента: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы генерации контента"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система генерации контента возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы генерации контента: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы генерации контента"""
+        try:
+            logger.info("Очистка системы генерации контента...")
+            
             # Очищаем шаблоны
             self.weapon_templates.clear()
             self.armor_templates.clear()
@@ -89,9 +181,143 @@ class ContentGenerator(ISystem):
             self.skill_generation_templates.clear()
             self.item_generation_templates.clear()
             self.unique_effect_templates.clear()
-            logger.info("ContentGenerator очищен")
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'weapons_generated': 0,
+                'armors_generated': 0,
+                'accessories_generated': 0,
+                'consumables_generated': 0,
+                'genes_generated': 0,
+                'skills_generated': 0,
+                'effects_generated': 0,
+                'materials_generated': 0,
+                'enemies_generated': 0,
+                'bosses_generated': 0,
+                'total_generated': 0,
+                'generation_time': 0.0,
+                'update_time': 0.0
+            }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система генерации контента очищена")
+            return True
+            
         except Exception as e:
-            logger.error(f"Ошибка очистки ContentGenerator: {e}")
+            logger.error(f"Ошибка очистки системы генерации контента: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'content_db_active': self.content_db is not None,
+            'templates_loaded': {
+                'weapons': len(self.weapon_templates),
+                'armors': len(self.armor_templates),
+                'accessories': len(self.accessory_templates),
+                'genes': len(self.gene_templates),
+                'skills': len(self.skill_templates),
+                'effects': len(self.effect_templates)
+            },
+            'stats': self.system_stats
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "generate_content":
+                return self._handle_generate_content(event_data)
+            elif event_type == "session_level_up":
+                return self._handle_session_level_up(event_data)
+            elif event_type == "content_requested":
+                return self._handle_content_requested(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def _load_all_templates(self) -> None:
+        """Загрузка всех шаблонов"""
+        try:
+            # Шаблоны уже загружены в конструкторе
+            logger.debug("Все шаблоны загружены")
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить все шаблоны: {e}")
+    
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            # Обновляем общее количество сгенерированного контента
+            total = (self.system_stats['weapons_generated'] + 
+                    self.system_stats['armors_generated'] + 
+                    self.system_stats['accessories_generated'] + 
+                    self.system_stats['consumables_generated'] + 
+                    self.system_stats['genes_generated'] + 
+                    self.system_stats['skills_generated'] + 
+                    self.system_stats['effects_generated'] + 
+                    self.system_stats['materials_generated'] + 
+                    self.system_stats['enemies_generated'] + 
+                    self.system_stats['bosses_generated'])
+            
+            self.system_stats['total_generated'] = total
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    
+    def _handle_generate_content(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события генерации контента"""
+        try:
+            session_id = event_data.get('session_id')
+            config = event_data.get('config', GenerationConfig())
+            
+            if session_id:
+                return self.generate_session_content(session_id, config)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события генерации контента: {e}")
+            return False
+    
+    def _handle_session_level_up(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события повышения уровня сессии"""
+        try:
+            session_id = event_data.get('session_id')
+            new_level = event_data.get('new_level')
+            
+            if session_id and new_level:
+                return self.generate_level_content(session_id, new_level)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события повышения уровня сессии: {e}")
+            return False
+    
+    def _handle_content_requested(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события запроса контента"""
+        try:
+            content_type = event_data.get('content_type')
+            session_id = event_data.get('session_id')
+            level = event_data.get('level', 1)
+            
+            if content_type and session_id:
+                if content_type == "enemy":
+                    return self.generate_enemy(session_id, level) is not None
+                elif content_type == "boss":
+                    return self.generate_boss(session_id, level) is not None
+                elif content_type == "item":
+                    return self.generate_item(session_id, level) is not None
+                else:
+                    return False
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события запроса контента: {e}")
+            return False
     
     def _load_weapon_templates(self) -> List[Dict[str, Any]]:
         """Загрузка шаблонов оружия"""

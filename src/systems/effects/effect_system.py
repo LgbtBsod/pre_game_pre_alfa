@@ -169,6 +169,7 @@ class Effect:
     def apply_over_time(self, source: Any, target: Any):
         """Применение эффекта с течением времени"""
         # Логика применения DOT эффекта
+        
         pass
     
     def _play_visuals(self, source: Any, target: Any):

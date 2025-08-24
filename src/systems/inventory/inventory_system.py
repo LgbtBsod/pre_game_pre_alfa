@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Inventory System - Система инвентаря
-Отвечает только за управление предметами и инвентарем сущностей
+Система инвентаря - управление инвентарями и предметами сущностей
 """
 
 import logging
-import random
+import time
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
+
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -387,102 +388,199 @@ class Inventory:
         
         logger.info(f"Инвентарь {self.owner_id} очищен")
 
-class InventorySystem:
-    """Система управления инвентарями"""
+class InventorySystem(ISystem):
+    """Система управления инвентарями для всех сущностей"""
     
     def __init__(self):
+        self._system_name = "inventory"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
+        # Инвентари сущностей
         self.inventories: Dict[str, Inventory] = {}
+        
+        # База данных предметов
         self.item_database: Dict[str, Dict[str, Any]] = {}
         
+        # Статистика системы
+        self.system_stats = {
+            'inventories_count': 0,
+            'items_total': 0,
+            'inventories_created': 0,
+            'items_added': 0,
+            'items_removed': 0,
+            'update_time': 0.0
+        }
+        
         logger.info("Система инвентаря инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
     
     def initialize(self) -> bool:
         """Инициализация системы инвентаря"""
         try:
+            logger.info("Инициализация системы инвентаря...")
+            
+            # Настраиваем базу данных предметов
             self._setup_item_database()
+            
+            self._system_state = SystemState.READY
             logger.info("Система инвентаря успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы инвентаря: {e}")
+            self._system_state = SystemState.ERROR
             return False
     
-    def _setup_item_database(self):
-        """Настройка базы данных предметов"""
-        self.item_database = {
-            "wooden_sword": {
-                "name": "Деревянный меч",
-                "category": ItemCategory.WEAPON,
-                "weight": 1.0,
-                "value": 10,
-                "stackable": False,
-                "max_stack": 1,
-                "effects": {"attack": 5}
-            },
-            "iron_sword": {
-                "name": "Железный меч",
-                "category": ItemCategory.WEAPON,
-                "weight": 2.0,
-                "value": 25,
-                "stackable": False,
-                "max_stack": 1,
-                "effects": {"attack": 12}
-            },
-            "leather_armor": {
-                "name": "Кожаная броня",
-                "category": ItemCategory.ARMOR,
-                "weight": 3.0,
-                "value": 15,
-                "stackable": False,
-                "max_stack": 1,
-                "effects": {"defense": 3}
-            },
-            "health_potion": {
-                "name": "Зелье здоровья",
-                "category": ItemCategory.CONSUMABLE,
-                "weight": 0.2,
-                "value": 5,
-                "stackable": True,
-                "max_stack": 10,
-                "effects": {"heal": 25}
-            },
-            "wood": {
-                "name": "Дерево",
-                "category": ItemCategory.MATERIAL,
-                "weight": 0.1,
-                "value": 1,
-                "stackable": True,
-                "max_stack": 100,
-                "effects": {}
-            },
-            "stone": {
-                "name": "Камень",
-                "category": ItemCategory.MATERIAL,
-                "weight": 0.5,
-                "value": 2,
-                "stackable": True,
-                "max_stack": 100,
-                "effects": {}
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы инвентаря"""
+        try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем статистику системы
+            self._update_system_stats()
+            
+            # Обновляем статистику системы
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы инвентаря: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы инвентаря"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система инвентаря приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы инвентаря: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы инвентаря"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система инвентаря возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы инвентаря: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы инвентаря"""
+        try:
+            logger.info("Очистка системы инвентаря...")
+            
+            # Очищаем все инвентари
+            self.inventories.clear()
+            self.item_database.clear()
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'inventories_count': 0,
+                'items_total': 0,
+                'inventories_created': 0,
+                'items_added': 0,
+                'items_removed': 0,
+                'update_time': 0.0
             }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система инвентаря очищена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы инвентаря: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'inventories_count': len(self.inventories),
+            'items_total': self.system_stats['items_total'],
+            'stats': self.system_stats
         }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "item_added":
+                return self._handle_item_added(event_data)
+            elif event_type == "item_removed":
+                return self._handle_item_removed(event_data)
+            elif event_type == "inventory_created":
+                return self._handle_inventory_created(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
     
     def create_inventory(self, owner_id: str, max_slots: int = 20) -> bool:
         """Создание нового инвентаря"""
-        if owner_id in self.inventories:
-            logger.warning(f"Инвентарь для {owner_id} уже существует")
+        try:
+            if owner_id in self.inventories:
+                logger.warning(f"Инвентарь для {owner_id} уже существует")
+                return False
+            
+            inventory = Inventory(owner_id, max_slots)
+            self.inventories[owner_id] = inventory
+            
+            self.system_stats['inventories_count'] = len(self.inventories)
+            self.system_stats['inventories_created'] += 1
+            
+            logger.info(f"Создан инвентарь для {owner_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания инвентаря для {owner_id}: {e}")
             return False
-        
-        inventory = Inventory(owner_id, max_slots)
-        self.inventories[owner_id] = inventory
-        
-        logger.info(f"Создан инвентарь для {owner_id}")
-        return True
     
-    def remove_inventory(self, owner_id: str):
+    def remove_inventory(self, owner_id: str) -> bool:
         """Удаление инвентаря"""
-        if owner_id in self.inventories:
-            del self.inventories[owner_id]
-            logger.info(f"Инвентарь {owner_id} удален")
+        try:
+            if owner_id in self.inventories:
+                del self.inventories[owner_id]
+                self.system_stats['inventories_count'] = len(self.inventories)
+                logger.info(f"Инвентарь {owner_id} удален")
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления инвентаря {owner_id}: {e}")
+            return False
     
     def get_inventory(self, owner_id: str) -> Optional[Inventory]:
         """Получение инвентаря по ID владельца"""
@@ -490,21 +588,41 @@ class InventorySystem:
     
     def add_item_to_inventory(self, owner_id: str, item_id: str, quantity: int = 1) -> Tuple[bool, int]:
         """Добавление предмета в инвентарь"""
-        inventory = self.get_inventory(owner_id)
-        if not inventory:
-            logger.error(f"Инвентарь для {owner_id} не найден")
+        try:
+            inventory = self.get_inventory(owner_id)
+            if not inventory:
+                logger.error(f"Инвентарь для {owner_id} не найден")
+                return False, 0
+            
+            success, added = inventory.add_item(item_id, quantity)
+            if success:
+                self.system_stats['items_added'] += added
+                self._update_system_stats()
+            
+            return success, added
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления предмета {item_id} в инвентарь {owner_id}: {e}")
             return False, 0
-        
-        return inventory.add_item(item_id, quantity)
     
     def remove_item_from_inventory(self, owner_id: str, item_id: str, quantity: int = 1) -> Tuple[bool, int]:
         """Удаление предмета из инвентаря"""
-        inventory = self.get_inventory(owner_id)
-        if not inventory:
-            logger.error(f"Инвентарь для {owner_id} не найден")
+        try:
+            inventory = self.get_inventory(owner_id)
+            if not inventory:
+                logger.error(f"Инвентарь для {owner_id} не найден")
+                return False, 0
+            
+            success, removed = inventory.remove_item(item_id, quantity)
+            if success:
+                self.system_stats['items_removed'] += removed
+                self._update_system_stats()
+            
+            return success, removed
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления предмета {item_id} из инвентаря {owner_id}: {e}")
             return False, 0
-        
-        return inventory.remove_item(item_id, quantity)
     
     def has_item_in_inventory(self, owner_id: str, item_id: str, quantity: int = 1) -> bool:
         """Проверка наличия предмета в инвентаре"""
@@ -555,8 +673,77 @@ class InventorySystem:
         
         return results
     
-    def cleanup(self):
-        """Очистка системы инвентаря"""
-        logger.info("Очистка системы инвентаря...")
-        self.inventories.clear()
-        self.item_database.clear()
+    
+    def _update_system_stats(self) -> None:
+        """Обновление статистики системы"""
+        try:
+            total_items = 0
+            for inventory in self.inventories.values():
+                for slot in inventory.slots:
+                    if not slot.is_empty():
+                        total_items += slot.quantity
+            
+            self.system_stats['items_total'] = total_items
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            max_slots = event_data.get('max_slots', 20)
+            
+            if entity_id:
+                return self.create_inventory(entity_id, max_slots)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_item_added(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события добавления предмета"""
+        try:
+            entity_id = event_data.get('entity_id')
+            item_id = event_data.get('item_id')
+            quantity = event_data.get('quantity', 1)
+            
+            if entity_id and item_id:
+                success, added = self.add_item_to_inventory(entity_id, item_id, quantity)
+                return success
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события добавления предмета: {e}")
+            return False
+    
+    def _handle_item_removed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события удаления предмета"""
+        try:
+            entity_id = event_data.get('entity_id')
+            item_id = event_data.get('item_id')
+            quantity = event_data.get('quantity', 1)
+            
+            if entity_id and item_id:
+                success, removed = self.remove_item_from_inventory(entity_id, item_id, quantity)
+                return success
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события удаления предмета: {e}")
+            return False
+    
+    def _handle_inventory_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания инвентаря"""
+        try:
+            entity_id = event_data.get('entity_id')
+            max_slots = event_data.get('max_slots', 20)
+            
+            if entity_id:
+                return self.create_inventory(entity_id, max_slots)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания инвентаря: {e}")
+            return False
