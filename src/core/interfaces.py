@@ -291,3 +291,69 @@ class ISystemManager(ISystem):
     def update_all_systems(self, delta_time: float) -> None:
         """Обновление всех систем"""
         pass
+
+class Scene(ABC):
+    """Базовый класс для игровых сцен"""
+    
+    @abstractmethod
+    def initialize(self) -> bool:
+        """Инициализация сцены"""
+        pass
+    
+    @abstractmethod
+    def update(self, delta_time: float) -> None:
+        """Обновление сцены"""
+        pass
+    
+    @abstractmethod
+    def render(self, render_node) -> None:
+        """Отрисовка сцены"""
+        pass
+    
+    @abstractmethod
+    def cleanup(self) -> None:
+        """Очистка сцены"""
+        pass
+    
+    @abstractmethod
+    def pause(self) -> None:
+        """Пауза сцены"""
+        pass
+    
+    @abstractmethod
+    def resume(self) -> None:
+        """Возобновление сцены"""
+        pass
+
+class ISceneManager(ISystem):
+    """Интерфейс менеджера сцен"""
+    
+    @abstractmethod
+    def add_scene(self, name: str, scene: Scene) -> bool:
+        """Добавление сцены"""
+        pass
+    
+    @abstractmethod
+    def remove_scene(self, name: str) -> bool:
+        """Удаление сцены"""
+        pass
+    
+    @abstractmethod
+    def get_scene(self, name: str) -> Optional[Scene]:
+        """Получение сцены"""
+        pass
+    
+    @abstractmethod
+    def set_active_scene(self, name: str) -> bool:
+        """Установка активной сцены"""
+        pass
+    
+    @abstractmethod
+    def get_active_scene(self) -> Optional[Scene]:
+        """Получение активной сцены"""
+        pass
+    
+    @abstractmethod
+    def update_active_scene(self, delta_time: float) -> None:
+        """Обновление активной сцены"""
+        pass

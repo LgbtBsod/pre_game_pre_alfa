@@ -13,6 +13,8 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 from pathlib import Path
 
+from ...core.interfaces import ISystem
+
 logger = logging.getLogger(__name__)
 
 class ContentType(Enum):
@@ -123,10 +125,12 @@ class BossData:
     spawn_conditions: Dict[str, Any]  # Условия появления
     minion_spawns: List[Dict[str, Any]]  # Спавн миньонов
 
-class ContentDatabase:
+class ContentDatabase(ISystem):
     """База данных для хранения процедурно сгенерированного контента"""
     
-    def __init__(self, db_path: str = "content_database.db"):
+    def __init__(self, db_path: str = None):
+        if db_path is None:
+            db_path = "content_database.db"
         self.db_path = db_path
         self.connection = None
         self._initialize_database()
@@ -144,6 +148,30 @@ class ContentDatabase:
         except Exception as e:
             logger.error(f"Ошибка инициализации базы данных: {e}")
             raise
+    
+    def initialize(self) -> bool:
+        """Инициализация системы"""
+        try:
+            # База данных уже инициализирована в конструкторе
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации ContentDatabase: {e}")
+            return False
+    
+    def update(self, delta_time: float):
+        """Обновление системы"""
+        # База данных не требует постоянного обновления
+        pass
+    
+    def cleanup(self):
+        """Очистка системы"""
+        try:
+            if self.connection:
+                self.connection.close()
+                self.connection = None
+                logger.info("ContentDatabase очищена")
+        except Exception as e:
+            logger.error(f"Ошибка очистки ContentDatabase: {e}")
     
     def _create_tables(self):
         """Создание таблиц базы данных"""

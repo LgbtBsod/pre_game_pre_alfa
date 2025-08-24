@@ -11,7 +11,7 @@ from .interfaces import ISceneManager, Scene
 
 logger = logging.getLogger(__name__)
 
-class Scene(ISceneManager):
+class Scene(ABC):
     """Базовый класс для всех сцен"""
     
     def __init__(self, name: str):
@@ -241,3 +241,61 @@ class SceneManager(ISceneManager):
         self.previous_scene = None
         
         logger.info("Менеджер сцен очищен")
+    
+    # Реализация недостающих методов интерфейса ISceneManager
+    def get_scene(self, name: str) -> Optional[Scene]:
+        """Получение сцены по имени"""
+        return self.scenes.get(name)
+    
+    def remove_scene(self, name: str) -> bool:
+        """Удаление сцены"""
+        if name not in self.scenes:
+            return False
+        
+        scene = self.scenes[name]
+        scene.cleanup()
+        del self.scenes[name]
+        
+        # Если удаляемая сцена была активной, сбрасываем активную сцену
+        if self.active_scene == scene:
+            self.active_scene = None
+        
+        logger.info(f"Сцена {name} удалена")
+        return True
+    
+    def get_active_scene(self) -> Optional[Scene]:
+        """Получение активной сцены"""
+        return self.active_scene
+    
+    def update_active_scene(self, delta_time: float) -> None:
+        """Обновление активной сцены"""
+        if self.active_scene:
+            self.active_scene.update(delta_time)
+    
+    def add_scene(self, name: str, scene: Scene) -> bool:
+        """Добавление сцены"""
+        try:
+            if name in self.scenes:
+                logger.warning(f"Сцена {name} уже существует")
+                return False
+            
+            # Инициализируем сцену
+            if not scene.initialize():
+                logger.error(f"Не удалось инициализировать сцену {name}")
+                return False
+            
+            # Добавляем сцену
+            self.scenes[name] = scene
+            scene.scene_manager = self
+            
+            # Если это первая сцена, делаем её активной
+            if not self.active_scene:
+                self.active_scene = scene
+                scene.set_visible(True)
+            
+            logger.info(f"Сцена {name} добавлена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления сцены {name}: {e}")
+            return False

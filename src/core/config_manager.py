@@ -99,6 +99,7 @@ class ConfigManager(IConfigManager):
             
             logger.info("Конфигурация успешно загружена")
             return self._loaded_config
+            return self._loaded_config
         except:
             logger.error("Ошибка загрузки конфигурации")
     
@@ -350,3 +351,57 @@ class ConfigManager(IConfigManager):
         self.performance_config = PerformanceConfig()
         
         self._loaded_config = self._get_default_config()
+    
+    # Реализация методов интерфейса ISystem
+    def initialize(self) -> bool:
+        """Инициализация системы"""
+        try:
+            self.load_config()
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации ConfigManager: {e}")
+            return False
+    
+    def update(self, delta_time: float):
+        """Обновление системы"""
+        # ConfigManager не требует постоянного обновления
+        pass
+    
+    def cleanup(self):
+        """Очистка системы"""
+        try:
+            self.save_config()
+            logger.info("ConfigManager очищен")
+        except Exception as e:
+            logger.error(f"Ошибка очистки ConfigManager: {e}")
+    
+    # Реализация методов интерфейса IConfigManager
+    def get_value(self, key: str, default: Any = None) -> Any:
+        """Получение значения конфигурации"""
+        # Поддерживаем формат "section.key"
+        if '.' in key:
+            section, subkey = key.split('.', 1)
+            return self.get(section, subkey, default)
+        else:
+            # Ищем во всех секциях
+            for section in self._loaded_config:
+                if key in self._loaded_config[section]:
+                    return self._loaded_config[section][key]
+            return default
+    
+    def set_value(self, key: str, value: Any) -> bool:
+        """Установка значения конфигурации"""
+        try:
+            # Поддерживаем формат "section.key"
+            if '.' in key:
+                section, subkey = key.split('.', 1)
+                self.set(section, subkey, value)
+            else:
+                # Устанавливаем в первую доступную секцию
+                if self._loaded_config:
+                    first_section = list(self._loaded_config.keys())[0]
+                    self.set(first_section, key, value)
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка установки значения {key}: {e}")
+            return False

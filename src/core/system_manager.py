@@ -263,6 +263,20 @@ class SystemManager(ISystemManager, EventSubscriber):
         elif event.event_type == "system_error":
             logger.error(f"Ошибка в системе {event.data.get('system', 'unknown')}: {event.data.get('error', 'unknown error')}")
     
+    def update(self, delta_time: float) -> None:
+        """Обновление менеджера систем"""
+        try:
+            # Обновляем все системы в правильном порядке
+            for system_name in self.system_order:
+                if system_name in self.systems:
+                    system = self.systems[system_name]
+                    try:
+                        system.update(delta_time)
+                    except Exception as e:
+                        logger.error(f"Ошибка обновления системы {system_name}: {e}")
+        except Exception as e:
+            logger.error(f"Ошибка обновления менеджера систем: {e}")
+    
     def cleanup(self) -> None:
         """Очистка менеджера систем"""
         logger.info("Очистка менеджера систем...")

@@ -100,6 +100,34 @@ class ResourceManager(IResourceManager):
         except Exception as e:
             logger.warning(f"Ошибка предзагрузки базовых ресурсов: {e}")
     
+    # Реализация методов интерфейса ISystem
+    def update(self, delta_time: float):
+        """Обновление системы"""
+        # ResourceManager не требует постоянного обновления
+        pass
+    
+    def cleanup(self):
+        """Очистка системы"""
+        try:
+            # Очищаем кэш
+            self.cache.clear()
+            self.textures.clear()
+            self.models.clear()
+            self.sounds.clear()
+            
+            # Очищаем загрузчик
+            if self.loader:
+                self.loader = None
+            
+            # Очищаем аудио менеджер
+            if self.audio_manager:
+                self.audio_manager = None
+            
+            logger.info("ResourceManager очищен")
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки ResourceManager: {e}")
+    
     # Реализация интерфейса IResourceManager
     def load_resource(self, resource_path: str, resource_type: str) -> Any:
         """Загрузка ресурса"""

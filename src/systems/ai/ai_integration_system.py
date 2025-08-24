@@ -7,8 +7,9 @@ import logging
 import time
 import random
 from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from ...core.interfaces import ISystem
 from .ai_system import AISystem, EmotionType, PersonalityType
 from .ai_entity import AIEntity, EntityType, MemoryType
 from ..genome.genome_system import Genome, genome_manager
@@ -41,16 +42,16 @@ class AIAgentState:
     target: Optional[str] = None
     last_action: Optional[str] = None
     action_cooldown: float = 0.0
-    inventory_items: List[str] = []  # UUID предметов в инвентаре
-    equipped_items: Dict[str, str] = {}  # Слот -> UUID предмета
-    available_skills: List[str] = []  # UUID доступных скиллов
-    learning_progress: Dict[str, float] = {}  # Прогресс обучения по навыкам
+    inventory_items: List[str] = field(default_factory=list)  # UUID предметов в инвентаре
+    equipped_items: Dict[str, str] = field(default_factory=dict)  # Слот -> UUID предмета
+    available_skills: List[str] = field(default_factory=list)  # UUID доступных скиллов
+    learning_progress: Dict[str, float] = field(default_factory=dict)  # Прогресс обучения по навыкам
 
 class AIIntegrationSystem:
     """Система интеграции AI агентов с игровыми системами"""
     
-    def __init__(self, event_system, ai_system: AISystem, combat_system: CombatSystem, 
-                 content_db: ContentDatabase, inventory_system: InventorySystem):
+    def __init__(self, event_system=None, ai_system: AISystem = None, combat_system: CombatSystem = None, 
+                 content_db: ContentDatabase = None, inventory_system = None):
         self.event_system = event_system
         self.ai_system = ai_system
         self.combat_system = combat_system
@@ -64,9 +65,64 @@ class AIIntegrationSystem:
         self.entity_stats: Dict[str, EntityStats] = {}
         
         # Подписка на события
-        self._subscribe_to_events()
+        if self.event_system:
+            self._subscribe_to_events()
         
         logger.info("AI Integration System инициализирована")
+    
+    def initialize(self) -> bool:
+        """Инициализация системы"""
+        try:
+            # Проверяем доступность зависимостей
+            if not self.event_system:
+                logger.warning("EventSystem недоступен, некоторые функции будут ограничены")
+            
+            if not self.ai_system:
+                logger.warning("AISystem недоступен, некоторые функции будут ограничены")
+            
+            if not self.combat_system:
+                logger.warning("CombatSystem недоступен, некоторые функции будут ограничены")
+            
+            if not self.content_db:
+                logger.warning("ContentDatabase недоступен, некоторые функции будут ограничены")
+            
+            if not self.inventory_system:
+                logger.warning("InventorySystem недоступен, некоторые функции будут ограничены")
+            
+            logger.info("AI Integration System успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации AI Integration System: {e}")
+            return False
+    
+    def update(self, delta_time: float):
+        """Обновление системы"""
+        try:
+            # Обновляем AI агентов
+            for entity_id, agent_state in self.ai_agents.items():
+                self.update_ai_agent(entity_id, delta_time)
+            
+            # Обновляем характеристики сущностей
+            for entity_id, stats in self.entity_stats.items():
+                stats.update(delta_time)
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления AI Integration System: {e}")
+    
+    def cleanup(self):
+        """Очистка системы"""
+        try:
+            # Очищаем AI агентов
+            self.ai_agents.clear()
+            
+            # Очищаем характеристики сущностей
+            self.entity_stats.clear()
+            
+            logger.info("AI Integration System очищена")
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки AI Integration System: {e}")
     
     def _subscribe_to_events(self):
         """Подписка на игровые события"""

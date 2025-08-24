@@ -75,12 +75,12 @@ class PerformanceManager(IPerformanceManager):
             # Инициализация Pygame метрик
             self._initialize_pygame_metrics()
             
-                    logger.info("Менеджер производительности успешно инициализирован")
-        return True
+            logger.info("Менеджер производительности успешно инициализирован")
+            return True
         
-    except Exception as e:
-        logger.error(f"Ошибка инициализации менеджера производительности: {e}")
-        return False
+        except Exception as e:
+            logger.error(f"Ошибка инициализации менеджера производительности: {e}")
+            return False
     
     # Реализация интерфейса IPerformanceManager
     def get_fps(self) -> float:

@@ -8,10 +8,25 @@ import logging
 from typing import Dict, Any, Optional, Type
 from .interfaces import ISystem
 from .event_system import EventSystem
-from ..systems.rendering import RenderSystem
-from ..systems.ui import UISystem
-from ..systems.ai import AISystem, PyTorchAISystem
-from ..systems.combat import CombatSystem
+try:
+    from ..systems.rendering import RenderSystem
+    from ..systems.ui import UISystem
+    from ..systems.ai import AISystem, PyTorchAISystem
+    from ..systems.combat import CombatSystem
+    from ..systems.content import ContentDatabase, ContentGenerator
+    from ..systems.ai import AIIntegrationSystem
+    from ..systems.entity import EntityStatsSystem
+except ImportError:
+    # Fallback для случаев, когда относительные импорты не работают
+    RenderSystem = None
+    UISystem = None
+    AISystem = None
+    PyTorchAISystem = None
+    CombatSystem = None
+    ContentDatabase = None
+    ContentGenerator = None
+    AIIntegrationSystem = None
+    EntityStatsSystem = None
 
 logger = logging.getLogger(__name__)
 
@@ -33,15 +48,31 @@ class SystemFactory:
     
     def _register_systems(self):
         """Регистрация доступных систем"""
-        self.system_registry.update({
-            "render": RenderSystem,
-            "ui": UISystem,
-            "ai": AISystem,
-            "pytorch_ai": PyTorchAISystem,
-            "combat": CombatSystem
-        })
+        systems_to_register = {}
+        
+        if RenderSystem:
+            systems_to_register["render"] = RenderSystem
+        if UISystem:
+            systems_to_register["ui"] = UISystem
+        if AISystem:
+            systems_to_register["ai"] = AISystem
+        if PyTorchAISystem:
+            systems_to_register["pytorch_ai"] = PyTorchAISystem
+        if CombatSystem:
+            systems_to_register["combat"] = CombatSystem
+        if ContentDatabase:
+            systems_to_register["content_database"] = ContentDatabase
+        if ContentGenerator:
+            systems_to_register["content_generator"] = ContentGenerator
+        if AIIntegrationSystem:
+            systems_to_register["ai_integration"] = AIIntegrationSystem
+        if EntityStatsSystem:
+            systems_to_register["entity_stats"] = EntityStatsSystem
+        
+        self.system_registry.update(systems_to_register)
         
         logger.debug(f"Зарегистрировано {len(self.system_registry)} систем")
+        logger.info(f"Доступные системы: {list(self.system_registry.keys())}")
     
     def create_system(self, system_name: str, **kwargs) -> Optional[ISystem]:
         """Создание системы по имени"""
@@ -66,6 +97,22 @@ class SystemFactory:
             
             elif system_name == "pytorch_ai":
                 # PyTorch AI система
+                system = system_class()
+            
+            elif system_name == "content_database":
+                # База данных контента
+                system = system_class()
+            
+            elif system_name == "content_generator":
+                # Генератор контента
+                system = system_class()
+            
+            elif system_name == "ai_integration":
+                # Система интеграции AI
+                system = system_class()
+            
+            elif system_name == "entity_stats":
+                # Система характеристик сущностей
                 system = system_class()
             
             else:
@@ -171,6 +218,26 @@ class SystemFactory:
             combat_system = self.create_system("combat")
             if combat_system:
                 created_systems["combat"] = combat_system
+            
+            # База данных контента
+            content_db = self.create_system("content_database")
+            if content_db:
+                created_systems["content_database"] = content_db
+            
+            # Генератор контента
+            content_gen = self.create_system("content_generator")
+            if content_gen:
+                created_systems["content_generator"] = content_gen
+            
+            # Система интеграции AI
+            ai_integration = self.create_system("ai_integration")
+            if ai_integration:
+                created_systems["ai_integration"] = ai_integration
+            
+            # Система характеристик сущностей
+            entity_stats = self.create_system("entity_stats")
+            if entity_stats:
+                created_systems["entity_stats"] = entity_stats
             
             logger.info(f"Создано {len(created_systems)} систем")
             return created_systems

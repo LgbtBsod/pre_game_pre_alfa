@@ -18,10 +18,8 @@ from .content_constants import (
     ENEMY_CONSTANTS, BOSS_CONSTANTS, ITEM_CONSTANTS,
     RANDOM_GENERATOR, GenerationBiome, GenerationTime, GenerationWeather
 )
-from ..items.item_system import Weapon, Armor, Accessory, Consumable, ItemRarity, ItemType
-from ..skills.skill_system import Skill, CombatSkill, UtilitySkill, SkillType, SkillTarget
-from ..genome.genome_system import Gene, GeneType, GeneDominance
-from ..effects.effect_system import Effect, SpecialEffect, EffectCategory
+
+from ...core.interfaces import ISystem
 
 logger = logging.getLogger(__name__)
 
@@ -39,10 +37,10 @@ class GenerationConfig:
     enemy_count: int = 15
     boss_count: int = 3
 
-class ContentGenerator:
+class ContentGenerator(ISystem):
     """Генератор процедурного контента с использованием констант и продвинутого рандома"""
     
-    def __init__(self, content_database: ContentDatabase, seed: int = None):
+    def __init__(self, content_database=None, seed: int = None):
         self.content_db = content_database
         self.random_generator = RANDOM_GENERATOR
         if seed is not None:
@@ -58,6 +56,34 @@ class ContentGenerator:
         self.effect_templates = self._load_effect_templates()
         
         logger.info("Генератор контента инициализирован")
+    
+    def initialize(self) -> bool:
+        """Инициализация системы"""
+        try:
+            # Генератор уже инициализирован в конструкторе
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации ContentGenerator: {e}")
+            return False
+    
+    def update(self, delta_time: float):
+        """Обновление системы"""
+        # Генератор не требует постоянного обновления
+        pass
+    
+    def cleanup(self):
+        """Очистка системы"""
+        try:
+            # Очищаем шаблоны
+            self.weapon_templates.clear()
+            self.armor_templates.clear()
+            self.accessory_templates.clear()
+            self.gene_templates.clear()
+            self.skill_templates.clear()
+            self.effect_templates.clear()
+            logger.info("ContentGenerator очищен")
+        except Exception as e:
+            logger.error(f"Ошибка очистки ContentGenerator: {e}")
     
     def _load_weapon_templates(self) -> List[Dict[str, Any]]:
         """Загрузка шаблонов оружия"""
