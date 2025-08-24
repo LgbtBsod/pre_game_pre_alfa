@@ -1,31 +1,40 @@
 #!/usr/bin/env python3
 """
-Game Scene - Основная игровая сцена
+Game Scene - Основная игровая сцена на Panda3D
 Отвечает только за игровой процесс и управление игровыми системами
 """
 
 import logging
-import pygame
 import math
+import random
 from typing import List, Optional, Dict, Any, Tuple
+from panda3d.core import NodePath, PandaNode, Vec3, Point3, LVector3
+from panda3d.core import OrthographicLens, PerspectiveLens
+from panda3d.core import DirectionalLight, AmbientLight
+from panda3d.core import TransparencyAttrib, AntialiasAttrib
+from panda3d.core import TextNode, PandaNode
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
+
 from ..core.scene_manager import Scene
 from ..systems import (
-    EvolutionSystem, AISystem, CombatSystem, 
+    EvolutionSystem, CombatSystem,
     CraftingSystem, InventorySystem
 )
+from ..systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
 
 logger = logging.getLogger(__name__)
 
 class IsometricCamera:
-    """Изометрическая камера"""
+    """Изометрическая камера для Panda3D"""
     
-    def __init__(self, screen_width: int, screen_height: int):
-        self.screen_width = screen_width
-        self.screen_height = screen_height
+    def __init__(self, camera_node: NodePath):
+        self.camera_node = camera_node
         
         # Позиция камеры в мировых координатах
         self.world_x = 0.0
         self.world_y = 0.0
+        self.world_z = 20.0
         
         # Масштаб
         self.zoom = 1.0
@@ -37,167 +46,172 @@ class IsometricCamera:
         self.cos_angle = math.cos(self.iso_angle)
         self.sin_angle = math.sin(self.iso_angle)
         
-        # Размер тайла в пикселях
-        self.tile_width = 64
-        self.tile_height = 32
+        # Настройка изометрической проекции
+        self._setup_isometric_projection()
     
-    def world_to_screen(self, world_x: float, world_y: float) -> Tuple[int, int]:
+    def _setup_isometric_projection(self):
+        """Настройка изометрической проекции"""
+        lens = OrthographicLens()
+        lens.setFilmSize(40, 30)
+        lens.setNearFar(-100, 100)
+        self.camera_node.node().setLens(lens)
+        
+        # Устанавливаем начальную позицию камеры
+        self.camera_node.setPos(self.world_x, self.world_y, self.world_z)
+        self.camera_node.lookAt(0, 0, 0)
+    
+    def world_to_screen(self, world_x: float, world_y: float, world_z: float = 0) -> Tuple[float, float, float]:
         """Преобразование мировых координат в экранные (изометрическая проекция)"""
         # Смещение относительно камеры
         rel_x = world_x - self.world_x
         rel_y = world_y - self.world_y
+        rel_z = world_z
         
         # Изометрическая проекция
         iso_x = (rel_x - rel_y) * self.cos_angle
         iso_y = (rel_x + rel_y) * self.sin_angle
+        iso_z = rel_z
         
         # Применяем масштаб
         iso_x *= self.zoom
         iso_y *= self.zoom
+        iso_z *= self.zoom
         
-        # Центрируем на экране
-        screen_x = int(iso_x + self.screen_width // 2)
-        screen_y = int(iso_y + self.screen_height // 2)
-        
-        return screen_x, screen_y
+        return iso_x, iso_y, iso_z
     
-    def screen_to_world(self, screen_x: int, screen_y: int) -> Tuple[float, float]:
+    def screen_to_world(self, screen_x: float, screen_y: float, screen_z: float = 0) -> Tuple[float, float, float]:
         """Преобразование экранных координат в мировые"""
-        # Убираем центрирование
-        rel_x = (screen_x - self.screen_width // 2) / self.zoom
-        rel_y = (screen_y - self.screen_height // 2) / self.zoom
-        
         # Обратная изометрическая проекция
-        world_x = (rel_x / self.cos_angle + rel_y / self.sin_angle) / 2 + self.world_x
-        world_y = (rel_y / self.sin_angle - rel_x / self.cos_angle) / 2 + self.world_y
+        world_x = (screen_x / self.cos_angle + screen_y / self.sin_angle) / 2 + self.world_x
+        world_y = (screen_y / self.sin_angle - screen_x / self.cos_angle) / 2 + self.world_y
+        world_z = screen_z / self.zoom
         
-        return world_x, world_y
+        return world_x, world_y, world_z
     
-    def move(self, dx: float, dy: float):
+    def move(self, dx: float, dy: float, dz: float = 0):
         """Перемещение камеры"""
         self.world_x += dx
         self.world_y += dy
+        self.world_z += dz
+        
+        # Обновляем позицию камеры
+        self.camera_node.setPos(self.world_x, self.world_y, self.world_z)
     
     def set_zoom(self, zoom: float):
         """Установка масштаба"""
         self.zoom = max(self.min_zoom, min(self.max_zoom, zoom))
+        
+        # Обновляем проекцию
+        lens = self.camera_node.node().getLens()
+        if isinstance(lens, OrthographicLens):
+            lens.setFilmSize(40 / self.zoom, 30 / self.zoom)
     
     def follow_entity(self, entity: Dict[str, Any], smooth: float = 0.1):
         """Следование за сущностью"""
-        target_x = entity['x']
-        target_y = entity['y']
+        target_x = entity.get('x', 0)
+        target_y = entity.get('y', 0)
+        target_z = entity.get('z', 0)
         
         # Плавное следование
         self.world_x += (target_x - self.world_x) * smooth
         self.world_y += (target_y - self.world_y) * smooth
+        self.world_z += (target_z - self.world_z) * smooth
+        
+        # Обновляем позицию камеры
+        self.camera_node.setPos(self.world_x, self.world_y, self.world_z)
 
 class GameScene(Scene):
-    """Основная игровая сцена"""
+    """Основная игровая сцена на Panda3D"""
     
     def __init__(self):
         super().__init__("game")
         
         # Игровые системы
-        self.systems: Dict[str, Any] = {}
+        self.systems = {}
+        
+        # AI система
+        self.ai_manager = AISystemManager()
         
         # Игровые объекты
-        self.entities: List[Any] = []
-        self.particles: List[Any] = []
-        self.ui_elements: List[Any] = []
+        self.entities: List[Dict[str, Any]] = []
+        self.particles: List[Dict[str, Any]] = []
+        self.ui_elements: List[Dict[str, Any]] = []
+        
+        # Panda3D узлы
+        self.scene_root = None
+        self.entities_root = None
+        self.particles_root = None
+        self.ui_root = None
         
         # Изометрическая камера
-        self.camera = None  # Инициализируется в initialize()
+        self.camera: Optional[IsometricCamera] = None
         
-        # Игровое время
+        # Игровое состояние
+        self.game_paused = False
         self.game_time = 0.0
         self.day_night_cycle = 0.0
         
-        # Состояние игры
-        self.game_paused = False
-        self.show_debug = False
+        # UI элементы Panda3D
+        self.health_bar_text = None
+        self.ai_info_text = None
+        self.debug_text = None
         
-        # Графика
-        self.background: Optional[pygame.Surface] = None
-        self.font: Optional[pygame.font.Font] = None
+        # Отладочная информация
+        self.show_debug = True
         
-        # Цвета
-        self.colors = {
-            'background': (50, 100, 50),
-            'text': (255, 255, 255),
-            'debug': (255, 255, 0),
-            'ui': (100, 100, 100)
-        }
-        
-        logger.info("Игровая сцена создана")
+        logger.info("Игровая сцена Panda3D создана")
     
     def initialize(self) -> bool:
         """Инициализация игровой сцены"""
         try:
-            logger.info("Инициализация игровой сцены...")
+            logger.info("Начало инициализации игровой сцены Panda3D...")
             
-            # Инициализация изометрической камеры
-            self.camera = IsometricCamera(1600, 900)
+            # Создание корневых узлов
+            self._create_scene_nodes()
             
-            # Создание шрифтов
-            self._create_fonts()
+            # Создаем изометрическую камеру
+            if hasattr(self, 'scene_manager') and self.scene_manager:
+                # Используем основную камеру Panda3D
+                from panda3d.core import Camera
+                camera_node = self.scene_manager.render_node.find("**/+Camera")
+                if camera_node.isEmpty():
+                    # Если камера не найдена, создаем новую
+                    camera = Camera('game_camera')
+                    camera_node = self.scene_manager.render_node.attachNewNode(camera)
+                self.camera = IsometricCamera(camera_node)
             
-            # Создание фона
-            self._create_background()
-            
-            # Инициализация игровых систем
+            # Инициализируем игровые системы
             self._initialize_game_systems()
             
-            # Создание начальных объектов
+            # Создаем начальные объекты
             self._create_initial_objects()
             
-            self.initialized = True
-            logger.info("Игровая сцена успешно инициализирована")
+            # Настройка освещения
+            self._setup_lighting()
+            
+            # Создание UI элементов
+            self._create_ui_elements()
+            
+            logger.info("Игровая сцена Panda3D успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации игровой сцены: {e}")
             return False
     
-    def _create_fonts(self):
-        """Создание шрифтов"""
-        try:
-            self.font = pygame.font.Font(None, 24)
-            logger.debug("Шрифты созданы")
-        except Exception as e:
-            logger.warning(f"Не удалось создать шрифты: {e}")
-            self.font = pygame.font.SysFont(None, 24)
-    
-    def _create_background(self):
-        """Создание фона игры"""
-        try:
-            # Создаем простой фон с травой
-            self.background = pygame.Surface((1600, 900))
-            
-            # Рисуем траву
-            grass_color = (34, 139, 34)
-            self.background.fill(grass_color)
-            
-            # Добавляем текстуру
-            for x in range(0, 1600, 20):
-                for y in range(0, 900, 20):
-                    if (x + y) % 40 == 0:
-                        pygame.draw.circle(self.background, (28, 120, 28), (x, y), 2)
-            
-            logger.debug("Фон игры создан")
-            
-        except Exception as e:
-            logger.warning(f"Не удалось создать фон: {e}")
-            self.background = None
+    def _create_scene_nodes(self):
+        """Создание корневых узлов сцены"""
+        if hasattr(self, 'scene_manager') and self.scene_manager:
+            self.scene_root = self.scene_manager.render_node.attachNewNode("game_scene")
+            self.entities_root = self.scene_root.attachNewNode("entities")
+            self.particles_root = self.scene_root.attachNewNode("particles")
+            self.ui_root = self.scene_root.attachNewNode("ui")
     
     def _initialize_game_systems(self):
         """Инициализация игровых систем"""
         try:
-            # Здесь будут инициализироваться все игровые системы
-            # AI, бой, крафтинг, эволюция и т.д.
-            
-            # Инициализация систем
+            # Создаем системы
             self.systems['evolution'] = EvolutionSystem()
-            self.systems['ai'] = AISystem()
             self.systems['combat'] = CombatSystem()
             self.systems['crafting'] = CraftingSystem()
             self.systems['inventory'] = InventorySystem()
@@ -206,6 +220,10 @@ class GameScene(Scene):
             for system_name, system in self.systems.items():
                 if hasattr(system, 'initialize'):
                     system.initialize()
+            
+            # Инициализируем AI систему
+            ai_system = AISystemFactory.create_ai_system("auto")
+            self.ai_manager.add_system("default", ai_system)
             
             logger.debug("Игровые системы инициализированы")
             
@@ -230,68 +248,218 @@ class GameScene(Scene):
             logger.warning(f"Не удалось создать некоторые объекты: {e}")
     
     def _create_test_player(self):
-        """Создание тестового игрока"""
+        """Создание тестового игрока с AI-управлением"""
         player = {
+            'id': 'player_1',
             'type': 'player',
-            'x': 800,
-            'y': 450,
-            'width': 32,
-            'height': 32,
-            'color': (255, 255, 0),
+            'x': 0,
+            'y': 0,
+            'z': 0,
+            'width': 2,
+            'height': 2,
+            'depth': 2,
+            'color': (1, 1, 0, 1),  # Желтый
             'health': 100,
             'max_health': 100,
-            'speed': 5.0
+            'speed': 5.0,
+            'level': 1,
+            'experience': 0,
+            'ai_personality': 'curious',  # Личность AI
+            'stats': {
+                'strength': 15,
+                'agility': 12,
+                'intelligence': 18,
+                'vitality': 14
+            },
+            'node': None  # Panda3D узел
         }
+        
+        # Создаем Panda3D узел для игрока
+        if self.entities_root:
+            player['node'] = self._create_entity_node(player)
+        
         self.entities.append(player)
-        logger.debug("Тестовый игрок создан")
+        
+        # Регистрируем игрока в AI системе
+        self.ai_manager.register_entity('player_1', player, "default", 'player')
+        
+        logger.debug("Тестовый игрок с AI создан")
     
     def _create_test_npcs(self):
-        """Создание тестовых NPC"""
-        npc_positions = [
-            (400, 300, (255, 0, 0)),    # Красный NPC
-            (1200, 600, (0, 0, 255)),   # Синий NPC
-            (600, 700, (0, 255, 0))     # Зеленый NPC
+        """Создание тестовых NPC с AI"""
+        npc_configs = [
+            {
+                'id': 'npc_1',
+                'x': -5, 'y': -5, 'z': 0, 'color': (1, 0, 0, 1),  # Красный
+                'ai_personality': 'aggressive',
+                'memory_group': 'enemies'
+            },
+            {
+                'id': 'npc_2', 
+                'x': 5, 'y': 5, 'z': 0, 'color': (0, 0, 1, 1),  # Синий
+                'ai_personality': 'defensive',
+                'memory_group': 'npcs'
+            },
+            {
+                'id': 'npc_3',
+                'x': 0, 'y': 5, 'z': 0, 'color': (0, 1, 0, 1),  # Зеленый
+                'ai_personality': 'curious',
+                'memory_group': 'npcs'
+            }
         ]
         
-        for i, (x, y, color) in enumerate(npc_positions):
+        for config in npc_configs:
             npc = {
+                'id': config['id'],
                 'type': 'npc',
-                'x': x,
-                'y': y,
-                'width': 24,
-                'height': 24,
-                'color': color,
+                'x': config['x'],
+                'y': config['y'],
+                'z': config['z'],
+                'width': 1.5,
+                'height': 1.5,
+                'depth': 1.5,
+                'color': config['color'],
                 'health': 50,
                 'max_health': 50,
                 'speed': 2.0,
                 'ai_state': 'idle',
                 'level': 1,
-                'experience': 0
+                'experience': 0,
+                'ai_personality': config['ai_personality'],
+                'stats': {
+                    'strength': 10,
+                    'agility': 8,
+                    'intelligence': 6,
+                    'vitality': 12
+                },
+                'node': None
             }
+            
+            # Создаем Panda3D узел для NPC
+            if self.entities_root:
+                npc['node'] = self._create_entity_node(npc)
+            
             self.entities.append(npc)
             
             # Регистрируем NPC в AI системе
-            if 'ai' in self.systems:
-                entity_id = f"npc_{i}"
-                if hasattr(self.systems['ai'], 'register_entity'):
-                    self.systems['ai'].register_entity(entity_id, npc)
+            self.ai_manager.register_entity(
+                config['id'], 
+                npc, 
+                "default",
+                config['memory_group']
+            )
         
-        logger.debug(f"Создано {len(npc_positions)} тестовых NPC")
+        logger.debug(f"Создано {len(npc_configs)} тестовых NPC с AI")
     
-    def _create_ui_elements(self):
-        """Создание UI элементов"""
-        # HUD элементы
-        hud_elements = [
-            {'type': 'health_bar', 'x': 20, 'y': 20, 'width': 200, 'height': 20},
-            {'type': 'minimap', 'x': 1400, 'y': 20, 'width': 180, 'height': 120},
-            {'type': 'inventory', 'x': 20, 'y': 800, 'width': 400, 'height': 80},
-            {'type': 'menu_button', 'x': 1400, 'y': 800, 'width': 180, 'height': 40}
+    def _create_entity_node(self, entity: Dict[str, Any]) -> NodePath:
+        """Создание Panda3D узла для сущности"""
+        # Создаем простой куб для сущности
+        from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
+        from panda3d.core import GeomVertexWriter, GeomTriangles, GeomNode
+        
+        # Создаем геометрию куба
+        format = GeomVertexFormat.getV3c4()
+        vdata = GeomVertexData('cube', format, Geom.UHStatic)
+        
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        color = GeomVertexWriter(vdata, 'color')
+        
+        # Вершины куба
+        size = entity.get('width', 1) / 2
+        vertices = [
+            (-size, -size, -size), (size, -size, -size), (size, size, -size), (-size, size, -size),
+            (-size, -size, size), (size, -size, size), (size, size, size), (-size, size, size)
         ]
         
-        for element in hud_elements:
-            self.ui_elements.append(element)
+        # Добавляем вершины
+        for v in vertices:
+            vertex.addData3(*v)
+            color.addData4(*entity['color'])
         
-        logger.debug(f"Создано {len(hud_elements)} UI элементов")
+        # Создаем треугольники
+        prim = GeomTriangles(Geom.UHStatic)
+        
+        # Грани куба
+        faces = [
+            (0, 1, 2), (2, 3, 0),  # Передняя грань
+            (1, 5, 6), (6, 2, 1),  # Правая грань
+            (5, 4, 7), (7, 6, 5),  # Задняя грань
+            (4, 0, 3), (3, 7, 4),  # Левая грань
+            (3, 2, 6), (6, 7, 3),  # Верхняя грань
+            (4, 5, 1), (1, 0, 4)   # Нижняя грань
+        ]
+        
+        for face in faces:
+            prim.addVertices(*face)
+            prim.closePrimitive()
+        
+        # Создаем геометрию
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        # Создаем узел
+        node = GeomNode('entity')
+        node.addGeom(geom)
+        
+        # Создаем NodePath и устанавливаем позицию
+        np = self.entities_root.attachNewNode(node)
+        np.setPos(entity['x'], entity['y'], entity['z'])
+        
+        return np
+    
+    def _setup_lighting(self):
+        """Настройка освещения для сцены"""
+        if not self.scene_root:
+            return
+        
+        # Основное направленное освещение
+        dlight = DirectionalLight('game_dlight')
+        dlight.setColor((0.8, 0.8, 0.8, 1))
+        dlnp = self.scene_root.attachNewNode(dlight)
+        dlnp.setHpr(45, -45, 0)
+        self.scene_root.setLight(dlnp)
+        
+        # Фоновое освещение
+        alight = AmbientLight('game_alight')
+        alight.setColor((0.3, 0.3, 0.3, 1))
+        alnp = self.scene_root.attachNewNode(alight)
+        self.scene_root.setLight(alnp)
+        
+        logger.debug("Освещение игровой сцены настроено")
+    
+    def _create_ui_elements(self):
+        """Создание UI элементов Panda3D"""
+        # Полоска здоровья
+        self.health_bar_text = OnscreenText(
+            text="HP: 100/100",
+            pos=(-1.3, 0.7),
+            scale=0.04,
+            fg=(1, 1, 1, 1),
+            align=TextNode.ALeft,
+            mayChange=True
+        )
+        
+        # Информация об AI
+        self.ai_info_text = OnscreenText(
+            text="AI: Initializing...",
+            pos=(-1.3, 0.6),
+            scale=0.03,
+            fg=(0, 1, 1, 1),
+            align=TextNode.ALeft,
+            mayChange=True
+        )
+        
+        # Отладочная информация
+        self.debug_text = OnscreenText(
+            text="Debug: Enabled",
+            pos=(-1.3, 0.5),
+            scale=0.03,
+            fg=(1, 1, 0, 1),
+            align=TextNode.ALeft,
+            mayChange=True
+        )
+        
+        logger.debug("UI элементы Panda3D созданы")
     
     def update(self, delta_time: float):
         """Обновление игровой сцены"""
@@ -319,17 +487,9 @@ class GameScene(Scene):
     
     def _update_game_systems(self, delta_time: float):
         """Обновление игровых систем"""
-        # Здесь будет обновление всех игровых систем
-        # AI, бой, крафтинг, эволюция и т.д.
         try:
-            # Обновляем системы, которые имеют метод update
-            if 'ai' in self.systems:
-                # AI система обновляет все зарегистрированные сущности
-                for entity in self.entities:
-                    if entity['type'] == 'npc':
-                        entity_id = f"{entity['type']}_{id(entity)}"
-                        if hasattr(self.systems['ai'], 'update_entity'):
-                            self.systems['ai'].update_entity(entity_id, entity, delta_time)
+            # Обновляем AI систему
+            self.ai_manager.update_all_systems(delta_time)
             
             # Обновляем систему боя
             if 'combat' in self.systems and hasattr(self.systems['combat'], 'update_combat'):
@@ -346,41 +506,105 @@ class GameScene(Scene):
         """Обновление игровых сущностей"""
         for entity in self.entities:
             if entity['type'] == 'player':
-                self._update_player(entity, delta_time)
+                self._update_player_ai(entity, delta_time)  # Игрок управляется AI
             elif entity['type'] == 'npc':
-                self._update_npc(entity, delta_time)
+                self._update_npc_ai(entity, delta_time)  # NPC управляются AI
+            
+            # Обновляем позицию Panda3D узла
+            if entity.get('node'):
+                entity['node'].setPos(entity['x'], entity['y'], entity['z'])
     
-    def _update_player(self, player: dict, delta_time: float):
-        """Обновление игрока"""
-        # Обработка ввода
-        keys = pygame.key.get_pressed()
-        
-        if keys[pygame.K_w]:
-            player['y'] -= player['speed']
-        if keys[pygame.K_s]:
-            player['y'] += player['speed']
-        if keys[pygame.K_a]:
-            player['x'] -= player['speed']
-        if keys[pygame.K_d]:
-            player['x'] += player['speed']
-        
-        # Ограничение позиции игрока
-        player['x'] = max(0, min(1600 - player['width'], player['x']))
-        player['y'] = max(0, min(900 - player['height'], player['y']))
+    def _update_player_ai(self, player: dict, delta_time: float):
+        """Обновление игрока через AI"""
+        # Получаем решение AI для игрока
+        context = {
+            'entities': self.entities,
+            'delta_time': delta_time,
+            'world_state': self._get_world_state()
+        }
+        decision = self.ai_manager.get_decision(player['id'], context)
+        if decision:
+            # AI принимает решение о движении
+            self._execute_ai_decision(player, decision, delta_time)
     
-    def _update_npc(self, npc: dict, delta_time: float):
-        """Обновление NPC"""
-        # Простой AI для тестовых NPC
-        if npc['ai_state'] == 'idle':
-            # Случайное движение
-            if pygame.time.get_ticks() % 120 == 0:  # Каждые 2 секунды
-                import random
-                npc['x'] += random.randint(-20, 20)
-                npc['y'] += random.randint(-20, 20)
+    def _update_npc_ai(self, npc: dict, delta_time: float):
+        """Обновление NPC через AI"""
+        # AI уже обновляется в _update_game_systems
+        # Здесь можно добавить дополнительную логику для NPC
+        pass
+    
+    def _execute_ai_decision(self, entity: dict, decision: AIDecision, delta_time: float):
+        """Выполнение решения AI для движения"""
+        from ..systems.ai.ai_interface import ActionType
+        
+        if decision.action_type == ActionType.MOVE:
+            # Движение к цели
+            if decision.parameters and 'target_x' in decision.parameters and 'target_y' in decision.parameters:
+                target_x = decision.parameters['target_x']
+                target_y = decision.parameters['target_y']
                 
-                # Ограничение позиции
-                npc['x'] = max(0, min(1600 - npc['width'], npc['x']))
-                npc['y'] = max(0, min(900 - npc['height'], npc['y']))
+                dx = target_x - entity['x']
+                dy = target_y - entity['y']
+                distance = math.sqrt(dx*dx + dy*dy)
+                
+                if distance > 0.5:
+                    # Нормализуем вектор движения
+                    dx = dx / distance * entity['speed'] * delta_time
+                    dy = dy / distance * entity['speed'] * delta_time
+                    
+                    entity['x'] += dx
+                    entity['y'] += dy
+        
+        elif decision.action_type == ActionType.ATTACK:
+            # Атака цели
+            if decision.target:
+                target_entity = next((e for e in self.entities if e.get('id') == decision.target), None)
+                if target_entity:
+                    # Простая логика атаки
+                    dx = target_entity['x'] - entity['x']
+                    dy = target_entity['y'] - entity['y']
+                    distance = math.sqrt(dx*dx + dy*dy)
+                    
+                    if distance <= 3:  # Дистанция атаки
+                        # Наносим урон
+                        if 'health' in target_entity:
+                            target_entity['health'] = max(0, target_entity['health'] - 10)
+        
+        elif decision.action_type == ActionType.EXPLORE:
+            # Исследование
+            if random.random() < 0.1:  # 10% шанс изменить направление
+                entity['target_x'] = random.uniform(-10, 10)
+                entity['target_y'] = random.uniform(-10, 10)
+                entity['target_z'] = 0
+    
+    def _find_nearest_enemy(self, entity: dict) -> Optional[dict]:
+        """Поиск ближайшего врага"""
+        enemies = [e for e in self.entities if e['type'] == 'npc' and e != entity]
+        if not enemies:
+            return None
+        
+        nearest = None
+        min_distance = float('inf')
+        
+        for enemy in enemies:
+            dx = enemy['x'] - entity['x']
+            dy = enemy['y'] - entity['y']
+            distance = math.sqrt(dx*dx + dy*dy)
+            
+            if distance < min_distance:
+                min_distance = distance
+                nearest = enemy
+        
+        return nearest
+    
+    def _get_world_state(self) -> Dict[str, Any]:
+        """Получение состояния игрового мира"""
+        return {
+            'entity_count': len(self.entities),
+            'player_count': len([e for e in self.entities if e['type'] == 'player']),
+            'npc_count': len([e for e in self.entities if e['type'] == 'npc']),
+            'world_bounds': {'x': (-20, 20), 'y': (-20, 20), 'z': (-10, 10)}
+        }
     
     def _update_particles(self, delta_time: float):
         """Обновление частиц"""
@@ -392,11 +616,32 @@ class GameScene(Scene):
             particle['life'] -= delta_time
             particle['x'] += particle.get('vx', 0) * delta_time
             particle['y'] += particle.get('vy', 0) * delta_time
+            particle['z'] += particle.get('vz', 0) * delta_time
     
     def _update_ui(self, delta_time: float):
         """Обновление UI"""
-        # Обновление HUD элементов
-        pass
+        # Обновление полоски здоровья
+        player = next((e for e in self.entities if e['type'] == 'player'), None)
+        if player and self.health_bar_text:
+            health = player.get('health', 100)
+            max_health = player.get('max_health', 100)
+            self.health_bar_text.setText(f"HP: {health}/{max_health}")
+        
+        # Обновление информации об AI
+        if player and self.ai_info_text:
+            # Получаем информацию о состоянии AI
+            context = {'entities': self.entities, 'delta_time': delta_time}
+            decision = self.ai_manager.get_decision(player['id'], context)
+            if decision:
+                self.ai_info_text.setText(f"AI: {decision.action_type.value} (conf: {decision.confidence:.2f})")
+            else:
+                self.ai_info_text.setText("AI: No decision")
+        
+        # Обновление отладочной информации
+        if self.debug_text and self.show_debug:
+            entities_count = len(self.entities)
+            particles_count = len(self.particles)
+            self.debug_text.setText(f"Debug: Entities={entities_count}, Particles={particles_count}")
     
     def _update_camera(self, delta_time: float):
         """Обновление изометрической камеры"""
@@ -408,343 +653,40 @@ class GameScene(Scene):
         if player:
             # Плавно следуем за игроком
             self.camera.follow_entity(player, smooth=0.05)
-        
-        # Обработка управления камерой
-        keys = pygame.key.get_pressed()
-        camera_speed = 200.0 * delta_time
-        
-        # Управление камерой стрелками (если не следуем за игроком)
-        if keys[pygame.K_LEFT]:
-            self.camera.move(-camera_speed, 0)
-        if keys[pygame.K_RIGHT]:
-            self.camera.move(camera_speed, 0)
-        if keys[pygame.K_UP]:
-            self.camera.move(0, -camera_speed)
-        if keys[pygame.K_DOWN]:
-            self.camera.move(0, camera_speed)
-        
-        # Масштабирование
-        if keys[pygame.K_EQUALS] or keys[pygame.K_PLUS]:  # Приближение
-            self.camera.set_zoom(self.camera.zoom + 1.0 * delta_time)
-        if keys[pygame.K_MINUS]:  # Отдаление
-            self.camera.set_zoom(self.camera.zoom - 1.0 * delta_time)
     
-    def render(self, screen: pygame.Surface):
+    def render(self, render_node):
         """Отрисовка игровой сцены"""
-        # Отрисовка фона
-        if self.background:
-            screen.blit(self.background, (0, 0))
-        else:
-            screen.fill(self.colors['background'])
-        
-        # Отрисовка игровых объектов
-        self._render_entities(screen)
-        
-        # Отрисовка частиц
-        self._render_particles(screen)
-        
-        # Отрисовка UI
-        self._render_ui(screen)
-        
-        # Отрисовка отладочной информации
-        if self.show_debug:
-            self._render_debug_info(screen)
+        # Panda3D автоматически отрисовывает сцену
+        # Здесь можно добавить дополнительную логику рендеринга
+        pass
     
-    def _render_entities(self, screen: pygame.Surface):
-        """Отрисовка игровых сущностей с изометрической проекцией"""
-        if not self.camera:
-            return
-            
-        for entity in self.entities:
-            # Проверяем корректность цвета
-            if 'color' not in entity or not isinstance(entity['color'], (tuple, list)) or len(entity['color']) != 3:
-                logger.warning(f"Некорректный цвет для сущности {entity.get('type', 'unknown')}: {entity.get('color', 'missing')}")
-                entity['color'] = (255, 255, 255)  # Белый цвет по умолчанию
-            
-            # Проверяем, что все компоненты цвета - числа от 0 до 255
-            color = entity['color']
-            if not all(isinstance(c, (int, float)) and 0 <= c <= 255 for c in color):
-                logger.warning(f"Некорректные значения цвета для сущности {entity.get('type', 'unknown')}: {color}")
-                entity['color'] = (255, 255, 255)  # Белый цвет по умолчанию
-                color = entity['color']
-            
-            # Преобразуем мировые координаты в экранные (изометрическая проекция)
-            screen_x, screen_y = self.camera.world_to_screen(entity['x'], entity['y'])
-            
-            # Размеры в изометрической проекции
-            iso_width = int(entity['width'] * self.camera.zoom)
-            iso_height = int(entity['height'] * self.camera.zoom * 0.5)  # Сжимаем по вертикали для изометрии
-            
-            if entity['type'] == 'player':
-                # Игрок - желтый ромб (изометрическая проекция прямоугольника)
-                self._draw_isometric_rect(screen, screen_x, screen_y, iso_width, iso_height, (255, 255, 0))
-                
-                # Полоска здоровья над игроком
-                health_ratio = entity['health'] / entity['max_health']
-                health_width = int(iso_width * health_ratio)
-                health_color = (0, 255, 0) if health_ratio > 0.5 else (255, 255, 0) if health_ratio > 0.25 else (255, 0, 0)
-                
-                # Фон полоски здоровья
-                pygame.draw.rect(screen, (100, 0, 0), (screen_x - iso_width//2, screen_y - iso_height - 15, iso_width, 5))
-                # Полоска здоровья
-                pygame.draw.rect(screen, health_color, (screen_x - iso_width//2, screen_y - iso_height - 15, health_width, 5))
-                
-            elif entity['type'] == 'npc':
-                # NPC - цветной ромб
-                self._draw_isometric_rect(screen, screen_x, screen_y, iso_width, iso_height, color)
-                
-                # Полоска здоровья над NPC
-                health_ratio = entity['health'] / entity['max_health']
-                health_width = int(iso_width * health_ratio)
-                health_color = (0, 255, 0) if health_ratio > 0.5 else (255, 255, 0) if health_ratio > 0.25 else (255, 0, 0)
-                
-                # Фон полоски здоровья
-                pygame.draw.rect(screen, (100, 0, 0), (screen_x - iso_width//2, screen_y - iso_height - 15, iso_width, 5))
-                # Полоска здоровья
-                pygame.draw.rect(screen, health_color, (screen_x - iso_width//2, screen_y - iso_height - 15, health_width, 5))
-    
-    def _draw_isometric_rect(self, screen: pygame.Surface, center_x: int, center_y: int, width: int, height: int, color: tuple):
-        """Отрисовка изометрического прямоугольника (ромба)"""
-        # Точки ромба
-        points = [
-            (center_x, center_y - height),  # Верх
-            (center_x + width//2, center_y),  # Право
-            (center_x, center_y + height),  # Низ
-            (center_x - width//2, center_y)   # Лево
-        ]
-        
-        # Рисуем заполненный ромб
-        pygame.draw.polygon(screen, color, points)
-        
-        # Рисуем контур
-        pygame.draw.polygon(screen, (0, 0, 0), points, 2)
-    
-    def _render_particles(self, screen: pygame.Surface):
-        """Отрисовка частиц"""
-        for particle in self.particles:
-            # Проверяем корректность цвета частицы
-            if 'color' not in particle or not isinstance(particle['color'], (tuple, list)) or len(particle['color']) != 3:
-                logger.warning(f"Некорректный цвет для частицы: {particle.get('color', 'missing')}")
-                particle['color'] = (255, 255, 255)  # Белый цвет по умолчанию
-            
-            # Проверяем, что все компоненты цвета - числа от 0 до 255
-            color = particle['color']
-            if not all(isinstance(c, (int, float)) and 0 <= c <= 255 for c in color):
-                logger.warning(f"Некорректные значения цвета для частицы: {color}")
-                particle['color'] = (255, 255, 255)  # Белый цвет по умолчанию
-                color = particle['color']
-            
-            # Отрисовка частицы
-            pygame.draw.circle(screen, color, (int(particle['x']), int(particle['y'])), 3)
-            
-            # Полоска жизни частицы
-            life_ratio = particle['life'] / particle['max_life']
-            life_width = int(10 * life_ratio)
-            life_color = (0, 255, 0) if life_ratio > 0.5 else (255, 255, 0) if life_ratio > 0.25 else (255, 0, 0)
-            
-            pygame.draw.rect(screen, (255, 0, 0), (int(particle['x'] - 5), int(particle['y'] - 8), 10, 2))
-            pygame.draw.rect(screen, life_color, (int(particle['x'] - 5), int(particle['y'] - 8), life_width, 2))
-    
-    def _render_ui(self, screen: pygame.Surface):
-        """Отрисовка UI"""
-        if not self.font:
-            return
-        
-        # Отрисовка HUD элементов
-        for element in self.ui_elements:
-            if element['type'] == 'health_bar':
-                self._render_health_bar(screen, element)
-            elif element['type'] == 'minimap':
-                self._render_minimap(screen, element)
-            elif element['type'] == 'inventory':
-                self._render_inventory(screen, element)
-            elif element['type'] == 'menu_button':
-                self._render_menu_button(screen, element)
-    
-    def _render_health_bar(self, screen: pygame.Surface, element: dict):
-        """Отрисовка полоски здоровья"""
-        player = next((e for e in self.entities if e['type'] == 'player'), None)
-        if not player:
-            return
-        
-        x, y, width, height = element['x'], element['y'], element['width'], element['height']
-        
-        # Фон полоски здоровья
-        pygame.draw.rect(screen, (100, 100, 100), (x, y, width, height))
-        
-        # Полоска здоровья
-        health_ratio = player['health'] / player['max_health']
-        health_width = int(width * health_ratio)
-        health_color = (0, 255, 0) if health_ratio > 0.5 else (255, 255, 0) if health_ratio > 0.25 else (255, 0, 0)
-        
-        pygame.draw.rect(screen, health_color, (x, y, health_width, height))
-        
-        # Текст здоровья
-        health_text = f"HP: {player['health']}/{player['max_health']}"
-        text_surface = self.font.render(health_text, True, self.colors['text'])
-        screen.blit(text_surface, (x + 5, y + 2))
-    
-    def _render_minimap(self, screen: pygame.Surface, element: dict):
-        """Отрисовка мини-карты"""
-        x, y, width, height = element['x'], element['y'], element['width'], element['height']
-        
-        # Фон мини-карты
-        pygame.draw.rect(screen, (50, 50, 50), (x, y, width, height))
-        pygame.draw.rect(screen, (255, 255, 255), (x, y, width, height), 2)
-        
-        # Отрисовка сущностей на мини-карте
-        scale = min(width, height) / 1600  # Масштаб карты
-        
-        for entity in self.entities:
-            map_x = x + entity['x'] * scale
-            map_y = y + entity['y'] * scale
-            
-            if entity['type'] == 'player':
-                color = (255, 255, 0)  # Желтый для игрока
-            else:
-                color = entity['color']
-            
-            pygame.draw.circle(screen, color, (int(map_x), int(map_y)), 2)
-    
-    def _render_inventory(self, screen: pygame.Surface, element: dict):
-        """Отрисовка инвентаря"""
-        x, y, width, height = element['x'], element['y'], element['width'], element['height']
-        
-        # Фон инвентаря
-        pygame.draw.rect(screen, (50, 50, 50), (x, y, width, height))
-        pygame.draw.rect(screen, (255, 255, 255), (x, y, width, height), 2)
-        
-        # Заголовок инвентаря
-        if self.font:
-            title_text = "Инвентарь"
-            title_surface = self.font.render(title_text, True, self.colors['text'])
-            screen.blit(title_surface, (x + 5, y + 5))
-    
-    def _render_menu_button(self, screen: pygame.Surface, element: dict):
-        """Отрисовка кнопки "Назад в меню" """
-        x, y, width, height = element['x'], element['y'], element['width'], element['height']
-        
-        # Фон кнопки
-        pygame.draw.rect(screen, (100, 100, 100), (x, y, width, height))
-        pygame.draw.rect(screen, (255, 255, 255), (x, y, width, height), 2)
-        
-        # Текст кнопки
-        if self.font:
-            text_surface = self.font.render("Назад в меню", True, self.colors['text'])
-            text_rect = text_surface.get_rect(center=(x + width // 2, y + height // 2))
-            screen.blit(text_surface, text_rect)
-    
-    def _render_debug_info(self, screen: pygame.Surface):
-        """Отрисовка отладочной информации"""
-        if not self.font:
-            return
-        
-        debug_info = [
-            f"FPS: {pygame.time.get_ticks() // 1000}",
-            f"Entities: {len(self.entities)}",
-            f"Particles: {len(self.particles)}",
-            f"Camera: ({self.camera_x:.1f}, {self.camera_y:.1f})",
-            f"Game Time: {self.game_time:.1f}s",
-            f"Day/Night: {self.day_night_cycle:.2f}"
-        ]
-        
-        for i, info in enumerate(debug_info):
-            text_surface = self.font.render(info, True, self.colors['debug'])
-            screen.blit(text_surface, (10, 10 + i * 25))
-    
-    def handle_event(self, event: pygame.event.Event):
+    def handle_event(self, event):
         """Обработка событий"""
-        if event.type == pygame.KEYDOWN:
-            self._handle_keydown(event)
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            self._handle_mouse_click(event)
-    
-    def _handle_keydown(self, event: pygame.event.Event):
-        """Обработка нажатий клавиш"""
-        if event.key == pygame.K_F1:
-            self.show_debug = not self.show_debug
-        elif event.key == pygame.K_p:
-            # Переход к сцене паузы
-            if self.scene_manager:
-                logger.info("Переход к сцене паузы")
-                self.scene_manager.switch_to_scene("pause", "instant")
-            else:
-                logger.warning("SceneManager недоступен для перехода к паузе")
-        elif event.key == pygame.K_SPACE:
-            self._create_test_particle()
-        elif event.key == pygame.K_ESCAPE:
-            # Возврат в главное меню
-            if self.scene_manager:
-                logger.info("Возврат в главное меню")
-                self.scene_manager.switch_to_scene("menu", "instant")
-            else:
-                logger.warning("SceneManager недоступен для возврата в меню")
-    
-    def _handle_mouse_click(self, event: pygame.event.Event):
-        """Обработка кликов мыши"""
-        if event.button == 1:  # Левый клик
-            mouse_pos = pygame.mouse.get_pos()
-            
-            # Проверяем клик по кнопке "Назад в меню"
-            for element in self.ui_elements:
-                if element['type'] == 'menu_button':
-                    if (element['x'] <= mouse_pos[0] <= element['x'] + element['width'] and 
-                        element['y'] <= mouse_pos[1] <= element['y'] + element['height']):
-                        if self.scene_manager:
-                            logger.info("Клик по кнопке 'Назад в меню'")
-                            self.scene_manager.switch_to_scene("menu", "instant")
-                        return
-            
-            # Создание частицы в месте клика
-            self._create_particle_at(mouse_pos[0], mouse_pos[1])
-    
-    def _create_test_particle(self):
-        """Создание тестовой частицы"""
-        import random
-        
-        particle = {
-            'x': random.randint(0, 1600),
-            'y': random.randint(0, 900),
-            'vx': random.uniform(-50, 50),
-            'vy': random.uniform(-50, 50),
-            'color': (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255)),
-            'life': 2.0,
-            'max_life': 2.0
-        }
-        
-        self.particles.append(particle)
-    
-    def _create_particle_at(self, x: int, y: int):
-        """Создание частицы в указанной позиции"""
-        import random
-        
-        particle = {
-            'x': x,
-            'y': y,
-            'vx': random.uniform(-30, 30),
-            'vy': random.uniform(-30, 30),
-            'color': (255, 255, 0),
-            'life': 1.0,
-            'max_life': 1.0
-        }
-        
-        self.particles.append(particle)
+        # Обработка событий Panda3D
+        pass
     
     def cleanup(self):
-        """Очистка ресурсов игровой сцены"""
-        logger.info("Очистка игровой сцены...")
+        """Очистка игровой сцены"""
+        logger.info("Очистка игровой сцены Panda3D...")
         
-        # Очистка графических ресурсов
-        self.background = None
-        self.font = None
+        # Очистка AI системы
+        self.ai_manager.cleanup()
         
-        # Очистка игровых объектов
-        self.entities.clear()
-        self.particles.clear()
-        self.ui_elements.clear()
+        # Очищаем системы
+        for system in self.systems.values():
+            if hasattr(system, 'cleanup'):
+                system.cleanup()
         
-        # Очистка систем
-        self.systems.clear()
+        # Очищаем Panda3D узлы
+        if self.scene_root:
+            self.scene_root.removeNode()
         
-        super().cleanup()
-        logger.info("Игровая сцена очищена")
+        # Очищаем UI элементы
+        if self.health_bar_text:
+            self.health_bar_text.destroy()
+        if self.ai_info_text:
+            self.ai_info_text.destroy()
+        if self.debug_text:
+            self.debug_text.destroy()
+        
+        logger.info("Игровая сцена Panda3D очищена")

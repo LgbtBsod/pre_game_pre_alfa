@@ -1,8 +1,14 @@
 """
 AI System Package
-Система искусственного интеллекта
+Система искусственного интеллекта с единым интерфейсом
 """
 
-from .ai_system import AISystem, AIState, AIPersonality, ActionType, AIDecision
+from .ai_interface import (
+    AISystemInterface, AISystemFactory, AISystemManager,
+    AIState, AIPersonality, ActionType, AIDecision, AIEntity
+)
 
-__all__ = ['AISystem', 'AIState', 'AIPersonality', 'ActionType', 'AIDecision']
+__all__ = [
+    'AISystemInterface', 'AISystemFactory', 'AISystemManager',
+    'AIState', 'AIPersonality', 'ActionType', 'AIDecision', 'AIEntity'
+]

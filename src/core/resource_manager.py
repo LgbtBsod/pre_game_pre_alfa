@@ -1,345 +1,342 @@
 #!/usr/bin/env python3
 """
-Resource Manager - Менеджер ресурсов
+Resource Manager - Менеджер ресурсов для Panda3D
 Отвечает только за загрузку, кэширование и управление игровыми ресурсами
 """
 
-import os
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
-import pygame
+from panda3d.core import Texture, TextureStage, NodePath, PandaNode
+from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
+from panda3d.core import GeomVertexWriter, GeomTriangles
+from panda3d.core import AudioSound, AudioManager
+from direct.showbase.Loader import Loader
 
 logger = logging.getLogger(__name__)
 
 class ResourceManager:
-    """Менеджер ресурсов игры"""
+    """Менеджер ресурсов для Panda3D"""
     
-    def __init__(self, assets_dir: Optional[Path] = None):
-        self.assets_dir = assets_dir or Path("assets")
+    def __init__(self):
+        self.base_path = Path("assets")
+        self.cache: Dict[str, Any] = {}
+        self.textures: Dict[str, Texture] = {}
+        self.models: Dict[str, NodePath] = {}
+        self.sounds: Dict[str, AudioSound] = {}
+        self.audio_manager: Optional[AudioManager] = None
+        self.loader: Optional[Loader] = None
         
-        # Кэши ресурсов
-        self.images: Dict[str, pygame.Surface] = {}
-        self.sounds: Dict[str, pygame.mixer.Sound] = {}
-        self.music: Dict[str, str] = {}  # Пути к музыкальным файлам
-        self.fonts: Dict[str, pygame.font.Font] = {}
-        self.data: Dict[str, Any] = {}
-        
-        # Статистика
-        self.total_resources = 0
-        self.loaded_resources = 0
-        
-        # Настройки
-        self.enable_caching = True
-        self.max_cache_size = 1000  # Максимальное количество ресурсов в кэше
-        
-        logger.info("Менеджер ресурсов инициализирован")
+        logger.info("Менеджер ресурсов Panda3D инициализирован")
     
     def initialize(self) -> bool:
         """Инициализация менеджера ресурсов"""
         try:
-            logger.info("Инициализация менеджера ресурсов...")
+            logger.info("Инициализация менеджера ресурсов Panda3D...")
             
             # Создание директорий ресурсов
-            self._create_asset_directories()
+            self._create_resource_directories()
             
-            # Сканирование доступных ресурсов
-            self._scan_assets()
+            # Инициализация загрузчика Panda3D
+            self._initialize_loader()
             
-            # Предзагрузка критических ресурсов
-            self._preload_critical_resources()
+            # Инициализация аудио менеджера
+            self._initialize_audio()
             
-            logger.info("Менеджер ресурсов успешно инициализирован")
+            # Предзагрузка базовых ресурсов
+            self._preload_basic_resources()
+            
+            logger.info("Менеджер ресурсов Panda3D успешно инициализирован")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации менеджера ресурсов: {e}")
             return False
     
-    def _create_asset_directories(self):
-        """Создание директорий для ресурсов"""
+    def _create_resource_directories(self):
+        """Создание директорий ресурсов"""
         directories = [
-            "graphics",
+            "textures",
+            "models", 
             "audio",
-            "data",
-            "maps",
-            "fonts"
+            "shaders",
+            "data"
         ]
         
         for directory in directories:
-            dir_path = self.assets_dir / directory
+            dir_path = self.base_path / directory
             dir_path.mkdir(parents=True, exist_ok=True)
-            logger.debug(f"Создана директория: {directory}")
+            logger.debug(f"Создана директория ресурсов: {directory}")
     
-    def _scan_assets(self):
-        """Сканирование доступных ресурсов"""
+    def _initialize_loader(self):
+        """Инициализация загрузчика Panda3D"""
         try:
-            # Сканируем графику
-            graphics_dir = self.assets_dir / "graphics"
-            if graphics_dir.exists():
-                self._scan_directory(graphics_dir, "images")
+            self.loader = Loader(None)
+            logger.debug("Загрузчик Panda3D инициализирован")
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать загрузчик: {e}")
+    
+    def _initialize_audio(self):
+        """Инициализация аудио менеджера"""
+        try:
+            self.audio_manager = AudioManager()
+            logger.debug("Аудио менеджер инициализирован")
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать аудио менеджер: {e}")
+    
+    def _preload_basic_resources(self):
+        """Предзагрузка базовых ресурсов"""
+        try:
+            # Создаем базовые текстуры
+            self._create_basic_textures()
             
-            # Сканируем аудио
-            audio_dir = self.assets_dir / "audio"
-            if audio_dir.exists():
-                self._scan_directory(audio_dir, "sounds")
+            # Создаем базовые модели
+            self._create_basic_models()
             
-            # Сканируем данные
-            data_dir = self.assets_dir / "data"
-            if data_dir.exists():
-                self._scan_directory(data_dir, "data")
-            
-            logger.info(f"Найдено ресурсов: {self.total_resources}")
+            logger.debug("Базовые ресурсы предзагружены")
             
         except Exception as e:
-            logger.error(f"Ошибка сканирования ресурсов: {e}")
+            logger.warning(f"Ошибка предзагрузки базовых ресурсов: {e}")
     
-    def _scan_directory(self, directory: Path, resource_type: str):
-        """Сканирование директории на предмет ресурсов"""
-        extensions = {
-            "images": [".png", ".jpg", ".jpeg", ".bmp", ".gif"],
-            "sounds": [".wav", ".ogg", ".mp3"],
-            "data": [".json", ".xml", ".txt", ".csv"]
-        }
+    def _create_basic_textures(self):
+        """Создание базовых текстур"""
+        # Создаем простую текстуру для тестирования
+        texture = Texture("basic_texture")
+        texture.setup2dTexture(64, 64, Texture.TUnsignedByte, Texture.FRgba)
         
-        if resource_type not in extensions:
-            return
+        # Заполняем текстуру данными
+        data = texture.modifyRamImage()
+        for i in range(64 * 64 * 4):
+            data.setElement(i, 128)  # Серый цвет
         
-        valid_extensions = extensions[resource_type]
-        
-        for file_path in directory.rglob("*"):
-            if file_path.is_file() and file_path.suffix.lower() in valid_extensions:
-                self.total_resources += 1
-                logger.debug(f"Найден ресурс: {file_path}")
+        self.textures["basic"] = texture
+        logger.debug("Создана базовая текстура")
     
-    def _preload_critical_resources(self):
-        """Предзагрузка критически важных ресурсов"""
-        critical_resources = [
-            ("graphics/ui/button.png", "images"),
-            ("graphics/ui/background.png", "images"),
-            ("audio/ui/click.wav", "sounds"),
-            ("fonts/main.ttf", "fonts")
+    def _create_basic_models(self):
+        """Создание базовых моделей"""
+        # Создаем простой куб
+        cube = self._create_cube_model()
+        self.models["cube"] = cube
+        logger.debug("Создана базовая модель куба")
+    
+    def _create_cube_model(self) -> NodePath:
+        """Создание модели куба"""
+        # Создаем геометрию куба
+        format = GeomVertexFormat.getV3c4()
+        vdata = GeomVertexData('cube', format, Geom.UHStatic)
+        
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        color = GeomVertexWriter(vdata, 'color')
+        
+        # Вершины куба
+        vertices = [
+            (-1, -1, -1), (1, -1, -1), (1, 1, -1), (-1, 1, -1),
+            (-1, -1, 1), (1, -1, 1), (1, 1, 1), (-1, 1, 1)
         ]
         
-        for resource_path, resource_type in critical_resources:
-            try:
-                if resource_type == "images":
-                    self.load_image(resource_path)
-                elif resource_type == "sounds":
-                    self.load_sound(resource_path)
-                elif resource_type == "fonts":
-                    self.load_font(resource_path)
-            except Exception as e:
-                logger.warning(f"Не удалось предзагрузить {resource_path}: {e}")
+        # Добавляем вершины
+        for v in vertices:
+            vertex.addData3(*v)
+            color.addData4(1, 1, 1, 1)  # Белый цвет
+        
+        # Создаем треугольники
+        prim = GeomTriangles(Geom.UHStatic)
+        
+        # Грани куба
+        faces = [
+            (0, 1, 2), (2, 3, 0),  # Передняя грань
+            (1, 5, 6), (6, 2, 1),  # Правая грань
+            (5, 4, 7), (7, 6, 5),  # Задняя грань
+            (4, 0, 3), (3, 7, 4),  # Левая грань
+            (3, 2, 6), (6, 7, 3),  # Верхняя грань
+            (4, 5, 1), (1, 0, 4)   # Нижняя грань
+        ]
+        
+        for face in faces:
+            prim.addVertices(*face)
+            prim.closePrimitive()
+        
+        # Создаем геометрию
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        # Создаем узел
+        node = GeomNode('cube')
+        node.addGeom(geom)
+        
+        return NodePath(node)
     
-    def load_image(self, path: str, scale: float = 1.0) -> Optional[pygame.Surface]:
-        """Загрузка изображения"""
+    def load_texture(self, texture_path: str) -> Optional[Texture]:
+        """Загрузка текстуры"""
+        if texture_path in self.textures:
+            return self.textures[texture_path]
+        
         try:
-            # Проверяем кэш
-            cache_key = f"{path}_{scale}"
-            if cache_key in self.images:
-                logger.debug(f"Изображение {path} загружено из кэша")
-                return self.images[cache_key]
+            full_path = self.base_path / "textures" / texture_path
             
-            # Загружаем изображение
-            full_path = self.assets_dir / path
             if not full_path.exists():
-                logger.warning(f"Файл изображения не найден: {full_path}")
-                return None
+                logger.warning(f"Текстура не найдена: {texture_path}")
+                return self.textures.get("basic")
             
-            image = pygame.image.load(str(full_path)).convert_alpha()
+            # Загружаем текстуру через Panda3D
+            texture = Texture()
+            texture.read(str(full_path))
             
-            # Масштабирование
-            if scale != 1.0:
-                new_size = (int(image.get_width() * scale), int(image.get_height() * scale))
-                image = pygame.transform.scale(image, new_size)
-            
-            # Кэширование
-            if self.enable_caching:
-                self._add_to_cache("images", cache_key, image)
-            
-            self.loaded_resources += 1
-            logger.debug(f"Изображение {path} загружено")
-            return image
+            self.textures[texture_path] = texture
+            logger.debug(f"Текстура загружена: {texture_path}")
+            return texture
             
         except Exception as e:
-            logger.error(f"Ошибка загрузки изображения {path}: {e}")
-            return None
+            logger.error(f"Ошибка загрузки текстуры {texture_path}: {e}")
+            return self.textures.get("basic")
     
-    def load_sound(self, path: str) -> Optional[pygame.mixer.Sound]:
+    def load_model(self, model_path: str) -> Optional[NodePath]:
+        """Загрузка модели"""
+        if model_path in self.models:
+            return self.models[model_path].copy()
+        
+        try:
+            full_path = self.base_path / "models" / model_path
+            
+            if not full_path.exists():
+                logger.warning(f"Модель не найдена: {model_path}")
+                return self.models.get("cube")
+            
+            # Загружаем модель через Panda3D загрузчик
+            if self.loader:
+                model = self.loader.loadModel(str(full_path))
+                if model:
+                    self.models[model_path] = model
+                    logger.debug(f"Модель загружена: {model_path}")
+                    return model.copy()
+            
+            logger.warning(f"Не удалось загрузить модель: {model_path}")
+            return self.models.get("cube")
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки модели {model_path}: {e}")
+            return self.models.get("cube")
+    
+    def load_sound(self, sound_path: str) -> Optional[AudioSound]:
         """Загрузка звука"""
+        if sound_path in self.sounds:
+            return self.sounds[sound_path]
+        
         try:
-            # Проверяем кэш
-            if path in self.sounds:
-                logger.debug(f"Звук {path} загружен из кэша")
-                return self.sounds[path]
+            full_path = self.base_path / "audio" / sound_path
             
-            # Загружаем звук
-            full_path = self.assets_dir / path
             if not full_path.exists():
-                logger.warning(f"Файл звука не найден: {full_path}")
+                logger.warning(f"Звук не найден: {sound_path}")
                 return None
             
-            sound = pygame.mixer.Sound(str(full_path))
+            # Загружаем звук через Panda3D аудио менеджер
+            if self.audio_manager:
+                sound = self.audio_manager.getSound(str(full_path))
+                if sound:
+                    self.sounds[sound_path] = sound
+                    logger.debug(f"Звук загружен: {sound_path}")
+                    return sound
             
-            # Кэширование
-            if self.enable_caching:
-                self._add_to_cache("sounds", path, sound)
-            
-            self.loaded_resources += 1
-            logger.debug(f"Звук {path} загружен")
-            return sound
+            logger.warning(f"Не удалось загрузить звук: {sound_path}")
+            return None
             
         except Exception as e:
-            logger.error(f"Ошибка загрузки звука {path}: {e}")
+            logger.error(f"Ошибка загрузки звука {sound_path}: {e}")
             return None
     
-    def load_font(self, path: str, size: int = 24) -> Optional[pygame.font.Font]:
-        """Загрузка шрифта"""
-        try:
-            # Проверяем кэш
-            cache_key = f"{path}_{size}"
-            if cache_key in self.fonts:
-                logger.debug(f"Шрифт {path} загружен из кэша")
-                return self.fonts[cache_key]
-            
-            # Загружаем шрифт
-            full_path = self.assets_dir / path
-            if not full_path.exists():
-                logger.warning(f"Файл шрифта не найден: {full_path}")
-                return None
-            
-            font = pygame.font.Font(str(full_path), size)
-            
-            # Кэширование
-            if self.enable_caching:
-                self._add_to_cache("fonts", cache_key, font)
-            
-            self.loaded_resources += 1
-            logger.debug(f"Шрифт {path} загружен")
-            return font
-            
-        except Exception as e:
-            logger.error(f"Ошибка загрузки шрифта {path}: {e}")
-            return None
+    def get_texture(self, texture_name: str) -> Optional[Texture]:
+        """Получение текстуры по имени"""
+        return self.textures.get(texture_name)
     
-    def load_data(self, path: str) -> Optional[Any]:
-        """Загрузка данных"""
-        try:
-            # Проверяем кэш
-            if path in self.data:
-                logger.debug(f"Данные {path} загружены из кэша")
-                return self.data[path]
-            
-            # Загружаем данные
-            full_path = self.assets_dir / path
-            if not full_path.exists():
-                logger.warning(f"Файл данных не найден: {full_path}")
-                return None
-            
-            # Определяем тип файла и загружаем соответственно
-            if path.endswith('.json'):
-                import json
-                with open(full_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-            elif path.endswith('.xml'):
-                import xml.etree.ElementTree as ET
-                tree = ET.parse(full_path)
-                data = tree.getroot()
-            else:
-                # Текстовый файл
-                with open(full_path, 'r', encoding='utf-8') as f:
-                    data = f.read()
-            
-            # Кэширование
-            if self.enable_caching:
-                self._add_to_cache("data", path, data)
-            
-            self.loaded_resources += 1
-            logger.debug(f"Данные {path} загружены")
-            return data
-            
-        except Exception as e:
-            logger.error(f"Ошибка загрузки данных {path}: {e}")
-            return None
+    def get_model(self, model_name: str) -> Optional[NodePath]:
+        """Получение модели по имени"""
+        model = self.models.get(model_name)
+        return model.copy() if model else None
     
-    def _add_to_cache(self, cache_type: str, key: str, resource: Any):
-        """Добавление ресурса в кэш"""
-        cache = getattr(self, cache_type)
-        
-        # Проверка размера кэша
-        if len(cache) >= self.max_cache_size:
-            self._cleanup_cache(cache_type)
-        
-        cache[key] = resource
-        logger.debug(f"Ресурс {key} добавлен в кэш {cache_type}")
+    def get_sound(self, sound_name: str) -> Optional[AudioSound]:
+        """Получение звука по имени"""
+        return self.sounds.get(sound_name)
     
-    def _cleanup_cache(self, cache_type: str):
-        """Очистка кэша"""
-        cache = getattr(self, cache_type)
+    def create_simple_texture(self, name: str, width: int, height: int, color: tuple) -> Texture:
+        """Создание простой текстуры"""
+        texture = Texture(name)
+        texture.setup2dTexture(width, height, Texture.TUnsignedByte, Texture.FRgba)
         
-        # Удаляем 20% самых старых ресурсов
-        items_to_remove = len(cache) // 5
-        keys_to_remove = list(cache.keys())[:items_to_remove]
+        # Заполняем текстуру цветом
+        data = texture.modifyRamImage()
+        for i in range(0, width * height * 4, 4):
+            data.setElement(i, color[0])     # R
+            data.setElement(i + 1, color[1]) # G
+            data.setElement(i + 2, color[2]) # B
+            data.setElement(i + 3, color[3]) # A
         
-        for key in keys_to_remove:
-            del cache[key]
-        
-        logger.debug(f"Кэш {cache_type} очищен, удалено {items_to_remove} ресурсов")
+        self.textures[name] = texture
+        logger.debug(f"Создана простая текстура: {name}")
+        return texture
     
-    def unload_resource(self, resource_type: str, key: str):
-        """Выгрузка ресурса из памяти"""
-        try:
-            cache = getattr(self, resource_type)
-            if key in cache:
-                del cache[key]
-                self.loaded_resources -= 1
-                logger.debug(f"Ресурс {key} выгружен из {resource_type}")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка выгрузки ресурса {key}: {e}")
-            return False
+    def create_simple_model(self, name: str, vertices: list, faces: list, color: tuple = (1, 1, 1, 1)) -> NodePath:
+        """Создание простой модели"""
+        format = GeomVertexFormat.getV3c4()
+        vdata = GeomVertexData(name, format, Geom.UHStatic)
+        
+        vertex = GeomVertexWriter(vdata, 'vertex')
+        color_writer = GeomVertexWriter(vdata, 'color')
+        
+        # Добавляем вершины
+        for v in vertices:
+            vertex.addData3(*v)
+            color_writer.addData4(*color)
+        
+        # Создаем треугольники
+        prim = GeomTriangles(Geom.UHStatic)
+        
+        for face in faces:
+            prim.addVertices(*face)
+            prim.closePrimitive()
+        
+        # Создаем геометрию
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        # Создаем узел
+        node = GeomNode(name)
+        node.addGeom(geom)
+        
+        model = NodePath(node)
+        self.models[name] = model
+        logger.debug(f"Создана простая модель: {name}")
+        return model
     
-    def clear_cache(self, cache_type: Optional[str] = None):
-        """Очистка кэша"""
-        if cache_type is None:
-            # Очищаем все кэши
-            self.images.clear()
-            self.sounds.clear()
-            self.fonts.clear()
-            self.data.clear()
-            logger.info("Все кэши очищены")
-        else:
-            # Очищаем конкретный кэш
-            cache = getattr(self, cache_type)
-            cache.clear()
-            logger.info(f"Кэш {cache_type} очищен")
+    def clear_cache(self):
+        """Очистка кэша ресурсов"""
+        self.cache.clear()
+        logger.info("Кэш ресурсов очищен")
     
     def get_resource_info(self) -> Dict[str, Any]:
         """Получение информации о ресурсах"""
         return {
-            'total_resources': self.total_resources,
-            'loaded_resources': self.loaded_resources,
-            'cache_sizes': {
-                'images': len(self.images),
-                'sounds': len(self.sounds),
-                'fonts': len(self.fonts),
-                'data': len(self.data)
-            },
-            'cache_enabled': self.enable_caching,
-            'max_cache_size': self.max_cache_size
+            'textures_count': len(self.textures),
+            'models_count': len(self.models),
+            'sounds_count': len(self.sounds),
+            'cache_size': len(self.cache),
+            'textures': list(self.textures.keys()),
+            'models': list(self.models.keys()),
+            'sounds': list(self.sounds.keys())
         }
     
     def cleanup(self):
-        """Очистка всех ресурсов"""
-        logger.info("Очистка менеджера ресурсов...")
+        """Очистка менеджера ресурсов"""
+        logger.info("Очистка менеджера ресурсов Panda3D...")
         
-        # Очищаем все кэши
-        self.clear_cache()
+        # Очищаем ресурсы
+        self.textures.clear()
+        self.models.clear()
+        self.sounds.clear()
+        self.cache.clear()
         
-        # Сбрасываем счетчики
-        self.total_resources = 0
-        self.loaded_resources = 0
+        # Очищаем менеджеры
+        self.audio_manager = None
+        self.loader = None
         
-        logger.info("Менеджер ресурсов очищен")
+        logger.info("Менеджер ресурсов Panda3D очищен")

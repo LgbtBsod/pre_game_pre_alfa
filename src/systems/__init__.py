@@ -5,15 +5,15 @@ Game Systems - Основные игровые системы
 
 # Основные системы
 from .evolution.evolution_system import EvolutionSystem
-from .ai.ai_system import AISystem
 from .combat.combat_system import CombatSystem
 from .crafting.crafting_system import CraftingSystem
 from .inventory.inventory_system import InventorySystem
 
-# Улучшенные системы
-from .effects import EffectSystem, TriggerSystem
-from .items import EnhancedItemSystem, ItemFactory
-from .skills import EnhancedSkillSystem, SkillFactory
+# AI система (используется через интерфейс)
+from .ai.ai_interface import (
+    AISystemInterface, AISystemFactory, AISystemManager,
+    AIState, AIPersonality, ActionType, AIDecision, AIEntity
+)
 
 # Перечисления и классы данных
 from .evolution.evolution_system import (
@@ -21,14 +21,6 @@ from .evolution.evolution_system import (
     EvolutionType,
     EvolutionStats,
     EvolutionRequirement
-)
-
-from .ai.ai_system import (
-    AIState,
-    AIPersonality,
-    ActionType,
-    AIDecision,
-    AIPattern
 )
 
 from .combat.combat_system import (
@@ -58,29 +50,25 @@ from .inventory.inventory_system import (
 __all__ = [
     # Основные системы
     "EvolutionSystem",
-    "AISystem", 
     "CombatSystem",
     "CraftingSystem",
     "InventorySystem",
     
-    # Улучшенные системы
-    "EffectSystem",
-    "TriggerSystem",
-    "EnhancedItemSystem",
-    "ItemFactory",
-    "EnhancedSkillSystem",
-    "SkillFactory",
+    # AI система
+    "AISystemInterface",
+    "AISystemFactory", 
+    "AISystemManager",
+    "AIState",
+    "AIPersonality",
+    "ActionType",
+    "AIDecision",
+    "AIEntity",
     
     # Перечисления и классы данных
     "EvolutionStage",
     "EvolutionType", 
     "EvolutionStats",
     "EvolutionRequirement",
-    "AIState",
-    "AIPersonality",
-    "ActionType",
-    "AIDecision",
-    "AIPattern",
     "CombatState",
     "AttackType",
     "CombatDamageType",

@@ -1,6 +1,6 @@
 # AI-EVOLVE Enhanced Edition - Dependencies
 # Core dependencies
-pygame>=2.5.0
+panda3d>=1.10.0
 numpy>=1.24.0
 psutil>=5.9.0
 
@@ -16,4 +16,3 @@ flake8>=6.0.0
 mypy>=1.0.0
 pytorch>=2.0.0
 pyopengl>=3.1.0
-panda3d>=1.10.0

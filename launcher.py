@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AI-EVOLVE Enhanced Edition - Launcher
-Основной файл запуска игры с новой модульной архитектурой
+Основной файл запуска игры с новой модульной архитектурой на Panda3D
 """
 
 import os
@@ -47,7 +47,7 @@ def setup_logging():
     root_logger.addHandler(console_handler)
     
     # Отключаем логи от сторонних библиотек
-    logging.getLogger('pygame').setLevel(logging.WARNING)
+    logging.getLogger('panda3d').setLevel(logging.WARNING)
 
 def check_python_version() -> bool:
     """Проверка версии Python"""
@@ -59,7 +59,7 @@ def check_python_version() -> bool:
 
 def check_dependencies() -> bool:
     """Проверка зависимостей"""
-    required_packages = ['pygame', 'numpy']
+    required_packages = ['panda3d', 'numpy']
     optional_packages = ['psutil', 'PIL']
     
     missing_required = []
@@ -103,7 +103,10 @@ def create_directories():
         "assets/audio",
         "assets/graphics",
         "assets/data",
-        "assets/maps"
+        "assets/maps",
+        "assets/models",
+        "assets/textures",
+        "assets/shaders"
     ]
     
     for directory in directories:
@@ -114,7 +117,7 @@ def create_directories():
 def initialize_game():
     """Инициализация игры"""
     try:
-        print("🚀 Инициализация AI-EVOLVE Enhanced Edition...")
+        print("🚀 Инициализация AI-EVOLVE Enhanced Edition на Panda3D...")
         
         # Создание директорий
         create_directories()
@@ -141,7 +144,7 @@ def initialize_game():
 
 def main():
     """Главная функция"""
-    print("🎮 AI-EVOLVE Enhanced Edition")
+    print("🎮 AI-EVOLVE Enhanced Edition - Panda3D Version")
     print("=" * 50)
     
     # Настройка логирования
