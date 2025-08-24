@@ -1,0 +1,12 @@
+{
+  "window_width": 1600,
+  "window_height": 900,
+  "fullscreen": false,
+  "vsync": true,
+  "render_fps": 120,
+  "hardware_acceleration": true,
+  "anti_aliasing": true,
+  "texture_quality": "high",
+  "shadow_quality": "medium",
+  "particle_count": 200
+}

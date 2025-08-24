@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AI-EVOLVE: Enhanced Edition - Оптимизированный Launcher
+AI-EVOLVE: Enhanced Edition - Оптимизированный запуск
 Запускает игру с новой централизованной архитектурой и простыми объектами
 """
 

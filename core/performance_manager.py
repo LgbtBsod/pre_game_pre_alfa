@@ -1,27 +1,20 @@
 #!/usr/bin/env python3
 """
-Менеджер производительности для оптимизации игры
-Отслеживает и управляет ресурсами системы
+Оптимизированная система управления производительностью
+Включает мониторинг, профилирование и автоматическую оптимизацию
 """
 
-import gc
 import time
-import psutil
-import threading
-from typing import Dict, List, Optional, Any, Callable
-from dataclasses import dataclass, field
-from enum import Enum
 import logging
+import threading
+from typing import Dict, Any, Optional, List, Callable
+from dataclasses import dataclass, field
+from collections import defaultdict, deque
+import gc
+import psutil
+import os
 
 logger = logging.getLogger(__name__)
-
-
-class PerformanceLevel(Enum):
-    """Уровни производительности"""
-    LOW = "low"
-    MEDIUM = "medium"  
-    HIGH = "high"
-    ULTRA = "ultra"
 
 
 @dataclass
@@ -29,285 +22,479 @@ class PerformanceMetrics:
     """Метрики производительности"""
     fps: float = 0.0
     frame_time: float = 0.0
-    memory_usage: float = 0.0
     cpu_usage: float = 0.0
-    entities_count: int = 0
-    active_particles: int = 0
-    draw_calls: int = 0
-    last_update: float = field(default_factory=time.time)
+    memory_usage: float = 0.0
+    memory_available: float = 0.0
+    gpu_usage: float = 0.0
+    disk_io: float = 0.0
+    network_io: float = 0.0
+    timestamp: float = field(default_factory=time.time)
 
 
 @dataclass
-class PerformanceSettings:
-    """Настройки производительности"""
-    target_fps: int = 60
-    max_entities: int = 100
-    max_particles: int = 200
-    memory_limit: int = 512  # MB
-    auto_optimize: bool = True
-    quality_level: PerformanceLevel = PerformanceLevel.MEDIUM
+class PerformanceThreshold:
+    """Пороги производительности"""
+    min_fps: float = 30.0
+    max_frame_time: float = 33.0  # 30 FPS = 33ms
+    max_cpu_usage: float = 80.0
+    max_memory_usage: float = 85.0
+    max_gpu_usage: float = 90.0
+
+
+class PerformanceProfiler:
+    """Профилировщик производительности"""
+    
+    def __init__(self, max_samples: int = 1000):
+        self.max_samples = max_samples
+        self.samples: deque = deque(maxlen=max_samples)
+        self.profiling_active = False
+        self.profile_data: Dict[str, List[float]] = defaultdict(list)
+        
+    def start_profiling(self):
+        """Начало профилирования"""
+        self.profiling_active = True
+        self.profile_data.clear()
+        logger.info("Профилирование производительности запущено")
+    
+    def stop_profiling(self):
+        """Остановка профилирования"""
+        self.profiling_active = False
+        logger.info("Профилирование производительности остановлено")
+    
+    def add_sample(self, metrics: PerformanceMetrics):
+        """Добавление образца метрик"""
+        self.samples.append(metrics)
+        
+        if self.profiling_active:
+            self.profile_data['fps'].append(metrics.fps)
+            self.profile_data['frame_time'].append(metrics.frame_time)
+            self.profile_data['cpu_usage'].append(metrics.cpu_usage)
+            self.profile_data['memory_usage'].append(metrics.memory_usage)
+    
+    def get_average_metrics(self, window_size: int = 60) -> PerformanceMetrics:
+        """Получение средних метрик за окно"""
+        if not self.samples:
+            return PerformanceMetrics()
+        
+        recent_samples = list(self.samples)[-window_size:]
+        
+        return PerformanceMetrics(
+            fps=sum(s.fps for s in recent_samples) / len(recent_samples),
+            frame_time=sum(s.frame_time for s in recent_samples) / len(recent_samples),
+            cpu_usage=sum(s.cpu_usage for s in recent_samples) / len(recent_samples),
+            memory_usage=sum(s.memory_usage for s in recent_samples) / len(recent_samples),
+            memory_available=sum(s.memory_available for s in recent_samples) / len(recent_samples),
+            gpu_usage=sum(s.gpu_usage for s in recent_samples) / len(recent_samples),
+            disk_io=sum(s.disk_io for s in recent_samples) / len(recent_samples),
+            network_io=sum(s.network_io for s in recent_samples) / len(recent_samples),
+            timestamp=time.time()
+        )
+    
+    def get_performance_report(self) -> Dict[str, Any]:
+        """Получение отчета о производительности"""
+        if not self.samples:
+            return {}
+        
+        all_fps = [s.fps for s in self.samples]
+        all_frame_times = [s.frame_time for s in self.samples]
+        all_cpu = [s.cpu_usage for s in self.samples]
+        all_memory = [s.memory_usage for s in self.samples]
+        
+        return {
+            'fps': {
+                'current': all_fps[-1] if all_fps else 0,
+                'average': sum(all_fps) / len(all_fps) if all_fps else 0,
+                'min': min(all_fps) if all_fps else 0,
+                'max': max(all_fps) if all_fps else 0
+            },
+            'frame_time': {
+                'current': all_frame_times[-1] if all_frame_times else 0,
+                'average': sum(all_frame_times) / len(all_frame_times) if all_frame_times else 0,
+                'min': min(all_frame_times) if all_frame_times else 0,
+                'max': max(all_frame_times) if all_frame_times else 0
+            },
+            'cpu_usage': {
+                'current': all_cpu[-1] if all_cpu else 0,
+                'average': sum(all_cpu) / len(all_cpu) if all_cpu else 0,
+                'max': max(all_cpu) if all_cpu else 0
+            },
+            'memory_usage': {
+                'current': all_memory[-1] if all_memory else 0,
+                'average': sum(all_memory) / len(all_memory) if all_memory else 0,
+                'max': max(all_memory) if all_memory else 0
+            },
+            'samples_count': len(self.samples),
+            'profiling_active': self.profiling_active
+        }
 
 
 class PerformanceOptimizer:
-    """
-    Оптимизатор производительности.
-    Автоматически адаптирует настройки игры под производительность системы.
-    """
+    """Оптимизатор производительности"""
     
-    def __init__(self, settings: PerformanceSettings = None):
-        self.settings = settings or PerformanceSettings()
-        self.metrics = PerformanceMetrics()
+    def __init__(self):
+        self.thresholds = PerformanceThreshold()
+        self.optimization_level = 0  # 0-3, где 0 - без оптимизации, 3 - максимальная
+        self.optimization_history: List[Dict[str, Any]] = []
+        self.auto_optimize = True
         
-        # История метрик
-        self.metrics_history: List[PerformanceMetrics] = []
-        self.max_history_size = 60  # 60 секунд истории
-        
-        # Оптимизации
-        self.optimizations: Dict[str, bool] = {
-            'reduce_particles': False,
-            'limit_entities': False,
-            'lower_quality': False,
-            'disable_effects': False,
-            'reduce_audio': False
-        }
-        
-        # Callbacks для оптимизаций
-        self.optimization_callbacks: Dict[str, Callable] = {}
-        
-        # Мониторинг
-        self._monitoring = False
-        self._monitor_thread = None
-        self._last_gc = time.time()
+        # Обработчики оптимизации
+        self.optimization_handlers: Dict[str, Callable] = {}
+        self._register_default_handlers()
         
         logger.info("Оптимизатор производительности инициализирован")
     
+    def _register_default_handlers(self):
+        """Регистрация стандартных обработчиков оптимизации"""
+        self.optimization_handlers['memory'] = self._optimize_memory
+        self.optimization_handlers['graphics'] = self._optimize_graphics
+        self.optimization_handlers['audio'] = self._optimize_audio
+        self.optimization_handlers['ai'] = self._optimize_ai
+        self.optimization_handlers['physics'] = self._optimize_physics
+    
+    def check_performance(self, metrics: PerformanceMetrics) -> Dict[str, bool]:
+        """Проверка производительности на соответствие порогам"""
+        issues = {}
+        
+        issues['low_fps'] = metrics.fps < self.thresholds.min_fps
+        issues['high_frame_time'] = metrics.frame_time > self.thresholds.max_frame_time
+        issues['high_cpu'] = metrics.cpu_usage > self.thresholds.max_cpu_usage
+        issues['high_memory'] = metrics.memory_usage > self.thresholds.max_memory_usage
+        issues['high_gpu'] = metrics.gpu_usage > self.thresholds.max_gpu_usage
+        
+        return issues
+    
+    def optimize_performance(self, metrics: PerformanceMetrics, issues: Dict[str, bool]) -> Dict[str, Any]:
+        """Оптимизация производительности"""
+        if not self.auto_optimize:
+            return {}
+        
+        optimizations = {}
+        
+        # Оптимизация памяти
+        if issues.get('high_memory', False):
+            memory_opt = self._optimize_memory(metrics)
+            if memory_opt:
+                optimizations['memory'] = memory_opt
+        
+        # Оптимизация графики
+        if issues.get('high_gpu', False) or issues.get('low_fps', False):
+            graphics_opt = self._optimize_graphics(metrics)
+            if graphics_opt:
+                optimizations['graphics'] = graphics_opt
+        
+        # Оптимизация CPU
+        if issues.get('high_cpu', False):
+            cpu_opt = self._optimize_cpu(metrics)
+            if cpu_opt:
+                optimizations['cpu'] = cpu_opt
+        
+        # Оптимизация AI
+        if issues.get('high_cpu', False):
+            ai_opt = self._optimize_ai(metrics)
+            if ai_opt:
+                optimizations['ai'] = ai_opt
+        
+        # Записываем оптимизацию в историю
+        if optimizations:
+            self.optimization_history.append({
+                'timestamp': time.time(),
+                'metrics': metrics,
+                'issues': issues,
+                'optimizations': optimizations
+            })
+            
+            # Ограничиваем размер истории
+            if len(self.optimization_history) > 100:
+                self.optimization_history.pop(0)
+        
+        return optimizations
+    
+    def _optimize_memory(self, metrics: PerformanceMetrics) -> Optional[Dict[str, Any]]:
+        """Оптимизация памяти"""
+        try:
+            # Принудительная сборка мусора
+            collected = gc.collect()
+            
+            # Очистка кэша ресурсов
+            from core.resource_manager import resource_manager
+            resource_manager.clear_cache()
+            
+            logger.info(f"Оптимизация памяти: собрано {collected} объектов")
+            
+            return {
+                'type': 'memory_cleanup',
+                'objects_collected': collected,
+                'cache_cleared': True
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка оптимизации памяти: {e}")
+            return None
+    
+    def _optimize_graphics(self, metrics: PerformanceMetrics) -> Optional[Dict[str, Any]]:
+        """Оптимизация графики"""
+        try:
+            # Уменьшение качества графики
+            if self.optimization_level < 3:
+                self.optimization_level += 1
+            
+            # Настройки графики в зависимости от уровня оптимизации
+            graphics_settings = {
+                1: {'texture_quality': 'medium', 'shadow_quality': 'low'},
+                2: {'texture_quality': 'low', 'shadow_quality': 'off', 'particle_count': 50},
+                3: {'texture_quality': 'low', 'shadow_quality': 'off', 'particle_count': 25, 'view_distance': 0.5}
+            }
+            
+            current_settings = graphics_settings.get(self.optimization_level, {})
+            
+            logger.info(f"Оптимизация графики: уровень {self.optimization_level}")
+            
+            return {
+                'type': 'graphics_optimization',
+                'level': self.optimization_level,
+                'settings': current_settings
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка оптимизации графики: {e}")
+            return None
+    
+    def _optimize_cpu(self, metrics: PerformanceMetrics) -> Optional[Dict[str, Any]]:
+        """Оптимизация CPU"""
+        try:
+            # Уменьшение частоты обновления AI
+            ai_update_rate = max(0.5, 1.0 - (self.optimization_level * 0.2))
+            
+            # Уменьшение сложности физики
+            physics_steps = max(1, 4 - self.optimization_level)
+            
+            logger.info(f"Оптимизация CPU: AI rate {ai_update_rate}, physics steps {physics_steps}")
+            
+            return {
+                'type': 'cpu_optimization',
+                'ai_update_rate': ai_update_rate,
+                'physics_steps': physics_steps
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка оптимизации CPU: {e}")
+            return None
+    
+    def _optimize_ai(self, metrics: PerformanceMetrics) -> Optional[Dict[str, Any]]:
+        """Оптимизация AI"""
+        try:
+            # Уменьшение количества активных AI
+            max_ai_entities = max(5, 20 - (self.optimization_level * 5))
+            
+            # Упрощение алгоритмов AI
+            ai_complexity = max(0.3, 1.0 - (self.optimization_level * 0.2))
+            
+            logger.info(f"Оптимизация AI: max entities {max_ai_entities}, complexity {ai_complexity}")
+            
+            return {
+                'type': 'ai_optimization',
+                'max_entities': max_ai_entities,
+                'complexity': ai_complexity
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка оптимизации AI: {e}")
+            return None
+    
+    def _optimize_audio(self, metrics: PerformanceMetrics) -> Optional[Dict[str, Any]]:
+        """Оптимизация аудио"""
+        try:
+            # Уменьшение качества аудио
+            audio_quality = max(0.5, 1.0 - (self.optimization_level * 0.2))
+            
+            # Уменьшение количества одновременных звуков
+            max_sounds = max(5, 15 - (self.optimization_level * 3))
+            
+            logger.info(f"Оптимизация аудио: quality {audio_quality}, max sounds {max_sounds}")
+            
+            return {
+                'type': 'audio_optimization',
+                'quality': audio_quality,
+                'max_sounds': max_sounds
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка оптимизации аудио: {e}")
+            return None
+    
+    def _optimize_physics(self, metrics: PerformanceMetrics) -> Optional[Dict[str, Any]]:
+        """Оптимизация физики"""
+        try:
+            # Уменьшение точности физики
+            physics_accuracy = max(0.5, 1.0 - (self.optimization_level * 0.2))
+            
+            # Уменьшение количества физических объектов
+            max_physics_objects = max(10, 50 - (self.optimization_level * 10))
+            
+            logger.info(f"Оптимизация физики: accuracy {physics_accuracy}, max objects {max_physics_objects}")
+            
+            return {
+                'type': 'physics_optimization',
+                'accuracy': physics_accuracy,
+                'max_objects': max_physics_objects
+            }
+            
+        except Exception as e:
+            logger.error(f"Ошибка оптимизации физики: {e}")
+            return None
+    
+    def reset_optimization(self):
+        """Сброс оптимизации"""
+        self.optimization_level = 0
+        logger.info("Оптимизация сброшена")
+    
+    def get_optimization_report(self) -> Dict[str, Any]:
+        """Получение отчета об оптимизации"""
+        return {
+            'current_level': self.optimization_level,
+            'auto_optimize': self.auto_optimize,
+            'optimization_count': len(self.optimization_history),
+            'recent_optimizations': self.optimization_history[-10:] if self.optimization_history else []
+        }
+
+
+class PerformanceMonitor:
+    """Монитор производительности"""
+    
+    def __init__(self):
+        self.profiler = PerformanceProfiler()
+        self.optimizer = PerformanceOptimizer()
+        self.monitoring_active = False
+        self.monitor_thread = None
+        self.monitor_interval = 1.0  # секунды
+        
+        # Системная информация
+        self.system_info = self._get_system_info()
+        
+        logger.info("Монитор производительности инициализирован")
+    
+    def _get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        try:
+            return {
+                'cpu_count': psutil.cpu_count(),
+                'memory_total': psutil.virtual_memory().total,
+                'platform': os.name,
+                'python_version': f"{os.sys.version_info.major}.{os.sys.version_info.minor}"
+            }
+        except Exception as e:
+            logger.error(f"Ошибка получения информации о системе: {e}")
+            return {}
+    
     def start_monitoring(self):
-        """Запуск мониторинга производительности"""
-        if self._monitoring:
+        """Запуск мониторинга"""
+        if self.monitoring_active:
             return
         
-        self._monitoring = True
-        self._monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
-        self._monitor_thread.start()
+        self.monitoring_active = True
+        self.monitor_thread = threading.Thread(target=self._monitor_loop, daemon=True)
+        self.monitor_thread.start()
+        
         logger.info("Мониторинг производительности запущен")
     
     def stop_monitoring(self):
         """Остановка мониторинга"""
-        self._monitoring = False
-        if self._monitor_thread:
-            self._monitor_thread.join(timeout=1.0)
+        self.monitoring_active = False
+        if self.monitor_thread:
+            self.monitor_thread.join(timeout=5)
+        
         logger.info("Мониторинг производительности остановлен")
     
     def _monitor_loop(self):
         """Цикл мониторинга"""
-        while self._monitoring:
+        while self.monitoring_active:
             try:
-                self._update_metrics()
-                self._check_performance()
-                self._cleanup_if_needed()
-                time.sleep(1.0)  # Обновление каждую секунду
-            except Exception as e:
-                logger.error(f"Ошибка мониторинга: {e}")
-    
-    def _update_metrics(self):
-        """Обновление метрик производительности"""
-        try:
-            # Системные метрики
-            process = psutil.Process()
-            self.metrics.memory_usage = process.memory_info().rss / 1024 / 1024  # MB
-            self.metrics.cpu_usage = process.cpu_percent()
-            self.metrics.last_update = time.time()
-            
-            # Добавляем в историю
-            self.metrics_history.append(self.metrics)
-            if len(self.metrics_history) > self.max_history_size:
-                self.metrics_history.pop(0)
+                metrics = self._collect_metrics()
+                self.profiler.add_sample(metrics)
                 
-        except Exception as e:
-            logger.warning(f"Ошибка обновления метрик: {e}")
-    
-    def _check_performance(self):
-        """Проверка производительности и автооптимизация"""
-        if not self.settings.auto_optimize:
-            return
-        
-        # Проверяем FPS
-        if self.metrics.fps < self.settings.target_fps * 0.8:
-            self._apply_fps_optimizations()
-        
-        # Проверяем память
-        if self.metrics.memory_usage > self.settings.memory_limit * 0.9:
-            self._apply_memory_optimizations()
-        
-        # Проверяем количество сущностей
-        if self.metrics.entities_count > self.settings.max_entities:
-            self._apply_entity_optimizations()
-    
-    def _apply_fps_optimizations(self):
-        """Применение оптимизаций для FPS"""
-        if not self.optimizations['reduce_particles']:
-            self.optimizations['reduce_particles'] = True
-            self._call_optimization('reduce_particles')
-            logger.info("Применена оптимизация: уменьшение частиц")
-        
-        elif not self.optimizations['lower_quality']:
-            self.optimizations['lower_quality'] = True
-            self._call_optimization('lower_quality')
-            logger.info("Применена оптимизация: снижение качества")
-        
-        elif not self.optimizations['disable_effects']:
-            self.optimizations['disable_effects'] = True
-            self._call_optimization('disable_effects')
-            logger.info("Применена оптимизация: отключение эффектов")
-    
-    def _apply_memory_optimizations(self):
-        """Применение оптимизаций памяти"""
-        if not self.optimizations['limit_entities']:
-            self.optimizations['limit_entities'] = True
-            self._call_optimization('limit_entities')
-            logger.info("Применена оптимизация: ограничение сущностей")
-        
-        # Принудительная сборка мусора
-        gc.collect()
-        logger.info("Выполнена сборка мусора")
-    
-    def _apply_entity_optimizations(self):
-        """Оптимизации для сущностей"""
-        if not self.optimizations['limit_entities']:
-            self.optimizations['limit_entities'] = True
-            self._call_optimization('limit_entities')
-            logger.info("Применена оптимизация: ограничение сущностей")
-    
-    def _call_optimization(self, optimization_name: str):
-        """Вызов callback оптимизации"""
-        callback = self.optimization_callbacks.get(optimization_name)
-        if callback:
-            try:
-                callback()
+                # Проверка производительности
+                issues = self.optimizer.check_performance(metrics)
+                
+                # Оптимизация при необходимости
+                if any(issues.values()):
+                    optimizations = self.optimizer.optimize_performance(metrics, issues)
+                    if optimizations:
+                        logger.info(f"Применены оптимизации: {list(optimizations.keys())}")
+                
+                time.sleep(self.monitor_interval)
+                
             except Exception as e:
-                logger.error(f"Ошибка применения оптимизации {optimization_name}: {e}")
+                logger.error(f"Ошибка в цикле мониторинга: {e}")
+                time.sleep(self.monitor_interval)
     
-    def _cleanup_if_needed(self):
-        """Очистка при необходимости"""
-        current_time = time.time()
-        
-        # Сборка мусора каждые 5 секунд
-        if current_time - self._last_gc > 5.0:
-            gc.collect()
-            self._last_gc = current_time
+    def _collect_metrics(self) -> PerformanceMetrics:
+        """Сбор метрик производительности"""
+        try:
+            # CPU
+            cpu_usage = psutil.cpu_percent(interval=0.1)
+            
+            # Память
+            memory = psutil.virtual_memory()
+            memory_usage = memory.percent
+            memory_available = memory.available / (1024 * 1024 * 1024)  # GB
+            
+            # GPU (упрощенная реализация)
+            gpu_usage = 0.0  # Требует специальных библиотек
+            
+            # Диск и сеть
+            disk_io = 0.0
+            network_io = 0.0
+            
+            return PerformanceMetrics(
+                cpu_usage=cpu_usage,
+                memory_usage=memory_usage,
+                memory_available=memory_available,
+                gpu_usage=gpu_usage,
+                disk_io=disk_io,
+                network_io=network_io,
+                timestamp=time.time()
+            )
+            
+        except Exception as e:
+            logger.error(f"Ошибка сбора метрик: {e}")
+            return PerformanceMetrics()
     
-    def register_optimization_callback(self, name: str, callback: Callable):
-        """Регистрация callback для оптимизации"""
-        self.optimization_callbacks[name] = callback
-        logger.info(f"Зарегистрирован callback оптимизации: {name}")
-    
-    def update_fps(self, fps: float, frame_time: float):
-        """Обновление FPS метрик"""
-        self.metrics.fps = fps
-        self.metrics.frame_time = frame_time
-    
-    def update_entities_count(self, count: int):
-        """Обновление количества сущностей"""
-        self.metrics.entities_count = count
-    
-    def update_particles_count(self, count: int):
-        """Обновление количества частиц"""
-        self.metrics.active_particles = count
-    
-    def update_draw_calls(self, count: int):
-        """Обновление количества вызовов отрисовки"""
-        self.metrics.draw_calls = count
-    
-    def get_metrics(self) -> PerformanceMetrics:
-        """Получение текущих метрик"""
-        return self.metrics
-    
-    def get_average_fps(self, seconds: int = 10) -> float:
-        """Получение среднего FPS за период"""
-        if not self.metrics_history:
-            return 0.0
-        
-        recent_metrics = [m for m in self.metrics_history 
-                         if time.time() - m.last_update <= seconds]
-        
-        if not recent_metrics:
-            return 0.0
-        
-        return sum(m.fps for m in recent_metrics) / len(recent_metrics)
+    def update_frame_metrics(self, fps: float, frame_time: float):
+        """Обновление метрик кадров"""
+        if self.profiler.samples:
+            current_metrics = self.profiler.samples[-1]
+            current_metrics.fps = fps
+            current_metrics.frame_time = frame_time
     
     def get_performance_report(self) -> Dict[str, Any]:
-        """Получение отчета о производительности"""
+        """Получение полного отчета о производительности"""
+        profiler_report = self.profiler.get_performance_report()
+        optimizer_report = self.optimizer.get_optimization_report()
+        
         return {
-            'current_metrics': {
-                'fps': self.metrics.fps,
-                'frame_time': self.metrics.frame_time,
-                'memory_mb': self.metrics.memory_usage,
-                'cpu_percent': self.metrics.cpu_usage,
-                'entities': self.metrics.entities_count,
-                'particles': self.metrics.active_particles,
-                'draw_calls': self.metrics.draw_calls
-            },
-            'averages': {
-                'fps_10s': self.get_average_fps(10),
-                'fps_30s': self.get_average_fps(30),
-                'fps_60s': self.get_average_fps(60)
-            },
-            'optimizations': self.optimizations.copy(),
-            'settings': {
-                'target_fps': self.settings.target_fps,
-                'max_entities': self.settings.max_entities,
-                'max_particles': self.settings.max_particles,
-                'memory_limit': self.settings.memory_limit,
-                'quality_level': self.settings.quality_level.value
-            }
+            'system_info': self.system_info,
+            'profiler': profiler_report,
+            'optimizer': optimizer_report,
+            'monitoring_active': self.monitoring_active
         }
-    
-    def reset_optimizations(self):
-        """Сброс всех оптимизаций"""
-        for key in self.optimizations:
-            self.optimizations[key] = False
-        logger.info("Все оптимизации сброшены")
-    
-    def set_quality_level(self, level: PerformanceLevel):
-        """Установка уровня качества"""
-        self.settings.quality_level = level
-        
-        # Применяем настройки в зависимости от уровня
-        if level == PerformanceLevel.LOW:
-            self.settings.max_entities = 50
-            self.settings.max_particles = 100
-        elif level == PerformanceLevel.MEDIUM:
-            self.settings.max_entities = 100
-            self.settings.max_particles = 200
-        elif level == PerformanceLevel.HIGH:
-            self.settings.max_entities = 200
-            self.settings.max_particles = 500
-        elif level == PerformanceLevel.ULTRA:
-            self.settings.max_entities = 500
-            self.settings.max_particles = 1000
-        
-        logger.info(f"Установлен уровень качества: {level.value}")
 
 
-# Глобальный экземпляр оптимизатора
+# Глобальные экземпляры
+performance_monitor = PerformanceMonitor()
 performance_optimizer = PerformanceOptimizer()
 
 
 def initialize_performance_monitoring():
     """Инициализация мониторинга производительности"""
     try:
-        performance_optimizer.start_monitoring()
+        performance_monitor.start_monitoring()
         logger.info("Мониторинг производительности инициализирован")
         return True
     except Exception as e:
-        logger.error(f"Ошибка инициализации мониторинга: {e}")
+        logger.error(f"Ошибка инициализации мониторинга производительности: {e}")
         return False
 
 
-def cleanup_performance_monitoring():
-    """Очистка мониторинга производительности"""
-    try:
-        performance_optimizer.stop_monitoring()
-        logger.info("Мониторинг производительности остановлен")
-    except Exception as e:
-        logger.error(f"Ошибка остановки мониторинга: {e}")
+def get_performance_stats() -> Dict[str, Any]:
+    """Получение статистики производительности"""
+    return performance_monitor.get_performance_report()

@@ -69,24 +69,32 @@ class DatabaseManager:
     def _create_indexes(self, conn: sqlite3.Connection):
         """Создание индексов для оптимизации запросов"""
         try:
+            # Проверяем существование таблиц перед созданием индексов
+            tables = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+            table_names = [table[0] for table in tables]
+            
             # Индексы для таблицы effects
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_effects_type ON effects(effect_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_effects_category ON effects(attribute)")
+            if 'effects' in table_names:
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_effects_type ON effects(effect_type)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_effects_category ON effects(attribute)")
             
             # Индексы для таблицы items
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_items_type ON items(item_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_items_rarity ON items(rarity)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_items_level ON items(level_requirement)")
+            if 'items' in table_names:
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_items_type ON items(item_type)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_items_rarity ON items(rarity)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_items_level ON items(level_requirement)")
             
             # Индексы для таблицы enemies
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_enemies_type ON enemies(enemy_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_enemies_biome ON enemies(biome)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_enemies_level ON enemies(level)")
+            if 'enemies' in table_names:
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_enemies_type ON enemies(enemy_type)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_enemies_biome ON enemies(biome)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_enemies_level ON enemies(level)")
             
             # Индексы для таблицы skills
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_skills_type ON skills(skill_type)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_skills_element ON skills(element)")
-            conn.execute("CREATE INDEX IF NOT EXISTS idx_skills_level ON skills(level_requirement)")
+            if 'skills' in table_names:
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_skills_type ON skills(skill_type)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_skills_element ON skills(element)")
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_skills_level ON skills(level_requirement)")
             
             conn.commit()
             logger.info("Индексы созданы")

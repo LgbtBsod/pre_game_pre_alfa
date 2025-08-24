@@ -212,7 +212,7 @@ class GameInterface:
             self.enhanced_combat_system = EnhancedCombatLearningSystem(self.memory_system, self.emotional_ai_system)
             self.enhanced_content_generator = EnhancedContentGenerator(self.memory_system)
             self.skill_manager = SkillManager(self.memory_system, self.emotional_ai_system)
-            self.skill_learning_ai = SkillLearningAI(self.memory_system, self.emotional_ai_system)
+            self.skill_learning_ai = SkillLearningAI(self.skill_manager, self.emotional_ai_system)
             
             logger.info("✅ Enhanced Edition системы инициализированы")
             

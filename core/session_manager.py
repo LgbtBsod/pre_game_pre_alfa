@@ -626,6 +626,43 @@ class SessionManager:
             for key in expired_keys:
                 del self._cache[key]
     
+    def bind_active_session_to_slot(self, slot_id: int, save_name: str = "") -> bool:
+        """Привязка активной сессии к слоту сохранения"""
+        try:
+            if not self.current_session:
+                logger.error("Нет активной сессии для привязки")
+                return False
+            
+            # Создаем данные сессии для слота
+            session_data = SessionData(
+                session_uuid=self.current_session.session_id,
+                slot_id=slot_id,
+                save_name=save_name or f"Save {slot_id}",
+                world_seed=self.current_session.session_data.get('world_seed', 0),
+                player_data=self.current_session.session_data.get('player_data', {}),
+                world_data=self.current_session.session_data.get('world_data', {}),
+                inventory_data=self.current_session.session_data.get('inventory_data', {}),
+                progress_data=self.current_session.session_data.get('progress_data', {}),
+                generation_seed=self.current_session.session_data.get('generation_seed', 0),
+                current_level=self.current_session.session_data.get('current_level', 1),
+                version=self.schema_version
+            )
+            
+            # Сохраняем в базу данных
+            success = self.save_session_data(session_data)
+            if success:
+                # Обновляем активный слот
+                self.active_slot = session_data
+                logger.info(f"Сессия привязана к слоту {slot_id}")
+                return True
+            else:
+                logger.error(f"Не удалось привязать сессию к слоту {slot_id}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Ошибка привязки сессии к слоту {slot_id}: {e}")
+            return False
+    
     def cleanup(self):
         """Очистка ресурсов"""
         try:

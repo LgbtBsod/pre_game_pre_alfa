@@ -209,36 +209,26 @@ def run_game_mode(mode: str) -> bool:
 def run_gui_mode() -> bool:
     """Запуск GUI режима с оптимизацией"""
     try:
-        from ui.game_interface import GameInterface, GameSettings
-        from config.config_manager import config_manager
+        from core.game_engine import GameEngine, GameConfig
         
-        # Загружаем настройки
-        try:
-            settings = GameSettings.from_config()
-            logger.info("✅ Настройки загружены из конфигурации")
-        except Exception as e:
-            logger.warning(f"⚠️ Ошибка загрузки настроек: {e}")
-            settings = GameSettings()
-            logger.info("✅ Используются настройки по умолчанию")
-        
-        # Создаем и запускаем игру
-        logger.info("🚀 Создание игрового интерфейса...")
-        game = GameInterface(settings)
+        # Создаем и запускаем движок
+        logger.info("🚀 Создание игрового движка...")
+        engine = GameEngine()
         
         # Проверяем Enhanced системы
-        if hasattr(game, 'memory_system') and game.memory_system:
+        memory_system = engine.get_system('memory_system')
+        if memory_system:
             logger.info("✨ Enhanced Edition активирован!")
-            logger.info(f"   - Память поколений: {game.memory_system.current_generation}")
-            logger.info(f"   - Эмоциональный ИИ: {'✅' if game.emotional_ai_system else '❌'}")
-            logger.info(f"   - Боевое обучение: {'✅' if game.enhanced_combat_system else '❌'}")
-            logger.info(f"   - Генератор контента: {'✅' if game.enhanced_content_generator else '❌'}")
-            logger.info(f"   - Система навыков: {'✅' if game.skill_manager else '❌'}")
+            logger.info(f"   - Память поколений: {getattr(memory_system, 'current_generation', 'N/A')}")
+            logger.info(f"   - Эмоциональный ИИ: {'✅' if engine.get_system('emotional_ai') else '❌'}")
+            logger.info(f"   - Боевое обучение: {'✅' if engine.get_system('enhanced_combat') else '❌'}")
+            logger.info(f"   - Генератор контента: {'✅' if engine.get_system('enhanced_content') else '❌'}")
+            logger.info(f"   - Система навыков: {'✅' if engine.get_system('skill_manager') else '❌'}")
         else:
             logger.info("ℹ️ Игра работает в базовом режиме")
         
         logger.info("🎯 Запуск главного игрового цикла...")
-        game.run()
-        return True
+        return engine.run() == 0
         
     except Exception as e:
         logger.error(f"❌ Ошибка GUI режима: {e}")

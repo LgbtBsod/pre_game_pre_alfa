@@ -1,0 +1,10 @@
+{
+  "difficulty": "normal",
+  "auto_save": true,
+  "auto_save_interval": 300,
+  "tutorial_enabled": true,
+  "language": "ru",
+  "subtitles": true,
+  "camera_sensitivity": 1.0,
+  "invert_y_axis": false
+}

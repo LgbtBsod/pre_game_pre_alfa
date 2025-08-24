@@ -98,7 +98,7 @@ class EnhancedGameMaster:
         # Системы контента и навыков
         self.content_generator = EnhancedContentGenerator(self.memory_system)
         self.skill_manager = SkillManager(self.memory_system, self.emotional_ai_system)
-        self.skill_learning_ai = SkillLearningAI(self.skill_manager)
+        self.skill_learning_ai = SkillLearningAI(self.skill_manager, None)
         
         # Системы прогрессии и инвентаря
         self.meta_progression_system = MetaProgressionSystem(self.memory_system)

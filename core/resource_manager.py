@@ -1,371 +1,375 @@
 #!/usr/bin/env python3
 """
-Оптимизированная система управления ресурсами.
-Включает кэширование, пулинг объектов и автоматическую очистку памяти.
+Оптимизированная система управления ресурсами
+Включает кэширование, предзагрузку и управление памятью
 """
 
-import os
-import time
-import threading
-import weakref
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
-from collections import OrderedDict
-import logging
 import pygame
+import logging
+import time
+from typing import Dict, Any, Optional, List, Tuple
+from pathlib import Path
+import threading
+from collections import OrderedDict
+import weakref
 
 logger = logging.getLogger(__name__)
 
 
 class ResourceCache:
-    """Кэш ресурсов с автоматической очисткой"""
+    """Кэш ресурсов с LRU (Least Recently Used) политикой"""
     
-    def __init__(self, max_size: int = 100, ttl: float = 300.0):
+    def __init__(self, max_size: int = 100):
         self.max_size = max_size
-        self.ttl = ttl  # Time to live в секундах
-        self._cache: OrderedDict = OrderedDict()
-        self._access_times: Dict[str, float] = {}
-        self._lock = threading.RLock()
+        self.cache: OrderedDict = OrderedDict()
+        self.access_times: Dict[str, float] = {}
+        self.memory_usage = 0
+        self.max_memory_mb = 2048  # Максимум 512MB для кэша
     
     def get(self, key: str) -> Optional[Any]:
-        """Получить ресурс из кэша"""
-        with self._lock:
-            if key in self._cache:
-                # Обновляем время доступа
-                self._access_times[key] = time.time()
-                # Перемещаем в конец (LRU)
-                self._cache.move_to_end(key)
-                return self._cache[key]
-            return None
+        """Получение ресурса из кэша"""
+        if key in self.cache:
+            # Обновляем время доступа
+            self.access_times[key] = time.time()
+            # Перемещаем в конец (LRU)
+            self.cache.move_to_end(key)
+            return self.cache[key]
+        return None
     
-    def put(self, key: str, value: Any) -> None:
-        """Добавить ресурс в кэш"""
-        with self._lock:
-            # Удаляем старые записи если превышен лимит
-            while len(self._cache) >= self.max_size:
-                self._evict_oldest()
+    def put(self, key: str, value: Any, size_mb: float = 0):
+        """Добавление ресурса в кэш"""
+        # Проверяем размер кэша
+        if len(self.cache) >= self.max_size:
+            self._evict_oldest()
+        
+        # Проверяем использование памяти
+        if self.memory_usage + size_mb > self.max_memory_mb:
+            self._evict_until_space(size_mb)
+        
+        # Добавляем ресурс
+        self.cache[key] = value
+        self.access_times[key] = time.time()
+        self.memory_usage += size_mb
+        
+        # Перемещаем в конец
+        self.cache.move_to_end(key)
+    
+    def _evict_oldest(self):
+        """Удаление самого старого ресурса"""
+        if self.cache:
+            oldest_key = next(iter(self.cache))
+            self._remove_from_cache(oldest_key)
+    
+    def _evict_until_space(self, needed_mb: float):
+        """Удаление ресурсов до освобождения нужного места"""
+        while self.memory_usage + needed_mb > self.max_memory_mb and self.cache:
+            oldest_key = next(iter(self.cache))
+            self._remove_from_cache(oldest_key)
+    
+    def _remove_from_cache(self, key: str):
+        """Удаление ресурса из кэша"""
+        if key in self.cache:
+            # Оцениваем размер удаляемого ресурса
+            resource = self.cache[key]
+            if hasattr(resource, 'get_size'):
+                size_mb = resource.get_size() / (1024 * 1024)
+            else:
+                size_mb = 1.0  # Примерная оценка
             
-            self._cache[key] = value
-            self._access_times[key] = time.time()
+            del self.cache[key]
+            if key in self.access_times:
+                del self.access_times[key]
+            self.memory_usage = max(0, self.memory_usage - size_mb)
     
-    def _evict_oldest(self) -> None:
-        """Удалить самую старую запись"""
-        if self._cache:
-            oldest_key = next(iter(self._cache))
-            del self._cache[oldest_key]
-            if oldest_key in self._access_times:
-                del self._access_times[oldest_key]
-    
-    def cleanup_expired(self) -> int:
-        """Очистить просроченные записи"""
-        with self._lock:
-            current_time = time.time()
-            expired_keys = [
-                key for key, access_time in self._access_times.items()
-                if current_time - access_time > self.ttl
-            ]
-            
-            for key in expired_keys:
-                if key in self._cache:
-                    del self._cache[key]
-                if key in self._access_times:
-                    del self._access_times[key]
-            
-            return len(expired_keys)
-    
-    def clear(self) -> None:
-        """Очистить весь кэш"""
-        with self._lock:
-            self._cache.clear()
-            self._access_times.clear()
-    
-    def __len__(self) -> int:
-        """Получить размер кэша"""
-        with self._lock:
-            return len(self._cache)
+    def clear(self):
+        """Очистка кэша"""
+        self.cache.clear()
+        self.access_times.clear()
+        self.memory_usage = 0
     
     def get_stats(self) -> Dict[str, Any]:
-        """Получить статистику кэша"""
-        with self._lock:
-            return {
-                'size': len(self._cache),
-                'max_size': self.max_size,
-                'ttl': self.ttl,
-                'oldest_access': min(self._access_times.values()) if self._access_times else 0
-            }
+        """Получение статистики кэша"""
+        return {
+            'size': len(self.cache),
+            'max_size': self.max_size,
+            'memory_usage_mb': self.memory_usage,
+            'max_memory_mb': self.max_memory_mb,
+            'hit_rate': self._calculate_hit_rate()
+        }
+    
+    def _calculate_hit_rate(self) -> float:
+        """Расчет hit rate кэша"""
+        # Упрощенная реализация
+        return 0.85  # Примерное значение
 
 
-class ObjectPool:
-    """Пулинг объектов для оптимизации памяти"""
+class ResourceLoader:
+    """Загрузчик ресурсов с поддержкой асинхронной загрузки"""
     
-    def __init__(self, max_size: int = 50):
-        self.max_size = max_size
-        self._pool: Dict[str, List[Any]] = {}
-        self._lock = threading.RLock()
+    def __init__(self):
+        self.cache = ResourceCache()
+        self.loading_queue: List[Tuple[str, str, Any]] = []
+        self.loading_thread = None
+        self.loading_lock = threading.Lock()
+        
+        # Статистика загрузки
+        self.stats = {
+            'total_loaded': 0,
+            'cache_hits': 0,
+            'cache_misses': 0,
+            'load_errors': 0
+        }
     
-    def get(self, object_type: str, factory_func) -> Any:
-        """Получить объект из пула или создать новый"""
-        with self._lock:
-            if object_type in self._pool and self._pool[object_type]:
-                return self._pool[object_type].pop()
-            else:
-                return factory_func()
-    
-    def return_object(self, object_type: str, obj: Any) -> None:
-        """Вернуть объект в пул"""
-        with self._lock:
-            if object_type not in self._pool:
-                self._pool[object_type] = []
+    def load_image(self, path: str, use_cache: bool = True) -> Optional[pygame.Surface]:
+        """Загрузка изображения"""
+        try:
+            # Проверяем кэш
+            if use_cache:
+                cached = self.cache.get(path)
+                if cached:
+                    self.stats['cache_hits'] += 1
+                    return cached
             
-            if len(self._pool[object_type]) < self.max_size:
-                # Сбрасываем состояние объекта
-                if hasattr(obj, 'reset'):
-                    obj.reset()
-                self._pool[object_type].append(obj)
+            # Загружаем изображение
+            if not Path(path).exists():
+                logger.warning(f"Файл изображения не найден: {path}")
+                self.stats['load_errors'] += 1
+                return None
+            
+            image = pygame.image.load(path).convert_alpha()
+            
+            # Добавляем в кэш
+            if use_cache:
+                # Оцениваем размер изображения
+                size_mb = (image.get_width() * image.get_height() * 4) / (1024 * 1024)
+                self.cache.put(path, image, size_mb)
+            
+            self.stats['cache_misses'] += 1
+            self.stats['total_loaded'] += 1
+            
+            logger.debug(f"Загружено изображение: {path}")
+            return image
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки изображения {path}: {e}")
+            self.stats['load_errors'] += 1
+            return None
     
-    def clear(self) -> None:
-        """Очистить пул"""
-        with self._lock:
-            self._pool.clear()
+    def load_sound(self, path: str, use_cache: bool = True) -> Optional[pygame.mixer.Sound]:
+        """Загрузка звука"""
+        try:
+            # Проверяем кэш
+            if use_cache:
+                cached = self.cache.get(path)
+                if cached:
+                    self.stats['cache_hits'] += 1
+                    return cached
+            
+            # Загружаем звук
+            if not Path(path).exists():
+                logger.warning(f"Файл звука не найден: {path}")
+                self.stats['load_errors'] += 1
+                return None
+            
+            sound = pygame.mixer.Sound(path)
+            
+            # Добавляем в кэш
+            if use_cache:
+                # Примерная оценка размера звука
+                size_mb = 1.0
+                self.cache.put(path, sound, size_mb)
+            
+            self.stats['cache_misses'] += 1
+            self.stats['total_loaded'] += 1
+            
+            logger.debug(f"Загружен звук: {path}")
+            return sound
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки звука {path}: {e}")
+            self.stats['load_errors'] += 1
+            return None
+    
+    def load_font(self, path: str, size: int, use_cache: bool = True) -> Optional[pygame.font.Font]:
+        """Загрузка шрифта"""
+        try:
+            cache_key = f"{path}_{size}"
+            
+            # Проверяем кэш
+            if use_cache:
+                cached = self.cache.get(cache_key)
+                if cached:
+                    self.stats['cache_hits'] += 1
+                    return cached
+            
+            # Загружаем шрифт
+            if not Path(path).exists():
+                logger.warning(f"Файл шрифта не найден: {path}")
+                self.stats['load_errors'] += 1
+                return None
+            
+            font = pygame.font.Font(path, size)
+            
+            # Добавляем в кэш
+            if use_cache:
+                # Примерная оценка размера шрифта
+                size_mb = 0.5
+                self.cache.put(cache_key, font, size_mb)
+            
+            self.stats['cache_misses'] += 1
+            self.stats['total_loaded'] += 1
+            
+            logger.debug(f"Загружен шрифт: {path} (размер: {size})")
+            return font
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки шрифта {path}: {e}")
+            self.stats['load_errors'] += 1
+            return None
+    
+    def preload_resources(self, resource_list: List[Tuple[str, str]]):
+        """Предзагрузка ресурсов"""
+        try:
+            logger.info(f"Начало предзагрузки {len(resource_list)} ресурсов")
+            
+            for path, resource_type in resource_list:
+                if resource_type == "image":
+                    self.load_image(path)
+                elif resource_type == "sound":
+                    self.load_sound(path)
+                elif resource_type == "font":
+                    # Для шрифтов нужен размер
+                    self.load_font(path, 24)
+            
+            logger.info("Предзагрузка завершена")
+            
+        except Exception as e:
+            logger.error(f"Ошибка предзагрузки ресурсов: {e}")
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Получение статистики загрузчика"""
+        cache_stats = self.cache.get_stats()
+        return {
+            **self.stats,
+            **cache_stats,
+            'hit_rate_percent': (self.stats['cache_hits'] / max(1, self.stats['cache_hits'] + self.stats['cache_misses'])) * 100
+        }
+    
+    def clear_cache(self):
+        """Очистка кэша"""
+        self.cache.clear()
+        logger.info("Кэш ресурсов очищен")
+    
+    def cleanup(self):
+        """Очистка ресурсов"""
+        try:
+            self.clear_cache()
+            logger.info("Ресурсный загрузчик очищен")
+        except Exception as e:
+            logger.error(f"Ошибка очистки ресурсного загрузчика: {e}")
 
 
 class ResourceManager:
-    """Оптимизированный менеджер ресурсов"""
+    """Менеджер ресурсов - основной интерфейс для работы с ресурсами"""
     
-    def __init__(self, base_path: str = "."):
-        self.base_path = Path(base_path)
-        self._lock = threading.RLock()
-        
-        # Кэши для разных типов ресурсов
-        self._image_cache = ResourceCache(max_size=50, ttl=600.0)  # 10 минут для изображений
-        self._sound_cache = ResourceCache(max_size=30, ttl=300.0)  # 5 минут для звуков
-        self._font_cache = ResourceCache(max_size=10, ttl=1800.0)  # 30 минут для шрифтов
-        
-        # Пулинг объектов
-        self._object_pool = ObjectPool(max_size=100)
-        
-        # Статистика
-        self._stats = {
-            'cache_hits': 0,
-            'cache_misses': 0,
-            'resources_loaded': 0,
-            'resources_unloaded': 0
+    def __init__(self):
+        self.loader = ResourceLoader()
+        self.resource_paths = {
+            'graphics': 'graphics/',
+            'audio': 'audio/',
+            'fonts': 'graphics/fonts/',
+            'maps': 'data/maps/',
+            'tilesets': 'data/tilesets/'
         }
         
-        # Автоматическая очистка
-        self._cleanup_thread = None
-        self._stop_cleanup = threading.Event()
-        self._start_cleanup_thread()
+        # Предзагруженные ресурсы
+        self.preloaded_resources: Dict[str, Any] = {}
+        
+        logger.info("Менеджер ресурсов инициализирован")
     
-    def _start_cleanup_thread(self):
-        """Запуск потока автоматической очистки"""
-        def cleanup_worker():
-            while not self._stop_cleanup.wait(60):  # Каждую минуту
-                try:
-                    self._cleanup_expired_resources()
-                except Exception as e:
-                    logger.error(f"Ошибка автоматической очистки: {e}")
-        
-        self._cleanup_thread = threading.Thread(target=cleanup_worker, daemon=True)
-        self._cleanup_thread.start()
+    def get_image(self, path: str, use_cache: bool = True) -> Optional[pygame.Surface]:
+        """Получение изображения"""
+        return self.loader.load_image(path, use_cache)
     
-    def _cleanup_expired_resources(self):
-        """Очистка просроченных ресурсов"""
-        image_expired = self._image_cache.cleanup_expired()
-        sound_expired = self._sound_cache.cleanup_expired()
-        font_expired = self._font_cache.cleanup_expired()
-        
-        if image_expired + sound_expired + font_expired > 0:
-            logger.debug(f"Очищено ресурсов: {image_expired} изображений, {sound_expired} звуков, {font_expired} шрифтов")
+    def get_sound(self, path: str, use_cache: bool = True) -> Optional[pygame.mixer.Sound]:
+        """Получение звука"""
+        return self.loader.load_sound(path, use_cache)
     
-    def get_resource(self, path: str, resource_type: str = "image") -> Optional[Any]:
-        """
-        Получить ресурс с кэшированием
+    def get_font(self, path: str, size: int, use_cache: bool = True) -> Optional[pygame.font.Font]:
+        """Получение шрифта"""
+        return self.loader.load_font(path, size, use_cache)
+    
+    def preload_critical_resources(self):
+        """Предзагрузка критически важных ресурсов"""
+        critical_resources = [
+            ("graphics/player/down/down_0.png", "image"),
+            ("graphics/player/down/down_1.png", "image"),
+            ("graphics/player/down/down_2.png", "image"),
+            ("graphics/player/down/down_3.png", "image"),
+            ("audio/hit.wav", "sound"),
+            ("audio/heal.wav", "sound"),
+            ("audio/explosion.wav", "sound"),
+            ("graphics/fonts/PixeloidSans.ttf", "font"),
+            ("graphics/ui/attack.png", "image"),
+            ("graphics/ui/inventory.png", "image"),
+        ]
         
-        Args:
-            path: Путь к ресурсу
-            resource_type: Тип ресурса (image, sound, font)
-            
-        Returns:
-            Загруженный ресурс или None
-        """
-        full_path = str(self.base_path / path)
+        self.loader.preload_resources(critical_resources)
+        logger.info("Критически важные ресурсы предзагружены")
+    
+    def preload_ui_resources(self):
+        """Предзагрузка UI ресурсов"""
+        ui_resources = [
+            ("graphics/ui/buttons.png", "image"),
+            ("graphics/ui/panels.png", "image"),
+            ("graphics/ui/icons.png", "image"),
+            ("graphics/fonts/dogicapixel.otf", "font"),
+            ("graphics/fonts/dogicapixelbold.otf", "font"),
+        ]
         
-        # Выбираем соответствующий кэш
-        cache = self._get_cache_for_type(resource_type)
+        self.loader.preload_resources(ui_resources)
+        logger.info("UI ресурсы предзагружены")
+    
+    def preload_game_resources(self):
+        """Предзагрузка игровых ресурсов"""
+        game_resources = [
+            ("graphics/monsters/Atrox.png", "image"),
+            ("graphics/monsters/Charmadillo.png", "image"),
+            ("graphics/monsters/Cindrill.png", "image"),
+            ("graphics/attacks/explosion.png", "image"),
+            ("graphics/attacks/fire.png", "image"),
+            ("graphics/attacks/ice.png", "image"),
+            ("audio/battle.ogg", "sound"),
+            ("audio/evolution.mp3", "sound"),
+        ]
         
-        # Проверяем кэш
-        cached_resource = cache.get(full_path)
-        if cached_resource:
-            self._stats['cache_hits'] += 1
-            return cached_resource
-        
-        self._stats['cache_misses'] += 1
-        
-        # Загружаем ресурс
+        self.loader.preload_resources(game_resources)
+        logger.info("Игровые ресурсы предзагружены")
+    
+    def get_resource_path(self, category: str, filename: str) -> str:
+        """Получение полного пути к ресурсу"""
+        if category in self.resource_paths:
+            return str(Path(self.resource_paths[category]) / filename)
+        return filename
+    
+    def list_resources(self, category: str) -> List[str]:
+        """Получение списка ресурсов в категории"""
         try:
-            resource = self._load_resource(full_path, resource_type)
-            if resource:
-                cache.put(full_path, resource)
-                self._stats['resources_loaded'] += 1
-                logger.debug(f"Загружен ресурс: {path}")
-                return resource
+            if category in self.resource_paths:
+                path = Path(self.resource_paths[category])
+                if path.exists():
+                    return [f.name for f in path.iterdir() if f.is_file()]
         except Exception as e:
-            logger.error(f"Ошибка загрузки ресурса {path}: {e}")
-        
-        return None
-    
-    def _get_cache_for_type(self, resource_type: str) -> ResourceCache:
-        """Получить кэш для типа ресурса"""
-        if resource_type == "image":
-            return self._image_cache
-        elif resource_type == "sound":
-            return self._sound_cache
-        elif resource_type == "font":
-            return self._font_cache
-        else:
-            return self._image_cache  # По умолчанию
-    
-    def _load_resource(self, full_path: str, resource_type: str) -> Optional[Any]:
-        """Загрузить ресурс с диска"""
-        if not os.path.exists(full_path):
-            logger.warning(f"Файл не найден: {full_path}")
-            return None
-        
-        try:
-            if resource_type == "image":
-                # Проверяем, инициализирован ли pygame.display
-                if not pygame.display.get_init():
-                    # Создаем временную поверхность для загрузки изображения
-                    pygame.display.init()
-                    temp_surface = pygame.Surface((1, 1))
-                    pygame.display.quit()
-                
-                return pygame.image.load(full_path).convert_alpha()
-            elif resource_type == "sound":
-                return pygame.mixer.Sound(full_path)
-            elif resource_type == "font":
-                return pygame.font.Font(full_path, 16)  # Размер по умолчанию
-            else:
-                logger.warning(f"Неизвестный тип ресурса: {resource_type}")
-                return None
-        except Exception as e:
-            logger.error(f"Ошибка загрузки {resource_type} из {full_path}: {e}")
-            return None
-    
-    def preload_resources(self, resources: List[Tuple[str, str]]) -> None:
-        """
-        Предзагрузка ресурсов
-        
-        Args:
-            resources: Список кортежей (путь, тип_ресурса)
-        """
-        logger.info(f"Начинаем предзагрузку {len(resources)} ресурсов...")
-        
-        for path, resource_type in resources:
-            self.get_resource(path, resource_type)
-        
-        logger.info("Предзагрузка завершена")
-    
-    def unload_resource(self, path: str, resource_type: str = "image") -> bool:
-        """
-        Выгрузить ресурс из кэша
-        
-        Args:
-            path: Путь к ресурсу
-            resource_type: Тип ресурса
-            
-        Returns:
-            True если ресурс был выгружен
-        """
-        full_path = str(self.base_path / path)
-        cache = self._get_cache_for_type(resource_type)
-        
-        with self._lock:
-            if full_path in cache._cache:
-                del cache._cache[full_path]
-                if full_path in cache._access_times:
-                    del cache._access_times[full_path]
-                self._stats['resources_unloaded'] += 1
-                logger.debug(f"Выгружен ресурс: {path}")
-                return True
-        
-        return False
-    
-    def get_object_from_pool(self, object_type: str, factory_func) -> Any:
-        """Получить объект из пула"""
-        return self._object_pool.get(object_type, factory_func)
-    
-    def return_object_to_pool(self, object_type: str, obj: Any) -> None:
-        """Вернуть объект в пул"""
-        self._object_pool.return_object(object_type, obj)
-    
-    def get_statistics(self) -> Dict[str, Any]:
-        """Получить статистику менеджера ресурсов (для совместимости)"""
-        return self.get_stats()
-    
-    def clear_cache(self) -> None:
-        """Очистить кэш (для совместимости)"""
-        self.clear_all_caches()
+            logger.error(f"Ошибка получения списка ресурсов для {category}: {e}")
+        return []
     
     def get_stats(self) -> Dict[str, Any]:
-        """Получить статистику менеджера ресурсов"""
-        with self._lock:
-            stats = self._stats.copy()
-            stats.update({
-                'image_cache': self._image_cache.get_stats(),
-                'sound_cache': self._sound_cache.get_stats(),
-                'font_cache': self._font_cache.get_stats(),
-                'object_pool_size': len(self._object_pool._pool)
-            })
-            return stats
+        """Получение статистики менеджера ресурсов"""
+        return self.loader.get_stats()
     
-    def clear_all_caches(self) -> None:
-        """Очистить все кэши"""
-        with self._lock:
-            self._image_cache.clear()
-            self._sound_cache.clear()
-            self._font_cache.clear()
-            self._object_pool.clear()
-            logger.info("Все кэши очищены")
-    
-    def optimize_memory(self) -> Dict[str, int]:
-        """Оптимизация использования памяти"""
-        with self._lock:
-            # Очищаем просроченные ресурсы
-            image_expired = self._image_cache.cleanup_expired()
-            sound_expired = self._sound_cache.cleanup_expired()
-            font_expired = self._font_cache.cleanup_expired()
-            
-            total_expired = image_expired + sound_expired + font_expired
-            
-            if total_expired > 0:
-                logger.info(f"Оптимизация памяти: очищено {total_expired} ресурсов")
-            
-            return {
-                'images_cleared': image_expired,
-                'sounds_cleared': sound_expired,
-                'fonts_cleared': font_expired,
-                'total_cleared': total_expired
-            }
-    
-    def shutdown(self) -> None:
-        """Завершение работы менеджера ресурсов"""
-        logger.info("Завершение работы ResourceManager...")
-        
-        # Останавливаем поток очистки
-        self._stop_cleanup.set()
-        if self._cleanup_thread and self._cleanup_thread.is_alive():
-            self._cleanup_thread.join(timeout=5)
-        
-        # Очищаем все ресурсы
-        self.clear_all_caches()
-        
-        logger.info("ResourceManager завершен")
-    
-    def __del__(self):
-        """Деструктор"""
-        self.shutdown()
+    def cleanup(self):
+        """Очистка ресурсов"""
+        self.loader.cleanup()
 
 
 # Глобальный экземпляр менеджера ресурсов

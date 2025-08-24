@@ -1,0 +1,10 @@
+{
+  "enabled": false,
+  "show_fps": false,
+  "show_debug_info": false,
+  "log_level": "INFO",
+  "save_debug_logs": true,
+  "performance_profiling": false,
+  "show_hitboxes": false,
+  "show_pathfinding": false
+}

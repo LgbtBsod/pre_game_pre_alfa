@@ -674,8 +674,9 @@ class SkillManager:
 class SkillLearningAI:
     """ИИ для обучения навыкам"""
     
-    def __init__(self, skill_manager: SkillManager):
+    def __init__(self, skill_manager: SkillManager, emotional_system=None):
         self.skill_manager = skill_manager
+        self.emotional_system = emotional_system
         self.learning_patterns: Dict[str, List[str]] = {}
         self.adaptation_strategies: Dict[str, Dict[str, Any]] = {}
     

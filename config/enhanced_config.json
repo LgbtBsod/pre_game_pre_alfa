@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "memory_system": true,
+  "emotional_ai": true,
+  "enhanced_combat": true,
+  "enhanced_content": true,
+  "skill_system": true,
+  "curse_blessing": true,
+  "risk_reward": true,
+  "meta_progression": true
+}
