@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Emotion System - Система эмоций для влияния на поведение AI
+Система эмоций - управление эмоциональным состоянием сущностей для влияния на поведение AI
 """
 
 import logging
@@ -9,6 +9,8 @@ import time
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from enum import Enum
+
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -40,8 +42,383 @@ class Emotion:
         elapsed = current_time - self.start_time
         return max(0.0, self.duration - elapsed)
 
-class EmotionSystem:
-    """Система эмоций для сущности"""
+class EmotionSystem(ISystem):
+    """Система управления эмоциями для всех сущностей"""
+    
+    def __init__(self):
+        self._system_name = "emotion"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
+        # Системы эмоций для сущностей
+        self.emotion_systems: Dict[str, 'EntityEmotionSystem'] = {}
+        
+        # Глобальные эмоциональные события
+        self.global_emotions: List[Dict[str, Any]] = []
+        
+        # Эмоциональные паттерны
+        self.emotion_patterns: Dict[str, Dict[str, Any]] = {}
+        
+        # Статистика системы
+        self.system_stats = {
+            'entities_count': 0,
+            'emotions_triggered': 0,
+            'active_emotions': 0,
+            'update_time': 0.0
+        }
+        
+        logger.info("Система эмоций инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def initialize(self) -> bool:
+        """Инициализация системы эмоций"""
+        try:
+            logger.info("Инициализация системы эмоций...")
+            
+            # Инициализируем эмоциональные паттерны
+            self._initialize_emotion_patterns()
+            
+            # Загружаем сохраненные эмоции
+            self._load_saved_emotions()
+            
+            self._system_state = SystemState.READY
+            logger.info("Система эмоций успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы эмоций: {e}")
+            self._system_state = SystemState.ERROR
+            return False
+    
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы эмоций"""
+        try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем все системы эмоций сущностей
+            self._update_all_entity_emotions(delta_time)
+            
+            # Обрабатываем глобальные эмоции
+            self._process_global_emotions(delta_time)
+            
+            # Обновляем статистику системы
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы эмоций: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы эмоций"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система эмоций приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы эмоций: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы эмоций"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система эмоций возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы эмоций: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы эмоций"""
+        try:
+            logger.info("Очистка системы эмоций...")
+            
+            # Сохраняем эмоции перед очисткой
+            self._save_emotions()
+            
+            # Очищаем все данные
+            self.emotion_systems.clear()
+            self.global_emotions.clear()
+            self.emotion_patterns.clear()
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'entities_count': 0,
+                'emotions_triggered': 0,
+                'active_emotions': 0,
+                'update_time': 0.0
+            }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система эмоций очищена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы эмоций: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'entities_count': len(self.emotion_systems),
+            'global_emotions_count': len(self.global_emotions),
+            'active_emotions': self.system_stats['active_emotions'],
+            'stats': self.system_stats
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "emotion_triggered":
+                return self._handle_emotion_triggered(event_data)
+            elif event_type == "emotion_removed":
+                return self._handle_emotion_removed(event_data)
+            elif event_type == "global_emotion_event":
+                return self._handle_global_emotion_event(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def get_emotion_system(self, entity_id: str) -> 'EntityEmotionSystem':
+        """Получает или создает систему эмоций для сущности"""
+        if entity_id not in self.emotion_systems:
+            self.emotion_systems[entity_id] = EntityEmotionSystem(entity_id)
+            self.system_stats['entities_count'] = len(self.emotion_systems)
+        
+        return self.emotion_systems[entity_id]
+    
+    def add_emotion_to_entity(self, entity_id: str, emotion_type: EmotionType, 
+                             intensity: float, duration: float, source: str = "unknown") -> bool:
+        """Добавляет эмоцию к сущности"""
+        try:
+            emotion_system = self.get_emotion_system(entity_id)
+            emotion_system.add_emotion(emotion_type, intensity, duration, source)
+            
+            # Обновляем статистику
+            self.system_stats['emotions_triggered'] += 1
+            self.system_stats['active_emotions'] = sum(
+                len(es.current_emotions) for es in self.emotion_systems.values()
+            )
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления эмоции к сущности {entity_id}: {e}")
+            return False
+    
+    def get_entity_behavior_modifiers(self, entity_id: str) -> Dict[str, float]:
+        """Получает модификаторы поведения для сущности"""
+        try:
+            emotion_system = self.get_emotion_system(entity_id)
+            return emotion_system.get_behavior_modifiers()
+        except Exception as e:
+            logger.error(f"Ошибка получения модификаторов поведения для {entity_id}: {e}")
+            return {}
+    
+    def trigger_global_emotion(self, emotion_type: EmotionType, intensity: float, 
+                              duration: float, source: str = "global") -> bool:
+        """Запускает глобальное эмоциональное событие"""
+        try:
+            global_emotion = {
+                'type': emotion_type,
+                'intensity': intensity,
+                'duration': duration,
+                'start_time': time.time(),
+                'source': source,
+                'affected_entities': []
+            }
+            
+            self.global_emotions.append(global_emotion)
+            
+            # Применяем к всем сущностям
+            for entity_id in self.emotion_systems:
+                self.add_emotion_to_entity(entity_id, emotion_type, intensity * 0.5, duration, source)
+                global_emotion['affected_entities'].append(entity_id)
+            
+            logger.info(f"Глобальная эмоция {emotion_type.value} запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска глобальной эмоции: {e}")
+            return False
+    
+    def _initialize_emotion_patterns(self) -> None:
+        """Инициализация эмоциональных паттернов"""
+        try:
+            # Паттерны для разных типов событий
+            self.emotion_patterns = {
+                'combat_victory': {
+                    'primary': EmotionType.JOY,
+                    'secondary': EmotionType.SURPRISE,
+                    'intensity_range': (0.6, 0.9),
+                    'duration_range': (30.0, 120.0)
+                },
+                'combat_defeat': {
+                    'primary': EmotionType.SADNESS,
+                    'secondary': EmotionType.FEAR,
+                    'intensity_range': (0.5, 0.8),
+                    'duration_range': (60.0, 300.0)
+                },
+                'discovery': {
+                    'primary': EmotionType.SURPRISE,
+                    'secondary': EmotionType.JOY,
+                    'intensity_range': (0.4, 0.7),
+                    'duration_range': (20.0, 60.0)
+                },
+                'danger': {
+                    'primary': EmotionType.FEAR,
+                    'secondary': EmotionType.ANGER,
+                    'intensity_range': (0.7, 1.0),
+                    'duration_range': (10.0, 60.0)
+                }
+            }
+            
+            logger.debug("Эмоциональные паттерны инициализированы")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать эмоциональные паттерны: {e}")
+    
+    def _update_all_entity_emotions(self, delta_time: float) -> None:
+        """Обновление всех систем эмоций сущностей"""
+        try:
+            for emotion_system in self.emotion_systems.values():
+                emotion_system.update(delta_time)
+                
+            # Обновляем статистику активных эмоций
+            self.system_stats['active_emotions'] = sum(
+                len(es.current_emotions) for es in self.emotion_systems.values()
+            )
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления эмоций сущностей: {e}")
+    
+    def _process_global_emotions(self, delta_time: float) -> None:
+        """Обработка глобальных эмоций"""
+        try:
+            current_time = time.time()
+            
+            # Удаляем истекшие глобальные эмоции
+            self.global_emotions = [
+                ge for ge in self.global_emotions 
+                if current_time - ge['start_time'] < ge['duration']
+            ]
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обработки глобальных эмоций: {e}")
+    
+    def _save_emotions(self) -> None:
+        """Сохранение эмоций"""
+        try:
+            # Здесь можно добавить логику сохранения эмоций
+            pass
+        except Exception as e:
+            logger.warning(f"Не удалось сохранить эмоции: {e}")
+    
+    def _load_saved_emotions(self) -> None:
+        """Загрузка сохраненных эмоций"""
+        try:
+            # Здесь можно добавить логику загрузки эмоций
+            pass
+        except Exception as e:
+            logger.warning(f"Не удалось загрузить сохраненные эмоции: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            
+            if entity_id:
+                # Создаем систему эмоций для новой сущности
+                self.get_emotion_system(entity_id)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_emotion_triggered(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события запуска эмоции"""
+        try:
+            entity_id = event_data.get('entity_id')
+            emotion_type = EmotionType(event_data.get('emotion_type', 'neutral'))
+            intensity = event_data.get('intensity', 0.5)
+            duration = event_data.get('duration', 60.0)
+            source = event_data.get('source', 'unknown')
+            
+            if entity_id and emotion_type:
+                return self.add_emotion_to_entity(entity_id, emotion_type, intensity, duration, source)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события запуска эмоции: {e}")
+            return False
+    
+    def _handle_emotion_removed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события удаления эмоции"""
+        try:
+            entity_id = event_data.get('entity_id')
+            emotion_type = EmotionType(event_data.get('emotion_type', 'neutral'))
+            
+            if entity_id and emotion_type:
+                emotion_system = self.get_emotion_system(entity_id)
+                emotion_system.remove_emotion(emotion_type)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события удаления эмоции: {e}")
+            return False
+    
+    def _handle_global_emotion_event(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события глобального эмоционального события"""
+        try:
+            emotion_type = EmotionType(event_data.get('emotion_type', 'neutral'))
+            intensity = event_data.get('intensity', 0.5)
+            duration = event_data.get('duration', 60.0)
+            source = event_data.get('source', 'global')
+            
+            return self.trigger_global_emotion(emotion_type, intensity, duration, source)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события глобального эмоционального события: {e}")
+            return False
+
+class EntityEmotionSystem:
+    """Система эмоций для конкретной сущности"""
     
     def __init__(self, entity_id: str):
         self.entity_id = entity_id
@@ -205,7 +582,7 @@ class EmotionSystem:
         }
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'EmotionSystem':
+    def from_dict(cls, data: Dict[str, Any]) -> 'EntityEmotionSystem':
         """Загрузка системы эмоций"""
         emotion_system = cls(data['entity_id'])
         emotion_system.base_mood = EmotionType(data['base_mood'])
@@ -223,37 +600,3 @@ class EmotionSystem:
         
         emotion_system.emotion_history = data.get('emotion_history', [])
         return emotion_system
-
-class EmotionManager:
-    """Менеджер эмоций для всех сущностей"""
-    
-    def __init__(self):
-        self.emotion_systems: Dict[str, EmotionSystem] = {}
-        
-        logger.info("Emotion Manager инициализирован")
-    
-    def get_emotion_system(self, entity_id: str) -> EmotionSystem:
-        """Получает или создает систему эмоций для сущности"""
-        if entity_id not in self.emotion_systems:
-            self.emotion_systems[entity_id] = EmotionSystem(entity_id)
-        
-        return self.emotion_systems[entity_id]
-    
-    def add_emotion_to_entity(self, entity_id: str, emotion_type: EmotionType, 
-                             intensity: float, duration: float, source: str = "unknown"):
-        """Добавляет эмоцию к сущности"""
-        emotion_system = self.get_emotion_system(entity_id)
-        emotion_system.add_emotion(emotion_type, intensity, duration, source)
-    
-    def get_entity_behavior_modifiers(self, entity_id: str) -> Dict[str, float]:
-        """Получает модификаторы поведения для сущности"""
-        emotion_system = self.get_emotion_system(entity_id)
-        return emotion_system.get_behavior_modifiers()
-    
-    def update_all(self, delta_time: float):
-        """Обновляет все системы эмоций"""
-        for emotion_system in self.emotion_systems.values():
-            emotion_system.update(delta_time)
-
-# Глобальный менеджер эмоций
-emotion_manager = EmotionManager()

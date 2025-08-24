@@ -15,7 +15,7 @@ from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from panda3d.core import WindowProperties
 
-from .interfaces import GameState, ISystemManager, IEventEmitter
+from .interfaces import SystemState, ISystemManager, IEventEmitter
 from .system_manager import SystemManager
 from .event_system import EventSystem
 from .config_manager import ConfigManager
@@ -41,7 +41,7 @@ class GameEngine(ShowBase):
         self.paused = False
         
         # Состояние игры
-        self.current_state = GameState.INITIALIZING
+        self.current_state = SystemState.INITIALIZING
         self.delta_time = 0.0
         self.last_frame_time = time.time()
         
@@ -365,16 +365,16 @@ class GameEngine(ShowBase):
         except Exception as e:
             logger.error(f"Ошибка при очистке ресурсов: {e}")
     
-    def change_state(self, new_state: GameState):
+    def change_state(self, new_state: SystemState):
         """Изменение состояния игры"""
         old_state = self.current_state
         self.current_state = new_state
         logger.info(f"Изменение состояния игры: {old_state} -> {new_state}")
         
         # Обработка изменения состояния
-        if new_state == GameState.QUITTING:
+        if new_state == SystemState.QUITTING:
             self.running = False
-        elif new_state == GameState.PLAYING:
+        elif new_state == SystemState.PLAYING:
             self.paused = False
     
     def get_performance_stats(self) -> Dict[str, Any]:

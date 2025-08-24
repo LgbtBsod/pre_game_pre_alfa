@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from collections import deque
 import pygame
-from .interfaces import IPerformanceManager
+from .interfaces import IPerformanceMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class PerformanceMetrics:
     entities_count: int = 0
     particles_count: int = 0
 
-class PerformanceManager(IPerformanceManager):
+class PerformanceManager(IPerformanceMonitor):
     """Менеджер производительности"""
     
     def __init__(self):

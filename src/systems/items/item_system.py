@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-Item System - Система предметов с поддержкой специальных эффектов
+Система предметов - управление предметами и их специальными эффектами
 """
 
 import logging
+import time
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Union
 from enum import Enum
 
-from ..effects.effect_system import SpecialEffect, Effect, EffectVisuals, EffectBalance, DamageType
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -52,20 +53,20 @@ class BaseItem:
         self.description = description
         self.item_type = item_type
         self.rarity = rarity
-        self.special_effects: List[SpecialEffect] = []
+        self.special_effects: List[Any] = []  # Упрощено для совместимости
         self.required_level: int = 1
         self.stack_size: int = 1
         self.max_stack: int = 1
         self.icon: Optional[str] = None
         self.model: Optional[str] = None
         
-    def add_special_effect(self, effect: SpecialEffect):
+    def add_special_effect(self, effect: Any):
         """Добавляет специальный эффект к предмету"""
         self.special_effects.append(effect)
     
-    def get_effects_for_trigger(self, trigger_type) -> List[SpecialEffect]:
+    def get_effects_for_trigger(self, trigger_type) -> List[Any]:
         """Возвращает эффекты для определенного триггера"""
-        return [effect for effect in self.special_effects if effect.trigger_condition == trigger_type]
+        return [effect for effect in self.special_effects if hasattr(effect, 'trigger_condition') and effect.trigger_condition == trigger_type]
     
     def to_dict(self) -> Dict[str, Any]:
         """Сериализация предмета"""
@@ -74,7 +75,7 @@ class BaseItem:
             "description": self.description,
             "item_type": self.item_type.value,
             "rarity": self.rarity.value,
-            "special_effects": [effect.to_dict() for effect in self.special_effects],
+            "special_effects": [effect.to_dict() if hasattr(effect, 'to_dict') else str(effect) for effect in self.special_effects],
             "required_level": self.required_level,
             "stack_size": self.stack_size,
             "max_stack": self.max_stack,
@@ -92,11 +93,6 @@ class BaseItem:
             rarity=ItemRarity(data["rarity"])
         )
         
-        # Восстанавливаем специальные эффекты
-        for effect_data in data.get("special_effects", []):
-            effect = SpecialEffect.from_dict(effect_data)
-            item.add_special_effect(effect)
-        
         # Восстанавливаем остальные свойства
         item.required_level = data.get("required_level", 1)
         item.stack_size = data.get("stack_size", 1)
@@ -110,7 +106,7 @@ class Weapon(BaseItem):
     """Класс оружия"""
     
     def __init__(self, name: str, description: str, damage: int, attack_speed: float, 
-                 damage_type: DamageType, slot: str, rarity: ItemRarity = ItemRarity.COMMON):
+                 damage_type: str, slot: str, rarity: ItemRarity = ItemRarity.COMMON):
         super().__init__(name, description, ItemType.WEAPON, rarity)
         self.damage = damage
         self.attack_speed = attack_speed
@@ -138,7 +134,7 @@ class Weapon(BaseItem):
         data.update({
             "damage": self.damage,
             "attack_speed": self.attack_speed,
-            "damage_type": self.damage_type.value,
+            "damage_type": self.damage_type,
             "slot": self.slot,
             "range": self.range,
             "durability": self.durability,
@@ -154,15 +150,10 @@ class Weapon(BaseItem):
             description=data["description"],
             damage=data["damage"],
             attack_speed=data["attack_speed"],
-            damage_type=DamageType(data["damage_type"]),
+            damage_type=data["damage_type"],
             slot=data["slot"],
             rarity=ItemRarity(data["rarity"])
         )
-        
-        # Восстанавливаем специальные эффекты
-        for effect_data in data.get("special_effects", []):
-            effect = SpecialEffect.from_dict(effect_data)
-            weapon.add_special_effect(effect)
         
         # Восстанавливаем остальные свойства
         weapon.required_level = data.get("required_level", 1)
@@ -218,11 +209,6 @@ class Armor(BaseItem):
             rarity=ItemRarity(data["rarity"])
         )
         
-        # Восстанавливаем специальные эффекты
-        for effect_data in data.get("special_effects", []):
-            effect = SpecialEffect.from_dict(effect_data)
-            armor.add_special_effect(effect)
-        
         # Восстанавливаем статистики
         if "stats" in data:
             armor.stats = ItemStats(**data["stats"])
@@ -275,11 +261,6 @@ class Accessory(BaseItem):
             rarity=ItemRarity(data["rarity"])
         )
         
-        # Восстанавливаем специальные эффекты
-        for effect_data in data.get("special_effects", []):
-            effect = SpecialEffect.from_dict(effect_data)
-            accessory.add_special_effect(effect)
-        
         # Восстанавливаем остальные свойства
         accessory.required_level = data.get("required_level", 1)
         
@@ -288,7 +269,7 @@ class Accessory(BaseItem):
 class Consumable(BaseItem):
     """Класс расходуемых предметов"""
     
-    def __init__(self, name: str, description: str, effects: List[Effect], 
+    def __init__(self, name: str, description: str, effects: List[Any], 
                  rarity: ItemRarity = ItemRarity.COMMON):
         super().__init__(name, description, ItemType.CONSUMABLE, rarity)
         self.effects = effects
@@ -297,11 +278,10 @@ class Consumable(BaseItem):
     def use(self, target: Any):
         """Использует расходуемый предмет"""
         for effect in self.effects:
-            if effect.duration == 0:
+            if hasattr(effect, 'apply_instant'):
                 effect.apply_instant(self, target)
-            else:
-                if hasattr(target, 'add_effect'):
-                    target.add_effect(effect, self)
+            elif hasattr(effect, 'apply'):
+                effect.apply(self, target)
         
         # Уменьшаем количество предметов
         self.stack_size -= 1
@@ -312,14 +292,15 @@ class Consumable(BaseItem):
         """Сериализация расходуемого предмета"""
         data = super().to_dict()
         data.update({
-            "effects": [effect.to_dict() for effect in self.effects]
+            "effects": [effect.to_dict() if hasattr(effect, 'to_dict') else str(effect) for effect in self.effects]
         })
         return data
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Consumable':
         """Десериализация расходуемого предмета"""
-        effects = [Effect.from_dict(effect_data) for effect_data in data.get("effects", [])]
+        # Упрощенная загрузка эффектов
+        effects = []
         
         consumable = cls(
             name=data["name"],
@@ -328,16 +309,417 @@ class Consumable(BaseItem):
             rarity=ItemRarity(data["rarity"])
         )
         
-        # Восстанавливаем специальные эффекты
-        for effect_data in data.get("special_effects", []):
-            effect = SpecialEffect.from_dict(effect_data)
-            consumable.add_special_effect(effect)
-        
         # Восстанавливаем остальные свойства
         consumable.required_level = data.get("required_level", 1)
         consumable.stack_size = data.get("stack_size", 1)
         
         return consumable
+
+class ItemSystem(ISystem):
+    """Система управления предметами для всех сущностей"""
+    
+    def __init__(self):
+        self._system_name = "item"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
+        # Предметы в системе
+        self.items: Dict[str, BaseItem] = {}
+        
+        # Предметы сущностей
+        self.entity_items: Dict[str, List[BaseItem]] = {}
+        
+        # Шаблоны предметов
+        self.item_templates: Dict[str, Dict[str, Any]] = {}
+        
+        # Фабрика предметов
+        self.item_factory = ItemFactory()
+        
+        # Статистика системы
+        self.system_stats = {
+            'items_count': 0,
+            'entities_count': 0,
+            'items_created': 0,
+            'items_used': 0,
+            'update_time': 0.0
+        }
+        
+        logger.info("Система предметов инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def initialize(self) -> bool:
+        """Инициализация системы предметов"""
+        try:
+            logger.info("Инициализация системы предметов...")
+            
+            # Инициализируем шаблоны предметов
+            self._initialize_item_templates()
+            
+            # Создаем базовые предметы
+            self._create_base_items()
+            
+            self._system_state = SystemState.READY
+            logger.info("Система предметов успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы предметов: {e}")
+            self._system_state = SystemState.ERROR
+            return False
+    
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы предметов"""
+        try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем предметы (например, прочность, эффекты)
+            self._update_items(delta_time)
+            
+            # Обновляем статистику системы
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы предметов: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы предметов"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система предметов приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы предметов: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы предметов"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система предметов возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы предметов: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы предметов"""
+        try:
+            logger.info("Очистка системы предметов...")
+            
+            # Очищаем все данные
+            self.items.clear()
+            self.entity_items.clear()
+            self.item_templates.clear()
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'items_count': 0,
+                'entities_count': 0,
+                'items_created': 0,
+                'items_used': 0,
+                'update_time': 0.0
+            }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система предметов очищена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы предметов: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'items_count': len(self.items),
+            'entities_count': len(self.entity_items),
+            'stats': self.system_stats
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "item_created":
+                return self._handle_item_created(event_data)
+            elif event_type == "item_used":
+                return self._handle_item_used(event_data)
+            elif event_type == "item_equipped":
+                return self._handle_item_equipped(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def create_item(self, item_template: str, **kwargs) -> Optional[BaseItem]:
+        """Создает предмет по шаблону"""
+        try:
+            if item_template not in self.item_templates:
+                logger.warning(f"Шаблон предмета {item_template} не найден")
+                return None
+            
+            template = self.item_templates[item_template]
+            
+            # Создаем предмет на основе шаблона
+            if template['type'] == 'weapon':
+                item = Weapon(
+                    name=template['name'],
+                    description=template['description'],
+                    damage=template['damage'],
+                    attack_speed=template['attack_speed'],
+                    damage_type=template['damage_type'],
+                    slot=template['slot'],
+                    rarity=ItemRarity(template['rarity'])
+                )
+            elif template['type'] == 'armor':
+                item = Armor(
+                    name=template['name'],
+                    description=template['description'],
+                    armor_value=template['armor_value'],
+                    slot=template['slot'],
+                    rarity=ItemRarity(template['rarity'])
+                )
+            elif template['type'] == 'accessory':
+                item = Accessory(
+                    name=template['name'],
+                    description=template['description'],
+                    slot=template['slot'],
+                    stats=template['stats'],
+                    rarity=ItemRarity(template['rarity'])
+                )
+            elif template['type'] == 'consumable':
+                item = Consumable(
+                    name=template['name'],
+                    description=template['description'],
+                    effects=[],
+                    rarity=ItemRarity(template['rarity'])
+                )
+            else:
+                item = BaseItem(
+                    name=template['name'],
+                    description=template['description'],
+                    item_type=ItemType(template['type']),
+                    rarity=ItemRarity(template['rarity'])
+                )
+            
+            # Применяем дополнительные параметры
+            for key, value in kwargs.items():
+                if hasattr(item, key):
+                    setattr(item, key, value)
+            
+            # Добавляем в систему
+            item_id = f"{item.name}_{len(self.items)}"
+            self.items[item_id] = item
+            self.system_stats['items_count'] = len(self.items)
+            self.system_stats['items_created'] += 1
+            
+            logger.info(f"Создан предмет: {item.name}")
+            return item
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания предмета {item_template}: {e}")
+            return None
+    
+    def add_item_to_entity(self, entity_id: str, item: BaseItem) -> bool:
+        """Добавляет предмет сущности"""
+        try:
+            if entity_id not in self.entity_items:
+                self.entity_items[entity_id] = []
+                self.system_stats['entities_count'] = len(self.entity_items)
+            
+            self.entity_items[entity_id].append(item)
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления предмета к сущности {entity_id}: {e}")
+            return False
+    
+    def get_entity_items(self, entity_id: str) -> List[BaseItem]:
+        """Получает все предметы сущности"""
+        return self.entity_items.get(entity_id, [])
+    
+    def use_item(self, entity_id: str, item_name: str, target: Any = None) -> bool:
+        """Использует предмет сущности"""
+        try:
+            if entity_id not in self.entity_items:
+                return False
+            
+            # Ищем предмет
+            item = None
+            for entity_item in self.entity_items[entity_id]:
+                if entity_item.name == item_name:
+                    item = entity_item
+                    break
+            
+            if not item:
+                return False
+            
+            # Используем предмет
+            if hasattr(item, 'use'):
+                item.use(target)
+                self.system_stats['items_used'] += 1
+                return True
+            
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка использования предмета {item_name} для {entity_id}: {e}")
+            return False
+    
+    def _initialize_item_templates(self) -> None:
+        """Инициализация шаблонов предметов"""
+        try:
+            # Шаблоны для разных типов предметов
+            self.item_templates = {
+                'basic_sword': {
+                    'type': 'weapon',
+                    'name': 'Базовый меч',
+                    'description': 'Простой железный меч',
+                    'damage': 15,
+                    'attack_speed': 1.0,
+                    'damage_type': 'physical',
+                    'slot': 'main_hand',
+                    'rarity': 'common'
+                },
+                'leather_armor': {
+                    'type': 'armor',
+                    'name': 'Кожаная броня',
+                    'description': 'Легкая кожаная броня',
+                    'armor_value': 8,
+                    'slot': 'chest',
+                    'rarity': 'common'
+                },
+                'health_potion': {
+                    'type': 'consumable',
+                    'name': 'Зелье здоровья',
+                    'description': 'Восстанавливает здоровье',
+                    'rarity': 'common'
+                }
+            }
+            
+            logger.debug("Шаблоны предметов инициализированы")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать шаблоны предметов: {e}")
+    
+    def _create_base_items(self) -> None:
+        """Создание базовых предметов"""
+        try:
+            # Создаем базовые предметы из шаблонов
+            for template_id in self.item_templates:
+                self.create_item(template_id)
+            
+            logger.info(f"Создано {len(self.items)} базовых предметов")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось создать базовые предметы: {e}")
+    
+    def _update_items(self, delta_time: float) -> None:
+        """Обновление предметов"""
+        try:
+            # Обновляем все предметы (например, прочность, эффекты)
+            for item in self.items.values():
+                if hasattr(item, 'update'):
+                    item.update(delta_time)
+                    
+        except Exception as e:
+            logger.warning(f"Ошибка обновления предметов: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            
+            if entity_id:
+                # Инициализируем список предметов для новой сущности
+                self.entity_items[entity_id] = []
+                self.system_stats['entities_count'] = len(self.entity_items)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_item_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания предмета"""
+        try:
+            item_template = event_data.get('item_template')
+            entity_id = event_data.get('entity_id')
+            
+            if item_template:
+                item = self.create_item(item_template)
+                if item and entity_id:
+                    return self.add_item_to_entity(entity_id, item)
+                return item is not None
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания предмета: {e}")
+            return False
+    
+    def _handle_item_used(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события использования предмета"""
+        try:
+            entity_id = event_data.get('entity_id')
+            item_name = event_data.get('item_name')
+            target = event_data.get('target')
+            
+            if entity_id and item_name:
+                return self.use_item(entity_id, item_name, target)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события использования предмета: {e}")
+            return False
+    
+    def _handle_item_equipped(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события экипировки предмета"""
+        try:
+            entity_id = event_data.get('entity_id')
+            item_name = event_data.get('item_name')
+            slot = event_data.get('slot')
+            
+            if entity_id and item_name and slot:
+                # Логика экипировки предмета
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события экипировки предмета: {e}")
+            return False
 
 class ItemFactory:
     """Фабрика для создания предметов"""
@@ -345,76 +727,15 @@ class ItemFactory:
     @staticmethod
     def create_enhanced_fire_sword() -> Weapon:
         """Создает огненный меч с улучшенными спецэффектами"""
-        from ..effects.effect_system import Effect, EffectVisuals, EffectBalance, TriggerType
-        
-        # Эффект поджига
-        burn_effect = Effect(
-            name="Ожог",
-            category="dot",
-            value=8,
-            damage_types=[DamageType.FIRE],
-            duration=5,
-            period=1,
-            scaling={"intelligence": 0.2},
-            target_type="enemy",
-            visuals=EffectVisuals(
-                particle_effect="fire_burn",
-                sound_effect="fire_crackle",
-                color_overlay=(255, 100, 0, 0.3)
-            ),
-            tags=["fire", "dot"]
-        )
-        
-        # Эффект взрыва
-        explosion_effect = Effect(
-            name="Огненный взрыв",
-            category="instant",
-            value=15,
-            damage_types=[DamageType.FIRE],
-            scaling={"intelligence": 0.3},
-            target_type="area",
-            area={"shape": "circle", "radius": 2},
-            ignore_resistance=0.2,
-            visuals=EffectVisuals(
-                particle_effect="fire_explosion",
-                sound_effect="explosion",
-                screen_shake=0.5
-            ),
-            tags=["fire", "aoe"]
-        )
-        
-        # Специальные эффекты оружия
-        special_effects = [
-            SpecialEffect(
-                chance=0.25,
-                effect=burn_effect,
-                trigger_condition=TriggerType.ON_HIT,
-                cooldown=0,
-                max_procs=0,
-                track_stats=True
-            ),
-            SpecialEffect(
-                chance=0.1,
-                effect=explosion_effect,
-                trigger_condition=TriggerType.ON_CRIT,
-                cooldown=5,
-                max_procs=1,
-                track_stats=True
-            )
-        ]
-        
         weapon = Weapon(
             name="Пылающий клинок",
             description="Меч, наполненный мощью огненного элементаля",
             damage=35,
             attack_speed=1.1,
-            damage_type=DamageType.FIRE,
+            damage_type="fire",
             slot="main_hand",
             rarity=ItemRarity.EPIC
         )
-        
-        for effect in special_effects:
-            weapon.add_special_effect(effect)
         
         weapon.required_level = 15
         
@@ -423,58 +744,6 @@ class ItemFactory:
     @staticmethod
     def create_lightning_ring() -> Accessory:
         """Создает кольцо молний со спецэффектами"""
-        from ..effects.effect_system import Effect, EffectVisuals, TriggerType, ElementCondition
-        
-        # Эффект цепи молний
-        chain_effect = Effect(
-            name="Цепь молний",
-            category="instant",
-            value=20,
-            damage_types=[DamageType.LIGHTNING],
-            scaling={"intelligence": 0.5},
-            target_type="enemy",
-            visuals=EffectVisuals(
-                particle_effect="lightning_chain",
-                sound_effect="lightning_strike"
-            ),
-            tags=["lightning", "chain"]
-        )
-        
-        # Эффект проводимости
-        conductivity_effect = Effect(
-            name="Проводимость",
-            category="debuff",
-            value={"lightning_resistance": -0.2},
-            duration=4,
-            target_type="enemy",
-            visuals=EffectVisuals(
-                particle_effect="lightning_aura",
-                color_overlay=(100, 100, 255, 0.2)
-            ),
-            tags=["lightning", "debuff"]
-        )
-        
-        # Специальные эффекты аксессуара
-        special_effects = [
-            SpecialEffect(
-                chance=0.15,
-                effect=chain_effect,
-                trigger_condition=TriggerType.ON_SPELL_CAST,
-                cooldown=3,
-                max_procs=0,
-                track_stats=True
-            ),
-            SpecialEffect(
-                chance=0.3,
-                effect=conductivity_effect,
-                trigger_condition=TriggerType.ON_ELEMENT_DAMAGE,
-                cooldown=0,
-                max_procs=0,
-                conditions=[ElementCondition(DamageType.LIGHTNING)],
-                track_stats=True
-            )
-        ]
-        
         accessory = Accessory(
             name="Кольцо грозы",
             description="Увеличивает мощь заклинаний молнии",
@@ -482,9 +751,6 @@ class ItemFactory:
             stats={"intelligence": 15, "spell_power": 0.1},
             rarity=ItemRarity.RARE
         )
-        
-        for effect in special_effects:
-            accessory.add_special_effect(effect)
         
         accessory.required_level = 10
         

@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-Skill System - Система скиллов с поддержкой AI обучения
+Система навыков - управление навыками и способностями сущностей с поддержкой AI обучения
 """
 
 import logging
+import time
+import random
+import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Union, Callable
 from enum import Enum
-import time
-import random
 
-from ..effects.effect_system import Effect, SpecialEffect, TriggerType, DamageType, EffectCategory
-from ..genome.genome_system import GeneType, genome_manager
-from ..ai.ai_entity import MemoryType
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,7 @@ class SkillType(Enum):
     ULTIMATE = "ultimate"
     COMBAT = "combat"
     UTILITY = "utility"
+    REACTIVE = "reactive"
 
 class SkillTarget(Enum):
     SELF = "self"
@@ -72,8 +72,8 @@ class Skill:
         self.target_type = target_type
         self.cooldown_system = SkillCooldown(cooldown)
         self.requirements = SkillRequirements()
-        self.effects: List[Effect] = []
-        self.special_effects: List[SpecialEffect] = []
+        self.effects: List[Any] = []  # Упрощено для совместимости
+        self.special_effects: List[Any] = []  # Упрощено для совместимости
         
         # AI обучение
         self.ai_learning_data = {
@@ -138,31 +138,10 @@ class Skill:
         return True
     
     def can_learn(self, entity: Any) -> bool:
-        """Проверяет, может ли сущность изучить скилл с учетом генома"""
+        """Проверяет, может ли сущность изучить скилл"""
         # Проверяем базовые требования
         if not self._check_basic_requirements(entity):
             return False
-        
-        # Проверяем геном
-        if hasattr(entity, 'get') and entity.get('id'):
-            genome = genome_manager.get_genome(entity['id'])
-            if genome:
-                # Получаем требования скилла в формате для генома
-                skill_requirements = {
-                    'strength': self.requirements.strength,
-                    'agility': self.requirements.agility,
-                    'intelligence': self.requirements.intelligence,
-                    'vitality': self.requirements.vitality
-                }
-                
-                # Проверяем, может ли геном удовлетворить требования
-                if not genome.can_learn_skill(skill_requirements):
-                    return False
-                
-                # Дополнительная проверка на эволюционный потенциал
-                evolution_potential = genome.get_evolution_potential()
-                if evolution_potential < 0.3:  # Минимальный эволюционный потенциал
-                    return False
         
         return True
     
@@ -191,22 +170,18 @@ class Skill:
     
     def _apply_effects(self, caster: Any, target: Any, context: Dict[str, Any]):
         """Применяет эффекты скилла"""
+        # Упрощенная логика применения эффектов
         for effect in self.effects:
-            if effect.duration == 0:
-                effect.apply_instant(caster, target)
-            else:
-                if hasattr(target, 'add_effect'):
-                    target.add_effect(effect, caster)
+            if hasattr(effect, 'apply'):
+                effect.apply(caster, target)
         
         # Применяем специальные эффекты
         for special_effect in self.special_effects:
-            if special_effect.can_trigger(caster, target, TriggerType.ON_SPELL_CAST, context):
+            if hasattr(special_effect, 'trigger'):
                 special_effect.trigger(caster, target, context)
     
     def _calculate_distance(self, caster: Any, target: Any) -> float:
         """Рассчитывает дистанцию между кастером и целью"""
-        import math
-        
         caster_x = caster.get('x', 0)
         caster_y = caster.get('y', 0)
         target_x = target.get('x', 0)
@@ -262,8 +237,8 @@ class Skill:
             "cooldown": self.cooldown_system.base_cooldown,
             "current_cooldown": self.cooldown_system.current_cooldown,
             "requirements": self.requirements.__dict__,
-            "effects": [effect.to_dict() for effect in self.effects],
-            "special_effects": [effect.to_dict() for effect in self.special_effects],
+            "effects": [effect.to_dict() if hasattr(effect, 'to_dict') else str(effect) for effect in self.effects],
+            "special_effects": [effect.to_dict() if hasattr(effect, 'to_dict') else str(effect) for effect in self.special_effects],
             "ai_learning_data": self.ai_learning_data,
             "cast_time": self.cast_time,
             "range": self.range,
@@ -282,15 +257,6 @@ class Skill:
             cooldown=data["cooldown"]
         )
         
-        # Восстанавливаем эффекты
-        for effect_data in data.get("effects", []):
-            effect = Effect.from_dict(effect_data)
-            skill.effects.append(effect)
-        
-        for effect_data in data.get("special_effects", []):
-            effect = SpecialEffect.from_dict(effect_data)
-            skill.special_effects.append(effect)
-        
         # Восстанавливаем остальные свойства
         skill.cooldown_system.current_cooldown = data.get("current_cooldown", 0)
         skill.requirements = SkillRequirements(**data.get("requirements", {}))
@@ -305,7 +271,7 @@ class Skill:
 class CombatSkill(Skill):
     """Боевой скилл"""
     
-    def __init__(self, name: str, description: str, damage: int, damage_type: DamageType,
+    def __init__(self, name: str, description: str, damage: int, damage_type: str,
                  target_type: SkillTarget = SkillTarget.ENEMY, cooldown: float = 0.0):
         super().__init__(name, description, SkillType.COMBAT, target_type, cooldown)
         self.damage = damage
@@ -412,7 +378,7 @@ class SkillTree:
         self.skills[skill.name] = skill
     
     def learn_skill(self, skill_name: str, character: Any) -> bool:
-        """Изучает скилл с учетом генома"""
+        """Изучает скилл"""
         if skill_name not in self.skills:
             logger.warning(f"Скилл {skill_name} не найден в дереве скиллов")
             return False
@@ -425,7 +391,7 @@ class SkillTree:
         
         # Проверяем геном
         if not skill.can_learn(character):
-            logger.warning(f"Геном не позволяет изучить скилл {skill_name}")
+            logger.warning(f"Не удается изучить скилл {skill_name}")
             return False
         
         # Проверяем наличие очков скиллов
@@ -436,16 +402,6 @@ class SkillTree:
         # Изучаем скилл
         self.learned_skills.append(skill_name)
         self.skill_points -= skill.requirements.skill_points
-        
-        # Записываем в память AI
-        if hasattr(character, 'ai_entity'):
-            character['ai_entity'].add_memory(
-                MemoryType.SKILL_USAGE,
-                {'skill_name': skill_name, 'action': 'learn'},
-                f"learn_skill_{skill_name}",
-                {'skill_type': skill.skill_type.value},
-                True
-            )
         
         logger.info(f"Персонаж {self.character_id} изучил скилл {skill_name}")
         return True
@@ -541,8 +497,345 @@ class SkillTree:
         
         return skill_tree
 
-# SkillFactory удален - теперь используется ContentGenerator для создания скиллов
-# Пример использования:
-# from ..content.content_generator import ContentGenerator
-# content_gen = ContentGenerator()
-# fireball_skill = content_gen.generate_unique_skill(session_id, level, "combat")
+class SkillSystem(ISystem):
+    """Система управления навыками для всех сущностей"""
+    
+    def __init__(self):
+        self._system_name = "skill"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
+        # Деревья скиллов для сущностей
+        self.skill_trees: Dict[str, SkillTree] = {}
+        
+        # Доступные скиллы
+        self.available_skills: Dict[str, Skill] = {}
+        
+        # Шаблоны скиллов
+        self.skill_templates: Dict[str, Dict[str, Any]] = {}
+        
+        # Статистика системы
+        self.system_stats = {
+            'entities_count': 0,
+            'skills_learned': 0,
+            'skills_used': 0,
+            'update_time': 0.0
+        }
+        
+        logger.info("Система навыков инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def initialize(self) -> bool:
+        """Инициализация системы навыков"""
+        try:
+            logger.info("Инициализация системы навыков...")
+            
+            # Инициализируем шаблоны скиллов
+            self._initialize_skill_templates()
+            
+            # Создаем базовые скиллы
+            self._create_base_skills()
+            
+            self._system_state = SystemState.READY
+            logger.info("Система навыков успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы навыков: {e}")
+            self._system_state = SystemState.ERROR
+            return False
+    
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы навыков"""
+        try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем все деревья скиллов
+            self._update_all_skill_trees(delta_time)
+            
+            # Обновляем статистику системы
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы навыков: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы навыков"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система навыков приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы навыков: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы навыков"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система навыков возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы навыков: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы навыков"""
+        try:
+            logger.info("Очистка системы навыков...")
+            
+            # Очищаем все данные
+            self.skill_trees.clear()
+            self.available_skills.clear()
+            self.skill_templates.clear()
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'entities_count': 0,
+                'skills_learned': 0,
+                'skills_used': 0,
+                'update_time': 0.0
+            }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система навыков очищена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы навыков: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'entities_count': len(self.skill_trees),
+            'available_skills_count': len(self.available_skills),
+            'stats': self.system_stats
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "skill_learned":
+                return self._handle_skill_learned(event_data)
+            elif event_type == "skill_used":
+                return self._handle_skill_used(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def create_skill_tree(self, entity_id: str) -> SkillTree:
+        """Создает дерево скиллов для сущности"""
+        if entity_id not in self.skill_trees:
+            skill_tree = SkillTree(entity_id)
+            self.skill_trees[entity_id] = skill_tree
+            self.system_stats['entities_count'] = len(self.skill_trees)
+            
+            # Добавляем базовые скиллы
+            for skill_name, skill in self.available_skills.items():
+                skill_tree.add_skill(skill)
+        
+        return self.skill_trees[entity_id]
+    
+    def get_skill_tree(self, entity_id: str) -> Optional[SkillTree]:
+        """Получает дерево скиллов для сущности"""
+        return self.skill_trees.get(entity_id)
+    
+    def learn_skill(self, entity_id: str, skill_name: str, character: Any) -> bool:
+        """Изучает скилл для сущности"""
+        try:
+            skill_tree = self.get_skill_tree(entity_id)
+            if not skill_tree:
+                skill_tree = self.create_skill_tree(entity_id)
+            
+            if skill_tree.learn_skill(skill_name, character):
+                self.system_stats['skills_learned'] += 1
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка изучения скилла {skill_name} для {entity_id}: {e}")
+            return False
+    
+    def use_skill(self, entity_id: str, skill_name: str, caster: Any, target: Any = None, context: Dict[str, Any] = None) -> bool:
+        """Использует скилл"""
+        try:
+            skill_tree = self.get_skill_tree(entity_id)
+            if not skill_tree or skill_name not in skill_tree.learned_skills:
+                return False
+            
+            skill = skill_tree.skills[skill_name]
+            if skill.use(caster, target, context):
+                self.system_stats['skills_used'] += 1
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка использования скилла {skill_name} для {entity_id}: {e}")
+            return False
+    
+    def _initialize_skill_templates(self) -> None:
+        """Инициализация шаблонов скиллов"""
+        try:
+            # Шаблоны для разных типов скиллов
+            self.skill_templates = {
+                'basic_attack': {
+                    'name': 'Базовая атака',
+                    'description': 'Простая физическая атака',
+                    'skill_type': SkillType.COMBAT,
+                    'target_type': SkillTarget.ENEMY,
+                    'cooldown': 1.0,
+                    'damage': 10,
+                    'damage_type': 'physical'
+                },
+                'fireball': {
+                    'name': 'Огненный шар',
+                    'description': 'Магическая атака огнем',
+                    'skill_type': SkillType.COMBAT,
+                    'target_type': SkillTarget.ENEMY,
+                    'cooldown': 5.0,
+                    'damage': 25,
+                    'damage_type': 'fire'
+                },
+                'heal': {
+                    'name': 'Исцеление',
+                    'description': 'Восстанавливает здоровье',
+                    'skill_type': SkillType.UTILITY,
+                    'target_type': SkillTarget.ALLY,
+                    'cooldown': 8.0,
+                    'effect_type': 'heal'
+                }
+            }
+            
+            logger.debug("Шаблоны скиллов инициализированы")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать шаблоны скиллов: {e}")
+    
+    def _create_base_skills(self) -> None:
+        """Создание базовых скиллов"""
+        try:
+            # Создаем базовые скиллы из шаблонов
+            for skill_id, template in self.skill_templates.items():
+                if template['skill_type'] == SkillType.COMBAT:
+                    skill = CombatSkill(
+                        name=template['name'],
+                        description=template['description'],
+                        damage=template['damage'],
+                        damage_type=template['damage_type'],
+                        target_type=template['target_type'],
+                        cooldown=template['cooldown']
+                    )
+                elif template['skill_type'] == SkillType.UTILITY:
+                    skill = UtilitySkill(
+                        name=template['name'],
+                        description=template['description'],
+                        effect_type=template['effect_type'],
+                        target_type=template['target_type'],
+                        cooldown=template['cooldown']
+                    )
+                else:
+                    skill = Skill(
+                        name=template['name'],
+                        description=template['description'],
+                        skill_type=template['skill_type'],
+                        target_type=template['target_type'],
+                        cooldown=template['cooldown']
+                    )
+                
+                self.available_skills[skill_id] = skill
+            
+            logger.info(f"Создано {len(self.available_skills)} базовых скиллов")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось создать базовые скиллы: {e}")
+    
+    def _update_all_skill_trees(self, delta_time: float) -> None:
+        """Обновление всех деревьев скиллов"""
+        try:
+            for skill_tree in self.skill_trees.values():
+                skill_tree.update(delta_time)
+                
+        except Exception as e:
+            logger.warning(f"Ошибка обновления деревьев скиллов: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            
+            if entity_id:
+                # Создаем дерево скиллов для новой сущности
+                self.create_skill_tree(entity_id)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_skill_learned(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события изучения скилла"""
+        try:
+            entity_id = event_data.get('entity_id')
+            skill_name = event_data.get('skill_name')
+            character = event_data.get('character')
+            
+            if entity_id and skill_name and character:
+                return self.learn_skill(entity_id, skill_name, character)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события изучения скилла: {e}")
+            return False
+    
+    def _handle_skill_used(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события использования скилла"""
+        try:
+            entity_id = event_data.get('entity_id')
+            skill_name = event_data.get('skill_name')
+            caster = event_data.get('caster')
+            target = event_data.get('target')
+            context = event_data.get('context', {})
+            
+            if entity_id and skill_name and caster:
+                return self.use_skill(entity_id, skill_name, caster, target, context)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события использования скилла: {e}")
+            return False

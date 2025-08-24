@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Effect System - Система специальных эффектов предметов (версия 2.0)
+Система эффектов - управление специальными эффектами и их применением
 """
 
 import logging
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union, Any, Callable, Tuple
 import random
 import time
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Union, Any, Callable, Tuple
 from enum import Enum
+
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +24,40 @@ class EffectCategory(Enum):
 class DamageType(Enum):
     PHYSICAL = "physical"
     FIRE = "fire"
-    COLD = "cold"
+    ICE = "ice"
     LIGHTNING = "lightning"
+    IMAGINARY = "imaginary"
+    QUANTUM = "quantum"
+    DARK = "dark"
+    LIGHT = "light"
+    EARTH = "earth"
+    AIR = "air"
+    WATER = "water"
+    LIGHTNING = "lightning"
+    HOLY = "holy"
     POISON = "poison"
     TRUE = "true"
+    ACID = "acid"
+    COLD = "cold"
+    MAGIC = "magic"
+    NECROTIC = "necrotic"
+    PSYCHIC = "psychic"
+    RADIANT = "radiant"
+    SHADOW = "shadow"
+    SOUND = "sound"
+    VIBRATION = "vibration"
+    MAGICAL = "magical"
+    ENERGY = "energy"
+    CHAOS = "chaos"
+    LIGHT = "light"
+    DARK = "dark"
+    WIND = "wind"
+    EARTH = "earth"
+    LIGHT = "light"
+    DARK = "dark"
+    WIND = "wind"
+    EARTH = "earth"
+    LIGHT = "light"
 
 class TargetType(Enum):
     SELF = "self"
@@ -40,6 +72,7 @@ class TriggerType(Enum):
     ON_BEING_HIT = "on_being_hit"
     ON_BLOCK = "on_block"
     ON_DODGE = "on_dodge"
+    ON_RESIST = "on_resist"
     ON_KILL = "on_kill"
     ON_LOW_HEALTH = "on_low_health"
     ON_ELEMENT_DAMAGE = "on_element_damage"
@@ -83,6 +116,50 @@ class Effect:
     
     def can_apply(self, source: Any, target: Any) -> bool:
         """Проверяет, можно ли применить эффект"""
+        if self.target_type == TargetType.SELF:
+            return True
+        elif self.target_type == TargetType.ENEMY:
+            return not hasattr(target, 'is_ally') or not target.is_ally
+        elif self.target_type == TargetType.ALLY:
+            return hasattr(target, 'is_ally') and target.is_ally
+        elif self.target_type == TargetType.AREA:
+            return True
+        
+        return False
+    
+    def apply_instant(self, source: Any, target: Any):
+        """Применение мгновенного эффекта"""
+        self._play_visuals(source, target)
+        
+    def apply_over_time(self, source: Any, target: Any):
+        """Применение эффекта с течением времени"""
+        # Логика применения DOT эффекта
+        pass
+    
+    def _play_visuals(self, source: Any, target: Any):
+        """Воспроизведение визуальных эффектов"""
+        if self.visuals:
+            # Интеграция с системой визуализации
+            logger.debug(f"Воспроизведение визуальных эффектов для {self.name}")
+    
+    def get_modified_value(self, context: Dict[str, Any]) -> float:
+        """Рассчитывает модифицированное значение эффекта"""
+        modified_value = self.value * self.balance.base_power * self.balance.scaling_factor
+        
+        if context.get("is_pvp"):
+            modified_value *= self.balance.pvp_modifier
+        else:
+            modified_value *= self.balance.pve_modifier
+        
+        if "source_level" in context and self.balance.level_scaling > 0:
+            level_factor = 1.0 + (context["source_level"] - 1) * self.balance.level_scaling
+            modified_value *= level_factor
+        
+        return modified_value
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Сериализация эффекта"""
+        
         return True  # Базовая проверка
     
     def apply_instant(self, source: Any, target: Any):
@@ -297,6 +374,374 @@ class SpecialEffect:
             combination_effects=combination_effects,
             **data
         )
+
+class EffectSystem(ISystem):
+    """Система управления эффектами для всех сущностей"""
+    
+    def __init__(self):
+        self._system_name = "effect"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
+        # Оптимизированная система триггеров
+        self.trigger_system = OptimizedTriggerSystem()
+        
+        # Система комбинаций
+        self.combination_system = CombinationSystem()
+        
+        # Активные эффекты на сущностях
+        self.active_effects: Dict[str, List[Effect]] = {}
+        
+        # Статистика эффектов
+        self.effect_statistics = EffectStatistics()
+        
+        # Шаблоны эффектов
+        self.effect_templates: Dict[str, Dict[str, Any]] = {}
+        
+        # Статистика системы
+        self.system_stats = {
+            'entities_count': 0,
+            'active_effects_count': 0,
+            'effects_triggered': 0,
+            'update_time': 0.0
+        }
+        
+        logger.info("Система эффектов инициализирована")
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def initialize(self) -> bool:
+        """Инициализация системы эффектов"""
+        try:
+            logger.info("Инициализация системы эффектов...")
+            
+            # Инициализируем шаблоны эффектов
+            self._initialize_effect_templates()
+            
+            # Настраиваем систему комбинаций
+            self._setup_effect_combinations()
+            
+            self._system_state = SystemState.READY
+            logger.info("Система эффектов успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы эффектов: {e}")
+            self._system_state = SystemState.ERROR
+            return False
+    
+    def update(self, delta_time: float) -> bool:
+        """Обновление системы эффектов"""
+        try:
+            if self._system_state != SystemState.READY:
+                return False
+            
+            start_time = time.time()
+            
+            # Обновляем активные эффекты
+            self._update_active_effects(delta_time)
+            
+            # Обрабатываем истекшие эффекты
+            self._process_expired_effects()
+            
+            # Обновляем статистику системы
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы эффектов: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы эффектов"""
+        try:
+            if self._system_state == SystemState.READY:
+                self._system_state = SystemState.PAUSED
+                logger.info("Система эффектов приостановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка приостановки системы эффектов: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы эффектов"""
+        try:
+            if self._system_state == SystemState.PAUSED:
+                self._system_state = SystemState.READY
+                logger.info("Система эффектов возобновлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка возобновления системы эффектов: {e}")
+            return False
+    
+    def cleanup(self) -> bool:
+        """Очистка системы эффектов"""
+        try:
+            logger.info("Очистка системы эффектов...")
+            
+            # Очищаем все данные
+            self.active_effects.clear()
+            self.effect_templates.clear()
+            
+            # Сбрасываем статистику
+            self.system_stats = {
+                'entities_count': 0,
+                'active_effects_count': 0,
+                'effects_triggered': 0,
+                'update_time': 0.0
+            }
+            
+            self._system_state = SystemState.DESTROYED
+            logger.info("Система эффектов очищена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы эффектов: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'entities_count': len(self.active_effects),
+            'active_effects_count': self.system_stats['active_effects_count'],
+            'stats': self.system_stats
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "effect_applied":
+                return self._handle_effect_applied(event_data)
+            elif event_type == "effect_removed":
+                return self._handle_effect_removed(event_data)
+            elif event_type == "trigger_activated":
+                return self._handle_trigger_activated(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def add_effect_to_entity(self, entity_id: str, effect: Effect, source: Any = None) -> bool:
+        """Добавляет эффект к сущности"""
+        try:
+            if entity_id not in self.active_effects:
+                self.active_effects[entity_id] = []
+                self.system_stats['entities_count'] = len(self.active_effects)
+            
+            self.active_effects[entity_id].append(effect)
+            self.system_stats['active_effects_count'] = sum(len(effects) for effects in self.active_effects.values())
+            
+            logger.debug(f"Эффект {effect.name} добавлен к сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления эффекта к сущности {entity_id}: {e}")
+            return False
+    
+    def remove_effect_from_entity(self, entity_id: str, effect_name: str) -> bool:
+        """Удаляет эффект с сущности"""
+        try:
+            if entity_id in self.active_effects:
+                self.active_effects[entity_id] = [
+                    effect for effect in self.active_effects[entity_id] 
+                    if effect.name != effect_name
+                ]
+                
+                self.system_stats['active_effects_count'] = sum(len(effects) for effects in self.active_effects.values())
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления эффекта с сущности {entity_id}: {e}")
+            return False
+    
+    def get_entity_effects(self, entity_id: str) -> List[Effect]:
+        """Получает все активные эффекты сущности"""
+        return self.active_effects.get(entity_id, [])
+    
+    def trigger_effect(self, trigger_type: TriggerType, source: Any, target: Any = None, context: Dict[str, Any] = None) -> bool:
+        """Активирует эффекты по триггеру"""
+        try:
+            if context is None:
+                context = {}
+            
+            # Активируем триггеры
+            self.trigger_system.trigger(trigger_type, source, target, context)
+            
+            # Обновляем статистику
+            self.system_stats['effects_triggered'] += 1
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка активации триггера {trigger_type.value}: {e}")
+            return False
+    
+    def _initialize_effect_templates(self) -> None:
+        """Инициализация шаблонов эффектов"""
+        try:
+            # Шаблоны для разных типов эффектов
+            self.effect_templates = {
+                'fire_damage': {
+                    'name': 'Огненный урон',
+                    'category': EffectCategory.INSTANT,
+                    'value': 25.0,
+                    'damage_types': [DamageType.FIRE],
+                    'duration': 0,
+                    'target_type': TargetType.ENEMY
+                },
+                'poison_dot': {
+                    'name': 'Отравление',
+                    'category': EffectCategory.DOT,
+                    'value': 5.0,
+                    'damage_types': [DamageType.POISON],
+                    'duration': 10.0,
+                    'period': 1.0,
+                    'target_type': TargetType.ENEMY
+                },
+                'strength_buff': {
+                    'name': 'Усиление силы',
+                    'category': EffectCategory.BUFF,
+                    'value': 10.0,
+                    'duration': 30.0,
+                    'target_type': TargetType.SELF
+                }
+            }
+            
+            logger.debug("Шаблоны эффектов инициализированы")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать шаблоны эффектов: {e}")
+    
+    def _setup_effect_combinations(self) -> None:
+        """Настройка комбинаций эффектов"""
+        try:
+            # Регистрируем комбинации эффектов
+            # Например: огонь + лед = взрыв пара
+            pass
+        except Exception as e:
+            logger.warning(f"Не удалось настроить комбинации эффектов: {e}")
+    
+    def _update_active_effects(self, delta_time: float) -> None:
+        """Обновление активных эффектов"""
+        try:
+            # Обновляем все активные эффекты
+            for entity_id, effects in self.active_effects.items():
+                for effect in effects:
+                    if effect.duration > 0:
+                        effect.apply_over_time(None, None)  # source и target можно передавать
+                        
+        except Exception as e:
+            logger.warning(f"Ошибка обновления активных эффектов: {e}")
+    
+    def _process_expired_effects(self) -> None:
+        """Обработка истекших эффектов"""
+        try:
+            current_time = time.time()
+            
+            # Удаляем истекшие эффекты
+            for entity_id in list(self.active_effects.keys()):
+                if entity_id in self.active_effects:
+                    self.active_effects[entity_id] = [
+                        effect for effect in self.active_effects[entity_id]
+                        if effect.duration == 0 or effect.duration > current_time
+                    ]
+                    
+                    # Удаляем пустые записи
+                    if not self.active_effects[entity_id]:
+                        del self.active_effects[entity_id]
+            
+            # Обновляем статистику
+            self.system_stats['entities_count'] = len(self.active_effects)
+            self.system_stats['active_effects_count'] = sum(len(effects) for effects in self.active_effects.values())
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обработки истекших эффектов: {e}")
+    
+    def _handle_entity_created(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события создания сущности"""
+        try:
+            entity_id = event_data.get('entity_id')
+            
+            if entity_id:
+                # Инициализируем список эффектов для новой сущности
+                self.active_effects[entity_id] = []
+                self.system_stats['entities_count'] = len(self.active_effects)
+                return True
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события создания сущности: {e}")
+            return False
+    
+    def _handle_effect_applied(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события применения эффекта"""
+        try:
+            entity_id = event_data.get('entity_id')
+            effect_data = event_data.get('effect_data', {})
+            
+            if entity_id and effect_data:
+                # Создаем эффект из данных
+                effect = Effect.from_dict(effect_data)
+                return self.add_effect_to_entity(entity_id, effect)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события применения эффекта: {e}")
+            return False
+    
+    def _handle_effect_removed(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события удаления эффекта"""
+        try:
+            entity_id = event_data.get('entity_id')
+            effect_name = event_data.get('effect_name')
+            
+            if entity_id and effect_name:
+                return self.remove_effect_from_entity(entity_id, effect_name)
+            return False
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события удаления эффекта: {e}")
+            return False
+    
+    def _handle_trigger_activated(self, event_data: Dict[str, Any]) -> bool:
+        """Обработка события активации триггера"""
+        try:
+            trigger_type = TriggerType(event_data.get('trigger_type', 'on_hit'))
+            source = event_data.get('source')
+            target = event_data.get('target')
+            context = event_data.get('context', {})
+            
+            return self.trigger_effect(trigger_type, source, target, context)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки события активации триггера: {e}")
+            return False
 
 class OptimizedTriggerSystem:
     """Оптимизированная система триггеров с индексацией эффектов"""

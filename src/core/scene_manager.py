@@ -7,7 +7,7 @@ Scene Manager - Менеджер сцен для Panda3D
 import logging
 from typing import Dict, Optional, Any
 from abc import ABC, abstractmethod
-from .interfaces import ISceneManager, Scene
+from .interfaces import ISceneManager, SystemState
 
 logger = logging.getLogger(__name__)
 
