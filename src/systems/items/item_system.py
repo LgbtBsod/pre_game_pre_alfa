@@ -33,7 +33,7 @@ class ItemStats:
     agility: int = 0
     intelligence: int = 0
     vitality: int = 0
-    armor: int = 0
+    defense: int = 0
     magic_resistance: int = 0
     damage: int = 0
     attack_speed: float = 1.0

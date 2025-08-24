@@ -1,0 +1,1 @@
+2025-08-24 18:24:34 - root - ERROR - Ошибка инициализации: cannot import name 'GameState' from 'core.interfaces' (C:\Users\lgbtb\Desktop\AI-EVOLVE\src\core\interfaces.py)
