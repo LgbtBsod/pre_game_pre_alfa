@@ -23,8 +23,10 @@ from panda3d.core import TextNode, PandaNode, NodePath
 from panda3d.core import TransparencyAttrib, AntialiasAttrib
 from panda3d.core import WindowProperties, GraphicsPipe, FrameBufferProperties
 
+from .interfaces import GameState, ISystemManager, IEventEmitter
+from .system_manager import SystemManager
+from .event_system import EventSystem
 from .config_manager import ConfigManager
-from .game_state import GameState
 from .scene_manager import SceneManager
 from .resource_manager import ResourceManager
 from .performance_manager import PerformanceManager
@@ -50,7 +52,11 @@ class GameEngine(ShowBase):
         self.main_camera = None
         self.ui_camera = None
         
-        # Менеджеры систем
+        # Новая архитектура - менеджеры систем
+        self.system_manager: Optional[SystemManager] = None
+        self.event_system: Optional[EventSystem] = None
+        
+        # Существующие менеджеры (для обратной совместимости)
         self.scene_manager: Optional[SceneManager] = None
         self.resource_manager: Optional[ResourceManager] = None
         self.performance_manager: Optional[PerformanceManager] = None
@@ -221,19 +227,33 @@ class GameEngine(ShowBase):
     def _initialize_managers(self) -> bool:
         """Инициализация менеджеров систем"""
         try:
-            # Менеджер ресурсов
+            # Инициализация системы событий (новая архитектура)
+            self.event_system = EventSystem()
+            if not self.event_system.initialize():
+                logger.error("Не удалось инициализировать систему событий")
+                return False
+            
+            # Инициализация менеджера систем (новая архитектура)
+            self.system_manager = SystemManager(self.event_system)
+            
+            # Добавляем существующие системы в новый менеджер
+            self._add_existing_systems_to_manager()
+            
+            if not self.system_manager.initialize():
+                logger.error("Не удалось инициализировать менеджер систем")
+                return False
+            
+            # Инициализация существующих менеджеров (для обратной совместимости)
             self.resource_manager = ResourceManager()
             if not self.resource_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер ресурсов")
                 return False
             
-            # Менеджер производительности
             self.performance_manager = PerformanceManager()
             if not self.performance_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер производительности")
                 return False
             
-            # Менеджер сцен
             self.scene_manager = SceneManager(self.render, self.resource_manager)
             if not self.scene_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер сцен")
@@ -245,6 +265,24 @@ class GameEngine(ShowBase):
         except Exception as e:
             logger.error(f"Ошибка инициализации менеджеров: {e}")
             return False
+    
+    def _add_existing_systems_to_manager(self):
+        """Добавление существующих систем в новый менеджер систем"""
+        try:
+            # Добавляем существующие системы как адаптеры
+            if hasattr(self, 'resource_manager') and self.resource_manager:
+                self.system_manager.add_system("resource", self.resource_manager)
+            
+            if hasattr(self, 'performance_manager') and self.performance_manager:
+                self.system_manager.add_system("performance", self.performance_manager)
+            
+            if hasattr(self, 'scene_manager') and self.scene_manager:
+                self.system_manager.add_system("scene", self.scene_manager)
+            
+            logger.info("Существующие системы добавлены в менеджер систем")
+            
+        except Exception as e:
+            logger.warning(f"Не удалось добавить существующие системы в менеджер: {e}")
     
     def _initialize_scenes(self) -> bool:
         """Инициализация игровых сцен"""
@@ -309,11 +347,15 @@ class GameEngine(ShowBase):
         self.delta_time = current_time - self.last_frame_time
         self.last_frame_time = current_time
         
-        # Обновление активной сцены
+        # Обновление всех систем через новый менеджер
+        if self.system_manager:
+            self.system_manager.update_all_systems(self.delta_time)
+        
+        # Обновление активной сцены (для обратной совместимости)
         if self.scene_manager and self.scene_manager.active_scene:
             self.scene_manager.active_scene.update(self.delta_time)
         
-        # Обновление менеджера производительности
+        # Обновление менеджера производительности (для обратной совместимости)
         if self.performance_manager:
             self.performance_manager.update(self.delta_time)
         
@@ -372,7 +414,15 @@ class GameEngine(ShowBase):
         logger.info("Очистка ресурсов игрового движка...")
         
         try:
-            # Очистка менеджеров
+            # Очистка нового менеджера систем
+            if self.system_manager:
+                self.system_manager.cleanup()
+            
+            # Очистка системы событий
+            if self.event_system:
+                self.event_system.cleanup()
+            
+            # Очистка существующих менеджеров (для обратной совместимости)
             if self.scene_manager:
                 self.scene_manager.cleanup()
             
@@ -431,3 +481,25 @@ class GameEngine(ShowBase):
             self.win.requestProperties(new_props)
             
             logger.info(f"Размер окна изменен: {width}x{height}")
+    
+    # Методы для доступа к новой архитектуре
+    def get_system_manager(self) -> Optional[SystemManager]:
+        """Получение менеджера систем"""
+        return self.system_manager
+    
+    def get_event_system(self) -> Optional[EventSystem]:
+        """Получение системы событий"""
+        return self.event_system
+    
+    def emit_event(self, event_type: str, data: Any, source: str = "game_engine"):
+        """Эмиссия события через новую систему событий"""
+        if self.event_system:
+            self.event_system.emit_event(event_type, data, source)
+        else:
+            logger.warning("Система событий не инициализирована")
+    
+    def get_system(self, system_name: str):
+        """Получение системы по имени"""
+        if self.system_manager:
+            return self.system_manager.get_system(system_name)
+        return None

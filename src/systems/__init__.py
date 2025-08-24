@@ -35,6 +35,11 @@ from .genome.genome_system import (
     GeneType, GeneDominance
 )
 
+from .emotion.emotion_system import (
+    Emotion, EmotionSystem, EmotionManager, emotion_manager,
+    EmotionType
+)
+
 # Экспорт всех систем
 __all__ = [
     # Существующие системы
@@ -95,5 +100,12 @@ __all__ = [
     'GenomeManager',
     'genome_manager',
     'GeneType',
-    'GeneDominance'
+    'GeneDominance',
+    
+    # Система эмоций
+    'Emotion',
+    'EmotionSystem',
+    'EmotionManager',
+    'emotion_manager',
+    'EmotionType'
 ]

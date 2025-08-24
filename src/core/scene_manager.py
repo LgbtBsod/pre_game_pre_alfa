@@ -7,10 +7,11 @@ Scene Manager - Менеджер сцен для Panda3D
 import logging
 from typing import Dict, Optional, Any
 from abc import ABC, abstractmethod
+from .interfaces import ISceneManager, Scene
 
 logger = logging.getLogger(__name__)
 
-class Scene(ABC):
+class Scene(ISceneManager):
     """Базовый класс для всех сцен"""
     
     def __init__(self, name: str):
@@ -58,7 +59,7 @@ class Scene(ABC):
             else:
                 self.ui_root.hide()
 
-class SceneManager:
+class SceneManager(ISceneManager):
     """Менеджер сцен для Panda3D"""
     
     def __init__(self, render_node, resource_manager):

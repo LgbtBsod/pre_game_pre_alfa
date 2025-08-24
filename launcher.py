@@ -155,6 +155,7 @@ def initialize_game():
         
         # Импорт и инициализация игрового движка
         from core.game_engine import GameEngine
+        
         from core.config_manager import ConfigManager
         
         # Загрузка конфигурации

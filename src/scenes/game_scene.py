@@ -21,7 +21,7 @@ from ..systems import (
     EvolutionSystem, CombatSystem,
     CraftingSystem, InventorySystem,
     AIEntity, EntityType, MemoryType,
-    genome_manager
+    genome_manager, emotion_manager
 )
 from ..systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
 from ..systems.effects.effect_system import OptimizedTriggerSystem, EffectStatistics, TriggerType
@@ -315,7 +315,10 @@ class GameScene(Scene):
             'ai_entity': AIEntity('player_1', EntityType.PLAYER, save_slot='default'),
             
             # Геном
-            'genome': genome_manager.create_genome('player_1')
+            'genome': genome_manager.create_genome('player_1'),
+            
+            # Система эмоций
+            'emotion_system': emotion_manager.get_emotion_system('player_1')
         }
         
         # Создаем Panda3D узел для игрока
@@ -436,7 +439,10 @@ class GameScene(Scene):
                 'ai_entity': AIEntity(config['id'], EntityType.ENEMY if config['ai_personality'] == 'aggressive' else EntityType.NPC, save_slot='default'),
                 
                 # Геном
-                'genome': genome_manager.create_genome(config['id'])
+                'genome': genome_manager.create_genome(config['id']),
+                
+                # Система эмоций
+                'emotion_system': emotion_manager.get_emotion_system(config['id'])
             }
             
             # Создаем Panda3D узел для NPC
@@ -597,7 +603,38 @@ class GameScene(Scene):
         # Создаем треугольники
         prim = GeomTriangles(Geom.UHStatic)
         
-        # Боковые грани
+        # Боковые грани цилиндра
+        for i in range(segments):
+            next_i = (i + 1) % segments
+            
+            # Первый треугольник
+            prim.addVertices(i, next_i, i + segments)
+            prim.addVertices(next_i, next_i + segments, i + segments)
+        
+        # Верхняя и нижняя крышки
+        for i in range(1, segments - 1):
+            # Верхняя крышка
+            prim.addVertices(0, i, i + 1)
+            # Нижняя крышка
+            prim.addVertices(segments, segments + i + 1, segments + i)
+        
+        # Создаем геометрию
+        geom = Geom(vdata)
+        geom.addPrimitive(prim)
+        
+        # Создаем узел
+        node = GeomNode('player_cylinder')
+        node.addGeom(geom)
+        
+        # Создаем NodePath и позиционируем
+        np = self.entities_root.attachNewNode(node)
+        np.setPos(entity['x'], entity['y'], entity['z'])
+        
+        # Добавляем неоновый эффект
+        np.setTransparency(True)
+        np.setColor(0, 1, 1, 0.8)  # Неоновый голубой
+        
+        return np
         for i in range(segments):
             i1 = i
             i2 = (i + 1) % segments
@@ -873,10 +910,23 @@ class GameScene(Scene):
             shadowOffset=(0.01, 0.01)
         )
         
+        # Полоска эмоций
+        self.emotion_bar_text = OnscreenText(
+            text="😊 Emotions: Neutral",
+            pos=(-1.3, 0.0),
+            scale=0.035,
+            fg=(255, 150, 100, 1),  # Неоновый оранжевый
+            align=TextNode.ALeft,
+            mayChange=True,
+            parent=parent_node,
+            shadow=(0, 0, 0, 0.6),
+            shadowOffset=(0.01, 0.01)
+        )
+        
         # Отладочная информация
         self.debug_text = OnscreenText(
             text="🐛 Debug: Enabled",
-            pos=(-1.3, 0.0),
+            pos=(-1.3, -0.1),
             scale=0.035,
             fg=(255, 150, 50, 1),  # Неоновый оранжевый
             align=TextNode.ALeft,
@@ -886,7 +936,51 @@ class GameScene(Scene):
             shadowOffset=(0.01, 0.01)
         )
         
+        # Кнопки эмоций
+        self.emotion_buttons = {}
+        emotion_configs = [
+            ("joy", "😊", (0.8, 0.8, 0.2, 1)),      # Желтый
+            ("sadness", "😢", (0.2, 0.2, 0.8, 1)),  # Синий
+            ("anger", "😠", (0.8, 0.2, 0.2, 1)),    # Красный
+            ("fear", "😨", (0.8, 0.2, 0.8, 1)),     # Фиолетовый
+            ("surprise", "😲", (0.2, 0.8, 0.8, 1)), # Голубой
+            ("disgust", "🤢", (0.2, 0.8, 0.2, 1))   # Зеленый
+        ]
+        
+        for i, (emotion_type, emoji, color) in enumerate(emotion_configs):
+            button = DirectButton(
+                text=emoji,
+                pos=(0.8 + i * 0.15, 0, 0.8),
+                scale=0.04,
+                frameColor=color,
+                text_fg=(1, 1, 1, 1),
+                relief=1,
+                command=self._apply_emotion,
+                extraArgs=[emotion_type],
+                parent=parent_node
+            )
+            self.emotion_buttons[emotion_type] = button
+        
         logger.debug("UI элементы Panda3D созданы")
+    
+    def _apply_emotion(self, emotion_type: str):
+        """Применяет эмоцию к игроку"""
+        player = next((e for e in self.entities if e['type'] == 'player'), None)
+        if player and 'emotion_system' in player:
+            from ..systems import EmotionType
+            
+            # Преобразуем строку в EmotionType
+            emotion_enum = EmotionType(emotion_type)
+            
+            # Применяем эмоцию
+            player['emotion_system'].add_emotion(
+                emotion_enum,
+                intensity=0.8,  # Высокая интенсивность
+                duration=30.0,  # 30 секунд
+                source="player_input"
+            )
+            
+            logger.info(f"Игрок применил эмоцию: {emotion_type}")
     
     def update(self, delta_time: float):
         """Обновление игровой сцены"""
@@ -899,6 +993,9 @@ class GameScene(Scene):
         
         # Обновление игровых систем
         self._update_game_systems(delta_time)
+        
+        # Обновление системы эмоций
+        emotion_manager.update_all(delta_time)
         
         # Обновление сущностей
         self._update_entities(delta_time)
@@ -1202,6 +1299,30 @@ class GameScene(Scene):
             else:
                 self.genome_info_text.setText("Genome: None")
         
+        # Обновление информации об эмоциях
+        if player and self.emotion_bar_text:
+            emotion_system = player.get('emotion_system')
+            if emotion_system:
+                emotion_summary = emotion_system.get_emotion_summary()
+                dominant_emotion = emotion_summary['dominant_emotion']
+                intensity = emotion_summary['dominant_intensity']
+                
+                # Эмодзи для эмоций
+                emotion_emojis = {
+                    'joy': '😊',
+                    'sadness': '😢',
+                    'anger': '😠',
+                    'fear': '😨',
+                    'surprise': '😲',
+                    'disgust': '🤢',
+                    'neutral': '😐'
+                }
+                
+                emoji = emotion_emojis.get(dominant_emotion, '😐')
+                self.emotion_bar_text.setText(f"{emoji} Emotions: {dominant_emotion.title()} ({intensity:.1f})")
+            else:
+                self.emotion_bar_text.setText("😐 Emotions: None")
+        
         # Обновление отладочной информации
         if self.debug_text and self.show_debug:
             entities_count = len(self.entities)
@@ -1266,6 +1387,14 @@ class GameScene(Scene):
             self.effects_info_text.destroy()
         if self.genome_info_text:
             self.genome_info_text.destroy()
+        if self.emotion_bar_text:
+            self.emotion_bar_text.destroy()
+        
+        # Уничтожаем кнопки эмоций
+        for button in self.emotion_buttons.values():
+            if button:
+                button.destroy()
+        
         if self.debug_text:
             self.debug_text.destroy()
         

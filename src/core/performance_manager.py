@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 from collections import deque
 import pygame
+from .interfaces import IPerformanceManager
 
 logger = logging.getLogger(__name__)
 

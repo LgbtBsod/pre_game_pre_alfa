@@ -13,10 +13,11 @@ from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
 from panda3d.core import GeomVertexWriter, GeomTriangles
 from panda3d.core import AudioSound, AudioManager
 from direct.showbase.Loader import Loader
+from .interfaces import IResourceManager
 
 logger = logging.getLogger(__name__)
 
-class ResourceManager:
+class ResourceManager(IResourceManager):
     """Менеджер ресурсов для Panda3D"""
     
     def __init__(self):
@@ -98,6 +99,43 @@ class ResourceManager:
             
         except Exception as e:
             logger.warning(f"Ошибка предзагрузки базовых ресурсов: {e}")
+    
+    # Реализация интерфейса IResourceManager
+    def load_resource(self, resource_path: str, resource_type: str) -> Any:
+        """Загрузка ресурса"""
+        try:
+            if resource_type == "texture":
+                return self.load_texture(resource_path)
+            elif resource_type == "model":
+                return self.load_model(resource_path)
+            elif resource_type == "sound":
+                return self.load_sound(resource_path)
+            else:
+                logger.warning(f"Неизвестный тип ресурса: {resource_type}")
+                return None
+        except Exception as e:
+            logger.error(f"Ошибка загрузки ресурса {resource_path}: {e}")
+            return None
+    
+    def unload_resource(self, resource_path: str) -> bool:
+        """Выгрузка ресурса"""
+        try:
+            if resource_path in self.cache:
+                del self.cache[resource_path]
+                logger.debug(f"Ресурс {resource_path} выгружен")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка выгрузки ресурса {resource_path}: {e}")
+            return False
+    
+    def get_resource(self, resource_path: str) -> Optional[Any]:
+        """Получение ресурса"""
+        return self.cache.get(resource_path)
+    
+    def is_resource_loaded(self, resource_path: str) -> bool:
+        """Проверка загрузки ресурса"""
+        return resource_path in self.cache
     
     def _create_basic_textures(self):
         """Создание базовых текстур"""
