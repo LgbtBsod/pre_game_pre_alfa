@@ -5,8 +5,9 @@ Event System - Система событий для улучшения моду�
 """
 
 import logging
+import time
 from typing import Dict, List, Any, Callable, Optional
-from collections import defaultdict
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from enum import Enum
 from .interfaces import IEventEmitter, IEventSubscriber
@@ -44,9 +45,12 @@ class EventSystem(IEventEmitter):
     
     def __init__(self):
         self.subscriptions: Dict[str, List[EventSubscription]] = defaultdict(list)
-        self.event_queue: List[Event] = []
-        self.max_queue_size = 1000
+        self.event_queue: deque = deque(maxlen=1000)
         self.is_initialized = False
+        
+        # Статистика
+        self.events_processed = 0
+        self.events_emitted = 0
         
         logger.info("Система событий инициализирована")
     
@@ -68,7 +72,6 @@ class EventSystem(IEventEmitter):
             return
         
         try:
-            import time
             event = Event(
                 event_type=event_type,
                 data=data,
@@ -79,15 +82,7 @@ class EventSystem(IEventEmitter):
             
             # Добавляем событие в очередь
             self.event_queue.append(event)
-            
-            # Ограничиваем размер очереди
-            if len(self.event_queue) > self.max_queue_size:
-                # Удаляем события с низким приоритетом
-                self.event_queue = [e for e in self.event_queue 
-                                  if e.priority != EventPriority.LOW]
-                # Если все еще много событий, удаляем старые
-                if len(self.event_queue) > self.max_queue_size:
-                    self.event_queue = self.event_queue[-self.max_queue_size:]
+            self.events_emitted += 1
             
             logger.debug(f"Событие {event_type} добавлено в очередь от {source}")
             
@@ -188,6 +183,7 @@ class EventSystem(IEventEmitter):
                 # Обрабатываем событие
                 if self._process_single_event(highest_priority_event):
                     processed_count += 1
+                    self.events_processed += 1
             
             return processed_count
             
@@ -231,6 +227,16 @@ class EventSystem(IEventEmitter):
         self.event_queue.clear()
         logger.debug("Очередь событий очищена")
     
+    def get_statistics(self) -> Dict[str, Any]:
+        """Получение статистики системы событий"""
+        return {
+            'events_processed': self.events_processed,
+            'events_emitted': self.events_emitted,
+            'queue_size': len(self.event_queue),
+            'subscription_count': self.get_subscription_count(),
+            'event_types': list(self.subscriptions.keys())
+        }
+    
     def update(self, delta_time: float) -> None:
         """Обновление системы событий"""
         # Обрабатываем события
@@ -250,6 +256,10 @@ class EventSystem(IEventEmitter):
             self.subscriptions.clear()
             self.event_queue.clear()
             self.is_initialized = False
+            
+            # Сбрасываем статистику
+            self.events_processed = 0
+            self.events_emitted = 0
             
             logger.info("Система событий очищена")
             

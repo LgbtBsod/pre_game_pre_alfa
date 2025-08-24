@@ -13,15 +13,7 @@ from enum import Enum
 # Panda3D imports
 from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
-from direct.gui.OnscreenText import OnscreenText
-from direct.gui.OnscreenImage import OnscreenImage
-from panda3d.core import WindowProperties, AntialiasAttrib, TransparencyAttrib
-from panda3d.core import Vec3, Vec4, Point3, LVector3
-from panda3d.core import DirectionalLight, AmbientLight, Spotlight
-from panda3d.core import PerspectiveLens, OrthographicLens
-from panda3d.core import TextNode, PandaNode, NodePath
-from panda3d.core import TransparencyAttrib, AntialiasAttrib
-from panda3d.core import WindowProperties, GraphicsPipe, FrameBufferProperties
+from panda3d.core import WindowProperties
 
 from .interfaces import GameState, ISystemManager, IEventEmitter
 from .system_manager import SystemManager
@@ -30,6 +22,7 @@ from .config_manager import ConfigManager
 from .scene_manager import SceneManager
 from .resource_manager import ResourceManager
 from .performance_manager import PerformanceManager
+from .system_factory import SystemFactory
 
 logger = logging.getLogger(__name__)
 
@@ -47,20 +40,6 @@ class GameEngine(ShowBase):
         self.running = False
         self.paused = False
         
-        # Panda3D компоненты
-        self.window_props = None
-        self.main_camera = None
-        self.ui_camera = None
-        
-        # Новая архитектура - менеджеры систем
-        self.system_manager: Optional[SystemManager] = None
-        self.event_system: Optional[EventSystem] = None
-        
-        # Существующие менеджеры (для обратной совместимости)
-        self.scene_manager: Optional[SceneManager] = None
-        self.resource_manager: Optional[ResourceManager] = None
-        self.performance_manager: Optional[PerformanceManager] = None
-        
         # Состояние игры
         self.current_state = GameState.INITIALIZING
         self.delta_time = 0.0
@@ -71,9 +50,15 @@ class GameEngine(ShowBase):
         self.frame_count = 0
         self.start_time = time.time()
         
-        # UI элементы
-        self.debug_text = None
-        self.fps_text = None
+        # Новая архитектура - менеджеры систем
+        self.system_manager: Optional[SystemManager] = None
+        self.event_system: Optional[EventSystem] = None
+        self.system_factory: Optional[SystemFactory] = None
+        
+        # Существующие менеджеры (для обратной совместимости)
+        self.scene_manager: Optional[SceneManager] = None
+        self.resource_manager: Optional[ResourceManager] = None
+        self.performance_manager: Optional[PerformanceManager] = None
         
         logger.info("Игровой движок Panda3D инициализирован")
     
@@ -93,12 +78,6 @@ class GameEngine(ShowBase):
             # Инициализация сцен
             if not self._initialize_scenes():
                 return False
-            
-            # Настройка освещения
-            self._setup_lighting()
-            
-            # Настройка UI
-            self._setup_ui()
             
             # Настройка задач
             self._setup_tasks()
@@ -121,21 +100,15 @@ class GameEngine(ShowBase):
             fullscreen = display_config.get('fullscreen', False)
             
             # Создание новых свойств окна
-            self.window_props = WindowProperties()
-            self.window_props.setSize(width, height)
-            self.window_props.setTitle("AI-EVOLVE Enhanced Edition - Panda3D")
+            window_props = WindowProperties()
+            window_props.setSize(width, height)
+            window_props.setTitle("AI-EVOLVE Enhanced Edition - Panda3D")
             
             if fullscreen:
-                self.window_props.setFullscreen(True)
+                window_props.setFullscreen(True)
             
             # Применение новых свойств
-            self.win.requestProperties(self.window_props)
-            
-            # Настройка камер
-            self._setup_cameras()
-            
-            # Настройка рендеринга
-            self._setup_rendering()
+            self.win.requestProperties(window_props)
             
             logger.info("Panda3D успешно инициализирован")
             return True
@@ -143,86 +116,6 @@ class GameEngine(ShowBase):
         except Exception as e:
             logger.error(f"Ошибка инициализации Panda3D: {e}")
             return False
-    
-    def _setup_cameras(self):
-        """Настройка камер"""
-        # Основная камера для 3D сцены
-        self.main_camera = self.cam
-        self.main_camera.setPos(0, -20, 10)
-        self.main_camera.lookAt(0, 0, 0)
-        
-        # UI камера для 2D элементов
-        self.ui_camera = self.makeCamera2d(self.win)
-        self.ui_camera.setPos(0, 0, 0)
-        
-        # Настройка изометрической проекции
-        lens = OrthographicLens()
-        lens.setFilmSize(40, 30)
-        lens.setNearFar(-100, 100)
-        self.main_camera.node().setLens(lens)
-    
-    def _setup_rendering(self):
-        """Настройка рендеринга"""
-        # Включение сглаживания
-        self.render.setAntialias(AntialiasAttrib.MAuto)
-        
-        # Настройка прозрачности
-        self.render.setTransparency(TransparencyAttrib.MAlpha)
-        
-        # Настройка глубины
-        self.render.setDepthWrite(True)
-        self.render.setDepthTest(True)
-    
-    def _setup_lighting(self):
-        """Настройка освещения"""
-        # Основное направленное освещение
-        dlight = DirectionalLight('dlight')
-        dlight.setColor((0.8, 0.8, 0.8, 1))
-        dlnp = self.render.attachNewNode(dlight)
-        dlnp.setHpr(45, -45, 0)
-        self.render.setLight(dlnp)
-        
-        # Фоновое освещение
-        alight = AmbientLight('alight')
-        alight.setColor((0.2, 0.2, 0.2, 1))
-        alnp = self.render.attachNewNode(alight)
-        self.render.setLight(alnp)
-        
-        logger.debug("Освещение настроено")
-    
-    def _setup_ui(self):
-        """Настройка UI элементов"""
-        # Отладочный текст
-        self.debug_text = OnscreenText(
-            text="AI-EVOLVE Panda3D",
-            pos=(-1.3, 0.9),
-            scale=0.05,
-            fg=(1, 1, 1, 1),
-            align=TextNode.ALeft,
-            mayChange=True
-        )
-        
-        # FPS текст
-        self.fps_text = OnscreenText(
-            text="FPS: 0",
-            pos=(-1.3, 0.8),
-            scale=0.04,
-            fg=(1, 1, 0, 1),
-            align=TextNode.ALeft,
-            mayChange=True
-        )
-        
-        logger.debug("UI элементы настроены")
-    
-    def _setup_tasks(self):
-        """Настройка задач Panda3D"""
-        # Основная задача обновления
-        self.taskMgr.add(self._update_task, "update_task")
-        
-        # Задача рендеринга
-        self.taskMgr.add(self._render_task, "render_task")
-        
-        logger.debug("Задачи Panda3D настроены")
     
     def _initialize_managers(self) -> bool:
         """Инициализация менеджеров систем"""
@@ -233,8 +126,18 @@ class GameEngine(ShowBase):
                 logger.error("Не удалось инициализировать систему событий")
                 return False
             
+            # Инициализация фабрики систем (новая архитектура)
+            self.system_factory = SystemFactory(self.event_system)
+            
             # Инициализация менеджера систем (новая архитектура)
             self.system_manager = SystemManager(self.event_system)
+            
+            # Создаем стандартный набор систем через фабрику
+            created_systems = self.system_factory.create_default_systems(self.render, self.win)
+            
+            # Добавляем созданные системы в менеджер
+            for system_name, system in created_systems.items():
+                self.system_manager.add_system(system_name, system)
             
             # Добавляем существующие системы в новый менеджер
             self._add_existing_systems_to_manager()
@@ -318,6 +221,13 @@ class GameEngine(ShowBase):
             logger.error(f"Ошибка инициализации сцен: {e}")
             return False
     
+    def _setup_tasks(self):
+        """Настройка задач Panda3D"""
+        # Основная задача обновления
+        self.taskMgr.add(self._update_task, "update_task")
+        
+        logger.debug("Задачи Panda3D настроены")
+    
     def run(self):
         """Основной игровой цикл Panda3D"""
         if not self.initialize():
@@ -364,20 +274,6 @@ class GameEngine(ShowBase):
         
         return task.cont
     
-    def _render_task(self, task):
-        """Задача рендеринга"""
-        if not self.running:
-            return task.done
-        
-        # Отрисовка активной сцены
-        if self.scene_manager and self.scene_manager.active_scene:
-            self.scene_manager.active_scene.render(self.render)
-        
-        # Обновление UI
-        self._update_ui()
-        
-        return task.cont
-    
     def _update_stats(self):
         """Обновление статистики"""
         self.frame_count += 1
@@ -393,16 +289,6 @@ class GameEngine(ShowBase):
             if int(current_time) % 10 == 0:
                 logger.debug(f"FPS: {self.fps}")
     
-    def _update_ui(self):
-        """Обновление UI элементов"""
-        if self.fps_text:
-            self.fps_text.setText(f"FPS: {self.fps}")
-        
-        if self.debug_text:
-            # Обновление отладочной информации
-            debug_info = f"AI-EVOLVE Panda3D | State: {self.current_state.value}"
-            self.debug_text.setText(debug_info)
-    
     def _handle_critical_error(self, error: Exception):
         """Обработка критических ошибок"""
         logger.critical(f"Критическая ошибка: {error}")
@@ -417,6 +303,10 @@ class GameEngine(ShowBase):
             # Очистка нового менеджера систем
             if self.system_manager:
                 self.system_manager.cleanup()
+            
+            # Очистка фабрики систем
+            if self.system_factory:
+                self.system_factory.cleanup()
             
             # Очистка системы событий
             if self.event_system:
@@ -491,6 +381,10 @@ class GameEngine(ShowBase):
         """Получение системы событий"""
         return self.event_system
     
+    def get_system_factory(self) -> Optional[SystemFactory]:
+        """Получение фабрики систем"""
+        return self.system_factory
+    
     def emit_event(self, event_type: str, data: Any, source: str = "game_engine"):
         """Эмиссия события через новую систему событий"""
         if self.event_system:
@@ -502,4 +396,10 @@ class GameEngine(ShowBase):
         """Получение системы по имени"""
         if self.system_manager:
             return self.system_manager.get_system(system_name)
+        return None
+    
+    def create_system(self, system_name: str, **kwargs):
+        """Создание новой системы через фабрику"""
+        if self.system_factory:
+            return self.system_factory.create_system(system_name, **kwargs)
         return None

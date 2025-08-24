@@ -30,6 +30,14 @@ from .ai.ai_entity import (
     AIEntity, EntityType, MemoryType, MemoryEntry, GenerationMemory
 )
 
+from .ai.ai_system import (
+    AISystem, EmotionType, PersonalityType, Memory, Emotion, Personality
+)
+
+from .ai.pytorch_ai_system import PyTorchAISystem, NeuralNetwork, EmotionalNetwork
+
+from .ai.ai_integration_system import AIIntegrationSystem, AIAgentState
+
 from .genome.genome_system import (
     Gene, Chromosome, Genome, GenomeManager, genome_manager,
     GeneType, GeneDominance
@@ -40,72 +48,61 @@ from .emotion.emotion_system import (
     EmotionType
 )
 
+from .entity.entity_stats_system import (
+    EntityType as GameEntityType, StatType, BaseStats, StatModifier, EntityStats
+)
+
+from .content.content_database import (
+    ContentDatabase, ContentItem, ContentType, ContentRarity,
+    EnemyData, BossData, EnemyType, BossType, DamageType as ContentDamageType
+)
+
+from .content.content_generator import ContentGenerator, GenerationConfig
+
+from .content.content_constants import (
+    ENEMY_CONSTANTS, BOSS_CONSTANTS, ITEM_CONSTANTS,
+    RANDOM_GENERATOR, GenerationBiome, GenerationTime, GenerationWeather
+)
+
 # Экспорт всех систем
 __all__ = [
-    # Существующие системы
-    'EvolutionSystem',
-    'CombatSystem', 
-    'CraftingSystem',
-    'InventorySystem',
+    # Основные системы
+    'EvolutionSystem', 'CombatSystem', 'CraftingSystem', 'InventorySystem',
     
     # Система эффектов
-    'Effect',
-    'SpecialEffect',
-    'EffectCategory',
-    'DamageType',
-    'TargetType',
-    'TriggerType',
-    'EffectVisuals',
-    'EffectBalance',
-    'EffectCondition',
-    'HealthCondition',
-    'ElementCondition',
-    'OptimizedTriggerSystem',
-    'CombinationSystem',
-    'EffectStatistics',
+    'Effect', 'SpecialEffect', 'EffectCategory', 'DamageType', 'TargetType', 'TriggerType',
+    'EffectVisuals', 'EffectBalance', 'EffectCondition', 'HealthCondition', 'ElementCondition',
+    'OptimizedTriggerSystem', 'CombinationSystem', 'EffectStatistics',
     
     # Система предметов
-    'BaseItem',
-    'Weapon',
-    'Armor',
-    'Accessory',
-    'Consumable',
-    'ItemFactory',
-    'ItemRarity',
-    'ItemType',
-    'ItemStats',
+    'BaseItem', 'Weapon', 'Armor', 'Accessory', 'Consumable', 'ItemFactory',
+    'ItemRarity', 'ItemType', 'ItemStats',
     
     # Система скиллов
-    'Skill',
-    'CombatSkill',
-    'UtilitySkill',
-    'SkillTree',
-    'SkillFactory',
-    'SkillType',
-    'SkillTarget',
-    'SkillRequirements',
-    'SkillCooldown',
+    'Skill', 'CombatSkill', 'UtilitySkill', 'SkillTree', 'SkillFactory',
+    'SkillType', 'SkillTarget', 'SkillRequirements', 'SkillCooldown',
     
-    # Система AI Entity
-    'AIEntity',
-    'EntityType',
-    'MemoryType',
-    'MemoryEntry',
-    'GenerationMemory',
+    # AI системы
+    'AIEntity', 'EntityType', 'MemoryType', 'MemoryEntry', 'GenerationMemory',
+    'AISystem', 'EmotionType', 'PersonalityType', 'Memory', 'Emotion', 'Personality',
+    'PyTorchAISystem', 'NeuralNetwork', 'EmotionalNetwork',
+    'AIIntegrationSystem', 'AIAgentState',
     
     # Система генома
-    'Gene',
-    'Chromosome',
-    'Genome',
-    'GenomeManager',
-    'genome_manager',
-    'GeneType',
-    'GeneDominance',
+    'Gene', 'Chromosome', 'Genome', 'GenomeManager', 'genome_manager',
+    'GeneType', 'GeneDominance',
     
     # Система эмоций
-    'Emotion',
-    'EmotionSystem',
-    'EmotionManager',
-    'emotion_manager',
-    'EmotionType'
+    'Emotion', 'EmotionSystem', 'EmotionManager', 'emotion_manager',
+    'EmotionType',
+    
+    # Система характеристик сущностей
+    'GameEntityType', 'StatType', 'BaseStats', 'StatModifier', 'EntityStats',
+    
+    # Система контента
+    'ContentDatabase', 'ContentItem', 'ContentType', 'ContentRarity',
+    'EnemyData', 'BossData', 'EnemyType', 'BossType', 'ContentDamageType',
+    'ContentGenerator', 'GenerationConfig',
+    'ENEMY_CONSTANTS', 'BOSS_CONSTANTS', 'ITEM_CONSTANTS',
+    'RANDOM_GENERATOR', 'GenerationBiome', 'GenerationTime', 'GenerationWeather'
 ]

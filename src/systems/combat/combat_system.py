@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
 from enum import Enum
 from ...core.interfaces import ISystem
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ class CombatSystem(ISystem):
     def __init__(self):
         self.combat_entities: Dict[str, Dict[str, Any]] = {}
         self.active_combats: Dict[str, Dict[str, Any]] = {}
-        self.combat_history: List[Dict[str, Any]] = {}
+        self.combat_history: List[Dict[str, Any]] = []
         self.attack_cooldowns: Dict[str, float] = {}
         self.is_initialized = False
         
@@ -121,25 +122,78 @@ class CombatSystem(ISystem):
         
         try:
             # Обновляем кулдауны атак
-            for entity_id in self.attack_cooldowns:
-                self.attack_cooldowns[entity_id] = max(0.0, self.attack_cooldowns[entity_id] - delta_time)
+            self._update_attack_cooldowns(delta_time)
             
             # Обновляем эффекты
-            for entity_id, entity_data in self.combat_entities.items():
-                self._update_entity_effects(entity_id, entity_data, delta_time)
+            self._update_entity_effects(delta_time)
             
             # Обновляем активные бои
-            for combat_id in list(self.active_combats.keys()):
-                combat = self.active_combats[combat_id]
-                combat["start_time"] += delta_time
-                combat["rounds"] += 1
-                
-                # Проверяем условия завершения боя
-                if self._should_end_combat(combat):
-                    self._end_combat(combat_id)
-                    
+            self._update_active_combats(delta_time)
+            
         except Exception as e:
             logger.error(f"Ошибка обновления системы боя: {e}")
+    
+    def _update_attack_cooldowns(self, delta_time: float):
+        """Обновление кулдаунов атак"""
+        for entity_id in self.attack_cooldowns:
+            self.attack_cooldowns[entity_id] = max(0.0, self.attack_cooldowns[entity_id] - delta_time)
+    
+    def _update_entity_effects(self, delta_time: float):
+        """Обновление эффектов сущностей"""
+        for entity_id, entity_data in self.combat_entities.items():
+            self._update_single_entity_effects(entity_id, entity_data, delta_time)
+    
+    def _update_single_entity_effects(self, entity_id: str, entity_data: Dict[str, Any], delta_time: float):
+        """Обновление эффектов одной сущности"""
+        try:
+            # Обновляем оглушение
+            if entity_data["stunned_until"] > 0.0:
+                entity_data["stunned_until"] = max(0.0, entity_data["stunned_until"] - delta_time)
+                if entity_data["stunned_until"] <= 0.0:
+                    entity_data["combat_state"] = CombatState.IDLE
+            
+            # Обновляем отравление
+            if "poisoned" in entity_data:
+                poison = entity_data["poisoned"]
+                poison["duration"] -= delta_time
+                if poison["duration"] <= 0.0:
+                    del entity_data["poisoned"]
+                else:
+                    # Наносим урон от отравления
+                    damage = poison["damage_per_tick"]
+                    entity_data["total_damage_taken"] += damage
+            
+            # Обновляем горение
+            if "burning" in entity_data:
+                burn = entity_data["burning"]
+                burn["duration"] -= delta_time
+                if burn["duration"] <= 0.0:
+                    del entity_data["burning"]
+                else:
+                    # Наносим урон от горения
+                    damage = burn["damage_per_tick"]
+                    entity_data["total_damage_taken"] += damage
+            
+            # Обновляем заморозку
+            if "frozen" in entity_data:
+                freeze = entity_data["frozen"]
+                freeze["duration"] -= delta_time
+                if freeze["duration"] <= 0.0:
+                    del entity_data["frozen"]
+                    
+        except Exception as e:
+            logger.error(f"Ошибка обновления эффектов сущности {entity_id}: {e}")
+    
+    def _update_active_combats(self, delta_time: float):
+        """Обновление активных боев"""
+        for combat_id in list(self.active_combats.keys()):
+            combat = self.active_combats[combat_id]
+            combat["start_time"] += delta_time
+            combat["rounds"] += 1
+            
+            # Проверяем условия завершения боя
+            if self._should_end_combat(combat):
+                self._end_combat(combat_id)
     
     def register_entity(self, entity_id: str, entity_data: Dict[str, Any]):
         """Регистрация сущности в системе боя"""
@@ -397,7 +451,7 @@ class CombatSystem(ISystem):
     def _log_attack(self, action: CombatAction, result: AttackResult):
         """Логирование атаки"""
         log_entry = {
-            "timestamp": 0.0,  # Упрощенная реализация
+            "timestamp": time.time(),
             "attacker_id": action.attacker_id,
             "target_id": action.target_id,
             "action_type": action.action_type.value,
@@ -416,63 +470,6 @@ class CombatSystem(ISystem):
         # Ограничиваем историю
         if len(self.combat_history) > 1000:
             self.combat_history = self.combat_history[-1000:]
-    
-    def update_combat(self, delta_time: float):
-        """Обновление системы боя"""
-        # Обновляем кулдауны атак
-        for entity_id in self.attack_cooldowns:
-            self.attack_cooldowns[entity_id] = max(0.0, self.attack_cooldowns[entity_id] - delta_time)
-        
-        # Обновляем эффекты
-        for entity_id, entity_data in self.combat_entities.items():
-            self._update_entity_effects(entity_id, entity_data, delta_time)
-        
-        # Обновляем активные бои
-        for combat_id in list(self.active_combats.keys()):
-            combat = self.active_combats[combat_id]
-            combat["start_time"] += delta_time
-            combat["rounds"] += 1
-            
-            # Проверяем условия завершения боя
-            if self._should_end_combat(combat):
-                self._end_combat(combat_id)
-    
-    def _update_entity_effects(self, entity_id: str, entity_data: Dict[str, Any], delta_time: float):
-        """Обновление эффектов сущности"""
-        # Обновляем оглушение
-        if entity_data["stunned_until"] > 0.0:
-            entity_data["stunned_until"] = max(0.0, entity_data["stunned_until"] - delta_time)
-            if entity_data["stunned_until"] <= 0.0:
-                entity_data["combat_state"] = CombatState.IDLE
-        
-        # Обновляем отравление
-        if "poisoned" in entity_data:
-            poison = entity_data["poisoned"]
-            poison["duration"] -= delta_time
-            if poison["duration"] <= 0.0:
-                del entity_data["poisoned"]
-            else:
-                # Наносим урон от отравления
-                damage = poison["damage_per_tick"]
-                entity_data["total_damage_taken"] += damage
-        
-        # Обновляем горение
-        if "burning" in entity_data:
-            burn = entity_data["burning"]
-            burn["duration"] -= delta_time
-            if burn["duration"] <= 0.0:
-                del entity_data["burning"]
-            else:
-                # Наносим урон от горения
-                damage = burn["damage_per_tick"]
-                entity_data["total_damage_taken"] += damage
-        
-        # Обновляем заморозку
-        if "frozen" in entity_data:
-            freeze = entity_data["frozen"]
-            freeze["duration"] -= delta_time
-            if freeze["duration"] <= 0.0:
-                del entity_data["frozen"]
     
     def _should_end_combat(self, combat: Dict[str, Any]) -> bool:
         """Проверка необходимости завершения боя"""
@@ -547,3 +544,4 @@ class CombatSystem(ISystem):
         self.active_combats.clear()
         self.combat_history.clear()
         self.attack_cooldowns.clear()
+        self.is_initialized = False

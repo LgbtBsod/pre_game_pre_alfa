@@ -1,14 +1,20 @@
+#!/usr/bin/env python3
 """
-AI System Package
-Система искусственного интеллекта с единым интерфейсом
+AI Systems Package
+Системы искусственного интеллекта
 """
 
-from .ai_interface import (
-    AISystemInterface, AISystemFactory, AISystemManager,
-    AIState, AIPersonality, ActionType, AIDecision, AIEntity
-)
+from .ai_system import AISystem, EmotionType, PersonalityType, Memory, Emotion, Personality
+from .pytorch_ai_system import PyTorchAISystem, NeuralNetwork, EmotionalNetwork
 
 __all__ = [
-    'AISystemInterface', 'AISystemFactory', 'AISystemManager',
-    'AIState', 'AIPersonality', 'ActionType', 'AIDecision', 'AIEntity'
+    'AISystem', 
+    'EmotionType', 
+    'PersonalityType', 
+    'Memory', 
+    'Emotion', 
+    'Personality',
+    'PyTorchAISystem',
+    'NeuralNetwork',
+    'EmotionalNetwork'
 ]
