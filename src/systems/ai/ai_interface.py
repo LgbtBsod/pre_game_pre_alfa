@@ -9,7 +9,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import logging
-from ...core.interfaces import ISystem
+from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
 
@@ -170,15 +170,79 @@ class AISystemManager(ISystem):
     """
     
     def __init__(self):
+        # Свойства для интерфейса ISystem
+        self._system_name = "ai_system_manager"
+        self._system_priority = SystemPriority.HIGH
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
         self.ai_systems: Dict[str, AISystemInterface] = {}
         self.entity_mappings: Dict[str, str] = {}  # entity_id -> system_name
         self.logger = logging.getLogger(__name__)
         self.is_initialized = False
     
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self._system_name,
+            'priority': self._system_priority.value,
+            'state': self._system_state.value,
+            'ai_systems_count': len(self.ai_systems),
+            'entities_count': len(self.entity_mappings),
+            'is_initialized': self.is_initialized
+        }
+    
+    def handle_event(self, event_type: str, event_data: Dict[str, Any]) -> bool:
+        """Обработка событий"""
+        try:
+            # Передаем событие всем AI системам
+            for system in self.ai_systems.values():
+                if hasattr(system, 'handle_event'):
+                    system.handle_event(event_type, event_data)
+            return True
+        except Exception as e:
+            self.logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка системы"""
+        try:
+            self._system_state = SystemState.PAUSED
+            return True
+        except Exception as e:
+            self.logger.error(f"Ошибка приостановки системы: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление системы"""
+        try:
+            self._system_state = SystemState.READY
+            return True
+        except Exception as e:
+            self.logger.error(f"Ошибка возобновления системы: {e}")
+            return False
+    
     def initialize(self) -> bool:
         """Инициализация AI системы"""
         try:
             self.is_initialized = True
+            self._system_state = SystemState.READY
             self.logger.info("AI система успешно инициализирована")
             return True
         except Exception as e:

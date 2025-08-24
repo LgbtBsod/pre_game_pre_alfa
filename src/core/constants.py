@@ -441,6 +441,52 @@ class RenderLayer(Enum):
     OVERLAY = "overlay"
 
 # ============================================================================
+# ТИПЫ ОБЪЕКТОВ МИРА (ТВОРЕЦ МИРА)
+# ============================================================================
+
+class WorldObjectType(Enum):
+    """Типы объектов, которые может создавать пользователь"""
+    OBSTACLE = "obstacle"           # Препятствие
+    TRAP = "trap"                   # Ловушка
+    CHEST = "chest"                 # Сундук с наградой
+    ENEMY = "enemy"                 # Враг
+    GEO_OBSTACLE = "geo_obstacle"   # Географическое препятствие
+    DECORATION = "decoration"       # Декорация
+
+class ObjectCategory(Enum):
+    """Категории объектов для создания"""
+    COMBAT = "combat"               # Боевые объекты
+    EXPLORATION = "exploration"     # Исследовательские объекты
+    ENVIRONMENT = "environment"     # Окружающая среда
+    REWARDS = "rewards"             # Награды
+
+class ObjectState(Enum):
+    """Состояния объектов в мире"""
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    DESTROYED = "destroyed"
+    TRIGGERED = "triggered"
+    LOCKED = "locked"
+
+class CreatorMode(Enum):
+    """Режимы создания объектов"""
+    PLACEMENT = "placement"         # Размещение объектов
+    EDIT = "edit"                   # Редактирование объектов
+    PREVIEW = "preview"             # Предварительный просмотр
+    CLEAR = "clear"                 # Очистка мира
+
+class ToolType(Enum):
+    """Типы инструментов для создания"""
+    SELECT = "select"               # Выбор объектов
+    PLACE = "place"                 # Размещение объектов
+    MOVE = "move"                   # Перемещение объектов
+    ROTATE = "rotate"               # Поворот объектов
+    SCALE = "scale"                 # Масштабирование объектов
+    DELETE = "delete"               # Удаление объектов
+    COPY = "copy"                   # Копирование объектов
+    PASTE = "paste"                 # Вставка объектов
+
+# ============================================================================
 # ТИПЫ СИСТЕМ
 # ============================================================================
 
@@ -576,7 +622,37 @@ SYSTEM_LIMITS = {
     "max_ai_entities": 1000,
     "max_active_combats": 100,
     "max_inventory_slots": 100,
-    "max_skill_tree_depth": 10
+    "max_skill_tree_depth": 10,
+    "max_inventory_weight": 1000.0,
+    "max_equipment_slots": 10,
+    "max_quests": 50,
+    "max_party_size": 4,
+    "max_guild_size": 100,
+    "max_trade_items": 20,
+    "max_crafting_queue": 5,
+    "max_evolution_stage": 10,
+    "max_gene_count": 20,
+    "max_skill_level": 100,
+    "max_item_level": 100,
+    "max_enemy_level": 100,
+    "max_item_stack_size": 999,
+    "max_currency_amount": 999999,
+    "max_experience": 999999999,
+    "max_level": 100,
+    "max_reputation": 1000,
+    "max_fame": 1000,
+    "max_infamy": 1000,
+    "max_honor": 1000,
+    "max_disgrace": 1000,
+    # Лимиты для режима "творца мира"
+    "max_world_objects": 1000,
+    "max_ui_elements": 500,
+    "max_ui_layers": 10,
+    "max_object_templates": 100,
+    "max_creator_modes": 10,
+    "max_grid_size": 200,
+    "max_camera_zoom": 5.0,
+    "min_camera_zoom": 0.1
 }
 
 # Временные константы
@@ -588,6 +664,11 @@ TIME_CONSTANTS = {
     "combat_timeout": 300.0,  # таймаут боя (5 минут)
     "ai_decision_delay": 0.5,  # задержка решений AI
     "effect_update_interval": 1.0,  # интервал обновления эффектов
+    # Временные константы для режима "творца мира"
+    "creator_update_interval": 1.0 / 30.0,  # интервал обновления творца мира
+    "object_placement_delay": 0.1,  # задержка размещения объектов
+    "ui_animation_duration": 0.3,  # длительность анимации UI
+    "grid_update_interval": 1.0,  # интервал обновления сетки
 }
 
 # Вероятности и шансы
@@ -605,6 +686,7 @@ PROBABILITY_CONSTANTS = {
     "base_crit_chance": 0.05,
     "base_crit_multiplier": 2.0,
     "base_evasion_chance": 0.1,
+    "base_luck": 0.05,
 }
 
 # Множители урона по типам
@@ -645,6 +727,144 @@ DEFAULT_RESISTANCES = {
     DamageType.PSYCHIC: 0.0,
     DamageType.RADIANT: 0.0,
     DamageType.SHADOW: 0.0,
+}
+
+# ============================================================================
+# КОНСТАНТЫ РЕЖИМА "ТВОРЕЦ МИРА"
+# ============================================================================
+
+# Настройки мира по умолчанию
+WORLD_SETTINGS = {
+    "max_objects": 1000,
+    "world_bounds": (-50, 50, -50, 50),
+    "collision_enabled": True,
+    "physics_enabled": True,
+    "weather_enabled": False,
+    "grid_snap": True,
+    "grid_size": 1.0,
+    "show_preview": True,
+    "auto_save": True,
+    "auto_save_interval": 300.0,  # 5 минут
+}
+
+# Настройки камеры по умолчанию
+CAMERA_SETTINGS = {
+    "default_zoom": 1.0,
+    "min_zoom": 0.1,
+    "max_zoom": 5.0,
+    "zoom_speed": 0.1,
+    "pan_speed": 1.0,
+    "rotation_speed": 1.0,
+    "orthographic": True,
+    "film_size": (40, 30),
+    "near_far": (-100, 100)
+}
+
+# Настройки UI по умолчанию
+UI_SETTINGS = {
+    "theme": "dark",
+    "font_size": 14,
+    "button_size": (100, 30),
+    "panel_opacity": 0.8,
+    "animation_enabled": True,
+    "auto_layout_enabled": True,
+    "theme_switching_enabled": True,
+    "event_bubbling_enabled": True
+}
+
+# Шаблоны объектов по умолчанию
+DEFAULT_OBJECT_TEMPLATES = {
+    "wall": {
+        "name": "Стена",
+        "type": WorldObjectType.OBSTACLE,
+        "category": ObjectCategory.ENVIRONMENT,
+        "description": "Непроходимое препятствие",
+        "icon": "🧱",
+        "cost": 10,
+        "unlock_level": 1,
+        "properties": {
+            "width": 2.0,
+            "height": 3.0,
+            "depth": 0.5,
+            "color": (0.5, 0.5, 0.5, 1.0),
+            "collision": True,
+            "destructible": False
+        }
+    },
+    "spikes": {
+        "name": "Шипы",
+        "type": WorldObjectType.TRAP,
+        "category": ObjectCategory.COMBAT,
+        "description": "Ловушка, наносящая урон",
+        "icon": "🗡️",
+        "cost": 25,
+        "unlock_level": 2,
+        "properties": {
+            "width": 1.0,
+            "height": 0.5,
+            "depth": 1.0,
+            "color": (0.8, 0.2, 0.2, 1.0),
+            "damage": 20,
+            "trigger_type": "step",
+            "hidden": True
+        }
+    },
+    "chest": {
+        "name": "Сундук",
+        "type": WorldObjectType.CHEST,
+        "category": ObjectCategory.REWARDS,
+        "description": "Содержит награды",
+        "icon": "📦",
+        "cost": 50,
+        "unlock_level": 1,
+        "properties": {
+            "width": 1.0,
+            "height": 1.0,
+            "depth": 1.0,
+            "color": (0.6, 0.4, 0.2, 1.0),
+            "loot_quality": "common",
+            "loot_count": 3,
+            "locked": False
+        }
+    },
+    "goblin": {
+        "name": "Гоблин",
+        "type": WorldObjectType.ENEMY,
+        "category": ObjectCategory.COMBAT,
+        "description": "Слабый, но быстрый враг",
+        "icon": "👹",
+        "cost": 30,
+        "unlock_level": 1,
+        "properties": {
+            "width": 0.8,
+            "height": 1.5,
+            "depth": 0.8,
+            "color": (0.2, 0.8, 0.2, 1.0),
+            "health": 30,
+            "damage": 8,
+            "speed": 3.0,
+            "ai_type": "aggressive",
+            "loot_drop": True
+        }
+    }
+}
+
+# Цвета для UI элементов
+UI_COLORS = {
+    "primary": (51, 122, 183, 255),
+    "secondary": (92, 184, 92, 255),
+    "success": (92, 184, 92, 255),
+    "warning": (240, 173, 78, 255),
+    "danger": (217, 83, 79, 255),
+    "info": (91, 192, 222, 255),
+    "light": (248, 249, 250, 255),
+    "dark": (52, 58, 64, 255),
+    "white": (255, 255, 255, 255),
+    "black": (0, 0, 0, 255),
+    "transparent": (0, 0, 0, 0),
+    "grid": (0.3, 0.3, 0.3, 0.5),
+    "selection": (0, 255, 255, 0.5),
+    "preview": (255, 255, 0, 0.3)
 }
 
 # ============================================================================
@@ -739,3 +959,23 @@ def validate_combat_state(state: str) -> bool:
 def validate_stat_type(stat_type: str) -> bool:
     """Валидация типа характеристики"""
     return is_valid_enum_value(StatType, stat_type)
+
+def validate_world_object_type(object_type: str) -> bool:
+    """Валидация типа объекта мира"""
+    return is_valid_enum_value(WorldObjectType, object_type)
+
+def validate_object_category(category: str) -> bool:
+    """Валидация категории объекта"""
+    return is_valid_enum_value(ObjectCategory, category)
+
+def validate_object_state(state: str) -> bool:
+    """Валидация состояния объекта"""
+    return is_valid_enum_value(ObjectState, state)
+
+def validate_creator_mode(mode: str) -> bool:
+    """Валидация режима создания"""
+    return is_valid_enum_value(CreatorMode, mode)
+
+def validate_tool_type(tool_type: str) -> bool:
+    """Валидация типа инструмента"""
+    return is_valid_enum_value(ToolType, tool_type)

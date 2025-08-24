@@ -28,7 +28,7 @@ except ImportError:
     PYTORCH_AVAILABLE = False
     print("PyTorch не установлен. AI система будет использовать базовую логику.")
 
-from .ai_system import AISystem, EmotionType, PersonalityType, Memory, Emotion, Personality
+from .ai_system import AISystem, AIConfig, AIMemory, AIDecision
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class EmotionalNetwork(nn.Module):
 class MemoryDataset(Dataset):
     """Датасет для обучения на основе памяти"""
     
-    def __init__(self, memories: List[Memory], sequence_length: int = 10):
+    def __init__(self, memories: List[AIMemory], sequence_length: int = 10):
         self.memories = memories
         self.sequence_length = sequence_length
         

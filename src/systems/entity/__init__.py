@@ -4,9 +4,9 @@ Entity Package - Системы характеристик и управлени
 """
 
 from .entity_stats_system import (
-    EntityType, StatType, BaseStats, StatModifier, EntityStats
+    StatModifier, EntityStats, EntityStatsSystem
 )
 
 __all__ = [
-    'EntityType', 'StatType', 'BaseStats', 'StatModifier', 'EntityStats'
+    'StatModifier', 'EntityStats', 'EntityStatsSystem'
 ]

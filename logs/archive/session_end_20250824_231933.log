@@ -1,0 +1,308 @@
+2025-08-24 23:01:01 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-24 23:01:01 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-24 23:01:01 - core.game_engine - INFO - Игровой движок Panda3D инициализирован
+2025-08-24 23:01:01 - core.game_engine - INFO - Начало инициализации игрового движка Panda3D...
+2025-08-24 23:01:01 - core.game_engine - INFO - Panda3D успешно инициализирован
+2025-08-24 23:01:01 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-24 23:01:01 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-24 23:01:01 - core.event_system - INFO - Система событий инициализирована
+2025-08-24 23:01:01 - core.event_system - INFO - Система событий успешно инициализирована
+2025-08-24 23:01:01 - core.system_manager - INFO - Менеджер систем инициализирован
+2025-08-24 23:01:01 - core.system_factory - INFO - Фабрика систем инициализирована
+2025-08-24 23:01:01 - core.system_manager - INFO - Менеджер систем инициализирован
+2025-08-24 23:01:01 - core.system_factory - INFO - Инициализация всех систем...
+2025-08-24 23:01:01 - core.system_manager - INFO - Инициализация менеджера систем...
+2025-08-24 23:01:01 - core.event_system - DEBUG - Подписка на событие system_ready от system_manager
+2025-08-24 23:01:01 - core.event_system - DEBUG - Подписка на событие system_error от system_manager
+2025-08-24 23:01:01 - core.system_manager - DEBUG - Порядок инициализации систем: []
+2025-08-24 23:01:01 - core.system_manager - INFO - Менеджер систем успешно инициализирован
+2025-08-24 23:01:01 - core.system_factory - INFO - Все системы успешно инициализированы
+2025-08-24 23:01:01 - core.game_engine - INFO - Существующие системы добавлены в менеджер систем
+2025-08-24 23:01:01 - core.system_manager - INFO - Инициализация менеджера систем...
+2025-08-24 23:01:01 - core.event_system - DEBUG - Подписка на событие system_ready от system_manager
+2025-08-24 23:01:01 - core.event_system - DEBUG - Подписка на событие system_error от system_manager
+2025-08-24 23:01:01 - core.system_manager - DEBUG - Порядок инициализации систем: []
+2025-08-24 23:01:01 - core.system_manager - INFO - Менеджер систем успешно инициализирован
+2025-08-24 23:01:01 - core.resource_manager - INFO - Менеджер ресурсов Panda3D инициализирован
+2025-08-24 23:01:01 - core.resource_manager - INFO - Инициализация менеджера ресурсов Panda3D...
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана директория ресурсов: textures
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана директория ресурсов: models
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана директория ресурсов: audio
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана директория ресурсов: shaders
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана директория ресурсов: data
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Загрузчик Panda3D инициализирован
+2025-08-24 23:01:01 - core.resource_manager - WARNING - Не удалось инициализировать аудио менеджер: cannot init abstract class
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана базовая текстура
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Создана базовая модель куба
+2025-08-24 23:01:01 - core.resource_manager - DEBUG - Базовые ресурсы предзагружены
+2025-08-24 23:01:01 - core.resource_manager - INFO - Менеджер ресурсов Panda3D успешно инициализирован
+2025-08-24 23:01:01 - core.performance_manager - INFO - Инициализация менеджера производительности...
+2025-08-24 23:01:01 - core.performance_manager - INFO - Поток мониторинга производительности запущен
+2025-08-24 23:01:01 - core.performance_manager - INFO - Менеджер производительности успешно инициализирован
+2025-08-24 23:01:01 - core.scene_manager - INFO - Инициализация менеджера сцен...
+2025-08-24 23:01:01 - core.scene_manager - INFO - Менеджер сцен успешно инициализирован
+2025-08-24 23:01:01 - core.game_engine - INFO - Все менеджеры успешно инициализированы
+2025-08-24 23:01:04 - src.scenes.menu_scene - INFO - Сцена меню Panda3D создана
+2025-08-24 23:01:04 - src.scenes.menu_scene - INFO - Инициализация сцены меню Panda3D...
+2025-08-24 23:01:04 - src.scenes.menu_scene - DEBUG - UI элементы меню созданы
+2025-08-24 23:01:04 - src.scenes.menu_scene - INFO - Сцена меню Panda3D успешно инициализирована
+2025-08-24 23:01:04 - core.scene_manager - INFO - Сцена menu зарегистрирована и инициализирована
+2025-08-24 23:01:04 - src.scenes.game_scene - INFO - Игровая сцена Panda3D создана
+2025-08-24 23:01:04 - src.scenes.game_scene - INFO - Начало инициализации игровой сцены Panda3D...
+2025-08-24 23:01:04 - src.scenes.game_scene - WARNING - Не удалось инициализировать некоторые системы: 'base_adaptation_chance'
+2025-08-24 23:01:04 - src.systems.skills.skill_system - DEBUG - Создано дерево навыков для сущности player_1
+2025-08-24 23:01:04 - src.systems.ai.ai_entity - DEBUG - Файл памяти не найден: saves/ai_memory/default/player_1_memory.json
+2025-08-24 23:01:04 - src.systems.ai.ai_entity - INFO - AI Entity создана: player_1 (player)
+2025-08-24 23:01:04 - src.scenes.game_scene - WARNING - Не удалось создать некоторые объекты: 'dict' object has no attribute 'get_stat_boosts'
+2025-08-24 23:01:04 - src.scenes.game_scene - INFO - Зарегистрировано 0 сущностей в AI системе
+2025-08-24 23:01:04 - src.scenes.game_scene - DEBUG - Освещение игровой сцены настроено
+2025-08-24 23:01:04 - src.scenes.game_scene - ERROR - Ошибка инициализации игровой сцены: name 'DirectButton' is not defined
+2025-08-24 23:01:04 - core.scene_manager - ERROR - Не удалось инициализировать сцену game
+2025-08-24 23:01:04 - src.scenes.pause_scene - INFO - Сцена паузы Panda3D создана
+2025-08-24 23:01:04 - src.scenes.pause_scene - INFO - Инициализация сцены паузы Panda3D...
+2025-08-24 23:01:04 - src.scenes.pause_scene - DEBUG - UI элементы паузы созданы
+2025-08-24 23:01:04 - src.scenes.pause_scene - INFO - Сцена паузы Panda3D успешно инициализирована
+2025-08-24 23:01:04 - core.scene_manager - INFO - Сцена pause зарегистрирована и инициализирована
+2025-08-24 23:01:04 - src.scenes.settings_scene - INFO - Сцена настроек Panda3D создана
+2025-08-24 23:01:04 - src.scenes.settings_scene - INFO - Инициализация сцены настроек Panda3D...
+2025-08-24 23:01:04 - src.scenes.settings_scene - ERROR - Ошибка инициализации сцены настроек: 'Unknown options "trough_relief, trough_frameColor" for DirectSlider'
+2025-08-24 23:01:04 - core.scene_manager - ERROR - Не удалось инициализировать сцену settings
+2025-08-24 23:01:04 - src.scenes.load_scene - INFO - Сцена загрузки Panda3D создана
+2025-08-24 23:01:04 - src.scenes.load_scene - INFO - Инициализация сцены загрузки Panda3D...
+2025-08-24 23:01:04 - src.scenes.load_scene - DEBUG - Загружено 3 сохранений
+2025-08-24 23:01:04 - src.scenes.load_scene - DEBUG - Список сохранений создан
+2025-08-24 23:01:04 - src.scenes.load_scene - DEBUG - UI элементы загрузки созданы
+2025-08-24 23:01:04 - src.scenes.load_scene - INFO - Сцена загрузки Panda3D успешно инициализирована
+2025-08-24 23:01:04 - core.scene_manager - INFO - Сцена load_game зарегистрирована и инициализирована
+2025-08-24 23:01:04 - src.scenes.creator_scene - INFO - Сцена творца мира Panda3D создана
+2025-08-24 23:01:04 - src.scenes.creator_scene - INFO - Начало инициализации сцены творца мира Panda3D...
+2025-08-24 23:01:04 - src.systems.world.world_manager - INFO - Менеджер игрового мира инициализирован
+2025-08-24 23:01:04 - src.systems.world.world_manager - INFO - Инициализация менеджера игрового мира...
+2025-08-24 23:01:04 - src.systems.world.world_manager - DEBUG - Panda3D узлы мира настроены
+2025-08-24 23:01:04 - src.systems.world.world_manager - DEBUG - Сетка мира инициализирована
+2025-08-24 23:01:04 - src.systems.world.world_manager - INFO - Менеджер игрового мира успешно инициализирован
+2025-08-24 23:01:04 - src.systems.ui.ui_system - INFO - Система UI творца мира инициализирована
+2025-08-24 23:01:04 - src.systems.ui.ui_system - INFO - Инициализация системы UI...
+2025-08-24 23:01:04 - src.systems.ui.ui_system - DEBUG - Система UI настроена
+2025-08-24 23:01:04 - src.systems.ui.ui_system - INFO - Создано 10 шаблонов объектов
+2025-08-24 23:01:04 - src.systems.ui.ui_system - INFO - Система UI успешно инициализирована
+2025-08-24 23:01:04 - src.scenes.creator_scene - DEBUG - Системы сцены творца мира инициализированы
+2025-08-24 23:01:04 - src.scenes.creator_scene - DEBUG - UI элементы сцены творца мира созданы
+2025-08-24 23:01:04 - src.scenes.creator_scene - DEBUG - Освещение сцены творца мира настроено
+2025-08-24 23:01:04 - src.scenes.creator_scene - DEBUG - Сетка размещения создана
+2025-08-24 23:01:04 - src.scenes.creator_scene - INFO - Сцена творца мира Panda3D успешно инициализирована
+2025-08-24 23:01:04 - core.scene_manager - INFO - Сцена creator зарегистрирована и инициализирована
+2025-08-24 23:01:04 - core.scene_manager - INFO - Активная сцена изменена на menu
+2025-08-24 23:01:04 - core.game_engine - INFO - Сцены успешно инициализированы
+2025-08-24 23:01:04 - core.game_engine - DEBUG - Задачи Panda3D настроены
+2025-08-24 23:01:04 - core.game_engine - INFO - Игровой движок Panda3D успешно инициализирован
+2025-08-24 23:01:04 - core.game_engine - INFO - Запуск игрового цикла Panda3D
+2025-08-24 23:01:10 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:01:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:01:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:01:35 - core.performance_manager - WARNING - Высокое использование CPU: 94.5% (источник: system)
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:35 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:01:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:01:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:02:00 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:02:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:02:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:02:29 - core.performance_manager - WARNING - Высокое использование CPU: 80.5% (источник: system)
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:29 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:30 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:02:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:02:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:02:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:03:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:03:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:03:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:03:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:03:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:03:50 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:04:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:04:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:04:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:04:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:04:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:04:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:05:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:05:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:05:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:05:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:05:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:05:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:06:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:06:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:06:20 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:06:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:06:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:06:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:07:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:07:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:07:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:07:20 - core.performance_manager - WARNING - Высокое использование CPU: 89.2% (источник: system)
+2025-08-24 23:07:20 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:20 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:20 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:07:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:07:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:07:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:08:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:08:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:08:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:08:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:08:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:08:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:09:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:09:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:09:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:09:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:09:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:09:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:10:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:10:10 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:10:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:10:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:10:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:10:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:11:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:11:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:11:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:11:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:11:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:11:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:12:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:12:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:12:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:12:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:12:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:12:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:13:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:13:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:13:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:13:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:13:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:13:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:14:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:14:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:14:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:14:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:14:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:14:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:15:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:15:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:15:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:15:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:15:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:15:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:16:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:16:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:16:20 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:16:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:16:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:16:50 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:16:52 - core.performance_manager - WARNING - Высокое использование CPU: 85.1% (источник: system)
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:52 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - WARNING - Высокое использование CPU: 95.3% (источник: system)
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:16:54 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:17:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:17:20 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:17:21 - core.performance_manager - WARNING - Высокое использование CPU: 89.0% (источник: system)
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:17:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:17:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:17:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:18:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:18:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:18:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:18:30 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:18:40 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:18:50 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:19:00 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:19:10 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:19:20 - core.game_engine - DEBUG - FPS: 60
+2025-08-24 23:19:21 - core.performance_manager - WARNING - Высокое использование CPU: 88.1% (источник: system)
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:21 - core.performance_manager - INFO - Применено 1 оптимизаций
+2025-08-24 23:19:30 - core.game_engine - DEBUG - FPS: 61
+2025-08-24 23:19:33 - core.game_engine - INFO - Очистка ресурсов игрового движка...
+2025-08-24 23:19:33 - core.system_manager - INFO - Очистка менеджера систем...
+2025-08-24 23:19:33 - core.system_manager - INFO - Менеджер систем очищен
+2025-08-24 23:19:33 - core.game_engine - ERROR - Ошибка при очистке ресурсов: 'SystemFactory' object has no attribute 'cleanup'

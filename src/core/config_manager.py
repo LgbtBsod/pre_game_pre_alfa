@@ -145,8 +145,23 @@ class ConfigManager(IConfigManager):
         except Exception as e:
             logger.error(f"Ошибка установки конфигурации {key}: {e}")
             return False
-            return self._loaded_config
-            return self._loaded_config
+    
+    def _save_config(self) -> bool:
+        """Сохранение конфигурации в файлы"""
+        try:
+            # Сохраняем каждую секцию в отдельный файл
+            self._save_section_config("display_config.json", asdict(self.display_config))
+            self._save_section_config("audio_config.json", asdict(self.audio_config))
+            self._save_section_config("gameplay_config.json", asdict(self.gameplay_config))
+            self._save_section_config("ai_config.json", asdict(self.ai_config))
+            self._save_section_config("performance_config.json", asdict(self.performance_config))
+            
+            logger.debug("Конфигурация сохранена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения конфигурации: {e}")
+            return False
         except:
             logger.error("Ошибка загрузки конфигурации")
     

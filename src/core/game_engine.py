@@ -120,6 +120,12 @@ class GameEngine(ShowBase):
     def _initialize_managers(self) -> bool:
         """Инициализация менеджеров систем"""
         try:
+            # Инициализация менеджера конфигурации
+            self.config_manager = ConfigManager()
+            if not self.config_manager.initialize():
+                logger.error("Не удалось инициализировать менеджер конфигурации")
+                return False
+            
             # Инициализация системы событий (новая архитектура)
             self.event_system = EventSystem()
             if not self.event_system.initialize():
@@ -127,17 +133,15 @@ class GameEngine(ShowBase):
                 return False
             
             # Инициализация фабрики систем (новая архитектура)
-            self.system_factory = SystemFactory(self.event_system)
+            self.system_factory = SystemFactory(self.config_manager, self.event_system)
             
             # Инициализация менеджера систем (новая архитектура)
             self.system_manager = SystemManager(self.event_system)
             
-            # Создаем стандартный набор систем через фабрику
-            created_systems = self.system_factory.create_default_systems(self.render, self.win)
-            
-            # Добавляем созданные системы в менеджер
-            for system_name, system in created_systems.items():
-                self.system_manager.add_system(system_name, system)
+            # Инициализируем фабрику систем
+            if not self.system_factory.initialize_all_systems():
+                logger.error("Не удалось инициализировать системы через фабрику")
+                return False
             
             # Добавляем существующие системы в новый менеджер
             self._add_existing_systems_to_manager()
@@ -197,12 +201,14 @@ class GameEngine(ShowBase):
                 from scenes.pause_scene import PauseScene
                 from scenes.settings_scene import SettingsScene
                 from scenes.load_scene import LoadScene
+                from scenes.creator_scene import CreatorScene
             except ImportError:
                 from src.scenes.menu_scene import MenuScene
                 from src.scenes.game_scene import GameScene
                 from src.scenes.pause_scene import PauseScene
                 from src.scenes.settings_scene import SettingsScene
                 from src.scenes.load_scene import LoadScene
+                from src.scenes.creator_scene import CreatorScene
             
             # Регистрация сцен
             self.scene_manager.register_scene("menu", MenuScene())
@@ -210,6 +216,7 @@ class GameEngine(ShowBase):
             self.scene_manager.register_scene("pause", PauseScene())
             self.scene_manager.register_scene("settings", SettingsScene())
             self.scene_manager.register_scene("load_game", LoadScene())
+            self.scene_manager.register_scene("creator", CreatorScene())
             
             # Установка начальной сцены
             self.scene_manager.set_active_scene("menu")

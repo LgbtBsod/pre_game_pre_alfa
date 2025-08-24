@@ -567,6 +567,14 @@ class IEntityStatsSystem(ABC):
 # ИНТЕРФЕЙСЫ СОБЫТИЙ
 # ============================================================================
 
+class IEventSubscriber(ABC):
+    """Интерфейс для подписчика событий"""
+    
+    @abstractmethod
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка события"""
+        pass
+
 class IEventSystem(ABC):
     """Интерфейс для системы событий"""
     
@@ -576,11 +584,17 @@ class IEventSystem(ABC):
         pass
     
     @abstractmethod
-    def subscribe(self, event_type: str, callback: callable) -> bool:
+    def subscribe(self, event_type: str, callback: callable, 
+                  subscriber_id: str = "unknown") -> bool:
         """Подписка на событие"""
         pass
     
     @abstractmethod
-    def unsubscribe(self, event_type: str, callback: callable) -> bool:
+    def unsubscribe(self, event_type: str, subscriber_id: str) -> bool:
         """Отписка от события"""
+        pass
+    
+    @abstractmethod
+    def process_events(self) -> bool:
+        """Обработка событий"""
         pass

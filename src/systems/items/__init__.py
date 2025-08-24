@@ -4,18 +4,14 @@ Items System Package
 """
 
 from .item_system import (
-    BaseItem, Weapon, Armor, Accessory, Consumable, ItemFactory,
-    ItemRarity, ItemType, ItemStats
+    Item, SpecialEffect, ItemSystem,
+    ItemRarity, ItemType
 )
 
 __all__ = [
-    'BaseItem',
-    'Weapon',
-    'Armor', 
-    'Accessory',
-    'Consumable',
-    'ItemFactory',
+    'Item',
+    'SpecialEffect',
+    'ItemSystem',
     'ItemRarity',
-    'ItemType',
-    'ItemStats'
+    'ItemType'
 ]

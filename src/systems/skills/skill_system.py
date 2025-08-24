@@ -56,6 +56,31 @@ class Skill:
     icon: str = ""
     sound: str = ""
     animation: str = ""
+    
+    def can_use(self, entity: Dict[str, Any]) -> bool:
+        """Проверка возможности использования навыка"""
+        try:
+            # Проверяем перезарядку
+            if self.cooldown.current_cooldown > 0:
+                return False
+            
+            # Проверяем ману
+            if self.mana_cost > 0:
+                entity_mana = entity.get('mana', 0)
+                if entity_mana < self.mana_cost:
+                    return False
+            
+            # Проверяем здоровье
+            if self.health_cost > 0:
+                entity_health = entity.get('health', 0)
+                if entity_health <= self.health_cost:
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки возможности использования навыка {self.skill_id}: {e}")
+            return False
 
 class SkillSystem(ISystem):
     """Система управления навыками"""
@@ -710,4 +735,187 @@ class SkillSystem(ISystem):
             
         except Exception as e:
             logger.error(f"Ошибка сброса перезарядки навыка {skill_id} для {entity_id}: {e}")
+            return False
+
+class SkillTree:
+    """Дерево навыков для сущности"""
+    
+    def __init__(self, entity_id: str):
+        self.entity_id = entity_id
+        self.skills: Dict[str, Skill] = {}
+        self.skill_points = 0
+        self.max_skill_points = 100
+        self.learned_skills: List[str] = []
+        self.available_skills: List[str] = []
+        
+        # Настройки дерева навыков
+        self.settings = {
+            'max_skills': 20,
+            'skill_point_cost': 1,
+            'prerequisite_skills_required': True,
+            'level_requirements_enabled': True
+        }
+        
+        logger.debug(f"Создано дерево навыков для сущности {entity_id}")
+    
+    def add_skill(self, skill: Skill) -> bool:
+        """Добавление навыка в дерево"""
+        try:
+            if skill.skill_id in self.skills:
+                logger.warning(f"Навык {skill.skill_id} уже добавлен в дерево навыков")
+                return False
+            
+            if len(self.skills) >= self.settings['max_skills']:
+                logger.warning(f"Достигнут лимит навыков в дереве навыков")
+                return False
+            
+            self.skills[skill.skill_id] = skill
+            self.available_skills.append(skill.skill_id)
+            
+            logger.debug(f"Навык {skill.skill_id} добавлен в дерево навыков для {self.entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка добавления навыка {skill.skill_id} в дерево навыков: {e}")
+            return False
+    
+    def learn_skill(self, skill_name: str, entity: Dict[str, Any]) -> bool:
+        """Изучение навыка"""
+        try:
+            # Находим навык по имени
+            skill_to_learn = None
+            for skill in self.skills.values():
+                if skill.name == skill_name:
+                    skill_to_learn = skill
+                    break
+            
+            if not skill_to_learn:
+                logger.warning(f"Навык {skill_name} не найден в дереве навыков")
+                return False
+            
+            # Проверяем требования
+            if not self._check_skill_requirements(skill_to_learn, entity):
+                logger.warning(f"Не выполнены требования для изучения навыка {skill_name}")
+                return False
+            
+            # Проверяем очки навыков
+            if self.skill_points < self.settings['skill_point_cost']:
+                logger.warning(f"Недостаточно очков навыков для изучения {skill_name}")
+                return False
+            
+            # Изучаем навык
+            self.skill_points -= self.settings['skill_point_cost']
+            self.learned_skills.append(skill_to_learn.skill_id)
+            
+            logger.info(f"Сущность {self.entity_id} изучила навык {skill_name}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка изучения навыка {skill_name}: {e}")
+            return False
+    
+    def _check_skill_requirements(self, skill: Skill, entity: Dict[str, Any]) -> bool:
+        """Проверка требований для изучения навыка"""
+        try:
+            requirements = skill.requirements
+            
+            # Проверяем уровень
+            if self.settings['level_requirements_enabled']:
+                entity_level = entity.get('level', 1)
+                if entity_level < requirements.level:
+                    return False
+            
+            # Проверяем характеристики
+            entity_stats = entity.get('stats', {})
+            for stat, required_value in requirements.stats.items():
+                if entity_stats.get(stat.value, 0) < required_value:
+                    return False
+            
+            # Проверяем предметы
+            entity_inventory = entity.get('inventory', [])
+            for required_item in requirements.items:
+                if not any(item.get('name') == required_item for item in entity_inventory):
+                    return False
+            
+            # Проверяем предварительные навыки
+            if self.settings['prerequisite_skills_required']:
+                for required_skill in requirements.skills:
+                    if required_skill not in self.learned_skills:
+                        return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки требований навыка: {e}")
+            return False
+    
+    def get_ai_recommended_skill(self, entity: Dict[str, Any], context: Dict[str, Any]) -> Optional[Skill]:
+        """Получение рекомендуемого навыка для AI"""
+        try:
+            target = context.get('target')
+            if not target:
+                return None
+            
+            # Простая логика выбора навыка
+            for skill_id in self.learned_skills:
+                skill = self.skills.get(skill_id)
+                if not skill:
+                    continue
+                
+                # Проверяем, подходит ли навык для ситуации
+                if skill.skill_type.value in ['combat', 'attack']:
+                    # Проверяем дистанцию
+                    dx = target.get('x', 0) - entity.get('x', 0)
+                    dy = target.get('y', 0) - entity.get('y', 0)
+                    distance = (dx*dx + dy*dy) ** 0.5
+                    
+                    if distance <= skill.range:
+                        return skill
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения рекомендуемого навыка для AI: {e}")
+            return None
+    
+    def update(self, delta_time: float):
+        """Обновление дерева навыков"""
+        try:
+            # Обновляем перезарядки навыков
+            for skill in self.skills.values():
+                if skill.cooldown.current_cooldown > 0:
+                    skill.cooldown.current_cooldown -= delta_time
+                    if skill.cooldown.current_cooldown < 0:
+                        skill.cooldown.current_cooldown = 0
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления дерева навыков: {e}")
+    
+    def can_use_skill(self, skill: Skill, entity: Dict[str, Any]) -> bool:
+        """Проверка возможности использования навыка"""
+        try:
+            # Проверяем, изучен ли навык
+            if skill.skill_id not in self.learned_skills:
+                return False
+            
+            # Проверяем перезарядку
+            if skill.cooldown.current_cooldown > 0:
+                return False
+            
+            # Проверяем ману
+            if skill.mana_cost > 0:
+                entity_mana = entity.get('mana', 0)
+                if entity_mana < skill.mana_cost:
+                    return False
+            
+            # Проверяем здоровье
+            if skill.health_cost > 0:
+                entity_health = entity.get('health', 0)
+                if entity_health <= skill.health_cost:
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки возможности использования навыка: {e}")
             return False

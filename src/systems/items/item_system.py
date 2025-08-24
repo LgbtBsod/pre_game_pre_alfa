@@ -1002,3 +1002,154 @@ class ItemSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка объединения предметов для сущности {entity_id}: {e}")
             return None
+
+class ItemFactory:
+    """Фабрика для создания предметов"""
+    
+    @staticmethod
+    def create_enhanced_fire_sword() -> Item:
+        """Создание улучшенного огненного меча"""
+        return Item(
+            item_id="enhanced_fire_sword",
+            name="Улучшенный Огненный Меч",
+            description="Мощный меч, зачарованный огнем",
+            item_type=ItemType.WEAPON,
+            category=ItemCategory.MELEE,
+            rarity=ItemRarity.RARE,
+            level=5,
+            stack_size=1,
+            max_stack=1,
+            weight=3.0,
+            value=500,
+            durability=100,
+            max_durability=100,
+            requirements={"strength": 15, "level": 5},
+            stats={StatType.STRENGTH: 8, StatType.AGILITY: 3},
+            damage=25,
+            damage_type=DamageType.FIRE,
+            armor=0,
+            special_effects=[
+                SpecialEffect(
+                    effect_id="fire_burn",
+                    name="Огненное Пламя",
+                    effect_type="damage_over_time",
+                    parameters={"damage": 5, "duration": 3.0},
+                    duration=3.0,
+                    chance=0.3
+                )
+            ],
+            icon="fire_sword_icon",
+            model="fire_sword_model",
+            sound="fire_sword_sound"
+        )
+    
+    @staticmethod
+    def create_lightning_ring() -> Item:
+        """Создание кольца молний"""
+        return Item(
+            item_id="lightning_ring",
+            name="Кольцо Молний",
+            description="Кольцо, усиливающее электрические атаки",
+            item_type=ItemType.ACCESSORY,
+            category=ItemCategory.RING,
+            rarity=ItemRarity.EPIC,
+            level=3,
+            stack_size=1,
+            max_stack=1,
+            weight=0.1,
+            value=300,
+            durability=100,
+            max_durability=100,
+            requirements={"intelligence": 12, "level": 3},
+            stats={StatType.INTELLIGENCE: 5, StatType.WISDOM: 3},
+            damage=0,
+            damage_type=None,
+            armor=0,
+            special_effects=[
+                SpecialEffect(
+                    effect_id="lightning_boost",
+                    name="Усиление Молний",
+                    effect_type="damage_boost",
+                    parameters={"damage_multiplier": 1.5, "damage_type": "lightning"},
+                    duration=0.0,
+                    chance=1.0
+                )
+            ],
+            icon="lightning_ring_icon",
+            model="lightning_ring_model",
+            sound="lightning_ring_sound"
+        )
+    
+    @staticmethod
+    def create_health_potion() -> Item:
+        """Создание зелья здоровья"""
+        return Item(
+            item_id="health_potion",
+            name="Зелье Здоровья",
+            description="Восстанавливает здоровье",
+            item_type=ItemType.CONSUMABLE,
+            category=ItemCategory.POTION,
+            rarity=ItemRarity.COMMON,
+            level=1,
+            stack_size=1,
+            max_stack=10,
+            weight=0.5,
+            value=50,
+            durability=100,
+            max_durability=100,
+            requirements={},
+            stats={},
+            damage=0,
+            damage_type=None,
+            armor=0,
+            special_effects=[
+                SpecialEffect(
+                    effect_id="heal",
+                    name="Исцеление",
+                    effect_type="heal",
+                    parameters={"heal_amount": 50},
+                    duration=0.0,
+                    chance=1.0
+                )
+            ],
+            icon="health_potion_icon",
+            model="health_potion_model",
+            sound="health_potion_sound"
+        )
+    
+    @staticmethod
+    def create_mana_potion() -> Item:
+        """Создание зелья маны"""
+        return Item(
+            item_id="mana_potion",
+            name="Зелье Маны",
+            description="Восстанавливает ману",
+            item_type=ItemType.CONSUMABLE,
+            category=ItemCategory.POTION,
+            rarity=ItemRarity.COMMON,
+            level=1,
+            stack_size=1,
+            max_stack=10,
+            weight=0.5,
+            value=50,
+            durability=100,
+            max_durability=100,
+            requirements={},
+            stats={},
+            damage=0,
+            damage_type=None,
+            armor=0,
+            special_effects=[
+                SpecialEffect(
+                    effect_id="mana_restore",
+                    name="Восстановление Маны",
+                    effect_type="mana_restore",
+                    parameters={"mana_amount": 50},
+                    duration=0.0,
+                    chance=1.0
+                )
+            ],
+            icon="mana_potion_icon",
+            model="mana_potion_model",
+            sound="mana_potion_sound"
+        )

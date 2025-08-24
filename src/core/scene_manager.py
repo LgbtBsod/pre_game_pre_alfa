@@ -5,9 +5,9 @@ Scene Manager - Менеджер сцен для Panda3D
 """
 
 import logging
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, List
 from abc import ABC, abstractmethod
-from .interfaces import ISceneManager, SystemState
+from .interfaces import ISceneManager, SystemState, SystemPriority
 
 logger = logging.getLogger(__name__)
 
@@ -66,15 +66,54 @@ class SceneManager(ISceneManager):
         self.render_node = render_node
         self.resource_manager = resource_manager
         
-        # Сцены
+        # Свойства для интерфейса ISystem
+        self._system_name = "scene_manager"
+        self._system_priority = SystemPriority.NORMAL
+        self._system_state = SystemState.UNINITIALIZED
+        self._dependencies = []
+        
+        # Инициализируем атрибуты сразу
         self.scenes: Dict[str, Scene] = {}
         self.active_scene: Optional[Scene] = None
         self.previous_scene: Optional[Scene] = None
-        
-        # Состояние переключения
         self.transitioning = False
         self.transition_type = "instant"
         self.transition_progress = 0.0
+        self.scenes_root = None
+        self.ui_root = None
+    
+    @property
+    def system_name(self) -> str:
+        return self._system_name
+    
+    @property
+    def system_priority(self) -> SystemPriority:
+        return self._system_priority
+    
+    @property
+    def system_state(self) -> SystemState:
+        return self._system_state
+    
+    @property
+    def dependencies(self) -> List[str]:
+        return self._dependencies
+    
+    def initialize(self) -> bool:
+        """Инициализация менеджера сцен"""
+        try:
+            logger.info("Инициализация менеджера сцен...")
+            
+            # Создаем корневые узлы
+            self.scenes_root = self.render_node.attachNewNode("scenes_root")
+            self.ui_root = self.render_node.attachNewNode("ui_root")
+            
+            self._system_state = SystemState.READY
+            logger.info("Менеджер сцен успешно инициализирован")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации менеджера сцен: {e}")
+            return False
         
         # Корневые узлы для сцен
         self.scenes_root = None
@@ -299,3 +338,18 @@ class SceneManager(ISceneManager):
         except Exception as e:
             logger.error(f"Ошибка добавления сцены {name}: {e}")
             return False
+    
+    def create_scene(self, name: str, scene_type: str) -> Optional[Scene]:
+        """Создание сцены по типу"""
+        try:
+            # Здесь можно добавить логику создания сцен по типу
+            # Пока возвращаем None
+            logger.debug(f"Создание сцены {name} типа {scene_type}")
+            return None
+        except Exception as e:
+            logger.error(f"Ошибка создания сцены {name}: {e}")
+            return None
+    
+    def destroy_scene(self, name: str) -> bool:
+        """Уничтожение сцены"""
+        return self.remove_scene(name)

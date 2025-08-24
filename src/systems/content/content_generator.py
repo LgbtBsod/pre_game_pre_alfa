@@ -8,7 +8,7 @@ import random
 import time
 import uuid
 from typing import Dict, List, Optional, Any, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
@@ -732,28 +732,41 @@ class ContentGenerator(ISystem):
             return []
     
     def _generate_weapon(self, level: int) -> Optional[ContentItem]:
-        """Генерация оружия"""
+        """Генерация оружия с улучшенной уникальностью"""
         try:
             # Выбираем случайный шаблон
             template_name = self.random_generator.choice(list(self.weapon_templates.keys()))
             template = self.weapon_templates[template_name]
             
-            # Генерируем уникальный ID
-            weapon_id = f"weapon_{uuid.uuid4().hex[:8]}"
+            # Генерируем уникальный ID с временной меткой
+            weapon_id = f"weapon_{int(time.time())}_{uuid.uuid4().hex[:8]}"
+            
+            # Генерируем уникальное имя
+            weapon_name = self._generate_unique_name(template_name, level)
+            
+            # Генерируем уникальные свойства
+            base_damage = template['base_damage'] + (level - 1) * 5
+            damage_variation = self.random_generator.uniform(0.8, 1.2)
+            final_damage = int(base_damage * damage_variation)
+            
+            # Генерируем уникальные эффекты
+            unique_effects = self._generate_unique_effects(level)
             
             # Создаем предмет
             weapon = ContentItem(
                 item_id=weapon_id,
-                name=f"{template_name.title()} Level {level}",
-                description=f"Сгенерированное оружие типа {template_name}",
+                name=weapon_name,
+                description=self._generate_unique_description(template_name, level, unique_effects),
                 content_type=ContentType.WEAPON,
                 rarity=self._generate_rarity(),
                 level=level,
                 properties={
-                    'base_damage': template['base_damage'] + (level - 1) * 5,
+                    'base_damage': final_damage,
                     'damage_type': template['damage_type'].value,
                     'requirements': template['requirements'],
-                    'scaling': template['scaling']
+                    'scaling': template['scaling'],
+                    'unique_effects': unique_effects,
+                    'generation_seed': self.random_generator.randint(1, 1000000)
                 }
             )
             
@@ -763,6 +776,53 @@ class ContentGenerator(ISystem):
         except Exception as e:
             logger.error(f"Ошибка генерации оружия: {e}")
             return None
+    
+    def _generate_unique_name(self, base_name: str, level: int) -> str:
+        """Генерация уникального имени"""
+        prefixes = ['Ancient', 'Mystic', 'Shadow', 'Light', 'Dark', 'Elemental', 'Crystal', 'Obsidian']
+        suffixes = ['Blade', 'Sword', 'Axe', 'Hammer', 'Staff', 'Wand', 'Bow', 'Crossbow']
+        
+        prefix = self.random_generator.choice(prefixes)
+        suffix = self.random_generator.choice(suffixes)
+        
+        return f"{prefix} {base_name.title()} {suffix} +{level}"
+    
+    def _generate_unique_description(self, base_name: str, level: int, effects: list) -> str:
+        """Генерация уникального описания"""
+        descriptions = [
+            f"Легендарное оружие, созданное древними мастерами. Уровень {level}.",
+            f"Мистический артефакт, излучающий мощную энергию. Уровень {level}.",
+            f"Оружие, закаленное в боях тысячелетий. Уровень {level}.",
+            f"Священный клинок, благословленный богами. Уровень {level}."
+        ]
+        
+        base_desc = self.random_generator.choice(descriptions)
+        effects_desc = ""
+        
+        if effects:
+            effects_desc = f" Особые свойства: {', '.join(effects)}."
+        
+        return base_desc + effects_desc
+    
+    def _generate_unique_effects(self, level: int) -> list:
+        """Генерация уникальных эффектов"""
+        effects = []
+        effect_pool = [
+            'Critical Strike', 'Life Steal', 'Mana Steal', 'Poison Damage',
+            'Fire Damage', 'Ice Damage', 'Lightning Damage', 'Holy Damage',
+            'Shadow Damage', 'Armor Penetration', 'Magic Penetration'
+        ]
+        
+        # Количество эффектов зависит от уровня
+        num_effects = min(level // 5 + 1, 3)
+        
+        for _ in range(num_effects):
+            if self.random_generator.random() < 0.3:  # 30% шанс эффекта
+                effect = self.random_generator.choice(effect_pool)
+                if effect not in effects:
+                    effects.append(effect)
+        
+        return effects
     
     def _generate_armor(self, level: int) -> Optional[ContentItem]:
         """Генерация брони"""

@@ -4,14 +4,12 @@ Emotion System Package
 """
 
 from .emotion_system import (
-    Emotion, EmotionSystem, EmotionManager, emotion_manager,
-    EmotionType
+    Emotion, EmotionalState, EmotionalTrigger, EmotionSystem
 )
 
 __all__ = [
     'Emotion',
-    'EmotionSystem',
-    'EmotionManager',
-    'emotion_manager',
-    'EmotionType'
+    'EmotionalState',
+    'EmotionalTrigger',
+    'EmotionSystem'
 ]

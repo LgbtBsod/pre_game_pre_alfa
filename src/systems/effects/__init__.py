@@ -3,25 +3,6 @@
 Effects System Package
 """
 
-from .effect_system import (
-    Effect, SpecialEffect, EffectCategory, DamageType, TargetType, TriggerType,
-    EffectVisuals, EffectBalance, EffectCondition, HealthCondition, ElementCondition,
-    OptimizedTriggerSystem, CombinationSystem, EffectStatistics
-)
+from .effect_system import EffectSystem
 
-__all__ = [
-    'Effect',
-    'SpecialEffect', 
-    'EffectCategory',
-    'DamageType',
-    'TargetType',
-    'TriggerType',
-    'EffectVisuals',
-    'EffectBalance',
-    'EffectCondition',
-    'HealthCondition',
-    'ElementCondition',
-    'OptimizedTriggerSystem',
-    'CombinationSystem',
-    'EffectStatistics'
-]
+__all__ = ['EffectSystem']

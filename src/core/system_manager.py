@@ -324,6 +324,18 @@ class SystemManager(ISystemManager):
             
         except Exception as e:
             logger.error(f"Ошибка очистки менеджера систем: {e}")
+    
+    def get_all_systems(self) -> Dict[str, ISystem]:
+        """Получение всех систем"""
+        return self.systems.copy()
+    
+    def register_system(self, name: str, system: ISystem) -> bool:
+        """Регистрация системы (алиас для add_system)"""
+        return self.add_system(name, system)
+    
+    def unregister_system(self, name: str) -> bool:
+        """Отмена регистрации системы (алиас для remove_system)"""
+        return self.remove_system(name)
 
 # Глобальный экземпляр менеджера систем
 _global_system_manager: Optional[SystemManager] = None

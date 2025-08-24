@@ -64,16 +64,17 @@ class EventSystem(IEventSystem):
             logger.error(f"Ошибка инициализации системы событий: {e}")
             return False
     
-    def emit(self, event_type: str, event_data: Any) -> bool:
+    def emit(self, event_type: str, event_data: Any, source: str = "unknown", 
+             priority: EventPriority = EventPriority.NORMAL) -> bool:
         """Эмиссия события"""
         if not self.is_initialized:
             logger.warning("Система событий не инициализирована")
-            return
+            return False
         
         try:
             event = Event(
                 event_type=event_type,
-                data=data,
+                data=event_data,
                 timestamp=time.time(),
                 source=source,
                 priority=priority
@@ -84,9 +85,11 @@ class EventSystem(IEventSystem):
             self.events_emitted += 1
             
             logger.debug(f"Событие {event_type} добавлено в очередь от {source}")
+            return True
             
         except Exception as e:
             logger.error(f"Ошибка эмиссии события {event_type}: {e}")
+            return False
     
     def subscribe(self, event_type: str, callback: Callable, 
                   subscriber_id: str = "unknown", 
@@ -98,6 +101,19 @@ class EventSystem(IEventSystem):
                 priority=priority,
                 subscriber_id=subscriber_id
             )
+            
+            # Добавляем подписку
+            self.subscriptions[event_type].append(subscription)
+            
+            # Сортируем по приоритету
+            self.subscriptions[event_type].sort(key=lambda x: x.priority.value, reverse=True)
+            
+            logger.debug(f"Подписка на событие {event_type} от {subscriber_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка подписки на событие {event_type}: {e}")
+            return False
             
             self.subscriptions[event_type].append(subscription)
             
@@ -113,21 +129,27 @@ class EventSystem(IEventSystem):
             logger.error(f"Ошибка подписки на {event_type}: {e}")
             return False
     
-    def unsubscribe(self, event_type: str, callback: Callable) -> bool:
+    def unsubscribe(self, event_type: str, subscriber_id: str) -> bool:
         """Отписка от события"""
         try:
-            if event_type in self.subscriptions:
-                # Удаляем все подписки с данным callback
-                original_length = len(self.subscriptions[event_type])
-                self.subscriptions[event_type] = [
-                    sub for sub in self.subscriptions[event_type]
-                    if sub.callback != callback
-                ]
-                
-                removed_count = original_length - len(self.subscriptions[event_type])
-                if removed_count > 0:
-                    logger.debug(f"Отписано {removed_count} подписок от {event_type}")
-                    return True
+            if event_type not in self.subscriptions:
+                return False
+            
+            original_length = len(self.subscriptions[event_type])
+            self.subscriptions[event_type] = [
+                sub for sub in self.subscriptions[event_type]
+                if sub.subscriber_id != subscriber_id
+            ]
+            
+            removed_count = original_length - len(self.subscriptions[event_type])
+            
+            # Удаляем пустой список подписок
+            if not self.subscriptions[event_type]:
+                del self.subscriptions[event_type]
+            
+            if removed_count > 0:
+                logger.debug(f"Отписано {removed_count} подписок от {event_type} для {subscriber_id}")
+                return True
             
             return False
             

@@ -66,7 +66,7 @@ class MenuScene(Scene):
         # Кнопка "Начать игру"
         self.start_button = DirectButton(
             text="🚀 START GAME",
-            pos=(0, 0, 0.2),
+            pos=(0, 0, 0.3),
             scale=0.07,
             command=self._start_game,
             frameColor=(0, 255, 100, 0.8),  # Неоновый зеленый
@@ -75,10 +75,22 @@ class MenuScene(Scene):
             parent=parent_node
         )
         
+        # Кнопка "Творец мира"
+        self.creator_button = DirectButton(
+            text="🎨 WORLD CREATOR",
+            pos=(0, 0, 0.1),
+            scale=0.07,
+            command=self._open_creator,
+            frameColor=(255, 193, 7, 0.8),  # Неоновый желтый
+            text_fg=(255, 255, 255, 1),
+            relief=1,
+            parent=parent_node
+        )
+        
         # Кнопка "Настройки"
         self.settings_button = DirectButton(
             text="⚙️ SETTINGS",
-            pos=(0, 0, 0),
+            pos=(0, 0, -0.1),
             scale=0.07,
             command=self._open_settings,
             frameColor=(255, 100, 255, 0.8),  # Неоновый розовый
@@ -90,7 +102,7 @@ class MenuScene(Scene):
         # Кнопка "Выход"
         self.quit_button = DirectButton(
             text="❌ QUIT",
-            pos=(0, 0, -0.2),
+            pos=(0, 0, -0.3),
             scale=0.07,
             command=self._quit_game,
             frameColor=(255, 100, 100, 0.8),  # Неоновый красный
@@ -106,6 +118,12 @@ class MenuScene(Scene):
         if self.scene_manager:
             self.scene_manager.switch_to_scene("game", "fade")
             logger.info("Переключение на игровую сцену")
+    
+    def _open_creator(self):
+        """Открыть творца мира"""
+        if self.scene_manager:
+            self.scene_manager.switch_to_scene("creator", "fade")
+            logger.info("Переключение на сцену творца мира")
     
     def _open_settings(self):
         """Открыть настройки"""
@@ -144,6 +162,8 @@ class MenuScene(Scene):
             self.title_text.destroy()
         if self.start_button:
             self.start_button.destroy()
+        if self.creator_button:
+            self.creator_button.destroy()
         if self.settings_button:
             self.settings_button.destroy()
         if self.quit_button:

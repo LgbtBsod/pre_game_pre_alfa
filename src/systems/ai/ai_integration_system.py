@@ -10,15 +10,16 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem
-from .ai_system import AISystem, EmotionType, PersonalityType
+from .ai_system import AISystem
+from ...core.constants import EmotionType, AIBehavior
 from .ai_entity import AIEntity, EntityType, MemoryType
-from ..genome.genome_system import Genome, genome_manager
-from ..emotion.emotion_system import EmotionSystem, emotion_manager
-from ..skills.skill_system import Skill, SkillTree, SkillType
+from ..genome.genome_system import GenomeProfile, GenomeSystem
+from ..emotion.emotion_system import EmotionSystem
+from ..skills.skill_system import Skill
 from ..content.content_database import ContentDatabase, ContentType
 from ..combat.combat_system import CombatSystem
-from ..entity.entity_stats_system import EntityStats, StatType, EntityType as GameEntityType
-from ..items.item_system import BaseItem, Weapon, Armor, Accessory
+from ..entity.entity_stats_system import EntityStats
+from ..items.item_system import Item
 from ..inventory.inventory_system import InventorySystem
 
 logger = logging.getLogger(__name__)
@@ -29,9 +30,9 @@ class AIAgentState:
     entity_id: str
     current_emotion: EmotionType
     emotion_intensity: float
-    personality: PersonalityType
-    genome: Genome
-    skill_tree: SkillTree
+    personality: AIBehavior
+    genome: GenomeProfile
+    skill_tree: Dict[str, Any]
     current_health: float
     max_health: float
     current_mana: float
@@ -167,9 +168,9 @@ class AIIntegrationSystem:
                 entity_id=entity_id,
                 current_emotion=EmotionType.NEUTRAL,
                 emotion_intensity=0.5,
-                personality=PersonalityType.BALANCED,
-                genome=entity_data.get('genome', genome_manager.create_genome(entity_id)),
-                skill_tree=entity_data.get('skill_tree', SkillTree(entity_id)),
+                personality=AIBehavior.BALANCED,
+                genome=entity_data.get('genome', GenomeProfile(entity_id)),
+                skill_tree=entity_data.get('skill_tree', {}),
                 current_health=stats.current_health,
                 max_health=stats.base_stats.health,
                 current_mana=stats.current_mana,
@@ -532,24 +533,24 @@ class AIIntegrationSystem:
             'strength': stats.base_stats.strength,
             'agility': stats.base_stats.agility,
             'intelligence': stats.base_stats.intelligence,
-            'vitality': stats.base_stats.vitality,
+            'constitution': stats.base_stats.constitution,
             'wisdom': stats.base_stats.wisdom,
             'charisma': stats.base_stats.charisma
         }
         
         # Определяем приоритеты на основе типа сущности и текущего состояния
-        if ai_state.personality == PersonalityType.AGGRESSIVE:
+        if ai_state.personality == AIBehavior.AGGRESSIVE:
             # Агрессивные предпочитают силу и ловкость
-            priority_stats = ['strength', 'agility', 'vitality']
-        elif ai_state.personality == PersonalityType.CAUTIOUS:
+            priority_stats = ['strength', 'agility', 'constitution']
+        elif ai_state.personality == AIBehavior.CAUTIOUS:
             # Осторожные предпочитают защиту и ману
-            priority_stats = ['vitality', 'wisdom', 'intelligence']
-        elif ai_state.personality == PersonalityType.INTELLECTUAL:
+            priority_stats = ['constitution', 'wisdom', 'intelligence']
+        elif ai_state.personality == AIBehavior.INTELLECTUAL:
             # Интеллектуальные предпочитают ману и интеллект
             priority_stats = ['intelligence', 'wisdom', 'charisma']
         else:
             # Сбалансированные улучшают все понемногу
-            priority_stats = ['vitality', 'strength', 'agility', 'intelligence', 'wisdom', 'charisma']
+            priority_stats = ['constitution', 'strength', 'agility', 'intelligence', 'wisdom', 'charisma']
         
         # Распределяем очки по приоритету
         for stat_name in priority_stats:
@@ -684,21 +685,21 @@ class AIIntegrationSystem:
             # Выбираем подходящий скилл на основе личности
             suitable_skill = None
             
-            if ai_state.personality == PersonalityType.AGGRESSIVE:
+            if ai_state.personality == AIBehavior.AGGRESSIVE:
                 # Агрессивные предпочитают боевые скиллы
                 for skill in available_skills:
                     if skill['data'].get('skill_type') == 'combat':
                         suitable_skill = skill
                         break
             
-            elif ai_state.personality == PersonalityType.CAUTIOUS:
+            elif ai_state.personality == AIBehavior.CAUTIOUS:
                 # Осторожные предпочитают защитные скиллы
                 for skill in available_skills:
                     if 'defense' in skill['data'].get('target_type', '').lower():
                         suitable_skill = skill
                         break
             
-            elif ai_state.personality == PersonalityType.INTELLECTUAL:
+            elif ai_state.personality == AIBehavior.INTELLECTUAL:
                 # Интеллектуальные предпочитают магические скиллы
                 for skill in available_skills:
                     if 'magic' in skill['name'].lower() or 'utility' in skill['data'].get('skill_type', '').lower():

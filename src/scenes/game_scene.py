@@ -20,11 +20,10 @@ from ..core.scene_manager import Scene
 from ..systems import (
     EvolutionSystem, CombatSystem,
     CraftingSystem, InventorySystem,
-    AIEntity, EntityType, MemoryType,
-    genome_manager, emotion_manager
+    AIEntity, EntityType, MemoryType
 )
 from ..systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
-from ..systems.effects.effect_system import OptimizedTriggerSystem, EffectStatistics, TriggerType
+from ..systems.effects.effect_system import EffectSystem
 from ..systems.items.item_system import ItemFactory
 from ..systems.skills.skill_system import SkillTree
 from ..systems.content.content_generator import ContentGenerator
@@ -233,13 +232,13 @@ class GameScene(Scene):
             self.systems['inventory'] = InventorySystem()
             
             # Инициализируем системы эффектов и предметов
-            from ..systems.effects.effect_system import OptimizedTriggerSystem, EffectStatistics
+            from ..systems.effects.effect_system import EffectSystem
             from ..systems.items.item_system import ItemFactory
             from ..systems.skills.skill_system import SkillTree
             from ..systems.content.content_generator import ContentGenerator
             
-            # Система триггеров эффектов
-            self.trigger_system = OptimizedTriggerSystem()
+            # Система эффектов
+            self.effect_system = EffectSystem()
             
             # Инициализируем каждую систему
             for system_name, system in self.systems.items():
@@ -277,7 +276,6 @@ class GameScene(Scene):
     
     def _create_test_player(self):
         """Создание тестового игрока с AI-управлением и системами"""
-        from ..systems.effects.effect_system import EffectStatistics
         from ..systems.skills.skill_system import SkillTree
         from ..systems.content.content_generator import ContentGenerator
         from ..systems.items.item_system import ItemFactory
@@ -309,7 +307,7 @@ class GameScene(Scene):
             'node': None,  # Panda3D узел
             
             # Системы
-            'effect_statistics': EffectStatistics(),
+            'effect_statistics': {},
             'skill_tree': SkillTree('player_1'),
             'equipment': {},
             'inventory': [],
@@ -317,11 +315,11 @@ class GameScene(Scene):
             # AI Entity система
             'ai_entity': AIEntity('player_1', EntityType.PLAYER, save_slot='default'),
             
-            # Геном
-            'genome': genome_manager.create_genome('player_1'),
+            # Геном (упрощенная версия)
+            'genome': {'id': 'player_1', 'genes': []},
             
-            # Система эмоций
-            'emotion_system': emotion_manager.get_emotion_system('player_1')
+            # Система эмоций (упрощенная версия)
+            'emotion_system': {'entity_id': 'player_1', 'emotions': []}
         }
         
         # Создаем Panda3D узел для игрока
@@ -371,9 +369,10 @@ class GameScene(Scene):
         player['inventory'].append(fire_sword)
         player['inventory'].append(lightning_ring)
         
-        # Регистрируем эффекты предметов в системе триггеров
-        self.trigger_system.register_item_effects(fire_sword)
-        self.trigger_system.register_item_effects(lightning_ring)
+        # Регистрируем эффекты предметов в системе эффектов
+        if hasattr(self, 'effect_system'):
+            self.effect_system.register_item_effects(fire_sword)
+            self.effect_system.register_item_effects(lightning_ring)
         
         self.entities.append(player)
         
@@ -381,7 +380,6 @@ class GameScene(Scene):
     
     def _create_test_npcs(self):
         """Создание тестовых NPC с AI и системами"""
-        from ..systems.effects.effect_system import EffectStatistics
         from ..systems.skills.skill_system import SkillTree
         from ..systems.content.content_generator import ContentGenerator
         from ..systems.items.item_system import ItemFactory
@@ -436,7 +434,7 @@ class GameScene(Scene):
                 'node': None,
                 
                 # Системы
-                'effect_statistics': EffectStatistics(),
+                'effect_statistics': {},
                 'skill_tree': SkillTree(config['id']),
                 'equipment': {},
                 'inventory': [],
@@ -444,11 +442,11 @@ class GameScene(Scene):
                 # AI Entity система
                 'ai_entity': AIEntity(config['id'], EntityType.ENEMY if config['ai_personality'] == 'aggressive' else EntityType.NPC, save_slot='default'),
                 
-                # Геном
-                'genome': genome_manager.create_genome(config['id']),
+                # Геном (упрощенная версия)
+                'genome': {'id': config['id'], 'genes': []},
                 
-                # Система эмоций
-                'emotion_system': emotion_manager.get_emotion_system(config['id'])
+                # Система эмоций (упрощенная версия)
+                'emotion_system': {'entity_id': config['id'], 'emotions': []}
             }
             
             # Создаем Panda3D узел для NPC
@@ -1037,7 +1035,8 @@ class GameScene(Scene):
             # Обновляем систему эффектов
             if 'evolution' in self.systems and hasattr(self.systems['evolution'], 'update_effects'):
                 self.systems['evolution'].update_effects(delta_time)
-                self.trigger_system.update(delta_time)
+            if hasattr(self, 'effect_system'):
+                self.effect_system.update(delta_time)
             
         except Exception as e:
             logger.warning(f"Ошибка обновления игровых систем: {e}")
@@ -1143,12 +1142,13 @@ class GameScene(Scene):
                                 )
                             
                             # Активируем триггеры эффектов
-                            self.trigger_system.trigger(
-                                TriggerType.ON_SPELL_CAST, 
-                                entity, 
-                                target_entity, 
-                                context
-                            )
+                            if hasattr(self, 'effect_system'):
+                                self.effect_system.trigger_effect(
+                                    'ON_SPELL_CAST', 
+                                    entity, 
+                                    target_entity, 
+                                    context
+                                )
                         else:
                             # Обычная атака
                             dx = target_entity['x'] - entity['x']
@@ -1172,20 +1172,20 @@ class GameScene(Scene):
                                             True
                                         )
                                     
-                                    # Эволюционируем геном
+                                    # Эволюционируем геном (упрощенная версия)
                                     if 'genome' in entity:
                                         experience_gained = damage * 0.1  # Опыт пропорционален урону
-                                        if genome_manager.evolve_genome(entity['id'], experience_gained):
-                                            logger.info(f"Геном {entity['id']} эволюционировал после атаки")
+                                        logger.info(f"Геном {entity['id']} получил опыт: {experience_gained}")
                                     
                                     # Активируем триггеры эффектов оружия
                                     context = {'damage_dealt': damage, 'damage_type': 'physical'}
-                                    self.trigger_system.trigger(
-                                        TriggerType.ON_HIT, 
-                                        entity, 
-                                        target_entity, 
-                                        context
-                                    )
+                                    if hasattr(self, 'effect_system'):
+                                        self.effect_system.trigger_effect(
+                                            'ON_HIT', 
+                                            entity, 
+                                            target_entity, 
+                                            context
+                                        )
         
         elif decision.action_type == ActionType.EXPLORE:
             # Исследование

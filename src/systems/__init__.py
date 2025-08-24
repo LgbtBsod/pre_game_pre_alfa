@@ -11,19 +11,16 @@ from .inventory.inventory_system import InventorySystem
 
 # Импорт новых систем
 from .effects.effect_system import (
-    Effect, SpecialEffect, EffectCategory, DamageType, TargetType, TriggerType,
-    EffectVisuals, EffectBalance, EffectCondition, HealthCondition, ElementCondition,
-    OptimizedTriggerSystem, CombinationSystem, EffectStatistics
+    Effect, SpecialEffect, EffectCategory, DamageType, TriggerType
 )
 
 from .items.item_system import (
-    BaseItem, Weapon, Armor, Accessory, Consumable, ItemFactory,
-    ItemRarity, ItemType, ItemStats
+    Item, SpecialEffect, ItemSystem,
+    ItemRarity, ItemType
 )
 
 from .skills.skill_system import (
-    Skill, CombatSkill, UtilitySkill, SkillTree,
-    SkillType, SkillTarget, SkillRequirements, SkillCooldown
+    Skill, SkillRequirements, SkillCooldown, SkillSystem
 )
 
 from .ai.ai_entity import (
@@ -31,7 +28,7 @@ from .ai.ai_entity import (
 )
 
 from .ai.ai_system import (
-    AISystem, EmotionType, PersonalityType, Memory, Emotion, Personality
+    AISystem, AIConfig, AIMemory, AIDecision
 )
 
 from .ai.pytorch_ai_system import PyTorchAISystem, NeuralNetwork, EmotionalNetwork
@@ -39,30 +36,24 @@ from .ai.pytorch_ai_system import PyTorchAISystem, NeuralNetwork, EmotionalNetwo
 from .ai.ai_integration_system import AIIntegrationSystem, AIAgentState
 
 from .genome.genome_system import (
-    Gene, Chromosome, Genome, GenomeManager, genome_manager,
-    GeneType, GeneDominance
+    GeneSequence, GeneticTrait, GenomeProfile, GenomeSystem
 )
 
 from .emotion.emotion_system import (
-    Emotion, EmotionSystem, EmotionManager, emotion_manager,
-    EmotionType
+    Emotion, EmotionalState, EmotionalTrigger, EmotionSystem
 )
 
 from .entity.entity_stats_system import (
-    EntityType as GameEntityType, StatType, BaseStats, StatModifier, EntityStats
+    StatModifier, EntityStats, EntityStatsSystem
 )
 
 from .content.content_database import (
-    ContentDatabase, ContentItem, ContentType, ContentRarity,
-    EnemyData, BossData, EnemyType, BossType, DamageType as ContentDamageType
+    ContentDatabase, ContentItem, ContentSlot, ContentSession
 )
 
-from .content.content_generator import ContentGenerator, GenerationConfig
+from .content.content_generator import ContentGenerator, GenerationConfig, EnemyData, BossData
 
-from .content.content_constants import (
-    ENEMY_CONSTANTS, BOSS_CONSTANTS, ITEM_CONSTANTS,
-    RANDOM_GENERATOR, GenerationBiome, GenerationTime, GenerationWeather
-)
+
 
 # Экспорт всех систем
 __all__ = [
@@ -70,39 +61,32 @@ __all__ = [
     'EvolutionSystem', 'CombatSystem', 'CraftingSystem', 'InventorySystem',
     
     # Система эффектов
-    'Effect', 'SpecialEffect', 'EffectCategory', 'DamageType', 'TargetType', 'TriggerType',
-    'EffectVisuals', 'EffectBalance', 'EffectCondition', 'HealthCondition', 'ElementCondition',
-    'OptimizedTriggerSystem', 'CombinationSystem', 'EffectStatistics',
+    'Effect', 'SpecialEffect', 'EffectCategory', 'DamageType', 'TriggerType',
     
     # Система предметов
-    'BaseItem', 'Weapon', 'Armor', 'Accessory', 'Consumable', 'ItemFactory',
-    'ItemRarity', 'ItemType', 'ItemStats',
+    'Item', 'SpecialEffect', 'ItemSystem',
+    'ItemRarity', 'ItemType',
     
     # Система скиллов
-    'Skill', 'CombatSkill', 'UtilitySkill', 'SkillTree',
-    'SkillType', 'SkillTarget', 'SkillRequirements', 'SkillCooldown',
+    'Skill', 'SkillRequirements', 'SkillCooldown', 'SkillSystem',
     
     # AI системы
     'AIEntity', 'EntityType', 'MemoryType', 'MemoryEntry', 'GenerationMemory',
-    'AISystem', 'EmotionType', 'PersonalityType', 'Memory', 'Emotion', 'Personality',
+    'AISystem', 'AIConfig', 'AIMemory', 'AIDecision',
     'PyTorchAISystem', 'NeuralNetwork', 'EmotionalNetwork',
     'AIIntegrationSystem', 'AIAgentState',
     
     # Система генома
-    'Gene', 'Chromosome', 'Genome', 'GenomeManager', 'genome_manager',
-    'GeneType', 'GeneDominance',
+    'GeneSequence', 'GeneticTrait', 'GenomeProfile', 'GenomeSystem',
     
     # Система эмоций
-    'Emotion', 'EmotionSystem', 'EmotionManager', 'emotion_manager',
-    'EmotionType',
+    'Emotion', 'EmotionalState', 'EmotionalTrigger', 'EmotionSystem',
     
     # Система характеристик сущностей
-    'GameEntityType', 'StatType', 'BaseStats', 'StatModifier', 'EntityStats',
+    'StatModifier', 'EntityStats', 'EntityStatsSystem',
     
     # Система контента
-    'ContentDatabase', 'ContentItem', 'ContentType', 'ContentRarity',
-    'EnemyData', 'BossData', 'EnemyType', 'BossType', 'ContentDamageType',
-    'ContentGenerator', 'GenerationConfig',
-    'ENEMY_CONSTANTS', 'BOSS_CONSTANTS', 'ITEM_CONSTANTS',
-    'RANDOM_GENERATOR', 'GenerationBiome', 'GenerationTime', 'GenerationWeather'
+    'ContentDatabase', 'ContentItem', 'ContentSlot', 'ContentSession',
+    'ContentGenerator', 'GenerationConfig', 'EnemyData', 'BossData',
+
 ]

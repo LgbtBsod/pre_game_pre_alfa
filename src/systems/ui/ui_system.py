@@ -1,20 +1,42 @@
 #!/usr/bin/env python3
 """
-Система пользовательского интерфейса - управление UI элементами
+Система пользовательского интерфейса - режим "Творец мира"
+Пользователь создает препятствия, ловушки, сундуки и врагов
 """
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
+from enum import Enum
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     UIElementType, UIState, StatType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
+    WorldObjectType, ObjectCategory, ObjectState, CreatorMode, ToolType,
+    WORLD_SETTINGS, UI_SETTINGS, DEFAULT_OBJECT_TEMPLATES, UI_COLORS
 )
 
 logger = logging.getLogger(__name__)
+
+# Используем константы из модуля constants
+WorldObjectType = WorldObjectType
+ObjectCategory = ObjectCategory
+
+@dataclass
+class WorldObjectTemplate:
+    """Шаблон объекта для создания"""
+    template_id: str
+    name: str
+    object_type: WorldObjectType
+    category: ObjectCategory
+    description: str
+    icon: str
+    cost: int = 0
+    unlock_level: int = 1
+    properties: Dict[str, Any] = field(default_factory=dict)
+    is_available: bool = True
 
 @dataclass
 class UIElement:
@@ -39,6 +61,17 @@ class UIElement:
     custom_data: Dict[str, Any] = field(default_factory=dict)
     last_update: float = field(default_factory=time.time)
     animation_data: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class CreatorMode:
+    """Режим создания объектов"""
+    mode_id: str
+    name: str
+    description: str
+    active: bool = False
+    selected_template: Optional[str] = None
+    placement_mode: bool = False
+    last_placed_position: Optional[Tuple[float, float, float]] = None
 
 @dataclass
 class UILayout:
@@ -66,7 +99,7 @@ class UITheme:
     last_update: float = field(default_factory=time.time)
 
 class UISystem(ISystem):
-    """Система пользовательского интерфейса"""
+    """Система пользовательского интерфейса - режим творца мира"""
     
     def __init__(self):
         self._system_name = "ui"
@@ -77,32 +110,44 @@ class UISystem(ISystem):
         # UI элементы
         self.ui_elements: Dict[str, UIElement] = {}
         
-        # Макеты
-        self.ui_layouts: Dict[str, UILayout] = {}
+        # Шаблоны объектов для создания
+        self.object_templates: Dict[str, WorldObjectTemplate] = {}
         
-        # Темы
-        self.ui_themes: Dict[str, UITheme] = {}
+        # Режимы создания
+        self.creator_modes: Dict[str, CreatorMode] = {}
         
-        # Активные экраны
-        self.active_screens: List[str] = []
+        # Активный режим
+        self.active_mode: Optional[str] = None
+        
+        # Выбранный шаблон для размещения
+        self.selected_template: Optional[WorldObjectTemplate] = None
+        
+        # Статистика создания
+        self.creation_stats = {
+            'objects_created': 0,
+            'obstacles_placed': 0,
+            'traps_placed': 0,
+            'chests_placed': 0,
+            'enemies_spawned': 0,
+            'total_cost': 0
+        }
         
         # Настройки системы
-        self.system_settings = {
+        self.system_settings = UI_SETTINGS.copy()
+        self.system_settings.update({
             'max_ui_elements': SYSTEM_LIMITS["max_ui_elements"],
             'max_layers': SYSTEM_LIMITS["max_ui_layers"],
-            'animation_enabled': True,
-            'auto_layout_enabled': True,
-            'theme_switching_enabled': True,
-            'event_bubbling_enabled': True
-        }
+            'grid_snap': WORLD_SETTINGS["grid_snap"],
+            'grid_size': WORLD_SETTINGS["grid_size"],
+            'show_preview': WORLD_SETTINGS["show_preview"]
+        })
         
         # Статистика системы
         self.system_stats = {
             'total_elements': 0,
             'visible_elements': 0,
-            'active_layouts': 0,
-            'active_themes': 0,
-            'active_screens': 0,
+            'active_modes': 0,
+            'available_templates': 0,
             'events_processed': 0,
             'update_time': 0.0
         }
@@ -111,7 +156,7 @@ class UISystem(ISystem):
         self.gui_frame = None
         self.gui_root = None
         
-        logger.info("Система UI инициализирована")
+        logger.info("Система UI творца мира инициализирована")
     
     @property
     def system_name(self) -> str:
@@ -137,14 +182,11 @@ class UISystem(ISystem):
             # Настраиваем систему
             self._setup_ui_system()
             
-            # Создаем базовые темы
-            self._create_base_themes()
+            # Создаем шаблоны объектов
+            self._create_object_templates()
             
-            # Создаем базовые макеты
-            self._create_base_layouts()
-            
-            # Создаем базовые UI элементы
-            self._create_base_ui_elements()
+            # Создаем базовые UI элементы (если нужно)
+            # self._create_base_ui_elements()
             
             self._system_state = SystemState.READY
             logger.info("Система UI успешно инициализирована")
@@ -214,20 +256,23 @@ class UISystem(ISystem):
             
             # Очищаем все данные
             self.ui_elements.clear()
-            self.ui_layouts.clear()
-            self.ui_themes.clear()
-            self.active_screens.clear()
+            self.object_templates.clear()
+            self.creator_modes.clear()
+            self.selected_template = None
+            self.active_mode = None
             
             # Сбрасываем статистику
             self.system_stats = {
                 'total_elements': 0,
                 'visible_elements': 0,
-                'active_layouts': 0,
-                'active_themes': 0,
-                'active_screens': 0,
+                'active_modes': 0,
+                'available_templates': 0,
                 'events_processed': 0,
                 'update_time': 0.0
             }
+            
+            # Сбрасываем статистику создания
+            self.reset_creation_stats()
             
             self._system_state = SystemState.DESTROYED
             logger.info("Система UI очищена")
@@ -245,11 +290,94 @@ class UISystem(ISystem):
             'priority': self.system_priority.value,
             'dependencies': self.dependencies,
             'total_elements': len(self.ui_elements),
-            'active_layouts': len(self.ui_layouts),
-            'active_themes': len([t for t in self.ui_themes.values() if t.is_active]),
-            'active_screens': len(self.active_screens),
+            'active_modes': len(self.creator_modes),
+            'available_templates': len(self.object_templates),
             'stats': self.system_stats
         }
+    
+    def get_available_templates(self, category: ObjectCategory) -> List[WorldObjectTemplate]:
+        """Получение доступных шаблонов по категории"""
+        try:
+            return [template for template in self.object_templates.values() 
+                   if template.category == category and template.is_available]
+        except Exception as e:
+            logger.error(f"Ошибка получения шаблонов для категории {category}: {e}")
+            return []
+    
+    def get_templates_by_type(self, object_type: WorldObjectType) -> List[WorldObjectTemplate]:
+        """Получение шаблонов по типу объекта"""
+        try:
+            return [template for template in self.object_templates.values() 
+                   if template.object_type == object_type and template.is_available]
+        except Exception as e:
+            logger.error(f"Ошибка получения шаблонов для типа {object_type}: {e}")
+            return []
+    
+    def select_template(self, template_id: str) -> bool:
+        """Выбор шаблона для размещения"""
+        try:
+            if template_id in self.object_templates:
+                self.selected_template = self.object_templates[template_id]
+                logger.info(f"Выбран шаблон: {self.selected_template.name}")
+                return True
+            else:
+                logger.warning(f"Шаблон {template_id} не найден")
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка выбора шаблона {template_id}: {e}")
+            return False
+    
+    def get_template_by_id(self, template_id: str) -> Optional[WorldObjectTemplate]:
+        """Получение шаблона по ID"""
+        try:
+            return self.object_templates.get(template_id)
+        except Exception as e:
+            logger.error(f"Ошибка получения шаблона {template_id}: {e}")
+            return None
+    
+    def unlock_template(self, template_id: str) -> bool:
+        """Разблокировка шаблона"""
+        try:
+            if template_id in self.object_templates:
+                self.object_templates[template_id].is_available = True
+                logger.info(f"Разблокирован шаблон: {self.object_templates[template_id].name}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка разблокировки шаблона {template_id}: {e}")
+            return False
+    
+    def lock_template(self, template_id: str) -> bool:
+        """Блокировка шаблона"""
+        try:
+            if template_id in self.object_templates:
+                self.object_templates[template_id].is_available = False
+                logger.info(f"Заблокирован шаблон: {self.object_templates[template_id].name}")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка блокировки шаблона {template_id}: {e}")
+            return False
+    
+    def get_creation_stats(self) -> Dict[str, Any]:
+        """Получение статистики создания"""
+        return self.creation_stats.copy()
+    
+    def reset_creation_stats(self) -> None:
+        """Сброс статистики создания"""
+        self.creation_stats = {
+            'objects_created': 0,
+            'obstacles_placed': 0,
+            'traps_placed': 0,
+            'chests_placed': 0,
+            'enemies_spawned': 0,
+            'total_cost': 0
+        }
+    
+    def increment_creation_stat(self, stat_name: str, value: int = 1) -> None:
+        """Увеличение статистики создания"""
+        if stat_name in self.creation_stats:
+            self.creation_stats[stat_name] += value
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
@@ -399,6 +527,159 @@ class UISystem(ISystem):
             
         except Exception as e:
             logger.error(f"Ошибка создания базовых макетов: {e}")
+    
+    def _create_object_templates(self) -> None:
+        """Создание шаблонов объектов для создания"""
+        try:
+            # Создаем шаблоны из констант
+            for template_id, template_data in DEFAULT_OBJECT_TEMPLATES.items():
+                self.object_templates[template_id] = WorldObjectTemplate(
+                    template_id=template_id,
+                    name=template_data["name"],
+                    object_type=template_data["type"],
+                    category=template_data["category"],
+                    description=template_data["description"],
+                    icon=template_data["icon"],
+                    cost=template_data["cost"],
+                    unlock_level=template_data["unlock_level"],
+                    properties=template_data["properties"]
+                )
+            
+            # Добавляем дополнительные шаблоны
+            additional_templates = {
+                "poison_pit": {
+                    "name": "Яма с ядом",
+                    "type": WorldObjectType.TRAP,
+                    "category": ObjectCategory.COMBAT,
+                    "description": "Ловушка с ядовитым газом",
+                    "icon": "☠️",
+                    "cost": 35,
+                    "unlock_level": 3,
+                    "properties": {
+                        'width': 2.0,
+                        'height': 0.1,
+                        'depth': 2.0,
+                        'color': (0.2, 0.8, 0.2, 0.8),
+                        'damage': 5,
+                        'damage_type': 'poison',
+                        'duration': 10.0,
+                        'trigger_type': 'step'
+                    }
+                },
+                "golden_chest": {
+                    "name": "Золотой сундук",
+                    "type": WorldObjectType.CHEST,
+                    "category": ObjectCategory.REWARDS,
+                    "description": "Содержит редкие награды",
+                    "icon": "💎",
+                    "cost": 150,
+                    "unlock_level": 5,
+                    "properties": {
+                        'width': 1.2,
+                        'height': 1.2,
+                        'depth': 1.2,
+                        'color': (1.0, 0.8, 0.0, 1.0),
+                        'loot_quality': 'rare',
+                        'loot_count': 5,
+                        'locked': True,
+                        'trap_chance': 0.3
+                    }
+                },
+                "troll": {
+                    "name": "Тролль",
+                    "type": WorldObjectType.ENEMY,
+                    "category": ObjectCategory.COMBAT,
+                    "description": "Сильный и медленный враг",
+                    "icon": "👺",
+                    "cost": 80,
+                    "unlock_level": 4,
+                    "properties": {
+                        'width': 1.5,
+                        'height': 2.5,
+                        'depth': 1.5,
+                        'color': (0.8, 0.4, 0.2, 1.0),
+                        'health': 120,
+                        'damage': 25,
+                        'speed': 1.5,
+                        'ai_type': 'defensive',
+                        'loot_drop': True,
+                        'regeneration': True
+                    }
+                },
+                "mountain": {
+                    "name": "Гора",
+                    "type": WorldObjectType.GEO_OBSTACLE,
+                    "category": ObjectCategory.ENVIRONMENT,
+                    "description": "Непроходимое географическое препятствие",
+                    "icon": "⛰️",
+                    "cost": 20,
+                    "unlock_level": 1,
+                    "properties": {
+                        'width': 5.0,
+                        'height': 8.0,
+                        'depth': 5.0,
+                        'color': (0.4, 0.3, 0.2, 1.0),
+                        'collision': True,
+                        'climbable': False,
+                        'weather_effect': 'wind'
+                    }
+                },
+                "river": {
+                    "name": "Река",
+                    "type": WorldObjectType.GEO_OBSTACLE,
+                    "category": ObjectCategory.ENVIRONMENT,
+                    "description": "Замедляет движение",
+                    "icon": "🌊",
+                    "cost": 15,
+                    "unlock_level": 1,
+                    "properties": {
+                        'width': 3.0,
+                        'height': 0.5,
+                        'depth': 10.0,
+                        'color': (0.2, 0.4, 0.8, 0.7),
+                        'collision': False,
+                        'movement_penalty': 0.5,
+                        'swimmable': True
+                    }
+                },
+                "tree": {
+                    "name": "Дерево",
+                    "type": WorldObjectType.DECORATION,
+                    "category": ObjectCategory.ENVIRONMENT,
+                    "description": "Декоративный элемент",
+                    "icon": "🌳",
+                    "cost": 5,
+                    "unlock_level": 1,
+                    "properties": {
+                        'width': 1.0,
+                        'height': 4.0,
+                        'depth': 1.0,
+                        'color': (0.2, 0.6, 0.2, 1.0),
+                        'collision': False,
+                        'provides_shade': True,
+                        'seasonal_changes': True
+                    }
+                }
+            }
+            
+            # Добавляем дополнительные шаблоны
+            for template_id, template_data in additional_templates.items():
+                self.object_templates[template_id] = WorldObjectTemplate(
+                    template_id=template_id,
+                    name=template_data["name"],
+                    object_type=template_data["type"],
+                    category=template_data["category"],
+                    description=template_data["description"],
+                    icon=template_data["icon"],
+                    cost=template_data["cost"],
+                    unlock_level=template_data["unlock_level"],
+                    properties=template_data["properties"]
+                )
+            
+            logger.info(f"Создано {len(self.object_templates)} шаблонов объектов")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания шаблонов объектов: {e}")
     
     def _create_base_ui_elements(self) -> None:
         """Создание базовых UI элементов"""

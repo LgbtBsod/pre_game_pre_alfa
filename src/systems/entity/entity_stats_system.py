@@ -60,7 +60,7 @@ class EntityStats:
     strength: int = BASE_STATS["strength"]
     agility: int = BASE_STATS["agility"]
     intelligence: int = BASE_STATS["intelligence"]
-    vitality: int = BASE_STATS["vitality"]
+    constitution: int = BASE_STATS["constitution"]
     wisdom: int = BASE_STATS["wisdom"]
     charisma: int = BASE_STATS["charisma"]
     
@@ -294,7 +294,7 @@ class EntityStatsSystem(ISystem):
                 
                 # Регенерация здоровья
                 if stats.health < stats.max_health:
-                    regen_amount = int(stats.vitality * 0.1) + 1
+                    regen_amount = int(stats.constitution * 0.1) + 1
                     stats.health = min(stats.max_health, stats.health + regen_amount)
                 
                 # Регенерация маны
@@ -523,12 +523,12 @@ class EntityStatsSystem(ISystem):
             stats.strength += stats_points // 6
             stats.agility += stats_points // 6
             stats.intelligence += stats_points // 6
-            stats.vitality += stats_points // 6
+            stats.constitution += stats_points // 6
             stats.wisdom += stats_points // 6
             stats.charisma += stats_points // 6
             
             # Улучшаем основные характеристики
-            stats.max_health += int(stats.vitality * 0.5)
+            stats.max_health += int(stats.constitution * 0.5)
             stats.max_mana += int(stats.intelligence * 0.3)
             stats.max_stamina += int(stats.agility * 0.2)
             
@@ -630,8 +630,8 @@ class EntityStatsSystem(ISystem):
                     stats.agility = max(1, stats.agility + int(modifier.value))
                 elif modifier.stat_type == StatType.INTELLIGENCE:
                     stats.intelligence = max(1, stats.intelligence + int(modifier.value))
-                elif modifier.stat_type == StatType.VITALITY:
-                    stats.vitality = max(1, stats.vitality + int(modifier.value))
+                elif modifier.stat_type == StatType.CONSTITUTION:
+                    stats.constitution = max(1, stats.constitution + int(modifier.value))
                 elif modifier.stat_type == StatType.WISDOM:
                     stats.wisdom = max(1, stats.wisdom + int(modifier.value))
                 elif modifier.stat_type == StatType.CHARISMA:
@@ -707,7 +707,7 @@ class EntityStatsSystem(ISystem):
                 'strength': stats.strength,
                 'agility': stats.agility,
                 'intelligence': stats.intelligence,
-                'vitality': stats.vitality,
+                'constitution': stats.constitution,
                 'wisdom': stats.wisdom,
                 'charisma': stats.charisma,
                 'resistances': {damage_type.value: value for damage_type, value in stats.resistances.items()},

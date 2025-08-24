@@ -4,16 +4,14 @@ AI Systems Package
 Системы искусственного интеллекта
 """
 
-from .ai_system import AISystem, EmotionType, PersonalityType, Memory, Emotion, Personality
+from .ai_system import AISystem, AIConfig, AIMemory, AIDecision
 from .pytorch_ai_system import PyTorchAISystem, NeuralNetwork, EmotionalNetwork
 
 __all__ = [
     'AISystem', 
-    'EmotionType', 
-    'PersonalityType', 
-    'Memory', 
-    'Emotion', 
-    'Personality',
+    'AIConfig', 
+    'AIMemory', 
+    'AIDecision',
     'PyTorchAISystem',
     'NeuralNetwork',
     'EmotionalNetwork'

@@ -46,9 +46,9 @@ class EmotionalTrigger:
     """Триггер эмоции"""
     trigger_id: str
     trigger_type: str
-    conditions: Dict[str, Any] = field(default_factory=dict)
     emotion_type: EmotionType
     intensity: EmotionIntensity
+    conditions: Dict[str, Any] = field(default_factory=dict)
     duration: float = 0.0
     probability: float = 1.0
     cooldown: float = 0.0
