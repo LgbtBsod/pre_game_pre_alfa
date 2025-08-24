@@ -9,6 +9,7 @@ from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.gui.DirectButton import DirectButton
 from panda3d.core import TextNode
+from panda3d.core import WindowProperties
 
 from ..core.scene_manager import Scene
 

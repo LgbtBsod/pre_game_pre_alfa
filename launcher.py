@@ -21,64 +21,155 @@ def setup_logging():
     log_dir = ROOT_DIR / "logs"
     log_dir.mkdir(exist_ok=True)
     
-    # Очистка старых логов
-    cleanup_old_logs(log_dir)
+    # Создаем папку для архива логов
+    archive_dir = ROOT_DIR / "logs" / "archive"
+    archive_dir.mkdir(exist_ok=True)
+    
+    # Загружаем конфигурацию логирования
+    logging_config = load_logging_config()
+    
+    # Очистка старых логов (если включено)
+    if logging_config.get("cleanup_on_startup", True):
+        cleanup_old_logs(log_dir, archive_dir, logging_config)
     
     # Форматтер для логов
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        logging_config.get("format", '%(asctime)s - %(name)s - %(levelname)s - %(message)s'),
+        datefmt=logging_config.get("date_format", '%Y-%m-%d %H:%M:%S')
     )
     
     # Файловый обработчик
+    current_log_file = log_dir / f"ai_evolve_{time.strftime('%Y%m%d_%H%M%S')}.log"
     file_handler = logging.FileHandler(
-        log_dir / f"ai_evolve_{time.strftime('%Y%m%d_%H%M%S')}.log",
+        current_log_file,
         encoding='utf-8'
     )
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(getattr(logging, logging_config.get("file_level", "DEBUG")))
     file_handler.setFormatter(formatter)
     
     # Консольный обработчик
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(getattr(logging, logging_config.get("console_level", "INFO")))
     console_handler.setFormatter(formatter)
     
     # Настройка корневого логгера
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
+    root_logger.setLevel(getattr(logging, logging_config.get("level", "DEBUG")))
     root_logger.addHandler(file_handler)
     root_logger.addHandler(console_handler)
     
-    # Отключаем логи от сторонних библиотек
-    logging.getLogger('panda3d').setLevel(logging.WARNING)
+    # Настройка уровней для внешних библиотек
+    external_libs = logging_config.get("external_libraries", {})
+    for lib_name, level in external_libs.items():
+        try:
+            logging.getLogger(lib_name).setLevel(getattr(logging, level))
+        except Exception as e:
+            print(f"⚠️  Не удалось установить уровень логирования для {lib_name}: {e}")
+    
+    # Сохраняем путь к текущему лог-файлу для возможного архивирования
+    root_logger.current_log_file = current_log_file
+    
+    print(f"📝 Логирование настроено: {current_log_file.name}")
+    print(f"📊 Уровень файла: {logging_config.get('file_level', 'DEBUG')}")
+    print(f"📊 Уровень консоли: {logging_config.get('console_level', 'INFO')}")
 
-def cleanup_old_logs(log_dir: Path):
-    """Очистка старых логов"""
+def load_logging_config():
+    """Загрузка конфигурации логирования"""
     try:
-        # Получаем все файлы логов
-        log_files = list(log_dir.glob("*.log"))
+        config_file = ROOT_DIR / "config" / "logging_config.json"
+        if config_file.exists():
+            import json
+            with open(config_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else:
+            print("⚠️  Файл конфигурации логирования не найден, используются настройки по умолчанию")
+    except Exception as e:
+        print(f"⚠️  Ошибка загрузки конфигурации логирования: {e}")
+    
+    # Возвращаем настройки по умолчанию
+    return {
+        "level": "INFO",
+        "file_level": "DEBUG",
+        "console_level": "INFO",
+        "max_archive_files": 10,
+        "cleanup_on_startup": True,
+        "save_last_session": True,
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "date_format": "%Y-%m-%d %H:%M:%S",
+        "external_libraries": {
+            "panda3d": "WARNING",
+            "numpy": "WARNING",
+            "PIL": "WARNING"
+        }
+    }
+
+def cleanup_old_logs(log_dir: Path, archive_dir: Path, config: dict):
+    """Очистка старых логов при каждом запуске игры"""
+    try:
+        # Получаем все файлы логов (исключаем папку archive)
+        log_files = [f for f in log_dir.glob("*.log") if f.parent == log_dir]
         
         if not log_files:
-            return
+            print("📁 Папка логов пуста")
+        else:
+            # Если есть логи, сохраняем самый последний в архив
+            if config.get("save_last_session", True) and log_files:
+                # Сортируем по времени модификации (новые сначала)
+                log_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                latest_log = log_files[0]
+                
+                # Копируем последний лог в архив
+                try:
+                    import shutil
+                    archive_name = f"last_session_{time.strftime('%Y%m%d_%H%M%S')}.log"
+                    archive_path = archive_dir / archive_name
+                    shutil.copy2(latest_log, archive_path)
+                    print(f"💾 Последний лог сохранен в архив: {archive_name}")
+                except Exception as e:
+                    print(f"⚠️  Не удалось сохранить лог в архив: {e}")
+            
+            # Удаляем все старые логи
+            for log_file in log_files:
+                try:
+                    log_file.unlink()
+                    print(f"🗑️  Удален старый лог: {log_file.name}")
+                except Exception as e:
+                    print(f"⚠️  Не удалось удалить лог {log_file.name}: {e}")
+            
+            print(f"🧹 Очищено {len(log_files)} старых логов")
         
-        # Сортируем по размеру (от большего к меньшему)
-        log_files.sort(key=lambda x: x.stat().st_size, reverse=True)
-        
-        # Удаляем старые логи, оставляя только 5 самых больших (важных)
-        files_to_remove = log_files[5:]
-        
-        for log_file in files_to_remove:
-            try:
-                log_file.unlink()
-                print(f"🗑️  Удален старый лог: {log_file.name}")
-            except Exception as e:
-                print(f"⚠️  Не удалось удалить лог {log_file.name}: {e}")
-        
-        if files_to_remove:
-            print(f"🧹 Очищено {len(files_to_remove)} старых логов")
+        # Очищаем архив логов (оставляем только последние 10)
+        cleanup_log_archive(archive_dir, config)
         
     except Exception as e:
         print(f"⚠️  Ошибка при очистке логов: {e}")
+
+def cleanup_log_archive(archive_dir: Path, config: dict):
+    """Очистка архива логов, оставляя только последние 10"""
+    try:
+        archive_files = list(archive_dir.glob("*.log"))
+        
+        if len(archive_files) <= config.get("max_archive_files", 10):
+            return
+        
+        # Сортируем по времени модификации (новые сначала)
+        archive_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        
+        # Удаляем старые файлы, оставляя только 10 последних
+        files_to_remove = archive_files[config.get("max_archive_files", 10):]
+        
+        for archive_file in files_to_remove:
+            try:
+                archive_file.unlink()
+                print(f"🗑️  Удален старый архивный лог: {archive_file.name}")
+            except Exception as e:
+                print(f"⚠️  Не удалось удалить архивный лог {archive_file.name}: {e}")
+        
+        if files_to_remove:
+            print(f"📦 Очищено {len(files_to_remove)} старых архивных логов")
+            
+    except Exception as e:
+        print(f"⚠️  Ошибка при очистке архива логов: {e}")
 
 def check_python_version() -> bool:
     """Проверка версии Python"""
@@ -174,6 +265,35 @@ def initialize_game():
         traceback.print_exc()
         return None
 
+def cleanup_on_exit():
+    """Очистка ресурсов при выходе из игры"""
+    try:
+        print("\n🧹 Очистка ресурсов...")
+        
+        # Получаем текущий лог-файл
+        root_logger = logging.getLogger()
+        if hasattr(root_logger, 'current_log_file') and root_logger.current_log_file:
+            current_log = root_logger.current_log_file
+            
+            # Если лог-файл существует и не пустой, копируем его в архив
+            if current_log.exists() and current_log.stat().st_size > 0:
+                try:
+                    import shutil
+                    archive_dir = ROOT_DIR / "logs" / "archive"
+                    archive_dir.mkdir(exist_ok=True)
+                    
+                    archive_name = f"session_end_{time.strftime('%Y%m%d_%H%M%S')}.log"
+                    archive_path = archive_dir / archive_name
+                    shutil.copy2(current_log, archive_path)
+                    print(f"💾 Финальный лог сохранен в архив: {archive_name}")
+                except Exception as e:
+                    print(f"⚠️  Не удалось сохранить финальный лог: {e}")
+        
+        print("✅ Очистка завершена")
+        
+    except Exception as e:
+        print(f"⚠️  Ошибка при очистке: {e}")
+
 def main():
     """Главная функция"""
     print("🎮 AI-EVOLVE Enhanced Edition - Panda3D Version")
@@ -216,7 +336,20 @@ def main():
         logger.error(f"Критическая ошибка: {e}")
         traceback.print_exc()
         return 1
+    
+    finally:
+        # Очистка при любом выходе
+        cleanup_on_exit()
 
 if __name__ == "__main__":
-    exit_code = main()
-    sys.exit(exit_code)
+    try:
+        exit_code = main()
+    except SystemExit:
+        cleanup_on_exit()
+        sys.exit(0)
+    except Exception as e:
+        print(f"\n💥 Неожиданная ошибка: {e}")
+        cleanup_on_exit()
+        sys.exit(1)
+    else:
+        sys.exit(exit_code)

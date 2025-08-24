@@ -1,0 +1,76 @@
+2025-08-24 17:49:44 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-24 17:49:44 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-24 17:49:45 - core.game_engine - INFO - Игровой движок Panda3D инициализирован
+2025-08-24 17:49:45 - core.game_engine - INFO - Начало инициализации игрового движка Panda3D...
+2025-08-24 17:49:45 - core.game_engine - INFO - Panda3D успешно инициализирован
+2025-08-24 17:49:45 - core.event_system - INFO - Система событий инициализирована
+2025-08-24 17:49:45 - core.event_system - INFO - Система событий успешно инициализирована
+2025-08-24 17:49:45 - src.systems.genome.genome_system - INFO - Инициализирован пул из 8 генов
+2025-08-24 17:49:45 - src.systems.genome.genome_system - INFO - Genome Manager инициализирован
+2025-08-24 17:49:46 - src.systems.emotion.emotion_system - INFO - Emotion Manager инициализирован
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс RenderSystem не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс UISystem не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс AISystem не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс PyTorchAISystem не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс CombatSystem не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс ContentDatabase не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс ContentGenerator не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс AIIntegrationSystem не является системой ISystem
+2025-08-24 17:49:46 - core.system_factory - WARNING - ⚠️ Класс EntityStatsSystem не найден в src.systems.entity.entity_stats_system: module 'src.systems.entity.entity_stats_system' has no attribute 'EntityStatsSystem'
+2025-08-24 17:49:46 - core.system_factory - INFO - 📊 Зарегистрировано 0 систем
+2025-08-24 17:49:46 - core.system_factory - INFO - 🎯 Доступные системы: []
+2025-08-24 17:49:46 - core.system_factory - ERROR - ❌ Ни одна система не была загружена!
+2025-08-24 17:49:46 - core.system_factory - INFO - 🔍 Проверяем доступность модулей...
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\rendering\render_system\rendersystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\ui\ui_system\uisystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\ai\ai_system\aisystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\ai\pytorch_ai_system\pytorchaisystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\combat\combat_system\combatsystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\content\content_database\contentdatabase.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\content\content_generator\contentgenerator.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\ai\ai_integration_system\aiintegrationsystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - WARNING - 📁 Файл C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\entity\entity_stats_system\entitystatssystem.py не найден
+2025-08-24 17:49:46 - core.system_factory - INFO - Фабрика систем инициализирована
+2025-08-24 17:49:46 - core.system_manager - INFO - Менеджер систем инициализирован
+2025-08-24 17:49:46 - core.system_factory - INFO - Создание стандартного набора систем...
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система render не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система ui не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система pytorch_ai не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система ai не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система combat не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система content_database не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система content_generator не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система ai_integration не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - ERROR - Система entity_stats не зарегистрирована
+2025-08-24 17:49:46 - core.system_factory - INFO - Создано 0 систем
+2025-08-24 17:49:46 - core.game_engine - INFO - Существующие системы добавлены в менеджер систем
+2025-08-24 17:49:46 - core.system_manager - INFO - Инициализация менеджера систем...
+2025-08-24 17:49:46 - core.event_system - DEBUG - Подписка на system_ready от system_manager
+2025-08-24 17:49:46 - core.event_system - DEBUG - Подписка на system_error от system_manager
+2025-08-24 17:49:46 - core.system_manager - DEBUG - Порядок инициализации систем: []
+2025-08-24 17:49:46 - core.system_manager - INFO - Менеджер систем успешно инициализирован
+2025-08-24 17:49:46 - core.resource_manager - INFO - Менеджер ресурсов Panda3D инициализирован
+2025-08-24 17:49:46 - core.resource_manager - INFO - Инициализация менеджера ресурсов Panda3D...
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана директория ресурсов: textures
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана директория ресурсов: models
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана директория ресурсов: audio
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана директория ресурсов: shaders
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана директория ресурсов: data
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Загрузчик Panda3D инициализирован
+2025-08-24 17:49:46 - core.resource_manager - WARNING - Не удалось инициализировать аудио менеджер: cannot init abstract class
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана базовая текстура
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Создана базовая модель куба
+2025-08-24 17:49:46 - core.resource_manager - DEBUG - Базовые ресурсы предзагружены
+2025-08-24 17:49:46 - core.resource_manager - INFO - Менеджер ресурсов Panda3D успешно инициализирован
+2025-08-24 17:49:46 - core.performance_manager - INFO - Менеджер производительности инициализирован
+2025-08-24 17:49:46 - core.performance_manager - INFO - Инициализация менеджера производительности...
+2025-08-24 17:49:46 - core.performance_manager - INFO - Системная информация: {'cpu_count': 12, 'cpu_freq': 3912.0, 'memory_total': 34244075520, 'memory_available': 20940222464, 'disk_total': 239150370816, 'disk_free': 137927794688}
+2025-08-24 17:49:46 - core.performance_manager - INFO - Мониторинг производительности запущен
+2025-08-24 17:49:46 - core.performance_manager - WARNING - Не удалось получить Pygame информацию: video system not initialized
+2025-08-24 17:49:46 - core.performance_manager - INFO - Менеджер производительности успешно инициализирован
+2025-08-24 17:49:46 - core.scene_manager - INFO - Менеджер сцен Panda3D инициализирован
+2025-08-24 17:49:46 - core.scene_manager - INFO - Инициализация менеджера сцен...
+2025-08-24 17:49:46 - core.scene_manager - INFO - Менеджер сцен успешно инициализирован
+2025-08-24 17:49:46 - core.game_engine - INFO - Все менеджеры успешно инициализированы
+2025-08-24 17:49:46 - core.game_engine - ERROR - Ошибка инициализации сцен: unexpected indent (game_scene.py, line 349)
+2025-08-24 17:49:46 - core.game_engine - ERROR - Не удалось инициализировать игровой движок

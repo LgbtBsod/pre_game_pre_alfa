@@ -323,7 +323,42 @@ class GameEngine(ShowBase):
                 self.performance_manager.cleanup()
             
             # Завершение Panda3D
-            self.destroy()
+            try:
+                # Сохраняем конфигурацию перед уничтожением
+                if hasattr(self, 'config') and isinstance(self.config, dict):
+                    # Создаем временный ConfigVariableManager для корректного завершения
+                    from panda3d.core import ConfigVariableManager
+                    temp_config = ConfigVariableManager()
+                    # Копируем настройки
+                    for key, value in self.config.items():
+                        if isinstance(value, bool):
+                            temp_config.SetBool(key, value)
+                        elif isinstance(value, int):
+                            temp_config.SetInt(key, value)
+                        elif isinstance(value, float):
+                            temp_config.SetDouble(key, value)
+                        elif isinstance(value, str):
+                            temp_config.SetString(key, value)
+                    
+                    # Временно заменяем конфигурацию
+                    original_config = getattr(self, '_original_config', None)
+                    if original_config is None:
+                        self._original_config = self.config
+                    self.config = temp_config
+                
+                self.destroy()
+                
+                # Восстанавливаем оригинальную конфигурацию
+                if hasattr(self, '_original_config'):
+                    self.config = self._original_config
+                    
+            except Exception as e:
+                logger.error(f"Ошибка при завершении Panda3D: {e}")
+                # Принудительно завершаем
+                try:
+                    super().destroy()
+                except:
+                    pass
             
             logger.info("Ресурсы успешно очищены")
             

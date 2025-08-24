@@ -5,28 +5,11 @@ System Factory - Фабрика систем
 """
 
 import logging
+import sys
+from pathlib import Path
 from typing import Dict, Any, Optional, Type
 from .interfaces import ISystem
 from .event_system import EventSystem
-try:
-    from ..systems.rendering import RenderSystem
-    from ..systems.ui import UISystem
-    from ..systems.ai import AISystem, PyTorchAISystem
-    from ..systems.combat import CombatSystem
-    from ..systems.content import ContentDatabase, ContentGenerator
-    from ..systems.ai import AIIntegrationSystem
-    from ..systems.entity import EntityStatsSystem
-except ImportError:
-    # Fallback для случаев, когда относительные импорты не работают
-    RenderSystem = None
-    UISystem = None
-    AISystem = None
-    PyTorchAISystem = None
-    CombatSystem = None
-    ContentDatabase = None
-    ContentGenerator = None
-    AIIntegrationSystem = None
-    EntityStatsSystem = None
 
 logger = logging.getLogger(__name__)
 
@@ -50,29 +33,75 @@ class SystemFactory:
         """Регистрация доступных систем"""
         systems_to_register = {}
         
-        if RenderSystem:
-            systems_to_register["render"] = RenderSystem
-        if UISystem:
-            systems_to_register["ui"] = UISystem
-        if AISystem:
-            systems_to_register["ai"] = AISystem
-        if PyTorchAISystem:
-            systems_to_register["pytorch_ai"] = PyTorchAISystem
-        if CombatSystem:
-            systems_to_register["combat"] = CombatSystem
-        if ContentDatabase:
-            systems_to_register["content_database"] = ContentDatabase
-        if ContentGenerator:
-            systems_to_register["content_generator"] = ContentGenerator
-        if AIIntegrationSystem:
-            systems_to_register["ai_integration"] = AIIntegrationSystem
-        if EntityStatsSystem:
-            systems_to_register["entity_stats"] = EntityStatsSystem
+        # Получаем корневую директорию проекта
+        root_dir = Path(__file__).parent.parent.parent
+        
+        # Регистрируем системы с обработкой ошибок импорта
+        system_modules = [
+            ("render", "src.systems.rendering.render_system", "RenderSystem"),
+            ("ui", "src.systems.ui.ui_system", "UISystem"),
+            ("ai", "src.systems.ai.ai_system", "AISystem"),
+            ("pytorch_ai", "src.systems.ai.pytorch_ai_system", "PyTorchAISystem"),
+            ("combat", "src.systems.combat.combat_system", "CombatSystem"),
+            ("content_database", "src.systems.content.content_database", "ContentDatabase"),
+            ("content_generator", "src.systems.content.content_generator", "ContentGenerator"),
+            ("ai_integration", "src.systems.ai.ai_integration_system", "AIIntegrationSystem"),
+            ("entity_stats", "src.systems.entity.entity_stats_system", "EntityStatsSystem")
+        ]
+        
+        for system_name, module_path, class_name in system_modules:
+            try:
+                # Добавляем корневую директорию в путь
+                if str(root_dir) not in sys.path:
+                    sys.path.insert(0, str(root_dir))
+                
+                # Импортируем модуль
+                module = __import__(module_path, fromlist=[class_name])
+                system_class = getattr(module, class_name)
+                
+                if system_class and issubclass(system_class, ISystem):
+                    systems_to_register[system_name] = system_class
+                    logger.info(f"✅ Система {system_name} успешно импортирована")
+                else:
+                    logger.warning(f"⚠️ Класс {class_name} не является системой ISystem")
+                    
+            except ImportError as e:
+                logger.warning(f"⚠️ Не удалось импортировать {module_path}: {e}")
+            except AttributeError as e:
+                logger.warning(f"⚠️ Класс {class_name} не найден в {module_path}: {e}")
+            except Exception as e:
+                logger.error(f"❌ Ошибка при импорте {module_path}: {e}")
         
         self.system_registry.update(systems_to_register)
         
-        logger.debug(f"Зарегистрировано {len(self.system_registry)} систем")
-        logger.info(f"Доступные системы: {list(self.system_registry.keys())}")
+        logger.info(f"📊 Зарегистрировано {len(self.system_registry)} систем")
+        logger.info(f"🎯 Доступные системы: {list(self.system_registry.keys())}")
+        
+        # Проверяем, какие системы действительно загрузились
+        if not systems_to_register:
+            logger.error("❌ Ни одна система не была загружена!")
+            logger.info("🔍 Проверяем доступность модулей...")
+            for system_name, module_path, class_name in system_modules:
+                try:
+                    # Правильный путь к модулю
+                    module_file = root_dir / module_path.replace('.', '/') / "__init__.py"
+                    if module_file.exists():
+                        logger.info(f"📁 Модуль {module_path} существует")
+                    else:
+                        logger.warning(f"📁 Модуль {module_path} не найден")
+                        
+                    # Проверяем, можно ли импортировать модуль
+                    try:
+                        test_module = __import__(module_path, fromlist=[class_name])
+                        if hasattr(test_module, class_name):
+                            logger.info(f"✅ Класс {class_name} найден в {module_path}")
+                        else:
+                            logger.warning(f"⚠️ Класс {class_name} не найден в {module_path}")
+                    except Exception as import_error:
+                        logger.error(f"❌ Ошибка импорта {module_path}: {import_error}")
+                        
+                except Exception as e:
+                    logger.error(f"❌ Ошибка проверки {module_path}: {e}")
     
     def create_system(self, system_name: str, **kwargs) -> Optional[ISystem]:
         """Создание системы по имени"""
@@ -83,7 +112,7 @@ class SystemFactory:
             
             system_class = self.system_registry[system_name]
             
-            # Создаем экземпляр системы
+            # Создаем экземпляр системы с учетом специфических требований
             if system_name == "render":
                 # RenderSystem требует render_node и window
                 if "render_node" not in kwargs or "window" not in kwargs:

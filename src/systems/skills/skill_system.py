@@ -541,77 +541,8 @@ class SkillTree:
         
         return skill_tree
 
-class SkillFactory:
-    """Фабрика для создания скиллов"""
-    
-    @staticmethod
-    def create_fireball() -> CombatSkill:
-        """Создает скилл огненного шара"""
-        from ..effects.effect_system import Effect, EffectVisuals, TriggerType
-        
-        # Эффект взрыва
-        explosion_effect = Effect(
-            name="Огненный взрыв",
-            category=EffectCategory.INSTANT,
-            value=25,
-            damage_types=[DamageType.FIRE],
-            scaling={"intelligence": 0.4},
-            target_type="area",
-            area={"shape": "circle", "radius": 3},
-            visuals=EffectVisuals(
-                particle_effect="fireball_explosion",
-                sound_effect="fireball_blast",
-                screen_shake=0.3
-            ),
-            tags=["fire", "aoe", "spell"]
-        )
-        
-        skill = CombatSkill(
-            name="Огненный шар",
-            description="Мощный огненный шар, взрывающийся при попадании",
-            damage=30,
-            damage_type=DamageType.FIRE,
-            target_type=SkillTarget.ENEMY,
-            cooldown=3.0
-        )
-        
-        skill.effects.append(explosion_effect)
-        skill.mana_cost = 25
-        skill.range = 8.0
-        skill.cast_time = 1.0
-        
-        return skill
-    
-    @staticmethod
-    def create_heal() -> UtilitySkill:
-        """Создает скилл исцеления"""
-        from ..effects.effect_system import Effect, EffectVisuals
-        
-        # Эффект исцеления
-        heal_effect = Effect(
-            name="Исцеление",
-            category=EffectCategory.HEAL,
-            value=40,
-            target_type="ally",
-            visuals=EffectVisuals(
-                particle_effect="heal_sparkles",
-                sound_effect="heal_chime",
-                color_overlay=(0, 255, 0, 0.2)
-            ),
-            tags=["heal", "support"]
-        )
-        
-        skill = UtilitySkill(
-            name="Исцеление",
-            description="Исцеляет союзника",
-            effect_type="heal",
-            target_type=SkillTarget.ALLY,
-            cooldown=8.0
-        )
-        
-        skill.effects.append(heal_effect)
-        skill.mana_cost = 30
-        skill.range = 5.0
-        skill.cast_time = 1.5
-        
-        return skill
+# SkillFactory удален - теперь используется ContentGenerator для создания скиллов
+# Пример использования:
+# from ..content.content_generator import ContentGenerator
+# content_gen = ContentGenerator()
+# fireball_skill = content_gen.generate_unique_skill(session_id, level, "combat")

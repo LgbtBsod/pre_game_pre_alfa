@@ -4,16 +4,15 @@ Skills System Package
 """
 
 from .skill_system import (
-    Skill, CombatSkill, UtilitySkill, SkillTree, SkillFactory,
+    Skill, CombatSkill, UtilitySkill, SkillTree,
     SkillType, SkillTarget, SkillRequirements, SkillCooldown
 )
 
 __all__ = [
     'Skill',
-    'CombatSkill',
+    'CombatSkill', 
     'UtilitySkill',
     'SkillTree',
-    'SkillFactory',
     'SkillType',
     'SkillTarget',
     'SkillRequirements',

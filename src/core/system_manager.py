@@ -37,8 +37,9 @@ class SystemManager(ISystemManager, EventSubscriber):
             logger.info("Инициализация менеджера систем...")
             
             # Подписываемся на события
-            self.subscribe_to_event("system_ready", priority=2)
-            self.subscribe_to_event("system_error", priority=3)
+            from .event_system import EventPriority
+            self.subscribe_to_event("system_ready", priority=EventPriority.HIGH)
+            self.subscribe_to_event("system_error", priority=EventPriority.CRITICAL)
             
             # Определяем порядок инициализации систем
             self._determine_initialization_order()

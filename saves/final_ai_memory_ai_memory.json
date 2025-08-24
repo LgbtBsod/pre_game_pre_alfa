@@ -1,6 +1,9 @@
 {
   "memories": {},
   "emotions": {},
-  "personalities": {
-    "player_1": {
-      "type": 
+  "personalities": {},
+  "statistics": {
+    "total_decisions": 0,
+    "successful_decisions": 0
+  }
+}

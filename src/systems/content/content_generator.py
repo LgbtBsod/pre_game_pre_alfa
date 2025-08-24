@@ -55,6 +55,11 @@ class ContentGenerator(ISystem):
         self.skill_templates = self._load_skill_templates()
         self.effect_templates = self._load_effect_templates()
         
+        # Расширенные шаблоны для уникальной генерации
+        self.skill_generation_templates = self._load_skill_generation_templates()
+        self.item_generation_templates = self._load_item_generation_templates()
+        self.unique_effect_templates = self._load_unique_effect_templates()
+        
         logger.info("Генератор контента инициализирован")
     
     def initialize(self) -> bool:
@@ -81,6 +86,9 @@ class ContentGenerator(ISystem):
             self.gene_templates.clear()
             self.skill_templates.clear()
             self.effect_templates.clear()
+            self.skill_generation_templates.clear()
+            self.item_generation_templates.clear()
+            self.unique_effect_templates.clear()
             logger.info("ContentGenerator очищен")
         except Exception as e:
             logger.error(f"Ошибка очистки ContentGenerator: {e}")
@@ -890,3 +898,473 @@ class ContentGenerator(ISystem):
         """Очистка несохраненного контента для сессии"""
         self.content_db.cleanup_unsaved_content(session_id)
         logger.info(f"Контент для сессии {session_id} очищен")
+    
+    def _load_skill_generation_templates(self) -> List[Dict[str, Any]]:
+        """Загрузка шаблонов для генерации скиллов"""
+        return [
+            {
+                'name': 'Огненный шар',
+                'base_damage': 30,
+                'damage_type': DamageType.FIRE,
+                'mana_cost': 25,
+                'cooldown': 3.0,
+                'range': 8.0,
+                'cast_time': 1.0,
+                'skill_type': 'combat',
+                'target_type': 'enemy',
+                'effects': ['burn', 'explosion'],
+                'rarity_weights': [0.6, 0.3, 0.1, 0.0],  # common, uncommon, rare, legendary
+                'level_scaling': {'damage': 0.15, 'mana_cost': 0.1, 'cooldown': -0.05}
+            },
+            {
+                'name': 'Исцеление',
+                'base_heal': 40,
+                'heal_type': 'magical',
+                'mana_cost': 30,
+                'cooldown': 8.0,
+                'range': 5.0,
+                'cast_time': 1.5,
+                'skill_type': 'utility',
+                'target_type': 'ally',
+                'effects': ['heal', 'regeneration'],
+                'rarity_weights': [0.7, 0.2, 0.1, 0.0],
+                'level_scaling': {'heal': 0.2, 'mana_cost': 0.1, 'cooldown': -0.03}
+            },
+            {
+                'name': 'Ледяная стрела',
+                'base_damage': 25,
+                'damage_type': DamageType.ICE,
+                'mana_cost': 20,
+                'cooldown': 2.5,
+                'range': 10.0,
+                'cast_time': 0.8,
+                'skill_type': 'combat',
+                'target_type': 'enemy',
+                'effects': ['freeze', 'slow'],
+                'rarity_weights': [0.5, 0.4, 0.1, 0.0],
+                'level_scaling': {'damage': 0.12, 'mana_cost': 0.08, 'cooldown': -0.04}
+            },
+            {
+                'name': 'Молния',
+                'base_damage': 35,
+                'damage_type': DamageType.LIGHTNING,
+                'mana_cost': 35,
+                'cooldown': 4.0,
+                'range': 12.0,
+                'cast_time': 1.2,
+                'skill_type': 'combat',
+                'target_type': 'enemy',
+                'effects': ['shock', 'chain'],
+                'rarity_weights': [0.4, 0.4, 0.2, 0.0],
+                'level_scaling': {'damage': 0.18, 'mana_cost': 0.12, 'cooldown': -0.06}
+            },
+            {
+                'name': 'Ядовитое облако',
+                'base_damage': 15,
+                'damage_type': DamageType.POISON,
+                'mana_cost': 40,
+                'cooldown': 6.0,
+                'range': 6.0,
+                'cast_time': 2.0,
+                'skill_type': 'combat',
+                'target_type': 'area',
+                'effects': ['poison', 'area_damage'],
+                'rarity_weights': [0.3, 0.5, 0.2, 0.0],
+                'level_scaling': {'damage': 0.1, 'mana_cost': 0.15, 'cooldown': -0.08}
+            }
+        ]
+    
+    def _load_item_generation_templates(self) -> List[Dict[str, Any]]:
+        """Загрузка шаблонов для генерации предметов"""
+        return [
+            {
+                'name': 'Меч',
+                'base_damage': 15,
+                'attack_speed': 1.2,
+                'item_type': 'weapon',
+                'weapon_type': 'sword',
+                'rarity_weights': [0.5, 0.3, 0.15, 0.05],
+                'level_scaling': {'damage': 0.2, 'attack_speed': 0.05},
+                'unique_properties': ['sharp', 'durable', 'balanced'],
+                'enchantment_slots': 2
+            },
+            {
+                'name': 'Кольчуга',
+                'base_defense': 12,
+                'weight': 8,
+                'item_type': 'armor',
+                'armor_type': 'medium',
+                'rarity_weights': [0.6, 0.25, 0.12, 0.03],
+                'level_scaling': {'defense': 0.15, 'weight': -0.02},
+                'unique_properties': ['flexible', 'protective', 'lightweight'],
+                'enchantment_slots': 1
+            },
+            {
+                'name': 'Кольцо силы',
+                'base_bonus': 3,
+                'bonus_type': 'strength',
+                'item_type': 'accessory',
+                'accessory_type': 'ring',
+                'rarity_weights': [0.4, 0.4, 0.15, 0.05],
+                'level_scaling': {'bonus': 0.1},
+                'unique_properties': ['enchanted', 'empowering', 'precious'],
+                'enchantment_slots': 3
+            },
+            {
+                'name': 'Зелье здоровья',
+                'base_heal': 50,
+                'duration': 0,
+                'item_type': 'consumable',
+                'consumable_type': 'potion',
+                'rarity_weights': [0.7, 0.2, 0.08, 0.02],
+                'level_scaling': {'heal': 0.25},
+                'unique_properties': ['refreshing', 'potent', 'pure'],
+                'stack_size': 10
+            }
+        ]
+    
+    def _load_unique_effect_templates(self) -> List[Dict[str, Any]]:
+        """Загрузка шаблонов для генерации уникальных эффектов"""
+        return [
+            {
+                'name': 'Воспламенение',
+                'effect_type': 'damage_over_time',
+                'base_damage': 8,
+                'duration': 5,
+                'damage_type': DamageType.FIRE,
+                'rarity_weights': [0.6, 0.3, 0.1, 0.0],
+                'unique_properties': ['stacking', 'spreading', 'intensifying'],
+                'level_scaling': {'damage': 0.15, 'duration': 0.1}
+            },
+            {
+                'name': 'Замедление времени',
+                'effect_type': 'debuff',
+                'base_effect': 0.3,
+                'duration': 3,
+                'effect_type_specific': 'slow',
+                'rarity_weights': [0.3, 0.5, 0.15, 0.05],
+                'unique_properties': ['temporal', 'controlling', 'mystical'],
+                'level_scaling': {'effect': 0.1, 'duration': 0.15}
+            },
+            {
+                'name': 'Божественная защита',
+                'effect_type': 'buff',
+                'base_effect': 20,
+                'duration': 8,
+                'effect_type_specific': 'defense',
+                'rarity_weights': [0.2, 0.4, 0.3, 0.1],
+                'unique_properties': ['holy', 'protective', 'blessed'],
+                'level_scaling': {'effect': 0.25, 'duration': 0.2}
+            }
+        ]
+    
+    def generate_unique_skill(self, session_id: str, level: int, skill_type: str = None) -> ContentItem:
+        """Генерация уникального скилла"""
+        if skill_type is None:
+            skill_type = self.random_generator.weighted_choice(['combat', 'utility', 'support'], [0.6, 0.25, 0.15])
+        
+        # Выбираем подходящий шаблон
+        suitable_templates = [t for t in self.skill_generation_templates if t['skill_type'] == skill_type]
+        if not suitable_templates:
+            suitable_templates = self.skill_generation_templates
+        
+        template = self.random_generator.weighted_choice(suitable_templates, [1.0] * len(suitable_templates))
+        
+        # Определяем редкость на основе весов
+        rarity = self._determine_rarity_from_weights(template['rarity_weights'])
+        
+        # Генерируем уникальные характеристики
+        skill_data = self._generate_skill_data(template, level, rarity)
+        
+        # Создаем уникальное имя
+        unique_name = self._generate_unique_name(template['name'], rarity, level)
+        
+        content_item = ContentItem(
+            uuid=str(uuid.uuid4()),
+            content_type=ContentType.SKILL,
+            name=unique_name,
+            description=skill_data['description'],
+            rarity=rarity,
+            level_requirement=level,
+            session_id=session_id,
+            generation_timestamp=time.time(),
+            data=skill_data
+        )
+        
+        return content_item
+    
+    def generate_unique_item(self, session_id: str, level: int, item_type: str = None) -> ContentItem:
+        """Генерация уникального предмета"""
+        if item_type is None:
+            item_type = self.random_generator.weighted_choice(['weapon', 'armor', 'accessory', 'consumable'], [0.4, 0.3, 0.2, 0.1])
+        
+        # Выбираем подходящий шаблон
+        suitable_templates = [t for t in self.item_generation_templates if t['item_type'] == item_type]
+        if not suitable_templates:
+            suitable_templates = self.item_generation_templates
+        
+        template = self.random_generator.weighted_choice(suitable_templates, [1.0] * len(suitable_templates))
+        
+        # Определяем редкость на основе весов
+        rarity = self._determine_rarity_from_weights(template['rarity_weights'])
+        
+        # Генерируем уникальные характеристики
+        item_data = self._generate_item_data(template, level, rarity)
+        
+        # Создаем уникальное имя
+        unique_name = self._generate_unique_name(template['name'], rarity, level)
+        
+        content_item = ContentItem(
+            uuid=str(uuid.uuid4()),
+            content_type=ContentType.ITEM,
+            name=unique_name,
+            description=item_data['description'],
+            rarity=rarity,
+            level_requirement=level,
+            session_id=session_id,
+            generation_timestamp=time.time(),
+            data=item_data
+        )
+        
+        return content_item
+    
+    def _generate_skill_data(self, template: Dict[str, Any], level: int, rarity: ContentRarity) -> Dict[str, Any]:
+        """Генерация данных скилла на основе шаблона"""
+        rarity_multiplier = self._get_rarity_multiplier(rarity)
+        
+        # Базовые характеристики
+        damage = int(template['base_damage'] * (1 + level * template['level_scaling']['damage']) * rarity_multiplier)
+        mana_cost = int(template['mana_cost'] * (1 + level * template['level_scaling']['mana_cost']))
+        cooldown = max(0.5, template['cooldown'] * (1 + level * template['level_scaling']['cooldown']))
+        
+        # Уникальные свойства
+        unique_properties = self._generate_unique_properties(template, rarity)
+        
+        skill_data = {
+            'template': template['name'],
+            'damage': damage,
+            'mana_cost': mana_cost,
+            'cooldown': cooldown,
+            'range': template['range'],
+            'cast_time': template['cast_time'],
+            'skill_type': template['skill_type'],
+            'target_type': template['target_type'],
+            'effects': template['effects'],
+            'unique_properties': unique_properties,
+            'rarity': rarity.value,
+            'level': level
+        }
+        
+        # Генерируем описание
+        skill_data['description'] = self._generate_skill_description(skill_data)
+        
+        return skill_data
+    
+    def _generate_item_data(self, template: Dict[str, Any], level: int, rarity: ContentRarity) -> Dict[str, Any]:
+        """Генерация данных предмета на основе шаблона"""
+        rarity_multiplier = self._get_rarity_multiplier(rarity)
+        
+        # Базовые характеристики
+        if 'base_damage' in template:
+            damage = int(template['base_damage'] * (1 + level * template['level_scaling']['damage']) * rarity_multiplier)
+        elif 'base_defense' in template:
+            defense = int(template['base_defense'] * (1 + level * template['level_scaling']['defense']) * rarity_multiplier)
+        elif 'base_bonus' in template:
+            bonus = int(template['base_bonus'] * (1 + level * template['level_scaling']['bonus']) * rarity_multiplier)
+        elif 'base_heal' in template:
+            heal = int(template['base_heal'] * (1 + level * template['level_scaling']['heal']) * rarity_multiplier)
+        
+        # Уникальные свойства
+        unique_properties = self._generate_unique_properties(template, rarity)
+        
+        item_data = {
+            'template': template['name'],
+            'item_type': template['item_type'],
+            'rarity': rarity.value,
+            'level': level,
+            'unique_properties': unique_properties
+        }
+        
+        # Добавляем специфичные характеристики
+        if 'base_damage' in template:
+            item_data['damage'] = damage
+        if 'base_defense' in template:
+            item_data['defense'] = defense
+        if 'base_bonus' in template:
+            item_data['bonus'] = bonus
+            item_data['bonus_type'] = template['bonus_type']
+        if 'base_heal' in template:
+            item_data['heal'] = heal
+        
+        # Генерируем описание
+        item_data['description'] = self._generate_item_description(item_data)
+        
+        return item_data
+    
+    def _generate_unique_properties(self, template: Dict[str, Any], rarity: ContentRarity) -> List[str]:
+        """Генерация уникальных свойств предмета/скилла"""
+        base_properties = template.get('unique_properties', [])
+        rarity_bonus = self._get_rarity_property_bonus(rarity)
+        
+        # Выбираем случайные свойства
+        selected_properties = self.random_generator.weighted_choice(
+            base_properties, 
+            [1.0] * len(base_properties),
+            count=min(len(base_properties), rarity_bonus)
+        )
+        
+        # Добавляем случайные уникальные свойства
+        unique_properties = [
+            'enchanted', 'ancient', 'corrupted', 'blessed', 'cursed',
+            'elemental', 'temporal', 'spatial', 'ethereal', 'material'
+        ]
+        
+        additional_properties = self.random_generator.weighted_choice(
+            unique_properties,
+            [0.1] * len(unique_properties),
+            count=rarity_bonus - len(selected_properties)
+        )
+        
+        return selected_properties + additional_properties
+    
+    def _generate_unique_name(self, base_name: str, rarity: ContentRarity, level: int) -> str:
+        """Генерация уникального имени"""
+        rarity_prefixes = {
+            ContentRarity.COMMON: ['Обычный', 'Простой', 'Базовый'],
+            ContentRarity.UNCOMMON: ['Улучшенный', 'Качественный', 'Надежный'],
+            ContentRarity.RARE: ['Редкий', 'Мощный', 'Древний'],
+            ContentRarity.LEGENDARY: ['Легендарный', 'Мифический', 'Божественный']
+        }
+        
+        level_suffixes = {
+            1: ['Новичка', 'Ученика'],
+            5: ['Подмастерья', 'Опытного'],
+            10: ['Мастера', 'Эксперта'],
+            15: ['Великого', 'Легендарного'],
+            20: ['Божественного', 'Мифического']
+        }
+        
+        # Выбираем префикс и суффикс
+        prefix = self.random_generator.weighted_choice(rarity_prefixes[rarity], [1.0] * len(rarity_prefixes[rarity]))
+        
+        # Определяем подходящий суффикс уровня
+        suitable_levels = [l for l in level_suffixes.keys() if l <= level]
+        if suitable_levels:
+            level_key = max(suitable_levels)
+            suffix = self.random_generator.weighted_choice(level_suffixes[level_key], [1.0] * len(level_suffixes[level_key]))
+        else:
+            suffix = 'Новичка'
+        
+        return f"{prefix} {base_name} {suffix}"
+    
+    def _generate_skill_description(self, skill_data: Dict[str, Any]) -> str:
+        """Генерация описания скилла"""
+        template = skill_data['template']
+        damage = skill_data.get('damage', 0)
+        effects = skill_data.get('effects', [])
+        unique_properties = skill_data.get('unique_properties', [])
+        
+        description_parts = [f"Скилл {template}"]
+        
+        if damage > 0:
+            description_parts.append(f"наносит {damage} урона")
+        
+        if effects:
+            effect_descriptions = {
+                'burn': 'поджигает цель',
+                'freeze': 'замораживает цель',
+                'shock': 'оглушает цель',
+                'poison': 'отравляет цель',
+                'heal': 'исцеляет союзника',
+                'regeneration': 'восстанавливает здоровье со временем',
+                'slow': 'замедляет цель',
+                'chain': 'поражает несколько целей',
+                'area_damage': 'наносит урон по области'
+            }
+            
+            effect_texts = [effect_descriptions.get(effect, effect) for effect in effects if effect in effect_descriptions]
+            if effect_texts:
+                description_parts.append(f"и {', '.join(effect_texts)}")
+        
+        if unique_properties:
+            property_descriptions = {
+                'enchanted': 'зачарован',
+                'ancient': 'древний',
+                'corrupted': 'испорчен',
+                'blessed': 'благословлен',
+                'cursed': 'проклят',
+                'elemental': 'стихийный',
+                'temporal': 'временной',
+                'spatial': 'пространственный',
+                'ethereal': 'эфирный',
+                'material': 'материальный'
+            }
+            
+            property_texts = [property_descriptions.get(prop, prop) for prop in unique_properties if prop in property_descriptions]
+            if property_texts:
+                description_parts.append(f"Скилл {', '.join(property_texts)}")
+        
+        return '. '.join(description_parts) + '.'
+    
+    def _generate_item_description(self, item_data: Dict[str, Any]) -> str:
+        """Генерация описания предмета"""
+        template = item_data['template']
+        item_type = item_data['item_type']
+        unique_properties = item_data.get('unique_properties', [])
+        
+        description_parts = [f"{template} - {item_type}"]
+        
+        # Добавляем характеристики
+        if 'damage' in item_data:
+            description_parts.append(f"с уроном {item_data['damage']}")
+        elif 'defense' in item_data:
+            description_parts.append(f"с защитой {item_data['defense']}")
+        elif 'bonus' in item_data:
+            description_parts.append(f"даёт +{item_data['bonus']} к {item_data['bonus_type']}")
+        elif 'heal' in item_data:
+            description_parts.append(f"восстанавливает {item_data['heal']} здоровья")
+        
+        if unique_properties:
+            property_descriptions = {
+                'enchanted': 'зачарован',
+                'ancient': 'древний',
+                'corrupted': 'испорчен',
+                'blessed': 'благословлен',
+                'cursed': 'проклят',
+                'elemental': 'стихийный',
+                'temporal': 'временной',
+                'spatial': 'пространственный',
+                'ethereal': 'эфирный',
+                'material': 'материальный'
+            }
+            
+            property_texts = [property_descriptions.get(prop, prop) for prop in unique_properties if prop in property_descriptions]
+            if property_texts:
+                description_parts.append(f"Предмет {', '.join(property_texts)}")
+        
+        return '. '.join(description_parts) + '.'
+    
+    def _determine_rarity_from_weights(self, weights: List[float]) -> ContentRarity:
+        """Определение редкости на основе весов"""
+        rarity_values = [ContentRarity.COMMON, ContentRarity.UNCOMMON, ContentRarity.RARE, ContentRarity.LEGENDARY]
+        return self.random_generator.weighted_choice(rarity_values, weights)
+    
+    def _get_rarity_multiplier(self, rarity: ContentRarity) -> float:
+        """Получение множителя редкости"""
+        rarity_multipliers = {
+            ContentRarity.COMMON: 1.0,
+            ContentRarity.UNCOMMON: 1.3,
+            ContentRarity.RARE: 1.8,
+            ContentRarity.LEGENDARY: 2.5
+        }
+        return rarity_multipliers.get(rarity, 1.0)
+    
+    def _get_rarity_property_bonus(self, rarity: ContentRarity) -> int:
+        """Получение бонуса к количеству свойств на основе редкости"""
+        rarity_bonuses = {
+            ContentRarity.COMMON: 1,
+            ContentRarity.UNCOMMON: 2,
+            ContentRarity.RARE: 3,
+            ContentRarity.LEGENDARY: 5
+        }
+        return rarity_bonuses.get(rarity, 1)

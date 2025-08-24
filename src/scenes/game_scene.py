@@ -26,7 +26,8 @@ from ..systems import (
 from ..systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
 from ..systems.effects.effect_system import OptimizedTriggerSystem, EffectStatistics, TriggerType
 from ..systems.items.item_system import ItemFactory
-from ..systems.skills.skill_system import SkillTree, SkillFactory
+from ..systems.skills.skill_system import SkillTree
+from ..systems.content.content_generator import ContentGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +235,8 @@ class GameScene(Scene):
             # Инициализируем системы эффектов и предметов
             from ..systems.effects.effect_system import OptimizedTriggerSystem, EffectStatistics
             from ..systems.items.item_system import ItemFactory
-            from ..systems.skills.skill_system import SkillTree, SkillFactory
+            from ..systems.skills.skill_system import SkillTree
+            from ..systems.content.content_generator import ContentGenerator
             
             # Система триггеров эффектов
             self.trigger_system = OptimizedTriggerSystem()
@@ -276,7 +278,8 @@ class GameScene(Scene):
     def _create_test_player(self):
         """Создание тестового игрока с AI-управлением и системами"""
         from ..systems.effects.effect_system import EffectStatistics
-        from ..systems.skills.skill_system import SkillTree, SkillFactory
+        from ..systems.skills.skill_system import SkillTree
+        from ..systems.content.content_generator import ContentGenerator
         from ..systems.items.item_system import ItemFactory
         
         player = {
@@ -342,8 +345,10 @@ class GameScene(Scene):
         player['skill_tree'].skill_points = 10
         
         # Добавляем базовые скиллы
-        fireball_skill = SkillFactory.create_fireball()
-        heal_skill = SkillFactory.create_heal()
+        # Используем ContentGenerator для создания скиллов
+        content_gen = ContentGenerator()
+        fireball_skill = content_gen.generate_unique_skill('default', 1, 'combat')
+        heal_skill = content_gen.generate_unique_skill('default', 1, 'utility')
         player['skill_tree'].add_skill(fireball_skill)
         player['skill_tree'].add_skill(heal_skill)
         
@@ -377,7 +382,8 @@ class GameScene(Scene):
     def _create_test_npcs(self):
         """Создание тестовых NPC с AI и системами"""
         from ..systems.effects.effect_system import EffectStatistics
-        from ..systems.skills.skill_system import SkillTree, SkillFactory
+        from ..systems.skills.skill_system import SkillTree
+        from ..systems.content.content_generator import ContentGenerator
         from ..systems.items.item_system import ItemFactory
         
         npc_configs = [
@@ -467,14 +473,18 @@ class GameScene(Scene):
             
             # Добавляем скиллы в зависимости от личности
             if config['ai_personality'] == 'aggressive':
-                fireball_skill = SkillFactory.create_fireball()
+                # Используем ContentGenerator для создания скиллов
+                content_gen = ContentGenerator()
+                fireball_skill = content_gen.generate_unique_skill('default', 1, 'combat')
                 npc['skill_tree'].add_skill(fireball_skill)
                 if npc['skill_tree'].learn_skill("Огненный шар", npc):
                     logger.info(f"NPC {config['id']} изучил Огненный шар")
                 else:
                     logger.info(f"NPC {config['id']} не смог изучить Огненный шар (ограничения генома)")
             elif config['ai_personality'] == 'defensive':
-                heal_skill = SkillFactory.create_heal()
+                # Используем ContentGenerator для создания скиллов
+                content_gen = ContentGenerator()
+                heal_skill = content_gen.generate_unique_skill('default', 1, 'utility')
                 npc['skill_tree'].add_skill(heal_skill)
                 if npc['skill_tree'].learn_skill("Исцеление", npc):
                     logger.info(f"NPC {config['id']} изучил Исцеление")
@@ -488,7 +498,7 @@ class GameScene(Scene):
     def _create_test_items_and_skills(self):
         """Создание тестовых предметов и скиллов"""
         from ..systems.items.item_system import ItemFactory
-        from ..systems.skills.skill_system import SkillFactory
+        from ..systems.content.content_generator import ContentGenerator
         
         # Создаем тестовые предметы
         self.test_items = {
@@ -497,9 +507,10 @@ class GameScene(Scene):
         }
         
         # Создаем тестовые скиллы
+        content_gen = ContentGenerator()
         self.test_skills = {
-            'fireball': SkillFactory.create_fireball(),
-            'heal': SkillFactory.create_heal()
+            'fireball': content_gen.generate_unique_skill('default', 1, 'combat'),
+            'heal': content_gen.generate_unique_skill('default', 1, 'utility')
         }
         
         logger.debug("Тестовые предметы и скиллы созданы")

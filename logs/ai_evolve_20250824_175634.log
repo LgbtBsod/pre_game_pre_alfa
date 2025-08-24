@@ -1,0 +1,195 @@
+2025-08-24 17:56:35 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-24 17:56:35 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-24 17:56:35 - core.game_engine - INFO - Игровой движок Panda3D инициализирован
+2025-08-24 17:56:35 - core.game_engine - INFO - Начало инициализации игрового движка Panda3D...
+2025-08-24 17:56:35 - core.game_engine - INFO - Panda3D успешно инициализирован
+2025-08-24 17:56:35 - core.event_system - INFO - Система событий инициализирована
+2025-08-24 17:56:35 - core.event_system - INFO - Система событий успешно инициализирована
+2025-08-24 17:56:35 - src.systems.genome.genome_system - INFO - Инициализирован пул из 8 генов
+2025-08-24 17:56:35 - src.systems.genome.genome_system - INFO - Genome Manager инициализирован
+2025-08-24 17:56:37 - src.systems.emotion.emotion_system - INFO - Emotion Manager инициализирован
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс RenderSystem не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс UISystem не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс AISystem не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс PyTorchAISystem не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс CombatSystem не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс ContentDatabase не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс ContentGenerator не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс AIIntegrationSystem не является системой ISystem
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс EntityStatsSystem не найден в src.systems.entity.entity_stats_system: module 'src.systems.entity.entity_stats_system' has no attribute 'EntityStatsSystem'
+2025-08-24 17:56:37 - core.system_factory - INFO - 📊 Зарегистрировано 0 систем
+2025-08-24 17:56:37 - core.system_factory - INFO - 🎯 Доступные системы: []
+2025-08-24 17:56:37 - core.system_factory - ERROR - ❌ Ни одна система не была загружена!
+2025-08-24 17:56:37 - core.system_factory - INFO - 🔍 Проверяем доступность модулей...
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.rendering.render_system не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс RenderSystem найден в src.systems.rendering.render_system
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.ui.ui_system не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс UISystem найден в src.systems.ui.ui_system
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.ai.ai_system не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс AISystem найден в src.systems.ai.ai_system
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.ai.pytorch_ai_system не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс PyTorchAISystem найден в src.systems.ai.pytorch_ai_system
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.combat.combat_system не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс CombatSystem найден в src.systems.combat.combat_system
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.content.content_database не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс ContentDatabase найден в src.systems.content.content_database
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.content.content_generator не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс ContentGenerator найден в src.systems.content.content_generator
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.ai.ai_integration_system не найден
+2025-08-24 17:56:37 - core.system_factory - INFO - ✅ Класс AIIntegrationSystem найден в src.systems.ai.ai_integration_system
+2025-08-24 17:56:37 - core.system_factory - WARNING - 📁 Модуль src.systems.entity.entity_stats_system не найден
+2025-08-24 17:56:37 - core.system_factory - WARNING - ⚠️ Класс EntityStatsSystem не найден в src.systems.entity.entity_stats_system
+2025-08-24 17:56:37 - core.system_factory - INFO - Фабрика систем инициализирована
+2025-08-24 17:56:37 - core.system_manager - INFO - Менеджер систем инициализирован
+2025-08-24 17:56:37 - core.system_factory - INFO - Создание стандартного набора систем...
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система render не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система ui не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система pytorch_ai не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система ai не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система combat не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система content_database не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система content_generator не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система ai_integration не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - ERROR - Система entity_stats не зарегистрирована
+2025-08-24 17:56:37 - core.system_factory - INFO - Создано 0 систем
+2025-08-24 17:56:37 - core.game_engine - INFO - Существующие системы добавлены в менеджер систем
+2025-08-24 17:56:37 - core.system_manager - INFO - Инициализация менеджера систем...
+2025-08-24 17:56:37 - core.event_system - DEBUG - Подписка на system_ready от system_manager
+2025-08-24 17:56:37 - core.event_system - DEBUG - Подписка на system_error от system_manager
+2025-08-24 17:56:37 - core.system_manager - DEBUG - Порядок инициализации систем: []
+2025-08-24 17:56:37 - core.system_manager - INFO - Менеджер систем успешно инициализирован
+2025-08-24 17:56:37 - core.resource_manager - INFO - Менеджер ресурсов Panda3D инициализирован
+2025-08-24 17:56:37 - core.resource_manager - INFO - Инициализация менеджера ресурсов Panda3D...
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана директория ресурсов: textures
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана директория ресурсов: models
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана директория ресурсов: audio
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана директория ресурсов: shaders
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана директория ресурсов: data
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Загрузчик Panda3D инициализирован
+2025-08-24 17:56:37 - core.resource_manager - WARNING - Не удалось инициализировать аудио менеджер: cannot init abstract class
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана базовая текстура
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Создана базовая модель куба
+2025-08-24 17:56:37 - core.resource_manager - DEBUG - Базовые ресурсы предзагружены
+2025-08-24 17:56:37 - core.resource_manager - INFO - Менеджер ресурсов Panda3D успешно инициализирован
+2025-08-24 17:56:37 - core.performance_manager - INFO - Менеджер производительности инициализирован
+2025-08-24 17:56:37 - core.performance_manager - INFO - Инициализация менеджера производительности...
+2025-08-24 17:56:37 - core.performance_manager - INFO - Системная информация: {'cpu_count': 12, 'cpu_freq': 3912.0, 'memory_total': 34244075520, 'memory_available': 21390635008, 'disk_total': 239150370816, 'disk_free': 137924583424}
+2025-08-24 17:56:37 - core.performance_manager - INFO - Мониторинг производительности запущен
+2025-08-24 17:56:37 - core.performance_manager - WARNING - Не удалось получить Pygame информацию: video system not initialized
+2025-08-24 17:56:37 - core.performance_manager - INFO - Менеджер производительности успешно инициализирован
+2025-08-24 17:56:37 - core.scene_manager - INFO - Менеджер сцен Panda3D инициализирован
+2025-08-24 17:56:37 - core.scene_manager - INFO - Инициализация менеджера сцен...
+2025-08-24 17:56:37 - core.scene_manager - INFO - Менеджер сцен успешно инициализирован
+2025-08-24 17:56:37 - core.game_engine - INFO - Все менеджеры успешно инициализированы
+2025-08-24 17:56:37 - src.scenes.menu_scene - INFO - Сцена меню Panda3D создана
+2025-08-24 17:56:37 - src.scenes.menu_scene - INFO - Инициализация сцены меню Panda3D...
+2025-08-24 17:56:37 - src.scenes.menu_scene - DEBUG - UI элементы меню созданы
+2025-08-24 17:56:37 - src.scenes.menu_scene - INFO - Сцена меню Panda3D успешно инициализирована
+2025-08-24 17:56:37 - core.scene_manager - INFO - Сцена menu зарегистрирована и инициализирована
+2025-08-24 17:56:37 - src.scenes.game_scene - INFO - Игровая сцена Panda3D создана
+2025-08-24 17:56:37 - src.scenes.game_scene - INFO - Начало инициализации игровой сцены Panda3D...
+2025-08-24 17:56:37 - src.systems.evolution.evolution_system - INFO - Система эволюции инициализирована
+2025-08-24 17:56:37 - src.systems.combat.combat_system - INFO - Система боя инициализирована
+2025-08-24 17:56:37 - src.systems.crafting.crafting_system - INFO - Система крафтинга инициализирована
+2025-08-24 17:56:37 - src.systems.inventory.inventory_system - INFO - Система инвентаря инициализирована
+2025-08-24 17:56:37 - src.systems.evolution.evolution_system - INFO - Система эволюции успешно инициализирована
+2025-08-24 17:56:37 - src.systems.combat.combat_system - INFO - Система боя успешно инициализирована
+2025-08-24 17:56:37 - src.systems.crafting.crafting_system - INFO - Система крафтинга успешно инициализирована
+2025-08-24 17:56:37 - src.systems.inventory.inventory_system - INFO - Система инвентаря успешно инициализирована
+2025-08-24 17:56:37 - src.systems.ai.ai_interface - INFO - Создана PyTorch AI система
+2025-08-24 17:56:37 - src.systems.ai.ai_system - INFO - Базовая AI система инициализирована
+2025-08-24 17:56:37 - src.systems.ai.pytorch_ai_system - INFO - PyTorch AI система инициализирована
+2025-08-24 17:56:37 - src.systems.ai.pytorch_ai_system - INFO - Инициализация PyTorch AI системы...
+2025-08-24 17:56:37 - src.systems.ai.ai_system - INFO - Инициализация базовой AI системы...
+2025-08-24 17:56:37 - src.systems.ai.ai_system - INFO - Базовая AI система успешно инициализирована
+2025-08-24 17:56:37 - src.systems.ai.pytorch_ai_system - INFO - PyTorch AI система успешно инициализирована
+2025-08-24 17:56:37 - src.systems.ai.ai_interface - INFO - AI система 'default' добавлена
+2025-08-24 17:56:37 - src.scenes.game_scene - DEBUG - Игровые системы инициализированы
+2025-08-24 17:56:37 - src.systems.ai.ai_entity - DEBUG - Файл памяти не найден: saves/ai_memory/default/player_1_memory.json
+2025-08-24 17:56:37 - src.systems.ai.ai_entity - INFO - AI Entity создана: player_1 (player)
+2025-08-24 17:56:37 - src.systems.genome.genome_system - INFO - Геном создан для player_1: 3 хромосом
+2025-08-24 17:56:37 - src.systems.genome.genome_system - INFO - Создан геном для player_1 (поколение 0)
+2025-08-24 17:56:37 - src.scenes.game_scene - WARNING - Не удалось создать некоторые объекты: name 'GeneType' is not defined
+2025-08-24 17:56:37 - src.scenes.game_scene - INFO - Зарегистрировано 0 сущностей в AI системе
+2025-08-24 17:56:37 - src.scenes.game_scene - DEBUG - Освещение игровой сцены настроено
+2025-08-24 17:56:37 - src.scenes.game_scene - ERROR - Ошибка инициализации игровой сцены: name 'DirectButton' is not defined
+2025-08-24 17:56:37 - core.scene_manager - ERROR - Не удалось инициализировать сцену game
+2025-08-24 17:56:37 - src.scenes.pause_scene - INFO - Сцена паузы Panda3D создана
+2025-08-24 17:56:37 - src.scenes.pause_scene - INFO - Инициализация сцены паузы Panda3D...
+2025-08-24 17:56:37 - src.scenes.pause_scene - DEBUG - UI элементы паузы созданы
+2025-08-24 17:56:37 - src.scenes.pause_scene - INFO - Сцена паузы Panda3D успешно инициализирована
+2025-08-24 17:56:37 - core.scene_manager - INFO - Сцена pause зарегистрирована и инициализирована
+2025-08-24 17:56:37 - src.scenes.settings_scene - INFO - Сцена настроек Panda3D создана
+2025-08-24 17:56:37 - src.scenes.settings_scene - INFO - Инициализация сцены настроек Panda3D...
+2025-08-24 17:56:37 - src.scenes.settings_scene - ERROR - Ошибка инициализации сцены настроек: 'Unknown options "trough_relief, trough_frameColor" for DirectSlider'
+2025-08-24 17:56:37 - core.scene_manager - ERROR - Не удалось инициализировать сцену settings
+2025-08-24 17:56:37 - src.scenes.load_scene - INFO - Сцена загрузки Panda3D создана
+2025-08-24 17:56:37 - src.scenes.load_scene - INFO - Инициализация сцены загрузки Panda3D...
+2025-08-24 17:56:37 - src.scenes.load_scene - DEBUG - Загружено 3 сохранений
+2025-08-24 17:56:37 - src.scenes.load_scene - DEBUG - Список сохранений создан
+2025-08-24 17:56:37 - src.scenes.load_scene - DEBUG - UI элементы загрузки созданы
+2025-08-24 17:56:37 - src.scenes.load_scene - INFO - Сцена загрузки Panda3D успешно инициализирована
+2025-08-24 17:56:37 - core.scene_manager - INFO - Сцена load_game зарегистрирована и инициализирована
+2025-08-24 17:56:37 - core.scene_manager - INFO - Активная сцена изменена на menu
+2025-08-24 17:56:37 - core.game_engine - INFO - Сцены успешно инициализированы
+2025-08-24 17:56:37 - core.game_engine - DEBUG - Задачи Panda3D настроены
+2025-08-24 17:56:37 - core.game_engine - INFO - Игровой движок Panda3D успешно инициализирован
+2025-08-24 17:56:37 - core.game_engine - INFO - Запуск игрового цикла Panda3D
+2025-08-24 17:56:37 - core.performance_manager - WARNING - FPS ниже порога: 0.5 < 30.0
+2025-08-24 17:56:37 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 500, 'shadow_quality': 'medium', 'texture_quality': 'medium', 'anti_aliasing': False}
+2025-08-24 17:56:37 - core.performance_manager - INFO - Уровень качества изменен: high -> medium
+2025-08-24 17:56:37 - core.performance_manager - INFO - Автоматическое снижение качества до medium
+2025-08-24 17:56:37 - core.performance_manager - WARNING - FPS ниже порога: 10.0 < 30.0
+2025-08-24 17:56:37 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 200, 'shadow_quality': 'low', 'texture_quality': 'low', 'anti_aliasing': False}
+2025-08-24 17:56:37 - core.performance_manager - INFO - Уровень качества изменен: medium -> low
+2025-08-24 17:56:37 - core.performance_manager - INFO - Автоматическое снижение качества до low
+2025-08-24 17:56:37 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 500, 'shadow_quality': 'medium', 'texture_quality': 'medium', 'anti_aliasing': False}
+2025-08-24 17:56:37 - core.performance_manager - INFO - Уровень качества изменен: low -> medium
+2025-08-24 17:56:37 - core.performance_manager - INFO - Автоматическое повышение качества до medium
+2025-08-24 17:56:37 - core.performance_manager - DEBUG - Применены настройки качества: {'particle_limit': 1000, 'shadow_quality': 'high', 'texture_quality': 'high', 'anti_aliasing': True}
+2025-08-24 17:56:37 - core.performance_manager - INFO - Уровень качества изменен: medium -> high
+2025-08-24 17:56:37 - core.performance_manager - INFO - Автоматическое повышение качества до high
+2025-08-24 17:56:40 - core.game_engine - DEBUG - FPS: 166
+2025-08-24 17:56:40 - core.performance_manager - WARNING - FPS ниже порога: 21.6 < 30.0
+2025-08-24 17:56:50 - core.game_engine - DEBUG - FPS: 166
+2025-08-24 17:57:00 - core.game_engine - DEBUG - FPS: 166
+2025-08-24 17:57:05 - core.game_engine - INFO - Очистка ресурсов игрового движка...
+2025-08-24 17:57:05 - core.system_manager - INFO - Очистка менеджера систем...
+2025-08-24 17:57:05 - core.system_manager - INFO - Менеджер систем очищен
+2025-08-24 17:57:05 - core.system_factory - INFO - Очистка фабрики систем...
+2025-08-24 17:57:05 - core.system_factory - INFO - Уничтожение всех систем...
+2025-08-24 17:57:05 - core.system_factory - INFO - Все системы уничтожены
+2025-08-24 17:57:05 - core.system_factory - INFO - Фабрика систем очищена
+2025-08-24 17:57:05 - core.event_system - INFO - Очистка системы событий...
+2025-08-24 17:57:05 - core.event_system - INFO - Система событий очищена
+2025-08-24 17:57:05 - core.scene_manager - INFO - Очистка менеджера сцен...
+2025-08-24 17:57:05 - src.scenes.menu_scene - INFO - Очистка сцены меню Panda3D...
+2025-08-24 17:57:05 - src.scenes.menu_scene - INFO - Сцена меню Panda3D очищена
+2025-08-24 17:57:05 - src.scenes.game_scene - INFO - Очистка игровой сцены Panda3D...
+2025-08-24 17:57:05 - src.systems.ai.pytorch_ai_system - INFO - Очистка PyTorch AI системы...
+2025-08-24 17:57:05 - src.systems.ai.ai_system - INFO - Память AI сохранена в final_ai_memory
+2025-08-24 17:57:05 - src.systems.ai.pytorch_ai_system - INFO - Память PyTorch AI сохранена в final_ai_memory
+2025-08-24 17:57:05 - src.systems.ai.ai_system - INFO - Очистка базовой AI системы...
+2025-08-24 17:57:05 - src.systems.ai.ai_system - INFO - Память AI сохранена в final_ai_memory
+2025-08-24 17:57:05 - src.systems.ai.pytorch_ai_system - INFO - Память PyTorch AI сохранена в final_ai_memory
+2025-08-24 17:57:05 - src.systems.ai.ai_system - INFO - Базовая AI система очищена
+2025-08-24 17:57:05 - src.systems.ai.pytorch_ai_system - INFO - PyTorch AI система очищена
+2025-08-24 17:57:05 - src.systems.ai.ai_interface - INFO - AI система 'default' очищена
+2025-08-24 17:57:05 - src.systems.evolution.evolution_system - INFO - Очистка системы эволюции...
+2025-08-24 17:57:05 - src.systems.combat.combat_system - INFO - Очистка системы боя...
+2025-08-24 17:57:05 - src.systems.crafting.crafting_system - INFO - Очистка системы крафтинга...
+2025-08-24 17:57:05 - src.systems.inventory.inventory_system - INFO - Очистка системы инвентаря...
+2025-08-24 17:57:05 - src.scenes.game_scene - INFO - Игровая сцена Panda3D очищена
+2025-08-24 17:57:05 - src.scenes.pause_scene - INFO - Очистка сцены паузы Panda3D...
+2025-08-24 17:57:05 - src.scenes.pause_scene - INFO - Сцена паузы Panda3D очищена
+2025-08-24 17:57:05 - src.scenes.settings_scene - INFO - Очистка сцены настроек Panda3D...
+2025-08-24 17:57:05 - src.scenes.settings_scene - INFO - Сцена настроек Panda3D очищена
+2025-08-24 17:57:05 - src.scenes.load_scene - INFO - Очистка сцены загрузки Panda3D...
+2025-08-24 17:57:05 - src.scenes.load_scene - INFO - Сцена загрузки Panda3D очищена
+2025-08-24 17:57:05 - core.scene_manager - INFO - Менеджер сцен очищен
+2025-08-24 17:57:05 - core.resource_manager - INFO - Очистка менеджера ресурсов Panda3D...
+2025-08-24 17:57:05 - core.resource_manager - INFO - Менеджер ресурсов Panda3D очищен
+2025-08-24 17:57:05 - core.performance_manager - INFO - Очистка менеджера производительности...
+2025-08-24 17:57:05 - core.performance_manager - INFO - Менеджер производительности очищен
+2025-08-24 17:57:05 - core.game_engine - ERROR - Ошибка при завершении Panda3D: cannot init abstract class
+2025-08-24 17:57:05 - core.game_engine - INFO - Ресурсы успешно очищены

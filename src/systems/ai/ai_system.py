@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
 """
 AI System - Базовая система искусственного интеллекта
-Отвечает только за базовую логику AI, эмоции и память
+Управляет поведением, эмоциями и памятью AI сущностей
 """
 
 import logging
 import json
-import random
-import math
 import time
-from typing import Dict, Any, List, Optional, Tuple
+import random
+from typing import Dict, List, Any, Optional
+from collections import defaultdict, deque
 from dataclasses import dataclass, asdict
 from enum import Enum
-from collections import deque, defaultdict
 from ...core.interfaces import ISystem
 
 logger = logging.getLogger(__name__)
+
+class EntityType(Enum):
+    """Типы сущностей"""
+    PLAYER = "player"
+    ENEMY = "enemy"
+    NPC = "npc"
+    BOSS = "boss"
 
 class EmotionType(Enum):
     """Типы эмоций AI"""
@@ -36,6 +42,14 @@ class PersonalityType(Enum):
     LONER = "loner"
     LEADER = "leader"
     FOLLOWER = "follower"
+    BALANCED = "balanced"
+
+class EnumEncoder(json.JSONEncoder):
+    """JSON энкодер для enum'ов"""
+    def default(self, obj):
+        if isinstance(obj, Enum):
+            return obj.value
+        return super().default(obj)
 
 @dataclass
 class Memory:
@@ -47,6 +61,17 @@ class Memory:
     emotional_impact: float
     importance: float
     associations: List[str]
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Конвертация в словарь для JSON"""
+        data = asdict(self)
+        # Убеждаемся, что все enum'ы конвертируются в строки
+        return data
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Memory':
+        """Создание из словаря"""
+        return cls(**data)
 
 @dataclass
 class Emotion:
@@ -56,6 +81,18 @@ class Emotion:
     duration: float
     trigger: str
     timestamp: float
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Конвертация в словарь для JSON"""
+        data = asdict(self)
+        data['type'] = self.type.value
+        return data
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Emotion':
+        """Создание из словаря"""
+        data['type'] = EmotionType(data['type'])
+        return cls(**data)
 
 @dataclass
 class Personality:
@@ -65,6 +102,18 @@ class Personality:
     preferences: Dict[str, float]
     fears: List[str]
     desires: List[str]
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Конвертация в словарь для JSON"""
+        data = asdict(self)
+        data['type'] = self.type.value
+        return data
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'Personality':
+        """Создание из словаря"""
+        data['type'] = PersonalityType(data['type'])
+        return cls(**data)
 
 class AISystem(ISystem):
     """Базовая AI система"""
