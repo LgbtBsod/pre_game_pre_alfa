@@ -53,8 +53,8 @@ class MenuScene(Scene):
         # Современный неоновый заголовок
         self.title_text = OnscreenText(
             text="🤖 AI-EVOLVE ENHANCED EDITION",
-            pos=(0, 0.7),
-            scale=0.1,
+            pos=(0, 0.75),
+            scale=0.14,
             fg=(0, 255, 255, 1),  # Неоновый голубой
             align=TextNode.ACenter,
             mayChange=False,
@@ -66,8 +66,8 @@ class MenuScene(Scene):
         # Кнопка "Начать игру"
         self.start_button = DirectButton(
             text="🚀 START GAME",
-            pos=(0, 0, 0.3),
-            scale=0.07,
+            pos=(0, 0, 0.35),
+            scale=0.1,
             command=self._start_game,
             frameColor=(0, 255, 100, 0.8),  # Неоновый зеленый
             text_fg=(255, 255, 255, 1),
@@ -78,8 +78,8 @@ class MenuScene(Scene):
         # Кнопка "Творец мира"
         self.creator_button = DirectButton(
             text="🎨 WORLD CREATOR",
-            pos=(0, 0, 0.1),
-            scale=0.07,
+            pos=(0, 0, 0.15),
+            scale=0.1,
             command=self._open_creator,
             frameColor=(255, 193, 7, 0.8),  # Неоновый желтый
             text_fg=(255, 255, 255, 1),
@@ -90,8 +90,8 @@ class MenuScene(Scene):
         # Кнопка "Настройки"
         self.settings_button = DirectButton(
             text="⚙️ SETTINGS",
-            pos=(0, 0, -0.1),
-            scale=0.07,
+            pos=(0, 0, -0.05),
+            scale=0.1,
             command=self._open_settings,
             frameColor=(255, 100, 255, 0.8),  # Неоновый розовый
             text_fg=(255, 255, 255, 1),
@@ -102,8 +102,8 @@ class MenuScene(Scene):
         # Кнопка "Выход"
         self.quit_button = DirectButton(
             text="❌ QUIT",
-            pos=(0, 0, -0.3),
-            scale=0.07,
+            pos=(0, 0, -0.25),
+            scale=0.1,
             command=self._quit_game,
             frameColor=(255, 100, 100, 0.8),  # Неоновый красный
             text_fg=(255, 255, 255, 1),

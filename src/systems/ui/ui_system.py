@@ -7,6 +7,7 @@
 import logging
 import time
 from typing import Dict, List, Optional, Any, Union, Tuple
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -109,6 +110,15 @@ class UISystem(ISystem):
         
         # UI элементы
         self.ui_elements: Dict[str, UIElement] = {}
+        self.ui_layouts: Dict[str, UILayout] = {}
+        self.ui_themes: Dict[str, UITheme] = {}
+        self.active_screens: List[str] = []
+
+        # Очередь событий UI и троттлинг обновлений (декуплинг от основного цикла)
+        self._event_queue: deque = deque()
+        self._max_events_per_tick: int = 64
+        self._last_update_time: float = 0.0
+        self._update_interval: float = 1.0 / 30.0  # 30 Гц по умолчанию
         
         # Шаблоны объектов для создания
         self.object_templates: Dict[str, WorldObjectTemplate] = {}
@@ -139,7 +149,10 @@ class UISystem(ISystem):
             'max_layers': SYSTEM_LIMITS["max_ui_layers"],
             'grid_snap': WORLD_SETTINGS["grid_snap"],
             'grid_size': WORLD_SETTINGS["grid_size"],
-            'show_preview': WORLD_SETTINGS["show_preview"]
+            'show_preview': WORLD_SETTINGS["show_preview"],
+            'ui_update_hz': 30,
+            'max_events_per_tick': 64,
+            'animation_enabled': True
         })
         
         # Статистика системы
@@ -181,6 +194,8 @@ class UISystem(ISystem):
             
             # Настраиваем систему
             self._setup_ui_system()
+            # Применяем частоту обновления и лимиты очереди
+            self._apply_runtime_settings()
             
             # Создаем шаблоны объектов
             self._create_object_templates()
@@ -204,7 +219,17 @@ class UISystem(ISystem):
                 return False
             
             start_time = time.time()
+            # Троттлинг частоты обновления UI для декуплинга от основного цикла
+            self._last_update_time += delta_time
+            if self._last_update_time < self._update_interval:
+                # Даже если пропускаем тяжелое обновление, обработаем ограниченное число событий
+                self._drain_event_queue(budget_only=True)
+                return True
+            self._last_update_time = 0.0
             
+            # Обрабатываем очередь событий с бюджетом
+            self._drain_event_queue()
+
             # Обновляем UI элементы
             self._update_ui_elements(delta_time)
             
@@ -224,6 +249,15 @@ class UISystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка обновления системы UI: {e}")
             return False
+
+    def _apply_runtime_settings(self) -> None:
+        """Применение настроек частоты обновления и лимита очереди"""
+        try:
+            hz = int(self.system_settings.get('ui_update_hz', 30))
+            self._update_interval = 1.0 / max(1, hz)
+            self._max_events_per_tick = int(self.system_settings.get('max_events_per_tick', 64))
+        except Exception as e:
+            logger.warning(f"Некорректные параметры UI настроек: {e}")
     
     def pause(self) -> bool:
         """Приостановка системы UI"""
@@ -382,6 +416,16 @@ class UISystem(ISystem):
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
         try:
+            # Добавляем в очередь для безопасной обработки в такт UI
+            self._event_queue.append((event_type, event_data))
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка постановки события {event_type} в очередь: {e}")
+            return False
+
+    def _process_event(self, event_type: str, event_data: Any) -> bool:
+        """Немедленная обработка одного события из очереди"""
+        try:
             if event_type == "ui_element_created":
                 return self._handle_ui_element_created(event_data)
             elif event_type == "ui_element_updated":
@@ -397,6 +441,19 @@ class UISystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
+
+    def _drain_event_queue(self, budget_only: bool = False) -> None:
+        """Обработка очереди событий с бюджетом на тик"""
+        try:
+            processed = 0
+            budget = self._max_events_per_tick if not budget_only else max(1, self._max_events_per_tick // 4)
+            while self._event_queue and processed < budget:
+                event_type, event_data = self._event_queue.popleft()
+                self._process_event(event_type, event_data)
+                processed += 1
+            self.system_stats['events_processed'] = self.system_stats.get('events_processed', 0) + processed
+        except Exception as e:
+            logger.warning(f"Ошибка обработки очереди событий UI: {e}")
     
     def _setup_ui_system(self) -> None:
         """Настройка системы UI"""

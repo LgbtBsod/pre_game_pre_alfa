@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 class SystemFactory:
     """Фабрика для создания игровых систем"""
     
-    def __init__(self, config_manager: ConfigManager, event_system: EventSystem):
+    def __init__(self, config_manager: ConfigManager, event_system: EventSystem, system_manager: Optional[SystemManager] = None):
         self.config_manager = config_manager
         self.event_system = event_system
-        self.system_manager = SystemManager(event_system)
+        self.system_manager = system_manager or SystemManager(event_system)
         
         # Реестр систем
         self.system_registry: Dict[str, Type[ISystem]] = {}
@@ -60,14 +60,20 @@ class SystemFactory:
                 logger.error(f"Система {system_name} не зарегистрирована")
                 return None
             
-            # Проверяем зависимости
+            # Проверяем зависимости (контекстные зависимости считаются удовлетворенными)
             if not self._check_dependencies(system_name):
                 logger.error(f"Не выполнены зависимости для системы {system_name}")
                 return None
             
             # Создаем систему
             system_class = self.system_registry[system_name]
-            system = system_class(**kwargs)
+            # Внедряем известные зависимости, если система ожидает их через kwargs
+            init_kwargs = dict(kwargs)
+            if 'config_manager' in system_class.__init__.__code__.co_varnames:
+                init_kwargs.setdefault('config_manager', self.config_manager)
+            if 'event_system' in system_class.__init__.__code__.co_varnames:
+                init_kwargs.setdefault('event_system', self.event_system)
+            system = system_class(**init_kwargs)
             
             # Добавляем в менеджер систем
             dependencies = self.system_dependencies.get(system_name, [])

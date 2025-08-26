@@ -113,28 +113,7 @@ class SceneManager(ISceneManager):
             
         except Exception as e:
             logger.error(f"Ошибка инициализации менеджера сцен: {e}")
-            return False
-        
-        # Корневые узлы для сцен
-        self.scenes_root = None
-        self.ui_root = None
-        
-        logger.info("Менеджер сцен Panda3D инициализирован")
-    
-    def initialize(self) -> bool:
-        """Инициализация менеджера сцен"""
-        try:
-            logger.info("Инициализация менеджера сцен...")
-            
-            # Создание корневых узлов
-            self.scenes_root = self.render_node.attachNewNode("scenes_root")
-            self.ui_root = self.render_node.attachNewNode("ui_root")
-            
-            logger.info("Менеджер сцен успешно инициализирован")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка инициализации менеджера сцен: {e}")
+            self._system_state = SystemState.ERROR
             return False
     
     def register_scene(self, name: str, scene: Scene):
@@ -189,6 +168,10 @@ class SceneManager(ISceneManager):
             logger.error(f"Сцена {name} не найдена")
             return False
         
+        if self._system_state != SystemState.READY:
+            logger.warning("Попытка сменить сцену до инициализации SceneManager")
+            return False
+        
         # Скрываем предыдущую активную сцену
         if self.active_scene:
             self.active_scene.set_visible(False)
@@ -209,6 +192,10 @@ class SceneManager(ISceneManager):
         
         if self.transitioning:
             logger.warning("Переход уже выполняется")
+            return False
+        
+        if self._system_state != SystemState.READY:
+            logger.warning("Попытка переключения сцены до инициализации SceneManager")
             return False
         
         # Начинаем переход

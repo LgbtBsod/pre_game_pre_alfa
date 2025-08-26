@@ -97,12 +97,70 @@ class ConfigManager(IConfigManager):
                 'performance': asdict(self.performance_config)
             }
             
+            # Валидация и коррекция значений
+            self._validate_all()
+            
+            # Пересобираем с учетом коррекций
+            self._loaded_config = {
+                'display': asdict(self.display_config),
+                'audio': asdict(self.audio_config),
+                'gameplay': asdict(self.gameplay_config),
+                'ai': asdict(self.ai_config),
+                'performance': asdict(self.performance_config)
+            }
+            
+            # Сохраняем, если что-то было исправлено
+            self._save_config()
+            
             logger.info("Конфигурация успешно загружена")
             return self._loaded_config
             
         except Exception as e:
             logger.error(f"Ошибка загрузки конфигурации: {e}")
             return {}
+
+    # -------------------- Валидация --------------------
+    def _validate_all(self) -> None:
+        """Валидация всех секций конфигурации"""
+        try:
+            self._validate_display()
+            self._validate_audio()
+            self._validate_gameplay()
+            self._validate_ai()
+            self._validate_performance()
+        except Exception as e:
+            logger.warning(f"Ошибка валидации конфигурации: {e}")
+
+    def _validate_display(self) -> None:
+        self.display_config.window_width = max(320, int(self.display_config.window_width))
+        self.display_config.window_height = max(240, int(self.display_config.window_height))
+        self.display_config.render_scale = float(min(2.0, max(0.5, self.display_config.render_scale)))
+        self.display_config.fps = int(min(240, max(15, self.display_config.fps)))
+
+    def _validate_audio(self) -> None:
+        self.audio_config.master_volume = float(min(1.0, max(0.0, self.audio_config.master_volume)))
+        self.audio_config.music_volume = float(min(1.0, max(0.0, self.audio_config.music_volume)))
+        self.audio_config.sfx_volume = float(min(1.0, max(0.0, self.audio_config.sfx_volume)))
+
+    def _validate_gameplay(self) -> None:
+        if self.gameplay_config.difficulty not in {"easy", "normal", "hard"}:
+            self.gameplay_config.difficulty = "normal"
+        self.gameplay_config.save_interval = int(min(3600, max(30, self.gameplay_config.save_interval)))
+        if not isinstance(self.gameplay_config.language, str) or len(self.gameplay_config.language) == 0:
+            self.gameplay_config.language = "en"
+
+    def _validate_ai(self) -> None:
+        self.ai_config.learning_rate = float(min(1.0, max(0.0, self.ai_config.learning_rate)))
+        self.ai_config.exploration_rate = float(min(1.0, max(0.0, self.ai_config.exploration_rate)))
+        self.ai_config.memory_size = int(min(1_000_000, max(100, self.ai_config.memory_size)))
+        self.ai_config.ai_update_frequency = float(min(1.0, max(0.01, self.ai_config.ai_update_frequency)))
+
+    def _validate_performance(self) -> None:
+        self.performance_config.max_fps = int(min(240, max(15, self.performance_config.max_fps)))
+        if self.performance_config.texture_quality not in {"low", "medium", "high"}:
+            self.performance_config.texture_quality = "high"
+        if self.performance_config.shadow_quality not in {"low", "medium", "high"}:
+            self.performance_config.shadow_quality = "medium"
     
     def get_config(self, key: str, default: Any = None) -> Any:
         """Получение значения конфигурации"""

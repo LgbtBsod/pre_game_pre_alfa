@@ -16,6 +16,18 @@ from typing import Optional
 ROOT_DIR = Path(__file__).parent
 sys.path.insert(0, str(ROOT_DIR / "src"))
 
+# Конфигурируем кодировку консоли для Windows/PowerShell
+def _configure_console_encoding():
+    try:
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+_configure_console_encoding()
+
 def setup_logging():
     """Настройка системы логирования с очисткой старых логов"""
     log_dir = ROOT_DIR / "logs"

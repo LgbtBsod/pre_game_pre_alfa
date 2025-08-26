@@ -9,6 +9,7 @@ from typing import Dict, Any, List, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
 import logging
+import importlib.util
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 
 logger = logging.getLogger(__name__)
@@ -138,23 +139,40 @@ class AISystemFactory:
                 from .pytorch_ai_system import PyTorchAISystem
                 logger.info("Создана PyTorch AI система")
                 return PyTorchAISystem()
-            except ImportError:
-                try:
-                    from .enhanced_ai_system import EnhancedAISystem
-                    logger.info("Создана Enhanced AI система")
-                    return EnhancedAISystem()
-                except ImportError:
-                    from .ai_system import AISystem
-                    logger.info("Создана базовая AI система")
-                    return AISystem()
+            except Exception as e:
+                logger.warning(f"PyTorch AI недоступна: {e}")
+                # Пробуем enhanced, если модуль существует
+                if importlib.util.find_spec(__package__ + '.enhanced_ai_system') is not None:
+                    try:
+                        module = importlib.import_module(__package__ + '.enhanced_ai_system')
+                        EnhancedAISystem = getattr(module, 'EnhancedAISystem')
+                        logger.info("Создана Enhanced AI система")
+                        return EnhancedAISystem()
+                    except Exception as e2:
+                        logger.warning(f"Enhanced AI недоступна: {e2}")
+                from .ai_system import AISystem
+                logger.info("Создана базовая AI система")
+                return AISystem()
         
         elif system_type == "pytorch":
-            from .pytorch_ai_system import PyTorchAISystem
-            return PyTorchAISystem()
+            try:
+                from .pytorch_ai_system import PyTorchAISystem
+                return PyTorchAISystem()
+            except Exception as e:
+                logger.warning(f"PyTorch AI недоступна: {e}; откат к базовой системе")
+                from .ai_system import AISystem
+                return AISystem()
         
         elif system_type == "enhanced":
-            from .enhanced_ai_system import EnhancedAISystem
-            return EnhancedAISystem()
+            if importlib.util.find_spec(__package__ + '.enhanced_ai_system') is not None:
+                try:
+                    module = importlib.import_module(__package__ + '.enhanced_ai_system')
+                    EnhancedAISystem = getattr(module, 'EnhancedAISystem')
+                    return EnhancedAISystem()
+                except Exception as e:
+                    logger.warning(f"Enhanced AI недоступна: {e}; откат к базовой системе")
+            from .ai_system import AISystem
+            return AISystem()
         
         elif system_type == "basic":
             from .ai_system import AISystem

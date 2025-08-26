@@ -232,6 +232,11 @@ class GameEngine(ShowBase):
         """Настройка задач Panda3D"""
         # Основная задача обновления
         self.taskMgr.add(self._update_task, "update_task")
+        # Отдельная задача для UI с более низким приоритетом
+        try:
+            self.taskMgr.add(self._ui_update_task, "ui_update_task")
+        except Exception as e:
+            logger.warning(f"Не удалось добавить отдельную задачу UI: {e}")
         
         logger.debug("Задачи Panda3D настроены")
     
@@ -257,28 +262,76 @@ class GameEngine(ShowBase):
     
     def _update_task(self, task):
         """Задача обновления состояния игры"""
-        if not self.running:
+        try:
+            if not self.running:
+                return task.done
+            
+            current_time = time.time()
+            self.delta_time = current_time - self.last_frame_time
+            self.last_frame_time = current_time
+            frame_start = current_time
+            
+            # Обновление всех систем через новый менеджер
+            if self.system_manager:
+                sys_update_start = time.time()
+                self.system_manager.update_all_systems(self.delta_time)
+                if self.performance_manager:
+                    from .performance_manager import PerformanceMetric
+                    self.performance_manager.record_metric(
+                        PerformanceMetric.EVENT_PROCESSING_TIME,
+                        (time.time() - sys_update_start) * 1000.0,
+                        "system_manager"
+                    )
+            
+            # Обновление активной сцены (для обратной совместимости)
+            if self.scene_manager and self.scene_manager.active_scene:
+                self.scene_manager.active_scene.update(self.delta_time)
+            
+            # Обновление менеджера производительности (для обратной совместимости)
+            if self.performance_manager:
+                self.performance_manager.update(self.delta_time)
+            
+            # Обновление статистики
+            self._update_stats()
+            # Запись метрик кадра и соблюдение бюджетов
+            if self.performance_manager:
+                frame_time_ms = (time.time() - frame_start) * 1000.0
+                try:
+                    from .performance_manager import PerformanceMetric
+                    self.performance_manager.record_metric(PerformanceMetric.FRAME_TIME, frame_time_ms, "engine")
+                    current_fps = 1000.0 / max(0.001, frame_time_ms)
+                    self.performance_manager.record_metric(PerformanceMetric.FPS, current_fps, "engine")
+                except Exception:
+                    pass
+                # Простая защита бюджета кадра на основе max_fps
+                try:
+                    target_fps = self.config.get('display', {}).get('fps', 60)
+                    min_frame_time = 1.0 / max(1, target_fps)
+                    elapsed = time.time() - current_time
+                    if elapsed < min_frame_time:
+                        time.sleep(max(0.0, min_frame_time - elapsed))
+                except Exception:
+                    pass
+            
+            return task.cont
+        except Exception as e:
+            logger.error(f"Исключение в update_task: {e}")
+            self._handle_critical_error(e)
+            self.running = False
             return task.done
-        
-        current_time = time.time()
-        self.delta_time = current_time - self.last_frame_time
-        self.last_frame_time = current_time
-        
-        # Обновление всех систем через новый менеджер
-        if self.system_manager:
-            self.system_manager.update_all_systems(self.delta_time)
-        
-        # Обновление активной сцены (для обратной совместимости)
-        if self.scene_manager and self.scene_manager.active_scene:
-            self.scene_manager.active_scene.update(self.delta_time)
-        
-        # Обновление менеджера производительности (для обратной совместимости)
-        if self.performance_manager:
-            self.performance_manager.update(self.delta_time)
-        
-        # Обновление статистики
-        self._update_stats()
-        
+
+    def _ui_update_task(self, task):
+        """Задача обновления UI, отделенная от общего обновления"""
+        try:
+            if not self.running:
+                return task.done
+            if self.system_manager:
+                ui_system = self.system_manager.get_system("ui") if hasattr(self.system_manager, "get_system") else None
+                if ui_system:
+                    # Передаем фиксированный delta для стабильности UI частоты; сам UI троттлит внутри
+                    ui_system.update(1.0 / 60.0)
+        except Exception as e:
+            logger.debug(f"UI task update error: {e}")
         return task.cont
     
     def _update_stats(self):
@@ -299,8 +352,13 @@ class GameEngine(ShowBase):
     def _handle_critical_error(self, error: Exception):
         """Обработка критических ошибок"""
         logger.critical(f"Критическая ошибка: {error}")
-        # Здесь можно добавить логику сохранения состояния игры
-        # и показа пользователю сообщения об ошибке
+        try:
+            if self.performance_manager:
+                from .performance_manager import PerformanceMetric
+                self.performance_manager.record_metric(PerformanceMetric.EVENT_PROCESSING_TIME, 0.0, "critical_error")
+        except Exception:
+            pass
+        # Здесь можно добавить логику сохранения состояния, уведомления UI и т.п.
     
     def _cleanup(self):
         """Очистка ресурсов"""
