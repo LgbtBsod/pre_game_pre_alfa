@@ -48,14 +48,15 @@ class MenuScene(Scene):
     def _create_ui_elements(self):
         """Создание UI элементов меню"""
         # Используем корневой узел UI сцены
+        # Привязываем к узлу UI текущей сцены (который уже находится под aspect2d)
         parent_node = self.ui_root if self.ui_root else None
         
         # Современный неоновый заголовок
         self.title_text = OnscreenText(
-            text="🤖 AI-EVOLVE ENHANCED EDITION",
+            text="AI-EVOLVE ENHANCED EDITION",
             pos=(0, 0.75),
             scale=0.14,
-            fg=(0, 255, 255, 1),  # Неоновый голубой
+            fg=(0.0, 1.0, 1.0, 1.0),  # Неоновый голубой (0..1)
             align=TextNode.ACenter,
             mayChange=False,
             parent=parent_node,
@@ -65,48 +66,48 @@ class MenuScene(Scene):
         
         # Кнопка "Начать игру"
         self.start_button = DirectButton(
-            text="🚀 START GAME",
+            text="START GAME",
             pos=(0, 0, 0.35),
             scale=0.1,
             command=self._start_game,
-            frameColor=(0, 255, 100, 0.8),  # Неоновый зеленый
-            text_fg=(255, 255, 255, 1),
+            frameColor=(0.0, 1.0, 0.392, 0.8),  # Неоновый зеленый (0..1)
+            text_fg=(1.0, 1.0, 1.0, 1.0),
             relief=1,
             parent=parent_node
         )
         
         # Кнопка "Творец мира"
         self.creator_button = DirectButton(
-            text="🎨 WORLD CREATOR",
+            text="WORLD CREATOR",
             pos=(0, 0, 0.15),
             scale=0.1,
             command=self._open_creator,
-            frameColor=(255, 193, 7, 0.8),  # Неоновый желтый
-            text_fg=(255, 255, 255, 1),
+            frameColor=(1.0, 0.756, 0.027, 0.8),  # Неоновый желтый (0..1)
+            text_fg=(1.0, 1.0, 1.0, 1.0),
             relief=1,
             parent=parent_node
         )
         
         # Кнопка "Настройки"
         self.settings_button = DirectButton(
-            text="⚙️ SETTINGS",
+            text="SETTINGS",
             pos=(0, 0, -0.05),
             scale=0.1,
             command=self._open_settings,
-            frameColor=(255, 100, 255, 0.8),  # Неоновый розовый
-            text_fg=(255, 255, 255, 1),
+            frameColor=(1.0, 0.392, 1.0, 0.8),  # Неоновый розовый (0..1)
+            text_fg=(1.0, 1.0, 1.0, 1.0),
             relief=1,
             parent=parent_node
         )
         
         # Кнопка "Выход"
         self.quit_button = DirectButton(
-            text="❌ QUIT",
+            text="QUIT",
             pos=(0, 0, -0.25),
             scale=0.1,
             command=self._quit_game,
-            frameColor=(255, 100, 100, 0.8),  # Неоновый красный
-            text_fg=(255, 255, 255, 1),
+            frameColor=(1.0, 0.392, 0.392, 0.8),  # Неоновый красный (0..1)
+            text_fg=(1.0, 1.0, 1.0, 1.0),
             relief=1,
             parent=parent_node
         )
@@ -116,6 +117,12 @@ class MenuScene(Scene):
     def _start_game(self):
         """Начать игру"""
         if self.scene_manager:
+            # Скрываем своё UI перед переключением
+            try:
+                if self.ui_root:
+                    self.ui_root.hide()
+            except Exception:
+                pass
             self.scene_manager.switch_to_scene("game", "fade")
             logger.info("Переключение на игровую сцену")
     
@@ -141,11 +148,13 @@ class MenuScene(Scene):
     def update(self, delta_time: float):
         """Обновление сцены меню"""
         # Анимация UI элементов
+        self.title_text.setText("AI-EVOLVE ENHANCED EDITION")
         pass
     
     def render(self, render_node):
         """Отрисовка сцены меню"""
         # Panda3D автоматически отрисовывает UI
+        self.title_text.setText("AI-EVOLVE ENHANCED EDITION")
         pass
     
     def handle_event(self, event):

@@ -280,8 +280,16 @@ class AISystemManager(ISystem):
     def cleanup(self) -> None:
         """Очистка AI системы"""
         try:
-            self.cleanup()
+            # Очистка внутренних подсистем без рекурсии
+            for name, system in list(self.ai_systems.items()):
+                try:
+                    system.cleanup()
+                except Exception as e:
+                    self.logger.error(f"Ошибка очистки AI подсистемы '{name}': {e}")
+            self.ai_systems.clear()
+            self.entity_mappings.clear()
             self.is_initialized = False
+            self._system_state = SystemState.DESTROYED
             self.logger.info("AI система очищена")
         except Exception as e:
             self.logger.error(f"Ошибка очистки AI системы: {e}")

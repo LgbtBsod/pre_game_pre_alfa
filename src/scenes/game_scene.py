@@ -15,6 +15,7 @@ from panda3d.core import TransparencyAttrib, AntialiasAttrib
 from panda3d.core import TextNode, PandaNode
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
+from direct.gui.DirectButton import DirectButton
 
 from ..core.scene_manager import Scene
 from ..systems import (
@@ -163,6 +164,9 @@ class GameScene(Scene):
         
         # Отладочная информация
         self.show_debug = True
+        # Режим создания объектов (горячая клавиша C)
+        self.creator_mode = False
+        self._bind_scene_inputs_done = False
         
         logger.info("Игровая сцена Panda3D создана")
     
@@ -174,16 +178,13 @@ class GameScene(Scene):
             # Создание корневых узлов
             self._create_scene_nodes()
             
-            # Создаем изометрическую камеру
-            if hasattr(self, 'scene_manager') and self.scene_manager:
-                # Используем основную камеру Panda3D
-                from panda3d.core import Camera
-                camera_node = self.scene_manager.render_node.find("**/+Camera")
-                if camera_node.isEmpty():
-                    # Если камера не найдена, создаем новую
-                    camera = Camera('game_camera')
-                    camera_node = self.scene_manager.render_node.attachNewNode(camera)
+            # Создаем изометрическую камеру (используем base.camera)
+            try:
+                import builtins
+                camera_node = builtins.base.camera
                 self.camera = IsometricCamera(camera_node)
+            except Exception as e:
+                logger.warning(f"Не удалось получить основную камеру: {e}")
             
             # Инициализируем игровые системы
             self._initialize_game_systems()
@@ -199,6 +200,9 @@ class GameScene(Scene):
             
             # Создание UI элементов
             self._create_ui_elements()
+
+            # Привязка инпутов сцены
+            self._bind_inputs()
             
             logger.info("Игровая сцена Panda3D успешно инициализирована")
             return True
@@ -213,14 +217,23 @@ class GameScene(Scene):
         if self.scene_root:
             self.entities_root = self.scene_root.attachNewNode("entities")
             self.particles_root = self.scene_root.attachNewNode("particles")
-            self.ui_root = self.scene_root.attachNewNode("ui") # Создаем корневой узел UI
+            # UI должен быть в 2D-иерархии
+            try:
+                import builtins
+                self.ui_root = builtins.base.aspect2d.attachNewNode("ui")
+            except Exception:
+                self.ui_root = self.scene_root.attachNewNode("ui")
         else:
             # Fallback если корневые узлы не созданы
             if hasattr(self, 'scene_manager') and self.scene_manager:
                 self.scene_root = self.scene_manager.render_node.attachNewNode("game_scene")
                 self.entities_root = self.scene_root.attachNewNode("entities")
                 self.particles_root = self.scene_root.attachNewNode("particles")
-                self.ui_root = self.scene_root.attachNewNode("ui") # Создаем корневой узел UI
+                try:
+                    import builtins
+                    self.ui_root = builtins.base.aspect2d.attachNewNode("ui")
+                except Exception:
+                    self.ui_root = self.scene_root.attachNewNode("ui")
     
     def _initialize_game_systems(self):
         """Инициализация игровых систем"""
@@ -327,7 +340,7 @@ class GameScene(Scene):
             player['node'] = self._create_entity_node(player)
         
         # Применяем бонусы от генома к характеристикам
-        if 'genome' in player:
+        if 'genome' in player and hasattr(player['genome'], 'get_stat_boosts'):
             stat_boosts = player['genome'].get_stat_boosts()
             for stat, boost in stat_boosts.items():
                 if stat in player['stats']:
@@ -817,10 +830,10 @@ class GameScene(Scene):
         
         # Современный неоновый заголовок
         self.game_title_text = OnscreenText(
-            text="🎮 GAME SESSION",
+            text="GAME SESSION",
             pos=(0, 0.9),
             scale=0.06,
-            fg=(0, 255, 255, 1),  # Неоновый голубой
+            fg=(0.0, 1.0, 1.0, 1.0),  # Неоновый голубой (0..1)
             align=TextNode.ACenter,
             mayChange=False,
             parent=parent_node,
@@ -830,10 +843,10 @@ class GameScene(Scene):
         
         # Полоска здоровья
         self.health_bar_text = OnscreenText(
-            text="❤️ HP: 100/100",
+            text="HP: 100/100",
             pos=(-1.3, 0.7),
             scale=0.045,
-            fg=(255, 100, 100, 1),  # Неоновый красный
+            fg=(1.0, 0.392, 0.392, 1.0),  # Неоновый красный (0..1)
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -843,10 +856,10 @@ class GameScene(Scene):
         
         # Полоска маны
         self.mana_bar_text = OnscreenText(
-            text="🔮 MP: 100/100",
+            text="MP: 100/100",
             pos=(-1.3, 0.6),
             scale=0.045,
-            fg=(100, 100, 255, 1),  # Неоновый синий
+            fg=(0.392, 0.392, 1.0, 1.0),  # Неоновый синий (0..1)
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -856,10 +869,10 @@ class GameScene(Scene):
         
         # Информация об AI
         self.ai_info_text = OnscreenText(
-            text="🤖 AI: Initializing...",
+            text="AI: Initializing...",
             pos=(-1.3, 0.5),
             scale=0.035,
-            fg=(0, 255, 255, 1),  # Неоновый голубой
+            fg=(0.0, 1.0, 1.0, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -869,10 +882,10 @@ class GameScene(Scene):
         
         # Информация о скиллах
         self.skills_info_text = OnscreenText(
-            text="⚡ Skills: None",
+            text="Skills: None",
             pos=(-1.3, 0.4),
             scale=0.035,
-            fg=(255, 100, 255, 1),  # Неоновый розовый
+            fg=(1.0, 0.392, 1.0, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -882,10 +895,10 @@ class GameScene(Scene):
         
         # Информация о предметах
         self.items_info_text = OnscreenText(
-            text="🎒 Items: None",
+            text="Items: None",
             pos=(-1.3, 0.3),
             scale=0.035,
-            fg=(255, 255, 100, 1),  # Неоновый желтый
+            fg=(1.0, 1.0, 0.392, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -895,10 +908,10 @@ class GameScene(Scene):
         
         # Информация об эффектах
         self.effects_info_text = OnscreenText(
-            text="✨ Effects: None",
+            text="Effects: None",
             pos=(-1.3, 0.2),
             scale=0.035,
-            fg=(100, 255, 100, 1),  # Неоновый зеленый
+            fg=(0.392, 1.0, 0.392, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -908,10 +921,10 @@ class GameScene(Scene):
         
         # Информация о геноме
         self.genome_info_text = OnscreenText(
-            text="🧬 Genome: Loading...",
+            text="Genome: Loading...",
             pos=(-1.3, 0.1),
             scale=0.035,
-            fg=(255, 100, 255, 1),  # Неоновый фиолетовый
+            fg=(1.0, 0.392, 1.0, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -921,10 +934,10 @@ class GameScene(Scene):
         
         # Полоска эмоций
         self.emotion_bar_text = OnscreenText(
-            text="😊 Emotions: Neutral",
+            text="Emotions: Neutral",
             pos=(-1.3, 0.0),
             scale=0.035,
-            fg=(255, 150, 100, 1),  # Неоновый оранжевый
+            fg=(1.0, 0.588, 0.392, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -934,10 +947,10 @@ class GameScene(Scene):
         
         # Отладочная информация
         self.debug_text = OnscreenText(
-            text="🐛 Debug: Enabled",
+            text="Debug: Enabled",
             pos=(-1.3, -0.1),
             scale=0.035,
-            fg=(255, 150, 50, 1),  # Неоновый оранжевый
+            fg=(1.0, 0.588, 0.196, 1.0),
             align=TextNode.ALeft,
             mayChange=True,
             parent=parent_node,
@@ -976,18 +989,20 @@ class GameScene(Scene):
         """Применяет эмоцию к игроку"""
         player = next((e for e in self.entities if e['type'] == 'player'), None)
         if player and 'emotion_system' in player:
-            from ..systems import EmotionType
-            
-            # Преобразуем строку в EmotionType
-            emotion_enum = EmotionType(emotion_type)
-            
-            # Применяем эмоцию
-            player['emotion_system'].add_emotion(
-                emotion_enum,
-                intensity=0.8,  # Высокая интенсивность
-                duration=30.0,  # 30 секунд
-                source="player_input"
-            )
+            try:
+                from ..systems import EmotionType, EmotionIntensity
+                if hasattr(player['emotion_system'], 'add_emotion'):
+                    emotion_enum = EmotionType(emotion_type)
+                    player['emotion_system'].add_emotion(
+                        player['id'],
+                        emotion_enum,
+                        EmotionIntensity.HIGH,
+                        0.8,
+                        30.0,
+                        source="player_input"
+                    )
+            except Exception:
+                pass
             
             logger.info(f"Игрок применил эмоцию: {emotion_type}")
     
@@ -1003,8 +1018,8 @@ class GameScene(Scene):
         # Обновление игровых систем
         self._update_game_systems(delta_time)
         
-        # Обновление системы эмоций
-        emotion_manager.update_all(delta_time)
+        # Безопасная заглушка для системы эмоций (если не инициализирована)
+        # Реальная система эмоций должна обновляться через менеджер систем
         
         # Обновление сущностей
         self._update_entities(delta_time)
@@ -1056,6 +1071,31 @@ class GameScene(Scene):
             # Обновляем позицию Panda3D узла
             if entity.get('node'):
                 entity['node'].setPos(entity['x'], entity['y'], entity['z'])
+
+        # Простейший спавн объектов в режиме создателя (клавиша C переключает, клики ЛКМ)
+        if self.creator_mode:
+            try:
+                import builtins
+                if builtins.base.mouseWatcherNode.hasMouse() and builtins.base.mouseWatcherNode.isButtonDown('mouse1'):
+                    mpos = builtins.base.mouseWatcherNode.getMouse()
+                    # Проецируем экранные координаты в мир грубо
+                    world_x = mpos.getX() * 10
+                    world_y = mpos.getY() * 10
+                    obj = {
+                        'id': f'obj_{len(self.entities)}',
+                        'type': 'npc',
+                        'x': world_x,
+                        'y': world_y,
+                        'z': 0,
+                        'width': 1.0,
+                        'height': 1.0,
+                        'depth': 1.0,
+                        'color': (0.8, 0.8, 0.2, 1)
+                    }
+                    obj['node'] = self._create_entity_node(obj)
+                    self.entities.append(obj)
+            except Exception:
+                pass
     
     def _update_player_ai(self, player: dict, delta_time: float):
         """Обновление игрока через AI с использованием скиллов и предметов"""
@@ -1240,14 +1280,14 @@ class GameScene(Scene):
         # Обновление полоски здоровья
         player = next((e for e in self.entities if e['type'] == 'player'), None)
         if player and self.health_bar_text:
-            health = player.get('health', 100)
-            max_health = player.get('max_health', 100)
+            health = int(player.get('health', 100))
+            max_health = int(player.get('max_health', 100))
             self.health_bar_text.setText(f"HP: {health}/{max_health}")
         
         # Обновление полоски маны
         if player and self.mana_bar_text:
-            mana = player.get('mana', 100)
-            max_mana = player.get('max_mana', 100)
+            mana = int(player.get('mana', 100))
+            max_mana = int(player.get('max_mana', 100))
             self.mana_bar_text.setText(f"MP: {mana}/{max_mana}")
         
         # Обновление информации об AI
@@ -1293,7 +1333,7 @@ class GameScene(Scene):
         # Обновление информации об эффектах
         if player and self.effects_info_text:
             effect_stats = player.get('effect_statistics')
-            if effect_stats:
+            if effect_stats and hasattr(effect_stats, 'effect_triggers'):
                 total_triggers = sum(effect_stats.effect_triggers.values())
                 self.effects_info_text.setText(f"Effects: {total_triggers} triggers")
             else:
@@ -1302,7 +1342,7 @@ class GameScene(Scene):
         # Обновление информации о геноме
         if player and self.genome_info_text:
             genome = player.get('genome')
-            if genome:
+            if genome and hasattr(genome, 'generation') and hasattr(genome, 'mutation_count') and hasattr(genome, 'get_evolution_potential'):
                 generation = genome.generation
                 mutations = genome.mutation_count
                 evolution_potential = genome.get_evolution_potential()
@@ -1313,10 +1353,10 @@ class GameScene(Scene):
         # Обновление информации об эмоциях
         if player and self.emotion_bar_text:
             emotion_system = player.get('emotion_system')
-            if emotion_system:
+            if emotion_system and hasattr(emotion_system, 'get_emotion_summary'):
                 emotion_summary = emotion_system.get_emotion_summary()
-                dominant_emotion = emotion_summary['dominant_emotion']
-                intensity = emotion_summary['dominant_intensity']
+                dominant_emotion = emotion_summary.get('dominant_emotion', 'neutral')
+                intensity = emotion_summary.get('dominant_intensity', 0.0)
                 
                 # Эмодзи для эмоций
                 emotion_emojis = {
@@ -1353,6 +1393,20 @@ class GameScene(Scene):
         if player:
             # Плавно следуем за игроком
             self.camera.follow_entity(player, smooth=0.05)
+
+    def _bind_inputs(self) -> None:
+        """Привязка горячих клавиш для игровой сцены"""
+        if self._bind_scene_inputs_done:
+            return
+        try:
+            import builtins
+            def _toggle_creator():
+                self.creator_mode = not self.creator_mode
+                logger.info(f"Creator mode: {self.creator_mode}")
+            builtins.base.accept('c', _toggle_creator)
+        except Exception as e:
+            logger.debug(f"Не удалось привязать инпуты сцены: {e}")
+        self._bind_scene_inputs_done = True
         
     def render(self, render_node):
         """Отрисовка игровой сцены"""

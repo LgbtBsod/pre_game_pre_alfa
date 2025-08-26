@@ -36,7 +36,7 @@ class GameEngine(ShowBase):
         # Инициализация Panda3D ShowBase
         super().__init__()
         
-        self.config = config
+        self.settings = config
         self.running = False
         self.paused = False
         
@@ -79,6 +79,9 @@ class GameEngine(ShowBase):
             if not self._initialize_scenes():
                 return False
             
+            # Привязываем глобальные клавиши управления сценами
+            self._bind_global_inputs()
+            
             # Настройка задач
             self._setup_tasks()
             
@@ -94,7 +97,7 @@ class GameEngine(ShowBase):
         """Инициализация Panda3D"""
         try:
             # Настройка окна (окно уже создано ShowBase)
-            display_config = self.config.get('display', {})
+            display_config = self.settings.get('display', {})
             width = display_config.get('window_width', 1600)
             height = display_config.get('window_height', 900)
             fullscreen = display_config.get('fullscreen', False)
@@ -237,6 +240,27 @@ class GameEngine(ShowBase):
             self.taskMgr.add(self._ui_update_task, "ui_update_task")
         except Exception as e:
             logger.warning(f"Не удалось добавить отдельную задачу UI: {e}")
+
+    def _bind_global_inputs(self) -> None:
+        """Глобальные горячие клавиши для переключения сцен (удобно для отладки)"""
+        try:
+            def _to(scene_name: str):
+                if self.scene_manager:
+                    self.scene_manager.switch_to_scene(scene_name, "fade")
+            # Пауза/меню/игра
+            self.accept('escape', _to, ["pause"])  # ESC -> пауза
+            self.accept('p', _to, ["pause"])      # P -> пауза
+            self.accept('m', _to, ["menu"])       # M -> меню
+            self.accept('g', _to, ["game"])       # G -> игра
+            # Восстановление фокуса на окно для считывания клавиш
+            try:
+                if self.win:
+                    props = self.win.getProperties()
+                    self.win.requestProperties(props)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.debug(f"Не удалось привязать горячие клавиши: {e}")
         
         logger.debug("Задачи Panda3D настроены")
     
@@ -305,7 +329,7 @@ class GameEngine(ShowBase):
                     pass
                 # Простая защита бюджета кадра на основе max_fps
                 try:
-                    target_fps = self.config.get('display', {}).get('fps', 60)
+                    target_fps = self.settings.get('display', {}).get('fps', 60)
                     min_frame_time = 1.0 / max(1, target_fps)
                     elapsed = time.time() - current_time
                     if elapsed < min_frame_time:
@@ -389,33 +413,7 @@ class GameEngine(ShowBase):
             
             # Завершение Panda3D
             try:
-                # Сохраняем конфигурацию перед уничтожением
-                if hasattr(self, 'config') and isinstance(self.config, dict):
-                    # Создаем временный ConfigVariableManager для корректного завершения
-                    from panda3d.core import ConfigVariableManager
-                    temp_config = ConfigVariableManager()
-                    # Копируем настройки
-                    for key, value in self.config.items():
-                        if isinstance(value, bool):
-                            temp_config.SetBool(key, value)
-                        elif isinstance(value, int):
-                            temp_config.SetInt(key, value)
-                        elif isinstance(value, float):
-                            temp_config.SetDouble(key, value)
-                        elif isinstance(value, str):
-                            temp_config.SetString(key, value)
-                    
-                    # Временно заменяем конфигурацию
-                    original_config = getattr(self, '_original_config', None)
-                    if original_config is None:
-                        self._original_config = self.config
-                    self.config = temp_config
-                
                 self.destroy()
-                
-                # Восстанавливаем оригинальную конфигурацию
-                if hasattr(self, '_original_config'):
-                    self.config = self._original_config
                     
             except Exception as e:
                 logger.error(f"Ошибка при завершении Panda3D: {e}")
@@ -488,7 +486,11 @@ class GameEngine(ShowBase):
     def emit_event(self, event_type: str, data: Any, source: str = "game_engine"):
         """Эмиссия события через новую систему событий"""
         if self.event_system:
-            self.event_system.emit_event(event_type, data, source)
+            # Поддерживаем оба варианта API (emit_event/emit)
+            if hasattr(self.event_system, 'emit_event'):
+                self.event_system.emit_event(event_type, data, source)
+            else:
+                self.event_system.emit(event_type, data, source)
         else:
             logger.warning("Система событий не инициализирована")
     

@@ -91,6 +91,11 @@ class EventSystem(IEventSystem):
             logger.error(f"Ошибка эмиссии события {event_type}: {e}")
             return False
     
+    # Совместимость: alias для вызовов emit_event(..)
+    def emit_event(self, event_type: str, event_data: Any, source: str = "unknown", 
+                   priority: EventPriority = EventPriority.NORMAL) -> bool:
+        return self.emit(event_type, event_data, source, priority)
+
     def subscribe(self, event_type: str, callback: Callable, 
                   subscriber_id: str = "unknown", 
                   priority: EventPriority = EventPriority.NORMAL) -> bool:
@@ -113,20 +118,6 @@ class EventSystem(IEventSystem):
             
         except Exception as e:
             logger.error(f"Ошибка подписки на событие {event_type}: {e}")
-            return False
-            
-            self.subscriptions[event_type].append(subscription)
-            
-            # Сортируем по приоритету (высокий приоритет первым)
-            self.subscriptions[event_type].sort(
-                key=lambda x: x.priority.value, reverse=True
-            )
-            
-            logger.debug(f"Подписка на {event_type} от {subscriber_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка подписки на {event_type}: {e}")
             return False
     
     def unsubscribe(self, event_type: str, subscriber_id: str) -> bool:

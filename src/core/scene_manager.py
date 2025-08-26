@@ -105,7 +105,18 @@ class SceneManager(ISceneManager):
             
             # Создаем корневые узлы
             self.scenes_root = self.render_node.attachNewNode("scenes_root")
-            self.ui_root = self.render_node.attachNewNode("ui_root")
+            try:
+                # UI должен располагаться в 2D-иерархии (aspect2d)
+                import builtins
+                if hasattr(builtins, 'base') and hasattr(builtins.base, 'aspect2d'):
+                    self.ui_root = builtins.base.aspect2d.attachNewNode("ui_root")
+                else:
+                    # fallback: создаем под render2d, если доступен
+                    from direct.showbase import ShowBase
+                    self.ui_root = builtins.base.render2d.attachNewNode("ui_root") if hasattr(builtins.base, 'render2d') else self.render_node.attachNewNode("ui_root")
+            except Exception:
+                # Если нет доступа к base, создаем временно под render
+                self.ui_root = self.render_node.attachNewNode("ui_root")
             
             self._system_state = SystemState.READY
             logger.info("Менеджер сцен успешно инициализирован")
@@ -172,9 +183,15 @@ class SceneManager(ISceneManager):
             logger.warning("Попытка сменить сцену до инициализации SceneManager")
             return False
         
-        # Скрываем предыдущую активную сцену
+        # Скрываем предыдущую активную сцену и скрываем её UI
         if self.active_scene:
-            self.active_scene.set_visible(False)
+            try:
+                self.active_scene.set_visible(False)
+                # Прячем UI предыдущей сцены, чтобы исключить наложение
+                if hasattr(self.active_scene, 'ui_root') and self.active_scene.ui_root:
+                    self.active_scene.ui_root.hide()
+            except Exception:
+                pass
             self.previous_scene = self.active_scene
         
         # Показываем новую активную сцену
@@ -205,7 +222,12 @@ class SceneManager(ISceneManager):
         
         # Скрываем предыдущую активную сцену
         if self.active_scene:
-            self.active_scene.set_visible(False)
+            try:
+                self.active_scene.set_visible(False)
+                if hasattr(self.active_scene, 'ui_root') and self.active_scene.ui_root:
+                    self.active_scene.ui_root.hide()
+            except Exception:
+                pass
             self.previous_scene = self.active_scene
         
         # Показываем новую активную сцену

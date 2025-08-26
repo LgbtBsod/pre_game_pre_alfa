@@ -814,6 +814,42 @@ class EffectSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка получения информации об эффекте {effect_id}: {e}")
             return None
+
+    # --- Расширение API для интеграции со сценой ---
+    def trigger_effect(self, trigger_type: str, source_entity: Any, target_entity: Any = None, context: Dict[str, Any] = None) -> bool:
+        """Примитивная обработка триггера эффекта. Заглушка для интеграции со сценой."""
+        try:
+            current_time = time.time()
+            self.effect_history.append({
+                'timestamp': current_time,
+                'action': 'trigger',
+                'trigger_type': trigger_type,
+                'source': getattr(source_entity, 'id', getattr(source_entity, 'name', 'unknown')) if source_entity is not None else None,
+                'target': getattr(target_entity, 'id', getattr(target_entity, 'name', None)) if target_entity is not None else None,
+                'context': context or {}
+            })
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка обработки триггера эффекта {trigger_type}: {e}")
+            return False
+
+    def register_item_effects(self, item: Any) -> bool:
+        """Регистрация эффектов, приходящих из предмета. Заглушка для совместимости со сценой."""
+        try:
+            effects = None
+            if hasattr(item, 'effects'):
+                effects = getattr(item, 'effects')
+            elif isinstance(item, dict):
+                effects = item.get('effects')
+            if not effects:
+                return True
+            for eff in effects:
+                if isinstance(eff, Effect) and eff.effect_id not in self.registered_effects:
+                    self.registered_effects[eff.effect_id] = eff
+            return True
+        except Exception as e:
+            logger.warning(f"Не удалось зарегистрировать эффекты предмета: {e}")
+            return False
     
     def register_custom_effect(self, effect: Effect) -> bool:
         """Регистрация пользовательского эффекта"""
