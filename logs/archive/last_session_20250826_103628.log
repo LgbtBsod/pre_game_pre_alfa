@@ -1,0 +1,9 @@
+2025-08-26 10:36:16 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-26 10:36:16 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-26 10:36:21 - core.game_engine - INFO - Игровой движок Panda3D инициализирован
+2025-08-26 10:36:21 - core.game_engine - INFO - Начало инициализации игрового движка Panda3D...
+2025-08-26 10:36:21 - core.game_engine - INFO - Panda3D успешно инициализирован
+2025-08-26 10:36:21 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-26 10:36:21 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-26 10:36:21 - core.game_engine - ERROR - Ошибка инициализации менеджеров: Can't instantiate abstract class EventSystem without an implementation for abstract method 'emit_event'
+2025-08-26 10:36:21 - core.game_engine - ERROR - Не удалось инициализировать игровой движок
