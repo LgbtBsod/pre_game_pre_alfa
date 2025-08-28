@@ -12,7 +12,12 @@ from dataclasses import dataclass, field
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     StatType, StatCategory, DamageType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
+    STAT_CALCULATION_FORMULAS
+)
+from ...core.stats_utils import (
+    STAT_GROUPS, ENTITY_STAT_TEMPLATES, get_entity_template,
+    apply_stat_template, validate_stats, merge_stats, scale_stats_by_level
 )
 
 logger = logging.getLogger(__name__)
@@ -39,7 +44,7 @@ class EntityStats:
     experience: int = 0
     experience_to_next: int = 100
     
-    # Основные характеристики
+    # Основные характеристики (расчетные из атрибутов)
     health: int = BASE_STATS["health"]
     max_health: int = BASE_STATS["health"]
     mana: int = BASE_STATS["mana"]
@@ -51,24 +56,42 @@ class EntityStats:
     attack: int = BASE_STATS["attack"]
     defense: int = BASE_STATS["defense"]
     speed: float = BASE_STATS["speed"]
+    attack_speed: float = 1.0  # Скорость атаки
+    range: float = BASE_STATS["range"]
+    
+    # Шансовые характеристики
     critical_chance: float = PROBABILITY_CONSTANTS["base_critical_chance"]
     critical_multiplier: float = 2.0
     dodge_chance: float = PROBABILITY_CONSTANTS["base_dodge_chance"]
     block_chance: float = PROBABILITY_CONSTANTS["base_block_chance"]
+    parry_chance: float = BASE_STATS["parry_chance"]
+    evasion_chance: float = BASE_STATS["evasion_chance"]
+    resist_chance: float = BASE_STATS["resist_chance"]
     
-    # Атрибуты
+    # Атрибуты (основные характеристики)
     strength: int = BASE_STATS["strength"]
     agility: int = BASE_STATS["agility"]
     intelligence: int = BASE_STATS["intelligence"]
     constitution: int = BASE_STATS["constitution"]
     wisdom: int = BASE_STATS["wisdom"]
     charisma: int = BASE_STATS["charisma"]
+    luck: float = PROBABILITY_CONSTANTS["base_luck"]
+    
+    # Механика стойкости
+    toughness: int = BASE_STATS["toughness"]
+    toughness_resistance: float = BASE_STATS["toughness_resistance"]
+    stun_resistance: float = BASE_STATS["stun_resistance"]
+    break_efficiency: float = BASE_STATS["break_efficiency"]
+    
+    # Регенерация (расчетная из атрибутов)
+    health_regen: float = 1.0
+    mana_regen: float = 1.0
+    stamina_regen: float = 1.0
     
     # Сопротивления
     resistances: Dict[DamageType, float] = field(default_factory=dict)
     
     # Дополнительные характеристики
-    luck: float = PROBABILITY_CONSTANTS["base_luck"]
     reputation: int = 0
     fame: int = 0
 
@@ -422,6 +445,27 @@ class EntityStatsSystem(ISystem):
                 for key, value in initial_stats.items():
                     if hasattr(stats, key):
                         setattr(stats, key, value)
+            
+            # Рассчитываем характеристики из атрибутов
+            attributes = {
+                "strength": stats.strength,
+                "agility": stats.agility,
+                "intelligence": stats.intelligence,
+                "constitution": stats.constitution,
+                "wisdom": stats.wisdom,
+                "charisma": stats.charisma,
+                "luck": stats.luck
+            }
+            
+            calculated_stats = calculate_stats_from_attributes(BASE_STATS, attributes)
+            
+            # Применяем рассчитанные характеристики
+            stats.health = calculated_stats["health"]
+            stats.max_health = calculated_stats["health"]
+            stats.mana = calculated_stats["mana"]
+            stats.max_mana = calculated_stats["mana"]
+            stats.stamina = calculated_stats["stamina"]
+            stats.max_stamina = calculated_stats["stamina"]
             
             # Инициализируем сопротивления
             stats.resistances = {
@@ -857,4 +901,55 @@ class EntityStatsSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка расчета урона: {e}")
             return base_damage
+    
+    def recalculate_stats_from_attributes(self, entity_id: str) -> bool:
+        """Пересчет характеристик из атрибутов"""
+        try:
+            if entity_id not in self.entity_stats:
+                return False
+            
+            stats = self.entity_stats[entity_id]
+            
+            # Собираем текущие атрибуты
+            attributes = {
+                "strength": stats.strength,
+                "agility": stats.agility,
+                "intelligence": stats.intelligence,
+                "constitution": stats.constitution,
+                "wisdom": stats.wisdom,
+                "charisma": stats.charisma,
+                "luck": stats.luck
+            }
+            
+            # Рассчитываем новые характеристики
+            calculated_stats = calculate_stats_from_attributes(BASE_STATS, attributes)
+            
+            # Применяем рассчитанные характеристики
+            old_health = stats.health
+            old_mana = stats.mana
+            old_stamina = stats.stamina
+            
+            stats.max_health = calculated_stats["health"]
+            stats.max_mana = calculated_stats["mana"]
+            stats.max_stamina = calculated_stats["stamina"]
+            
+            # Сохраняем пропорции текущих значений
+            if old_health > 0:
+                health_ratio = old_health / stats.max_health
+                stats.health = int(stats.max_health * health_ratio)
+            
+            if old_mana > 0:
+                mana_ratio = old_mana / stats.max_mana
+                stats.mana = int(stats.max_mana * mana_ratio)
+            
+            if old_stamina > 0:
+                stamina_ratio = old_stamina / stats.max_stamina
+                stats.stamina = int(stats.max_stamina * stamina_ratio)
+            
+            logger.debug(f"Пересчитаны характеристики для сущности {entity_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка пересчета характеристик для {entity_id}: {e}")
+            return False
 

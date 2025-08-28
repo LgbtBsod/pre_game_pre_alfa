@@ -121,52 +121,55 @@ class GameEngine(ShowBase):
             return False
     
     def _initialize_managers(self) -> bool:
-        """Инициализация менеджеров систем"""
+        """Инициализация менеджеров систем в правильном порядке"""
         try:
-            # Инициализация менеджера конфигурации
+            # 1. Менеджер конфигурации (первый)
             self.config_manager = ConfigManager()
             if not self.config_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер конфигурации")
                 return False
             
-            # Инициализация системы событий (новая архитектура)
+            # 2. Система событий (второй)
             self.event_system = EventSystem()
             if not self.event_system.initialize():
                 logger.error("Не удалось инициализировать систему событий")
                 return False
             
-            # Инициализация фабрики систем (новая архитектура)
-            self.system_factory = SystemFactory(self.config_manager, self.event_system)
-            
-            # Инициализация менеджера систем (новая архитектура)
-            self.system_manager = SystemManager(self.event_system)
-            
-            # Инициализируем фабрику систем
-            if not self.system_factory.initialize_all_systems():
-                logger.error("Не удалось инициализировать системы через фабрику")
-                return False
-            
-            # Добавляем существующие системы в новый менеджер
-            self._add_existing_systems_to_manager()
-            
-            if not self.system_manager.initialize():
-                logger.error("Не удалось инициализировать менеджер систем")
-                return False
-            
-            # Инициализация существующих менеджеров (для обратной совместимости)
+            # 3. Менеджер ресурсов (третий)
             self.resource_manager = ResourceManager()
             if not self.resource_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер ресурсов")
                 return False
             
+            # 4. Менеджер производительности (четвертый)
             self.performance_manager = PerformanceManager()
             if not self.performance_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер производительности")
                 return False
             
+            # 5. Менеджер сцен (пятый)
             self.scene_manager = SceneManager(self.render, self.resource_manager)
             if not self.scene_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер сцен")
+                return False
+            
+            # 6. Фабрика систем (шестой)
+            self.system_factory = SystemFactory(self.config_manager, self.event_system, None)
+            
+            # 7. Менеджер систем (седьмой)
+            self.system_manager = SystemManager(self.event_system)
+            
+            # 8. Инициализация всех систем через фабрику
+            if not self.system_factory.initialize_all_systems():
+                logger.error("Не удалось инициализировать системы через фабрику")
+                return False
+            
+            # 9. Добавляем существующие системы в менеджер
+            self._add_existing_systems_to_manager()
+            
+            # 10. Инициализация менеджера систем (последний)
+            if not self.system_manager.initialize():
+                logger.error("Не удалось инициализировать менеджер систем")
                 return False
             
             logger.info("Все менеджеры успешно инициализированы")
@@ -385,33 +388,37 @@ class GameEngine(ShowBase):
         # Здесь можно добавить логику сохранения состояния, уведомления UI и т.п.
     
     def _cleanup(self):
-        """Очистка ресурсов"""
+        """Очистка ресурсов в правильном порядке"""
         logger.info("Очистка ресурсов игрового движка...")
         
         try:
-            # Очистка нового менеджера систем
+            # Очистка в обратном порядке инициализации
+            
+            # 1. Очистка менеджера систем
             if self.system_manager:
                 self.system_manager.cleanup()
             
-            # Очистка фабрики систем
+            # 2. Очистка фабрики систем
             if self.system_factory:
                 self.system_factory.cleanup()
             
-            # Очистка системы событий
+            # 3. Очистка системы событий
             if self.event_system:
                 self.event_system.cleanup()
             
-            # Очистка существующих менеджеров (для обратной совместимости)
+            # 4. Очистка менеджера сцен
             if self.scene_manager:
                 self.scene_manager.cleanup()
             
+            # 5. Очистка менеджера ресурсов
             if self.resource_manager:
                 self.resource_manager.cleanup()
             
+            # 6. Очистка менеджера производительности
             if self.performance_manager:
                 self.performance_manager.cleanup()
             
-            # Завершение Panda3D
+            # 7. Завершение Panda3D
             try:
                 self.destroy()
                     

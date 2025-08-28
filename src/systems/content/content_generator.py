@@ -12,11 +12,12 @@ from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
-    ItemType, ItemRarity, ItemCategory, WeaponType, ArmorType, AccessoryType, ConsumableType,
+    ItemType, ItemRarity, WeaponType, ArmorType, AccessoryType, ConsumableType,
     DamageType, StatType, SkillType, SkillCategory, GeneType, GeneRarity, EffectCategory,
     EnemyType, BossType, ContentType, ContentRarity,
     BASE_STATS, ITEM_STATS, TOUGHNESS_MECHANICS, ENEMY_WEAKNESSES,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
+    SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS
 )
 
 logger = logging.getLogger(__name__)
@@ -99,6 +100,9 @@ class ContentGenerator(ISystem):
         self.gene_templates = self._load_gene_templates()
         self.skill_templates = self._load_skill_templates()
         self.effect_templates = self._load_effect_templates()
+        
+        # Шаблоны предметов (перенесены из constants.py)
+        self.item_templates = self._load_item_templates()
         
         # Расширенные шаблоны для уникальной генерации
         self.skill_generation_templates = self._load_skill_generation_templates()
@@ -295,6 +299,9 @@ class ContentGenerator(ISystem):
             self.gene_templates = self._load_gene_templates()
             self.skill_templates = self._load_skill_templates()
             self.effect_templates = self._load_effect_templates()
+            
+            # Загружаем шаблоны предметов
+            self.item_templates = self._load_item_templates()
             
             # Загружаем расширенные шаблоны
             self.skill_generation_templates = self._load_skill_generation_templates()
@@ -612,6 +619,153 @@ class ContentGenerator(ISystem):
             logger.error(f"Ошибка загрузки шаблонов уникальных эффектов: {e}")
             return {}
     
+    def _load_item_templates(self) -> Dict[str, Any]:
+        """Загрузка шаблонов предметов (перенесено из constants.py)"""
+        try:
+            templates = {
+                "weapon": {
+                    "sword": {
+                        "name": "Меч",
+                        "base_multipliers": {
+                            "attack": 1.2,
+                            "speed": 1.0,
+                            "critical_chance": 1.1,
+                            "toughness_damage": 0.8,
+                            "break_efficiency": 1.0,
+                        },
+                        "preferred_damage_types": [DamageType.PHYSICAL, DamageType.PIERCING],
+                        "skill_requirements": ["strength", "agility"],
+                    },
+                    "axe": {
+                        "name": "Топор",
+                        "base_multipliers": {
+                            "attack": 1.5,
+                            "speed": 0.8,
+                            "critical_multiplier": 1.3,
+                            "toughness_damage": 1.2,
+                            "break_efficiency": 1.5,
+                        },
+                        "preferred_damage_types": [DamageType.PHYSICAL],
+                        "skill_requirements": ["strength"],
+                    },
+                    "bow": {
+                        "name": "Лук",
+                        "base_multipliers": {
+                            "attack": 1.0,
+                            "speed": 1.5,
+                            "range": 3.0,
+                            "critical_chance": 1.3,
+                            "toughness_damage": 0.6,
+                            "break_efficiency": 0.8,
+                        },
+                        "preferred_damage_types": [DamageType.PHYSICAL, DamageType.PIERCING],
+                        "skill_requirements": ["agility", "dexterity"],
+                    },
+                    "staff": {
+                        "name": "Посох",
+                        "base_multipliers": {
+                            "attack": 0.8,
+                            "mana": 1.5,
+                            "intelligence": 1.2,
+                            "magic_resistance": 1.1,
+                            "toughness_damage": 0.5,
+                            "break_efficiency": 0.7,
+                        },
+                        "preferred_damage_types": [DamageType.MAGIC, DamageType.ARCANE],
+                        "skill_requirements": ["intelligence", "wisdom"],
+                    },
+                },
+                "armor": {
+                    "plate": {
+                        "name": "Пластинчатая броня",
+                        "base_multipliers": {
+                            "defense": 2.0,
+                            "health": 1.5,
+                            "weight": 2.0,
+                            "movement_penalty": 1.5,
+                            "toughness_resistance": 1.8,
+                            "stun_resistance": 1.5,
+                        },
+                        "preferred_resistances": [DamageType.PHYSICAL, DamageType.PIERCING],
+                        "skill_requirements": ["strength", "constitution"],
+                    },
+                    "leather": {
+                        "name": "Кожаная броня",
+                        "base_multipliers": {
+                            "defense": 0.8,
+                            "speed": 1.3,
+                            "agility": 1.2,
+                            "weight": 0.6,
+                            "movement_penalty": 0.8,
+                            "toughness_resistance": 0.7,
+                            "stun_resistance": 0.9,
+                        },
+                        "preferred_resistances": [DamageType.PHYSICAL],
+                        "skill_requirements": ["agility", "dexterity"],
+                    },
+                    "cloth": {
+                        "name": "Тканевая броня",
+                        "base_multipliers": {
+                            "defense": 0.5,
+                            "mana": 1.8,
+                            "intelligence": 1.3,
+                            "magic_resistance": 1.5,
+                            "weight": 0.3,
+                            "movement_penalty": 0.5,
+                            "toughness_resistance": 0.5,
+                            "stun_resistance": 0.7,
+                        },
+                        "preferred_resistances": [DamageType.MAGIC, DamageType.ARCANE],
+                        "skill_requirements": ["intelligence", "wisdom"],
+                    },
+                },
+                "accessory": {
+                    "ring": {
+                        "name": "Кольцо",
+                        "base_multipliers": {
+                            "intelligence": 1.2,
+                            "strength": 1.2,
+                            "agility": 1.2,
+                            "constitution": 1.2,
+                            "wisdom": 1.2,
+                            "charisma": 1.2,
+                            "luck": 1.3,
+                        },
+                        "socket_count": 1,
+                        "set_bonus": None,
+                    },
+                    "necklace": {
+                        "name": "Ожерелье",
+                        "base_multipliers": {
+                            "intelligence": 1.5,
+                            "wisdom": 1.3,
+                            "charisma": 1.4,
+                            "mana": 1.2,
+                        },
+                        "socket_count": 2,
+                        "set_bonus": None,
+                    },
+                    "amulet": {
+                        "name": "Амулет",
+                        "base_multipliers": {
+                            "strength": 1.5,
+                            "constitution": 1.3,
+                            "health": 1.2,
+                            "stamina": 1.2,
+                        },
+                        "socket_count": 1,
+                        "set_bonus": None,
+                    },
+                },
+            }
+            
+            logger.debug(f"Загружено {len(templates)} шаблонов предметов")
+            return templates
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки шаблонов предметов: {e}")
+            return {}
+    
     def _update_system_stats(self) -> None:
         """Обновление статистики системы"""
         try:
@@ -790,6 +944,25 @@ class ContentGenerator(ISystem):
         except Exception as e:
             logger.error(f"Ошибка генерации оружия: {e}")
             return None
+    
+    def _generate_skill_name(self, skill_type: str, level: int) -> str:
+        """Генерация уникального имени для скилла"""
+        prefixes = {
+            "physical": ["Мощный", "Быстрый", "Смертоносный", "Точный", "Разрушительный"],
+            "magical": ["Мистический", "Древний", "Запрещенный", "Священный", "Темный"],
+            "free": ["Уникальный", "Редкий", "Легендарный", "Божественный", "Загадочный"]
+        }
+        
+        suffixes = {
+            "physical": ["Удар", "Атака", "Техника", "Прием", "Комбо"],
+            "magical": ["Заклинание", "Ритуал", "Проклятие", "Благословение", "Чары"],
+            "free": ["Дар", "Сила", "Способность", "Талант", "Мастерство"]
+        }
+        
+        prefix = self.random_generator.choice(prefixes.get(skill_type, ["Мощный"]))
+        suffix = self.random_generator.choice(suffixes.get(skill_type, ["Удар"]))
+        
+        return f"{prefix} {suffix} +{level}"
     
     def _generate_unique_name(self, base_name: str, level: int) -> str:
         """Генерация уникального имени"""
@@ -987,30 +1160,64 @@ class ContentGenerator(ISystem):
             return None
     
     def _generate_skill(self, level: int) -> Optional[ContentItem]:
-        """Генерация навыка"""
+        """Генерация навыка с использованием новых шаблонов"""
         try:
-            # Выбираем случайный шаблон
-            template_name = self.random_generator.choice(list(self.skill_templates.keys()))
-            template = self.skill_templates[template_name]
+            # Выбираем случайный тип скилла
+            skill_type = self.random_generator.choice(list(SKILL_GENERATION_TEMPLATES.keys()))
+            template = SKILL_GENERATION_TEMPLATES[skill_type]
             
             # Генерируем уникальный ID
             skill_id = f"skill_{uuid.uuid4().hex[:8]}"
             
+            # Определяем источники затрат
+            if skill_type == "physical":
+                cost_sources = ["stamina"]
+                base_cost = template["base_cost"]
+            elif skill_type == "magical":
+                # Магические скиллы могут тратить несколько ресурсов
+                cost_sources = self.random_generator.sample(template["cost_sources"], 
+                                                         self.random_generator.randint(1, len(template["cost_sources"])))
+                base_cost = template["base_cost"]
+            else:  # free
+                cost_sources = []
+                base_cost = 0
+            
+            # Рассчитываем мощность скилла на основе источников затрат
+            power_multiplier = 1.0
+            if cost_sources:
+                if len(cost_sources) == 1:
+                    power_multiplier = SKILL_POWER_MULTIPLIERS["single_cost"]
+                elif len(cost_sources) == 2:
+                    power_multiplier = SKILL_POWER_MULTIPLIERS["dual_cost"]
+                elif len(cost_sources) >= 3:
+                    power_multiplier = SKILL_POWER_MULTIPLIERS["triple_cost"]
+            else:
+                power_multiplier = SKILL_POWER_MULTIPLIERS["no_cost"]
+            
+            # Генерируем характеристики скилла
+            base_damage = int(template["base_cost"] * power_multiplier * level * 0.5)
+            damage_type = self.random_generator.choice(template["damage_types"])
+            
+            # Генерируем уникальное имя
+            skill_name = self._generate_skill_name(skill_type, level)
+            
             # Создаем предмет
             skill = ContentItem(
                 item_id=skill_id,
-                name=f"{template_name.title()} Level {level}",
-                description=f"Сгенерированный навык типа {template_name}",
+                name=skill_name,
+                description=f"Сгенерированный {skill_type} навык уровня {level}",
                 content_type=ContentType.SKILL,
                 rarity=self._generate_rarity(),
                 level_requirement=level,
                 properties={
-                    'skill_type': template['skill_type'].value,
-                    'category': template['category'].value,
-                    'base_damage': template.get('base_damage', 0),
-                    'damage_type': template.get('damage_type', DamageType.PHYSICAL).value,
-                    'requirements': template['requirements'],
-                    'scaling': template['scaling']
+                    'skill_type': skill_type,
+                    'cost_sources': cost_sources,
+                    'base_cost': base_cost,
+                    'power_multiplier': power_multiplier,
+                    'base_damage': base_damage,
+                    'damage_type': damage_type,
+                    'preferred_stats': template["preferred_stats"],
+                    'level': level
                 }
             )
             
@@ -1177,6 +1384,110 @@ class ContentGenerator(ISystem):
             return self.system_stats.copy()
         except Exception as e:
             logger.error(f"Ошибка получения статистики генерации: {e}")
+            return {}
+    
+    def apply_item_template(self, item_type: str, template_name: str, level: int = 1, rarity: str = "common") -> dict:
+        """Применение шаблона предмета к базовым характеристикам"""
+        if item_type not in self.item_templates or template_name not in self.item_templates[item_type]:
+            return ITEM_STATS[item_type].copy()
+        
+        template = self.item_templates[item_type][template_name]
+        item_stats = ITEM_STATS[item_type].copy()
+        
+        # Применяем множители из шаблона
+        for stat, multiplier in template["base_multipliers"].items():
+            if stat in item_stats:
+                if isinstance(item_stats[stat], (int, float)):
+                    item_stats[stat] = int(item_stats[stat] * multiplier * level)
+        
+        # Добавляем информацию о шаблоне
+        item_stats["template_name"] = template_name
+        item_stats["template_display_name"] = template["name"]
+        item_stats["preferred_damage_types"] = template.get("preferred_damage_types", [])
+        item_stats["preferred_resistances"] = template.get("preferred_resistances", [])
+        item_stats["skill_requirements"] = template.get("skill_requirements", [])
+        item_stats["socket_count"] = template.get("socket_count", 0)
+        item_stats["set_bonus"] = template.get("set_bonus")
+        
+        # Применяем множитель редкости
+        rarity_multipliers = {
+            "common": 1.0,
+            "uncommon": 1.2,
+            "rare": 1.5,
+            "epic": 2.0,
+            "legendary": 3.0,
+            "mythic": 4.0,
+            "divine": 5.0,
+        }
+        
+        rarity_mult = rarity_multipliers.get(rarity, 1.0)
+        for stat in ["attack", "defense", "health", "mana", "stamina"]:
+            if stat in item_stats and isinstance(item_stats[stat], (int, float)):
+                item_stats[stat] = int(item_stats[stat] * rarity_mult)
+        
+        return item_stats
+    
+    def generate_session_content(self, session_id: str, config: GenerationConfig = None) -> Dict[str, List[ContentItem]]:
+        """Генерация контента для сессии (до 100 объектов каждого типа)"""
+        try:
+            if config is None:
+                config = GenerationConfig()
+            
+            # Ограничиваем количество объектов согласно лимитам сессии
+            session_limits = SYSTEM_LIMITS["session_content_limits"]
+            
+            session_content = {}
+            
+            # Генерируем оружие
+            weapon_count = min(config.weapon_count, session_limits["weapons"])
+            session_content["weapons"] = self.generate_content("weapon", weapon_count, 1)
+            
+            # Генерируем броню
+            armor_count = min(config.armor_count, session_limits["armors"])
+            session_content["armors"] = self.generate_content("armor", armor_count, 1)
+            
+            # Генерируем аксессуары
+            accessory_count = min(config.accessory_count, session_limits["accessories"])
+            session_content["accessories"] = self.generate_content("accessory", accessory_count, 1)
+            
+            # Генерируем расходники
+            consumable_count = min(config.consumable_count, session_limits["consumables"])
+            session_content["consumables"] = self.generate_content("consumable", consumable_count, 1)
+            
+            # Генерируем гены
+            gene_count = min(config.gene_count, session_limits["genes"])
+            session_content["genes"] = self.generate_content("gene", gene_count, 1)
+            
+            # Генерируем скиллы
+            skill_count = min(config.skill_count, session_limits["skills"])
+            session_content["skills"] = self.generate_content("skill", skill_count, 1)
+            
+            # Генерируем эффекты
+            effect_count = min(config.effect_count, session_limits["effects"])
+            session_content["effects"] = self.generate_content("effect", effect_count, 1)
+            
+            # Генерируем материалы
+            material_count = min(config.material_count, session_limits["materials"])
+            session_content["materials"] = self.generate_content("material", material_count, 1)
+            
+            # Генерируем врагов
+            enemy_count = min(config.enemy_count, session_limits["enemies"])
+            session_content["enemies"] = self.generate_content("enemy", enemy_count, 1)
+            
+            # Генерируем боссов
+            boss_count = min(config.boss_count, session_limits["bosses"])
+            session_content["bosses"] = self.generate_content("boss", boss_count, 1)
+            
+            # Добавляем session_id ко всем элементам
+            for content_type, items in session_content.items():
+                for item in items:
+                    item.session_id = session_id
+            
+            logger.info(f"Сгенерирован контент для сессии {session_id}: {sum(len(items) for items in session_content.values())} объектов")
+            return session_content
+            
+        except Exception as e:
+            logger.error(f"Ошибка генерации контента для сессии {session_id}: {e}")
             return {}
     
     def get_template_info(self, template_type: str) -> Dict[str, Any]:

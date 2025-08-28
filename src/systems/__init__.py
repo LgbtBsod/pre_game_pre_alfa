@@ -23,17 +23,10 @@ from .skills.skill_system import (
     Skill, SkillRequirements, SkillCooldown, SkillSystem
 )
 
-from .ai.ai_entity import (
-    AIEntity, EntityType, MemoryType, MemoryEntry, GenerationMemory
+from .ai.unified_ai_system import (
+    UnifiedAISystem, EntityType, MemoryType, MemoryEntry, AIDecision,
+    AIConfig, Personality, NeuralNetwork, EmotionalNetwork
 )
-
-from .ai.ai_system import (
-    AISystem, AIConfig, AIMemory, AIDecision
-)
-
-from .ai.pytorch_ai_system import PyTorchAISystem, NeuralNetwork, EmotionalNetwork
-
-from .ai.ai_integration_system import AIIntegrationSystem, AIAgentState
 
 from .genome.genome_system import (
     GeneSequence, GeneticTrait, GenomeProfile, GenomeSystem
@@ -71,10 +64,8 @@ __all__ = [
     'Skill', 'SkillRequirements', 'SkillCooldown', 'SkillSystem',
     
     # AI системы
-    'AIEntity', 'EntityType', 'MemoryType', 'MemoryEntry', 'GenerationMemory',
-    'AISystem', 'AIConfig', 'AIMemory', 'AIDecision',
-    'PyTorchAISystem', 'NeuralNetwork', 'EmotionalNetwork',
-    'AIIntegrationSystem', 'AIAgentState',
+    'UnifiedAISystem', 'EntityType', 'MemoryType', 'MemoryEntry', 'AIDecision',
+    'AIConfig', 'Personality', 'NeuralNetwork', 'EmotionalNetwork',
     
     # Система генома
     'GeneSequence', 'GeneticTrait', 'GenomeProfile', 'GenomeSystem',

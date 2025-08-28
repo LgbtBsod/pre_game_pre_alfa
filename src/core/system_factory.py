@@ -29,11 +29,11 @@ class SystemFactory:
         
         # Зависимости систем
         self.system_dependencies = {
-            'ai_system': ['event_system', 'config_manager'],
-            'combat_system': ['event_system', 'ai_system'],
+            'unified_ai_system': ['event_system', 'config_manager'],
+            'combat_system': ['event_system', 'unified_ai_system'],
             'content_generator': ['event_system', 'config_manager'],
-            'emotion_system': ['event_system', 'ai_system'],
-            'evolution_system': ['event_system', 'ai_system'],
+            'emotion_system': ['event_system', 'unified_ai_system'],
+            'evolution_system': ['event_system', 'unified_ai_system'],
             'inventory_system': ['event_system'],
             'item_system': ['event_system', 'content_generator'],
             'skill_system': ['event_system', 'content_generator'],

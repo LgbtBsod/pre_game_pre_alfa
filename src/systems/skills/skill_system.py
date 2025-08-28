@@ -12,7 +12,8 @@ from dataclasses import dataclass, field
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     SkillType, SkillCategory, DamageType, StatType, TriggerType,
-    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
+    SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS
 )
 
 logger = logging.getLogger(__name__)
