@@ -8,7 +8,7 @@ import time
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     ItemType, ItemRarity, ItemCategory, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -50,14 +50,11 @@ class ItemStack:
     created_time: float = field(default_factory=time.time)
     last_used: float = field(default_factory=time.time)
 
-class InventorySystem(ISystem):
+class InventorySystem(BaseGameSystem):
     """Система управления инвентарями"""
     
     def __init__(self):
-        self._system_name = "inventory"
-        self._system_priority = SystemPriority.NORMAL
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("inventory", Priority.NORMAL)
         
         # Инвентари сущностей
         self.inventories: Dict[str, Inventory] = {}
@@ -92,25 +89,12 @@ class InventorySystem(ISystem):
         
         logger.info("Система инвентаря инициализирована")
     
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
-    
     def initialize(self) -> bool:
         """Инициализация системы инвентаря"""
         try:
+            if not super().initialize():
+                return False
+                
             logger.info("Инициализация системы инвентаря...")
             
             # Настраиваем систему
@@ -119,20 +103,69 @@ class InventorySystem(ISystem):
             # Создаем базовые шаблоны инвентарей
             self._create_base_inventory_templates()
             
-            self._system_state = SystemState.READY
+            # Регистрация состояний и репозиториев
+            self._register_states()
+            self._register_repositories()
+            
             logger.info("Система инвентаря успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы инвентаря: {e}")
-            self._system_state = SystemState.ERROR
             return False
     
-    def update(self, delta_time: float) -> bool:
+    def start(self) -> bool:
+        """Запуск системы"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстановление данных из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Система инвентаря запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы инвентаря: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы"""
+        try:
+            # Сохранение данных в репозитории
+            self._save_to_repositories()
+            
+            if not super().stop():
+                return False
+            
+            logger.info("Система инвентаря остановлена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы инвентаря: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы"""
+        try:
+            # Сохранение данных в репозитории
+            self._save_to_repositories()
+            
+            if not super().destroy():
+                return False
+            
+            logger.info("Система инвентаря уничтожена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения системы инвентаря: {e}")
+            return False
+    
+    def update(self, delta_time: float) -> None:
         """Обновление системы инвентаря"""
         try:
-            if self._system_state != SystemState.READY:
-                return False
+            super().update(delta_time)
             
             start_time = time.time()
             
@@ -147,76 +180,195 @@ class InventorySystem(ISystem):
             
             self.system_stats['update_time'] = time.time() - start_time
             
-            return True
+            # Обновление состояний
+            self._update_states()
             
         except Exception as e:
             logger.error(f"Ошибка обновления системы инвентаря: {e}")
-            return False
     
-    def pause(self) -> bool:
-        """Приостановка системы инвентаря"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система инвентаря приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы инвентаря: {e}")
-            return False
-    
-    def resume(self) -> bool:
-        """Возобновление системы инвентаря"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система инвентаря возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы инвентаря: {e}")
-            return False
-    
-    def cleanup(self) -> bool:
-        """Очистка системы инвентаря"""
-        try:
-            logger.info("Очистка системы инвентаря...")
+    def _register_states(self):
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
             
-            # Очищаем все данные
-            self.inventories.clear()
-            self.item_stacks.clear()
-            self.inventory_history.clear()
+        try:
+            # Настройки системы инвентаря
+            self.state_manager.register_state(
+                "inventory_system_settings",
+                self.system_settings
+            )
             
-            # Сбрасываем статистику
-            self.system_stats = {
-                'total_inventories': 0,
-                'total_items': 0,
-                'total_weight': 0.0,
-                'items_added': 0,
-                'items_removed': 0,
-                'inventories_expanded': 0,
-                'update_time': 0.0
-            }
+            # Статистика системы инвентаря
+            self.state_manager.register_state(
+                "inventory_system_stats",
+                self.system_stats
+            )
             
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система инвентаря очищена")
-            return True
+            # Активные инвентари
+            self.state_manager.register_state(
+                "active_inventories",
+                {entity_id: {
+                    "max_slots": inv.max_slots,
+                    "current_weight": inv.current_weight,
+                    "max_weight": inv.max_weight,
+                    "is_expandable": inv.is_expandable,
+                    "slot_count": len(inv.slots)
+                } for entity_id, inv in self.inventories.items()}
+            )
+            
+            logger.debug("Состояния системы инвентаря зарегистрированы")
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы инвентаря: {e}")
-            return False
+            logger.warning(f"Ошибка регистрации состояний системы инвентаря: {e}")
     
-    def get_system_info(self) -> Dict[str, Any]:
-        """Получение информации о системе"""
-        return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
-            'total_inventories': len(self.inventories),
-            'total_items': self.system_stats['total_items'],
-            'total_weight': self.system_stats['total_weight'],
-            'stats': self.system_stats
+    def _register_repositories(self):
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Инвентари
+            self.repository_manager.register_repository(
+                "inventories",
+                "inventories",
+                "memory"
+            )
+            
+            # Стеки предметов
+            self.repository_manager.register_repository(
+                "item_stacks",
+                "item_stacks",
+                "memory"
+            )
+            
+            # История инвентаря
+            self.repository_manager.register_repository(
+                "inventory_history",
+                "inventory_history",
+                "memory"
+            )
+            
+            logger.debug("Репозитории системы инвентаря зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации репозиториев системы инвентаря: {e}")
+    
+    def _restore_from_repositories(self):
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Восстанавливаем инвентари
+            inventories_data = self.repository_manager.get_repository("inventories").get_all()
+            if inventories_data:
+                for inv_data in inventories_data:
+                    if inv_data.get("entity_id"):
+                        self.inventories[inv_data["entity_id"]] = Inventory(**inv_data)
+                        self.system_stats['total_inventories'] += 1
+            
+            # Восстанавливаем стеки предметов
+            item_stacks_data = self.repository_manager.get_repository("item_stacks").get_all()
+            if item_stacks_data:
+                for stack_data in item_stacks_data:
+                    if stack_data.get("item_id"):
+                        self.item_stacks[stack_data["item_id"]] = ItemStack(**stack_data)
+                        self.system_stats['total_items'] += stack_data.get("count", 1)
+            
+            # Восстанавливаем историю
+            history_data = self.repository_manager.get_repository("inventory_history").get_all()
+            if history_data:
+                for hist_data in history_data:
+                    if hist_data.get("timestamp"):
+                        self.inventory_history.append(hist_data)
+            
+            logger.debug("Данные системы инвентаря восстановлены из репозиториев")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка восстановления данных системы инвентаря: {e}")
+    
+    def _save_to_repositories(self):
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Сохраняем инвентари
+            inventories_repo = self.repository_manager.get_repository("inventories")
+            inventories_repo.clear()
+            for entity_id, inventory in self.inventories.items():
+                inventories_repo.create({
+                    "entity_id": inventory.entity_id,
+                    "max_slots": inventory.max_slots,
+                    "max_weight": inventory.max_weight,
+                    "current_weight": inventory.current_weight,
+                    "is_expandable": inventory.is_expandable,
+                    "expansion_cost": inventory.expansion_cost,
+                    "last_update": inventory.last_update
+                })
+            
+            # Сохраняем стеки предметов
+            item_stacks_repo = self.repository_manager.get_repository("item_stacks")
+            item_stacks_repo.clear()
+            for item_id, stack in self.item_stacks.items():
+                item_stacks_repo.create({
+                    "item_id": stack.item_id,
+                    "count": stack.count,
+                    "max_stack_size": stack.max_stack_size,
+                    "quality": stack.quality,
+                    "durability": stack.durability,
+                    "created_time": stack.created_time,
+                    "last_used": stack.last_used
+                })
+            
+            # Сохраняем историю
+            history_repo = self.repository_manager.get_repository("inventory_history")
+            history_repo.clear()
+            for hist_entry in self.inventory_history:
+                history_repo.create(hist_entry)
+            
+            logger.debug("Данные системы инвентаря сохранены в репозитории")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка сохранения данных системы инвентаря: {e}")
+    
+    def _update_states(self):
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+            
+        try:
+            # Обновляем статистику
+            self.state_manager.set_state_value("inventory_system_stats", self.system_stats)
+            
+            # Обновляем активные инвентари
+            self.state_manager.set_state_value("active_inventories", {
+                entity_id: {
+                    "max_slots": inv.max_slots,
+                    "current_weight": inv.current_weight,
+                    "max_weight": inv.max_weight,
+                    "is_expandable": inv.is_expandable,
+                    "slot_count": len(inv.slots)
+                } for entity_id, inv in self.inventories.items()
+            })
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления состояний системы инвентаря: {e}")
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        return self.system_stats.copy()
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.system_stats = {
+            'total_inventories': 0,
+            'total_items': 0,
+            'total_weight': 0.0,
+            'items_added': 0,
+            'items_removed': 0,
+            'inventories_expanded': 0,
+            'update_time': 0.0
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
@@ -237,6 +389,19 @@ class InventorySystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'total_inventories': len(self.inventories),
+            'total_items': self.system_stats['total_items'],
+            'total_weight': self.system_stats['total_weight'],
+            'stats': self.system_stats
+        }
     
     def _setup_inventory_system(self) -> None:
         """Настройка системы инвентаря"""

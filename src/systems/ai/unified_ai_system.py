@@ -10,7 +10,7 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     AIState, AIBehavior, AIDifficulty, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -72,14 +72,11 @@ class AIDecision:
     timestamp: float
     executed: bool = False
 
-class UnifiedAISystem(ISystem):
-    """Объединенная система искусственного интеллекта"""
+class UnifiedAISystem(BaseGameSystem):
+    """Объединенная система искусственного интеллекта с улучшенной архитектурой"""
     
     def __init__(self, config_manager=None, event_system=None):
-        self._system_name = "unified_ai"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("unified_ai", Priority.HIGH)
         
         # Внешние зависимости
         self.config_manager = config_manager
@@ -121,6 +118,9 @@ class UnifiedAISystem(ISystem):
     def initialize(self) -> bool:
         """Инициализация системы"""
         try:
+            if not super().initialize():
+                return False
+                
             logger.info("Инициализация Unified AI System...")
             
             # Загрузка конфигурации
@@ -133,21 +133,96 @@ class UnifiedAISystem(ISystem):
             if not self._initialize_subsystems():
                 return False
             
-            # Инициализация подсистем
-            if not self._initialize_subsystems():
-                return False
-            
             # Регистрация обработчиков событий
             if self.event_system:
                 self._register_event_handlers()
             
-            self._system_state = SystemState.READY
+            # Регистрация состояний и репозиториев
+            self._register_states()
+            self._register_repositories()
+            
             logger.info("Unified AI System успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации Unified AI System: {e}")
             return False
+    
+    def start(self) -> bool:
+        """Запуск системы"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстановление данных из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Unified AI System запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска Unified AI System: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы"""
+        try:
+            # Сохранение данных в репозитории
+            self._save_to_repositories()
+            
+            if not super().stop():
+                return False
+            
+            logger.info("Unified AI System остановлена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки Unified AI System: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы"""
+        try:
+            # Сохранение данных в репозитории
+            self._save_to_repositories()
+            
+            if not super().destroy():
+                return False
+            
+            logger.info("Unified AI System уничтожена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения Unified AI System: {e}")
+            return False
+    
+    def update(self, delta_time: float) -> None:
+        """Обновление системы"""
+        try:
+            super().update(delta_time)
+            
+            start_time = time.time()
+            
+            # Обновление AI сущностей
+            self._update_ai_entities(delta_time)
+            
+            # Обработка решений
+            self._process_decisions(delta_time)
+            
+            # Обновление подсистем
+            self._update_subsystems(delta_time)
+            
+            # Очистка памяти
+            self._cleanup_memory(delta_time)
+            
+            # Обновление статистики
+            self.stats['update_time'] = time.time() - start_time
+            
+            # Обновление состояний
+            self._update_states()
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления Unified AI System: {e}")
     
     def _initialize_subsystems(self) -> bool:
         """Инициализация подсистем AI"""
@@ -198,28 +273,244 @@ class UnifiedAISystem(ISystem):
         self.event_system.subscribe("damage_dealt", self._on_damage_dealt)
         self.event_system.subscribe("damage_received", self._on_damage_received)
     
-    def update(self, delta_time: float) -> None:
-        """Обновление системы"""
+    def _register_states(self):
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
+            
         try:
-            start_time = time.time()
+            # Основные настройки AI системы
+            self.state_manager.register_state(
+                "ai_system_settings",
+                {
+                    "enable_behavior_trees": self.config.enable_behavior_trees,
+                    "enable_neural_networks": self.config.enable_neural_networks,
+                    "enable_rule_based": self.config.enable_rule_based,
+                    "enable_learning": self.config.enable_learning,
+                    "max_ai_entities": self.config.max_ai_entities,
+                    "update_frequency": self.config.update_frequency,
+                    "learning_rate": self.config.learning_rate,
+                    "default_behavior": self.config.default_behavior.value,
+                    "default_difficulty": self.config.default_difficulty.value
+                }
+            )
             
-            # Обновление AI сущностей
-            self._update_ai_entities(delta_time)
+            # Статистика AI системы
+            self.state_manager.register_state(
+                "ai_system_stats",
+                self.stats
+            )
             
-            # Обработка решений
-            self._process_decisions(delta_time)
+            # Активные AI сущности
+            self.state_manager.register_state(
+                "active_ai_entities",
+                {entity_id: {
+                    "entity_type": data.entity_type,
+                    "behavior": data.behavior.value,
+                    "difficulty": data.difficulty.value,
+                    "current_state": data.current_state.value,
+                    "position": data.position,
+                    "target": data.target
+                } for entity_id, data in self.ai_entities.items()}
+            )
             
-            # Обновление подсистем
-            self._update_subsystems(delta_time)
-            
-            # Очистка памяти
-            self._cleanup_memory(delta_time)
-            
-            # Обновление статистики
-            self.stats['update_time'] = time.time() - start_time
+            logger.debug("Состояния AI системы зарегистрированы")
             
         except Exception as e:
-            logger.error(f"Ошибка обновления Unified AI System: {e}")
+            logger.warning(f"Ошибка регистрации состояний AI системы: {e}")
+    
+    def _register_repositories(self):
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # AI сущности
+            self.repository_manager.register_repository(
+                "ai_entities",
+                "ai_entities",
+                "memory"
+            )
+            
+            # Решения AI
+            self.repository_manager.register_repository(
+                "ai_decisions",
+                "ai_decisions",
+                "memory"
+            )
+            
+            # Группы AI
+            self.repository_manager.register_repository(
+                "ai_groups",
+                "ai_groups",
+                "memory"
+            )
+            
+            # Глобальная память
+            self.repository_manager.register_repository(
+                "ai_global_memory",
+                "global_memory",
+                "memory"
+            )
+            
+            # Пул опыта
+            self.repository_manager.register_repository(
+                "ai_experience_pool",
+                "experience_pool",
+                "memory"
+            )
+            
+            logger.debug("Репозитории AI системы зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации репозиториев AI системы: {e}")
+    
+    def _restore_from_repositories(self):
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Восстанавливаем AI сущности
+            ai_entities_data = self.repository_manager.get_repository("ai_entities").get_all()
+            if ai_entities_data:
+                for entity_data in ai_entities_data:
+                    if entity_data.get("entity_id"):
+                        self.ai_entities[entity_data["entity_id"]] = AIEntityData(**entity_data)
+                        self.stats['total_entities'] += 1
+                        self.stats['active_entities'] += 1
+            
+            # Восстанавливаем решения
+            ai_decisions_data = self.repository_manager.get_repository("ai_decisions").get_all()
+            if ai_decisions_data:
+                for decision_data in ai_decisions_data:
+                    if decision_data.get("entity_id"):
+                        if decision_data["entity_id"] not in self.ai_decisions:
+                            self.ai_decisions[decision_data["entity_id"]] = []
+                        self.ai_decisions[decision_data["entity_id"]].append(AIDecision(**decision_data))
+            
+            # Восстанавливаем группы
+            ai_groups_data = self.repository_manager.get_repository("ai_groups").get_all()
+            if ai_groups_data:
+                for group_data in ai_groups_data:
+                    if group_data.get("group_id") and group_data.get("entity_ids"):
+                        self.ai_groups[group_data["group_id"]] = group_data["entity_ids"]
+            
+            # Восстанавливаем глобальную память
+            global_memory_data = self.repository_manager.get_repository("ai_global_memory").get_all()
+            if global_memory_data:
+                for memory_data in global_memory_data:
+                    if memory_data.get("key") and memory_data.get("value"):
+                        self.global_memory[memory_data["key"]] = memory_data["value"]
+            
+            # Восстанавливаем пул опыта
+            experience_pool_data = self.repository_manager.get_repository("ai_experience_pool").get_all()
+            if experience_pool_data:
+                for experience_data in experience_pool_data:
+                    if experience_data.get("skill") and experience_data.get("value"):
+                        self.experience_pool[experience_data["skill"]] = experience_data["value"]
+            
+            logger.debug("Данные AI системы восстановлены из репозиториев")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка восстановления данных AI системы: {e}")
+    
+    def _save_to_repositories(self):
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Сохраняем AI сущности
+            ai_entities_repo = self.repository_manager.get_repository("ai_entities")
+            ai_entities_repo.clear()
+            for entity_id, entity_data in self.ai_entities.items():
+                ai_entities_repo.create({
+                    "entity_id": entity_id,
+                    "entity_type": entity_data.entity_type,
+                    "behavior": entity_data.behavior.value,
+                    "difficulty": entity_data.difficulty.value,
+                    "current_state": entity_data.current_state.value,
+                    "position": entity_data.position,
+                    "target": entity_data.target,
+                    "memory": entity_data.memory,
+                    "skills": entity_data.skills,
+                    "stats": entity_data.stats,
+                    "last_decision": entity_data.last_decision,
+                    "decision_cooldown": entity_data.decision_cooldown
+                })
+            
+            # Сохраняем решения
+            ai_decisions_repo = self.repository_manager.get_repository("ai_decisions")
+            ai_decisions_repo.clear()
+            for entity_id, decisions in self.ai_decisions.items():
+                for decision in decisions:
+                    ai_decisions_repo.create({
+                        "entity_id": decision.entity_id,
+                        "decision_type": decision.decision_type,
+                        "target_id": decision.target_id,
+                        "action_data": decision.action_data,
+                        "priority": decision.priority,
+                        "confidence": decision.confidence,
+                        "timestamp": decision.timestamp,
+                        "executed": decision.executed
+                    })
+            
+            # Сохраняем группы
+            ai_groups_repo = self.repository_manager.get_repository("ai_groups")
+            ai_groups_repo.clear()
+            for group_id, entity_ids in self.ai_groups.items():
+                ai_groups_repo.create({
+                    "group_id": group_id,
+                    "entity_ids": entity_ids
+                })
+            
+            # Сохраняем глобальную память
+            global_memory_repo = self.repository_manager.get_repository("ai_global_memory")
+            global_memory_repo.clear()
+            for key, value in self.global_memory.items():
+                global_memory_repo.create({
+                    "key": key,
+                    "value": value
+                })
+            
+            # Сохраняем пул опыта
+            experience_pool_repo = self.repository_manager.get_repository("ai_experience_pool")
+            experience_pool_repo.clear()
+            for skill, value in self.experience_pool.items():
+                experience_pool_repo.create({
+                    "skill": skill,
+                    "value": value
+                })
+            
+            logger.debug("Данные AI системы сохранены в репозитории")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка сохранения данных AI системы: {e}")
+    
+    def _update_states(self):
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+            
+        try:
+            # Обновляем статистику
+            self.state_manager.set_state_value("ai_system_stats", self.stats)
+            
+            # Обновляем активные AI сущности
+            self.state_manager.set_state_value("active_ai_entities", {
+                entity_id: {
+                    "entity_type": data.entity_type,
+                    "behavior": data.behavior.value,
+                    "difficulty": data.difficulty.value,
+                    "current_state": data.current_state.value,
+                    "position": data.position,
+                    "target": data.target
+                } for entity_id, data in self.ai_entities.items()
+            })
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления состояний AI системы: {e}")
     
     def _update_ai_entities(self, delta_time: float):
         """Обновление AI сущностей"""
@@ -456,11 +747,45 @@ class UnifiedAISystem(ISystem):
         if entity_id in self.ai_entities:
             self.ai_entities[entity_id].target = target_id
     
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        return self.stats.copy()
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.stats = {
+            'total_entities': 0,
+            'active_entities': 0,
+            'decisions_made': 0,
+            'learning_events': 0,
+            'update_time': 0.0
+        }
+    
+    def handle_event(self, event_type: str, event_data: Dict[str, Any]) -> bool:
+        """Обработка событий"""
+        try:
+            if event_type == "entity_created":
+                return self._on_entity_created(event_data)
+            elif event_type == "entity_destroyed":
+                return self._on_entity_destroyed(event_data)
+            elif event_type == "combat_started":
+                return self._on_combat_started(event_data)
+            elif event_type == "combat_ended":
+                return self._on_combat_ended(event_data)
+            elif event_type == "damage_dealt":
+                return self._on_damage_dealt(event_data)
+            elif event_type == "damage_received":
+                return self._on_damage_received(event_data)
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
-            'system_name': self._system_name,
-            'system_state': self._system_state.value,
+            'system_name': self.system_name,
+            'system_state': self.system_state.value,
             'total_entities': self.stats['total_entities'],
             'active_entities': self.stats['active_entities'],
             'decisions_made': self.stats['decisions_made'],
@@ -492,7 +817,7 @@ class UnifiedAISystem(ISystem):
             self.global_memory.clear()
             self.experience_pool.clear()
             
-            self._system_state = SystemState.UNINITIALIZED
+            self.system_state = self.LifecycleState.UNINITIALIZED
             logger.info("Unified AI System очищена")
             
         except Exception as e:

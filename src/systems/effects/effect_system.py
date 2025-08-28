@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Система эффектов - управление игровыми эффектами и их применением
+Интегрирована с новой модульной архитектурой
 """
 
 import logging
@@ -9,7 +10,10 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem
+from ...core.architecture import Priority, LifecycleState
+from ...core.state_manager import StateManager, StateType, StateScope
+from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     EffectCategory, TriggerType, DamageType, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -57,28 +61,30 @@ class ActiveEffect:
     applied_by: Optional[str] = None
     data: Dict[str, Any] = field(default_factory=dict)
 
-class EffectSystem(ISystem):
-    """Система управления эффектами"""
+class EffectSystem(BaseGameSystem):
+    """Система управления эффектами - интегрирована с новой архитектурой"""
     
     def __init__(self):
-        self._system_name = "effects"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("effects", Priority.HIGH)
         
-        # Зарегистрированные эффекты
+        # Интеграция с новой архитектурой
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        self.event_bus = None
+        
+        # Зарегистрированные эффекты (теперь управляются через RepositoryManager)
         self.registered_effects: Dict[str, Effect] = {}
         
-        # Специальные эффекты
+        # Специальные эффекты (теперь управляются через RepositoryManager)
         self.special_effects: Dict[str, SpecialEffect] = {}
         
-        # Активные эффекты на сущностях
+        # Активные эффекты на сущностях (теперь управляются через RepositoryManager)
         self.active_effects: Dict[str, List[ActiveEffect]] = {}
         
-        # История применения эффектов
+        # История применения эффектов (теперь управляется через RepositoryManager)
         self.effect_history: List[Dict[str, Any]] = []
         
-        # Настройки системы
+        # Настройки системы (теперь управляются через StateManager)
         self.system_settings = {
             'max_effects_per_entity': SYSTEM_LIMITS["max_effects_per_entity"],
             'max_special_effects': 100,
@@ -87,7 +93,7 @@ class EffectSystem(ISystem):
             'effect_combining_enabled': True
         }
         
-        # Статистика системы
+        # Статистика системы (теперь управляется через StateManager)
         self.system_stats = {
             'registered_effects_count': 0,
             'special_effects_count': 0,
@@ -97,48 +103,86 @@ class EffectSystem(ISystem):
             'update_time': 0.0
         }
         
-        logger.info("Система эффектов инициализирована")
-    
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
+        logger.info("Система эффектов инициализирована с новой архитектурой")
     
     def initialize(self) -> bool:
-        """Инициализация системы эффектов"""
+        """Инициализация системы эффектов с новой архитектурой"""
         try:
             logger.info("Инициализация системы эффектов...")
             
-            # Регистрируем базовые эффекты
-            self._register_base_effects()
+            # Инициализация базового компонента
+            if not super().initialize():
+                return False
             
-            # Регистрируем специальные эффекты
-            self._register_special_effects()
+            # Настраиваем систему
+            self._setup_effect_system()
             
-            self._system_state = SystemState.READY
+            # Загружаем базовые эффекты
+            self._load_base_effects()
+            
+            # Регистрируем состояния в StateManager
+            self._register_states()
+            
+            # Регистрируем репозитории в RepositoryManager
+            self._register_repositories()
+            
             logger.info("Система эффектов успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы эффектов: {e}")
-            self._system_state = SystemState.ERROR
+            return False
+    
+    def start(self) -> bool:
+        """Запуск системы эффектов"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстанавливаем данные из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Система эффектов запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы эффектов: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы эффектов"""
+        try:
+            # Сохраняем данные в репозитории
+            self._save_to_repositories()
+            
+            return super().stop()
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы эффектов: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы эффектов"""
+        try:
+            # Сохраняем финальные данные
+            self._save_to_repositories()
+            
+            # Очищаем все данные
+            self.registered_effects.clear()
+            self.special_effects.clear()
+            self.active_effects.clear()
+            self.effect_history.clear()
+            
+            return super().destroy()
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения системы эффектов: {e}")
             return False
     
     def update(self, delta_time: float) -> bool:
         """Обновление системы эффектов"""
         try:
-            if self._system_state != SystemState.READY:
+            if not super().update(delta_time):
                 return False
             
             start_time = time.time()
@@ -152,6 +196,9 @@ class EffectSystem(ISystem):
             # Обновляем статистику системы
             self._update_system_stats()
             
+            # Обновляем состояния в StateManager
+            self._update_states()
+            
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
@@ -160,75 +207,185 @@ class EffectSystem(ISystem):
             logger.error(f"Ошибка обновления системы эффектов: {e}")
             return False
     
-    def pause(self) -> bool:
-        """Приостановка системы эффектов"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система эффектов приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы эффектов: {e}")
-            return False
+    def _register_states(self) -> None:
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "effect_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.system_settings
+        )
+        
+        self.state_manager.register_container(
+            "effect_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния эффектов
+        self.state_manager.register_container(
+            "active_effects",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы эффектов зарегистрированы")
     
-    def resume(self) -> bool:
-        """Возобновление системы эффектов"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система эффектов возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы эффектов: {e}")
-            return False
+    def _register_repositories(self) -> None:
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий зарегистрированных эффектов
+        self.repository_manager.register_repository(
+            "registered_effects",
+            DataType.CONFIGURATION,
+            StorageType.MEMORY,
+            self.registered_effects
+        )
+        
+        # Регистрируем репозиторий специальных эффектов
+        self.repository_manager.register_repository(
+            "special_effects",
+            DataType.CONFIGURATION,
+            StorageType.MEMORY,
+            self.special_effects
+        )
+        
+        # Регистрируем репозиторий активных эффектов
+        self.repository_manager.register_repository(
+            "active_effects",
+            DataType.DYNAMIC_DATA,
+            StorageType.MEMORY,
+            self.active_effects
+        )
+        
+        # Регистрируем репозиторий истории эффектов
+        self.repository_manager.register_repository(
+            "effect_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.effect_history
+        )
+        
+        logger.info("Репозитории системы эффектов зарегистрированы")
     
-    def cleanup(self) -> bool:
-        """Очистка системы эффектов"""
+    def _restore_from_repositories(self) -> None:
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+        
         try:
-            logger.info("Очистка системы эффектов...")
+            # Восстанавливаем зарегистрированные эффекты
+            effects_repo = self.repository_manager.get_repository("registered_effects")
+            if effects_repo:
+                self.registered_effects = effects_repo.get_all()
             
-            # Очищаем все данные
-            self.registered_effects.clear()
-            self.special_effects.clear()
-            self.active_effects.clear()
-            self.effect_history.clear()
+            # Восстанавливаем специальные эффекты
+            special_repo = self.repository_manager.get_repository("special_effects")
+            if special_repo:
+                self.special_effects = special_repo.get_all()
             
-            # Сбрасываем статистику
-            self.system_stats = {
-                'registered_effects_count': 0,
-                'special_effects_count': 0,
-                'total_active_effects': 0,
-                'effects_applied_today': 0,
-                'effects_removed_today': 0,
-                'update_time': 0.0
-            }
+            # Восстанавливаем активные эффекты
+            active_repo = self.repository_manager.get_repository("active_effects")
+            if active_repo:
+                self.active_effects = active_repo.get_all()
             
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система эффектов очищена")
-            return True
+            # Восстанавливаем историю
+            history_repo = self.repository_manager.get_repository("effect_history")
+            if history_repo:
+                self.effect_history = history_repo.get_all()
+            
+            logger.info("Данные системы эффектов восстановлены из репозиториев")
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы эффектов: {e}")
-            return False
+            logger.error(f"Ошибка восстановления данных из репозиториев: {e}")
     
-    def get_system_info(self) -> Dict[str, Any]:
-        """Получение информации о системе"""
+    def _save_to_repositories(self) -> None:
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+        
+        try:
+            # Сохраняем зарегистрированные эффекты
+            effects_repo = self.repository_manager.get_repository("registered_effects")
+            if effects_repo:
+                effects_repo.clear()
+                for effect_id, effect in self.registered_effects.items():
+                    effects_repo.create(effect_id, effect)
+            
+            # Сохраняем специальные эффекты
+            special_repo = self.repository_manager.get_repository("special_effects")
+            if special_repo:
+                special_repo.clear()
+                for effect_id, effect in self.special_effects.items():
+                    special_repo.create(effect_id, effect)
+            
+            # Сохраняем активные эффекты
+            active_repo = self.repository_manager.get_repository("active_effects")
+            if active_repo:
+                active_repo.clear()
+                for entity_id, effects in self.active_effects.items():
+                    active_repo.create(entity_id, effects)
+            
+            # Сохраняем историю
+            history_repo = self.repository_manager.get_repository("effect_history")
+            if history_repo:
+                history_repo.clear()
+                for i, record in enumerate(self.effect_history):
+                    history_repo.create(f"history_{i}", record)
+            
+            logger.info("Данные системы эффектов сохранены в репозитории")
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения данных в репозитории: {e}")
+    
+    def _update_states(self) -> None:
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        try:
+            # Обновляем статистику системы
+            self.state_manager.set_state_value("effect_system_stats", self.system_stats)
+            
+            # Обновляем активные эффекты
+            self.state_manager.set_state_value("active_effects", self.active_effects)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления состояний: {e}")
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
         return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
+            **self.system_stats,
             'registered_effects': len(self.registered_effects),
             'special_effects': len(self.special_effects),
             'entities_with_effects': len(self.active_effects),
-            'total_active_effects': self.system_stats['total_active_effects'],
-            'stats': self.system_stats
+            'system_name': self.system_name,
+            'system_state': self.system_state.value,
+            'system_priority': self.system_priority.value
+        }
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.system_stats = {
+            'registered_effects_count': 0,
+            'special_effects_count': 0,
+            'total_active_effects': 0,
+            'effects_applied_today': 0,
+            'effects_removed_today': 0,
+            'update_time': 0.0
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
-        """Обработка событий"""
+        """Обработка событий - интеграция с новой архитектурой"""
         try:
             if event_type == "effect_applied":
                 return self._handle_effect_applied(event_data)
@@ -244,216 +401,54 @@ class EffectSystem(ISystem):
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
     
-    def _register_base_effects(self) -> None:
-        """Регистрация базовых эффектов"""
-        try:
-            # Эффекты здоровья
-            health_effects = [
-                Effect(
-                    effect_id="heal_small",
-                    name="Малое исцеление",
-                    description="Восстанавливает небольшое количество здоровья",
-                    category=EffectCategory.HEALING,
-                    trigger_type=TriggerType.INSTANT,
-                    duration=0.0,
-                    magnitude=20.0,
-                    target_stats=[StatType.HEALTH],
-                    icon="heal_small"
-                ),
-                Effect(
-                    effect_id="heal_large",
-                    name="Большое исцеление",
-                    description="Восстанавливает большое количество здоровья",
-                    category=EffectCategory.HEALING,
-                    trigger_type=TriggerType.INSTANT,
-                    duration=0.0,
-                    magnitude=50.0,
-                    target_stats=[StatType.HEALTH],
-                    icon="heal_large"
-                ),
-                Effect(
-                    effect_id="regeneration",
-                    name="Регенерация",
-                    description="Постепенно восстанавливает здоровье",
-                    category=EffectCategory.HEALING,
-                    trigger_type=TriggerType.PERIODIC,
-                    duration=30.0,
-                    magnitude=5.0,
-                    target_stats=[StatType.HEALTH],
-                    icon="regeneration"
-                )
-            ]
-            
-            # Эффекты урона
-            damage_effects = [
-                Effect(
-                    effect_id="burn",
-                    name="Ожог",
-                    description="Наносит периодический огненный урон",
-                    category=EffectCategory.DAMAGE,
-                    trigger_type=TriggerType.PERIODIC,
-                    duration=15.0,
-                    magnitude=10.0,
-                    target_stats=[StatType.HEALTH],
-                    damage_type=DamageType.FIRE,
-                    icon="burn"
-                ),
-                Effect(
-                    effect_id="poison",
-                    name="Яд",
-                    description="Наносит периодический ядовитый урон",
-                    category=EffectCategory.DAMAGE,
-                    trigger_type=TriggerType.PERIODIC,
-                    duration=20.0,
-                    magnitude=8.0,
-                    target_stats=[StatType.HEALTH],
-                    damage_type=DamageType.POISON,
-                    icon="poison"
-                ),
-                Effect(
-                    effect_id="bleeding",
-                    name="Кровотечение",
-                    description="Наносит периодический физический урон",
-                    category=EffectCategory.DAMAGE,
-                    trigger_type=TriggerType.PERIODIC,
-                    duration=25.0,
-                    magnitude=12.0,
-                    target_stats=[StatType.HEALTH],
-                    damage_type=DamageType.PHYSICAL,
-                    icon="bleeding"
-                )
-            ]
-            
-            # Эффекты усиления
-            buff_effects = [
-                Effect(
-                    effect_id="strength_boost",
-                    name="Усиление силы",
-                    description="Увеличивает атаку",
-                    category=EffectCategory.BUFF,
-                    trigger_type=TriggerType.DURATION,
-                    duration=60.0,
-                    magnitude=15.0,
-                    target_stats=[StatType.ATTACK],
-                    icon="strength_boost"
-                ),
-                Effect(
-                    effect_id="speed_boost",
-                    name="Ускорение",
-                    description="Увеличивает скорость",
-                    category=EffectCategory.BUFF,
-                    trigger_type=TriggerType.DURATION,
-                    duration=45.0,
-                    magnitude=0.5,
-                    target_stats=[StatType.SPEED],
-                    icon="speed_boost"
-                ),
-                Effect(
-                    effect_id="defense_boost",
-                    name="Усиление защиты",
-                    description="Увеличивает защиту",
-                    category=EffectCategory.BUFF,
-                    trigger_type=TriggerType.DURATION,
-                    duration=90.0,
-                    magnitude=20.0,
-                    target_stats=[StatType.DEFENSE],
-                    icon="defense_boost"
-                )
-            ]
-            
-            # Эффекты ослабления
-            debuff_effects = [
-                Effect(
-                    effect_id="weakness",
-                    name="Слабость",
-                    description="Уменьшает атаку",
-                    category=EffectCategory.DEBUFF,
-                    trigger_type=TriggerType.DURATION,
-                    duration=40.0,
-                    magnitude=-10.0,
-                    target_stats=[StatType.ATTACK],
-                    icon="weakness"
-                ),
-                Effect(
-                    effect_id="slow",
-                    name="Замедление",
-                    description="Уменьшает скорость",
-                    category=EffectCategory.DEBUFF,
-                    trigger_type=TriggerType.DURATION,
-                    duration=35.0,
-                    magnitude=-0.3,
-                    target_stats=[StatType.SPEED],
-                    icon="slow"
-                ),
-                Effect(
-                    effect_id="vulnerability",
-                    name="Уязвимость",
-                    description="Уменьшает защиту",
-                    category=EffectCategory.DEBUFF,
-                    trigger_type=TriggerType.DURATION,
-                    duration=50.0,
-                    magnitude=-15.0,
-                    target_stats=[StatType.DEFENSE],
-                    icon="vulnerability"
-                )
-            ]
-            
-            # Регистрируем все эффекты
-            all_effects = health_effects + damage_effects + buff_effects + debuff_effects
-            
-            for effect in all_effects:
-                self.registered_effects[effect.effect_id] = effect
-            
-            logger.info(f"Зарегистрировано {len(all_effects)} базовых эффектов")
-            
-        except Exception as e:
-            logger.error(f"Ошибка регистрации базовых эффектов: {e}")
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'registered_effects': len(self.registered_effects),
+            'special_effects': len(self.special_effects),
+            'entities_with_effects': len(self.active_effects),
+            'total_active_effects': self.system_stats['total_active_effects'],
+            'stats': self.system_stats
+        }
     
-    def _register_special_effects(self) -> None:
-        """Регистрация специальных эффектов"""
+    def _setup_effect_system(self) -> None:
+        """Настройка системы эффектов"""
         try:
-            special_effects = [
-                SpecialEffect(
-                    effect_id="stun",
-                    name="Оглушение",
-                    effect_type="stun",
-                    parameters={'duration': 3.0},
-                    duration=3.0,
-                    chance=0.15
-                ),
-                SpecialEffect(
-                    effect_id="silence",
-                    name="Тишина",
-                    effect_type="silence",
-                    parameters={'duration': 5.0},
-                    duration=5.0,
-                    chance=0.10
-                ),
-                SpecialEffect(
-                    effect_id="fear",
-                    name="Страх",
-                    effect_type="fear",
-                    parameters={'duration': 8.0, 'movement_speed': -0.5},
-                    duration=8.0,
-                    chance=0.08
-                ),
-                SpecialEffect(
-                    effect_id="charm",
-                    name="Очарование",
-                    effect_type="charm",
-                    parameters={'duration': 6.0, 'control_duration': 4.0},
-                    duration=6.0,
-                    chance=0.05
-                )
-            ]
+            # Получаем настройки из StateManager
+            settings_container = self.state_manager.get_container("effect_system_settings")
+            if settings_container:
+                self.system_settings.update(settings_container.data)
+                logger.info(f"Настройки системы эффектов обновлены: {self.system_settings}")
             
-            for effect in special_effects:
-                self.special_effects[effect.effect_id] = effect
-            
-            logger.info(f"Зарегистрировано {len(special_effects)} специальных эффектов")
+            # Получаем статистику из StateManager
+            stats_container = self.state_manager.get_container("effect_system_stats")
+            if stats_container:
+                self.system_stats.update(stats_container.data)
+                logger.info(f"Статистика системы эффектов обновлена: {self.system_stats}")
             
         except Exception as e:
-            logger.error(f"Ошибка регистрации специальных эффектов: {e}")
+            logger.error(f"Ошибка настройки системы эффектов: {e}")
+    
+    def _load_base_effects(self) -> None:
+        """Загрузка базовых эффектов из RepositoryManager"""
+        try:
+            # Получаем зарегистрированные эффекты из репозитория
+            effects_repo = self.repository_manager.get_repository("registered_effects")
+            if effects_repo:
+                self.registered_effects = effects_repo.get_all()
+                logger.info(f"Загружено {len(self.registered_effects)} базовых эффектов")
+            
+            # Получаем специальные эффекты из репозитория
+            special_repo = self.repository_manager.get_repository("special_effects")
+            if special_repo:
+                self.special_effects = special_repo.get_all()
+                logger.info(f"Загружено {len(self.special_effects)} специальных эффектов")
+            
+        except Exception as e:
+            logger.error(f"Ошибка загрузки базовых эффектов: {e}")
     
     def _update_active_effects(self, delta_time: float) -> None:
         """Обновление активных эффектов"""

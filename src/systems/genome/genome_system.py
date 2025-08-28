@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Система генома - управление генетической информацией сущностей
+Интегрирована с новой модульной архитектурой
 """
 
 import logging
@@ -9,7 +10,10 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem
+from ...core.architecture import Priority, LifecycleState
+from ...core.state_manager import StateManager, StateType, StateScope
+from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     GeneType, GeneRarity, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -52,25 +56,27 @@ class GenomeProfile:
     last_update: float = field(default_factory=time.time)
     generation: int = 1
 
-class GenomeSystem(ISystem):
-    """Система управления геномом"""
+class GenomeSystem(BaseGameSystem):
+    """Система управления геномом - интегрирована с новой архитектурой"""
     
     def __init__(self):
-        self._system_name = "genome"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("genome", Priority.HIGH)
         
-        # Профили геномов сущностей
+        # Интеграция с новой архитектурой
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        self.event_bus = None
+        
+        # Профили геномов сущностей (теперь управляются через RepositoryManager)
         self.genome_profiles: Dict[str, GenomeProfile] = {}
         
-        # Генетические шаблоны
+        # Генетические шаблоны (теперь управляются через RepositoryManager)
         self.genetic_templates: Dict[str, Dict[str, Any]] = {}
         
-        # История генетических изменений
+        # История генетических изменений (теперь управляется через RepositoryManager)
         self.genetic_history: List[Dict[str, Any]] = []
         
-        # Настройки системы
+        # Настройки системы (теперь управляются через StateManager)
         self.system_settings = {
             'max_genes_per_entity': SYSTEM_LIMITS["max_genes_per_entity"],
             'mutation_rate': PROBABILITY_CONSTANTS["base_mutation_rate"],
@@ -80,7 +86,7 @@ class GenomeSystem(ISystem):
             'trait_activation_chance': 0.7
         }
         
-        # Статистика системы
+        # Статистика системы (теперь управляется через StateManager)
         self.system_stats = {
             'genomes_count': 0,
             'total_genes': 0,
@@ -90,28 +96,16 @@ class GenomeSystem(ISystem):
             'update_time': 0.0
         }
         
-        logger.info("Система генома инициализирована")
-    
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
+        logger.info("Система генома инициализирована с новой архитектурой")
     
     def initialize(self) -> bool:
-        """Инициализация системы генома"""
+        """Инициализация системы генома с новой архитектурой"""
         try:
             logger.info("Инициализация системы генома...")
+            
+            # Инициализация базового компонента
+            if not super().initialize():
+                return False
             
             # Настраиваем систему
             self._setup_genome_system()
@@ -119,19 +113,68 @@ class GenomeSystem(ISystem):
             # Загружаем генетические шаблоны
             self._load_genetic_templates()
             
-            self._system_state = SystemState.READY
+            # Регистрируем состояния в StateManager
+            self._register_states()
+            
+            # Регистрируем репозитории в RepositoryManager
+            self._register_repositories()
+            
             logger.info("Система генома успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы генома: {e}")
-            self._system_state = SystemState.ERROR
+            return False
+    
+    def start(self) -> bool:
+        """Запуск системы генома"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстанавливаем данные из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Система генома запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы генома: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы генома"""
+        try:
+            # Сохраняем данные в репозитории
+            self._save_to_repositories()
+            
+            return super().stop()
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы генома: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы генома"""
+        try:
+            # Сохраняем финальные данные
+            self._save_to_repositories()
+            
+            # Очищаем все данные
+            self.genome_profiles.clear()
+            self.genetic_templates.clear()
+            self.genetic_history.clear()
+            
+            return super().destroy()
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения системы генома: {e}")
             return False
     
     def update(self, delta_time: float) -> bool:
         """Обновление системы генома"""
         try:
-            if self._system_state != SystemState.READY:
+            if not super().update(delta_time):
                 return False
             
             start_time = time.time()
@@ -145,6 +188,9 @@ class GenomeSystem(ISystem):
             # Обновляем статистику системы
             self._update_system_stats()
             
+            # Обновляем состояния в StateManager
+            self._update_states()
+            
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
@@ -153,87 +199,139 @@ class GenomeSystem(ISystem):
             logger.error(f"Ошибка обновления системы генома: {e}")
             return False
     
-    def pause(self) -> bool:
-        """Приостановка системы генома"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система генома приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы генома: {e}")
-            return False
+    def _register_states(self) -> None:
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "genome_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.system_settings
+        )
+        
+        self.state_manager.register_container(
+            "genome_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния геномов
+        self.state_manager.register_container(
+            "genome_profiles",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы генома зарегистрированы")
     
-    def resume(self) -> bool:
-        """Возобновление системы генома"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система генома возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы генома: {e}")
-            return False
+    def _register_repositories(self) -> None:
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий генетических шаблонов
+        self.repository_manager.register_repository(
+            "genetic_templates",
+            DataType.CONFIGURATION,
+            StorageType.MEMORY,
+            self.genetic_templates
+        )
+        
+        # Регистрируем репозиторий истории генетических изменений
+        self.repository_manager.register_repository(
+            "genetic_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.genetic_history
+        )
+        
+        # Регистрируем репозиторий профилей геномов
+        self.repository_manager.register_repository(
+            "genome_profiles",
+            DataType.ENTITY_DATA,
+            StorageType.MEMORY,
+            self.genome_profiles
+        )
+        
+        logger.info("Репозитории системы генома зарегистрированы")
     
-    def cleanup(self) -> bool:
-        """Очистка системы генома"""
+    def _restore_from_repositories(self) -> None:
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+        
         try:
-            logger.info("Очистка системы генома...")
+            # Восстанавливаем генетические шаблоны
+            templates_repo = self.repository_manager.get_repository("genetic_templates")
+            if templates_repo:
+                self.genetic_templates = templates_repo.get_all()
             
-            # Очищаем все данные
-            self.genome_profiles.clear()
-            self.genetic_templates.clear()
-            self.genetic_history.clear()
+            # Восстанавливаем историю
+            history_repo = self.repository_manager.get_repository("genetic_history")
+            if history_repo:
+                self.genetic_history = history_repo.get_all()
             
-            # Сбрасываем статистику
-            self.system_stats = {
-                'genomes_count': 0,
-                'total_genes': 0,
-                'mutations_occurred': 0,
-                'recombinations_occurred': 0,
-                'traits_activated': 0,
-                'update_time': 0.0
-            }
+            # Восстанавливаем профили геномов
+            profiles_repo = self.repository_manager.get_repository("genome_profiles")
+            if profiles_repo:
+                self.genome_profiles = profiles_repo.get_all()
             
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система генома очищена")
-            return True
+            logger.info("Данные системы генома восстановлены из репозиториев")
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы генома: {e}")
-            return False
+            logger.error(f"Ошибка восстановления данных из репозиториев: {e}")
     
-    def get_system_info(self) -> Dict[str, Any]:
-        """Получение информации о системе"""
-        return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
-            'genomes_count': len(self.genome_profiles),
-            'genetic_templates': len(self.genetic_templates),
-            'total_genes': self.system_stats['total_genes'],
-            'stats': self.system_stats
-        }
-    
-    def handle_event(self, event_type: str, event_data: Any) -> bool:
-        """Обработка событий"""
+    def _save_to_repositories(self) -> None:
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+        
         try:
-            if event_type == "entity_created":
-                return self._handle_entity_created(event_data)
-            elif event_type == "entity_destroyed":
-                return self._handle_entity_destroyed(event_data)
-            elif event_type == "reproduction":
-                return self._handle_reproduction(event_data)
-            elif event_type == "environment_change":
-                return self._handle_environment_change(event_data)
-            else:
-                return False
+            # Сохраняем генетические шаблоны
+            templates_repo = self.repository_manager.get_repository("genetic_templates")
+            if templates_repo:
+                templates_repo.clear()
+                for key, value in self.genetic_templates.items():
+                    templates_repo.create(key, value)
+            
+            # Сохраняем историю
+            history_repo = self.repository_manager.get_repository("genetic_history")
+            if history_repo:
+                history_repo.clear()
+                for i, record in enumerate(self.genetic_history):
+                    history_repo.create(f"history_{i}", record)
+            
+            # Сохраняем профили геномов
+            profiles_repo = self.repository_manager.get_repository("genome_profiles")
+            if profiles_repo:
+                profiles_repo.clear()
+                for entity_id, profile in self.genome_profiles.items():
+                    profiles_repo.create(entity_id, profile)
+            
+            logger.info("Данные системы генома сохранены в репозитории")
+            
         except Exception as e:
-            logger.error(f"Ошибка обработки события {event_type}: {e}")
-            return False
+            logger.error(f"Ошибка сохранения данных в репозитории: {e}")
+    
+    def _update_states(self) -> None:
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        try:
+            # Обновляем статистику системы
+            self.state_manager.set_state_value("genome_system_stats", self.system_stats)
+            
+            # Обновляем профили геномов
+            self.state_manager.set_state_value("genome_profiles", self.genome_profiles)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления состояний: {e}")
     
     def _setup_genome_system(self) -> None:
         """Настройка системы генома"""
@@ -249,19 +347,19 @@ class GenomeSystem(ISystem):
             # Шаблоны для разных типов сущностей
             self.genetic_templates = {
                 'basic': {
-                    'gene_types': [GeneType.PHYSICAL, GeneType.MENTAL, GeneType.ENERGY],
+                    'gene_types': [GeneType.STRENGTH, GeneType.AGILITY, GeneType.INTELLIGENCE],
                     'complexity_range': (10, 50),
                     'mutation_rate': 0.01,
                     'trait_count': 5
                 },
                 'advanced': {
-                    'gene_types': [GeneType.PHYSICAL, GeneType.MENTAL, GeneType.ENERGY, GeneType.SPECIAL],
+                    'gene_types': [GeneType.STRENGTH, GeneType.AGILITY, GeneType.INTELLIGENCE, GeneType.CONSTITUTION],
                     'complexity_range': (30, 100),
                     'mutation_rate': 0.015,
                     'trait_count': 8
                 },
                 'elite': {
-                    'gene_types': [GeneType.PHYSICAL, GeneType.MENTAL, GeneType.ENERGY, GeneType.SPECIAL, GeneType.LEGENDARY],
+                    'gene_types': [GeneType.STRENGTH, GeneType.AGILITY, GeneType.INTELLIGENCE, GeneType.CONSTITUTION, GeneType.WISDOM],
                     'complexity_range': (80, 200),
                     'mutation_rate': 0.02,
                     'trait_count': 12
@@ -843,3 +941,55 @@ class GenomeSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка принудительной мутации признака {trait_id} у {entity_id}: {e}")
             return False
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        return {
+            **self.system_stats,
+            'genomes_count': len(self.genome_profiles),
+            'genetic_templates_count': len(self.genetic_templates),
+            'total_genes': sum(len(profile.traits) for profile in self.genome_profiles.values()),
+            'system_name': self.system_name,
+            'system_state': self.system_state.value,
+            'system_priority': self.system_priority.value
+        }
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.system_stats = {
+            'genomes_count': 0,
+            'total_genes': 0,
+            'mutations_occurred': 0,
+            'recombinations_occurred': 0,
+            'traits_activated': 0,
+            'update_time': 0.0
+        }
+    
+    def handle_event(self, event_type: str, event_data: Any) -> bool:
+        """Обработка событий - интеграция с новой архитектурой"""
+        try:
+            if event_type == "entity_created":
+                return self._handle_entity_created(event_data)
+            elif event_type == "entity_destroyed":
+                return self._handle_entity_destroyed(event_data)
+            elif event_type == "reproduction":
+                return self._handle_reproduction(event_data)
+            elif event_type == "environment_change":
+                return self._handle_environment_change(event_data)
+            else:
+                return False
+        except Exception as e:
+            logger.error(f"Ошибка обработки события {event_type}: {e}")
+            return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'genomes_count': len(self.genome_profiles),
+            'genetic_templates': len(self.genetic_templates),
+            'total_genes': self.system_stats['total_genes'],
+            'stats': self.system_stats
+        }

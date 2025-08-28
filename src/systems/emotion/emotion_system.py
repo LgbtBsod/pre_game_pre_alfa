@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Система эмоций - управление эмоциональным состоянием сущностей
+Интегрирована с новой модульной архитектурой
 """
 
 import logging
@@ -9,7 +10,10 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem
+from ...core.architecture import Priority, LifecycleState
+from ...core.state_manager import StateManager, StateType, StateScope
+from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     EmotionType, EmotionIntensity, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -54,25 +58,27 @@ class EmotionalTrigger:
     cooldown: float = 0.0
     last_triggered: float = 0.0
 
-class EmotionSystem(ISystem):
-    """Система управления эмоциями"""
+class EmotionSystem(BaseGameSystem):
+    """Система управления эмоциями - интегрирована с новой архитектурой"""
     
     def __init__(self):
-        self._system_name = "emotions"
-        self._system_priority = SystemPriority.NORMAL
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("emotions", Priority.NORMAL)
         
-        # Эмоциональные состояния сущностей
+        # Интеграция с новой архитектурой
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        self.event_bus = None
+        
+        # Эмоциональные состояния сущностей (теперь управляются через RepositoryManager)
         self.emotional_states: Dict[str, EmotionalState] = {}
         
-        # Триггеры эмоций
+        # Триггеры эмоций (теперь управляются через RepositoryManager)
         self.emotional_triggers: List[EmotionalTrigger] = []
         
-        # История эмоций
+        # История эмоций (теперь управляется через RepositoryManager)
         self.emotion_history: List[Dict[str, Any]] = []
         
-        # Настройки системы
+        # Настройки системы (теперь управляются через StateManager)
         self.system_settings = {
             'max_emotions_per_entity': SYSTEM_LIMITS["max_emotions_per_entity"],
             'emotion_decay_rate': 0.1,
@@ -81,7 +87,7 @@ class EmotionSystem(ISystem):
             'emotional_stability_range': (0.1, 0.9)
         }
         
-        # Статистика системы
+        # Статистика системы (теперь управляется через StateManager)
         self.system_stats = {
             'entities_with_emotions': 0,
             'total_emotions': 0,
@@ -91,28 +97,16 @@ class EmotionSystem(ISystem):
             'update_time': 0.0
         }
         
-        logger.info("Система эмоций инициализирована")
-    
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
+        logger.info("Система эмоций инициализирована с новой архитектурой")
     
     def initialize(self) -> bool:
-        """Инициализация системы эмоций"""
+        """Инициализация системы эмоций с новой архитектурой"""
         try:
             logger.info("Инициализация системы эмоций...")
+            
+            # Инициализация базового компонента
+            if not super().initialize():
+                return False
             
             # Настраиваем систему
             self._setup_emotion_system()
@@ -120,19 +114,68 @@ class EmotionSystem(ISystem):
             # Создаем базовые триггеры эмоций
             self._create_base_triggers()
             
-            self._system_state = SystemState.READY
+            # Регистрируем состояния в StateManager
+            self._register_states()
+            
+            # Регистрируем репозитории в RepositoryManager
+            self._register_repositories()
+            
             logger.info("Система эмоций успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы эмоций: {e}")
-            self._system_state = SystemState.ERROR
+            return False
+    
+    def start(self) -> bool:
+        """Запуск системы эмоций"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстанавливаем данные из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Система эмоций запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы эмоций: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы эмоций"""
+        try:
+            # Сохраняем данные в репозитории
+            self._save_to_repositories()
+            
+            return super().stop()
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы эмоций: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы эмоций"""
+        try:
+            # Сохраняем финальные данные
+            self._save_to_repositories()
+            
+            # Очищаем все данные
+            self.emotional_states.clear()
+            self.emotional_triggers.clear()
+            self.emotion_history.clear()
+            
+            return super().destroy()
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения системы эмоций: {e}")
             return False
     
     def update(self, delta_time: float) -> bool:
         """Обновление системы эмоций"""
         try:
-            if self._system_state != SystemState.READY:
+            if not super().update(delta_time):
                 return False
             
             start_time = time.time()
@@ -146,6 +189,9 @@ class EmotionSystem(ISystem):
             # Обновляем статистику системы
             self._update_system_stats()
             
+            # Обновляем состояния в StateManager
+            self._update_states()
+            
             self.system_stats['update_time'] = time.time() - start_time
             
             return True
@@ -154,73 +200,164 @@ class EmotionSystem(ISystem):
             logger.error(f"Ошибка обновления системы эмоций: {e}")
             return False
     
-    def pause(self) -> bool:
-        """Приостановка системы эмоций"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система эмоций приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы эмоций: {e}")
-            return False
+    def _register_states(self) -> None:
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "emotion_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.system_settings
+        )
+        
+        self.state_manager.register_container(
+            "emotion_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния эмоций
+        self.state_manager.register_container(
+            "emotional_states",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы эмоций зарегистрированы")
     
-    def resume(self) -> bool:
-        """Возобновление системы эмоций"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система эмоций возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы эмоций: {e}")
-            return False
+    def _register_repositories(self) -> None:
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий эмоциональных состояний
+        self.repository_manager.register_repository(
+            "emotional_states",
+            DataType.ENTITY_DATA,
+            StorageType.MEMORY,
+            self.emotional_states
+        )
+        
+        # Регистрируем репозиторий триггеров эмоций
+        self.repository_manager.register_repository(
+            "emotional_triggers",
+            DataType.CONFIGURATION,
+            StorageType.MEMORY,
+            self.emotional_triggers
+        )
+        
+        # Регистрируем репозиторий истории эмоций
+        self.repository_manager.register_repository(
+            "emotion_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.emotion_history
+        )
+        
+        logger.info("Репозитории системы эмоций зарегистрированы")
     
-    def cleanup(self) -> bool:
-        """Очистка системы эмоций"""
+    def _restore_from_repositories(self) -> None:
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+        
         try:
-            logger.info("Очистка системы эмоций...")
+            # Восстанавливаем эмоциональные состояния
+            states_repo = self.repository_manager.get_repository("emotional_states")
+            if states_repo:
+                self.emotional_states = states_repo.get_all()
             
-            # Очищаем все данные
-            self.emotional_states.clear()
-            self.emotional_triggers.clear()
-            self.emotion_history.clear()
+            # Восстанавливаем триггеры
+            triggers_repo = self.repository_manager.get_repository("emotional_triggers")
+            if triggers_repo:
+                self.emotional_triggers = triggers_repo.get_all()
             
-            # Сбрасываем статистику
-            self.system_stats = {
-                'entities_with_emotions': 0,
-                'total_emotions': 0,
-                'emotions_triggered': 0,
-                'mood_changes': 0,
-                'stress_events': 0,
-                'update_time': 0.0
-            }
+            # Восстанавливаем историю
+            history_repo = self.repository_manager.get_repository("emotion_history")
+            if history_repo:
+                self.emotion_history = history_repo.get_all()
             
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система эмоций очищена")
-            return True
+            logger.info("Данные системы эмоций восстановлены из репозиториев")
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы эмоций: {e}")
-            return False
+            logger.error(f"Ошибка восстановления данных из репозиториев: {e}")
     
-    def get_system_info(self) -> Dict[str, Any]:
-        """Получение информации о системе"""
+    def _save_to_repositories(self) -> None:
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+        
+        try:
+            # Сохраняем эмоциональные состояния
+            states_repo = self.repository_manager.get_repository("emotional_states")
+            if states_repo:
+                states_repo.clear()
+                for entity_id, state in self.emotional_states.items():
+                    states_repo.create(entity_id, state)
+            
+            # Сохраняем триггеры
+            triggers_repo = self.repository_manager.get_repository("emotional_triggers")
+            if triggers_repo:
+                triggers_repo.clear()
+                for i, trigger in enumerate(self.emotional_triggers):
+                    triggers_repo.create(f"trigger_{i}", trigger)
+            
+            # Сохраняем историю
+            history_repo = self.repository_manager.get_repository("emotion_history")
+            if history_repo:
+                history_repo.clear()
+                for i, record in enumerate(self.emotion_history):
+                    history_repo.create(f"history_{i}", record)
+            
+            logger.info("Данные системы эмоций сохранены в репозитории")
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения данных в репозитории: {e}")
+    
+    def _update_states(self) -> None:
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        try:
+            # Обновляем статистику системы
+            self.state_manager.set_state_value("emotion_system_stats", self.system_stats)
+            
+            # Обновляем эмоциональные состояния
+            self.state_manager.set_state_value("emotional_states", self.emotional_states)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления состояний: {e}")
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
         return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
+            **self.system_stats,
             'entities_with_emotions': len(self.emotional_states),
-            'emotional_triggers': len(self.emotional_triggers),
-            'total_emotions': self.system_stats['total_emotions'],
-            'stats': self.system_stats
+            'emotional_triggers_count': len(self.emotional_triggers),
+            'system_name': self.system_name,
+            'system_state': self.system_state.value,
+            'system_priority': self.system_priority.value
+        }
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.system_stats = {
+            'entities_with_emotions': 0,
+            'total_emotions': 0,
+            'emotions_triggered': 0,
+            'mood_changes': 0,
+            'stress_events': 0,
+            'update_time': 0.0
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
-        """Обработка событий"""
+        """Обработка событий - интеграция с новой архитектурой"""
         try:
             if event_type == "entity_created":
                 return self._handle_entity_created(event_data)
@@ -237,6 +374,18 @@ class EmotionSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'entities_with_emotions': len(self.emotional_states),
+            'emotional_triggers': len(self.emotional_triggers),
+            'total_emotions': self.system_stats['total_emotions'],
+            'stats': self.system_stats
+        }
     
     def _setup_emotion_system(self) -> None:
         """Настройка системы эмоций"""

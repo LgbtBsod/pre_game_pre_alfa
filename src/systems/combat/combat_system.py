@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Система боя - управление боевыми взаимодействиями между сущностями
+Интегрирована с новой модульной архитектурой
 """
 
 import logging
@@ -9,7 +10,10 @@ import random
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem
+from ...core.architecture import Priority, LifecycleState
+from ...core.state_manager import StateManager, StateType, StateScope
+from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     DamageType, CombatState, AttackType, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -55,25 +59,27 @@ class CombatAction:
     timestamp: float
     data: Dict[str, Any] = field(default_factory=dict)
 
-class CombatSystem(ISystem):
-    """Система управления боевыми взаимодействиями"""
+class CombatSystem(BaseGameSystem):
+    """Система управления боевыми взаимодействиями - интегрирована с новой архитектурой"""
     
     def __init__(self):
-        self._system_name = "combat"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("combat", Priority.HIGH)
         
-        # Активные бои
+        # Интеграция с новой архитектурой
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        self.event_bus = None
+        
+        # Активные бои (теперь управляются через RepositoryManager)
         self.active_combats: Dict[str, Dict[str, Any]] = {}
         
-        # Боевые статистики сущностей
+        # Боевые статистики сущностей (теперь управляются через RepositoryManager)
         self.entity_combat_stats: Dict[str, CombatStats] = {}
         
-        # История боевых действий
+        # История боевых действий (теперь управляется через RepositoryManager)
         self.combat_history: List[CombatAction] = []
         
-        # Настройки системы
+        # Настройки системы (теперь управляются через StateManager)
         self.combat_settings = {
             'max_active_combats': SYSTEM_LIMITS["max_active_combats"],
             'combat_timeout': TIME_CONSTANTS["combat_timeout"],
@@ -82,7 +88,7 @@ class CombatSystem(ISystem):
             'gold_multiplier': 1.0
         }
         
-        # Статистика системы
+        # Статистика системы (теперь управляется через StateManager)
         self.system_stats = {
             'active_combats_count': 0,
             'combats_started': 0,
@@ -93,45 +99,82 @@ class CombatSystem(ISystem):
             'update_time': 0.0
         }
         
-        logger.info("Система боя инициализирована")
-    
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
+        logger.info("Система боя инициализирована с новой архитектурой")
     
     def initialize(self) -> bool:
-        """Инициализация системы боя"""
+        """Инициализация системы боя с новой архитектурой"""
         try:
             logger.info("Инициализация системы боя...")
+            
+            # Инициализация базового компонента
+            if not super().initialize():
+                return False
             
             # Настраиваем систему
             self._setup_combat_system()
             
-            self._system_state = SystemState.READY
+            # Регистрируем состояния в StateManager
+            self._register_states()
+            
+            # Регистрируем репозитории в RepositoryManager
+            self._register_repositories()
+            
             logger.info("Система боя успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы боя: {e}")
-            self._system_state = SystemState.ERROR
+            return False
+    
+    def start(self) -> bool:
+        """Запуск системы боя"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстанавливаем данные из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Система боя запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы боя: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы боя"""
+        try:
+            # Сохраняем данные в репозитории
+            self._save_to_repositories()
+            
+            return super().stop()
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы боя: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы боя"""
+        try:
+            # Сохраняем финальные данные
+            self._save_to_repositories()
+            
+            # Очищаем все данные
+            self.active_combats.clear()
+            self.entity_combat_stats.clear()
+            self.combat_history.clear()
+            
+            return super().destroy()
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения системы боя: {e}")
             return False
     
     def update(self, delta_time: float) -> bool:
         """Обновление системы боя"""
         try:
-            if self._system_state != SystemState.READY:
+            if not super().update(delta_time):
                 return False
             
             start_time = time.time()
@@ -139,11 +182,14 @@ class CombatSystem(ISystem):
             # Обновляем активные бои
             self._update_active_combats(delta_time)
             
-            # Проверяем таймауты
+            # Проверяем таймауты боев
             self._check_combat_timeouts()
             
             # Обновляем статистику системы
             self._update_system_stats()
+            
+            # Обновляем состояния в StateManager
+            self._update_states()
             
             self.system_stats['update_time'] = time.time() - start_time
             
@@ -153,62 +199,163 @@ class CombatSystem(ISystem):
             logger.error(f"Ошибка обновления системы боя: {e}")
             return False
     
-    def pause(self) -> bool:
-        """Приостановка системы боя"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система боя приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы боя: {e}")
-            return False
+    def _register_states(self) -> None:
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "combat_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.combat_settings
+        )
+        
+        self.state_manager.register_container(
+            "combat_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния боев
+        self.state_manager.register_container(
+            "active_combats",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы боя зарегистрированы")
     
-    def resume(self) -> bool:
-        """Возобновление системы боя"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система боя возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы боя: {e}")
-            return False
+    def _register_repositories(self) -> None:
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий активных боев
+        self.repository_manager.register_repository(
+            "active_combats",
+            DataType.DYNAMIC_DATA,
+            StorageType.MEMORY,
+            self.active_combats
+        )
+        
+        # Регистрируем репозиторий боевых статистик
+        self.repository_manager.register_repository(
+            "entity_combat_stats",
+            DataType.ENTITY_DATA,
+            StorageType.MEMORY,
+            self.entity_combat_stats
+        )
+        
+        # Регистрируем репозиторий истории боев
+        self.repository_manager.register_repository(
+            "combat_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.combat_history
+        )
+        
+        logger.info("Репозитории системы боя зарегистрированы")
     
-    def cleanup(self) -> bool:
-        """Очистка системы боя"""
+    def _restore_from_repositories(self) -> None:
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+        
         try:
-            logger.info("Очистка системы боя...")
+            # Восстанавливаем активные бои
+            combats_repo = self.repository_manager.get_repository("active_combats")
+            if combats_repo:
+                self.active_combats = combats_repo.get_all()
             
-            # Завершаем все активные бои
-            for combat_id in list(self.active_combats.keys()):
-                self._end_combat(combat_id, "system_cleanup")
+            # Восстанавливаем боевые статистики
+            stats_repo = self.repository_manager.get_repository("entity_combat_stats")
+            if stats_repo:
+                self.entity_combat_stats = stats_repo.get_all()
             
-            # Очищаем данные
-            self.active_combats.clear()
-            self.entity_combat_stats.clear()
-            self.combat_history.clear()
+            # Восстанавливаем историю
+            history_repo = self.repository_manager.get_repository("combat_history")
+            if history_repo:
+                self.combat_history = history_repo.get_all()
             
-            # Сбрасываем статистику
-            self.system_stats = {
-                'active_combats_count': 0,
-                'combats_started': 0,
-                'combats_completed': 0,
-                'total_damage_dealt': 0,
-                'total_experience_gained': 0,
-                'total_gold_gained': 0,
-                'update_time': 0.0
-            }
-            
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система боя очищена")
-            return True
+            logger.info("Данные системы боя восстановлены из репозиториев")
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы боя: {e}")
-            return False
+            logger.error(f"Ошибка восстановления данных из репозиториев: {e}")
+    
+    def _save_to_repositories(self) -> None:
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+        
+        try:
+            # Сохраняем активные бои
+            combats_repo = self.repository_manager.get_repository("active_combats")
+            if combats_repo:
+                combats_repo.clear()
+                for combat_id, combat_data in self.active_combats.items():
+                    combats_repo.create(combat_id, combat_data)
+            
+            # Сохраняем боевые статистики
+            stats_repo = self.repository_manager.get_repository("entity_combat_stats")
+            if stats_repo:
+                stats_repo.clear()
+                for entity_id, stats in self.entity_combat_stats.items():
+                    stats_repo.create(entity_id, stats)
+            
+            # Сохраняем историю
+            history_repo = self.repository_manager.get_repository("combat_history")
+            if history_repo:
+                history_repo.clear()
+                for i, action in enumerate(self.combat_history):
+                    history_repo.create(f"action_{i}", action)
+            
+            logger.info("Данные системы боя сохранены в репозитории")
+            
+        except Exception as e:
+            logger.error(f"Ошибка сохранения данных в репозитории: {e}")
+    
+    def _update_states(self) -> None:
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+        
+        try:
+            # Обновляем статистику системы
+            self.state_manager.set_state_value("combat_system_stats", self.system_stats)
+            
+            # Обновляем активные бои
+            self.state_manager.set_state_value("active_combats", self.active_combats)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления состояний: {e}")
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        return {
+            **self.system_stats,
+            'active_combats': len(self.active_combats),
+            'entity_stats': len(self.entity_combat_stats),
+            'combat_history': len(self.combat_history),
+            'system_name': self.system_name,
+            'system_state': self.system_state.value,
+            'system_priority': self.system_priority.value
+        }
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.system_stats = {
+            'active_combats_count': 0,
+            'combats_started': 0,
+            'combats_completed': 0,
+            'total_damage_dealt': 0,
+            'total_experience_gained': 0,
+            'total_gold_gained': 0,
+            'update_time': 0.0
+        }
     
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
@@ -216,7 +363,6 @@ class CombatSystem(ISystem):
             'name': self.system_name,
             'state': self.system_state.value,
             'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
             'active_combats': len(self.active_combats),
             'entity_stats': len(self.entity_combat_stats),
             'combat_history': len(self.combat_history),

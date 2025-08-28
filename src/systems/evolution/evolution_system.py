@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Система эволюции - управление эволюционными процессами сущностей
+Интегрирована с новой модульной архитектурой
 """
 
 import logging
@@ -9,7 +10,10 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem
+from ...core.architecture import Priority, LifecycleState
+from ...core.state_manager import StateManager, StateType, StateScope
+from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     EvolutionStage, EvolutionType, GeneType, GeneRarity, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -52,28 +56,30 @@ class EvolutionTrigger:
     cooldown: float = 0.0
     last_triggered: float = 0.0
 
-class EvolutionSystem(ISystem):
-    """Система управления эволюцией"""
+class EvolutionSystem(BaseGameSystem):
+    """Система управления эволюцией - интегрирована с новой архитектурой"""
     
     def __init__(self):
-        self._system_name = "evolution"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("evolution", Priority.HIGH)
         
-        # Прогресс эволюции сущностей
+        # Интеграция с новой архитектурой
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        self.event_bus = None
+        
+        # Прогресс эволюции сущностей (теперь управляется через RepositoryManager)
         self.evolution_progress: Dict[str, EvolutionProgress] = {}
         
-        # Гены сущностей
+        # Гены сущностей (теперь управляются через RepositoryManager)
         self.entity_genes: Dict[str, List[Gene]] = {}
         
-        # Триггеры эволюции
+        # Триггеры эволюции (теперь управляются через RepositoryManager)
         self.evolution_triggers: List[EvolutionTrigger] = []
         
-        # История эволюции
+        # История эволюции (теперь управляется через RepositoryManager)
         self.evolution_history: List[Dict[str, Any]] = []
         
-        # Настройки системы
+        # Настройки системы (теперь управляются через StateManager)
         self.system_settings = {
             'max_evolution_stage': EvolutionStage.LEGENDARY,
             'base_evolution_points': 100,
@@ -83,7 +89,7 @@ class EvolutionSystem(ISystem):
             'evolution_cooldown': TIME_CONSTANTS["evolution_cooldown"]
         }
         
-        # Статистика системы
+        # Статистика системы (теперь управляется через StateManager)
         self.system_stats = {
             'entities_evolving': 0,
             'total_evolutions': 0,
@@ -93,23 +99,72 @@ class EvolutionSystem(ISystem):
             'update_time': 0.0
         }
         
-        logger.info("Система эволюции инициализирована")
+        logger.info("Система эволюции инициализирована с новой архитектурой")
     
     @property
     def system_name(self) -> str:
-        return self._system_name
+        return self.component_id
     
     @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
+    def system_priority(self) -> Priority:
+        return self.priority
     
     @property
-    def system_state(self) -> SystemState:
-        return self._system_state
+    def system_state(self) -> LifecycleState:
+        return self.state
     
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
+    def set_architecture_components(self, state_manager: StateManager, 
+                                  repository_manager: RepositoryManager, 
+                                  event_bus=None) -> None:
+        """Установка компонентов архитектуры"""
+        self.state_manager = state_manager
+        self.repository_manager = repository_manager
+        self.event_bus = event_bus
+        
+        # Регистрируем состояния системы
+        if self.state_manager:
+            self._register_system_states()
+        
+        # Регистрируем репозитории системы
+        if self.repository_manager:
+            self._register_system_repositories()
+    
+    def _register_system_states(self) -> None:
+        """Регистрация состояний системы"""
+        try:
+            # Регистрируем настройки системы
+            self.register_system_state('system_settings', self.system_settings, StateType.SYSTEM)
+            
+            # Регистрируем статистику системы
+            self.register_system_state('system_stats', self.system_stats, StateType.SYSTEM)
+            
+            # Регистрируем состояние системы
+            self.register_system_state('system_state', 'ready', StateType.SYSTEM)
+            
+            logger.info("Состояния системы эволюции зарегистрированы")
+            
+        except Exception as e:
+            logger.error(f"Ошибка регистрации состояний системы эволюции: {e}")
+    
+    def _register_system_repositories(self) -> None:
+        """Регистрация репозиториев системы"""
+        try:
+            # Регистрируем репозиторий прогресса эволюции
+            self.register_system_repository('evolution_progress', DataType.ENTITY_DATA, StorageType.MEMORY)
+            
+            # Регистрируем репозиторий генов
+            self.register_system_repository('entity_genes', DataType.ENTITY_DATA, StorageType.MEMORY)
+            
+            # Регистрируем репозиторий триггеров эволюции
+            self.register_system_repository('evolution_triggers', DataType.SYSTEM_DATA, StorageType.MEMORY)
+            
+            # Регистрируем репозиторий истории эволюции
+            self.register_system_repository('evolution_history', DataType.SYSTEM_DATA, StorageType.MEMORY)
+            
+            logger.info("Репозитории системы эволюции зарегистрированы")
+            
+        except Exception as e:
+            logger.error(f"Ошибка регистрации репозиториев системы эволюции: {e}")
     
     def initialize(self) -> bool:
         """Инициализация системы эволюции"""
@@ -122,19 +177,49 @@ class EvolutionSystem(ISystem):
             # Создаем базовые триггеры эволюции
             self._create_base_triggers()
             
-            self._system_state = SystemState.READY
+            # Обновляем состояние системы
+            if self.state_manager:
+                self.state_manager.update_state('evolution', 'system_state', 'ready')
+            
+            self.state = LifecycleState.READY
             logger.info("Система эволюции успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы эволюции: {e}")
-            self._system_state = SystemState.ERROR
+            self.state = LifecycleState.ERROR
+            return False
+    
+    def start(self) -> bool:
+        """Запуск системы эволюции"""
+        try:
+            if self.state != LifecycleState.READY:
+                return False
+            
+            self.state = LifecycleState.RUNNING
+            logger.info("Система эволюции запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы эволюции: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы эволюции"""
+        try:
+            if self.state == LifecycleState.RUNNING:
+                self.state = LifecycleState.STOPPED
+                logger.info("Система эволюции остановлена")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы эволюции: {e}")
             return False
     
     def update(self, delta_time: float) -> bool:
         """Обновление системы эволюции"""
         try:
-            if self._system_state != SystemState.READY:
+            if self.state != LifecycleState.RUNNING:
                 return False
             
             start_time = time.time()
@@ -151,42 +236,25 @@ class EvolutionSystem(ISystem):
             # Обновляем статистику системы
             self._update_system_stats()
             
-            self.system_stats['update_time'] = time.time() - start_time
+            # Обновляем время обновления в статистике
+            update_time = time.time() - start_time
+            self.system_stats['update_time'] = update_time
+            
+            # Обновляем статистику через StateManager
+            if self.state_manager:
+                self.state_manager.update_state('evolution', 'system_stats', self.system_stats)
             
             return True
             
         except Exception as e:
             logger.error(f"Ошибка обновления системы эволюции: {e}")
+            self.system_stats['errors_count'] += 1
             return False
     
-    def pause(self) -> bool:
-        """Приостановка системы эволюции"""
+    def destroy(self) -> bool:
+        """Уничтожение системы эволюции"""
         try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система эволюции приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы эволюции: {e}")
-            return False
-    
-    def resume(self) -> bool:
-        """Возобновление системы эволюции"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система эволюции возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы эволюции: {e}")
-            return False
-    
-    def cleanup(self) -> bool:
-        """Очистка системы эволюции"""
-        try:
-            logger.info("Очистка системы эволюции...")
+            logger.info("Уничтожение системы эволюции...")
             
             # Очищаем все данные
             self.evolution_progress.clear()
@@ -204,13 +272,34 @@ class EvolutionSystem(ISystem):
                 'update_time': 0.0
             }
             
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система эволюции очищена")
+            self.state = LifecycleState.DESTROYED
+            logger.info("Система эволюции уничтожена")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы эволюции: {e}")
+            logger.error(f"Ошибка уничтожения системы эволюции: {e}")
             return False
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        try:
+            self.system_stats = {
+                'entities_evolving': 0,
+                'total_evolutions': 0,
+                'mutations_occurred': 0,
+                'adaptations_occurred': 0,
+                'genes_activated': 0,
+                'update_time': 0.0
+            }
+            
+            # Обновляем статистику через StateManager
+            if self.state_manager:
+                self.state_manager.update_state('evolution', 'system_stats', self.system_stats)
+            
+            logger.info("Статистика системы эволюции сброшена")
+            
+        except Exception as e:
+            logger.error(f"Ошибка сброса статистики системы эволюции: {e}")
     
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
@@ -218,7 +307,6 @@ class EvolutionSystem(ISystem):
             'name': self.system_name,
             'state': self.system_state.value,
             'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
             'entities_evolving': len(self.evolution_progress),
             'total_genes': sum(len(genes) for genes in self.entity_genes.values()),
             'evolution_triggers': len(self.evolution_triggers),
@@ -226,7 +314,7 @@ class EvolutionSystem(ISystem):
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
-        """Обработка событий"""
+        """Обработка событий - интеграция с новой архитектурой"""
         try:
             if event_type == "entity_created":
                 return self._handle_entity_created(event_data)
@@ -454,7 +542,7 @@ class EvolutionSystem(ISystem):
                 for gene_data in initial_genes:
                     gene = Gene(
                         gene_id=f"custom_{int(time.time() * 1000)}",
-                        gene_type=GeneType(gene_data.get('gene_type', GeneType.PHYSICAL.value)),
+                        gene_type=GeneType(gene_data.get('gene_type', GeneType.STRENGTH.value)),
                         rarity=GeneRarity(gene_data.get('rarity', GeneRarity.COMMON.value)),
                         strength=gene_data.get('strength', 1.0),
                         mutation_chance=gene_data.get('mutation_chance', 0.01),
@@ -530,14 +618,14 @@ class EvolutionSystem(ISystem):
             physical_genes = [
                 Gene(
                     gene_id=f"strength_{entity_id}",
-                    gene_type=GeneType.PHYSICAL,
+                    gene_type=GeneType.STRENGTH,
                     rarity=GeneRarity.COMMON,
                     strength=1.0,
                     mutation_chance=0.01
                 ),
                 Gene(
                     gene_id=f"agility_{entity_id}",
-                    gene_type=GeneType.PHYSICAL,
+                    gene_type=GeneType.AGILITY,
                     rarity=GeneRarity.COMMON,
                     strength=1.0,
                     mutation_chance=0.01
@@ -548,14 +636,14 @@ class EvolutionSystem(ISystem):
             mental_genes = [
                 Gene(
                     gene_id=f"intelligence_{entity_id}",
-                    gene_type=GeneType.MENTAL,
+                    gene_type=GeneType.INTELLIGENCE,
                     rarity=GeneRarity.COMMON,
                     strength=1.0,
                     mutation_chance=0.01
                 ),
                 Gene(
                     gene_id=f"wisdom_{entity_id}",
-                    gene_type=GeneType.MENTAL,
+                    gene_type=GeneType.WISDOM,
                     rarity=GeneRarity.COMMON,
                     strength=1.0,
                     mutation_chance=0.01
@@ -566,7 +654,7 @@ class EvolutionSystem(ISystem):
             energy_genes = [
                 Gene(
                     gene_id=f"vitality_{entity_id}",
-                    gene_type=GeneType.ENERGY,
+                    gene_type=GeneType.VITALITY,
                     rarity=GeneRarity.COMMON,
                     strength=1.0,
                     mutation_chance=0.01
@@ -577,7 +665,7 @@ class EvolutionSystem(ISystem):
             special_genes = [
                 Gene(
                     gene_id=f"adaptation_{entity_id}",
-                    gene_type=GeneType.SPECIAL,
+                    gene_type=GeneType.ADAPTATION,
                     rarity=GeneRarity.UNCOMMON,
                     strength=1.2,
                     mutation_chance=0.02
@@ -764,7 +852,7 @@ class EvolutionSystem(ISystem):
             # Создаем адаптационный ген
             adaptation_gene = Gene(
                 gene_id=f"adaptation_{int(time.time() * 1000)}",
-                gene_type=GeneType.SPECIAL,
+                gene_type=GeneType.ADAPTATION,
                 rarity=GeneRarity.UNCOMMON,
                 strength=1.3,
                 mutation_chance=0.015,
@@ -912,3 +1000,5 @@ class EvolutionSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка деактивации гена {gene_id} у {entity_id}: {e}")
             return False
+    
+

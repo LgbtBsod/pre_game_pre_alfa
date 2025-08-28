@@ -9,7 +9,7 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     SkillType, SkillCategory, DamageType, StatType, TriggerType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
@@ -49,6 +49,7 @@ class Skill:
     cooldown: SkillCooldown = field(default_factory=SkillCooldown)
     mana_cost: int = 0
     health_cost: int = 0
+    stamina_cost: int = 0
     damage: int = 0
     damage_type: Optional[DamageType] = None
     range: float = 1.0
@@ -83,14 +84,11 @@ class Skill:
             logger.error(f"Ошибка проверки возможности использования навыка {self.skill_id}: {e}")
             return False
 
-class SkillSystem(ISystem):
+class SkillSystem(BaseGameSystem):
     """Система управления навыками"""
     
     def __init__(self):
-        self._system_name = "skills"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("skills", Priority.HIGH)
         
         # Зарегистрированные навыки
         self.registered_skills: Dict[str, Skill] = {}
@@ -125,44 +123,80 @@ class SkillSystem(ISystem):
         
         logger.info("Система навыков инициализирована")
     
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
-    
     def initialize(self) -> bool:
         """Инициализация системы навыков"""
         try:
+            if not super().initialize():
+                return False
+                
             logger.info("Инициализация системы навыков...")
             
             # Регистрируем базовые навыки
             self._register_base_skills()
             
-            self._system_state = SystemState.READY
+            # Регистрация состояний и репозиториев
+            self._register_states()
+            self._register_repositories()
+            
             logger.info("Система навыков успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы навыков: {e}")
-            self._system_state = SystemState.ERROR
             return False
     
-    def update(self, delta_time: float) -> bool:
+    def start(self) -> bool:
+        """Запуск системы"""
+        try:
+            if not super().start():
+                return False
+            
+            # Восстановление данных из репозиториев
+            self._restore_from_repositories()
+            
+            logger.info("Система навыков запущена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы навыков: {e}")
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка системы"""
+        try:
+            # Сохранение данных в репозитории
+            self._save_to_repositories()
+            
+            if not super().stop():
+                return False
+            
+            logger.info("Система навыков остановлена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки системы навыков: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы"""
+        try:
+            # Сохранение данных в репозитории
+            self._save_to_repositories()
+            
+            if not super().destroy():
+                return False
+            
+            logger.info("Система навыков уничтожена")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения системы навыков: {e}")
+            return False
+    
+    def update(self, delta_time: float) -> None:
         """Обновление системы навыков"""
         try:
-            if self._system_state != SystemState.READY:
-                return False
+            super().update(delta_time)
             
             start_time = time.time()
             
@@ -174,76 +208,266 @@ class SkillSystem(ISystem):
             
             self.system_stats['update_time'] = time.time() - start_time
             
-            return True
+            # Обновление состояний
+            self._update_states()
             
         except Exception as e:
             logger.error(f"Ошибка обновления системы навыков: {e}")
-            return False
     
-    def pause(self) -> bool:
-        """Приостановка системы навыков"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система навыков приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы навыков: {e}")
-            return False
-    
-    def resume(self) -> bool:
-        """Возобновление системы навыков"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система навыков возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы навыков: {e}")
-            return False
-    
-    def cleanup(self) -> bool:
-        """Очистка системы навыков"""
-        try:
-            logger.info("Очистка системы навыков...")
+    def _register_states(self):
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
             
-            # Очищаем все данные
-            self.registered_skills.clear()
-            self.entity_skills.clear()
-            self.skill_cooldowns.clear()
-            self.skill_history.clear()
+        try:
+            # Настройки системы навыков
+            self.state_manager.register_state(
+                "skill_system_settings",
+                self.system_settings
+            )
             
-            # Сбрасываем статистику
-            self.system_stats = {
-                'registered_skills_count': 0,
-                'total_entity_skills': 0,
-                'skills_used_today': 0,
-                'skills_learned_today': 0,
-                'skills_upgraded_today': 0,
-                'update_time': 0.0
-            }
+            # Статистика системы навыков
+            self.state_manager.register_state(
+                "skill_system_stats",
+                self.system_stats
+            )
             
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система навыков очищена")
-            return True
+            # Зарегистрированные навыки
+            self.state_manager.register_state(
+                "registered_skills",
+                {skill_id: {
+                    "name": skill.name,
+                    "skill_type": skill.skill_type.value,
+                    "category": skill.category.value,
+                    "level": skill.level,
+                    "max_level": skill.max_level
+                } for skill_id, skill in self.registered_skills.items()}
+            )
+            
+            # Навыки сущностей
+            self.state_manager.register_state(
+                "entity_skills",
+                {entity_id: {
+                    skill_id: {
+                        "name": skill.name,
+                        "level": skill.level,
+                        "cooldown": skill.cooldown.current_cooldown
+                    } for skill_id, skill in skills.items()
+                } for entity_id, skills in self.entity_skills.items()}
+            )
+            
+            logger.debug("Состояния системы навыков зарегистрированы")
             
         except Exception as e:
-            logger.error(f"Ошибка очистки системы навыков: {e}")
-            return False
+            logger.warning(f"Ошибка регистрации состояний системы навыков: {e}")
     
-    def get_system_info(self) -> Dict[str, Any]:
-        """Получение информации о системе"""
-        return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
-            'registered_skills': len(self.registered_skills),
-            'entities_with_skills': len(self.entity_skills),
-            'total_entity_skills': self.system_stats['total_entity_skills'],
-            'stats': self.system_stats
+    def _register_repositories(self):
+        """Регистрация репозиториев в RepositoryManager"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Зарегистрированные навыки
+            self.repository_manager.register_repository(
+                "registered_skills",
+                "registered_skills",
+                "memory"
+            )
+            
+            # Навыки сущностей
+            self.repository_manager.register_repository(
+                "entity_skills",
+                "entity_skills",
+                "memory"
+            )
+            
+            # Перезарядки навыков
+            self.repository_manager.register_repository(
+                "skill_cooldowns",
+                "skill_cooldowns",
+                "memory"
+            )
+            
+            # История навыков
+            self.repository_manager.register_repository(
+                "skill_history",
+                "skill_history",
+                "memory"
+            )
+            
+            logger.debug("Репозитории системы навыков зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации репозиториев системы навыков: {e}")
+    
+    def _restore_from_repositories(self):
+        """Восстановление данных из репозиториев"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Восстанавливаем зарегистрированные навыки
+            skills_data = self.repository_manager.get_repository("registered_skills").get_all()
+            if skills_data:
+                for skill_data in skills_data:
+                    if skill_data.get("skill_id"):
+                        self.registered_skills[skill_data["skill_id"]] = Skill(**skill_data)
+                        self.system_stats['registered_skills_count'] += 1
+            
+            # Восстанавливаем навыки сущностей
+            entity_skills_data = self.repository_manager.get_repository("entity_skills").get_all()
+            if entity_skills_data:
+                for entity_data in entity_skills_data:
+                    if entity_data.get("entity_id") and entity_data.get("skills"):
+                        entity_id = entity_data["entity_id"]
+                        self.entity_skills[entity_id] = {}
+                        for skill_data in entity_data["skills"]:
+                            if skill_data.get("skill_id"):
+                                self.entity_skills[entity_id][skill_data["skill_id"]] = Skill(**skill_data)
+                                self.system_stats['total_entity_skills'] += 1
+            
+            # Восстанавливаем перезарядки
+            cooldowns_data = self.repository_manager.get_repository("skill_cooldowns").get_all()
+            if cooldowns_data:
+                for cooldown_data in cooldowns_data:
+                    if cooldown_data.get("entity_id") and cooldown_data.get("skill_id"):
+                        entity_id = cooldown_data["entity_id"]
+                        skill_id = cooldown_data["skill_id"]
+                        if entity_id not in self.skill_cooldowns:
+                            self.skill_cooldowns[entity_id] = {}
+                        self.skill_cooldowns[entity_id][skill_id] = SkillCooldown(**cooldown_data)
+            
+            # Восстанавливаем историю
+            history_data = self.repository_manager.get_repository("skill_history").get_all()
+            if history_data:
+                for hist_data in history_data:
+                    if hist_data.get("timestamp"):
+                        self.skill_history.append(hist_data)
+            
+            logger.debug("Данные системы навыков восстановлены из репозиториев")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка восстановления данных системы навыков: {e}")
+    
+    def _save_to_repositories(self):
+        """Сохранение данных в репозитории"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Сохраняем зарегистрированные навыки
+            skills_repo = self.repository_manager.get_repository("registered_skills")
+            skills_repo.clear()
+            for skill_id, skill in self.registered_skills.items():
+                skills_repo.create({
+                    "skill_id": skill.skill_id,
+                    "name": skill.name,
+                    "description": skill.description,
+                    "skill_type": skill.skill_type.value,
+                    "category": skill.category.value,
+                    "level": skill.level,
+                    "max_level": skill.max_level,
+                    "mana_cost": skill.mana_cost,
+                    "health_cost": skill.health_cost,
+                    "damage": skill.damage,
+                    "damage_type": skill.damage_type.value if skill.damage_type else None,
+                    "range": skill.range,
+                    "area_effect": skill.area_effect,
+                    "effects": skill.effects,
+                    "icon": skill.icon,
+                    "sound": skill.sound,
+                    "animation": skill.animation
+                })
+            
+            # Сохраняем навыки сущностей
+            entity_skills_repo = self.repository_manager.get_repository("entity_skills")
+            entity_skills_repo.clear()
+            for entity_id, skills in self.entity_skills.items():
+                skills_data = []
+                for skill_id, skill in skills.items():
+                    skills_data.append({
+                        "skill_id": skill.skill_id,
+                        "name": skill.name,
+                        "level": skill.level,
+                        "max_level": skill.max_level
+                    })
+                entity_skills_repo.create({
+                    "entity_id": entity_id,
+                    "skills": skills_data
+                })
+            
+            # Сохраняем перезарядки
+            cooldowns_repo = self.repository_manager.get_repository("skill_cooldowns")
+            cooldowns_repo.clear()
+            for entity_id, skill_cooldowns in self.skill_cooldowns.items():
+                for skill_id, cooldown in skill_cooldowns.items():
+                    cooldowns_repo.create({
+                        "entity_id": entity_id,
+                        "skill_id": skill_id,
+                        "base_cooldown": cooldown.base_cooldown,
+                        "current_cooldown": cooldown.current_cooldown,
+                        "cooldown_reduction": cooldown.cooldown_reduction,
+                        "last_used": cooldown.last_used
+                    })
+            
+            # Сохраняем историю
+            history_repo = self.repository_manager.get_repository("skill_history")
+            history_repo.clear()
+            for hist_entry in self.skill_history:
+                history_repo.create(hist_entry)
+            
+            logger.debug("Данные системы навыков сохранены в репозитории")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка сохранения данных системы навыков: {e}")
+    
+    def _update_states(self):
+        """Обновление состояний в StateManager"""
+        if not self.state_manager:
+            return
+            
+        try:
+            # Обновляем статистику
+            self.state_manager.set_state_value("skill_system_stats", self.system_stats)
+            
+            # Обновляем зарегистрированные навыки
+            self.state_manager.set_state_value("registered_skills", {
+                skill_id: {
+                    "name": skill.name,
+                    "skill_type": skill.skill_type.value,
+                    "category": skill.category.value,
+                    "level": skill.level,
+                    "max_level": skill.max_level
+                } for skill_id, skill in self.registered_skills.items()
+            })
+            
+            # Обновляем навыки сущностей
+            self.state_manager.set_state_value("entity_skills", {
+                entity_id: {
+                    skill_id: {
+                        "name": skill.name,
+                        "level": skill.level,
+                        "cooldown": skill.cooldown.current_cooldown
+                    } for skill_id, skill in skills.items()
+                } for entity_id, skills in self.entity_skills.items()
+            })
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления состояний системы навыков: {e}")
+    
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        return self.system_stats.copy()
+    
+    def reset_stats(self) -> None:
+        """Сброс статистики системы"""
+        self.system_stats = {
+            'registered_skills_count': 0,
+            'total_entity_skills': 0,
+            'skills_used_today': 0,
+            'skills_learned_today': 0,
+            'skills_upgraded_today': 0,
+            'update_time': 0.0
         }
     
     def handle_event(self, event_type: str, event_data: Any) -> bool:
@@ -262,6 +486,19 @@ class SkillSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка обработки события {event_type}: {e}")
             return False
+    
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'dependencies': self.dependencies,
+            'registered_skills': len(self.registered_skills),
+            'entities_with_skills': len(self.entity_skills),
+            'total_entity_skills': self.system_stats['total_entity_skills'],
+            'stats': self.system_stats
+        }
    
     def _update_skill_cooldowns(self, delta_time: float) -> None:
         """Обновление перезарядок навыков"""

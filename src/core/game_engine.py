@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Game Engine - Основной игровой движок на Panda3D
-Отвечает только за координацию всех систем и управление жизненным циклом игры
+Улучшенная архитектура с модульным подходом
 """
 
 import time
@@ -15,6 +15,12 @@ from direct.showbase.ShowBase import ShowBase
 from direct.task import Task
 from panda3d.core import WindowProperties
 
+# Новая архитектура
+from .architecture import ComponentManager, EventBus, Priority, ComponentType, LifecycleState
+from .state_manager import StateManager, StateType
+from .repository import RepositoryManager, DataType, StorageType
+
+# Существующие системы (для обратной совместимости)
 from .interfaces import SystemState, ISystemManager, IEventSystem
 from .system_manager import SystemManager
 from .event_system import EventSystem
@@ -29,7 +35,7 @@ logger = logging.getLogger(__name__)
 class GameEngine(ShowBase):
     """
     Основной игровой движок на Panda3D
-    Координирует все системы и управляет жизненным циклом игры
+    Улучшенная архитектура с модульным подходом
     """
     
     def __init__(self, config: Dict[str, Any]):
@@ -50,17 +56,21 @@ class GameEngine(ShowBase):
         self.frame_count = 0
         self.start_time = time.time()
         
-        # Новая архитектура - менеджеры систем
+        # Новая архитектура - основные менеджеры
+        self.component_manager: Optional[ComponentManager] = None
+        self.event_bus: Optional[EventBus] = None
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        
+        # Существующие менеджеры (для обратной совместимости)
         self.system_manager: Optional[SystemManager] = None
         self.event_system: Optional[EventSystem] = None
         self.system_factory: Optional[SystemFactory] = None
-        
-        # Существующие менеджеры (для обратной совместимости)
         self.scene_manager: Optional[SceneManager] = None
         self.resource_manager: Optional[ResourceManager] = None
         self.performance_manager: Optional[PerformanceManager] = None
         
-        logger.info("Игровой движок Panda3D инициализирован")
+        logger.info("Игровой движок Panda3D с улучшенной архитектурой инициализирован")
     
     def initialize(self) -> bool:
         """Инициализация игрового движка"""
@@ -121,42 +131,117 @@ class GameEngine(ShowBase):
             return False
     
     def _initialize_managers(self) -> bool:
-        """Инициализация менеджеров систем в правильном порядке"""
+        """Инициализация менеджеров в правильном порядке"""
         try:
-            # 1. Менеджер конфигурации (первый)
+            # 1. Создание основных менеджеров новой архитектуры
+            self._create_new_architecture_managers()
+            
+            # 2. Инициализация новой архитектуры
+            if not self._initialize_new_architecture():
+                logger.error("Не удалось инициализировать новую архитектуру")
+                return False
+            
+            # 3. Инициализация существующих менеджеров (для обратной совместимости)
+            if not self._initialize_legacy_managers():
+                logger.error("Не удалось инициализировать существующие менеджеры")
+                return False
+            
+            # 4. Интеграция старой и новой архитектуры
+            if not self._integrate_architectures():
+                logger.error("Не удалось интегрировать архитектуры")
+                return False
+            
+            logger.info("Все менеджеры успешно инициализированы")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации менеджеров: {e}")
+            return False
+    
+    def _create_new_architecture_managers(self) -> None:
+        """Создание менеджеров новой архитектуры"""
+        # 1. Шина событий (критический приоритет)
+        self.event_bus = EventBus()
+        
+        # 2. Менеджер состояний (высокий приоритет)
+        self.state_manager = StateManager()
+        
+        # 3. Менеджер репозиториев (высокий приоритет)
+        self.repository_manager = RepositoryManager()
+        
+        # 4. Менеджер компонентов (критический приоритет)
+        self.component_manager = ComponentManager()
+        
+        logger.info("Менеджеры новой архитектуры созданы")
+    
+    def _initialize_new_architecture(self) -> bool:
+        """Инициализация новой архитектуры"""
+        try:
+            # Регистрируем основные компоненты в правильном порядке
+            self.component_manager.register_component(self.event_bus)
+            self.component_manager.register_component(self.state_manager)
+            self.component_manager.register_component(self.repository_manager)
+            self.component_manager.register_component(self.component_manager)
+            
+            # Устанавливаем зависимости
+            self.component_manager.add_dependency("state_manager", "event_bus")
+            self.component_manager.add_dependency("repository_manager", "event_bus")
+            self.component_manager.add_dependency("component_manager", "event_bus")
+            
+            # Инициализируем все компоненты
+            if not self.component_manager.initialize_all():
+                logger.error("Не удалось инициализировать компоненты новой архитектуры")
+                return False
+            
+            # Запускаем компоненты
+            if not self.component_manager.start_all():
+                logger.error("Не удалось запустить компоненты новой архитектуры")
+                return False
+            
+            logger.info("Новая архитектура успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации новой архитектуры: {e}")
+            return False
+    
+    def _initialize_legacy_managers(self) -> bool:
+        """Инициализация существующих менеджеров"""
+        try:
+            # 1. Менеджер конфигурации
             self.config_manager = ConfigManager()
             if not self.config_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер конфигурации")
                 return False
             
-            # 2. Система событий (второй)
+            # 2. Система событий (существующая)
             self.event_system = EventSystem()
             if not self.event_system.initialize():
                 logger.error("Не удалось инициализировать систему событий")
                 return False
             
-            # 3. Менеджер ресурсов (третий)
+            # 3. Менеджер ресурсов
             self.resource_manager = ResourceManager()
             if not self.resource_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер ресурсов")
                 return False
             
-            # 4. Менеджер производительности (четвертый)
+            # 4. Менеджер производительности
             self.performance_manager = PerformanceManager()
             if not self.performance_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер производительности")
                 return False
             
-            # 5. Менеджер сцен (пятый)
+            # 5. Менеджер сцен
             self.scene_manager = SceneManager(self.render, self.resource_manager)
             if not self.scene_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер сцен")
                 return False
             
-            # 6. Фабрика систем (шестой)
+            # 6. Фабрика систем
             self.system_factory = SystemFactory(self.config_manager, self.event_system, None)
             
-            # 7. Менеджер систем (седьмой)
+            # 7. Менеджер систем
             self.system_manager = SystemManager(self.event_system)
             
             # 8. Создание и инициализация всех систем через фабрику
@@ -167,17 +252,66 @@ class GameEngine(ShowBase):
             # 9. Добавляем существующие системы в менеджер
             self._add_existing_systems_to_manager()
             
-            # 10. Инициализация менеджера систем (последний)
+            # 10. Инициализация менеджера систем
             if not self.system_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер систем")
                 return False
             
-            logger.info("Все менеджеры успешно инициализированы")
+            logger.info("Существующие менеджеры успешно инициализированы")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации менеджеров: {e}")
+            logger.error(f"Ошибка инициализации существующих менеджеров: {e}")
             return False
+    
+    def _integrate_architectures(self) -> bool:
+        """Интеграция старой и новой архитектуры"""
+        try:
+            # Связываем шину событий с системой событий
+            if self.event_bus and self.event_system:
+                # Здесь можно добавить мост между системами событий
+                pass
+            
+            # Связываем менеджер состояний с системами
+            if self.state_manager:
+                # Регистрируем состояния для существующих систем
+                self._register_legacy_states()
+            
+            # Связываем менеджер репозиториев с системами
+            if self.repository_manager:
+                # Регистрируем репозитории для существующих данных
+                self._register_legacy_repositories()
+            
+            logger.info("Архитектуры успешно интегрированы")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка интеграции архитектур: {e}")
+            return False
+    
+    def _register_legacy_states(self) -> None:
+        """Регистрация состояний для существующих систем"""
+        # Состояния для игрового движка
+        self.state_manager.register_state("engine_running", False, StateType.SYSTEM)
+        self.state_manager.register_state("engine_paused", False, StateType.SYSTEM)
+        self.state_manager.register_state("current_scene", "menu", StateType.SYSTEM)
+        
+        # Состояния для производительности
+        self.state_manager.register_state("fps", 0.0, StateType.SYSTEM)
+        self.state_manager.register_state("frame_count", 0, StateType.SYSTEM)
+        self.state_manager.register_state("memory_usage", 0.0, StateType.SYSTEM)
+        
+        logger.info("Состояния для существующих систем зарегистрированы")
+    
+    def _register_legacy_repositories(self) -> None:
+        """Регистрация репозиториев для существующих данных"""
+        # Репозитории для игровых данных
+        self.repository_manager.create_repository("legacy_entities", DataType.ENTITY)
+        self.repository_manager.create_repository("legacy_items", DataType.ITEM)
+        self.repository_manager.create_repository("legacy_skills", DataType.SKILL)
+        self.repository_manager.create_repository("legacy_effects", DataType.EFFECT)
+        
+        logger.info("Репозитории для существующих данных зарегистрированы")
     
     def _create_all_systems(self) -> bool:
         """Создание всех систем через фабрику"""
@@ -357,7 +491,7 @@ class GameEngine(ShowBase):
             self._cleanup()
     
     def _update_task(self, task):
-        """Задача обновления состояния игры"""
+        """Задача обновления состояния игры с новой архитектурой"""
         try:
             if not self.running:
                 return task.done
@@ -367,7 +501,23 @@ class GameEngine(ShowBase):
             self.last_frame_time = current_time
             frame_start = current_time
             
-            # Обновление всех систем через новый менеджер
+            # Обновление новой архитектуры
+            if self.component_manager:
+                arch_update_start = time.time()
+                self.component_manager.update_all(self.delta_time)
+                if self.performance_manager:
+                    from .performance_manager import PerformanceMetric
+                    self.performance_manager.record_metric(
+                        PerformanceMetric.EVENT_PROCESSING_TIME,
+                        (time.time() - arch_update_start) * 1000.0,
+                        "component_manager"
+                    )
+            
+            # Обновление состояний
+            if self.state_manager:
+                self._update_game_states()
+            
+            # Обновление всех систем через существующий менеджер (для обратной совместимости)
             if self.system_manager:
                 sys_update_start = time.time()
                 self.system_manager.update_all_systems(self.delta_time)
@@ -445,6 +595,27 @@ class GameEngine(ShowBase):
             if int(current_time) % 10 == 0:
                 logger.debug(f"FPS: {self.fps}")
     
+    def _update_game_states(self) -> None:
+        """Обновление игровых состояний"""
+        try:
+            # Обновляем состояния производительности
+            self.state_manager.set_state_value("fps", self.fps)
+            self.state_manager.set_state_value("frame_count", self.frame_count)
+            self.state_manager.set_state_value("engine_running", self.running)
+            self.state_manager.set_state_value("engine_paused", self.paused)
+            
+            # Обновляем состояние памяти (если доступно)
+            try:
+                import psutil
+                process = psutil.Process()
+                memory_usage = process.memory_info().rss / 1024 / 1024  # MB
+                self.state_manager.set_state_value("memory_usage", memory_usage)
+            except ImportError:
+                pass  # psutil не установлен
+            
+        except Exception as e:
+            logger.warning(f"Ошибка обновления игровых состояний: {e}")
+    
     def _handle_critical_error(self, error: Exception):
         """Обработка критических ошибок"""
         logger.critical(f"Критическая ошибка: {error}")
@@ -463,7 +634,12 @@ class GameEngine(ShowBase):
         try:
             # Очистка в обратном порядке инициализации
             
-            # 1. Очистка менеджера систем
+            # 1. Очистка новой архитектуры
+            if self.component_manager:
+                logger.info("Остановка компонентов новой архитектуры...")
+                self.component_manager.stop_all()
+            
+            # 2. Очистка менеджера систем
             if self.system_manager:
                 self.system_manager.cleanup()
             
