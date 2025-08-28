@@ -655,7 +655,7 @@ class EventType(Enum):
 # КОНСТАНТЫ ЗНАЧЕНИЙ
 # ============================================================================
 
-# Базовые значения характеристик
+# Базовые значения характеристик для всех сущностей
 BASE_STATS = {
     # Основные характеристики
     "health": 100,
@@ -666,6 +666,7 @@ BASE_STATS = {
     "attack": 10,
     "defense": 5,
     "speed": 1.0,
+    "range": 1.0,
     
     # Атрибуты
     "intelligence": 10,
@@ -676,41 +677,38 @@ BASE_STATS = {
     "charisma": 10,
     "luck": 5,
     
+    # Шансовые характеристики
+    "critical_chance": 0.05,
+    "critical_multiplier": 2.0,
+    "dodge_chance": 0.1,
+    "block_chance": 0.15,
+    "parry_chance": 0.1,
+    "evasion_chance": 0.1,
+    "resist_chance": 0.1,
+    
     # Механика стойкости
     "toughness": 100,
     "toughness_resistance": 0.0,
     "stun_resistance": 0.0,
     "break_efficiency": 1.0,
+    
+    # Стихийные сопротивления (автоматически заполняются)
+    "resistance": {},
+    
+    # Стихийные множители (автоматически заполняются)
+    "damage_multipliers": {},
 }
 
-# Характеристики для предметов (наследуют от BASE_STATS)
+# Характеристики для предметов (наследуют от BASE_STATS + дополнительные)
 ITEM_STATS = {
     "weapon": {
-        # Боевые характеристики
-        "attack": 0,
-        "speed": 0,
-        "critical_chance": 0,
-        "critical_multiplier": 0,
-        "damage_type": None,
-        
-        # Механика стойкости
-        "toughness_damage": 0,
-        "break_efficiency": 0,
-    },
-    "armor": {
-        # Защитные характеристики
-        "defense": 0,
+        # Базовые характеристики (наследуются от BASE_STATS)
         "health": 0,
         "mana": 0,
         "stamina": 0,
-        "resistance": {},  # Сопротивления по типам урона
-        
-        # Механика стойкости
-        "toughness_resistance": 0,
-        "stun_resistance": 0,
-    },
-    "accessory": {
-        # Атрибуты
+        "attack": 0,
+        "defense": 0,
+        "speed": 0,
         "intelligence": 0,
         "strength": 0,
         "agility": 0,
@@ -718,19 +716,100 @@ ITEM_STATS = {
         "wisdom": 0,
         "charisma": 0,
         "luck": 0,
+        "toughness": 0,
+        "toughness_resistance": 0,
+        "stun_resistance": 0,
+        "break_efficiency": 0,
         
-        # Специальные эффекты
+        # Специфичные для оружия
+        "critical_chance": 0,
+        "critical_multiplier": 0,
+        "damage_type": None,
+        "toughness_damage": 0,
+        "penetration": 0,
+        "range": 0,
+        "attack_speed": 0,
+    },
+    "armor": {
+        # Базовые характеристики (наследуются от BASE_STATS)
+        "health": 0,
+        "mana": 0,
+        "stamina": 0,
+        "attack": 0,
+        "defense": 0,
+        "speed": 0,
+        "intelligence": 0,
+        "strength": 0,
+        "agility": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "charisma": 0,
+        "luck": 0,
+        "toughness": 0,
+        "toughness_resistance": 0,
+        "stun_resistance": 0,
+        "break_efficiency": 0,
+        
+        # Специфичные для брони
+        "resistance": {},  # Сопротивления по типам урона
+        "weight": 0,
+        "movement_penalty": 0,
+        "durability": 0,
+        "max_durability": 0,
+    },
+    "accessory": {
+        # Базовые характеристики (наследуются от BASE_STATS)
+        "health": 0,
+        "mana": 0,
+        "stamina": 0,
+        "attack": 0,
+        "defense": 0,
+        "speed": 0,
+        "intelligence": 0,
+        "strength": 0,
+        "agility": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "charisma": 0,
+        "luck": 0,
+        "toughness": 0,
+        "toughness_resistance": 0,
+        "stun_resistance": 0,
+        "break_efficiency": 0,
+        
+        # Специфичные для аксессуаров
         "special_effects": [],
+        "set_bonus": None,
+        "socket_count": 0,
     },
     "consumable": {
-        # Восстановление
+        # Базовые характеристики (наследуются от BASE_STATS)
+        "health": 0,
+        "mana": 0,
+        "stamina": 0,
+        "attack": 0,
+        "defense": 0,
+        "speed": 0,
+        "intelligence": 0,
+        "strength": 0,
+        "agility": 0,
+        "constitution": 0,
+        "wisdom": 0,
+        "charisma": 0,
+        "luck": 0,
+        "toughness": 0,
+        "toughness_resistance": 0,
+        "stun_resistance": 0,
+        "break_efficiency": 0,
+        
+        # Специфичные для расходников
         "healing": 0,
         "mana_restore": 0,
         "stamina_restore": 0,
         "duration": 0,
-        
-        # Временные эффекты
         "effects": [],
+        "cooldown": 0,
+        "uses_remaining": 1,
     }
 }
 
@@ -771,6 +850,163 @@ ENEMY_WEAKNESSES = {
     # Специальные слабости
     "genetic_weak": [DamageType.GENETIC, DamageType.EMOTIONAL],
     "chaos_weak": [DamageType.CHAOS, DamageType.VIBRATION],
+}
+
+# Шаблоны характеристик для разных типов врагов
+ENEMY_TEMPLATES = {
+    # Танк - высокая защита, низкая скорость
+    "tank": {
+        "name": "Танк",
+        "description": "Медленный, но очень защищенный враг",
+        "base_multipliers": {
+            "health": 2.0,
+            "defense": 2.5,
+            "speed": 0.6,
+            "attack": 0.8,
+            "toughness": 1.5,
+            "toughness_resistance": 1.5,
+            "stun_resistance": 2.0,
+        },
+        "preferred_skills": ["defensive", "counter"],
+        "ai_behavior": "defensive",
+        "weakness_types": ["magic_weak", "arcane_weak"],
+        "loot_quality": "rare",
+    },
+    
+    # Ассасин - высокая скорость, низкая защита
+    "assassin": {
+        "name": "Ассасин",
+        "description": "Быстрый и смертоносный, но хрупкий враг",
+        "base_multipliers": {
+            "health": 0.7,
+            "defense": 0.5,
+            "speed": 2.5,
+            "attack": 2.0,
+            "critical_chance": 2.0,
+            "critical_multiplier": 1.5,
+            "dodge_chance": 2.0,
+            "evasion_chance": 2.0,
+        },
+        "preferred_skills": ["attack", "movement"],
+        "ai_behavior": "aggressive",
+        "weakness_types": ["physical_weak"],
+        "loot_quality": "epic",
+    },
+    
+    # Маг - высокая магия, низкая физическая защита
+    "mage": {
+        "name": "Маг",
+        "description": "Мощный в магии, но слабый физически",
+        "base_multipliers": {
+            "health": 0.8,
+            "mana": 3.0,
+            "defense": 0.6,
+            "intelligence": 2.5,
+            "wisdom": 2.0,
+            "attack": 0.5,
+            "magic_resistance": 1.5,
+        },
+        "preferred_skills": ["magic", "support"],
+        "ai_behavior": "tactical",
+        "weakness_types": ["physical_weak", "piercing_weak"],
+        "loot_quality": "rare",
+    },
+    
+    # Брут - высокая сила, средняя защита
+    "brute": {
+        "name": "Брут",
+        "description": "Сильный и выносливый враг",
+        "base_multipliers": {
+            "health": 1.8,
+            "stamina": 2.0,
+            "strength": 2.5,
+            "constitution": 2.0,
+            "attack": 1.8,
+            "defense": 1.2,
+            "toughness": 1.3,
+            "break_efficiency": 1.5,
+        },
+        "preferred_skills": ["attack", "defensive"],
+        "ai_behavior": "aggressive",
+        "weakness_types": ["fire_weak", "lightning_weak"],
+        "loot_quality": "uncommon",
+    },
+    
+    # Стрелок - высокая дальность, средняя защита
+    "archer": {
+        "name": "Стрелок",
+        "description": "Атакует с расстояния, избегает ближнего боя",
+        "base_multipliers": {
+            "health": 0.9,
+            "speed": 1.8,
+            "agility": 2.0,
+            "attack": 1.5,
+            "range": 3.0,
+            "critical_chance": 1.5,
+            "dodge_chance": 1.8,
+        },
+        "preferred_skills": ["ranged", "movement"],
+        "ai_behavior": "cautious",
+        "weakness_types": ["fire_weak", "ice_weak"],
+        "loot_quality": "rare",
+    },
+    
+    # Некромант - высокая магия, низкая физическая защита
+    "necromancer": {
+        "name": "Некромант",
+        "description": "Владеет темной магией и некромантией",
+        "base_multipliers": {
+            "health": 0.7,
+            "mana": 2.5,
+            "intelligence": 2.0,
+            "wisdom": 1.8,
+            "dark_resistance": 2.0,
+            "holy_weakness": 2.0,
+        },
+        "preferred_skills": ["magic", "debuff"],
+        "ai_behavior": "tactical",
+        "weakness_types": ["holy_weak", "radiant_weak"],
+        "loot_quality": "epic",
+    },
+    
+    # Элементаль - высокая стихийная сила, специфические слабости
+    "elemental": {
+        "name": "Элементаль",
+        "description": "Существо чистой стихии",
+        "base_multipliers": {
+            "health": 1.2,
+            "mana": 2.0,
+            "intelligence": 1.5,
+            "elemental_resistance": 2.0,
+            "physical_weakness": 1.5,
+        },
+        "preferred_skills": ["magic", "elemental"],
+        "ai_behavior": "aggressive",
+        "weakness_types": ["opposite_element"],
+        "loot_quality": "rare",
+    },
+    
+    # Дракон - высокая сила во всех аспектах
+    "dragon": {
+        "name": "Дракон",
+        "description": "Мощное мифическое существо",
+        "base_multipliers": {
+            "health": 5.0,
+            "mana": 3.0,
+            "stamina": 4.0,
+            "attack": 3.0,
+            "defense": 2.5,
+            "speed": 1.5,
+            "intelligence": 2.0,
+            "strength": 3.0,
+            "fire_resistance": 3.0,
+            "toughness": 2.0,
+        },
+        "preferred_skills": ["ultimate", "magic", "attack"],
+        "ai_behavior": "berserk",
+        "weakness_types": ["ice_weak", "holy_weak"],
+        "loot_quality": "legendary",
+    },
 }
 
 # Множители опыта по сложности
@@ -1011,6 +1247,46 @@ def generate_damage_constants():
     
     return resistances, boosts
 
+def generate_base_stats_with_resistances():
+    """Генерация базовых характеристик с автоматически заполненными сопротивлениями"""
+    base_stats = BASE_STATS.copy()
+    
+    # Автоматически заполняем сопротивления и множители
+    resistances, multipliers = generate_damage_constants()
+    
+    base_stats["resistance"] = resistances
+    base_stats["damage_multipliers"] = multipliers
+    
+    return base_stats
+
+def apply_enemy_template(base_stats: dict, template_name: str, level: int = 1) -> dict:
+    """Применение шаблона врага к базовым характеристикам"""
+    if template_name not in ENEMY_TEMPLATES:
+        return base_stats
+    
+    template = ENEMY_TEMPLATES[template_name]
+    modified_stats = base_stats.copy()
+    
+    # Применяем множители из шаблона
+    for stat, multiplier in template["base_multipliers"].items():
+        if stat in modified_stats:
+            if isinstance(modified_stats[stat], (int, float)):
+                modified_stats[stat] = int(modified_stats[stat] * multiplier * level)
+            elif stat == "resistance" and isinstance(multiplier, dict):
+                # Специальная обработка для сопротивлений
+                for res_type, res_value in multiplier.items():
+                    if res_type in modified_stats["resistance"]:
+                        modified_stats["resistance"][res_type] = res_value
+    
+    # Добавляем информацию о шаблоне
+    modified_stats["enemy_template"] = template_name
+    modified_stats["preferred_skills"] = template["preferred_skills"]
+    modified_stats["ai_behavior"] = template["ai_behavior"]
+    modified_stats["weakness_types"] = template["weakness_types"]
+    modified_stats["loot_quality"] = template["loot_quality"]
+    
+    return modified_stats
+
 # Генерируем константы автоматически
 DEFAULT_RESISTANCES, DAMAGE_MULTIPLIERS = generate_damage_constants()
 
@@ -1160,6 +1436,185 @@ UI_COLORS = {
     "selection": (0, 255, 255, 0.5),
     "preview": (255, 255, 0, 0.3)
 }
+
+# Шаблоны для предметов
+ITEM_TEMPLATES = {
+    "weapon": {
+        "sword": {
+            "name": "Меч",
+            "base_multipliers": {
+                "attack": 1.2,
+                "speed": 1.0,
+                "critical_chance": 1.1,
+                "toughness_damage": 0.8,
+                "break_efficiency": 1.0,
+            },
+            "preferred_damage_types": [DamageType.PHYSICAL, DamageType.PIERCING],
+            "skill_requirements": ["strength", "agility"],
+        },
+        "axe": {
+            "name": "Топор",
+            "base_multipliers": {
+                "attack": 1.5,
+                "speed": 0.8,
+                "critical_multiplier": 1.3,
+                "toughness_damage": 1.2,
+                "break_efficiency": 1.5,
+            },
+            "preferred_damage_types": [DamageType.PHYSICAL],
+            "skill_requirements": ["strength"],
+        },
+        "bow": {
+            "name": "Лук",
+            "base_multipliers": {
+                "attack": 1.0,
+                "speed": 1.5,
+                "range": 3.0,
+                "critical_chance": 1.3,
+                "toughness_damage": 0.6,
+                "break_efficiency": 0.8,
+            },
+            "preferred_damage_types": [DamageType.PHYSICAL, DamageType.PIERCING],
+            "skill_requirements": ["agility", "dexterity"],
+        },
+        "staff": {
+            "name": "Посох",
+            "base_multipliers": {
+                "attack": 0.8,
+                "mana": 1.5,
+                "intelligence": 1.2,
+                "magic_resistance": 1.1,
+                "toughness_damage": 0.5,
+                "break_efficiency": 0.7,
+            },
+            "preferred_damage_types": [DamageType.MAGIC, DamageType.ARCANE],
+            "skill_requirements": ["intelligence", "wisdom"],
+        },
+    },
+    "armor": {
+        "plate": {
+            "name": "Пластинчатая броня",
+            "base_multipliers": {
+                "defense": 2.0,
+                "health": 1.5,
+                "weight": 2.0,
+                "movement_penalty": 1.5,
+                "toughness_resistance": 1.8,
+                "stun_resistance": 1.5,
+            },
+            "preferred_resistances": [DamageType.PHYSICAL, DamageType.PIERCING],
+            "skill_requirements": ["strength", "constitution"],
+        },
+        "leather": {
+            "name": "Кожаная броня",
+            "base_multipliers": {
+                "defense": 0.8,
+                "speed": 1.3,
+                "agility": 1.2,
+                "weight": 0.6,
+                "movement_penalty": 0.8,
+                "toughness_resistance": 0.7,
+                "stun_resistance": 0.9,
+            },
+            "preferred_resistances": [DamageType.PHYSICAL],
+            "skill_requirements": ["agility", "dexterity"],
+        },
+        "cloth": {
+            "name": "Тканевая броня",
+            "base_multipliers": {
+                "defense": 0.5,
+                "mana": 1.8,
+                "intelligence": 1.3,
+                "magic_resistance": 1.5,
+                "weight": 0.3,
+                "movement_penalty": 0.5,
+                "toughness_resistance": 0.5,
+                "stun_resistance": 0.7,
+            },
+            "preferred_resistances": [DamageType.MAGIC, DamageType.ARCANE],
+            "skill_requirements": ["intelligence", "wisdom"],
+        },
+    },
+    "accessory": {
+        "ring": {
+            "name": "Кольцо",
+            "base_multipliers": {
+                "intelligence": 1.2,
+                "strength": 1.2,
+                "agility": 1.2,
+                "constitution": 1.2,
+                "wisdom": 1.2,
+                "charisma": 1.2,
+                "luck": 1.3,
+            },
+            "socket_count": 1,
+            "set_bonus": None,
+        },
+        "necklace": {
+            "name": "Ожерелье",
+            "base_multipliers": {
+                "intelligence": 1.5,
+                "wisdom": 1.3,
+                "charisma": 1.4,
+                "mana": 1.2,
+            },
+            "socket_count": 2,
+            "set_bonus": None,
+        },
+        "amulet": {
+            "name": "Амулет",
+            "base_multipliers": {
+                "strength": 1.5,
+                "constitution": 1.3,
+                "health": 1.2,
+                "stamina": 1.2,
+            },
+            "socket_count": 1,
+            "set_bonus": None,
+        },
+    },
+}
+
+def apply_item_template(item_type: str, template_name: str, level: int = 1, rarity: str = "common") -> dict:
+    """Применение шаблона предмета к базовым характеристикам"""
+    if item_type not in ITEM_TEMPLATES or template_name not in ITEM_TEMPLATES[item_type]:
+        return ITEM_STATS[item_type].copy()
+    
+    template = ITEM_TEMPLATES[item_type][template_name]
+    item_stats = ITEM_STATS[item_type].copy()
+    
+    # Применяем множители из шаблона
+    for stat, multiplier in template["base_multipliers"].items():
+        if stat in item_stats:
+            if isinstance(item_stats[stat], (int, float)):
+                item_stats[stat] = int(item_stats[stat] * multiplier * level)
+    
+    # Добавляем информацию о шаблоне
+    item_stats["template_name"] = template_name
+    item_stats["template_display_name"] = template["name"]
+    item_stats["preferred_damage_types"] = template.get("preferred_damage_types", [])
+    item_stats["preferred_resistances"] = template.get("preferred_resistances", [])
+    item_stats["skill_requirements"] = template.get("skill_requirements", [])
+    item_stats["socket_count"] = template.get("socket_count", 0)
+    item_stats["set_bonus"] = template.get("set_bonus")
+    
+    # Применяем множитель редкости
+    rarity_multipliers = {
+        "common": 1.0,
+        "uncommon": 1.2,
+        "rare": 1.5,
+        "epic": 2.0,
+        "legendary": 3.0,
+        "mythic": 4.0,
+        "divine": 5.0,
+    }
+    
+    rarity_mult = rarity_multipliers.get(rarity, 1.0)
+    for stat in ["attack", "defense", "health", "mana", "stamina"]:
+        if stat in item_stats and isinstance(item_stats[stat], (int, float)):
+            item_stats[stat] = int(item_stats[stat] * rarity_mult)
+    
+    return item_stats
 
 # ============================================================================
 # УТИЛИТЫ ДЛЯ РАБОТЫ С КОНСТАНТАМИ
