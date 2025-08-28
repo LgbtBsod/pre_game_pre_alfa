@@ -105,6 +105,20 @@ class ItemRarity(Enum):
     ULTIMATE = "ultimate"
 
 # Убираем дублирующий ItemCategory, используем ItemType
+# Но добавляем обратно для совместимости с существующим кодом
+class ItemCategory(Enum):
+    """Категории предметов (для совместимости)"""
+    WEAPON = "weapon"
+    ARMOR = "armor"
+    ACCESSORY = "accessory"
+    CONSUMABLE = "consumable"
+    MATERIAL = "material"
+    TOOL = "tool"
+    GEM = "gem"
+    SCROLL = "scroll"
+    BOOK = "book"
+    KEY = "key"
+    CURRENCY = "currency"
 
 class WeaponType(Enum):
     """Типы оружия"""
@@ -285,6 +299,20 @@ class EmotionIntensity(Enum):
     STRONG = "strong"
     INTENSE = "intense"
     OVERWHELMING = "overwhelming"
+
+# ============================================================================
+# ТИПЫ СУЩНОСТЕЙ
+# ============================================================================
+
+class EntityType(Enum):
+    """Типы сущностей"""
+    PLAYER = "player"
+    ENEMY = "enemy"
+    NPC = "npc"
+    BOSS = "boss"
+    MUTANT = "mutant"
+    CREATURE = "creature"
+    OBJECT = "object"
 
 # ============================================================================
 # ТИПЫ ВРАГОВ И БОССОВ
@@ -1289,6 +1317,106 @@ def apply_enemy_template(base_stats: dict, template_name: str, level: int = 1) -
 
 # Генерируем константы автоматически
 DEFAULT_RESISTANCES, DAMAGE_MULTIPLIERS = generate_damage_constants()
+
+# ============================================================================
+# СЛОТЫ ЭКИПИРОВКИ
+# ============================================================================
+
+class ItemSlot(Enum):
+    """Слоты экипировки"""
+    WEAPON = "weapon"
+    ARMOR_HEAD = "armor_head"
+    ARMOR_CHEST = "armor_chest"
+    ARMOR_LEGS = "armor_legs"
+    ARMOR_FEET = "armor_feet"
+    ACCESSORY_1 = "accessory_1"
+    ACCESSORY_2 = "accessory_2"
+    ACCESSORY_3 = "accessory_3"
+
+# ============================================================================
+# ШАБЛОНЫ ГЕНЕРАЦИИ СКИЛЛОВ
+# ============================================================================
+
+SKILL_GENERATION_TEMPLATES = {
+    "attack": {
+        "name_patterns": ["Slash", "Strike", "Thrust", "Cleave", "Smash"],
+        "base_damage": 20,
+        "mana_cost": 10,
+        "cooldown": 3.0,
+        "range": 1.5,
+        "effects": ["damage"],
+        "requirements": ["strength"],
+        "animation": "attack"
+    },
+    "magic": {
+        "name_patterns": ["Fireball", "Ice Bolt", "Lightning", "Arcane Blast", "Shadow Bolt"],
+        "base_damage": 25,
+        "mana_cost": 20,
+        "cooldown": 5.0,
+        "range": 5.0,
+        "effects": ["damage", "elemental"],
+        "requirements": ["intelligence"],
+        "animation": "cast"
+    },
+    "healing": {
+        "name_patterns": ["Heal", "Cure", "Restore", "Regenerate", "Revitalize"],
+        "base_healing": 30,
+        "mana_cost": 25,
+        "cooldown": 8.0,
+        "range": 3.0,
+        "effects": ["healing"],
+        "requirements": ["wisdom"],
+        "animation": "heal"
+    },
+    "buff": {
+        "name_patterns": ["Enhance", "Boost", "Empower", "Strengthen", "Fortify"],
+        "duration": 30.0,
+        "mana_cost": 15,
+        "cooldown": 10.0,
+        "range": 2.0,
+        "effects": ["buff"],
+        "requirements": ["charisma"],
+        "animation": "buff"
+    },
+    "debuff": {
+        "name_patterns": ["Weaken", "Slow", "Poison", "Curse", "Drain"],
+        "duration": 20.0,
+        "mana_cost": 18,
+        "cooldown": 12.0,
+        "range": 4.0,
+        "effects": ["debuff"],
+        "requirements": ["intelligence"],
+        "animation": "debuff"
+    },
+    "movement": {
+        "name_patterns": ["Dash", "Leap", "Teleport", "Rush", "Charge"],
+        "distance": 5.0,
+        "mana_cost": 12,
+        "cooldown": 6.0,
+        "effects": ["movement"],
+        "requirements": ["agility"],
+        "animation": "dash"
+    },
+    "defensive": {
+        "name_patterns": ["Shield", "Block", "Parry", "Dodge", "Counter"],
+        "defense_boost": 15,
+        "mana_cost": 8,
+        "cooldown": 4.0,
+        "effects": ["defense"],
+        "requirements": ["constitution"],
+        "animation": "block"
+    }
+}
+
+SKILL_POWER_MULTIPLIERS = {
+    "common": 1.0,
+    "uncommon": 1.2,
+    "rare": 1.5,
+    "epic": 2.0,
+    "legendary": 3.0,
+    "mythic": 4.0,
+    "divine": 5.0
+}
 
 # ============================================================================
 # КОНСТАНТЫ РЕЖИМА "ТВОРЕЦ МИРА"

@@ -14,13 +14,9 @@ from enum import Enum
 import random
 import math
 
-logger = logging.getLogger(__name__)
+from ...entities.base_entity import BaseEntity, EntityType as BaseEntityType
 
-class EntityType(Enum):
-    """Типы сущностей"""
-    PLAYER = "player"
-    ENEMY = "enemy"
-    NPC = "npc"
+logger = logging.getLogger(__name__)
 
 class MemoryType(Enum):
     """Типы памяти"""
@@ -55,7 +51,7 @@ class GenerationMemory:
     """Память поколения"""
     generation_id: int
     entity_id: str
-    entity_type: EntityType
+    entity_type: BaseEntityType
     start_time: float
     end_time: Optional[float]
     total_experience: float
@@ -71,16 +67,18 @@ class GenerationMemory:
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'GenerationMemory':
-        data['entity_type'] = EntityType(data['entity_type'])
+        data['entity_type'] = BaseEntityType(data['entity_type'])
         data['memories'] = [MemoryEntry.from_dict(mem) for mem in data['memories']]
         return cls(**data)
 
-class AIEntity:
-    """Базовая сущность для всех ИИ агентов"""
+class AIEntity(BaseEntity):
+    """Базовая сущность для всех ИИ агентов - наследуется от BaseEntity"""
     
-    def __init__(self, entity_id: str, entity_type: EntityType, save_slot: str = "default"):
-        self.entity_id = entity_id
-        self.entity_type = entity_type
+    def __init__(self, entity_id: str, entity_type: BaseEntityType, save_slot: str = "default"):
+        # Инициализируем базовую сущность
+        super().__init__(entity_id, entity_type)
+        
+        # Сохраняем слот для сохранения
         self.save_slot = save_slot
         
         # Параметры обучения
@@ -88,8 +86,7 @@ class AIEntity:
         self.memory_capacity = self._get_memory_capacity()
         self.generation_memory_capacity = self._get_generation_memory_capacity()
         
-        # Текущая память
-        self.current_memories: List[MemoryEntry] = []
+        # Текущая память поколений
         self.generation_memories: List[GenerationMemory] = []
         
         # Текущее поколение
@@ -117,27 +114,27 @@ class AIEntity:
     
     def _get_learning_rate(self) -> float:
         """Получение скорости обучения в зависимости от типа сущности"""
-        if self.entity_type == EntityType.PLAYER:
+        if self.entity_type == BaseEntityType.PLAYER:
             return 0.8  # Игрок учится быстро
-        elif self.entity_type == EntityType.ENEMY:
+        elif self.entity_type == BaseEntityType.ENEMY:
             return 0.3  # Враги учатся медленно, но имеют общую память
         else:  # NPC
             return 0.5  # Средняя скорость обучения
     
     def _get_memory_capacity(self) -> int:
         """Получение емкости памяти"""
-        if self.entity_type == EntityType.PLAYER:
+        if self.entity_type == BaseEntityType.PLAYER:
             return 1000  # Большая память для игрока
-        elif self.entity_type == EntityType.ENEMY:
+        elif self.entity_type == BaseEntityType.ENEMY:
             return 500   # Средняя память для врагов
         else:  # NPC
             return 300   # Небольшая память для NPC
     
     def _get_generation_memory_capacity(self) -> int:
         """Получение емкости памяти поколений"""
-        if self.entity_type == EntityType.PLAYER:
+        if self.entity_type == BaseEntityType.PLAYER:
             return 50   # Много поколений для игрока
-        elif self.entity_type == EntityType.ENEMY:
+        elif self.entity_type == BaseEntityType.ENEMY:
             return 100  # Очень много поколений для врагов (общая память)
         else:  # NPC
             return 20   # Несколько поколений для NPC
@@ -159,14 +156,14 @@ class AIEntity:
             learning_value=learning_value
         )
         
-        # Добавляем в текущую память
-        self.current_memories.append(memory)
+        # Добавляем в текущую память (используем базовую память)
+        self.memory.memories.append(memory.to_dict())
         
         # Ограничиваем размер памяти
-        if len(self.current_memories) > self.memory_capacity:
+        if len(self.memory.memories) > self.memory_capacity:
             # Удаляем старые записи с низкой ценностью
-            self.current_memories.sort(key=lambda x: x.learning_value)
-            self.current_memories = self.current_memories[-self.memory_capacity:]
+            self.memory.memories.sort(key=lambda x: x.get('learning_value', 0))
+            self.memory.memories = self.memory.memories[-self.memory_capacity:]
         
         # Обновляем статистику
         self.stats['total_memories'] += 1
@@ -228,25 +225,27 @@ class AIEntity:
                             limit: int = 10) -> List[MemoryEntry]:
         """Получение релевантных записей памяти"""
         # Фильтруем по типу памяти
-        relevant = [mem for mem in self.current_memories if mem.memory_type == memory_type]
+        relevant = [mem for mem in self.memory.memories if mem.get('memory_type') == memory_type.value]
         
         # Сортируем по релевантности (простая эвристика)
-        def relevance_score(memory: MemoryEntry) -> float:
-            score = memory.learning_value
+        def relevance_score(memory: Dict[str, Any]) -> float:
+            score = memory.get('learning_value', 0)
             
             # Бонус за похожий контекст
-            context_similarity = self._calculate_context_similarity(memory.context, context)
+            context_similarity = self._calculate_context_similarity(memory.get('context', {}), context)
             score += context_similarity * 0.3
             
             # Бонус за недавность
-            time_diff = time.time() - memory.timestamp
+            time_diff = time.time() - memory.get('timestamp', 0)
             recency_bonus = max(0, 1.0 - time_diff / 3600.0)  # 1 час
             score += recency_bonus * 0.2
             
             return score
         
         relevant.sort(key=relevance_score, reverse=True)
-        return relevant[:limit]
+        
+        # Конвертируем обратно в MemoryEntry
+        return [MemoryEntry.from_dict(mem) for mem in relevant[:limit]]
     
     def _calculate_context_similarity(self, context1: Dict[str, Any], context2: Dict[str, Any]) -> float:
         """Вычисление схожести контекстов"""
@@ -282,6 +281,14 @@ class AIEntity:
         if not final_stats:
             final_stats = self.stats.copy()
         
+        # Конвертируем память в MemoryEntry
+        memories = []
+        for mem_dict in self.memory.memories:
+            try:
+                memories.append(MemoryEntry.from_dict(mem_dict))
+            except Exception as e:
+                logger.warning(f"Ошибка конвертации памяти: {e}")
+        
         # Создаем память поколения
         generation_memory = GenerationMemory(
             generation_id=self.current_generation,
@@ -290,7 +297,7 @@ class AIEntity:
             start_time=self.generation_start_time,
             end_time=time.time(),
             total_experience=self.generation_experience,
-            memories=self.current_memories.copy(),
+            memories=memories,
             final_stats=final_stats,
             cause_of_death=cause_of_death
         )
@@ -323,27 +330,27 @@ class AIEntity:
         patterns = self._analyze_patterns()
         
         # Получаем статистику успешных действий
-        successful_combat = [mem for mem in self.current_memories 
-                           if mem.memory_type == MemoryType.COMBAT and mem.success]
-        failed_combat = [mem for mem in self.current_memories 
-                        if mem.memory_type == MemoryType.COMBAT and not mem.success]
+        successful_combat = [mem for mem in self.memory.memories 
+                           if mem.get('memory_type') == MemoryType.COMBAT.value and mem.get('success', False)]
+        failed_combat = [mem for mem in self.memory.memories 
+                        if mem.get('memory_type') == MemoryType.COMBAT.value and not mem.get('success', True)]
         
         # Анализируем использование скиллов
         skill_usage = {}
-        for mem in self.current_memories:
-            if mem.memory_type == MemoryType.SKILL_USAGE:
-                skill_name = mem.context.get('skill_name', 'unknown')
+        for mem in self.memory.memories:
+            if mem.get('memory_type') == MemoryType.SKILL_USAGE.value:
+                skill_name = mem.get('context', {}).get('skill_name', 'unknown')
                 if skill_name not in skill_usage:
                     skill_usage[skill_name] = {'success': 0, 'total': 0}
                 skill_usage[skill_name]['total'] += 1
-                if mem.success:
+                if mem.get('success', False):
                     skill_usage[skill_name]['success'] += 1
         
         return {
             'patterns': patterns,
             'combat_success_rate': len(successful_combat) / max(1, len(successful_combat) + len(failed_combat)),
             'skill_usage': skill_usage,
-            'recent_memories': [mem.to_dict() for mem in self.current_memories[-10:]],
+            'recent_memories': self.memory.memories[-10:],
             'generation_stats': {
                 'current_generation': self.current_generation,
                 'total_generations': self.stats['total_generations'],
@@ -362,12 +369,12 @@ class AIEntity:
         
         # Анализируем предпочитаемые действия
         action_counts = {}
-        for mem in self.current_memories:
-            action = mem.action
+        for mem in self.memory.memories:
+            action = mem.get('action', '')
             if action not in action_counts:
                 action_counts[action] = {'success': 0, 'total': 0}
             action_counts[action]['total'] += 1
-            if mem.success:
+            if mem.get('success', False):
                 action_counts[action]['success'] += 1
         
         # Находим наиболее успешные действия
@@ -377,12 +384,12 @@ class AIEntity:
                 patterns['preferred_actions'][action] = success_rate
         
         # Анализируем успешные комбинации действий
-        recent_memories = self.current_memories[-20:]  # Последние 20 действий
+        recent_memories = self.memory.memories[-20:]  # Последние 20 действий
         for i in range(len(recent_memories) - 1):
             mem1 = recent_memories[i]
             mem2 = recent_memories[i + 1]
-            if mem1.success and mem2.success:
-                combination = f"{mem1.action} -> {mem2.action}"
+            if mem1.get('success', False) and mem2.get('success', False):
+                combination = f"{mem1.get('action', '')} -> {mem2.get('action', '')}"
                 if combination not in patterns['successful_combinations']:
                     patterns['successful_combinations'].append(combination)
         
@@ -390,7 +397,7 @@ class AIEntity:
     
     def _get_memory_file_path(self) -> str:
         """Получение пути к файлу памяти"""
-        memory_dir = f"saves/ai_memory/{self.save_slot}"
+        memory_dir = f"saves/ai_memory/{getattr(self, 'save_slot', 'default')}"
         os.makedirs(memory_dir, exist_ok=True)
         return f"{memory_dir}/{self.entity_id}_memory.json"
     
@@ -400,7 +407,7 @@ class AIEntity:
             memory_data = {
                 'entity_id': self.entity_id,
                 'entity_type': self.entity_type.value,
-                'save_slot': self.save_slot,
+                'save_slot': getattr(self, 'save_slot', 'default'),
                 'stats': self.stats,
                 'current_generation': self.current_generation,
                 'generation_memories': [gen.to_dict() for gen in self.generation_memories]
@@ -446,7 +453,7 @@ class AIEntity:
             'current_generation': self.current_generation,
             'total_generations': self.stats['total_generations'],
             'total_experience': self.stats['total_experience'],
-            'current_memories': len(self.current_memories),
+            'current_memories': len(self.memory.memories),
             'generation_memories': len(self.generation_memories),
             'learning_rate': self.learning_rate,
             'success_rate': self.stats['successful_actions'] / max(1, self.stats['successful_actions'] + self.stats['failed_actions'])

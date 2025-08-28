@@ -14,27 +14,10 @@ from enum import Enum
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     StatType, BASE_STATS, PROBABILITY_CONSTANTS, 
-    TIME_CONSTANTS, SYSTEM_LIMITS
+    TIME_CONSTANTS, SYSTEM_LIMITS, WorldObjectType, ObjectState
 )
 
 logger = logging.getLogger(__name__)
-
-class WorldObjectType(Enum):
-    """Типы объектов в мире"""
-    OBSTACLE = "obstacle"
-    TRAP = "trap"
-    CHEST = "chest"
-    ENEMY = "enemy"
-    GEO_OBSTACLE = "geo_obstacle"
-    DECORATION = "decoration"
-
-class ObjectState(Enum):
-    """Состояния объектов"""
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    DESTROYED = "destroyed"
-    TRIGGERED = "triggered"
-    LOCKED = "locked"
 
 @dataclass
 class WorldObject:

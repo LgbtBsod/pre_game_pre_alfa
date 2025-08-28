@@ -3,270 +3,443 @@
 Базовые классы предметов для игры
 """
 
-from panda3d.core import Vec3, Point3
-from direct.actor.Actor import Actor
-from typing import List, Dict, Any, Optional, Union
+import logging
+import time
+from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
+from enum import Enum
 
-from ..systems.effects.effect_system import Effect, EffectCategory
-from ..systems.effects.effect_system import EffectVisuals, EffectBalance
+from ..core.constants import ItemType, ItemRarity, ItemCategory, DamageType, StatType, ItemSlot
+
+logger = logging.getLogger(__name__)
 
 @dataclass
-class ItemRequirements:
+class ItemEffect:
+    """Эффект предмета"""
+    effect_id: str
+    effect_type: str
+    magnitude: float
+    duration: float = 0.0
+    chance: float = 1.0
+    conditions: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class ItemRequirement:
     """Требования для использования предмета"""
     level: int = 1
-    strength: int = 0
-    intelligence: int = 0
-    agility: int = 0
-    special_skills: List[str] = field(default_factory=list)
+    stats: Dict[StatType, int] = field(default_factory=dict)
+    skills: List[str] = field(default_factory=list)
+    items: List[str] = field(default_factory=list)
 
 class Item:
     """Базовый класс для всех предметов в игре"""
     
-    def __init__(self, name: str, item_type: str, rarity: str = "common", stack_size: int = 1):
+    def __init__(self, 
+                 item_id: str,
+                 name: str,
+                 description: str,
+                 item_type: ItemType,
+                 rarity: ItemRarity = ItemRarity.COMMON,
+                 stack_size: int = 1,
+                 weight: float = 0.0,
+                 value: int = 0):
+        
+        self.item_id = item_id
         self.name = name
-        self.item_type = item_type  # weapon, armor, consumable, etc.
+        self.description = description
+        self.item_type = item_type
         self.rarity = rarity
         self.stack_size = stack_size
+        self.weight = weight
+        self.value = value
+        
+        # Базовые свойства
         self.quantity = 1
-        self.effects: List[Effect] = []
-        self.requirements = ItemRequirements()
-        self.visual_model = None  # 3D модель предмета
-        self.icon = ""  # Путь к иконке
-        self.description = ""
-        self.value = 0  # Стоимость предмета
+        self.durability = 1.0
+        self.quality = 1.0
+        self.level = 1
         
-    def use(self, user) -> bool:
-        """Использовать предмет"""
-        if self.check_requirements(user):
-            for effect in self.effects:
-                effect.apply(user, user)
+        # Эффекты и требования
+        self.effects: List[ItemEffect] = []
+        self.requirements = ItemRequirement()
+        
+        # Визуальные свойства
+        self.icon = ""
+        self.model = ""
+        self.texture = ""
+        self.visual_effects = []
+        
+        # Звуковые эффекты
+        self.use_sound = ""
+        self.equip_sound = ""
+        self.unequip_sound = ""
+        
+        # Флаги
+        self.is_consumable = False
+        self.is_equippable = False
+        self.is_tradeable = True
+        self.is_droppable = True
+        self.is_unique = False
+        
+        # Метаданные
+        self.created_time = time.time()
+        self.last_used = 0.0
+        self.usage_count = 0
+        
+        logger.debug(f"Создан предмет: {name} ({item_id})")
+    
+    def can_use(self, user: Dict[str, Any]) -> bool:
+        """Проверка возможности использования предмета"""
+        try:
+            # Проверка требований
+            if not self._check_requirements(user):
+                return False
+            
+            # Проверка количества
+            if self.quantity <= 0:
+                return False
+            
+            # Проверка прочности
+            if self.durability <= 0:
+                return False
+            
             return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки возможности использования предмета {self.item_id}: {e}")
+            return False
+    
+    def use(self, user: Dict[str, Any], target: Optional[Dict[str, Any]] = None) -> bool:
+        """Использование предмета"""
+        try:
+            if not self.can_use(user):
+                return False
+            
+            # Применение эффектов
+            success = self._apply_effects(user, target)
+            
+            if success:
+                # Обновление статистики использования
+                self.last_used = time.time()
+                self.usage_count += 1
+                
+                # Уменьшение количества для расходников
+                if self.is_consumable:
+                    self.quantity -= 1
+                
+                # Уменьшение прочности
+                self._reduce_durability()
+                
+                logger.debug(f"Предмет {self.name} использован игроком {user.get('name', 'unknown')}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Ошибка использования предмета {self.item_id}: {e}")
+            return False
+    
+    def can_equip(self, user: Dict[str, Any], slot: ItemSlot) -> bool:
+        """Проверка возможности экипировки"""
+        try:
+            if not self.is_equippable:
+                return False
+            
+            if not self._check_requirements(user):
+                return False
+            
+            # Проверка совместимости слота
+            if not self._check_slot_compatibility(slot):
+                return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки экипировки предмета {self.item_id}: {e}")
+            return False
+    
+    def equip(self, user: Dict[str, Any], slot: ItemSlot) -> bool:
+        """Экипировка предмета"""
+        try:
+            if not self.can_equip(user, slot):
+                return False
+            
+            # Применение эффектов экипировки
+            success = self._apply_equip_effects(user)
+            
+            if success:
+                logger.debug(f"Предмет {self.name} экипирован в слот {slot.value}")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Ошибка экипировки предмета {self.item_id}: {e}")
+            return False
+    
+    def unequip(self, user: Dict[str, Any]) -> bool:
+        """Снятие предмета"""
+        try:
+            # Удаление эффектов экипировки
+            success = self._remove_equip_effects(user)
+            
+            if success:
+                logger.debug(f"Предмет {self.name} снят")
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Ошибка снятия предмета {self.item_id}: {e}")
+            return False
+    
+    def _check_requirements(self, user: Dict[str, Any]) -> bool:
+        """Проверка требований для использования"""
+        try:
+            # Проверка уровня
+            user_level = user.get('level', 0)
+            if user_level < self.requirements.level:
+                return False
+            
+            # Проверка характеристик
+            for stat, required_value in self.requirements.stats.items():
+                user_stat = user.get(stat.value, 0)
+                if user_stat < required_value:
+                    return False
+            
+            # Проверка навыков
+            user_skills = user.get('skills', [])
+            for skill in self.requirements.skills:
+                if skill not in user_skills:
+                    return False
+            
+            # Проверка предметов
+            user_items = user.get('items', [])
+            for item in self.requirements.items:
+                if item not in user_items:
+                    return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки требований предмета {self.item_id}: {e}")
+            return False
+    
+    def _apply_effects(self, user: Dict[str, Any], target: Optional[Dict[str, Any]] = None) -> bool:
+        """Применение эффектов предмета"""
+        try:
+            target = target or user
+            
+            for effect in self.effects:
+                # Проверка шанса срабатывания
+                if effect.chance < 1.0:
+                    import random
+                    if random.random() > effect.chance:
+                        continue
+                
+                # Применение эффекта
+                self._apply_single_effect(effect, target, user)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка применения эффектов предмета {self.item_id}: {e}")
+            return False
+    
+    def _apply_single_effect(self, effect: ItemEffect, target: Dict[str, Any], source: Dict[str, Any]):
+        """Применение одного эффекта"""
+        try:
+            if effect.effect_type == "stat_modifier":
+                stat_name = effect.conditions.get('stat_name')
+                if stat_name and stat_name in target:
+                    target[stat_name] += effect.magnitude
+            
+            elif effect.effect_type == "heal":
+                current_health = target.get('health', 0)
+                max_health = target.get('max_health', 0)
+                target['health'] = min(max_health, current_health + effect.magnitude)
+            
+            elif effect.effect_type == "damage":
+                current_health = target.get('health', 0)
+                target['health'] = max(0, current_health - effect.magnitude)
+            
+            elif effect.effect_type == "buff":
+                # Добавление временного баффа
+                buffs = target.get('buffs', [])
+                buffs.append({
+                    'effect_id': effect.effect_id,
+                    'magnitude': effect.magnitude,
+                    'duration': effect.duration,
+                    'start_time': time.time()
+                })
+                target['buffs'] = buffs
+            
+        except Exception as e:
+            logger.error(f"Ошибка применения эффекта {effect.effect_id}: {e}")
+    
+    def _apply_equip_effects(self, user: Dict[str, Any]) -> bool:
+        """Применение эффектов экипировки"""
+        try:
+            # Применяем эффекты экипировки
+            for effect in self.effects:
+                if effect.effect_type == "equip_bonus":
+                    self._apply_single_effect(effect, user, user)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка применения эффектов экипировки {self.item_id}: {e}")
+            return False
+    
+    def _remove_equip_effects(self, user: Dict[str, Any]) -> bool:
+        """Удаление эффектов экипировки"""
+        try:
+            # Удаляем эффекты экипировки
+            for effect in self.effects:
+                if effect.effect_type == "equip_bonus":
+                    # Обратный эффект
+                    reverse_effect = ItemEffect(
+                        effect_id=f"reverse_{effect.effect_id}",
+                        effect_type="equip_bonus",
+                        magnitude=-effect.magnitude
+                    )
+                    self._apply_single_effect(reverse_effect, user, user)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка удаления эффектов экипировки {self.item_id}: {e}")
+            return False
+    
+    def _check_slot_compatibility(self, slot: ItemSlot) -> bool:
+        """Проверка совместимости со слотом"""
+        # Базовая проверка - можно переопределить в наследниках
+        if self.item_type == ItemType.WEAPON and slot == ItemSlot.WEAPON:
+            return True
+        elif self.item_type == ItemType.ARMOR:
+            armor_slots = [ItemSlot.ARMOR_HEAD, ItemSlot.ARMOR_CHEST, ItemSlot.ARMOR_LEGS, ItemSlot.ARMOR_FEET]
+            return slot in armor_slots
+        elif self.item_type == ItemType.ACCESSORY:
+            accessory_slots = [ItemSlot.ACCESSORY_1, ItemSlot.ACCESSORY_2, ItemSlot.ACCESSORY_3]
+            return slot in accessory_slots
+        
         return False
-        
-    def check_requirements(self, user) -> bool:
-        """Проверить требования для использования"""
-        if hasattr(user, 'level') and user.level < self.requirements.level:
-            return False
-        if hasattr(user, 'strength') and user.strength < self.requirements.strength:
-            return False
-        if hasattr(user, 'intelligence') and user.intelligence < self.requirements.intelligence:
-            return False
-        if hasattr(user, 'agility') and user.agility < self.requirements.agility:
-            return False
-        return True
-        
-    def create_visual(self, position: Vec3):
-        """Создать визуальное представление предмета в мире"""
-        if self.visual_model:
-            item_node = self.visual_model.copyTo(render)
-            item_node.setPos(position)
-            return item_node
-        return None
     
-    def is_consumable(self) -> bool:
-        """Проверить, является ли предмет расходником"""
-        return self.item_type == "consumable"
+    def _reduce_durability(self):
+        """Уменьшение прочности предмета"""
+        if self.durability > 0:
+            # Уменьшаем прочность на 1% за использование
+            self.durability = max(0, self.durability - 0.01)
     
-    def can_stack_with(self, other: 'Item') -> bool:
-        """Проверить, можно ли складывать с другим предметом"""
-        return (self.name == other.name and 
-                self.item_type == other.item_type and
-                self.rarity == other.rarity)
-    
-    def add_effect(self, effect: Effect):
-        """Добавить эффект к предмету"""
-        self.effects.append(effect)
-    
-    def remove_effect(self, effect: Effect):
-        """Удалить эффект с предмета"""
-        if effect in self.effects:
-            self.effects.remove(effect)
+    def get_info(self) -> Dict[str, Any]:
+        """Получение информации о предмете"""
+        return {
+            'item_id': self.item_id,
+            'name': self.name,
+            'description': self.description,
+            'item_type': self.item_type.value,
+            'rarity': self.rarity.value,
+            'stack_size': self.stack_size,
+            'quantity': self.quantity,
+            'weight': self.weight,
+            'value': self.value,
+            'durability': self.durability,
+            'quality': self.quality,
+            'level': self.level,
+            'is_consumable': self.is_consumable,
+            'is_equippable': self.is_equippable,
+            'usage_count': self.usage_count
+        }
 
 class Weapon(Item):
     """Класс оружия"""
     
-    def __init__(self, name: str, damage: int, damage_type: str, attack_speed: float = 1.0):
-        super().__init__(name, "weapon")
+    def __init__(self, 
+                 item_id: str,
+                 name: str,
+                 description: str,
+                 damage: int,
+                 damage_type: DamageType = DamageType.PHYSICAL,
+                 attack_speed: float = 1.0,
+                 range: float = 1.0,
+                 **kwargs):
+        
+        super().__init__(item_id, name, description, ItemType.WEAPON, **kwargs)
+        
         self.damage = damage
         self.damage_type = damage_type
         self.attack_speed = attack_speed
-        self.range = 1.0
-        self.durability = 100
-        self.max_durability = 100
+        self.range = range
         
-        # Создаем эффект урона
-        damage_effect = Effect(
-            name=f"Урон от {name}",
-            category=EffectCategory.DAMAGE,
-            value={"damage": damage, "damage_type": damage_type},
-            visuals=EffectVisuals(
-                particle_effect="weapon_swing",
-                sound_effect="weapon_hit"
-            ),
-            tags=["weapon", "damage"]
-        )
-        self.add_effect(damage_effect)
-    
-    def attack(self, user, target) -> bool:
-        """Атака оружием"""
-        if self.durability <= 0:
-            return False
+        self.is_equippable = True
         
-        # Применяем эффект урона
-        for effect in self.effects:
-            effect.apply(target, user)
-        
-        # Уменьшаем прочность
-        self.durability = max(0, self.durability - 1)
-        return True
-    
-    def repair(self, amount: int):
-        """Починить оружие"""
-        self.durability = min(self.max_durability, self.durability + amount)
+        # Специальные свойства оружия
+        self.critical_chance = 0.05
+        self.critical_multiplier = 2.0
+        self.accuracy = 0.95
+        self.durability_loss_per_use = 0.01
 
 class Armor(Item):
     """Класс брони"""
     
-    def __init__(self, name: str, armor_type: str, defense: int):
-        super().__init__(name, "armor")
-        self.armor_type = armor_type  # head, chest, legs, etc.
-        self.defense = defense
-        self.weight = 1.0
-        self.movement_penalty = 0.0
+    def __init__(self,
+                 item_id: str,
+                 name: str,
+                 description: str,
+                 armor_value: int,
+                 armor_type: str = "physical",
+                 slot: ItemSlot = ItemSlot.ARMOR_CHEST,
+                 **kwargs):
         
-        # Создаем эффект защиты
-        defense_effect = Effect(
-            name=f"Защита от {name}",
-            category=EffectCategory.BUFF,
-            value={"defense": defense},
-            tags=["armor", "defense"]
-        )
-        self.add_effect(defense_effect)
-    
-    def apply_defense(self, user):
-        """Применить защиту"""
-        for effect in self.effects:
-            effect.apply(user, user)
+        super().__init__(item_id, name, description, ItemType.ARMOR, **kwargs)
+        
+        self.armor_value = armor_value
+        self.armor_type = armor_type
+        self.slot = slot
+        
+        self.is_equippable = True
+        
+        # Специальные свойства брони
+        self.resistance_bonuses = {}
+        self.movement_penalty = 0.0
+        self.durability_loss_per_hit = 0.005
 
 class Consumable(Item):
-    """Класс расходников"""
+    """Класс расходника"""
     
-    def __init__(self, name: str, effect: Effect, cooldown: float = 0):
-        super().__init__(name, "consumable")
+    def __init__(self,
+                 item_id: str,
+                 name: str,
+                 description: str,
+                 effect_type: str,
+                 effect_magnitude: float,
+                 **kwargs):
+        
+        super().__init__(item_id, name, description, ItemType.CONSUMABLE, **kwargs)
+        
+        self.effect_type = effect_type
+        self.effect_magnitude = effect_magnitude
+        
+        self.is_consumable = True
+        
+        # Добавляем эффект
+        effect = ItemEffect(
+            effect_id=f"{item_id}_effect",
+            effect_type=effect_type,
+            magnitude=effect_magnitude
+        )
         self.effects.append(effect)
-        self.cooldown = cooldown
-        self.last_used = 0
-        self.uses_remaining = 1
-        
-    def can_use(self, current_time: float) -> bool:
-        """Проверить, можно ли использовать"""
-        if self.uses_remaining <= 0:
-            return False
-        if self.cooldown > 0 and (current_time - self.last_used) < self.cooldown:
-            return False
-        return True
-        
-    def use(self, user, current_time: float = 0) -> bool:
-        """Использовать расходник"""
-        if not self.can_use(current_time):
-            return False
-        
-        # Применяем эффекты
-        for effect in self.effects:
-            effect.apply(user, user)
-        
-        # Обновляем время использования
-        self.last_used = current_time
-        
-        # Уменьшаем количество использований
-        self.uses_remaining -= 1
-        
-        return True
 
-class Material(Item):
-    """Класс материалов для крафтинга"""
+class Accessory(Item):
+    """Класс аксессуара"""
     
-    def __init__(self, name: str, material_type: str, quality: str = "normal"):
-        super().__init__(name, "material")
-        self.material_type = material_type
-        self.quality = quality
-        self.crafting_value = 1
+    def __init__(self,
+                 item_id: str,
+                 name: str,
+                 description: str,
+                 **kwargs):
         
-    def get_crafting_bonus(self) -> float:
-        """Получить бонус к крафтингу"""
-        quality_bonuses = {
-            "poor": 0.5,
-            "normal": 1.0,
-            "good": 1.5,
-            "excellent": 2.0,
-            "masterwork": 3.0
-        }
-        return quality_bonuses.get(self.quality, 1.0)
-
-# Фабрика предметов
-class ItemFactory:
-    """Фабрика для создания предметов"""
-    
-    @staticmethod
-    def create_weapon(weapon_type: str, level: int = 1) -> Weapon:
-        """Создать оружие по типу и уровню"""
-        weapons = {
-            "sword": {"damage": 10, "damage_type": "physical", "attack_speed": 1.2},
-            "axe": {"damage": 15, "damage_type": "physical", "attack_speed": 0.8},
-            "bow": {"damage": 8, "damage_type": "physical", "attack_speed": 1.5, "range": 5.0},
-            "staff": {"damage": 12, "damage_type": "magical", "attack_speed": 1.0}
-        }
+        super().__init__(item_id, name, description, ItemType.ACCESSORY, **kwargs)
         
-        if weapon_type not in weapons:
-            weapon_type = "sword"
+        self.is_equippable = True
         
-        weapon_data = weapons[weapon_type].copy()
-        weapon_data["damage"] += (level - 1) * 2
-        
-        weapon = Weapon(f"{weapon_type.title()} +{level}", 
-                       weapon_data["damage"], 
-                       weapon_data["damage_type"], 
-                       weapon_data["attack_speed"])
-        
-        if "range" in weapon_data:
-            weapon.range = weapon_data["range"]
-        
-        return weapon
-    
-    @staticmethod
-    def create_consumable(consumable_type: str, level: int = 1) -> Consumable:
-        """Создать расходник по типу и уровню"""
-        consumables = {
-            "health_potion": {
-                "effect": Effect(
-                    name="Восстановление здоровья",
-                    category=EffectCategory.HEAL,
-                    value={"health": 50 + level * 10},
-                    visuals=EffectVisuals(
-                        particle_effect="heal_sparkle",
-                        sound_effect="potion_use"
-                    ),
-                    tags=["heal", "consumable"]
-                )
-            },
-            "mana_potion": {
-                "effect": Effect(
-                    name="Восстановление маны",
-                    category=EffectCategory.HEAL,
-                    value={"mana": 50 + level * 10},
-                    visuals=EffectVisuals(
-                        particle_effect="mana_restore",
-                        sound_effect="potion_use"
-                    ),
-                    tags=["mana", "consumable"]
-                )
-            }
-        }
-        
-        if consumable_type not in consumables:
-            consumable_type = "health_potion"
-        
-        consumable_data = consumables[consumable_type]
-        return Consumable(f"{consumable_type.replace('_', ' ').title()} +{level}", 
-                         consumable_data["effect"])
+        # Специальные свойства аксессуаров
+        self.special_abilities = []
+        self.set_bonus = None

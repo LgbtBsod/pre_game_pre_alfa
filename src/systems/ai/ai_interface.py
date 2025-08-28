@@ -11,34 +11,9 @@ from enum import Enum
 import logging
 import importlib.util
 from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import AIState, AIBehavior as AIPersonality, AIState as ActionType
 
 logger = logging.getLogger(__name__)
-
-class AIState(Enum):
-    """Состояния AI"""
-    IDLE = "idle"
-    EXPLORING = "exploring"
-    COMBAT = "combat"
-    CRAFTING = "crafting"
-    SOCIAL = "social"
-    LEARNING = "learning"
-
-class AIPersonality(Enum):
-    """Типы личностей AI"""
-    CURIOUS = "curious"
-    AGGRESSIVE = "aggressive"
-    CAUTIOUS = "cautious"
-    SOCIAL = "social"
-    CREATIVE = "creative"
-
-class ActionType(Enum):
-    """Типы действий AI"""
-    MOVE = "move"
-    ATTACK = "attack"
-    CRAFT = "craft"
-    TALK = "talk"
-    EXPLORE = "explore"
-    LEARN = "learn"
 
 @dataclass
 class AIDecision:

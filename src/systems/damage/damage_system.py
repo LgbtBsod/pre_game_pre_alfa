@@ -10,22 +10,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
-from ...core.constants import SYSTEM_LIMITS, TIME_CONSTANTS, PROBABILITY_CONSTANTS
+from ...core.constants import SYSTEM_LIMITS, TIME_CONSTANTS, PROBABILITY_CONSTANTS, DamageType
 
 logger = logging.getLogger(__name__)
-
-class DamageType(Enum):
-    """Типы урона"""
-    PHYSICAL = "physical"
-    FIRE = "fire"
-    COLD = "cold"
-    LIGHTNING = "lightning"
-    ACID = "acid"
-    POISON = "poison"
-    PSYCHIC = "psychic"
-    TRUE = "true"
-    GENETIC = "genetic"
-    EMOTIONAL = "emotional"
 
 @dataclass
 class Damage:

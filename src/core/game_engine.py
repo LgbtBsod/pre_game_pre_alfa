@@ -159,9 +159,9 @@ class GameEngine(ShowBase):
             # 7. Менеджер систем (седьмой)
             self.system_manager = SystemManager(self.event_system)
             
-            # 8. Инициализация всех систем через фабрику
-            if not self.system_factory.initialize_all_systems():
-                logger.error("Не удалось инициализировать системы через фабрику")
+            # 8. Создание и инициализация всех систем через фабрику
+            if not self._create_all_systems():
+                logger.error("Не удалось создать системы через фабрику")
                 return False
             
             # 9. Добавляем существующие системы в менеджер
@@ -177,6 +177,45 @@ class GameEngine(ShowBase):
             
         except Exception as e:
             logger.error(f"Ошибка инициализации менеджеров: {e}")
+            return False
+    
+    def _create_all_systems(self) -> bool:
+        """Создание всех систем через фабрику"""
+        try:
+            # Список систем для создания
+            systems_to_create = [
+                'unified_ai_system',
+                'combat_system', 
+                'effect_system',
+                'skill_system',
+                'damage_system',
+                'inventory_system',
+                'item_system',
+                'emotion_system',
+                'evolution_system',
+                'ui_system',
+                'render_system',
+                'content_generator'
+            ]
+            
+            # Создаем системы
+            for system_name in systems_to_create:
+                system = self.system_factory.create_system(system_name)
+                if not system:
+                    logger.warning(f"Не удалось создать систему: {system_name}")
+                    continue
+                
+                logger.info(f"Система {system_name} создана")
+            
+            # Инициализируем все созданные системы
+            if not self.system_factory.initialize_all_systems():
+                logger.error("Не удалось инициализировать системы")
+                return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания систем: {e}")
             return False
     
     def _add_existing_systems_to_manager(self):
@@ -201,31 +240,61 @@ class GameEngine(ShowBase):
         """Инициализация игровых сцен"""
         try:
             # Создание основных сцен
+            scenes_to_register = []
+            
+            # Попытка импорта сцен с обработкой ошибок
             try:
-                from scenes.menu_scene import MenuScene
-                from scenes.game_scene import GameScene
-                from scenes.pause_scene import PauseScene
-                from scenes.settings_scene import SettingsScene
-                from scenes.load_scene import LoadScene
-                from scenes.creator_scene import CreatorScene
-            except ImportError:
-                from src.scenes.menu_scene import MenuScene
-                from src.scenes.game_scene import GameScene
-                from src.scenes.pause_scene import PauseScene
-                from src.scenes.settings_scene import SettingsScene
-                from src.scenes.load_scene import LoadScene
-                from src.scenes.creator_scene import CreatorScene
+                from ..scenes.menu_scene import MenuScene
+                scenes_to_register.append(("menu", MenuScene))
+            except ImportError as e:
+                logger.warning(f"Не удалось импортировать MenuScene: {e}")
             
-            # Регистрация сцен
-            self.scene_manager.register_scene("menu", MenuScene())
-            self.scene_manager.register_scene("game", GameScene())
-            self.scene_manager.register_scene("pause", PauseScene())
-            self.scene_manager.register_scene("settings", SettingsScene())
-            self.scene_manager.register_scene("load_game", LoadScene())
-            self.scene_manager.register_scene("creator", CreatorScene())
+            try:
+                from ..scenes.game_scene import GameScene
+                scenes_to_register.append(("game", GameScene))
+            except ImportError as e:
+                logger.warning(f"Не удалось импортировать GameScene: {e}")
             
-            # Установка начальной сцены
-            self.scene_manager.set_active_scene("menu")
+            try:
+                from ..scenes.pause_scene import PauseScene
+                scenes_to_register.append(("pause", PauseScene))
+            except ImportError as e:
+                logger.warning(f"Не удалось импортировать PauseScene: {e}")
+            
+            try:
+                from ..scenes.settings_scene import SettingsScene
+                scenes_to_register.append(("settings", SettingsScene))
+            except ImportError as e:
+                logger.warning(f"Не удалось импортировать SettingsScene: {e}")
+            
+            try:
+                from ..scenes.load_scene import LoadScene
+                scenes_to_register.append(("load_game", LoadScene))
+            except ImportError as e:
+                logger.warning(f"Не удалось импортировать LoadScene: {e}")
+            
+            try:
+                from ..scenes.creator_scene import CreatorScene
+                scenes_to_register.append(("creator", CreatorScene))
+            except ImportError as e:
+                logger.warning(f"Не удалось импортировать CreatorScene: {e}")
+            
+            # Регистрация доступных сцен
+            for scene_name, scene_class in scenes_to_register:
+                try:
+                    self.scene_manager.register_scene(scene_name, scene_class())
+                    logger.info(f"Сцена {scene_name} зарегистрирована")
+                except Exception as e:
+                    logger.error(f"Ошибка регистрации сцены {scene_name}: {e}")
+            
+            # Установка начальной сцены (первая доступная)
+            if scenes_to_register:
+                first_scene = scenes_to_register[0][0]
+                self.scene_manager.set_active_scene(first_scene)
+                logger.info(f"Установлена начальная сцена: {first_scene}")
+            else:
+                logger.error("Нет доступных сцен для инициализации")
+                return False
             
             logger.info("Сцены успешно инициализированы")
             return True

@@ -41,6 +41,9 @@ class SystemFactory:
             'render_system': ['event_system', 'config_manager']
         }
         
+        # Автоматическая регистрация систем
+        self._register_default_systems()
+        
         logger.info("Фабрика систем инициализирована")
     
     def register_system(self, system_name: str, system_class: Type[ISystem]) -> bool:
@@ -196,6 +199,52 @@ class SystemFactory:
             
         except Exception as e:
             logger.error(f"Ошибка очистки систем: {e}")
+    
+    def _register_default_systems(self):
+        """Регистрация систем по умолчанию"""
+        try:
+            # Регистрация Unified AI System
+            from ..systems.ai.unified_ai_system import UnifiedAISystem
+            self.register_system('unified_ai_system', UnifiedAISystem)
+            
+            # Регистрация других систем
+            from ..systems.combat.combat_system import CombatSystem
+            self.register_system('combat_system', CombatSystem)
+            
+            from ..systems.effects.effect_system import EffectSystem
+            self.register_system('effect_system', EffectSystem)
+            
+            from ..systems.skills.skill_system import SkillSystem
+            self.register_system('skill_system', SkillSystem)
+            
+            from ..systems.damage.damage_system import DamageSystem
+            self.register_system('damage_system', DamageSystem)
+            
+            from ..systems.inventory.inventory_system import InventorySystem
+            self.register_system('inventory_system', InventorySystem)
+            
+            from ..systems.items.item_system import ItemSystem
+            self.register_system('item_system', ItemSystem)
+            
+            from ..systems.emotion.emotion_system import EmotionSystem
+            self.register_system('emotion_system', EmotionSystem)
+            
+            from ..systems.evolution.evolution_system import EvolutionSystem
+            self.register_system('evolution_system', EvolutionSystem)
+            
+            from ..systems.ui.ui_system import UISystem
+            self.register_system('ui_system', UISystem)
+            
+            from ..systems.rendering.render_system import RenderSystem
+            self.register_system('render_system', RenderSystem)
+            
+            from ..systems.content.content_generator import ContentGenerator
+            self.register_system('content_generator', ContentGenerator)
+            
+            logger.info("Системы по умолчанию зарегистрированы")
+            
+        except Exception as e:
+            logger.error(f"Ошибка регистрации систем по умолчанию: {e}")
     
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о всех системах"""
