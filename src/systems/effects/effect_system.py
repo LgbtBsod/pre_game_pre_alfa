@@ -928,3 +928,33 @@ class EffectSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка получения эффектов по типу триггера {trigger_type.value}: {e}")
             return []
+
+    def combine_effects(self, effect1: Effect, effect2: Effect) -> Optional[Effect]:
+        """Комбинирование двух эффектов для создания нового эффекта"""
+        try:
+            # Проверяем, можно ли комбинировать эффекты
+            if not self.system_settings['effect_combining_enabled']:
+                return None
+            
+            # Создаем комбинированный эффект
+            combined_effect = Effect(
+                effect_id=f"combined_{effect1.effect_id}_{effect2.effect_id}",
+                name=f"Комбинированный: {effect1.name} + {effect2.name}",
+                description=f"Комбинация эффектов {effect1.name} и {effect2.name}",
+                category=EffectCategory.COMBINED,
+                trigger_type=TriggerType.ON_COMBINE,
+                duration=max(effect1.duration, effect2.duration),
+                magnitude=(effect1.magnitude + effect2.magnitude) * 0.8,  # Небольшое ослабление
+                target_stats=list(set(effect1.target_stats + effect2.target_stats)),
+                damage_type=effect1.damage_type or effect2.damage_type,
+                special_effects=effect1.special_effects + effect2.special_effects,
+                stackable=False,
+                max_stacks=1
+            )
+            
+            logger.info(f"Создан комбинированный эффект: {combined_effect.name}")
+            return combined_effect
+            
+        except Exception as e:
+            logger.error(f"Ошибка комбинирования эффектов: {e}")
+            return None

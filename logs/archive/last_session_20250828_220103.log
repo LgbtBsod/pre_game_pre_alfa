@@ -117,3 +117,6 @@
 2025-08-26 11:25:47 - core.scene_manager - INFO - Переключение на сцену game с переходом fade
 2025-08-26 11:25:47 - src.scenes.menu_scene - INFO - Переключение на игровую сцену
 2025-08-26 11:25:55 - core.performance_manager - WARNING - Высокое использование CPU: 81.6% (источник: system)
+2025-08-26 11:27:49 - core.performance_manager - WARNING - Высокое использование CPU: 87.7% (источник: system)
+2025-08-26 11:27:53 - core.performance_manager - WARNING - Высокое использование CPU: 81.2% (источник: system)
+2025-08-26 11:27:54 - core.performance_manager - WARNING - Высокое использование CPU: 83.6% (источник: system)

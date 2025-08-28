@@ -12,10 +12,11 @@ from dataclasses import dataclass, field
 
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
-    ItemType, ItemRarity, ItemCategory, DamageType, StatType,
-    SkillType, SkillCategory, GeneType, GeneRarity, EffectCategory,
+    ItemType, ItemRarity, ItemCategory, WeaponType, ArmorType, AccessoryType, ConsumableType,
+    DamageType, StatType, SkillType, SkillCategory, GeneType, GeneRarity, EffectCategory,
     EnemyType, BossType, ContentType, ContentRarity,
-    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    BASE_STATS, ITEM_STATS, TOUGHNESS_MECHANICS, ENEMY_WEAKNESSES,
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )
 
 logger = logging.getLogger(__name__)
@@ -42,7 +43,9 @@ class ContentItem:
     description: str
     content_type: ContentType
     rarity: ContentRarity
-    level: int = 1
+    uuid: str = field(default_factory=lambda: str(uuid.uuid4()))
+    level_requirement: int = 1
+    session_id: str = ""
     generation_time: float = field(default_factory=time.time)
     properties: Dict[str, Any] = field(default_factory=dict)
 
@@ -538,7 +541,7 @@ class ContentGenerator(ISystem):
             templates = {
                 'weapon': {
                     'item_type': ItemType.WEAPON,
-                    'categories': [ItemCategory.SWORD, ItemCategory.AXE, ItemCategory.BOW, ItemCategory.STAFF],
+                    'categories': [WeaponType.SWORD, WeaponType.AXE, WeaponType.BOW, WeaponType.STAFF],
                     'rarity_weights': {
                         ItemRarity.COMMON: 0.6,
                         ItemRarity.UNCOMMON: 0.25,
@@ -549,7 +552,7 @@ class ContentGenerator(ISystem):
                 },
                 'armor': {
                     'item_type': ItemType.ARMOR,
-                    'categories': [ItemCategory.HELMET, ItemCategory.CHESTPLATE, ItemCategory.GREAVES],
+                    'categories': [ArmorType.HELMET, ArmorType.CHESTPLATE, ArmorType.GREAVES],
                     'rarity_weights': {
                         ItemRarity.COMMON: 0.6,
                         ItemRarity.UNCOMMON: 0.25,
@@ -560,7 +563,7 @@ class ContentGenerator(ISystem):
                 },
                 'accessory': {
                     'item_type': ItemType.ACCESSORY,
-                    'categories': [ItemCategory.RING, ItemCategory.AMULET, ItemCategory.BELT],
+                    'categories': [AccessoryType.RING, AccessoryType.AMULET, AccessoryType.BELT],
                     'rarity_weights': {
                         ItemRarity.COMMON: 0.5,
                         ItemRarity.UNCOMMON: 0.3,
@@ -749,24 +752,35 @@ class ContentGenerator(ISystem):
             damage_variation = self.random_generator.uniform(0.8, 1.2)
             final_damage = int(base_damage * damage_variation)
             
+            # Генерируем характеристики стойкости
+            toughness_damage = max(10, final_damage // 2) + (level - 1) * 2
+            break_efficiency = min(2.0, 1.0 + (level - 1) * 0.1)
+            
             # Генерируем уникальные эффекты
             unique_effects = self._generate_unique_effects(level)
             
-            # Создаем предмет
+            # Создаем предмет с полными характеристиками
             weapon = ContentItem(
                 item_id=weapon_id,
                 name=weapon_name,
                 description=self._generate_unique_description(template_name, level, unique_effects),
                 content_type=ContentType.WEAPON,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'base_damage': final_damage,
                     'damage_type': template['damage_type'].value,
                     'requirements': template['requirements'],
                     'scaling': template['scaling'],
                     'unique_effects': unique_effects,
-                    'generation_seed': self.random_generator.randint(1, 1000000)
+                    'generation_seed': self.random_generator.randint(1, 1000000),
+                    # Новые характеристики стойкости
+                    'toughness_damage': toughness_damage,
+                    'break_efficiency': break_efficiency,
+                    'attack': final_damage // 2,
+                    'speed': 1.0 + (level - 1) * 0.05,
+                    'critical_chance': min(0.25, 0.05 + (level - 1) * 0.02),
+                    'critical_multiplier': min(3.0, 2.0 + (level - 1) * 0.1)
                 }
             )
             
@@ -834,18 +848,36 @@ class ContentGenerator(ISystem):
             # Генерируем уникальный ID
             armor_id = f"armor_{uuid.uuid4().hex[:8]}"
             
-            # Создаем предмет
+            # Генерируем характеристики стойкости
+            base_defense = template['base_defense'] + (level - 1) * 3
+            toughness_resistance = min(0.5, 0.1 + (level - 1) * 0.05)
+            stun_resistance = min(0.3, 0.05 + (level - 1) * 0.03)
+            
+            # Создаем предмет с полными характеристиками
             armor = ContentItem(
                 item_id=armor_id,
                 name=f"{template_name.title()} Level {level}",
                 description=f"Сгенерированная броня типа {template_name}",
                 content_type=ContentType.ARMOR,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
-                    'base_defense': template['base_defense'] + (level - 1) * 3,
+                    'base_defense': base_defense,
                     'requirements': template['requirements'],
-                    'scaling': template['scaling']
+                    'scaling': template['scaling'],
+                    # Новые характеристики стойкости
+                    'defense': base_defense,
+                    'health': 20 + (level - 1) * 5,
+                    'mana': 10 + (level - 1) * 3,
+                    'stamina': 15 + (level - 1) * 4,
+                    'toughness_resistance': toughness_resistance,
+                    'stun_resistance': stun_resistance,
+                    'resistance': {
+                        'physical': min(0.3, 0.1 + (level - 1) * 0.02),
+                        'fire': min(0.25, 0.05 + (level - 1) * 0.02),
+                        'ice': min(0.25, 0.05 + (level - 1) * 0.02),
+                        'lightning': min(0.25, 0.05 + (level - 1) * 0.02)
+                    }
                 }
             )
             
@@ -866,18 +898,31 @@ class ContentGenerator(ISystem):
             # Генерируем уникальный ID
             accessory_id = f"accessory_{uuid.uuid4().hex[:8]}"
             
-            # Создаем предмет
+            # Генерируем характеристики
+            stat_bonus = 2 + (level - 1) * 1
+            special_effects = self._generate_accessory_effects(level)
+            
+            # Создаем предмет с полными характеристиками
             accessory = ContentItem(
                 item_id=accessory_id,
                 name=f"{template_name.title()} Level {level}",
                 description=f"Сгенерированный аксессуар типа {template_name}",
                 content_type=ContentType.ACCESSORY,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'base_stats': template['base_stats'],
                     'requirements': template['requirements'],
-                    'scaling': template['scaling']
+                    'scaling': template['scaling'],
+                    # Новые характеристики
+                    'intelligence': stat_bonus,
+                    'strength': stat_bonus,
+                    'agility': stat_bonus,
+                    'constitution': stat_bonus,
+                    'wisdom': stat_bonus,
+                    'charisma': stat_bonus,
+                    'luck': stat_bonus,
+                    'special_effects': special_effects
                 }
             )
             
@@ -887,6 +932,26 @@ class ContentGenerator(ISystem):
         except Exception as e:
             logger.error(f"Ошибка генерации аксессуара: {e}")
             return None
+    
+    def _generate_accessory_effects(self, level: int) -> list:
+        """Генерация эффектов для аксессуаров"""
+        effects = []
+        effect_pool = [
+            'Health Regeneration', 'Mana Regeneration', 'Stamina Regeneration',
+            'Experience Boost', 'Gold Boost', 'Drop Rate Boost',
+            'Movement Speed', 'Attack Speed', 'Cast Speed'
+        ]
+        
+        # Количество эффектов зависит от уровня
+        num_effects = min(level // 3 + 1, 2)
+        
+        for _ in range(num_effects):
+            if self.random_generator.random() < 0.4:  # 40% шанс эффекта
+                effect = self.random_generator.choice(effect_pool)
+                if effect not in effects:
+                    effects.append(effect)
+        
+        return effects
     
     def _generate_gene(self, level: int) -> Optional[ContentItem]:
         """Генерация гена"""
@@ -905,7 +970,7 @@ class ContentGenerator(ISystem):
                 description=f"Сгенерированный ген типа {template_name}",
                 content_type=ContentType.GENE,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'gene_type': template['gene_type'].value,
                     'rarity': template['rarity'].value,
@@ -938,7 +1003,7 @@ class ContentGenerator(ISystem):
                 description=f"Сгенерированный навык типа {template_name}",
                 content_type=ContentType.SKILL,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'skill_type': template['skill_type'].value,
                     'category': template['category'].value,
@@ -973,7 +1038,7 @@ class ContentGenerator(ISystem):
                 description=f"Сгенерированный эффект типа {template_name}",
                 content_type=ContentType.EFFECT,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'effect_category': template['effect_category'].value,
                     'base_damage': template.get('base_damage', 0),
@@ -1003,7 +1068,7 @@ class ContentGenerator(ISystem):
                 description=f"Сгенерированный враг уровня {level}",
                 content_type=ContentType.ENEMY,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'enemy_type': EnemyType.NORMAL.value,
                     'health': BASE_STATS['health'] + (level - 1) * 20,
@@ -1033,7 +1098,7 @@ class ContentGenerator(ISystem):
                 description=f"Сгенерированный босс уровня {level}",
                 content_type=ContentType.BOSS,
                 rarity=self._generate_rarity(),
-                level=level,
+                level_requirement=level,
                 properties={
                     'boss_type': BossType.MINIBOSS.value,
                     'health': (BASE_STATS['health'] * 5) + (level - 1) * 100,
@@ -1135,3 +1200,64 @@ class ContentGenerator(ISystem):
         except Exception as e:
             logger.error(f"Ошибка получения информации о шаблонах типа {template_type}: {e}")
             return {'count': 0, 'templates': []}
+    
+    def generate_effect_combinations(self, session_id: str, count: int = 10) -> List[ContentItem]:
+        """Генерация комбинаций эффектов для сессии"""
+        try:
+            combinations = []
+            
+            # Базовые эффекты для комбинирования
+            base_effects = [
+                {'name': 'Огненный урон', 'type': 'fire', 'magnitude': 15, 'duration': 5.0},
+                {'name': 'Ледяной урон', 'type': 'cold', 'magnitude': 12, 'duration': 6.0},
+                {'name': 'Электрический урон', 'type': 'lightning', 'magnitude': 18, 'duration': 4.0},
+                {'name': 'Кислотный урон', 'type': 'acid', 'magnitude': 10, 'duration': 8.0},
+                {'name': 'Ядовитый урон', 'type': 'poison', 'magnitude': 8, 'duration': 10.0},
+                {'name': 'Психический урон', 'type': 'psychic', 'magnitude': 20, 'duration': 3.0},
+                {'name': 'Генетический урон', 'type': 'genetic', 'magnitude': 25, 'duration': 7.0},
+                {'name': 'Эмоциональный урон', 'type': 'emotional', 'magnitude': 22, 'duration': 4.0}
+            ]
+            
+            for i in range(count):
+                # Выбираем два случайных базовых эффекта
+                effect1 = self.random_generator.choice(base_effects)
+                effect2 = self.random_generator.choice(base_effects)
+                
+                if effect1 == effect2:
+                    continue
+                
+                # Создаем комбинированный эффект
+                combo_name = f"Комбинация: {effect1['name']} + {effect2['name']}"
+                combo_description = f"Синергия эффектов {effect1['name']} и {effect2['name']}"
+                
+                # Рассчитываем параметры комбинации
+                combo_magnitude = (effect1['magnitude'] + effect2['magnitude']) * 0.8
+                combo_duration = max(effect1['duration'], effect2['duration'])
+                
+                # Создаем элемент контента
+                combo_item = ContentItem(
+                    item_id=f"effect_combo_{uuid.uuid4().hex[:8]}",
+                    name=combo_name,
+                    description=combo_description,
+                    content_type=ContentType.DAMAGE_COMBINATION,
+                    rarity=self._generate_rarity(),
+                    level_requirement=1,
+                    session_id=session_id,
+                    properties={
+                        'effect1': effect1,
+                        'effect2': effect2,
+                        'combo_magnitude': combo_magnitude,
+                        'combo_duration': combo_duration,
+                        'generation_time': time.time()
+                    }
+                )
+                
+                combinations.append(combo_item)
+                self.system_stats['effects_generated'] += 1
+            
+            logger.info(f"Сгенерировано {len(combinations)} комбинаций эффектов для сессии {session_id}")
+            return combinations
+            
+        except Exception as e:
+            logger.error(f"Ошибка генерации комбинаций эффектов: {e}")
+            return []
