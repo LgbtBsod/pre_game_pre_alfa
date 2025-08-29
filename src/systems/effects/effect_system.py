@@ -125,6 +125,14 @@ class EffectSystem(BaseGameSystem):
             
             # Регистрируем репозитории в RepositoryManager
             self._register_system_repositories()
+
+            # Подписки на события для интеграции
+            try:
+                if self.event_bus:
+                    self.event_bus.on("apply_effect", self._on_apply_effect_event)
+                    self.event_bus.on("remove_effect", self._on_remove_effect_event)
+            except Exception:
+                pass
             
             logger.info("Система эффектов успешно инициализирована")
             return True
@@ -208,11 +216,10 @@ class EffectSystem(BaseGameSystem):
             return False
     
     def _register_system_states(self) -> None:
-        """Регистрация состояний системы (для совместимости с тестами)"""
+        """Регистрация состояний системы (единый источник)"""
         if not self.state_manager:
             return
         
-        # Регистрируем состояния системы
         self.state_manager.register_container(
             "effect_system_settings",
             StateType.CONFIGURATION,
@@ -227,7 +234,6 @@ class EffectSystem(BaseGameSystem):
             self.system_stats
         )
         
-        # Регистрируем состояния эффектов
         self.state_manager.register_container(
             "active_effects",
             StateType.DATA,
@@ -236,67 +242,34 @@ class EffectSystem(BaseGameSystem):
         )
         
         logger.info("Состояния системы эффектов зарегистрированы")
-    
+
+    # Сохранение обратной совместимости
     def _register_states(self) -> None:
-        """Регистрация состояний в StateManager"""
-        if not self.state_manager:
-            return
-        
-        # Регистрируем состояния системы
-        self.state_manager.register_container(
-            "effect_system_settings",
-            StateType.CONFIGURATION,
-            StateScope.SYSTEM,
-            self.system_settings
-        )
-        
-        self.state_manager.register_container(
-            "effect_system_stats",
-            StateType.STATISTICS,
-            StateScope.SYSTEM,
-            self.system_stats
-        )
-        
-        # Регистрируем состояния эффектов
-        self.state_manager.register_container(
-            "active_effects",
-            StateType.DATA,
-            StateScope.GLOBAL,
-            {}
-        )
-        
-        logger.info("Состояния системы эффектов зарегистрированы")
+        self._register_system_states()
     
     def _register_system_repositories(self) -> None:
-        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        """Регистрация репозиториев системы (единый источник)"""
         if not self.repository_manager:
             return
         
-        # Регистрируем репозиторий зарегистрированных эффектов
         self.repository_manager.register_repository(
             "registered_effects",
             DataType.CONFIGURATION,
             StorageType.MEMORY,
             self.registered_effects
         )
-        
-        # Регистрируем репозиторий специальных эффектов
         self.repository_manager.register_repository(
             "special_effects",
             DataType.CONFIGURATION,
             StorageType.MEMORY,
             self.special_effects
         )
-        
-        # Регистрируем репозиторий активных эффектов
         self.repository_manager.register_repository(
             "active_effects",
             DataType.DYNAMIC_DATA,
             StorageType.MEMORY,
             self.active_effects
         )
-        
-        # Регистрируем репозиторий истории эффектов
         self.repository_manager.register_repository(
             "effect_history",
             DataType.HISTORY,
@@ -305,45 +278,10 @@ class EffectSystem(BaseGameSystem):
         )
         
         logger.info("Репозитории системы эффектов зарегистрированы")
-    
+
+    # Сохранение обратной совместимости
     def _register_repositories(self) -> None:
-        """Регистрация репозиториев в RepositoryManager"""
-        if not self.repository_manager:
-            return
-        
-        # Регистрируем репозиторий зарегистрированных эффектов
-        self.repository_manager.register_repository(
-            "registered_effects",
-            DataType.CONFIGURATION,
-            StorageType.MEMORY,
-            self.registered_effects
-        )
-        
-        # Регистрируем репозиторий специальных эффектов
-        self.repository_manager.register_repository(
-            "special_effects",
-            DataType.CONFIGURATION,
-            StorageType.MEMORY,
-            self.special_effects
-        )
-        
-        # Регистрируем репозиторий активных эффектов
-        self.repository_manager.register_repository(
-            "active_effects",
-            DataType.DYNAMIC_DATA,
-            StorageType.MEMORY,
-            self.active_effects
-        )
-        
-        # Регистрируем репозиторий истории эффектов
-        self.repository_manager.register_repository(
-            "effect_history",
-            DataType.HISTORY,
-            StorageType.MEMORY,
-            self.effect_history
-        )
-        
-        logger.info("Репозитории системы эффектов зарегистрированы")
+        self._register_system_repositories()
     
     def _restore_from_repositories(self) -> None:
         """Восстановление данных из репозиториев"""
@@ -644,7 +582,7 @@ class EffectSystem(BaseGameSystem):
                         for effect in self.active_effects[participant_id]:
                             if effect.effect_id in self.registered_effects:
                                 registered_effect = self.registered_effects[effect.effect_id]
-                                if registered_effect.trigger_type == TriggerType.COMBAT_START:
+                                if registered_effect.trigger_type == TriggerType.ON_ENTER_COMBAT:
                                     self._apply_combat_trigger_effect(participant_id, effect, registered_effect)
                 return True
             return False
@@ -878,6 +816,27 @@ class EffectSystem(BaseGameSystem):
         except Exception as e:
             logger.error(f"Ошибка получения информации об эффекте {effect_id}: {e}")
             return None
+
+    # --- Event bus integration ---
+    def _on_apply_effect_event(self, data: Dict[str, Any]) -> None:
+        try:
+            effect_id = data.get('effect_id')
+            target_id = data.get('target_id') or data.get('entity_id')
+            applied_by = data.get('applied_by')
+            duration = data.get('duration')
+            if effect_id and target_id:
+                self.apply_effect_to_entity(effect_id, target_id, applied_by, duration)
+        except Exception:
+            pass
+
+    def _on_remove_effect_event(self, data: Dict[str, Any]) -> None:
+        try:
+            effect_id = data.get('effect_id')
+            target_id = data.get('target_id') or data.get('entity_id')
+            if effect_id and target_id:
+                self.remove_effect_from_entity(target_id, effect_id)
+        except Exception:
+            pass
 
     # --- Расширение API для интеграции со сценой ---
     def trigger_effect(self, trigger_type: str, source_entity: Any, target_entity: Any = None, context: Dict[str, Any] = None) -> bool:

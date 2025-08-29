@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import SYSTEM_LIMITS, TIME_CONSTANTS, PROBABILITY_CONSTANTS, DamageType
 
 logger = logging.getLogger(__name__)
@@ -70,14 +70,11 @@ class DamageModifier:
     stackable: bool = False
     max_stacks: int = 1
 
-class DamageSystem(ISystem):
-    """Система управления уроном"""
+class DamageSystem(BaseGameSystem):
+    """Система управления уроном (интегрирована с BaseGameSystem)"""
     
     def __init__(self):
-        self._system_name = "damage"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("damage", Priority.HIGH)
         
         # Модификаторы урона
         self.damage_modifiers: Dict[str, DamageModifier] = {}
@@ -105,7 +102,14 @@ class DamageSystem(ISystem):
     def initialize(self) -> bool:
         """Инициализация системы урона"""
         try:
-            self._system_state = SystemState.READY
+            if not super().initialize():
+                return False
+            # Подпишемся на события шины для интеграции с другими системами
+            try:
+                if self.event_bus:
+                    self.event_bus.on("deal_damage", self._on_deal_damage_event)
+            except Exception:
+                pass
             logger.info("Система урона успешно инициализирована")
             return True
         except Exception as e:
@@ -189,13 +193,19 @@ class DamageSystem(ISystem):
         return max(PROBABILITY_CONSTANTS["min_critical_multiplier"], 
                   min(PROBABILITY_CONSTANTS["max_critical_multiplier"], base_multiplier))
     
-    def update(self, dt: float):
+    def update(self, delta_time: float) -> bool:
         """Обновление системы урона"""
-        # Очистка истекших модификаторов
-        self._cleanup_expired_modifiers(dt)
-        
-        # Обновление статистики
-        self.damage_stats['update_time'] += dt
+        try:
+            if not super().update(delta_time):
+                return False
+            # Очистка истекших модификаторов
+            self._cleanup_expired_modifiers(delta_time)
+            # Обновление статистики
+            self.damage_stats['update_time'] += delta_time
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы урона: {e}")
+            return False
     
     def _cleanup_expired_modifiers(self, dt: float):
         """Очистка истекших модификаторов"""
@@ -225,8 +235,8 @@ class DamageSystem(ISystem):
     def get_system_stats(self) -> Dict[str, Any]:
         """Получение статистики системы"""
         return {
-            'system_name': self._system_name,
-            'system_state': self._system_state.value,
+            'system_name': self.system_name,
+            'system_state': self.system_state.value,
             'damage_stats': self.damage_stats,
             'active_modifiers': len(self.damage_modifiers),
             'system_limits': {
@@ -235,6 +245,20 @@ class DamageSystem(ISystem):
                 'max_penetration_value': SYSTEM_LIMITS["max_penetration_value"]
             }
         }
+
+    # --- Event bus integration ---
+    def _on_deal_damage_event(self, data: Dict[str, Any]) -> None:
+        try:
+            target = data.get('target') or data.get('target_id')
+            source = data.get('source') or data.get('source_id')
+            amount = data.get('amount', 0)
+            damage_type = data.get('damage_type', DamageType.PHYSICAL.value)
+            # В реальной интеграции здесь получаем объекты сущностей по id
+            if hasattr(target, 'take_damage'):
+                dmg = Damage(amount=amount, damage_type=DamageType(damage_type), source=source)
+                self.deal_damage(target, dmg)
+        except Exception:
+            pass
     
     def reset_stats(self):
         """Сброс статистики"""

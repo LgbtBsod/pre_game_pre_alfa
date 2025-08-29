@@ -30,15 +30,17 @@ class SystemFactory:
         # Зависимости систем
         self.system_dependencies = {
             'unified_ai_system': ['event_system', 'config_manager'],
-            'combat_system': ['event_system', 'unified_ai_system'],
+            'combat_system': ['event_system', 'unified_ai_system', 'effect_system', 'damage_system'],
             'content_generator': ['event_system', 'config_manager'],
             'emotion_system': ['event_system', 'unified_ai_system'],
             'evolution_system': ['event_system', 'unified_ai_system'],
-            'inventory_system': ['event_system'],
+            'inventory_system': ['event_system', 'item_system'],
             'item_system': ['event_system', 'content_generator'],
-            'skill_system': ['event_system', 'content_generator'],
-            'ui_system': ['event_system', 'config_manager'],
-            'render_system': ['event_system', 'config_manager']
+            'skill_system': ['event_system', 'content_generator', 'effect_system', 'damage_system'],
+            'ui_system': ['event_system', 'config_manager', 'effect_system'],
+            'render_system': ['event_system', 'config_manager', 'effect_system'],
+            'effect_system': ['event_system', 'config_manager'],
+            'damage_system': ['event_system', 'config_manager']
         }
         
         # Автоматическая регистрация систем

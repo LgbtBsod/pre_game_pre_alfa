@@ -1,3 +1,22 @@
+# Current Status
+
+## 2025-08-29
+
+- Unified registration methods across systems:
+  - Effects, Skills, Inventory now use single-source `_register_system_states` and `_register_system_repositories` with backward-compatible aliases.
+- Fixed logic/enum issues:
+  - `EffectSystem`: combat-start trigger aligned to `TriggerType.ON_ENTER_COMBAT`.
+  - `EmotionSystem`: corrected initialization logging to avoid undefined variables on entity creation.
+- Dependency graph improved in `src/core/system_factory.py`:
+  - Added explicit deps: combat -> effects, damage; skills -> effects, damage; inventory -> items; render/ui -> effects; effect/damage depend on event/config.
+- Cross-system event integration:
+  - `SkillSystem` publishes `skill_used` + `deal_damage`/`apply_effect` events to bus.
+  - `DamageSystem` subscribes to `deal_damage`.
+  - `EffectSystem` subscribes to `apply_effect`/`remove_effect`.
+- Test runner reliability on Windows:
+  - `tests/run_tests.py` now forces UTF-8 stdout to prevent encoding crashes.
+
+All changes preserve existing mechanics and integrate within existing modules without creating duplicates.
 # Текущий статус разработки - "Эволюционная Адаптация: Генетический Резонанс"
 
 ## Общий прогресс: ~95%

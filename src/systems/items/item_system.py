@@ -9,7 +9,7 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     ItemType, ItemRarity, ItemCategory, DamageType, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
@@ -53,14 +53,11 @@ class Item:
     model: str = ""
     sound: str = ""
 
-class ItemSystem(ISystem):
-    """Система управления предметами"""
+class ItemSystem(BaseGameSystem):
+    """Система управления предметами (интегрирована с BaseGameSystem)"""
     
     def __init__(self):
-        self._system_name = "items"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__("items", Priority.HIGH)
         
         # Зарегистрированные предметы
         self.registered_items: Dict[str, Item] = {}
@@ -95,25 +92,11 @@ class ItemSystem(ISystem):
         
         logger.info("Система предметов инициализирована")
     
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
-    
     def initialize(self) -> bool:
         """Инициализация системы предметов"""
         try:
+            if not super().initialize():
+                return False
             logger.info("Инициализация системы предметов...")
             
             # Регистрируем базовые предметы
@@ -122,13 +105,11 @@ class ItemSystem(ISystem):
             # Загружаем шаблоны предметов
             self._load_item_templates()
             
-            self._system_state = SystemState.READY
             logger.info("Система предметов успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы предметов: {e}")
-            self._system_state = SystemState.ERROR
             return False
     
     def update(self, delta_time: float) -> bool:
@@ -154,55 +135,18 @@ class ItemSystem(ISystem):
             logger.error(f"Ошибка обновления системы предметов: {e}")
             return False
     
-    def pause(self) -> bool:
-        """Приостановка системы предметов"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система предметов приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы предметов: {e}")
-            return False
+    # Пауза/резюмирование покрываются базовым компонентом при необходимости
     
-    def resume(self) -> bool:
-        """Возобновление системы предметов"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система предметов возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы предметов: {e}")
-            return False
-    
-    def cleanup(self) -> bool:
-        """Очистка системы предметов"""
+    def destroy(self) -> bool:
+        """Очистка/уничтожение системы предметов"""
         try:
             logger.info("Очистка системы предметов...")
-            
-            # Очищаем все данные
             self.registered_items.clear()
             self.entity_items.clear()
             self.item_templates.clear()
             self.item_history.clear()
-            
-            # Сбрасываем статистику
-            self.system_stats = {
-                'registered_items_count': 0,
-                'total_entity_items': 0,
-                'items_created_today': 0,
-                'items_destroyed_today': 0,
-                'items_upgraded_today': 0,
-                'update_time': 0.0
-            }
-            
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система предметов очищена")
-            return True
-            
+            self.reset_stats()
+            return super().destroy()
         except Exception as e:
             logger.error(f"Ошибка очистки системы предметов: {e}")
             return False

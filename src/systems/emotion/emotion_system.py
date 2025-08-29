@@ -760,27 +760,16 @@ class EmotionSystem(BaseGameSystem):
             
             # Записываем в историю
             current_time = time.time()
+            # Начальные эмоции логируем агрегировано
             self.emotion_history.append({
                 'timestamp': current_time,
-                'action': 'emotion_added',
+                'action': 'entity_emotion_state_initialized',
                 'entity_id': entity_id,
-                'emotion_type': emotion_type.value,
-                'intensity': intensity.value,
-                'value': value,
-                'duration': duration,
-                'source': source
+                'initial_emotions_count': len(emotional_state.emotions)
             })
             
-            emotional_state.emotional_history.append({
-                'timestamp': current_time,
-                'emotion_type': emotion_type.value,
-                'intensity': intensity.value,
-                'value': value,
-                'source': source
-            })
-            
-            self.system_stats['emotions_triggered'] += 1
-            logger.debug(f"Добавлена эмоция {emotion_type.value} для {entity_id}")
+            self.system_stats['emotions_triggered'] += len(emotional_state.emotions)
+            logger.debug(f"Инициализировано эмоциональное состояние для {entity_id} ({len(emotional_state.emotions)} эмоций)")
             return True
             
         except Exception as e:

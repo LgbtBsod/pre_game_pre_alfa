@@ -215,24 +215,19 @@ class SkillSystem(BaseGameSystem):
             logger.error(f"Ошибка обновления системы навыков: {e}")
     
     def _register_system_states(self):
-        """Регистрация состояний системы (для совместимости с тестами)"""
+        """Регистрация состояний системы (единый источник)"""
         if not self.state_manager:
             return
             
         try:
-            # Настройки системы навыков
             self.state_manager.register_state(
                 "skill_system_settings",
                 self.system_settings
             )
-            
-            # Статистика системы навыков
             self.state_manager.register_state(
                 "skill_system_stats",
                 self.system_stats
             )
-            
-            # Зарегистрированные навыки
             self.state_manager.register_state(
                 "registered_skills",
                 {skill_id: {
@@ -243,8 +238,6 @@ class SkillSystem(BaseGameSystem):
                     "max_level": skill.max_level
                 } for skill_id, skill in self.registered_skills.items()}
             )
-            
-            # Навыки сущностей
             self.state_manager.register_state(
                 "entity_skills",
                 {entity_id: {
@@ -255,136 +248,39 @@ class SkillSystem(BaseGameSystem):
                     } for skill_id, skill in skills.items()
                 } for entity_id, skills in self.entity_skills.items()}
             )
-            
             logger.debug("Состояния системы навыков зарегистрированы")
-            
         except Exception as e:
             logger.warning(f"Ошибка регистрации состояний системы навыков: {e}")
     
     def _register_states(self):
-        """Регистрация состояний в StateManager"""
-        if not self.state_manager:
-            return
-            
-        try:
-            # Настройки системы навыков
-            self.state_manager.register_state(
-                "skill_system_settings",
-                self.system_settings
-            )
-            
-            # Статистика системы навыков
-            self.state_manager.register_state(
-                "skill_system_stats",
-                self.system_stats
-            )
-            
-            # Зарегистрированные навыки
-            self.state_manager.register_state(
-                "registered_skills",
-                {skill_id: {
-                    "name": skill.name,
-                    "skill_type": skill.skill_type.value,
-                    "category": skill.category.value,
-                    "level": skill.level,
-                    "max_level": skill.max_level
-                } for skill_id, skill in self.registered_skills.items()}
-            )
-            
-            # Навыки сущностей
-            self.state_manager.register_state(
-                "entity_skills",
-                {entity_id: {
-                    skill_id: {
-                        "name": skill.name,
-                        "level": skill.level,
-                        "cooldown": skill.cooldown.current_cooldown
-                    } for skill_id, skill in skills.items()
-                } for entity_id, skills in self.entity_skills.items()}
-            )
-            
-            logger.debug("Состояния системы навыков зарегистрированы")
-            
-        except Exception as e:
-            logger.warning(f"Ошибка регистрации состояний системы навыков: {e}")
+        """Сохранение обратной совместимости"""
+        self._register_system_states()
     
     def _register_system_repositories(self):
-        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        """Регистрация репозиториев системы (единый источник)"""
         if not self.repository_manager:
             return
             
         try:
-            # Зарегистрированные навыки
             self.repository_manager.register_repository(
-                "registered_skills",
-                "registered_skills",
-                "memory"
+                "registered_skills", "registered_skills", "memory"
             )
-            
-            # Навыки сущностей
             self.repository_manager.register_repository(
-                "entity_skills",
-                "entity_skills",
-                "memory"
+                "entity_skills", "entity_skills", "memory"
             )
-            
-            # Перезарядки навыков
             self.repository_manager.register_repository(
-                "skill_cooldowns",
-                "skill_cooldowns",
-                "memory"
+                "skill_cooldowns", "skill_cooldowns", "memory"
             )
-            
-            # История навыков
             self.repository_manager.register_repository(
-                "skill_history",
-                "skill_history",
-                "memory"
+                "skill_history", "skill_history", "memory"
             )
-            
             logger.debug("Репозитории системы навыков зарегистрированы")
-            
         except Exception as e:
             logger.warning(f"Ошибка регистрации репозиториев системы навыков: {e}")
     
     def _register_repositories(self):
-        """Регистрация репозиториев в RepositoryManager"""
-        if not self.repository_manager:
-            return
-            
-        try:
-            # Зарегистрированные навыки
-            self.repository_manager.register_repository(
-                "registered_skills",
-                "registered_skills",
-                "memory"
-            )
-            
-            # Навыки сущностей
-            self.repository_manager.register_repository(
-                "entity_skills",
-                "entity_skills",
-                "memory"
-            )
-            
-            # Перезарядки навыков
-            self.repository_manager.register_repository(
-                "skill_cooldowns",
-                "skill_cooldowns",
-                "memory"
-            )
-            
-            # История навыков
-            self.repository_manager.register_repository(
-                "skill_history",
-                "skill_history",
-                "memory"
-            )
-            
-            logger.debug("Репозитории системы навыков зарегистрированы")
-            
-        except Exception as e:
-            logger.warning(f"Ошибка регистрации репозиториев системы навыков: {e}")
+        """Сохранение обратной совместимости"""
+        self._register_system_repositories()
     
     def _restore_from_repositories(self):
         """Восстановление данных из репозиториев"""
@@ -756,6 +652,37 @@ class SkillSystem(BaseGameSystem):
                     'target_id': target_id,
                     'skill_level': skill.level
                 })
+                
+                # Публикуем события для систем урона/эффектов
+                try:
+                    if self.event_bus:
+                        # Событие использования навыка
+                        self.event_bus.emit("skill_used", {
+                            'entity_id': entity_id,
+                            'skill_id': skill_id,
+                            'target_id': target_id,
+                            'damage': skill.damage,
+                            'damage_type': skill.damage_type.value if skill.damage_type else None,
+                            'effects': skill.effects
+                        })
+                        # Для мгновенного нанесения урона, если применимо
+                        if skill.damage > 0 and target_id:
+                            self.event_bus.emit("deal_damage", {
+                                'source_id': entity_id,
+                                'target_id': target_id,
+                                'amount': skill.damage,
+                                'damage_type': skill.damage_type.value if skill.damage_type else None
+                            })
+                        # Для применения эффектов
+                        if skill.effects and target_id:
+                            for effect_id in skill.effects:
+                                self.event_bus.emit("apply_effect", {
+                                    'target_id': target_id,
+                                    'effect_id': effect_id,
+                                    'applied_by': entity_id
+                                })
+                except Exception:
+                    pass
                 
                 self.system_stats['skills_used_today'] += 1
                 logger.info(f"Сущность {entity_id} использовала навык {skill_id}")

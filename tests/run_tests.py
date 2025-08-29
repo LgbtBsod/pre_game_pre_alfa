@@ -5,6 +5,7 @@
 
 import unittest
 import sys
+import io
 import os
 import time
 
@@ -159,6 +160,12 @@ def run_specific_test(test_name):
     return result.wasSuccessful()
 
 def main():
+    # Ensure UTF-8 output on Windows consoles
+    try:
+        if sys.stdout.encoding.lower() != 'utf-8':
+            sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='ignore')
+    except Exception:
+        pass
     """Основная функция"""
     if len(sys.argv) > 1:
         test_name = sys.argv[1]
