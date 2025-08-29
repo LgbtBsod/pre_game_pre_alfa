@@ -70,6 +70,7 @@ class PerformanceManager(ISystem):
             'enabled': True,
             'sample_interval': 0.1,  # 10 раз в секунду
             'history_size': 1000,
+            'summary_interval_sec': 5.0,
             'alert_thresholds': {
                 'fps_min': 30.0,
                 'frame_time_max': 33.0,  # 30 FPS
@@ -116,6 +117,7 @@ class PerformanceManager(ISystem):
             
             # Кэш для оптимизации
             self.performance_cache = {}
+            self._last_summary_ts = 0.0
             
             # Запускаем поток мониторинга
             self._start_monitoring()
@@ -141,6 +143,9 @@ class PerformanceManager(ISystem):
             
             # Применяем оптимизации при необходимости
             self._apply_optimizations()
+
+            # Периодическое логирование сводки FPS/FrameTime
+            self._log_periodic_summary()
             
             return True
             
@@ -407,6 +412,36 @@ class PerformanceManager(ISystem):
                 
         except Exception as e:
             logger.error(f"Ошибка применения оптимизаций: {e}")
+
+    def _log_periodic_summary(self) -> None:
+        """Периодически логирует сводку FPS/FrameTime из последних метрик."""
+        try:
+            now = time.time()
+            interval = float(self.monitoring_config.get('summary_interval_sec', 5.0))
+            if self._last_summary_ts and (now - self._last_summary_ts) < interval:
+                return
+            self._last_summary_ts = now
+
+            # Собираем последние значения
+            fps_values = [d.value for d in self.metrics[PerformanceMetric.FPS]]
+            ft_values = [d.value for d in self.metrics[PerformanceMetric.FRAME_TIME]]
+
+            if fps_values:
+                avg_fps = sum(fps_values) / len(fps_values)
+            else:
+                avg_fps = 0.0
+            if ft_values:
+                avg_ft = sum(ft_values) / len(ft_values)
+                max_ft = max(ft_values)
+                min_ft = min(ft_values)
+            else:
+                avg_ft = max_ft = min_ft = 0.0
+
+            logger.info(
+                f"Perf: avg_fps={avg_fps:.1f}, frame_time(ms): avg={avg_ft:.2f} max={max_ft:.2f} min={min_ft:.2f}"
+            )
+        except Exception:
+            pass
     
     def _get_current_metric(self, metric: PerformanceMetric) -> Optional[float]:
         """Получение текущего значения метрики"""

@@ -11,7 +11,7 @@ from direct.gui.DirectButton import DirectButton
 from panda3d.core import TextNode
 from panda3d.core import WindowProperties
 
-from ..core.scene_manager import Scene
+from core.scene_manager import Scene
 
 logger = logging.getLogger(__name__)
 

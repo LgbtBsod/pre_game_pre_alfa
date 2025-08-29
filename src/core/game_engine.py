@@ -418,37 +418,37 @@ class GameEngine(ShowBase):
             
             # Попытка импорта сцен с обработкой ошибок
             try:
-                from ..scenes.menu_scene import MenuScene
+                from scenes.menu_scene import MenuScene
                 scenes_to_register.append(("menu", MenuScene))
             except ImportError as e:
                 logger.warning(f"Не удалось импортировать MenuScene: {e}")
             
             try:
-                from ..scenes.game_scene import GameScene
+                from scenes.game_scene import GameScene
                 scenes_to_register.append(("game", GameScene))
             except ImportError as e:
                 logger.warning(f"Не удалось импортировать GameScene: {e}")
             
             try:
-                from ..scenes.pause_scene import PauseScene
+                from scenes.pause_scene import PauseScene
                 scenes_to_register.append(("pause", PauseScene))
             except ImportError as e:
                 logger.warning(f"Не удалось импортировать PauseScene: {e}")
             
             try:
-                from ..scenes.settings_scene import SettingsScene
+                from scenes.settings_scene import SettingsScene
                 scenes_to_register.append(("settings", SettingsScene))
             except ImportError as e:
                 logger.warning(f"Не удалось импортировать SettingsScene: {e}")
             
             try:
-                from ..scenes.load_scene import LoadScene
+                from scenes.load_scene import LoadScene
                 scenes_to_register.append(("load_game", LoadScene))
             except ImportError as e:
                 logger.warning(f"Не удалось импортировать LoadScene: {e}")
             
             try:
-                from ..scenes.creator_scene import CreatorScene
+                from scenes.creator_scene import CreatorScene
                 scenes_to_register.append(("creator", CreatorScene))
             except ImportError as e:
                 logger.warning(f"Не удалось импортировать CreatorScene: {e}")

@@ -9,12 +9,12 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ...core.system_interfaces import BaseGameSystem, Priority
-from ...core.constants import (
+from core.system_interfaces import BaseGameSystem, Priority
+from core.constants import (
     SYSTEM_LIMITS_RO, PROBABILITY_CONSTANTS, DamageType,
     TIME_CONSTANTS_RO, get_float, canonicalize_damage_type
 )
-from ...core.entity_registry import get_entity
+from core.entity_registry import get_entity
 
 logger = logging.getLogger(__name__)
 

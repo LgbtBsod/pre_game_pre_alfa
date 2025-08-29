@@ -9,8 +9,8 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.system_interfaces import BaseGameSystem, Priority
-from ...core.constants import (
+from core.system_interfaces import BaseGameSystem, Priority
+from core.constants import (
     SkillType, SkillCategory, DamageType, StatType, TriggerType,
     BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
     SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS,

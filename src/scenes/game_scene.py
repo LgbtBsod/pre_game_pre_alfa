@@ -16,19 +16,20 @@ from panda3d.core import TextNode
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.gui.DirectButton import DirectButton
+from ui.widgets import create_hud
 
-from ..core.scene_manager import Scene
-from ..systems import (
+from core.scene_manager import Scene
+from systems import (
     EvolutionSystem, CombatSystem,
     CraftingSystem, InventorySystem,
     AIEntity, EntityType, MemoryType
 )
-from ..systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
-from ..systems.effects.effect_system import EffectSystem
-from ..systems.items.item_system import ItemFactory
-from ..systems.skills.skill_system import SkillTree
-from ..systems.content.content_generator import ContentGenerator
-from ..core.entity_registry import register_entity, unregister_entity
+from systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
+from systems.effects.effect_system import EffectSystem
+from systems.items.item_system import ItemFactory
+from systems.skills.skill_system import SkillTree
+from systems.content.content_generator import ContentGenerator
+from core.entity_registry import register_entity, unregister_entity
 
 logger = logging.getLogger(__name__)
 
@@ -246,10 +247,10 @@ class GameScene(Scene):
             self.systems['inventory'] = InventorySystem()
             
             # Инициализируем системы эффектов и предметов
-            from ..systems.effects.effect_system import EffectSystem
-            from ..systems.items.item_system import ItemFactory
-            from ..systems.skills.skill_system import SkillTree
-            from ..systems.content.content_generator import ContentGenerator
+            from systems.effects.effect_system import EffectSystem
+            from systems.items.item_system import ItemFactory
+            from systems.skills.skill_system import SkillTree
+            from systems.content.content_generator import ContentGenerator
             
             # Система эффектов
             self.effect_system = EffectSystem()
@@ -290,9 +291,9 @@ class GameScene(Scene):
     
     def _create_test_player(self):
         """Создание тестового игрока с AI-управлением и системами"""
-        from ..systems.skills.skill_system import SkillTree
-        from ..systems.content.content_generator import ContentGenerator
-        from ..systems.items.item_system import ItemFactory
+        from systems.skills.skill_system import SkillTree
+        from systems.content.content_generator import ContentGenerator
+        from systems.items.item_system import ItemFactory
         
         player = {
             'id': 'player_1',
@@ -303,7 +304,7 @@ class GameScene(Scene):
             'width': 2,
             'height': 2,
             'depth': 2,
-            'color': (1, 1, 0, 1),  # Желтый
+            'color': (1.0, 1.0, 0.0, 1.0),  # Желтый (нормализованные 0..1)
             'health': 100,
             'max_health': 100,
             'mana': 100,
@@ -398,9 +399,9 @@ class GameScene(Scene):
     
     def _create_test_npcs(self):
         """Создание тестовых NPC с AI и системами"""
-        from ..systems.skills.skill_system import SkillTree
-        from ..systems.content.content_generator import ContentGenerator
-        from ..systems.items.item_system import ItemFactory
+        from systems.skills.skill_system import SkillTree
+        from systems.content.content_generator import ContentGenerator
+        from systems.items.item_system import ItemFactory
         
         npc_configs = [
             {
@@ -517,8 +518,8 @@ class GameScene(Scene):
     
     def _create_test_items_and_skills(self):
         """Создание тестовых предметов и скиллов"""
-        from ..systems.items.item_system import ItemFactory
-        from ..systems.content.content_generator import ContentGenerator
+        from systems.items.item_system import ItemFactory
+        from systems.content.content_generator import ContentGenerator
         
         # Создаем тестовые предметы
         self.test_items = {
@@ -557,12 +558,16 @@ class GameScene(Scene):
         if asset_path and self._asset_exists(asset_path):
             # Загружаем модель из ассета
             try:
-                model = self.loader.loadModel(asset_path)
-                if model:
-                    np = self.entities_root.attachNewNode(model)
-                    np.setPos(entity['x'], entity['y'], entity['z'])
-                    np.setScale(entity.get('scale', 1))
-                    return np
+                import builtins
+                loader = getattr(builtins, 'base', None)
+                loader = getattr(loader, 'loader', None) if loader else None
+                if loader and hasattr(loader, 'loadModel'):
+                    model = loader.loadModel(asset_path)
+                    if model:
+                        np = self.entities_root.attachNewNode(model)
+                        np.setPos(entity['x'], entity['y'], entity['z'])
+                        np.setScale(entity.get('scale', 1))
+                        return np
             except Exception as e:
                 logger.warning(f"Не удалось загрузить ассет {asset_path}: {e}")
         
@@ -686,14 +691,14 @@ class GameScene(Scene):
             (-size, -size, size), (size, -size, size), (size, size, size), (-size, size, size)
         ]
         
-        # Цвет в зависимости от личности NPC
+        # Цвет в зависимости от личности NPC (нормализуем к 0..1)
         personality = entity.get('ai_personality', 'neutral')
         if personality == 'aggressive':
-            npc_color = (255, 100, 100, 1)  # Неоновый красный
+            npc_color = (1.0, 100/255.0, 100/255.0, 1.0)  # Неоновый красный
         elif personality == 'defensive':
-            npc_color = (100, 255, 100, 1)  # Неоновый зеленый
+            npc_color = (100/255.0, 1.0, 100/255.0, 1.0)  # Неоновый зеленый
         else:
-            npc_color = (255, 255, 100, 1)  # Неоновый желтый
+            npc_color = (1.0, 1.0, 100/255.0, 1.0)  # Неоновый желтый
         
         # Добавляем вершины
         for v in vertices:
@@ -811,123 +816,21 @@ class GameScene(Scene):
         # Используем корневой узел UI сцены
         parent_node = self.ui_root if self.ui_root else None
         
-        # Современный неоновый заголовок
-        self.game_title_text = OnscreenText(
-            text="GAME SESSION",
-            pos=(0, 0.9),
-            scale=0.06,
-            fg=(0.0, 1.0, 1.0, 1.0),  # Неоновый голубой (0..1)
-            align=TextNode.ACenter,
-            mayChange=False,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.8),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Полоска здоровья
-        self.health_bar_text = OnscreenText(
-            text="HP: 100/100",
-            pos=(-1.3, 0.7),
-            scale=0.045,
-            fg=(1.0, 0.392, 0.392, 1.0),  # Неоновый красный (0..1)
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Полоска маны
-        self.mana_bar_text = OnscreenText(
-            text="MP: 100/100",
-            pos=(-1.3, 0.6),
-            scale=0.045,
-            fg=(0.392, 0.392, 1.0, 1.0),  # Неоновый синий (0..1)
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Информация об AI
-        self.ai_info_text = OnscreenText(
-            text="AI: Initializing...",
-            pos=(-1.3, 0.5),
-            scale=0.035,
-            fg=(0.0, 1.0, 1.0, 1.0),
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Информация о скиллах
-        self.skills_info_text = OnscreenText(
-            text="Skills: None",
-            pos=(-1.3, 0.4),
-            scale=0.035,
-            fg=(1.0, 0.392, 1.0, 1.0),
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Информация о предметах
-        self.items_info_text = OnscreenText(
-            text="Items: None",
-            pos=(-1.3, 0.3),
-            scale=0.035,
-            fg=(1.0, 1.0, 0.392, 1.0),
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Информация об эффектах
-        self.effects_info_text = OnscreenText(
-            text="Effects: None",
-            pos=(-1.3, 0.2),
-            scale=0.035,
-            fg=(0.392, 1.0, 0.392, 1.0),
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Информация о геноме
-        self.genome_info_text = OnscreenText(
-            text="Genome: Loading...",
-            pos=(-1.3, 0.1),
-            scale=0.035,
-            fg=(1.0, 0.392, 1.0, 1.0),
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
-        # Полоска эмоций
-        self.emotion_bar_text = OnscreenText(
-            text="Emotions: Neutral",
-            pos=(-1.3, 0.0),
-            scale=0.035,
-            fg=(1.0, 0.588, 0.392, 1.0),
-            align=TextNode.ALeft,
-            mayChange=True,
-            parent=parent_node,
-            shadow=(0, 0, 0, 0.6),
-            shadowOffset=(0.01, 0.01)
-        )
-        
+        # Создаём HUD через модуль виджетов
+        try:
+            hud = create_hud(parent_node)
+            self.game_title_text = hud.game_title_text
+            self.health_bar_text = hud.health_bar_text
+            self.mana_bar_text = hud.mana_bar_text
+            self.ai_info_text = hud.ai_info_text
+            self.skills_info_text = hud.skills_info_text
+            self.items_info_text = hud.items_info_text
+            self.effects_info_text = hud.effects_info_text
+            self.genome_info_text = hud.genome_info_text
+            self.emotion_bar_text = hud.emotion_bar_text
+        except Exception:
+            pass
+
         # Отладочная информация
         self.debug_text = OnscreenText(
             text="Debug: Enabled",
@@ -940,6 +843,21 @@ class GameScene(Scene):
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01)
         )
+        # Встроенная индикация FPS (опционально)
+        try:
+            self.fps_text = OnscreenText(
+                text="FPS: --",
+                pos=(1.25, 0.9),
+                scale=0.035,
+                fg=(0.0, 1.0, 0.5, 1.0),
+                align=TextNode.ARight,
+                mayChange=True,
+                parent=parent_node,
+                shadow=(0, 0, 0, 0.6),
+                shadowOffset=(0.01, 0.01)
+            )
+        except Exception:
+            self.fps_text = None
         
         # Кнопки эмоций
         self.emotion_buttons = {}
@@ -973,7 +891,7 @@ class GameScene(Scene):
         player = next((e for e in self.entities if e['type'] == 'player'), None)
         if player and 'emotion_system' in player:
             try:
-                from ..systems import EmotionType, EmotionIntensity
+                from systems import EmotionType, EmotionIntensity
                 if hasattr(player['emotion_system'], 'add_emotion'):
                     emotion_enum = EmotionType(emotion_type)
                     player['emotion_system'].add_emotion(
@@ -1015,6 +933,19 @@ class GameScene(Scene):
         
         # Обновление камеры
         self._update_camera(delta_time)
+        
+        # Обновление FPS индикатора, если доступен PerformanceManager через сцену/движок
+        try:
+            if hasattr(self, 'scene_manager') and self.scene_manager and hasattr(self.scene_manager, 'system_manager'):
+                pm = self.scene_manager.system_manager.get_system("performance") if hasattr(self.scene_manager.system_manager, 'get_system') else None
+                if pm and hasattr(pm, 'get_performance_report') and getattr(self, 'fps_text', None):
+                    report = pm.get_performance_report()
+                    current = report.get('current_metrics', {})
+                    fps = current.get('fps', {}).get('value')
+                    if fps is not None:
+                        self.fps_text.setText(f"FPS: {fps:.1f}")
+        except Exception:
+            pass
     
     def _update_game_systems(self, delta_time: float):
         """Обновление игровых систем"""
@@ -1122,7 +1053,7 @@ class GameScene(Scene):
     
     def _execute_ai_decision(self, entity: dict, decision: AIDecision, delta_time: float):
         """Выполнение решения AI для движения и скиллов"""
-        from ..systems.ai.ai_interface import ActionType
+        from systems.ai.ai_interface import ActionType
         
         if decision.action_type == ActionType.MOVE:
             # Движение к цели

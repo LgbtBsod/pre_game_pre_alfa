@@ -10,9 +10,8 @@
   - EntityRegistry integration: entities are now registered/unregistered in `src/scenes/game_scene.py` on spawn/despawn, enabling id→object resolution for event handlers.
   - Added `DEFAULT_RESISTANCES_RO`, `DAMAGE_MULTIPLIERS_RO`, `normalize_damage_type`, and `get_time_constant` helper.
   - Removed duplication of `ui_animation_duration` by introducing `ui_animation_duration_legacy` and aliasing in `get_time_constant`.
-- EventBus API: добавлены алиасы `on`/`emit` для унификации с вызовами в системах.
- - EventBus API: добавлены алиасы `on`/`emit` для унификации с вызовами в системах.
- - В `GameEngine` добавлен `EventBusAdapter` — мост между новой шиной и legacy `EventSystem`.
+- EventBus API: добавлены алиасы `on`/`emit` для унификации с вызовами в системах (sanity-check пройден).
+- В `GameEngine` добавлен `EventBusAdapter` — мост между новой шиной и legacy `EventSystem`; базовые события проксируются.
 - Performance: троттлинг обновлений
   - `EffectSystem` использует `TIME_CONSTANTS.effect_update_interval`.
   - `InventorySystem` использует `TIME_CONSTANTS.inventory_update_interval`.
@@ -174,5 +173,5 @@ All changes preserve existing mechanics and integrate within existing modules wi
 
 ---
 
-*Последнее обновление: Добавлен `EventBusAdapter` и актуализирован план развития*
-*Следующий этап: Тестирование мостика событий и профилирование систем*
+*Последнее обновление: Завершён sanity-check `EventBus` on/emit и интеграция моста*
+*Следующий этап: Комплексное тестирование и профилирование систем*

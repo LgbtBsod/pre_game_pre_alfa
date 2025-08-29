@@ -10,11 +10,11 @@ import random
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 
-from ...core.system_interfaces import BaseGameSystem
-from ...core.architecture import Priority, LifecycleState
-from ...core.state_manager import StateManager, StateType, StateScope
-from ...core.repository import RepositoryManager, DataType, StorageType
-from ...core.constants import (
+from core.system_interfaces import BaseGameSystem
+from core.architecture import Priority, LifecycleState
+from core.state_manager import StateManager, StateType, StateScope
+from core.repository import RepositoryManager, DataType, StorageType
+from core.constants import (
     DamageType, CombatState, AttackType, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
     TIME_CONSTANTS_RO, get_float, canonicalize_damage_type
@@ -213,7 +213,7 @@ class CombatSystem(BaseGameSystem):
         except Exception:
             # Fallback на реальную реализацию, если доступна
             try:
-                from ...core.state_manager import StateType as RealStateType, StateScope as RealStateScope
+                from core.state_manager import StateType as RealStateType, StateScope as RealStateScope
                 self.state_manager.register_state("combat_system_settings", self.combat_settings, RealStateType.CONFIGURATION, RealStateScope.SYSTEM)
                 self.state_manager.register_state("combat_system_stats", self.system_stats, RealStateType.STATISTICS, RealStateScope.SYSTEM)
                 self.state_manager.register_state("active_combats", {}, RealStateType.DATA, RealStateScope.GLOBAL)

@@ -11,8 +11,8 @@ from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
-from ...core.constants import (
+from core.interfaces import ISystem, SystemPriority, SystemState
+from core.constants import (
     UIElementType, UIState, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
     WorldObjectType, ObjectCategory, ObjectState, CreatorMode, ToolType,

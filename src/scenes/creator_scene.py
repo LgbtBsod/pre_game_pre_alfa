@@ -19,9 +19,9 @@ from direct.gui.DirectButton import DirectButton
 from direct.gui.DirectFrame import DirectFrame
 from direct.gui.DirectLabel import DirectLabel
 
-from ..core.scene_manager import Scene
-from ..systems.world.world_manager import WorldManager, WorldObjectType, ObjectState
-from ..systems.ui.ui_system import UISystem, WorldObjectTemplate, ObjectCategory
+from core.scene_manager import Scene
+from systems.world.world_manager import WorldManager, WorldObjectType, ObjectState
+from systems.ui.ui_system import UISystem, WorldObjectTemplate, ObjectCategory
 
 logger = logging.getLogger(__name__)
 
