@@ -306,7 +306,7 @@ class DamageSystem(BaseComponent):
         if combo_key in self.combo_timers:
             # Увеличиваем множитель комбо
             self.combo_multipliers[combo_key] = min(3.0, self.combo_multipliers.get(combo_key, 1.0) + 0.2)
-        else:
+                else:
             # Начинаем новое комбо
             self.combo_multipliers[combo_key] = 1.0
         
@@ -338,7 +338,7 @@ class DamageSystem(BaseComponent):
         for effect_func in self.catalytic_effects:
             try:
                 effect_func(target_id, damage, result)
-            except Exception as e:
+        except Exception as e:
                 self.logger.error(f"Ошибка в каталитическом эффекте: {e}")
     
     def _add_to_history(self, damage: DamageInstance):

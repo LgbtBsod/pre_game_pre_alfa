@@ -112,7 +112,7 @@ class AIIntegrationSystem(BaseComponent):
             
             logger.info("AI Integration System уничтожен")
             return True
-            
+                
         except Exception as e:
             logger.error(f"Ошибка уничтожения AI Integration System: {e}")
             return False
@@ -258,11 +258,11 @@ class AIIntegrationSystem(BaseComponent):
                 self.total_ai_entities += 1
                 self.active_ai_entities += 1
                 logger.debug(f"AI сущность {entity_id} зарегистрирована в {success_count} системах")
-                return True
+            return True
             else:
                 logger.warning(f"AI сущность {entity_id} не зарегистрирована ни в одной системе")
                 return False
-                
+            
         except Exception as e:
             logger.error(f"Ошибка регистрации AI сущности {entity_id}: {e}")
             return False

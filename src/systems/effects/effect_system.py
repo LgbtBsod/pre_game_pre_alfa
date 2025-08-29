@@ -133,7 +133,7 @@ class Effect:
             # Применяем эффект
             if self._apply_effect(target, source, context):
                 self._on_effect_applied(target, source, context)
-                return True
+            return True
             
             return False
             
@@ -150,7 +150,7 @@ class Effect:
             # Убираем эффект
             if self._remove_effect(target):
                 self._on_effect_removed(target)
-                return True
+            return True
             
             return False
             
@@ -415,31 +415,31 @@ class SpecialEffect:
             
             # Проверка типа триггера
             if self.trigger_condition != trigger_type:
-                return False
+            return False
             
             # Проверка шанса
             if random.random() > self.chance:
-                return False
-            
+            return False
+    
             # Проверка кулдауна
             current_time = time.time()
             if self.cooldown > 0 and (current_time - self.last_proc_time) < self.cooldown:
-                return False
+            return False
             
             # Проверка максимального количества срабатываний
             if self.max_procs > 0 and self.proc_count >= self.max_procs:
-                return False
-            
+            return False
+    
             # Проверка возможности применения эффекта
             if not self.effect.can_apply(source, target, context):
-                return False
+            return False
             
             # Проверка дополнительных условий
             for condition in self.conditions:
                 if not condition(source, target, context):
-                    return False
-            
-            return True
+            return False
+    
+                return True
             
         except Exception as e:
             logger.error(f"Ошибка проверки возможности срабатывания специального эффекта: {e}")
@@ -475,7 +475,7 @@ class SpecialEffect:
                 if self.track_stats and hasattr(source, 'effect_statistics'):
                     source.effect_statistics.record_trigger(self.effect.name)
                 
-                return True
+                    return True
             
             return False
             
@@ -490,7 +490,7 @@ class SpecialEffect:
                 # В реальной реализации здесь был бы таймер
                 # Пока просто логируем
                 logger.debug(f"Запланирован отложенный эффект: {self.delayed_effect.effect.name}")
-                
+            
         except Exception as e:
             logger.error(f"Ошибка планирования отложенного эффекта: {e}")
     
@@ -652,11 +652,11 @@ class EffectSystem(BaseComponent):
         try:
             if effect_id in self.effects_registry:
                 logger.warning(f"Эффект {effect_id} уже зарегистрирован")
-                return False
-            
+            return False
+
             self.effects_registry[effect_id] = effect
             logger.debug(f"Эффект {effect_id} зарегистрирован")
-            return True
+                return True
             
         except Exception as e:
             logger.error(f"Ошибка регистрации эффекта {effect_id}: {e}")
@@ -696,7 +696,7 @@ class EffectSystem(BaseComponent):
                 self.total_effects_applied += 1
                 
                 logger.debug(f"Эффект {effect_id} применен к {target_id}")
-                return True
+            return True
             
             return False
             
@@ -735,7 +735,7 @@ class EffectSystem(BaseComponent):
                         # Получаем объект цели (в реальной реализации)
                         # effect.remove(target)
                         pass
-                    except Exception as e:
+        except Exception as e:
                         logger.error(f"Ошибка очистки эффекта {effect.name}: {e}")
             
             self.active_effects.clear()

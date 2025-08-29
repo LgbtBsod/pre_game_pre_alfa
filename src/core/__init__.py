@@ -10,11 +10,20 @@ from .scene_manager import SceneManager
 from .resource_manager import ResourceManager
 from .performance_manager import PerformanceManager
 
+# Архитектурные компоненты
+from .architecture import (
+    IComponent, BaseComponent, ComponentType, LifecycleState, Priority,
+    ComponentManager, EventBus, StateManager, Event, create_event
+)
+
 __all__ = [
     'GameEngine',
     'ConfigManager', 
     'GameState',
     'SceneManager',
     'ResourceManager',
-    'PerformanceManager'
+    'PerformanceManager',
+    # Архитектурные компоненты
+    'IComponent', 'BaseComponent', 'ComponentType', 'LifecycleState', 'Priority',
+    'ComponentManager', 'EventBus', 'StateManager', 'Event', 'create_event'
 ]

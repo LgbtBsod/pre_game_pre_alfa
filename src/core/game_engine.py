@@ -104,7 +104,7 @@ class GameEngine(ShowBase):
             # Настройка камеры
             self.camera.setPos(0, -20, 10)
             self.camera.lookAt(0, 0, 0)
-            
+
             logger.info("Panda3D успешно инициализирован")
             return True
             

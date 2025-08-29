@@ -464,6 +464,35 @@ class EventBus:
             return []
 
 # ============================================================================
+# СИСТЕМА СОБЫТИЙ
+# ============================================================================
+
+@dataclass
+class Event:
+    """Базовый класс для событий"""
+    event_type: str
+    data: Any = None
+    timestamp: float = field(default_factory=time.time)
+    source: Optional[str] = None
+    target: Optional[str] = None
+    priority: Priority = Priority.NORMAL
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = time.time()
+
+def create_event(event_type: str, data: Any = None, source: str = None, 
+                target: str = None, priority: Priority = Priority.NORMAL) -> Event:
+    """Создание события"""
+    return Event(
+        event_type=event_type,
+        data=data,
+        source=source,
+        target=target,
+        priority=priority
+    )
+
+# ============================================================================
 # УТИЛИТЫ
 # ============================================================================
 

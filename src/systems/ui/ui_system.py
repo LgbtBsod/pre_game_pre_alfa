@@ -50,8 +50,8 @@ class UIElement:
         if not self.visible:
             return False
         if self.state == UIState.HIDDEN:
-            return False
-        return True
+                return False
+                return True
     
     def is_enabled(self) -> bool:
         """Проверить, активен ли элемент"""
@@ -59,7 +59,7 @@ class UIElement:
             return False
         if self.state == UIState.DISABLED:
             return False
-        return True
+                return True
 
 
 @dataclass
@@ -117,7 +117,7 @@ class UISystem(BaseComponent):
             # Настройка обработчиков событий
             self._setup_event_handlers()
             
-            return True
+                return True
         except Exception as e:
             self.logger.error(f"Ошибка инициализации UISystem: {e}")
             return False
@@ -270,8 +270,8 @@ class UISystem(BaseComponent):
         
         panel = self.ui_elements[panel_id]
         if panel.element_type != UIElementType.PANEL:
-            return
-        
+                return
+            
         # Убираем из стека
         if panel_id in self.panel_stack:
             self.panel_stack.remove(panel_id)
@@ -291,7 +291,7 @@ class UISystem(BaseComponent):
         """Проверить, видима ли панель"""
         if panel_id not in self.ui_elements:
             return False
-        
+            
         panel = self.ui_elements[panel_id]
         return panel.is_visible()
     
@@ -338,14 +338,14 @@ class UISystem(BaseComponent):
     
     def set_element_size(self, element_id: str, size: tuple):
         """Установить размер элемента"""
-        if element_id in self.ui_elements:
+            if element_id in self.ui_elements:
             element = self.ui_elements[element_id]
             element.size = size
     
     # Обработка событий
     def handle_click(self, element_id: str):
         """Обработать клик по элементу"""
-        if element_id not in self.ui_elements:
+            if element_id not in self.ui_elements:
             return
         
         element = self.ui_elements[element_id]
@@ -356,12 +356,12 @@ class UISystem(BaseComponent):
         if "click" in element.callbacks:
             try:
                 element.callbacks["click"]()
-            except Exception as e:
+        except Exception as e:
                 self.logger.error(f"Ошибка в callback клика для {element_id}: {e}")
     
     def add_callback(self, element_id: str, event_type: str, callback: Callable):
         """Добавить callback для элемента"""
-        if element_id not in self.ui_elements:
+            if element_id not in self.ui_elements:
             return
         
         element = self.ui_elements[element_id]

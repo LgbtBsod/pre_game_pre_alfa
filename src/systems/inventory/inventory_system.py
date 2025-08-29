@@ -124,15 +124,15 @@ class InventorySlot:
         """Проверить, можно ли поместить предмет в слот"""
         if self.locked:
             return False
-        
+    
         if self.is_empty():
             return True
-        
+            
         if self.item.id == item.id:
             return self.quantity + quantity <= self.item.max_stack
         
-        return False
-
+                return False
+            
 
 @dataclass
 class EquipmentSet:
@@ -368,19 +368,19 @@ class InventorySystem(BaseComponent):
         """Проверить, можно ли скрафтить предмет"""
         if recipe_id not in self.crafting_recipes:
             return False
-        
+            
         recipe = self.crafting_recipes[recipe_id]
         inventory = self.get_inventory(entity_id)
         if not inventory:
             return False
-        
+    
         # Проверяем наличие материалов
         for material_id, required_quantity in recipe["materials"].items():
             if not inventory.has_item(material_id, required_quantity):
-                return False
-        
+            return False
+            
         # TODO: Проверка навыков крафтинга
-        return True
+                return True
     
     def craft_item(self, entity_id: str, recipe_id: str) -> Optional[Item]:
         """Скрафтить предмет"""
@@ -478,13 +478,13 @@ class Inventory:
         # Ищем слот для предмета
         slot = self._find_slot_for_item(item)
         if not slot:
-            return False
-        
-        # Добавляем предмет
+                return False
+            
+            # Добавляем предмет
         if slot.is_empty():
             slot.item = item
             slot.quantity = item.stack_size
-        else:
+                else:
             # Складываем с существующим предметом
             max_add = min(item.stack_size, slot.item.max_stack - slot.quantity)
             slot.quantity += max_add
@@ -509,24 +509,24 @@ class Inventory:
                 )
                 return self.add_item(remaining_item)
         
-        return True
-    
+            return True
+            
     def remove_item(self, item_id: str, quantity: int = 1) -> bool:
         """Убрать предмет из инвентаря"""
-        # Ищем слот с предметом
+            # Ищем слот с предметом
         slot = self._find_slot_by_item_id(item_id)
         if not slot:
-            return False
+                    return False
         
         # Убираем предмет
         if slot.quantity <= quantity:
             slot.item = None
             slot.quantity = 0
-        else:
+            else:
             slot.quantity -= quantity
         
-        return True
-    
+            return True
+            
     def has_item(self, item_id: str, quantity: int = 1) -> bool:
         """Проверить наличие предмета"""
         total_quantity = 0
@@ -535,14 +535,14 @@ class Inventory:
                 total_quantity += slot.quantity
                 if total_quantity >= quantity:
                     return True
-        return False
+            return False
     
     def equip_item(self, item: Item, slot: EquipmentSlot) -> bool:
         """Экипировать предмет"""
         # Проверяем требования
         if not self._check_equipment_requirements(item):
-            return False
-        
+                return False
+            
         # Снимаем предыдущий предмет
         if slot in self.equipment:
             self.unequip_item(slot)
@@ -553,8 +553,8 @@ class Inventory:
         # Применяем эффекты
         self._apply_equipment_effects(item, True)
         
-        return True
-    
+            return True
+            
     def unequip_item(self, slot: EquipmentSlot) -> Optional[Item]:
         """Снять предмет с экипировки"""
         if slot not in self.equipment:
@@ -615,20 +615,20 @@ class Inventory:
             if slot.is_empty():
                 return slot
         
-        return None
-    
+                return None
+            
     def _find_slot_by_item_id(self, item_id: str) -> Optional[InventorySlot]:
         """Найти слот по ID предмета"""
         for slot in self.slots:
             if slot.item and slot.item.id == item_id:
                 return slot
-        return None
+            return None
     
     def _check_equipment_requirements(self, item: Item) -> bool:
         """Проверить требования для экипировки"""
         # TODO: Проверка уровня, характеристик и других требований
-        return True
-    
+            return True
+            
     def _apply_equipment_effects(self, item: Item, equipping: bool):
         """Применить эффекты экипировки"""
         for effect_name in item.effects:
@@ -636,5 +636,5 @@ class Inventory:
                 effect_func = self.system.item_effects[effect_name]
                 try:
                     effect_func(self.entity_id, {"equipping": equipping, "item": item})
-                except Exception as e:
+        except Exception as e:
                     self.system.logger.error(f"Ошибка применения эффекта {effect_name}: {e}")

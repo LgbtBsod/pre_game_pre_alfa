@@ -35,6 +35,12 @@ from .systems.health.health_system import HealthSystem, HealthStatus, ResourceTy
 from .systems.ui.ui_system import UISystem, UIElement, UIElementType, UIState
 from .systems.ui.hud_system import HUDSystem, HUDElement, HUDType, HUDLayout
 
+# Integration System
+from .systems.integration.system_integrator import SystemIntegrator, IntegrationType, IntegrationStatus, DemoScenario
+
+# Testing System
+from .systems.testing.integration_tester import IntegrationTester, TestStatus, TestPriority, TestResult, TestCase
+
 # Legacy Systems (для обратной совместимости)
 try:
     from .systems.emotion.emotion_system import EmotionSystem
@@ -62,7 +68,7 @@ from .scenes.load_scene import LoadScene
 from .scenes.creator_scene import CreatorScene
 
 # Version Info
-__version__ = "2.2.0"
+__version__ = "2.4.0"
 __author__ = "AI-EVOLVE Team"
 __description__ = "Эволюционная Адаптация: Генетический Резонанс"
 
@@ -113,6 +119,19 @@ __all__ = [
     'HUDElement',
     'HUDType',
     'HUDLayout',
+    
+    # Integration System
+    'SystemIntegrator',
+    'IntegrationType',
+    'IntegrationStatus',
+    'DemoScenario',
+    
+    # Testing System
+    'IntegrationTester',
+    'TestStatus',
+    'TestPriority',
+    'TestResult',
+    'TestCase',
     
     # Legacy Systems
     'EmotionSystem',

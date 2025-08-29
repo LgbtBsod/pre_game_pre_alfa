@@ -141,7 +141,7 @@ class CombatSystem(BaseComponent):
         """Войти в бой"""
         if entity_id in self.combat_states and self.combat_states[entity_id] == CombatState.DEAD:
             return False
-        
+    
         # Устанавливаем состояние боя
         self.combat_states[entity_id] = CombatState.IN_COMBAT
         
@@ -168,7 +168,7 @@ class CombatSystem(BaseComponent):
         """Выйти из боя"""
         if entity_id not in self.combat_states:
             return False
-        
+    
         # Убираем из активных боев
         if entity_id in self.active_combats:
             del self.active_combats[entity_id]
@@ -181,9 +181,9 @@ class CombatSystem(BaseComponent):
             self.initiative_order.remove(entity_id)
         if entity_id in self.initiative_timers:
             del self.initiative_timers[entity_id]
-        
-        return True
-    
+            
+            return True
+            
     def is_in_combat(self, entity_id: str) -> bool:
         """Проверить, находится ли сущность в бою"""
         return (entity_id in self.combat_states and 
@@ -340,7 +340,7 @@ class CombatSystem(BaseComponent):
             return stats.block_chance
         elif defense_type == DefenseType.PARRY:
             return stats.parry_chance
-        else:
+            else:
             return 0.0
     
     # Модификаторы
@@ -359,19 +359,19 @@ class CombatSystem(BaseComponent):
         """Проверить возможность атаки"""
         # Проверяем состояние
         if attacker_id not in self.combat_states or self.combat_states[attacker_id] == CombatState.DEAD:
-            return False
-        
+                return False
+            
         if target_id not in self.combat_states or self.combat_states[target_id] == CombatState.DEAD:
             return False
-        
+    
         # Проверяем дистанцию
         if not self._is_in_range(attacker_id, target_id):
             return False
-        
+            
         # Проверяем инициативу
         if not self._can_act(attacker_id):
             return False
-        
+    
         return True
     
     def _can_move(self, entity_id: str, new_position: Tuple[float, float, float]) -> bool:
@@ -379,11 +379,11 @@ class CombatSystem(BaseComponent):
         # Проверяем состояние
         if entity_id not in self.combat_states or self.combat_states[entity_id] == CombatState.DEAD:
             return False
-        
+            
         # Проверяем инициативу
         if not self._can_act(entity_id):
             return False
-        
+    
         return True
     
     def _is_in_range(self, attacker_id: str, target_id: str) -> bool:
@@ -431,8 +431,8 @@ class CombatSystem(BaseComponent):
                 if current_time >= self.initiative_timers[entity_id]:
                     return entity_id
         
-        return None
-    
+                return None
+            
     # Позиционирование
     def set_entity_position(self, entity_id: str, position: Tuple[float, float, float]):
         """Установить позицию сущности"""
@@ -481,8 +481,8 @@ class CombatSystem(BaseComponent):
     # История и статистика
     def _add_to_history(self, action: CombatAction):
         """Добавить действие в историю"""
-        self.combat_history.append(action)
-        
+            self.combat_history.append(action)
+            
         # Ограничиваем размер истории
         if len(self.combat_history) > self.max_combat_history:
             self.combat_history.pop(0)
@@ -502,8 +502,8 @@ class CombatSystem(BaseComponent):
         
         attacks = [a for a in entity_actions if a.action_type == "attack"]
         defenses = [a for a in entity_actions if a.action_type == "defense"]
-        
-        return {
+            
+            return {
             'total_actions': len(entity_actions),
             'attacks_performed': len(attacks),
             'defenses_performed': len(defenses),

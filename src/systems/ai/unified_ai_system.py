@@ -225,7 +225,7 @@ class UnifiedAISystem(BaseComponent):
                 else:
                     adapter.is_active = False
                     logger.warning(f"Система {adapter.system_name} не имеет метода initialize")
-            except Exception as e:
+                except Exception as e:
                 adapter.is_active = False
                 logger.error(f"Ошибка валидации {adapter.system_name}: {e}")
         
@@ -330,7 +330,7 @@ class UnifiedAISystem(BaseComponent):
                 try:
                     if primary_system.register_entity(entity_id, entity_data):
                         success_count += 1
-                except Exception as e:
+        except Exception as e:
                     logger.error(f"Ошибка регистрации в основной системе: {e}")
             
             # Регистрируем в специализированных системах
@@ -362,7 +362,7 @@ class UnifiedAISystem(BaseComponent):
             else:
                 logger.warning(f"AI сущность {entity_id} не зарегистрирована ни в одной системе")
                 return False
-                
+            
         except Exception as e:
             logger.error(f"Ошибка регистрации AI сущности {entity_id}: {e}")
             return False
@@ -415,7 +415,7 @@ class UnifiedAISystem(BaseComponent):
                 try:
                     if primary_system.remove_entity(entity_id):
                         success_count += 1
-                except Exception as e:
+        except Exception as e:
                     logger.error(f"Ошибка удаления из основной системы: {e}")
             
             # Удаляем из специализированных систем
@@ -425,7 +425,7 @@ class UnifiedAISystem(BaseComponent):
                         try:
                             if adapter.system_instance.remove_entity(entity_id):
                                 success_count += 1
-                        except Exception as e:
+        except Exception as e:
                             logger.error(f"Ошибка удаления из {adapter.system_name}: {e}")
             
             # Удаляем локальные данные
@@ -439,7 +439,7 @@ class UnifiedAISystem(BaseComponent):
                 logger.warning(f"AI сущность {entity_id} не удалена ни из одной системы")
                 return False
                 
-        except Exception as e:
+            except Exception as e:
             logger.error(f"Ошибка удаления AI сущности {entity_id}: {e}")
             return False
     
@@ -490,7 +490,7 @@ class UnifiedAISystem(BaseComponent):
                 logger.debug(f"Добавлен опыт {experience_type}: {amount}")
             else:
                 logger.warning(f"Неизвестный тип опыта: {experience_type}")
-                
+            
         except Exception as e:
             logger.error(f"Ошибка добавления опыта: {e}")
     
@@ -516,7 +516,7 @@ class UnifiedAISystem(BaseComponent):
                 # Обновляем отношения с NPC
                 if "npc_relationships" not in self.global_memory:
                     self.global_memory["npc_relationships"] = {}
-                    
+            
         except Exception as e:
             logger.error(f"Ошибка обновления глобальной памяти: {e}")
     
