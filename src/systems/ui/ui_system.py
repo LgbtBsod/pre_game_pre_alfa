@@ -1,1392 +1,527 @@
-#!/usr/bin/env python3
 """
-Система пользовательского интерфейса - режим "Творец мира"
-Пользователь создает препятствия, ловушки, сундуки и врагов
+Система UI - базовый интерфейс для отображения всех игровых систем
 """
 
-import logging
 import time
-from typing import Dict, List, Optional, Any, Union, Tuple
-from collections import deque
+from typing import Dict, List, Optional, Callable, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 
-from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import constants_manager, (
-    UIElementType, UIState, StatType, BASE_STATS,
-    PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
-    WorldObjectType, ObjectCategory, ObjectState, CreatorMode, ToolType,
-    WORLD_SETTINGS, UI_SETTINGS, DEFAULT_OBJECT_TEMPLATES, UI_COLORS,
-    get_time_constant, normalize_trigger, normalize_ui_event
-)
+from src.core.architecture import BaseComponent, ComponentType, Priority
 
-logger = logging.getLogger(__name__)
 
-# Используем константы из модуля constants
-WorldObjectType = WorldObjectType
-ObjectCategory = ObjectCategory
+class UIElementType(Enum):
+    """Типы UI элементов"""
+    BUTTON = "button"
+    LABEL = "label"
+    PROGRESS_BAR = "progress_bar"
+    PANEL = "panel"
+    MENU = "menu"
+    HUD = "hud"
+    TOOLTIP = "tooltip"
 
-@dataclass
-class WorldObjectTemplate:
-    """Шаблон объекта для создания"""
-    template_id: str
-    name: str
-    object_type: WorldObjectType
-    category: ObjectCategory
-    description: str
-    icon: str
-    cost: int = 0
-    unlock_level: int = 1
-    properties: Dict[str, Any] = field(default_factory=dict)
-    is_available: bool = True
+
+class UIState(Enum):
+    """Состояния UI"""
+    HIDDEN = "hidden"
+    VISIBLE = "visible"
+    DISABLED = "disabled"
+    ACTIVE = "active"
+
 
 @dataclass
 class UIElement:
-    """Элемент пользовательского интерфейса"""
+    """Базовый UI элемент"""
     element_id: str
     element_type: UIElementType
-    name: str = ""
-    position: tuple = (0.0, 0.0)
-    size: tuple = (100.0, 100.0)
+    position: tuple = (0, 0)
+    size: tuple = (100, 100)
+    text: str = ""
+    state: UIState = UIState.VISIBLE
     visible: bool = True
     enabled: bool = True
-    state: UIState = UIState.NORMAL
-    text: str = ""
-    icon: str = ""
-    color: tuple = (255, 255, 255, 255)
-    background_color: tuple = (0, 0, 0, 128)
-    border_color: tuple = (128, 128, 128, 255)
-    font_size: int = 14
-    parent_id: Optional[str] = None
+    parent: Optional[str] = None
     children: List[str] = field(default_factory=list)
-    event_handlers: Dict[str, str] = field(default_factory=dict)
-    custom_data: Dict[str, Any] = field(default_factory=dict)
-    last_update: float = field(default_factory=time.time)
-    animation_data: Dict[str, Any] = field(default_factory=dict)
-    layer: int = 0
+    callbacks: Dict[str, Callable] = field(default_factory=dict)
+    data: Dict[str, Any] = field(default_factory=dict)
+    
+    def is_visible(self) -> bool:
+        """Проверить, видим ли элемент"""
+        if not self.visible:
+            return False
+        if self.state == UIState.HIDDEN:
+            return False
+        return True
+    
+    def is_enabled(self) -> bool:
+        """Проверить, активен ли элемент"""
+        if not self.enabled:
+            return False
+        if self.state == UIState.DISABLED:
+            return False
+        return True
+
 
 @dataclass
-class CreatorMode:
-    """Режим создания объектов"""
-    mode_id: str
-    name: str
-    description: str
-    active: bool = False
-    selected_template: Optional[str] = None
-    placement_mode: bool = False
-    last_placed_position: Optional[Tuple[float, float, float]] = None
+class HUDData:
+    """Данные для HUD"""
+    health_percentage: float = 100.0
+    mana_percentage: float = 100.0
+    energy_percentage: float = 100.0
+    stamina_percentage: float = 100.0
+    shield_percentage: float = 0.0
+    experience: int = 0
+    level: int = 1
+    active_effects: List[str] = field(default_factory=list)
+    combat_state: str = "idle"
+    position: tuple = (0, 0, 0)
 
-@dataclass
-class UILayout:
-    """Макет UI элементов"""
-    layout_id: str
-    name: str = ""
-    layout_type: str = "vertical"  # vertical, horizontal, grid, absolute
-    spacing: float = 5.0
-    padding: tuple = (10.0, 10.0)
-    auto_size: bool = True
-    elements: List[str] = field(default_factory=list)
-    constraints: Dict[str, Any] = field(default_factory=dict)
-    last_update: float = field(default_factory=time.time)
 
-@dataclass
-class UITheme:
-    """Тема пользовательского интерфейса"""
-    theme_id: str
-    name: str = ""
-    colors: Dict[str, tuple] = field(default_factory=dict)
-    fonts: Dict[str, str] = field(default_factory=dict)
-    sizes: Dict[str, float] = field(default_factory=dict)
-    styles: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    is_active: bool = False
-    last_update: float = field(default_factory=time.time)
-
-class UISystem(ISystem):
-    """Система пользовательского интерфейса - режим творца мира"""
+class UISystem(BaseComponent):
+    """
+    Система UI
+    Управляет всеми элементами интерфейса и их отображением
+    """
     
     def __init__(self):
-        self._system_name = "ui"
-        self._system_priority = SystemPriority.HIGH
-        self._system_state = SystemState.UNINITIALIZED
-        self._dependencies = []
+        super().__init__(
+            name="UISystem",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.MEDIUM
+        )
         
         # UI элементы
         self.ui_elements: Dict[str, UIElement] = {}
-        self.ui_layouts: Dict[str, UILayout] = {}
-        self.ui_themes: Dict[str, UITheme] = {}
-        self.active_screens: List[str] = []
-
-        # Очередь событий UI и троттлинг обновлений (декуплинг от основного цикла)
-        self._event_queue: deque = deque()
-        self._max_events_per_tick: int = 64
-        self._last_update_time: float = 0.0
-        self._update_interval: float = 1.0 / 30.0  # 30 Гц по умолчанию
+        self.element_hierarchy: Dict[str, List[str]] = {}
         
-        # Шаблоны объектов для создания
-        self.object_templates: Dict[str, WorldObjectTemplate] = {}
+        # HUD данные
+        self.hud_data: Dict[str, HUDData] = {}
         
-        # Режимы создания
-        self.creator_modes: Dict[str, CreatorMode] = {}
+        # Активные панели
+        self.active_panels: List[str] = []
+        self.panel_stack: List[str] = []
         
-        # Активный режим
-        self.active_mode: Optional[str] = None
+        # Обработчики событий
+        self.event_handlers: Dict[str, Callable] = {}
         
-        # Выбранный шаблон для размещения
-        self.selected_template: Optional[WorldObjectTemplate] = None
+        # Настройки
+        self.auto_update_interval = 0.1  # секунды
+        self.last_update_time = 0.0
         
-        # Статистика создания
-        self.creation_stats = {
-            'objects_created': 0,
-            'obstacles_placed': 0,
-            'traps_placed': 0,
-            'chests_placed': 0,
-            'enemies_spawned': 0,
-            'total_cost': 0
-        }
-        
-        # Настройки системы
-        self.system_settings = UI_SETTINGS.copy()
-        self.system_settings.update({
-            'max_ui_elements': SYSTEM_LIMITS_RO["max_ui_elements"],
-            'max_layers': SYSTEM_LIMITS_RO["max_ui_layers"],
-            'grid_snap': WORLD_SETTINGS["grid_snap"],
-            'grid_size': WORLD_SETTINGS["grid_size"],
-            'show_preview': WORLD_SETTINGS["show_preview"],
-            'ui_update_hz': 30,
-            'max_events_per_tick': 64,
-            'animation_enabled': True
-        })
-        
-        # Статистика системы
-        self.system_stats = {
-            'total_elements': 0,
-            'visible_elements': 0,
-            'active_modes': 0,
-            'available_templates': 0,
-            'events_processed': 0,
-            'update_time': 0.0
-        }
-        
-        # Panda3D GUI компоненты
-        self.gui_frame = None
-        self.gui_root = None
-        
-        logger.info("Система UI творца мира инициализирована")
-    
-    @property
-    def system_name(self) -> str:
-        return self._system_name
-    
-    @property
-    def system_priority(self) -> SystemPriority:
-        return self._system_priority
-    
-    @property
-    def system_state(self) -> SystemState:
-        return self._system_state
-    
-    @property
-    def dependencies(self) -> List[str]:
-        return self._dependencies
-    
-    def initialize(self) -> bool:
-        """Инициализация системы UI"""
+    def _on_initialize(self) -> bool:
+        """Инициализация UI системы"""
         try:
-            logger.info("Инициализация системы UI...")
+            # Регистрация базовых UI элементов
+            self._register_basic_elements()
             
-            # Настраиваем систему
-            self._setup_ui_system()
-            # Применяем частоту обновления и лимиты очереди
-            self._apply_runtime_settings()
-            
-            # Создаем шаблоны объектов
-            self._create_object_templates()
-            
-            # Создаем базовые UI элементы (если нужно)
-            self._create_base_ui_elements()
-            
-            self._system_state = SystemState.READY
-            logger.info("Система UI успешно инициализирована")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка инициализации системы UI: {e}")
-            self._system_state = SystemState.ERROR
-            return False
-
-    # --- Normalizers -------------------------------------------------------
-    def _normalize_element_type(self, value: Any) -> UIElementType:
-        try:
-            if isinstance(value, UIElementType):
-                return value
-            if isinstance(value, str):
-                v = value.strip().lower()
-                for e in UIElementType:
-                    if e.value == v or e.name.lower() == v:
-                        return e
-            return UIElementType.PANEL
-        except Exception:
-            return UIElementType.PANEL
-
-    def _normalize_ui_state(self, value: Any) -> UIState:
-        try:
-            if isinstance(value, UIState):
-                return value
-            if isinstance(value, str):
-                v = value.strip().lower()
-                for s in UIState:
-                    if s.value == v or s.name.lower() == v:
-                        return s
-            return UIState.NORMAL
-        except Exception:
-            return UIState.NORMAL
-
-    def _normalize_event_handlers(self, handlers: Dict[str, str]) -> Dict[str, str]:
-        try:
-            normalized: Dict[str, str] = {}
-            for k, v in (handlers or {}).items():
-                if not isinstance(k, str):
-                    continue
-                key = k.strip().lower()
-                # Локальные алиасы для UI событий
-                key = normalize_ui_event(key)
-                # Попытка нормализовать общесистемным normalizer (если совпадает по семантике)
-                try:
-                    norm = normalize_trigger(key)
-                    if hasattr(norm, 'value'):
-                        key = norm.value
-                except Exception:
-                    pass
-                normalized[key] = v
-            return normalized
-        except Exception:
-            return handlers or {}
-    
-    def update(self, delta_time: float) -> bool:
-        """Обновление системы UI"""
-        try:
-            if self._system_state != SystemState.READY:
-                return False
-            
-            start_time = time.time()
-            # Троттлинг частоты обновления UI для декуплинга от основного цикла
-            self._last_update_time += delta_time
-            if self._last_update_time < self._update_interval:
-                # Даже если пропускаем тяжелое обновление, обработаем ограниченное число событий
-                self._drain_event_queue(budget_only=True)
-                return True
-            self._last_update_time = 0.0
-            
-            # Обрабатываем очередь событий с бюджетом
-            self._drain_event_queue()
-
-            # Обновляем UI элементы
-            self._update_ui_elements(delta_time)
-            
-            # Обновляем макеты
-            self._update_layouts(delta_time)
-            
-            # Обновляем анимации
-            self._update_animations(delta_time)
-            
-            # Обновляем статистику системы
-            self._update_system_stats()
-            
-            self.system_stats['update_time'] = time.time() - start_time
+            # Настройка обработчиков событий
+            self._setup_event_handlers()
             
             return True
-            
         except Exception as e:
-            logger.error(f"Ошибка обновления системы UI: {e}")
-            return False
-
-    def _apply_runtime_settings(self) -> None:
-        """Применение настроек частоты обновления и лимита очереди"""
-        try:
-            hz = int(self.system_settings.get('ui_update_hz', 30))
-            # UI FPS может зависеть от глобальной константы, с поддержкой legacy алиасов
-            ui_anim_dur = get_time_constant("ui_animation_duration", 0.3)
-            self._update_interval = 1.0 / max(1, hz)
-            self._max_events_per_tick = int(self.system_settings.get('max_events_per_tick', 64))
-        except Exception as e:
-            logger.warning(f"Некорректные параметры UI настроек: {e}")
-    
-    def pause(self) -> bool:
-        """Приостановка системы UI"""
-        try:
-            if self._system_state == SystemState.READY:
-                self._system_state = SystemState.PAUSED
-                logger.info("Система UI приостановлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка приостановки системы UI: {e}")
+            self.logger.error(f"Ошибка инициализации UISystem: {e}")
             return False
     
-    def resume(self) -> bool:
-        """Возобновление системы UI"""
-        try:
-            if self._system_state == SystemState.PAUSED:
-                self._system_state = SystemState.READY
-                logger.info("Система UI возобновлена")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка возобновления системы UI: {e}")
-            return False
-    
-    def cleanup(self) -> bool:
-        """Очистка системы UI"""
-        try:
-            logger.info("Очистка системы UI...")
-            
-            # Очищаем все данные
-            self.ui_elements.clear()
-            self.object_templates.clear()
-            self.creator_modes.clear()
-            self.selected_template = None
-            self.active_mode = None
-            
-            # Сбрасываем статистику
-            self.system_stats = {
-                'total_elements': 0,
-                'visible_elements': 0,
-                'active_modes': 0,
-                'available_templates': 0,
-                'events_processed': 0,
-                'update_time': 0.0
-            }
-            
-            # Сбрасываем статистику создания
-            self.reset_creation_stats()
-            
-            self._system_state = SystemState.DESTROYED
-            logger.info("Система UI очищена")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка очистки системы UI: {e}")
-            return False
-    
-    def get_system_info(self) -> Dict[str, Any]:
-        """Получение информации о системе"""
-        return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'dependencies': self.dependencies,
-            'total_elements': len(self.ui_elements),
-            'active_modes': len(self.creator_modes),
-            'available_templates': len(self.object_templates),
-            'stats': self.system_stats
-        }
-    
-    def get_available_templates(self, category: ObjectCategory) -> List[WorldObjectTemplate]:
-        """Получение доступных шаблонов по категории"""
-        try:
-            return [template for template in self.object_templates.values() 
-                   if template.category == category and template.is_available]
-        except Exception as e:
-            logger.error(f"Ошибка получения шаблонов для категории {category}: {e}")
-            return []
-    
-    def get_templates_by_type(self, object_type: WorldObjectType) -> List[WorldObjectTemplate]:
-        """Получение шаблонов по типу объекта"""
-        try:
-            return [template for template in self.object_templates.values() 
-                   if template.object_type == object_type and template.is_available]
-        except Exception as e:
-            logger.error(f"Ошибка получения шаблонов для типа {object_type}: {e}")
-            return []
-    
-    def select_template(self, template_id: str) -> bool:
-        """Выбор шаблона для размещения"""
-        try:
-            if template_id in self.object_templates:
-                self.selected_template = self.object_templates[template_id]
-                logger.info(f"Выбран шаблон: {self.selected_template.name}")
-                return True
-            else:
-                logger.warning(f"Шаблон {template_id} не найден")
-                return False
-        except Exception as e:
-            logger.error(f"Ошибка выбора шаблона {template_id}: {e}")
-            return False
-    
-    def get_template_by_id(self, template_id: str) -> Optional[WorldObjectTemplate]:
-        """Получение шаблона по ID"""
-        try:
-            return self.object_templates.get(template_id)
-        except Exception as e:
-            logger.error(f"Ошибка получения шаблона {template_id}: {e}")
-            return None
-    
-    def unlock_template(self, template_id: str) -> bool:
-        """Разблокировка шаблона"""
-        try:
-            if template_id in self.object_templates:
-                self.object_templates[template_id].is_available = True
-                logger.info(f"Разблокирован шаблон: {self.object_templates[template_id].name}")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка разблокировки шаблона {template_id}: {e}")
-            return False
-    
-    def lock_template(self, template_id: str) -> bool:
-        """Блокировка шаблона"""
-        try:
-            if template_id in self.object_templates:
-                self.object_templates[template_id].is_available = False
-                logger.info(f"Заблокирован шаблон: {self.object_templates[template_id].name}")
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Ошибка блокировки шаблона {template_id}: {e}")
-            return False
-    
-    def get_creation_stats(self) -> Dict[str, Any]:
-        """Получение статистики создания"""
-        return self.creation_stats.copy()
-    
-    def reset_creation_stats(self) -> None:
-        """Сброс статистики создания"""
-        self.creation_stats = {
-            'objects_created': 0,
-            'obstacles_placed': 0,
-            'traps_placed': 0,
-            'chests_placed': 0,
-            'enemies_spawned': 0,
-            'total_cost': 0
-        }
-    
-    def increment_creation_stat(self, stat_name: str, value: int = 1) -> None:
-        """Увеличение статистики создания"""
-        if stat_name in self.creation_stats:
-            self.creation_stats[stat_name] += value
-    
-    def handle_event(self, event_type: str, event_data: Any) -> bool:
-        """Обработка событий"""
-        try:
-            # Добавляем в очередь для безопасной обработки в такт UI
-            self._event_queue.append((event_type, event_data))
-            return True
-        except Exception as e:
-            logger.error(f"Ошибка постановки события {event_type} в очередь: {e}")
-            return False
-
-    def _process_event(self, event_type: str, event_data: Any) -> bool:
-        """Немедленная обработка одного события из очереди"""
-        try:
-            if event_type == "ui_element_created":
-                return self._handle_ui_element_created(event_data)
-            elif event_type == "ui_element_updated":
-                return self._handle_ui_element_updated(event_data)
-            elif event_type == "ui_element_destroyed":
-                return self._handle_ui_element_destroyed(event_data)
-            elif event_type == "screen_changed":
-                return self._handle_screen_changed(event_data)
-            elif event_type == "theme_changed":
-                return self._handle_theme_changed(event_data)
-            else:
-                return False
-        except Exception as e:
-            logger.error(f"Ошибка обработки события {event_type}: {e}")
-            return False
-
-    def _drain_event_queue(self, budget_only: bool = False) -> None:
-        """Обработка очереди событий с бюджетом на тик"""
-        try:
-            processed = 0
-            budget = self._max_events_per_tick if not budget_only else max(1, self._max_events_per_tick // 4)
-            while self._event_queue and processed < budget:
-                event_type, event_data = self._event_queue.popleft()
-                self._process_event(event_type, event_data)
-                processed += 1
-            self.system_stats['events_processed'] = self.system_stats.get('events_processed', 0) + processed
-        except Exception as e:
-            logger.warning(f"Ошибка обработки очереди событий UI: {e}")
-    
-    def _setup_ui_system(self) -> None:
-        """Настройка системы UI"""
-        try:
-            # Здесь должна быть инициализация Panda3D GUI
-            # Пока просто логируем
-            logger.debug("Система UI настроена")
-        except Exception as e:
-            logger.warning(f"Не удалось настроить систему UI: {e}")
-    
-    def _create_base_themes(self) -> None:
-        """Создание базовых тем"""
-        try:
-            # Светлая тема
-            light_theme = UITheme(
-                theme_id="light_theme",
-                name="Светлая тема",
-                colors={
-                    'primary': (51, 122, 183, 200),
-                    'secondary': (92, 184, 92, 200),
-                    'accent': (91, 192, 222, 220),
-                    'text': (255, 255, 255, 255)
-                },
-                fonts={
-                    'default': 'Arial',
-                    'heading': 'Arial Bold',
-                    'monospace': 'Courier New'
-                },
-                sizes={
-                    'font_small': 12.0,
-                    'font_normal': 14.0,
-                    'font_large': 16.0,
-                    'font_xlarge': 20.0,
-                    'spacing_small': 5.0,
-                    'spacing_normal': 10.0,
-                    'spacing_large': 20.0
-                },
-                is_active=False
-            )
-            
-            # Неоновая полупрозрачная тема (по умолчанию)
-            neon_theme = UITheme(
-                theme_id="neon_theme",
-                name="Неоновая тема",
-                colors={
-                    'primary': (0, 255, 200, 160),
-                    'secondary': (255, 0, 200, 160),
-                    'accent': (0, 120, 255, 180),
-                    'text': (230, 255, 250, 255),
-                    'panel_bg': (10, 10, 20, 140)
-                },
-                fonts={
-                    'default': 'Arial',
-                    'heading': 'Arial Bold'
-                },
-                sizes={
-                    'font_small': 12.0,
-                    'font_normal': 15.0,
-                    'font_large': 18.0,
-                    'font_xlarge': 22.0,
-                    'spacing_small': 6.0,
-                    'spacing_normal': 12.0,
-                    'spacing_large': 24.0
-                },
-                is_active=True
-            )
-            
-            # Темная тема
-            dark_theme = UITheme(
-                theme_id="dark_theme",
-                name="Темная тема",
-                colors={
-                    'primary': (0, 123, 255, 200),
-                    'secondary': (108, 117, 125, 200),
-                    'accent': (23, 162, 184, 200),
-                    'text': (220, 220, 220, 255)
-                },
-                fonts={'default': 'Arial', 'heading': 'Arial Bold'},
-                sizes={'font_small': 12.0,'font_normal': 14.0,'font_large': 16.0,'font_xlarge': 20.0},
-                is_active=False
-            )
-            
-            self.ui_themes["light_theme"] = light_theme
-            self.ui_themes["neon_theme"] = neon_theme
-            self.ui_themes["dark_theme"] = dark_theme
-            
-            logger.info("Созданы базовые темы (по умолчанию: neon_theme)")
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания базовых тем: {e}")
-    
-    def _create_base_layouts(self) -> None:
-        """Создание базовых макетов"""
-        try:
-            # Главное меню
-            main_menu_layout = UILayout(
-                layout_id="main_menu_layout",
-                name="Главное меню",
-                layout_type="vertical",
-                spacing=10.0,
-                padding=(20.0, 20.0),
-                auto_size=True
-            )
-            
-            # Игровое меню
-            game_menu_layout = UILayout(
-                layout_id="game_menu_layout",
-                name="Игровое меню",
-                layout_type="horizontal",
-                spacing=15.0,
-                padding=(10.0, 10.0),
-                auto_size=False
-            )
-            
-            # Настройки
-            settings_layout = UILayout(
-                layout_id="settings_layout",
-                name="Настройки",
-                layout_type="grid",
-                spacing=8.0,
-                padding=(15.0, 15.0),
-                auto_size=True
-            )
-            
-            # Добавляем макеты
-            self.ui_layouts["main_menu_layout"] = main_menu_layout
-            self.ui_layouts["game_menu_layout"] = game_menu_layout
-            self.ui_layouts["settings_layout"] = settings_layout
-            
-            logger.info("Созданы базовые макеты")
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания базовых макетов: {e}")
-    
-    def _create_object_templates(self) -> None:
-        """Создание шаблонов объектов для создания"""
-        try:
-            # Создаем шаблоны из констант
-            for template_id, template_data in DEFAULT_OBJECT_TEMPLATES.items():
-                self.object_templates[template_id] = WorldObjectTemplate(
-                    template_id=template_id,
-                    name=template_data["name"],
-                    object_type=template_data["type"],
-                    category=template_data["category"],
-                    description=template_data["description"],
-                    icon=template_data["icon"],
-                    cost=template_data["cost"],
-                    unlock_level=template_data["unlock_level"],
-                    properties=template_data["properties"]
-                )
-            
-            # Добавляем дополнительные шаблоны
-            additional_templates = {
-                "poison_pit": {
-                    "name": "Яма с ядом",
-                    "type": WorldObjectType.TRAP,
-                    "category": ObjectCategory.COMBAT,
-                    "description": "Ловушка с ядовитым газом",
-                    "icon": "☠️",
-                    "cost": 35,
-                    "unlock_level": 3,
-                    "properties": {
-                        'width': 2.0,
-                        'height': 0.1,
-                        'depth': 2.0,
-                        'color': (0.2, 0.8, 0.2, 0.8),
-                        'damage': 5,
-                        'damage_type': 'poison',
-                        'duration': 10.0,
-                        'trigger_type': 'step'
-                    }
-                },
-                "golden_chest": {
-                    "name": "Золотой сундук",
-                    "type": WorldObjectType.CHEST,
-                    "category": ObjectCategory.REWARDS,
-                    "description": "Содержит редкие награды",
-                    "icon": "💎",
-                    "cost": 150,
-                    "unlock_level": 5,
-                    "properties": {
-                        'width': 1.2,
-                        'height': 1.2,
-                        'depth': 1.2,
-                        'color': (1.0, 0.8, 0.0, 1.0),
-                        'loot_quality': 'rare',
-                        'loot_count': 5,
-                        'locked': True,
-                        'trap_chance': 0.3
-                    }
-                },
-                "troll": {
-                    "name": "Тролль",
-                    "type": WorldObjectType.ENEMY,
-                    "category": ObjectCategory.COMBAT,
-                    "description": "Сильный и медленный враг",
-                    "icon": "👺",
-                    "cost": 80,
-                    "unlock_level": 4,
-                    "properties": {
-                        'width': 1.5,
-                        'height': 2.5,
-                        'depth': 1.5,
-                        'color': (0.8, 0.4, 0.2, 1.0),
-                        'health': 120,
-                        'damage': 25,
-                        'speed': 1.5,
-                        'ai_type': 'defensive',
-                        'loot_drop': True,
-                        'regeneration': True
-                    }
-                },
-                "mountain": {
-                    "name": "Гора",
-                    "type": WorldObjectType.GEO_OBSTACLE,
-                    "category": ObjectCategory.ENVIRONMENT,
-                    "description": "Непроходимое географическое препятствие",
-                    "icon": "⛰️",
-                    "cost": 20,
-                    "unlock_level": 1,
-                    "properties": {
-                        'width': 5.0,
-                        'height': 8.0,
-                        'depth': 5.0,
-                        'color': (0.4, 0.3, 0.2, 1.0),
-                        'collision': True,
-                        'climbable': False,
-                        'weather_effect': 'wind'
-                    }
-                },
-                "river": {
-                    "name": "Река",
-                    "type": WorldObjectType.GEO_OBSTACLE,
-                    "category": ObjectCategory.ENVIRONMENT,
-                    "description": "Замедляет движение",
-                    "icon": "🌊",
-                    "cost": 15,
-                    "unlock_level": 1,
-                    "properties": {
-                        'width': 3.0,
-                        'height': 0.5,
-                        'depth': 10.0,
-                        'color': (0.2, 0.4, 0.8, 0.7),
-                        'collision': False,
-                        'movement_penalty': 0.5,
-                        'swimmable': True
-                    }
-                },
-                "tree": {
-                    "name": "Дерево",
-                    "type": WorldObjectType.DECORATION,
-                    "category": ObjectCategory.ENVIRONMENT,
-                    "description": "Декоративный элемент",
-                    "icon": "🌳",
-                    "cost": 5,
-                    "unlock_level": 1,
-                    "properties": {
-                        'width': 1.0,
-                        'height': 4.0,
-                        'depth': 1.0,
-                        'color': (0.2, 0.6, 0.2, 1.0),
-                        'collision': False,
-                        'provides_shade': True,
-                        'seasonal_changes': True
-                    }
-                }
-            }
-            
-            # Добавляем дополнительные шаблоны
-            for template_id, template_data in additional_templates.items():
-                self.object_templates[template_id] = WorldObjectTemplate(
-                    template_id=template_id,
-                    name=template_data["name"],
-                    object_type=template_data["type"],
-                    category=template_data["category"],
-                    description=template_data["description"],
-                    icon=template_data["icon"],
-                    cost=template_data["cost"],
-                    unlock_level=template_data["unlock_level"],
-                    properties=template_data["properties"]
-                )
-            
-            logger.info(f"Создано {len(self.object_templates)} шаблонов объектов")
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания шаблонов объектов: {e}")
-    
-    def _create_base_ui_elements(self) -> None:
-        """Создание базовых UI элементов"""
-        try:
-            # Стартовый экран
-            self._create_screen_panel("start", title="Стартовое меню", buttons=[
-                ("Играть", "start_game"),
-                ("Настройки", "open_settings"),
-                ("Выход", "exit_game")
-            ], layer=1)
-            
-            # Пауза
-            self._create_screen_panel("pause", title="Пауза", buttons=[
-                ("Продолжить", "resume"),
-                ("Настройки", "open_settings"),
-                ("Выйти в меню", "to_menu")
-            ], layer=2)
-            
-            # Настройки
-            self._create_screen_panel("settings", title="Настройки", buttons=[
-                ("Видео", "settings_video"),
-                ("Аудио", "settings_audio"),
-                ("Управление", "settings_controls")
-            ], layer=2)
-            
-            # Инвентарь / Гены / Торговля / Крафт — панели-заглушки
-            for sid, title in [
-                ("inventory", "Инвентарь"),
-                ("genes", "Гены"),
-                ("trade", "Торговля"),
-                ("crafting", "Крафт")
-            ]:
-                self._create_screen_panel(sid, title=title, buttons=[], layer=1)
-            
-            logger.info("Созданы базовые экраны UI")
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания базовых UI элементов: {e}")
-
-    def _create_screen_panel(self, screen_id: str, title: str, buttons: List[tuple], layer: int = 0) -> None:
-        panel_id = f"{screen_id}_panel"
-        title_id = f"{screen_id}_title"
+    def _register_basic_elements(self):
+        """Регистрация базовых UI элементов"""
+        # Создаем основной HUD
+        self.create_hud("main_hud")
         
-        self.create_ui_element(panel_id, {
-            'element_type': UIElementType.PANEL.value,
-            'name': title,
-            'position': (0.0, 0.0),
-            'size': (800.0, 500.0),
-            'visible': screen_id == 'start',
-            'background_color': self.ui_themes.get('neon_theme', UITheme('x')).colors.get('panel_bg', (0,0,0,140)),
-            'layer': layer
-        })
+        # Создаем основные панели
+        self.create_panel("main_menu", "Главное меню")
+        self.create_panel("game_hud", "Игровой HUD")
+        self.create_panel("inventory_panel", "Инвентарь")
+        self.create_panel("skills_panel", "Навыки")
+        self.create_panel("combat_panel", "Бой")
         
-        self.create_ui_element(title_id, {
-            'element_type': UIElementType.LABEL.value,
-            'name': f"{title} - Заголовок",
-            'position': (0.0, 220.0),
-            'size': (500.0, 40.0),
-            'text': title,
-            'color': self.ui_themes.get('neon_theme', UITheme('x')).colors.get('text', (255,255,255,255)),
-            'parent_id': panel_id,
-            'layer': layer
-        })
+        # Создаем кнопки
+        self.create_button("start_game", "Начать игру", self._on_start_game)
+        self.create_button("load_game", "Загрузить игру", self._on_load_game)
+        self.create_button("settings", "Настройки", self._on_settings)
+        self.create_button("exit_game", "Выход", self._on_exit_game)
+    
+    def _setup_event_handlers(self):
+        """Настройка обработчиков событий"""
+        self.event_handlers["ui_update"] = self._handle_ui_update
+        self.event_handlers["hud_update"] = self._handle_hud_update
+        self.event_handlers["panel_show"] = self._handle_panel_show
+        self.event_handlers["panel_hide"] = self._handle_panel_hide
+    
+    # Создание UI элементов
+    def create_element(self, element_id: str, element_type: UIElementType, **kwargs) -> UIElement:
+        """Создать UI элемент"""
+        if element_id in self.ui_elements:
+            return self.ui_elements[element_id]
         
-        y = 120.0
-        for idx, (btn_text, btn_action) in enumerate(buttons):
-            btn_id = f"{screen_id}_btn_{idx}"
-            self.create_ui_element(btn_id, {
-                'element_type': UIElementType.BUTTON.value,
-                'name': btn_text,
-                'position': (0.0, y),
-                'size': (240.0, 50.0),
-                'text': btn_text,
-                'background_color': self.ui_themes.get('neon_theme', UITheme('x')).colors.get('primary', (0,255,200,160)),
-                'parent_id': panel_id,
-                'event_handlers': {'click': btn_action},
-                'layer': layer
-            })
-            y -= 70.0
+        element = UIElement(
+            element_id=element_id,
+            element_type=element_type,
+            **kwargs
+        )
+        
+        self.ui_elements[element_id] = element
+        
+        # Добавляем в иерархию
+        if element.parent:
+            if element.parent not in self.element_hierarchy:
+                self.element_hierarchy[element.parent] = []
+            self.element_hierarchy[element.parent].append(element_id)
+        
+        return element
     
-    def _update_ui_elements(self, delta_time: float) -> None:
-        """Обновление UI элементов"""
-        try:
-            current_time = time.time()
-            
-            for element_id, ui_element in self.ui_elements.items():
-                # Обновляем время последнего обновления
-                ui_element.last_update = current_time
-                
-                # Здесь должна быть логика обновления Panda3D GUI элементов
-                # Пока просто обновляем состояние
-                if ui_element.visible and ui_element.enabled:
-                    ui_element.custom_data['last_updated'] = current_time
-                
-        except Exception as e:
-            logger.warning(f"Ошибка обновления UI элементов: {e}")
+    def create_button(self, button_id: str, text: str, callback: Callable, **kwargs) -> UIElement:
+        """Создать кнопку"""
+        return self.create_element(
+            button_id, 
+            UIElementType.BUTTON, 
+            text=text,
+            callbacks={"click": callback},
+            **kwargs
+        )
     
-    def _update_layouts(self, delta_time: float) -> None:
-        """Обновление макетов"""
-        try:
-            current_time = time.time()
-            
-            for layout_id, layout in self.ui_layouts.items():
-                # Обновляем время последнего обновления
-                layout.last_update = current_time
-                
-                # Здесь должна быть логика обновления макетов
-                # Пока просто обновляем статистику
-                if layout.elements:
-                    layout.custom_data = {'last_updated': current_time}
-                
-        except Exception as e:
-            logger.warning(f"Ошибка обновления макетов: {e}")
+    def create_label(self, label_id: str, text: str, **kwargs) -> UIElement:
+        """Создать текстовую метку"""
+        return self.create_element(
+            label_id,
+            UIElementType.LABEL,
+            text=text,
+            **kwargs
+        )
     
-    def _update_animations(self, delta_time: float) -> None:
-        """Обновление анимаций"""
-        try:
-            if not self.system_settings['animation_enabled']:
-                return
-            
-            current_time = time.time()
-            
-            for element_id, ui_element in self.ui_elements.items():
-                if ui_element.animation_data:
-                    # Здесь должна быть логика обновления анимаций
-                    # Пока просто обновляем время
-                    ui_element.animation_data['last_update'] = current_time
-                
-        except Exception as e:
-            logger.warning(f"Ошибка обновления анимаций: {e}")
+    def create_progress_bar(self, bar_id: str, **kwargs) -> UIElement:
+        """Создать полосу прогресса"""
+        return self.create_element(
+            bar_id,
+            UIElementType.PROGRESS_BAR,
+            **kwargs
+        )
     
-    def _update_system_stats(self) -> None:
-        """Обновление статистики системы"""
-        try:
-            self.system_stats['total_elements'] = len(self.ui_elements)
-            self.system_stats['visible_elements'] = len([e for e in self.ui_elements.values() if e.visible])
-            self.system_stats['active_layouts'] = len(self.ui_layouts)
-            self.system_stats['active_themes'] = len([t for t in self.ui_themes.values() if t.is_active])
-            self.system_stats['active_screens'] = len(self.active_screens)
-            # Распределение по слоям
-            layers = {}
-            for e in self.ui_elements.values():
-                layers[e.layer] = layers.get(e.layer, 0) + 1
-            self.system_stats['layers'] = layers
-            
-        except Exception as e:
-            logger.warning(f"Ошибка обновления статистики системы: {e}")
+    def create_panel(self, panel_id: str, title: str, **kwargs) -> UIElement:
+        """Создать панель"""
+        return self.create_element(
+            panel_id,
+            UIElementType.PANEL,
+            text=title,
+            **kwargs
+        )
     
-    def _handle_ui_element_created(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события создания UI элемента"""
-        try:
-            element_id = event_data.get('element_id')
-            element_data = event_data.get('element_data', {})
-            
-            if element_id and element_data:
-                return self.create_ui_element(element_id, element_data)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события создания UI элемента: {e}")
-            return False
+    def create_hud(self, hud_id: str, **kwargs) -> UIElement:
+        """Создать HUD"""
+        return self.create_element(
+            hud_id,
+            UIElementType.HUD,
+            **kwargs
+        )
     
-    def _handle_ui_element_updated(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события обновления UI элемента"""
-        try:
-            element_id = event_data.get('element_id')
-            update_data = event_data.get('update_data', {})
-            
-            if element_id and update_data:
-                return self.update_ui_element(element_id, update_data)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события обновления UI элемента: {e}")
-            return False
+    # Управление HUD
+    def create_hud_data(self, entity_id: str, **kwargs) -> HUDData:
+        """Создать данные HUD для сущности"""
+        if entity_id in self.hud_data:
+            return self.hud_data[entity_id]
+        
+        hud_data = HUDData(**kwargs)
+        self.hud_data[entity_id] = hud_data
+        return hud_data
     
-    def _handle_ui_element_destroyed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события уничтожения UI элемента"""
-        try:
-            element_id = event_data.get('element_id')
-            
-            if element_id:
-                return self.destroy_ui_element(element_id)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события уничтожения UI элемента: {e}")
-            return False
+    def update_hud_data(self, entity_id: str, **kwargs):
+        """Обновить данные HUD"""
+        if entity_id not in self.hud_data:
+            self.create_hud_data(entity_id)
+        
+        hud_data = self.hud_data[entity_id]
+        
+        for key, value in kwargs.items():
+            if hasattr(hud_data, key):
+                setattr(hud_data, key, value)
     
-    def _handle_screen_changed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события смены экрана"""
-        try:
-            screen_id = event_data.get('screen_id')
-            action = event_data.get('action', 'show')  # show, hide, switch
-            
-            if screen_id:
-                if action == "show":
-                    return self.show_screen(screen_id)
-                elif action == "hide":
-                    return self.hide_screen(screen_id)
-                elif action == "switch":
-                    return self.switch_screen(screen_id)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события смены экрана: {e}")
-            return False
+    def get_hud_data(self, entity_id: str) -> Optional[HUDData]:
+        """Получить данные HUD"""
+        return self.hud_data.get(entity_id)
     
-    def _handle_theme_changed(self, event_data: Dict[str, Any]) -> bool:
-        """Обработка события смены темы"""
-        try:
-            theme_id = event_data.get('theme_id')
-            
-            if theme_id:
-                return self.switch_theme(theme_id)
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки события смены темы: {e}")
-            return False
+    # Управление панелями
+    def show_panel(self, panel_id: str):
+        """Показать панель"""
+        if panel_id not in self.ui_elements:
+            return
+        
+        panel = self.ui_elements[panel_id]
+        if panel.element_type != UIElementType.PANEL:
+            return
+        
+        # Добавляем в стек активных панелей
+        if panel_id not in self.panel_stack:
+            self.panel_stack.append(panel_id)
+        
+        # Показываем панель
+        panel.state = UIState.ACTIVE
+        panel.visible = True
+        
+        # Показываем дочерние элементы
+        for child_id in panel.children:
+            if child_id in self.ui_elements:
+                child = self.ui_elements[child_id]
+                child.visible = True
+                child.state = UIState.VISIBLE
     
-    def create_ui_element(self, element_id: str, element_data: Dict[str, Any]) -> bool:
-        """Создание UI элемента"""
-        try:
-            if element_id in self.ui_elements:
-                logger.warning(f"UI элемент {element_id} уже существует")
-                return False
-            
-            # Нормализация текста (защита кодировки)
-            raw_text = element_data.get('text', '')
+    def hide_panel(self, panel_id: str):
+        """Скрыть панель"""
+        if panel_id not in self.ui_elements:
+            return
+        
+        panel = self.ui_elements[panel_id]
+        if panel.element_type != UIElementType.PANEL:
+            return
+        
+        # Убираем из стека
+        if panel_id in self.panel_stack:
+            self.panel_stack.remove(panel_id)
+        
+        # Скрываем панель
+        panel.state = UIState.HIDDEN
+        panel.visible = False
+        
+        # Скрываем дочерние элементы
+        for child_id in panel.children:
+            if child_id in self.ui_elements:
+                child = self.ui_elements[child_id]
+                child.visible = False
+                child.state = UIState.HIDDEN
+    
+    def is_panel_visible(self, panel_id: str) -> bool:
+        """Проверить, видима ли панель"""
+        if panel_id not in self.ui_elements:
+            return False
+        
+        panel = self.ui_elements[panel_id]
+        return panel.is_visible()
+    
+    # Управление элементами
+    def show_element(self, element_id: str):
+        """Показать элемент"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.visible = True
+            element.state = UIState.VISIBLE
+    
+    def hide_element(self, element_id: str):
+        """Скрыть элемент"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.visible = False
+            element.state = UIState.HIDDEN
+    
+    def enable_element(self, element_id: str):
+        """Включить элемент"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.enabled = True
+            element.state = UIState.ACTIVE
+    
+    def disable_element(self, element_id: str):
+        """Отключить элемент"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.enabled = False
+            element.state = UIState.DISABLED
+    
+    def set_element_text(self, element_id: str, text: str):
+        """Установить текст элемента"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.text = text
+    
+    def set_element_position(self, element_id: str, position: tuple):
+        """Установить позицию элемента"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.position = position
+    
+    def set_element_size(self, element_id: str, size: tuple):
+        """Установить размер элемента"""
+        if element_id in self.ui_elements:
+            element = self.ui_elements[element_id]
+            element.size = size
+    
+    # Обработка событий
+    def handle_click(self, element_id: str):
+        """Обработать клик по элементу"""
+        if element_id not in self.ui_elements:
+            return
+        
+        element = self.ui_elements[element_id]
+        if not element.is_enabled():
+            return
+        
+        # Вызываем callback для клика
+        if "click" in element.callbacks:
             try:
-                norm_text = str(raw_text).encode('utf-8', 'ignore').decode('utf-8', 'ignore')
-            except Exception:
-                norm_text = str(raw_text)
-            
-            # Создаем UI элемент
-            ui_element = UIElement(
-                element_id=element_id,
-                element_type=self._normalize_element_type(element_data.get('element_type', UIElementType.PANEL.value)),
-                name=element_data.get('name', ''),
-                position=element_data.get('position', (0.0, 0.0)),
-                size=element_data.get('size', (100.0, 100.0)),
-                visible=element_data.get('visible', True),
-                enabled=element_data.get('enabled', True),
-                state=self._normalize_ui_state(element_data.get('state', UIState.NORMAL.value)),
-                text=norm_text,
-                icon=element_data.get('icon', ''),
-                color=element_data.get('color', (255, 255, 255, 255)),
-                background_color=element_data.get('background_color', (0, 0, 0, 128)),
-                border_color=element_data.get('border_color', (128, 128, 128, 255)),
-                font_size=element_data.get('font_size', 14),
-                parent_id=element_data.get('parent_id'),
-                event_handlers=self._normalize_event_handlers(element_data.get('event_handlers', {})),
-                custom_data=element_data.get('custom_data', {}),
-                layer=int(element_data.get('layer', 0))
-            )
-            
-            # Добавляем в систему
-            self.ui_elements[element_id] = ui_element
-            
-            # Обновляем связи с родителем
-            if ui_element.parent_id and ui_element.parent_id in self.ui_elements:
-                parent = self.ui_elements[ui_element.parent_id]
-                parent.children.append(element_id)
-            
-            # Пересчет слоев для предотвращения наслоения
-            self._resolve_layering()
-            
-            logger.info(f"Создан UI элемент {element_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания UI элемента {element_id}: {e}")
-            return False
+                element.callbacks["click"]()
+            except Exception as e:
+                self.logger.error(f"Ошибка в callback клика для {element_id}: {e}")
     
-    def update_ui_element(self, element_id: str, update_data: Dict[str, Any]) -> bool:
-        """Обновление UI элемента"""
-        try:
-            if element_id not in self.ui_elements:
-                return False
-            
-            ui_element = self.ui_elements[element_id]
-            
-            # Нормализация текста
-            if 'text' in update_data:
-                try:
-                    update_data['text'] = str(update_data['text']).encode('utf-8','ignore').decode('utf-8','ignore')
-                except Exception:
-                    update_data['text'] = str(update_data['text'])
-            
-            # Нормализация enum-полей при обновлении
-            if 'element_type' in update_data:
-                update_data['element_type'] = self._normalize_element_type(update_data['element_type'])
-            if 'state' in update_data:
-                update_data['state'] = self._normalize_ui_state(update_data['state'])
-            if 'event_handlers' in update_data and isinstance(update_data['event_handlers'], dict):
-                update_data['event_handlers'] = self._normalize_event_handlers(update_data['event_handlers'])
-
-            # Обновляем свойства
-            for key, value in update_data.items():
-                if hasattr(ui_element, key):
-                    setattr(ui_element, key, value)
-            
-            ui_element.last_update = time.time()
-            
-            # Пересчет слоев
-            if 'layer' in update_data:
-                self._resolve_layering()
-            
-            logger.debug(f"Обновлен UI элемент {element_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка обновления UI элемента {element_id}: {e}")
-            return False
+    def add_callback(self, element_id: str, event_type: str, callback: Callable):
+        """Добавить callback для элемента"""
+        if element_id not in self.ui_elements:
+            return
+        
+        element = self.ui_elements[element_id]
+        element.callbacks[event_type] = callback
     
-    def destroy_ui_element(self, element_id: str) -> bool:
-        """Уничтожение UI элемента"""
-        try:
-            if element_id not in self.ui_elements:
-                return False
-            
-            ui_element = self.ui_elements[element_id]
-            
-            # Удаляем связи с родителем
-            if ui_element.parent_id and ui_element.parent_id in self.ui_elements:
-                parent = self.ui_elements[ui_element.parent_id]
-                if element_id in parent.children:
-                    parent.children.remove(element_id)
-            
-            # Удаляем дочерние элементы
-            for child_id in ui_element.children[:]:
-                self.destroy_ui_element(child_id)
-            
-            # Здесь должна быть логика удаления Panda3D GUI элемента
-            # Пока просто удаляем из системы
-            
-            del self.ui_elements[element_id]
-            
-            logger.info(f"UI элемент {element_id} уничтожен")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка уничтожения UI элемента {element_id}: {e}")
-            return False
+    # Обновление UI
+    def update(self, delta_time: float):
+        """Обновить UI систему"""
+        current_time = time.time()
+        
+        # Проверяем, нужно ли обновлять UI
+        if current_time - self.last_update_time < self.auto_update_interval:
+            return
+        
+        # Обновляем все видимые элементы
+        for element_id, element in self.ui_elements.items():
+            if element.is_visible():
+                self._update_element(element, delta_time)
+        
+        self.last_update_time = current_time
     
-    def show_screen(self, screen_id: str) -> bool:
-        """Показать экран"""
-        try:
-            if screen_id not in self.active_screens:
-                self.active_screens.append(screen_id)
-                
-                # Показываем все элементы экрана
-                for element_id, ui_element in self.ui_elements.items():
-                    if element_id.startswith(f"{screen_id}_"):
-                        ui_element.visible = True
-                
-                logger.info(f"Показан экран {screen_id}")
-                return True
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка показа экрана {screen_id}: {e}")
-            return False
+    def _update_element(self, element: UIElement, delta_time: float):
+        """Обновить отдельный элемент"""
+        # Обновляем прогресс-бары
+        if element.element_type == UIElementType.PROGRESS_BAR:
+            self._update_progress_bar(element, delta_time)
+        
+        # Обновляем HUD
+        elif element.element_type == UIElementType.HUD:
+            self._update_hud(element, delta_time)
     
-    def hide_screen(self, screen_id: str) -> bool:
-        """Скрыть экран"""
-        try:
-            if screen_id in self.active_screens:
-                self.active_screens.remove(screen_id)
-                
-                # Скрываем все элементы экрана
-                for element_id, ui_element in self.ui_elements.items():
-                    if element_id.startswith(f"{screen_id}_"):
-                        ui_element.visible = False
-                
-                logger.info(f"Скрыт экран {screen_id}")
-                return True
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка скрытия экрана {screen_id}: {e}")
-            return False
+    def _update_progress_bar(self, element: UIElement, delta_time: float):
+        """Обновить прогресс-бар"""
+        # TODO: Анимация прогресс-бара
+        pass
     
-    def switch_screen(self, screen_id: str) -> bool:
-        """Переключить экран"""
-        try:
-            # Скрываем все экраны
-            for active_screen in self.active_screens[:]:
-                self.hide_screen(active_screen)
-            
-            # Показываем нужный экран
-            return self.show_screen(screen_id)
-            
-        except Exception as e:
-            logger.error(f"Ошибка переключения на экран {screen_id}: {e}")
-            return False
+    def _update_hud(self, element: UIElement, delta_time: float):
+        """Обновить HUD"""
+        # TODO: Обновление данных HUD
+        pass
     
-    def switch_theme(self, theme_id: str) -> bool:
-        """Переключить тему"""
-        try:
-            if not self.system_settings['theme_switching_enabled']:
-                return False
-            
-            if theme_id not in self.ui_themes:
-                return False
-            
-            # Деактивируем все темы
-            for theme in self.ui_themes.values():
-                theme.is_active = False
-            
-            # Активируем нужную тему
-            target_theme = self.ui_themes[theme_id]
-            target_theme.is_active = True
-            target_theme.last_update = time.time()
-            
-            # Применяем тему ко всем элементам
-            self._apply_theme_to_elements(target_theme)
-            
-            logger.info(f"Переключена тема {theme_id}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка переключения темы {theme_id}: {e}")
-            return False
+    # Обработчики событий
+    def _handle_ui_update(self, event_data: Dict[str, Any]):
+        """Обработчик обновления UI"""
+        # TODO: Обработка событий обновления UI
+        pass
     
-    def _apply_theme_to_elements(self, theme: UITheme) -> None:
-        """Применение темы к элементам"""
-        try:
-            for element_id, ui_element in self.ui_elements.items():
-                # Применяем цвета темы
-                if 'primary' in theme.colors:
-                    ui_element.background_color = theme.colors['primary']
-                
-                if 'text' in theme.colors:
-                    ui_element.color = theme.colors['text']
-                
-                # Применяем размеры темы
-                if 'font_normal' in theme.sizes:
-                    ui_element.font_size = int(theme.sizes['font_normal'])
-                
-        except Exception as e:
-            logger.warning(f"Ошибка применения темы к элементам: {e}")
+    def _handle_hud_update(self, event_data: Dict[str, Any]):
+        """Обработчик обновления HUD"""
+        entity_id = event_data.get("entity_id")
+        if not entity_id:
+            return
+        
+        # Обновляем данные HUD
+        if entity_id in self.hud_data:
+            hud_data = self.hud_data[entity_id]
+            
+            # Обновляем отображение
+            self._update_hud_display(entity_id, hud_data)
     
-    def get_ui_element_info(self, element_id: str) -> Optional[Dict[str, Any]]:
-        """Получение информации о UI элементе"""
-        try:
-            if element_id not in self.ui_elements:
-                return None
-            
-            ui_element = self.ui_elements[element_id]
-            
-            return {
-                'element_id': ui_element.element_id,
-                'element_type': ui_element.element_type.value,
-                'name': ui_element.name,
-                'position': ui_element.position,
-                'size': ui_element.size,
-                'visible': ui_element.visible,
-                'enabled': ui_element.enabled,
-                'state': ui_element.state.value,
-                'text': ui_element.text,
-                'icon': ui_element.icon,
-                'color': ui_element.color,
-                'background_color': ui_element.background_color,
-                'border_color': ui_element.border_color,
-                'font_size': ui_element.font_size,
-                'parent_id': ui_element.parent_id,
-                'children': ui_element.children,
-                'event_handlers': ui_element.event_handlers,
-                'custom_data': ui_element.custom_data,
-                'last_update': ui_element.last_update,
-                'animation_data': ui_element.animation_data
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения информации о UI элементе {element_id}: {e}")
-            return None
+    def _handle_panel_show(self, event_data: Dict[str, Any]):
+        """Обработчик показа панели"""
+        panel_id = event_data.get("panel_id")
+        if panel_id:
+            self.show_panel(panel_id)
     
-    def get_layout_info(self, layout_id: str) -> Optional[Dict[str, Any]]:
-        """Получение информации о макете"""
-        try:
-            if layout_id not in self.ui_layouts:
-                return None
-            
-            layout = self.ui_layouts[layout_id]
-            
-            return {
-                'layout_id': layout.layout_id,
-                'name': layout.name,
-                'layout_type': layout.layout_type,
-                'spacing': layout.spacing,
-                'padding': layout.padding,
-                'auto_size': layout.auto_size,
-                'elements': layout.elements,
-                'constraints': layout.constraints,
-                'last_update': layout.last_update
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения информации о макете {layout_id}: {e}")
-            return None
+    def _handle_panel_hide(self, event_data: Dict[str, Any]):
+        """Обработчик скрытия панели"""
+        panel_id = event_data.get("panel_id")
+        if panel_id:
+            self.hide_panel(panel_id)
     
-    def get_theme_info(self, theme_id: str) -> Optional[Dict[str, Any]]:
-        """Получение информации о теме"""
-        try:
-            if theme_id not in self.ui_themes:
-                return None
-            
-            theme = self.ui_themes[theme_id]
-            
-            return {
-                'theme_id': theme.theme_id,
-                'name': theme.name,
-                'colors': theme.colors,
-                'fonts': theme.fonts,
-                'sizes': theme.sizes,
-                'styles': theme.styles,
-                'is_active': theme.is_active,
-                'last_update': theme.last_update
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения информации о теме {theme_id}: {e}")
-            return None
+    def _update_hud_display(self, entity_id: str, hud_data: HUDData):
+        """Обновить отображение HUD"""
+        # Обновляем прогресс-бары здоровья
+        health_bar_id = f"{entity_id}_health_bar"
+        if health_bar_id in self.ui_elements:
+            self._update_health_bar(health_bar_id, hud_data.health_percentage)
+        
+        # Обновляем прогресс-бары ресурсов
+        mana_bar_id = f"{entity_id}_mana_bar"
+        if mana_bar_id in self.ui_elements:
+            self._update_mana_bar(mana_bar_id, hud_data.mana_percentage)
+        
+        # Обновляем метки
+        level_label_id = f"{entity_id}_level_label"
+        if level_label_id in self.ui_elements:
+            self.set_element_text(level_label_id, f"Уровень: {hud_data.level}")
+        
+        exp_label_id = f"{entity_id}_exp_label"
+        if exp_label_id in self.ui_elements:
+            self.set_element_text(exp_label_id, f"Опыт: {hud_data.experience}")
     
-    def toggle_ui_element_visibility(self, element_id: str) -> bool:
-        """Переключение видимости UI элемента"""
-        try:
-            if element_id not in self.ui_elements:
-                return False
-            
-            ui_element = self.ui_elements[element_id]
-            ui_element.visible = not ui_element.visible
-            ui_element.last_update = time.time()
-            
-            # Здесь должна быть логика обновления Panda3D GUI элемента
-            # Пока просто логируем
-            
-            logger.debug(f"Переключена видимость UI элемента {element_id}: {ui_element.visible}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка переключения видимости UI элемента {element_id}: {e}")
-            return False
+    def _update_health_bar(self, bar_id: str, percentage: float):
+        """Обновить полосу здоровья"""
+        if bar_id not in self.ui_elements:
+            return
+        
+        bar = self.ui_elements[bar_id]
+        bar.data["current_value"] = percentage
+        bar.data["max_value"] = 100.0
+        
+        # Обновляем цвет в зависимости от процента
+        if percentage > 50:
+            bar.data["color"] = (0, 1, 0)  # Зеленый
+        elif percentage > 25:
+            bar.data["color"] = (1, 1, 0)  # Желтый
+        else:
+            bar.data["color"] = (1, 0, 0)  # Красный
     
-    def get_visible_elements_count(self) -> int:
-        """Получение количества видимых элементов"""
-        try:
-            return len([e for e in self.ui_elements.values() if e.visible])
-        except Exception as e:
-            logger.error(f"Ошибка получения количества видимых элементов: {e}")
-            return 0
+    def _update_mana_bar(self, bar_id: str, percentage: float):
+        """Обновить полосу маны"""
+        if bar_id not in self.ui_elements:
+            return
+        
+        bar = self.ui_elements[bar_id]
+        bar.data["current_value"] = percentage
+        bar.data["max_value"] = 100.0
+        bar.data["color"] = (0, 0, 1)  # Синий
     
-    def get_elements_by_type(self, element_type: UIElementType) -> List[str]:
-        """Получение элементов по типу"""
-        try:
-            return [
-                element_id for element_id, element in self.ui_elements.items()
-                if element.element_type == element_type
-            ]
-        except Exception as e:
-            logger.error(f"Ошибка получения элементов по типу {element_type.value}: {e}")
-            return []
+    # Callback функции для кнопок
+    def _on_start_game(self):
+        """Callback для кнопки 'Начать игру'"""
+        self.logger.info("Нажата кнопка 'Начать игру'")
+        # TODO: Запуск игры
     
-    def get_elements_by_screen(self, screen_id: str) -> List[str]:
-        """Получение элементов экрана"""
-        try:
-            return [
-                element_id for element_id in self.ui_elements.keys()
-                if element_id.startswith(f"{screen_id}_")
-            ]
-        except Exception as e:
-            logger.error(f"Ошибка получения элементов экрана {screen_id}: {e}")
-            return []
-
-    def set_element_layer(self, element_id: str, layer: int) -> bool:
-        """Установить слой элемента"""
-        try:
-            if element_id not in self.ui_elements:
-                return False
-            self.ui_elements[element_id].layer = int(layer)
-            self._resolve_layering()
-            return True
-        except Exception as e:
-            logger.error(f"Ошибка установки слоя для {element_id}: {e}")
-            return False
+    def _on_load_game(self):
+        """Callback для кнопки 'Загрузить игру'"""
+        self.logger.info("Нажата кнопка 'Загрузить игру'")
+        # TODO: Загрузка игры
     
-    def _resolve_layering(self) -> None:
-        """Простейшее разрешение наслоения: порядок по layer и parent"""
-        try:
-            # Здесь может быть логика сортировки/ z-order для движка GUI
-            # Пока просто фиксируем порядок в custom_data
-            ordered = sorted(self.ui_elements.values(), key=lambda e: (e.layer, e.parent_id or '', e.element_id))
-            for idx, el in enumerate(ordered):
-                el.custom_data['z_index'] = idx
-        except Exception as e:
-            logger.debug(f"Ошибка пересчета слоев UI: {e}")
+    def _on_settings(self):
+        """Callback для кнопки 'Настройки'"""
+        self.logger.info("Нажата кнопка 'Настройки'")
+        # TODO: Открытие настроек
+    
+    def _on_exit_game(self):
+        """Callback для кнопки 'Выход'"""
+        self.logger.info("Нажата кнопка 'Выход'")
+        # TODO: Выход из игры
+    
+    # Публичные методы
+    def get_element(self, element_id: str) -> Optional[UIElement]:
+        """Получить UI элемент"""
+        return self.ui_elements.get(element_id)
+    
+    def get_visible_elements(self) -> List[UIElement]:
+        """Получить все видимые элементы"""
+        return [e for e in self.ui_elements.values() if e.is_visible()]
+    
+    def get_active_panels(self) -> List[str]:
+        """Получить активные панели"""
+        return self.panel_stack.copy()
+    
+    def clear_all_panels(self):
+        """Очистить все панели"""
+        for panel_id in self.panel_stack.copy():
+            self.hide_panel(panel_id)
+    
+    def refresh_ui(self):
+        """Обновить весь UI"""
+        self.last_update_time = 0.0  # Принудительное обновление
+        self.update(0.0)

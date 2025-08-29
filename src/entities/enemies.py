@@ -10,7 +10,7 @@ import math
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
 
-from core.constants import constants_manager, StatType, DamageType, AIState, EntityType
+from ..core.constants import constants_manager, StatType, DamageType, AIState, EntityType
 from .base_entity import BaseEntity, EntityType as BaseEntityType
 
 logger = logging.getLogger(__name__)

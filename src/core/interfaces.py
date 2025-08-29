@@ -5,7 +5,7 @@
 
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional
-from .constants import constants_manager
+from .constants import constants_manager, SystemPriority, SystemState
 
 # ============================================================================
 # БАЗОВЫЙ ИНТЕРФЕЙС СИСТЕМЫ

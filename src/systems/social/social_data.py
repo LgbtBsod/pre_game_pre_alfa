@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
-from core.constants import constants_manager, RelationshipType, InteractionType, ReputationType
+from ...core.constants import constants_manager, RelationshipType, InteractionType, ReputationType
 
 @dataclass
 class Relationship:

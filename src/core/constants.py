@@ -12,6 +12,109 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Импортируем типы квестов
+try:
+    from ..systems.quests.quest_types import QuestType, QuestStatus, QuestRewardType, QuestDifficulty, QuestCategory
+except ImportError:
+    # Заглушки если модуль недоступен
+    class QuestType(Enum):
+        MAIN_QUEST = "main_quest"
+        SIDE_QUEST = "side_quest"
+        EXPLORATION_QUEST = "exploration_quest"
+        COMBAT_QUEST = "combat_quest"
+        EVOLUTION_QUEST = "evolution_quest"
+    
+    class QuestStatus(Enum):
+        NOT_STARTED = "not_started"
+        IN_PROGRESS = "in_progress"
+        COMPLETED = "completed"
+    
+    class QuestRewardType(Enum):
+        EXPERIENCE = "experience"
+        GOLD = "gold"
+        ITEMS = "items"
+    
+    class QuestDifficulty(Enum):
+        EASY = "easy"
+        NORMAL = "normal"
+        HARD = "hard"
+    
+    class QuestCategory(Enum):
+        MAIN = "main"
+        SIDE = "side"
+        DAILY = "daily"
+
+# Импортируем типы торговли
+try:
+    from ..systems.trading.trading_types import TradeType, TradeStatus, CurrencyType, TradeCategory, TradeRarity, TradeLocation
+except ImportError:
+    # Заглушки если модуль недоступен
+    class TradeType(Enum):
+        BUY = "buy"
+        SELL = "sell"
+        EXCHANGE = "exchange"
+        AUCTION = "auction"
+    
+    class TradeStatus(Enum):
+        PENDING = "pending"
+        ACTIVE = "active"
+        COMPLETED = "completed"
+        CANCELLED = "cancelled"
+    
+    class CurrencyType(Enum):
+        GOLD = "gold"
+        SILVER = "silver"
+        COPPER = "copper"
+        CREDITS = "credits"
+    
+    class TradeCategory(Enum):
+        WEAPONS = "weapons"
+        ARMOR = "armor"
+        CONSUMABLES = "consumables"
+        MATERIALS = "materials"
+    
+    class TradeRarity(Enum):
+        COMMON = "common"
+        UNCOMMON = "uncommon"
+        RARE = "rare"
+        EPIC = "epic"
+    
+    class TradeLocation(Enum):
+        MARKETPLACE = "marketplace"
+        SHOP = "shop"
+        AUCTION_HOUSE = "auction_house"
+
+# Импортируем типы социального взаимодействия
+try:
+    from ..systems.social.social_types import RelationshipType, InteractionType, ReputationType, SocialStatus
+except ImportError:
+    # Заглушки если модуль недоступен
+    class RelationshipType(Enum):
+        STRANGER = "stranger"
+        ACQUAINTANCE = "acquaintance"
+        FRIEND = "friend"
+        ENEMY = "enemy"
+    
+    class InteractionType(Enum):
+        GREETING = "greeting"
+        CONVERSATION = "conversation"
+        GIFT_GIVING = "gift_giving"
+    
+    class ReputationType(Enum):
+        GENERAL = "general"
+        HONESTY = "honesty"
+        RELIABILITY = "reliability"
+    
+    class SocialStatus(Enum):
+        OUTCAST = "outcast"
+        PEASANT = "peasant"
+        CITIZEN = "citizen"
+        MERCHANT = "merchant"
+        NOBLE = "noble"
+        ROYAL = "royal"
+        LEGENDARY = "legendary"
+        MYTHIC = "mythic"
+
 # ============================================================================
 # БАЗОВЫЕ ТИПЫ
 # ============================================================================
@@ -27,7 +130,6 @@ class DamageType(Enum):
     HOLY = "holy"
     DARK = "dark"
     ARCANE = "arcane"
-    MAGIC = "magic"
     TRUE = "true"
     ACID = "acid"
     COLD = "cold"
@@ -173,6 +275,7 @@ class BaseStats:
     attack: int = 10
     defense: int = 5
     speed: float = 1.0
+    range: float = 1.0
     intelligence: int = 10
     strength: int = 10
     agility: int = 10
@@ -206,6 +309,7 @@ class BaseStatsManager:
             "attack": stats.attack,
             "defense": stats.defense,
             "speed": stats.speed,
+            "range": stats.range,
             "intelligence": stats.intelligence,
             "strength": stats.strength,
             "agility": stats.agility,
@@ -835,3 +939,217 @@ def create_validation_rule(validation_type: str, rule_data: Dict[str, Any],
         "rule_data": rule_data,
         "error_message": error_message
     }
+
+# ============================================================================
+# ИМПОРТ РАСШИРЕННЫХ КОНСТАНТ
+# ============================================================================
+
+# Импортируем расширенные константы для обратной совместимости
+try:
+    from .constants_extended import *
+except ImportError:
+    # Если расширенный модуль недоступен, создаем заглушки
+    logger.warning("Extended constants module not available, using fallbacks")
+    
+    # Создаем заглушки для основных типов
+    class EffectCategory(Enum):
+        INSTANT = "instant"
+        OVER_TIME = "over_time"
+        BUFF = "buff"
+        DEBUFF = "debuff"
+    
+    class TriggerType(Enum):
+        ON_HIT = "on_hit"
+        ON_CRIT = "on_crit"
+        ON_KILL = "on_kill"
+    
+    class WeaponType(Enum):
+        SWORD = "sword"
+        AXE = "axe"
+        BOW = "bow"
+    
+    class ArmorType(Enum):
+        HELMET = "helmet"
+        CHESTPLATE = "chestplate"
+        BOOTS = "boots"
+    
+    class AccessoryType(Enum):
+        RING = "ring"
+        NECKLACE = "necklace"
+        AMULET = "amulet"
+    
+    class ConsumableType(Enum):
+        HEALTH_POTION = "health_potion"
+        MANA_POTION = "mana_potion"
+        STAMINA_POTION = "stamina_potion"
+    
+    class SkillCategory(Enum):
+        MELEE = "melee"
+        RANGED = "ranged"
+        MAGIC = "magic"
+    
+    class GeneType(Enum):
+        STRENGTH = "strength"
+        AGILITY = "agility"
+        INTELLIGENCE = "intelligence"
+    
+    class GeneRarity(Enum):
+        COMMON = "common"
+        UNCOMMON = "uncommon"
+        RARE = "rare"
+    
+    class EvolutionStage(Enum):
+        BASIC = "basic"
+        INTERMEDIATE = "intermediate"
+        ADVANCED = "advanced"
+    
+    class EvolutionType(Enum):
+        NATURAL = "natural"
+        FORCED = "forced"
+        MUTATION = "mutation"
+    
+    class EmotionType(Enum):
+        JOY = "joy"
+        SADNESS = "sadness"
+        ANGER = "anger"
+    
+    class EmotionIntensity(Enum):
+        MINIMAL = "minimal"
+        WEAK = "weak"
+        LOW = "low"
+    
+    class EnemyType(Enum):
+        MELEE = "melee"
+        RANGED = "ranged"
+        MAGIC = "magic"
+    
+    class BossType(Enum):
+        MINI_BOSS = "mini_boss"
+        AREA_BOSS = "area_boss"
+        DUNGEON_BOSS = "dungeon_boss"
+    
+    class AttackType(Enum):
+        NORMAL = "normal"
+        MELEE = "melee"
+        RANGED = "ranged"
+    
+    class StatCategory(Enum):
+        PRIMARY = "primary"
+        SECONDARY = "secondary"
+        COMBAT = "combat"
+    
+    class ContentType(Enum):
+        WEAPON = "weapon"
+        ARMOR = "armor"
+        ACCESSORY = "accessory"
+    
+    class ContentRarity(Enum):
+        COMMON = "common"
+        UNCOMMON = "uncommon"
+        RARE = "rare"
+    
+    class UIElementType(Enum):
+        BUTTON = "button"
+        LABEL = "label"
+        INPUT = "input"
+    
+    class UIState(Enum):
+        NORMAL = "normal"
+        HOVERED = "hovered"
+        PRESSED = "pressed"
+    
+    class RenderQuality(Enum):
+        LOW = "low"
+        MEDIUM = "medium"
+        HIGH = "high"
+    
+    class RenderLayer(Enum):
+        BACKGROUND = "background"
+        TERRAIN = "terrain"
+        OBJECTS = "objects"
+    
+    class WorldObjectType(Enum):
+        OBSTACLE = "obstacle"
+        TRAP = "trap"
+        CHEST = "chest"
+    
+    class ObjectCategory(Enum):
+        COMBAT = "combat"
+        EXPLORATION = "exploration"
+        ENVIRONMENT = "environment"
+    
+    class ObjectState(Enum):
+        ACTIVE = "active"
+        INACTIVE = "inactive"
+        DESTROYED = "destroyed"
+    
+    class CreatorMode(Enum):
+        PLACEMENT = "placement"
+        EDIT = "edit"
+        PREVIEW = "preview"
+    
+    class ToolType(Enum):
+        SELECT = "select"
+        PLACE = "place"
+        MOVE = "move"
+    
+    class ItemCategory(Enum):
+        WEAPON = "weapon"
+        ARMOR = "armor"
+        ACCESSORY = "accessory"
+    
+    class ItemSlot(Enum):
+        WEAPON = "weapon"
+        ARMOR_HEAD = "armor_head"
+        ARMOR_CHEST = "armor_chest"
+    
+    # Заглушки для констант
+    SKILL_GENERATION_TEMPLATES = {}
+    SKILL_POWER_MULTIPLIERS = {}
+    STAT_CALCULATION_FORMULAS = {}
+    WORLD_SETTINGS = {}
+    CAMERA_SETTINGS = {}
+    UI_SETTINGS = {}
+    UI_COLORS = {}
+    DEFAULT_OBJECT_TEMPLATES = {}
+
+# ============================================================================
+# ФИНАЛЬНЫЙ ЭКСПОРТ
+# ============================================================================
+
+__all__ = [
+    # Основные типы
+    'DamageType', 'ItemType', 'ItemRarity', 'SkillType', 'StatType',
+    'CombatState', 'AIBehavior', 'AIState', 'AIDifficulty', 'EntityType',
+    
+    # Менеджеры
+    'constants_manager', 'BaseStatsManager', 'SystemLimitsManager',
+    'TimeConstantsManager', 'ProbabilityConstantsManager', 'DamageTypeManager',
+    'ValidationManager', 'UtilsManager', 'ConstantsManager',
+    
+    # Константы
+    'BASE_STATS', 'SYSTEM_LIMITS', 'TIME_CONSTANTS', 'PROBABILITY_CONSTANTS',
+    'DEFAULT_RESISTANCES', 'DAMAGE_MULTIPLIERS',
+    
+    # Read-only версии
+    'BASE_STATS_RO', 'SYSTEM_LIMITS_RO', 'TIME_CONSTANTS_RO', 'PROBABILITY_CONSTANTS_RO',
+    
+    # Утилиты
+    'get_float', 'get_int', 'get_bool', 'canonicalize_damage_type',
+    'create_validation_rule',
+    
+    # Расширенные типы (если доступны)
+    'EffectCategory', 'TriggerType', 'WeaponType', 'ArmorType', 'AccessoryType',
+    'ConsumableType', 'SkillCategory', 'GeneType', 'GeneRarity', 'EvolutionStage',
+    'EvolutionType', 'EmotionType', 'EmotionIntensity', 'EnemyType', 'BossType',
+    'AttackType', 'StatCategory', 'ContentType', 'ContentRarity', 'UIElementType',
+    'UIState', 'RenderQuality', 'RenderLayer', 'WorldObjectType', 'ObjectCategory',
+    'ObjectState', 'CreatorMode', 'ToolType', 'SystemPriority', 'SystemState',
+    'ItemCategory', 'ItemSlot', 'QuestType', 'QuestStatus', 'QuestRewardType', 'QuestDifficulty', 'QuestCategory',
+    'TradeType', 'TradeStatus', 'CurrencyType', 'TradeCategory', 'TradeRarity', 'TradeLocation',
+    'RelationshipType', 'InteractionType', 'ReputationType', 'SocialStatus', 'FactionType',
+    
+    # Расширенные константы (если доступны)
+    'SKILL_GENERATION_TEMPLATES', 'SKILL_POWER_MULTIPLIERS', 'STAT_CALCULATION_FORMULAS',
+    'WORLD_SETTINGS', 'CAMERA_SETTINGS', 'UI_SETTINGS', 'UI_COLORS', 'DEFAULT_OBJECT_TEMPLATES'
+]

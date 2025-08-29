@@ -11,7 +11,7 @@ from direct.gui.DirectSlider import DirectSlider
 from direct.gui.DirectCheckBox import DirectCheckBox
 from panda3d.core import TextNode
 
-from core.scene_manager import Scene
+from ..core.scene_manager import Scene
 
 logger = logging.getLogger(__name__)
 

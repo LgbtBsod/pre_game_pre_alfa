@@ -11,11 +11,8 @@ from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
-from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import constants_manager, (
-    StatType, BASE_STATS, PROBABILITY_CONSTANTS, 
-    TIME_CONSTANTS, SYSTEM_LIMITS, WorldObjectType, ObjectState
-)
+from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import constants_manager, StatType, BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS, WorldObjectType, ObjectState
 
 logger = logging.getLogger(__name__)
 

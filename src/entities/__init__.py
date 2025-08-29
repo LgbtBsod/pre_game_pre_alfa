@@ -4,7 +4,7 @@ Entities Package - Игровые сущности
 """
 
 from .base_entity import BaseEntity
-from core.constants import constants_manager, EntityType
+from ..core.constants import constants_manager, EntityType
 from .items import Item, Weapon, Armor, Consumable, Accessory
 from .player import Player
 from .npc import NPC

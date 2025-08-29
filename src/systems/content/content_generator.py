@@ -10,15 +10,8 @@ import uuid
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import constants_manager, (
-    ItemType, ItemRarity, WeaponType, ArmorType, AccessoryType, ConsumableType,
-    DamageType, StatType, SkillType, SkillCategory, GeneType, GeneRarity, EffectCategory,
-    EnemyType, BossType, ContentType, ContentRarity,
-    BASE_STATS, ITEM_STATS, TOUGHNESS_MECHANICS, ENEMY_WEAKNESSES,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
-    SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS
-)
+from ...core.interfaces import ISystem, SystemPriority, SystemState
+from ...core.constants import constants_manager, ItemType, ItemRarity, WeaponType, ArmorType, AccessoryType, ConsumableType, DamageType, StatType, SkillType, SkillCategory, GeneType, GeneRarity, EffectCategory, EnemyType, BossType, ContentType, ContentRarity, BASE_STATS, ITEM_STATS, TOUGHNESS_MECHANICS, ENEMY_WEAKNESSES, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS, SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS
 
 logger = logging.getLogger(__name__)
 

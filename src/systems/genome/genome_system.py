@@ -10,14 +10,11 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from core.system_interfaces import BaseGameSystem
-from core.architecture import Priority, LifecycleState
-from core.state_manager import StateManager, StateType, StateScope
-from core.repository import RepositoryManager, DataType, StorageType
-from core.constants import constants_manager, (
-    GeneType, GeneRarity, StatType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
-)
+from src.core.system_interfaces import BaseGameSystem
+from src.core.architecture import Priority, LifecycleState
+from src.core.state_manager import StateManager, StateType, StateScope
+from src.core.repository import RepositoryManager, DataType, StorageType
+from src.core.constants import constants_manager, GeneType, GeneRarity, StatType, BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 
 logger = logging.getLogger(__name__)
 

@@ -264,11 +264,11 @@ class TestCombatSystem(unittest.TestCase):
         """Тест констант боя"""
         # Проверяем, что все типы урона доступны
         self.assertIsNotNone(DamageType.PHYSICAL)
-        self.assertIsNotNone(DamageType.MAGICAL)
+        self.assertIsNotNone(DamageType.ARCANE)
         self.assertIsNotNone(DamageType.TRUE)
         
         # Проверяем, что все типы атак доступны
-        self.assertIsNotNone(AttackType.NORMAL)
+        self.assertIsNotNone(AttackType.MELEE)
         self.assertIsNotNone(AttackType.CRITICAL)
         self.assertIsNotNone(AttackType.SPECIAL)
 

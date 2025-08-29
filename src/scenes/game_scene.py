@@ -18,7 +18,7 @@ from direct.gui.OnscreenImage import OnscreenImage
 from direct.gui.DirectButton import DirectButton
 from ui.widgets import create_hud
 
-from core.scene_manager import Scene
+from ..core.scene_manager import Scene
 from systems import (
     EvolutionSystem, CombatSystem,
     CraftingSystem, InventorySystem
@@ -30,7 +30,7 @@ from systems.effects.effect_system import EffectSystem
 from systems.items.item_system import ItemFactory
 from systems.skills.skill_system import SkillTree
 from systems.content.content_generator import ContentGenerator
-from core.entity_registry import register_entity, unregister_entity
+from ..core.entity_registry import register_entity, unregister_entity
 
 logger = logging.getLogger(__name__)
 
