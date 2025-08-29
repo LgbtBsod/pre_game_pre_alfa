@@ -21,9 +21,10 @@ from ui.widgets import create_hud
 from core.scene_manager import Scene
 from systems import (
     EvolutionSystem, CombatSystem,
-    CraftingSystem, InventorySystem,
-    AIEntity, EntityType, MemoryType
+    CraftingSystem, InventorySystem
 )
+from systems.ai.ai_entity import AIEntity, MemoryType
+from entities.base_entity import EntityType
 from systems.ai.ai_interface import AISystemFactory, AISystemManager, AIDecision
 from systems.effects.effect_system import EffectSystem
 from systems.items.item_system import ItemFactory
@@ -193,7 +194,7 @@ class GameScene(Scene):
             
             # Создаем начальные объекты
             self._create_initial_objects()
-            
+
             # Регистрируем сущности в AI системе после создания
             self._register_entities_in_ai()
             
@@ -281,8 +282,9 @@ class GameScene(Scene):
             # Создаем тестовые предметы и скиллы
             self._create_test_items_and_skills()
             
-            # Создаем UI элементы
+            # Создаем UI элементы (создаем один раз на сцену)
             self._create_ui_elements()
+            # UI создается в initialize(), избегаем дублирования здесь
             
             logger.debug("Начальные объекты созданы")
             
@@ -472,12 +474,12 @@ class GameScene(Scene):
             if self.entities_root:
                 npc['node'] = self._create_entity_node(npc)
             
-            # Применяем бонусы от генома к характеристикам
-            if 'genome' in npc:
+            # Применяем бонусы от генома к характеристикам (если доступен API)
+            if 'genome' in npc and hasattr(npc['genome'], 'get_stat_boosts'):
                 stat_boosts = npc['genome'].get_stat_boosts()
                 for stat, boost in stat_boosts.items():
                     if stat in npc['stats']:
-                        npc['stats'][stat] += int(boost * 8)  # Увеличиваем характеристики
+                        npc['stats'][stat] += int(boost * 8)
                     if stat == 'health' and 'max_health' in npc:
                         npc['max_health'] += int(boost * 15)
                         npc['health'] = npc['max_health']
@@ -559,15 +561,16 @@ class GameScene(Scene):
             # Загружаем модель из ассета
             try:
                 import builtins
-                loader = getattr(builtins, 'base', None)
-                loader = getattr(loader, 'loader', None) if loader else None
-                if loader and hasattr(loader, 'loadModel'):
-                    model = loader.loadModel(asset_path)
+                base_obj = getattr(builtins, 'base', None)
+                model_loader = getattr(base_obj, 'loader', None) if base_obj else None
+                if model_loader and hasattr(model_loader, 'loadModel'):
+                    model = model_loader.loadModel(asset_path)
                     if model:
-                        np = self.entities_root.attachNewNode(model)
-                        np.setPos(entity['x'], entity['y'], entity['z'])
-                        np.setScale(entity.get('scale', 1))
-                        return np
+                        # loadModel возвращает NodePath — репарентим в иерархию сцены
+                        model.reparentTo(self.entities_root)
+                        model.setPos(entity['x'], entity['y'], entity['z'])
+                        model.setScale(entity.get('scale', 1))
+                        return model
             except Exception as e:
                 logger.warning(f"Не удалось загрузить ассет {asset_path}: {e}")
         
@@ -621,7 +624,8 @@ class GameScene(Scene):
             x = radius * math.cos(angle)
             y = radius * math.sin(angle)
             vertices.append((x, y, height/2))
-            colors.append((0, 255, 255, 1))  # Неоновый голубой для игрока
+            # Цвета должны быть в диапазоне 0..1
+            colors.append((0.0, 1.0, 1.0, 1.0))
         
         # Нижняя крышка
         for i in range(segments):
@@ -629,7 +633,7 @@ class GameScene(Scene):
             x = radius * math.cos(angle)
             y = radius * math.sin(angle)
             vertices.append((x, y, -height/2))
-            colors.append((0, 255, 255, 1))
+            colors.append((0.0, 1.0, 1.0, 1.0))
         
         # Добавляем вершины
         for v, c in zip(vertices, colors):

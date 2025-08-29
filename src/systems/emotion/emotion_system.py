@@ -221,7 +221,7 @@ class EmotionSystem(BaseGameSystem):
         except Exception:
             # Fallback на реальную реализацию, если доступна
             try:
-                from ...core.state_manager import StateType as RealStateType, StateScope as RealStateScope
+                from core.state_manager import StateType as RealStateType, StateScope as RealStateScope
                 self.state_manager.register_state("emotion_system_settings", self.system_settings, RealStateType.CONFIGURATION, RealStateScope.SYSTEM)
                 self.state_manager.register_state("emotion_system_stats", self.system_stats, RealStateType.STATISTICS, RealStateScope.SYSTEM)
                 self.state_manager.register_state("emotional_states", {}, RealStateType.DATA, RealStateScope.GLOBAL)

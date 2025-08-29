@@ -84,6 +84,8 @@ class ResourceManager(IResourceManager):
             self.audio_manager = AudioManager()
             logger.debug("Аудио менеджер инициализирован")
         except Exception as e:
+            # Грейсфул деградация: продолжаем без аудио, логируем один раз
+            self.audio_manager = None
             logger.warning(f"Не удалось инициализировать аудио менеджер: {e}")
     
     def _preload_basic_resources(self):

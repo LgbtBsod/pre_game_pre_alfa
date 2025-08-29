@@ -6,11 +6,13 @@ HUD widget factory for Panda3D OnscreenText elements.
 from typing import Optional, Dict, Any
 from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import TextNode
+import os
 
 
 class HUD:
     def __init__(self, parent_node):
         self.parent = parent_node
+        self.font = self._load_font()
         self.game_title_text: Optional[OnscreenText] = None
         self.health_bar_text: Optional[OnscreenText] = None
         self.mana_bar_text: Optional[OnscreenText] = None
@@ -32,6 +34,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.8),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.health_bar_text = OnscreenText(
             text="HP: 100/100",
@@ -43,6 +46,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.mana_bar_text = OnscreenText(
             text="MP: 100/100",
@@ -54,6 +58,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.ai_info_text = OnscreenText(
             text="AI: Initializing...",
@@ -65,6 +70,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.skills_info_text = OnscreenText(
             text="Skills: None",
@@ -76,6 +82,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.items_info_text = OnscreenText(
             text="Items: None",
@@ -87,6 +94,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.effects_info_text = OnscreenText(
             text="Effects: None",
@@ -98,6 +106,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.genome_info_text = OnscreenText(
             text="Genome: Loading...",
@@ -109,6 +118,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         self.emotion_bar_text = OnscreenText(
             text="Emotions: Neutral",
@@ -120,6 +130,7 @@ class HUD:
             parent=self.parent,
             shadow=(0, 0, 0, 0.6),
             shadowOffset=(0.01, 0.01),
+            font=self.font
         )
         return self
 
@@ -140,6 +151,18 @@ class HUD:
                     w.destroy()
             except Exception:
                 pass
+
+    def _load_font(self):
+        try:
+            # Try bundled font with Cyrillic support
+            font_path = os.path.join('assets', 'fonts', 'DejaVuSans.ttf')
+            import builtins
+            loader = getattr(getattr(builtins, 'base', None), 'loader', None)
+            if loader and os.path.exists(font_path):
+                return loader.loadFont(font_path)
+        except Exception:
+            pass
+        return None
 
 
 def create_hud(parent_node) -> HUD:

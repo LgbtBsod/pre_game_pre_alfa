@@ -10,11 +10,11 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.system_interfaces import BaseGameSystem
-from ...core.architecture import Priority, LifecycleState
-from ...core.state_manager import StateManager, StateType, StateScope
-from ...core.repository import RepositoryManager, DataType, StorageType
-from ...core.constants import (
+from core.system_interfaces import BaseGameSystem
+from core.architecture import Priority, LifecycleState
+from core.state_manager import StateManager, StateType, StateScope
+from core.repository import RepositoryManager, DataType, StorageType
+from core.constants import (
     QuestType, QuestStatus, QuestRewardType, QuestDifficulty, QuestCategory,
     PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
     TIME_CONSTANTS_RO, get_float

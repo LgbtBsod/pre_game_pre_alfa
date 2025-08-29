@@ -9,9 +9,9 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem
+from core.interfaces import ISystem
 from .ai_system import AISystem
-from ...core.constants import EmotionType, AIBehavior
+from core.constants import EmotionType, AIBehavior
 from .ai_entity import AIEntity, EntityType, MemoryType
 from ..genome.genome_system import GenomeProfile, GenomeSystem
 from ..emotion.emotion_system import EmotionSystem

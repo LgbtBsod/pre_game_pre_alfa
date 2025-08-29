@@ -9,8 +9,11 @@ import io
 import os
 import time
 
-# Добавляем путь к исходному коду
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# Добавляем пути к проекту и исходникам
+PROJECT_ROOT = os.path.join(os.path.dirname(__file__), '..')
+SRC_ROOT = os.path.join(PROJECT_ROOT, 'src')
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, SRC_ROOT)
 
 def run_all_tests():
     """Запуск всех тестов"""
@@ -53,6 +56,21 @@ def run_all_tests():
         print(f"❌ Ошибка импорта CombatSystem тестов: {e}")
     
     # Добавляем тесты для других систем (когда они будут созданы)
+    # Тесты унификации сцен: событие/состояние при смене сцены
+    try:
+        from tests.test_scene_manager_events import TestSceneManagerEvents
+        test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSceneManagerEvents))
+        print("✅ SceneManager events/state тесты добавлены")
+    except ImportError as e:
+        print(f"⚠️  Ошибка импорта SceneManager events/state тестов: {e}")
+
+    # Легкий тест интеграции AI: создание базовой AI и регистрация сущности
+    try:
+        from tests.test_ai_integration_minimal import TestAIIntegrationMinimal
+        test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestAIIntegrationMinimal))
+        print("✅ Минимальные AI интеграционные тесты добавлены")
+    except ImportError as e:
+        print(f"⚠️  Ошибка импорта AI интеграционных тестов: {e}")
     # Легкий интеграционный тест: совместимость on/emit alias в EventSystem
     try:
         from src.core.event_system import EventSystem, EventPriority

@@ -10,8 +10,8 @@ import math
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
-from ...core.constants import (
+from core.interfaces import ISystem, SystemPriority, SystemState
+from core.constants import (
     AIState, AIBehavior, AIDifficulty, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )

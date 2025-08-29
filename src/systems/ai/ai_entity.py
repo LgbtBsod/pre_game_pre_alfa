@@ -14,7 +14,7 @@ from enum import Enum
 import random
 import math
 
-from ...entities.base_entity import BaseEntity, EntityType as BaseEntityType
+from entities.base_entity import BaseEntity, EntityType as BaseEntityType
 
 logger = logging.getLogger(__name__)
 

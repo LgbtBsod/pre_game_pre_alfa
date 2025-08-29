@@ -9,10 +9,10 @@ import random
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from ...core.interfaces import ISystem, SystemPriority, SystemState
-from ...core.state_manager import StateManager
-from ...core.repository import RepositoryManager, DataType, StorageType
-from ...core.constants import (
+from core.interfaces import ISystem, SystemPriority, SystemState
+from core.state_manager import StateManager
+from core.repository import RepositoryManager, DataType, StorageType
+from core.constants import (
     ItemType, ItemRarity, ItemCategory, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )
@@ -254,7 +254,7 @@ class CraftingSystem(ISystem):
         except Exception:
             # Fallback на реальную реализацию
             try:
-                from ...core.state_manager import StateType, StateScope
+                from core.state_manager import StateType, StateScope
                 self.state_manager.register_state("crafting_system_settings", self.system_settings, StateType.CONFIGURATION, StateScope.SYSTEM)
                 self.state_manager.register_state("crafting_system_stats", self.system_stats, StateType.STATISTICS, StateScope.SYSTEM)
                 self.state_manager.register_state("crafting_active_sessions", list(self.crafting_sessions.keys()), StateType.DYNAMIC_DATA, StateScope.SYSTEM)

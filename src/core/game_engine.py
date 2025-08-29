@@ -128,6 +128,18 @@ class GameEngine(ShowBase):
             # Применение новых свойств
             self.win.requestProperties(window_props)
             
+            # Глобальная настройка шрифта с поддержкой кириллицы/символов
+            try:
+                import os
+                from panda3d.core import TextNode
+                font_path = os.path.join('assets', 'fonts', 'DejaVuSans.ttf')
+                if os.path.exists(font_path) and hasattr(self, 'loader'):
+                    font = self.loader.loadFont(font_path)
+                    if font:
+                        TextNode.setDefaultFont(font)
+            except Exception:
+                pass
+
             logger.info("Panda3D успешно инициализирован")
             return True
             
@@ -186,12 +198,10 @@ class GameEngine(ShowBase):
             self.component_manager.register_component(self.event_bus)
             self.component_manager.register_component(self.state_manager)
             self.component_manager.register_component(self.repository_manager)
-            self.component_manager.register_component(self.component_manager)
             
             # Устанавливаем зависимости
             self.component_manager.add_dependency("state_manager", "event_bus")
             self.component_manager.add_dependency("repository_manager", "event_bus")
-            self.component_manager.add_dependency("component_manager", "event_bus")
             
             # Инициализируем все компоненты
             if not self.component_manager.initialize_all():
@@ -242,21 +252,37 @@ class GameEngine(ShowBase):
                 logger.error("Не удалось инициализировать менеджер производительности")
                 return False
             
-            # 5. Менеджер сцен (передаем system_manager для централизованного апдейта сценой)
+            # 5. Менеджер сцен (передаем system_manager позже, после создания)
             self.scene_manager = SceneManager(self.render, self.resource_manager, None)
             if not self.scene_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер сцен")
                 return False
             
-            # 6. Фабрика систем
+            # 6. Фабрика систем (использует общий экземпляр system_manager)
             self.system_factory = SystemFactory(self.config_manager, self.event_system, None)
             
             # 7. Менеджер систем
             self.system_manager = SystemManager(self.event_system)
+            # Связываем общий экземпляр с фабрикой и сценами
+            try:
+                if self.system_factory:
+                    self.system_factory.system_manager = self.system_manager
+            except Exception:
+                pass
             # Привяжем менеджер систем к менеджеру сцен (для доступа из сцены)
             try:
                 if self.scene_manager:
                     self.scene_manager.system_manager = self.system_manager
+                    # Дополнительно: предоставим сценам доступ к event/state
+                    try:
+                        # event_system предоставляет on/emit API совместимо через adapter
+                        self.scene_manager.event_system = self.event_system
+                    except Exception:
+                        pass
+                    try:
+                        self.scene_manager.state_manager = self.state_manager
+                    except Exception:
+                        pass
             except Exception:
                 pass
 
@@ -271,8 +297,14 @@ class GameEngine(ShowBase):
                 "system_manager": self.system_manager,
                 "system_factory": self.system_factory,
                 "scene_manager": self.scene_manager,
+                "engine_version": self.settings.get('engine', {}).get('version', '0.0.0') if isinstance(self.settings, dict) else '0.0.0',
             }
             self.lazy_plugins = self.plugin_manager.auto_load(base_context)
+            # Запускаем загруженные плагины (EAGER)
+            try:
+                self.plugin_manager.start_all()
+            except Exception as e:
+                logger.warning(f"Не удалось запустить плагины: {e}")
             logger.info(f"Плагины обнаружены: {discovered}, отложенная загрузка: {self.lazy_plugins}")
             
             # 10. Инициализация менеджера систем
@@ -311,10 +343,30 @@ class GameEngine(ShowBase):
                 except Exception:
                     pass
             
-            # Связываем менеджер состояний с системами
+            # Связываем менеджер состояний с системами (без дублей)
             if self.state_manager:
-                # Регистрируем состояния для существующих систем
-                self._register_legacy_states()
+                try:
+                    existing = set()
+                    # пробуем получить уже зарегистрированные состояния
+                    for state_id in ("engine_running","engine_paused","current_scene","fps","frame_count","memory_usage"):
+                        if self.state_manager.get_state(state_id):
+                            existing.add(state_id)
+                    # Регистрируем только отсутствующие
+                    if "engine_running" not in existing:
+                        self.state_manager.register_state("engine_running", False, StateType.SYSTEM)
+                    if "engine_paused" not in existing:
+                        self.state_manager.register_state("engine_paused", False, StateType.SYSTEM)
+                    if "current_scene" not in existing:
+                        self.state_manager.register_state("current_scene", "menu", StateType.SYSTEM)
+                    if "fps" not in existing:
+                        self.state_manager.register_state("fps", 0.0, StateType.SYSTEM)
+                    if "frame_count" not in existing:
+                        self.state_manager.register_state("frame_count", 0, StateType.SYSTEM)
+                    if "memory_usage" not in existing:
+                        self.state_manager.register_state("memory_usage", 0.0, StateType.SYSTEM)
+                except Exception:
+                    # Fallback на старую логику
+                    self._register_legacy_states()
             
             # Связываем менеджер репозиториев с системами
             if self.repository_manager:
@@ -676,36 +728,45 @@ class GameEngine(ShowBase):
         try:
             # Очистка в обратном порядке инициализации
             
-            # 1. Очистка новой архитектуры
+            # 1. Останавливаем плагины и наблюдатель
+            try:
+                if self.plugin_manager:
+                    self.plugin_manager.stop_all()
+                    self.plugin_manager.stop_watching()
+                    self.plugin_manager.destroy_all()
+            except Exception as e:
+                logger.warning(f"Ошибка остановки плагинов: {e}")
+
+            # 2. Очистка новой архитектуры
             if self.component_manager:
                 logger.info("Остановка компонентов новой архитектуры...")
                 self.component_manager.stop_all()
             
-            # 2. Очистка менеджера систем
+            # 3. Очистка менеджера систем
             if self.system_manager:
                 self.system_manager.cleanup()
             
-            # 2. Очистка фабрики систем
+            # 4. Очистка фабрики систем
             if self.system_factory:
                 self.system_factory.cleanup()
             
-            # 3. Очистка системы событий
+            # 5. Очистка системы событий
             if self.event_system:
                 self.event_system.cleanup()
             
-            # 4. Очистка менеджера сцен
+            # 6. Очистка менеджера сцен
             if self.scene_manager:
                 self.scene_manager.cleanup()
             
-            # 5. Очистка менеджера ресурсов
+            # 7. Очистка менеджера ресурсов
             if self.resource_manager:
                 self.resource_manager.cleanup()
             
-            # 6. Очистка менеджера производительности
+            # 8. Очистка менеджера производительности
             if self.performance_manager:
                 self.performance_manager.cleanup()
             
-            # 7. Завершение Panda3D
+            # 9. Завершение Panda3D
             try:
                 self.destroy()
                     

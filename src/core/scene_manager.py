@@ -67,6 +67,9 @@ class SceneManager(ISceneManager):
         self.resource_manager = resource_manager
         # Доступ к менеджеру систем для централизованных обновлений сценой
         self.system_manager = system_manager
+        # Опциональные зависимости для унифицированных паттернов состояния/событий
+        self.event_system = None
+        self.state_manager = None
         
         # Свойства для интерфейса ISystem
         self._system_name = "scene_manager"
@@ -199,6 +202,17 @@ class SceneManager(ISceneManager):
         # Показываем новую активную сцену
         self.active_scene = self.scenes[name]
         self.active_scene.set_visible(True)
+        # Обновляем глобальное состояние и эмитим событие, если доступны зависимости
+        try:
+            if self.state_manager:
+                self.state_manager.set_state_value("current_scene", name)
+        except Exception:
+            pass
+        try:
+            if self.event_system:
+                self.event_system.emit_event("scene_changed", {"scene": name}, "scene_manager")
+        except Exception:
+            pass
         
         logger.info(f"Активная сцена изменена на {name}")
         return True
@@ -235,6 +249,17 @@ class SceneManager(ISceneManager):
         # Показываем новую активную сцену
         self.active_scene = self.scenes[name]
         self.active_scene.set_visible(True)
+        # Обновляем глобальное состояние и эмитим событие, если доступны зависимости
+        try:
+            if self.state_manager:
+                self.state_manager.set_state_value("current_scene", name)
+        except Exception:
+            pass
+        try:
+            if self.event_system:
+                self.event_system.emit_event("scene_changed", {"scene": name, "transition": transition_type}, "scene_manager")
+        except Exception:
+            pass
         
         # Завершаем переход для мгновенного переключения
         if transition_type == "instant":

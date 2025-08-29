@@ -235,7 +235,7 @@ class InventorySystem(BaseGameSystem):
             return
             
         try:
-            from ...core.repository import DataType, StorageType
+            from core.repository import DataType, StorageType
             self.repository_manager.register_repository("inventories", DataType.DYNAMIC_DATA, StorageType.MEMORY, self.inventories)
             self.repository_manager.register_repository("item_stacks", DataType.ENTITY_DATA, StorageType.MEMORY, self.item_stacks)
             self.repository_manager.register_repository("inventory_history", DataType.HISTORY, StorageType.MEMORY, self.inventory_history)
