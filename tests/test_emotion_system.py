@@ -16,7 +16,7 @@ from src.core.architecture import Priority, LifecycleState
 from src.core.state_manager import StateManager, StateType
 from src.core.repository import RepositoryManager, DataType, StorageType
 from src.systems.emotion.emotion_system import EmotionSystem, Emotion, EmotionalState, EmotionalTrigger
-from src.core.constants import EmotionType, EmotionIntensity
+from src.core.constants import constants_manager, EmotionType, EmotionIntensity
 
 class TestEmotionSystem(unittest.TestCase):
     """Тесты для системы эмоций"""

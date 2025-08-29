@@ -65,6 +65,37 @@ def run_all_tests():
         print(f"⚠️  Ошибка импорта SceneManager events/state тестов: {e}")
 
     # Легкий тест интеграции AI: создание базовой AI и регистрация сущности
+    # SystemFactory/Manager ordering
+    try:
+        from tests.test_system_factory_ordering import TestSystemFactoryOrdering
+        test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestSystemFactoryOrdering))
+        print("✅ SystemFactory ordering тесты добавлены")
+    except ImportError as e:
+        print(f"⚠️  Ошибка импорта SystemFactory ordering тестов: {e}")
+
+    # Performance metrics toggle
+    try:
+        from tests.test_performance_metrics_toggle import TestPerformanceMetricsToggle
+        test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestPerformanceMetricsToggle))
+        print("✅ Performance metrics toggle тесты добавлены")
+    except ImportError as e:
+        print(f"⚠️  Ошибка импорта performance metrics toggle тестов: {e}")
+
+    # Plugin lifecycle
+    try:
+        from tests.test_plugin_lifecycle import TestPluginLifecycle
+        test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestPluginLifecycle))
+        print("✅ Plugin lifecycle тесты добавлены")
+    except ImportError as e:
+        print(f"⚠️  Ошибка импорта plugin lifecycle тестов: {e}")
+
+    # Repository perf
+    try:
+        from tests.test_repository_perf import TestRepositoryPerf
+        test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestRepositoryPerf))
+        print("✅ Repository perf тесты добавлены")
+    except ImportError as e:
+        print(f"⚠️  Ошибка импорта repository perf тестов: {e}")
     try:
         from tests.test_ai_integration_minimal import TestAIIntegrationMinimal
         test_suite.addTests(unittest.TestLoader().loadTestsFromTestCase(TestAIIntegrationMinimal))

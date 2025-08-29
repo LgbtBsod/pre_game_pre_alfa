@@ -16,7 +16,7 @@ from src.core.architecture import Priority, LifecycleState
 from src.core.state_manager import StateManager, StateType
 from src.core.repository import RepositoryManager, DataType, StorageType
 from src.systems.evolution.evolution_system import EvolutionSystem, EvolutionProgress, Gene, EvolutionTrigger
-from src.core.constants import EvolutionStage, GeneType, GeneRarity
+from src.core.constants import constants_manager, EvolutionStage, GeneType, GeneRarity
 
 class TestEvolutionSystem(unittest.TestCase):
     """Тесты для системы эволюции"""

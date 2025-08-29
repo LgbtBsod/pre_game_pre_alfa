@@ -8,7 +8,7 @@ import time
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
-from core.constants import StatType, DamageType, AIState, EntityType
+from core.constants import constants_manager, StatType, DamageType, AIState, EntityType
 from .base_entity import BaseEntity, EntityType as BaseEntityType
 
 logger = logging.getLogger(__name__)

@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
 from core.system_interfaces import BaseGameSystem, Priority
-from core.constants import (
+from core.constants import constants_manager, (
     AIState, AIBehavior, AIDifficulty, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )

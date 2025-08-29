@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from core.system_interfaces import BaseGameSystem, Priority
-from core.constants import (
+from core.constants import constants_manager, (
     SYSTEM_LIMITS_RO, PROBABILITY_CONSTANTS, DamageType,
     TIME_CONSTANTS_RO, get_float, canonicalize_damage_type
 )

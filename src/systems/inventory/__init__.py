@@ -4,6 +4,6 @@ Inventory System Package
 """
 
 from systems.inventory.inventory_system import InventorySystem, Inventory, InventorySlot
-from core.constants import ItemCategory
+from core.constants import constants_manager, ItemCategory
 
 __all__ = ['InventorySystem', 'Inventory', 'InventorySlot', 'ItemCategory']

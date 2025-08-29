@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 
 from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import (
+from core.constants import constants_manager, (
     AIState, AIBehavior, AIDifficulty, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )
@@ -216,6 +216,47 @@ class AISystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка очистки системы AI: {e}")
             return False
+
+    # --- Interface shims for AISystemManager compatibility ---
+    def register_entity(self, entity_id: str, entity_data: Dict[str, Any], memory_group: str = "default") -> bool:
+        try:
+            # Minimal registration using available fields
+            pos = (
+                float(entity_data.get('x', 0.0)),
+                float(entity_data.get('y', 0.0)),
+                float(entity_data.get('z', 0.0)),
+            )
+            config = AIConfig()  # default config
+            created = self.create_ai_entity(entity_id, config, pos)
+            # seed minimal memory group holder if needed
+            if created and entity_id not in self.ai_memories:
+                self.ai_memories[entity_id] = {}
+            return created
+        except Exception as e:
+            logger.error(f"register_entity shim failed: {e}")
+            return False
+
+    def get_decision(self, entity_id: str, context: Dict[str, Any]):
+        try:
+            # Trigger decision making on demand
+            if entity_id in self.ai_entities:
+                self._make_ai_decision(entity_id, self.ai_entities[entity_id])
+                # Return latest pending decision if any
+                decisions = self.ai_decisions.get(entity_id, [])
+                for d in reversed(decisions):
+                    if not d.executed:
+                        # Provide a minimal object compatible with callers that check attributes
+                        class _ShimDecision:
+                            def __init__(self, dtype, target):
+                                self.action_type = type('Action', (), {'value': dtype})
+                                self.target = target
+                                self.parameters = {}
+                                self.confidence = 0.5
+                        return _ShimDecision(d.decision_type, d.target_entity)
+            return None
+        except Exception as e:
+            logger.error(f"get_decision shim failed: {e}")
+            return None
     
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
@@ -475,7 +516,11 @@ class AISystem(ISystem):
             self.ai_decisions[entity_id] = []
             
             # Генерируем точки патрулирования
-            if ai_config.behavior == AIBehavior.PATROL:
+            try:
+                patrol_enum = getattr(AIBehavior, 'PATROL', None)
+            except Exception:
+                patrol_enum = None
+            if patrol_enum is not None and ai_config.behavior == patrol_enum:
                 self._generate_patrol_points(entity_id, position, ai_config.patrol_radius)
             
             logger.info(f"AI сущность {entity_id} создана")

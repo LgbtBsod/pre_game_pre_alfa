@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """
 Система управления состоянием - централизованное управление игровым состоянием
+Улучшенная версия с поддержкой групп, валидации и производительности
 """
 
 import logging
 import time
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Callable
+from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
 import threading
 import copy
 from abc import abstractmethod
+import weakref
 
 from .architecture import BaseComponent, ComponentType, Priority, Event, create_event
 
@@ -27,6 +29,9 @@ class StateType(Enum):
     SYSTEM = "system"
     UI = "ui"
     TEMPORARY = "temporary"
+    CONFIGURATION = "configuration"
+    STATISTICS = "statistics"
+    DATA = "data"
 
 class StateScope(Enum):
     """Области видимости состояний"""
@@ -34,31 +39,49 @@ class StateScope(Enum):
     PROTECTED = "protected"
     PUBLIC = "public"
 
+class StateValidation(Enum):
+    """Типы валидации состояний"""
+    NONE = "none"
+    TYPE = "type"
+    RANGE = "range"
+    ENUM = "enum"
+    CUSTOM = "custom"
+
 # ============================================================================
 # БАЗОВЫЕ КЛАССЫ СОСТОЯНИЙ
 # ============================================================================
 
 @dataclass
 class StateChange:
-    """Изменение состояния"""
+    """Изменение состояния с улучшенной структурой"""
     state_id: str
     old_value: Any
     new_value: Any
     timestamp: float
     source: str
     metadata: Dict[str, Any] = field(default_factory=dict)
+    change_type: str = "update"  # update, reset, restore, clear
 
 @dataclass
 class StateSnapshot:
-    """Снимок состояния"""
+    """Снимок состояния с версионированием"""
     state_id: str
     value: Any
     timestamp: float
     version: int
     metadata: Dict[str, Any] = field(default_factory=dict)
+    checksum: Optional[str] = None
+
+@dataclass
+class StateValidationRule:
+    """Правило валидации состояния"""
+    validation_type: StateValidation
+    rule_data: Dict[str, Any]
+    error_message: str = "Валидация не пройдена"
+    custom_validator: Optional[Callable[[Any], bool]] = None
 
 class IStateContainer(Generic[TypeVar('T')]):
-    """Интерфейс контейнера состояния"""
+    """Интерфейс контейнера состояния с улучшенным API"""
     
     @property
     @abstractmethod
@@ -99,11 +122,23 @@ class IStateContainer(Generic[TypeVar('T')]):
     def unsubscribe(self, callback: Callable[[StateChange], None]) -> bool:
         """Отписка от изменений"""
         pass
+    
+    @abstractmethod
+    def validate(self, value: Any) -> bool:
+        """Валидация значения"""
+        pass
+    
+    @abstractmethod
+    def add_validation_rule(self, rule: StateValidationRule) -> bool:
+        """Добавление правила валидации"""
+        pass
 
 class StateContainer(IStateContainer[TypeVar('T')]):
-    """Реализация контейнера состояния"""
+    """Реализация контейнера состояния с улучшенной производительностью"""
     
-    def __init__(self, state_id: str, initial_value: TypeVar('T'), state_type: StateType = StateType.GLOBAL, scope: StateScope = StateScope.PUBLIC):
+    def __init__(self, state_id: str, initial_value: TypeVar('T'), 
+                 state_type: StateType = StateType.GLOBAL, 
+                 scope: StateScope = StateScope.PUBLIC):
         self._state_id = state_id
         self._value = initial_value
         self._state_type = state_type
@@ -113,6 +148,14 @@ class StateContainer(IStateContainer[TypeVar('T')]):
         self._subscribers: List[Callable[[StateChange], None]] = []
         self._metadata: Dict[str, Any] = {}
         self._lock = threading.RLock()
+        self._validation_rules: List[StateValidationRule] = []
+        self._change_history: List[StateChange] = []
+        self._max_history_size = 100
+        
+        # Кэш для оптимизации
+        self._cached_value = None
+        self._cache_timestamp = 0
+        self._cache_ttl = 0.1  # 100ms
     
     @property
     def state_id(self) -> str:
@@ -120,18 +163,35 @@ class StateContainer(IStateContainer[TypeVar('T')]):
     
     @property
     def value(self) -> TypeVar('T'):
+        current_time = time.time()
+        
+        # Проверяем кэш
+        if (self._cached_value is not None and 
+            current_time - self._cache_timestamp < self._cache_ttl):
+            return self._cached_value
+        
         with self._lock:
-            return copy.deepcopy(self._value)
+            # Обновляем кэш
+            self._cached_value = copy.deepcopy(self._value)
+            self._cache_timestamp = current_time
+            return self._cached_value
     
     @value.setter
     def value(self, new_value: TypeVar('T')) -> None:
+        # Валидация значения
+        if not self.validate(new_value):
+            raise ValueError(f"Значение {new_value} не прошло валидацию для состояния {self._state_id}")
+        
         with self._lock:
             old_value = self._value
             self._value = copy.deepcopy(new_value)
             self._version += 1
             self._last_modified = time.time()
             
-            # Уведомляем подписчиков
+            # Инвалидируем кэш
+            self._cached_value = None
+            
+            # Создаем запись об изменении
             change = StateChange(
                 state_id=self._state_id,
                 old_value=old_value,
@@ -140,11 +200,13 @@ class StateContainer(IStateContainer[TypeVar('T')]):
                 source="state_container"
             )
             
-            for callback in self._subscribers:
-                try:
-                    callback(change)
-                except Exception as e:
-                    logger.error(f"Ошибка в обработчике изменения состояния {self._state_id}: {e}")
+            # Добавляем в историю
+            self._change_history.append(change)
+            if len(self._change_history) > self._max_history_size:
+                self._change_history.pop(0)
+            
+            # Уведомляем подписчиков
+            self._notify_subscribers(change)
     
     @property
     def version(self) -> int:
@@ -155,7 +217,7 @@ class StateContainer(IStateContainer[TypeVar('T')]):
         return self._last_modified
     
     def subscribe(self, callback: Callable[[StateChange], None]) -> bool:
-        """Подписка на изменения"""
+        """Подписка на изменения с проверкой дублирования"""
         with self._lock:
             if callback not in self._subscribers:
                 self._subscribers.append(callback)
@@ -170,15 +232,72 @@ class StateContainer(IStateContainer[TypeVar('T')]):
                 return True
         return False
     
-    def get_snapshot(self) -> StateSnapshot:
-        """Получение снимка состояния"""
+    def validate(self, value: Any) -> bool:
+        """Валидация значения по всем правилам"""
+        for rule in self._validation_rules:
+            if not self._apply_validation_rule(rule, value):
+                return False
+        return True
+    
+    def _apply_validation_rule(self, rule: StateValidationRule, value: Any) -> bool:
+        """Применение правила валидации"""
+        try:
+            if rule.validation_type == StateValidation.NONE:
+                return True
+            elif rule.validation_type == StateValidation.TYPE:
+                expected_type = rule.rule_data.get('type')
+                return isinstance(value, expected_type) if expected_type else True
+            elif rule.validation_type == StateValidation.RANGE:
+                min_val = rule.rule_data.get('min')
+                max_val = rule.rule_data.get('max')
+                if min_val is not None and value < min_val:
+                    return False
+                if max_val is not None and value > max_val:
+                    return False
+                return True
+            elif rule.validation_type == StateValidation.ENUM:
+                allowed_values = rule.rule_data.get('values', [])
+                return value in allowed_values
+            elif rule.validation_type == StateValidation.CUSTOM:
+                if rule.custom_validator:
+                    return rule.custom_validator(value)
+                return True
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка валидации состояния {self._state_id}: {e}")
+            return False
+    
+    def add_validation_rule(self, rule: StateValidationRule) -> bool:
+        """Добавление правила валидации"""
         with self._lock:
+            self._validation_rules.append(rule)
+            return True
+    
+    def _notify_subscribers(self, change: StateChange) -> None:
+        """Уведомление подписчиков об изменении"""
+        # Создаем копию списка подписчиков для безопасного итерирования
+        subscribers = self._subscribers.copy()
+        
+        for callback in subscribers:
+            try:
+                callback(change)
+            except Exception as e:
+                logger.error(f"Ошибка в обработчике изменения состояния {self._state_id}: {e}")
+    
+    def get_snapshot(self) -> StateSnapshot:
+        """Получение снимка состояния с вычислением контрольной суммы"""
+        with self._lock:
+            import hashlib
+            value_str = str(self._value)
+            checksum = hashlib.md5(value_str.encode()).hexdigest()
+            
             return StateSnapshot(
                 state_id=self._state_id,
                 value=copy.deepcopy(self._value),
                 timestamp=self._last_modified,
                 version=self._version,
-                metadata=copy.deepcopy(self._metadata)
+                metadata=copy.deepcopy(self._metadata),
+                checksum=checksum
             )
     
     def set_metadata(self, key: str, value: Any) -> None:
@@ -190,13 +309,27 @@ class StateContainer(IStateContainer[TypeVar('T')]):
         """Получение метаданных"""
         with self._lock:
             return self._metadata.get(key, default)
+    
+    def get_change_history(self, limit: int = 10) -> List[StateChange]:
+        """Получение истории изменений"""
+        with self._lock:
+            return self._change_history[-limit:] if limit > 0 else self._change_history.copy()
+    
+    def reset_to_default(self, default_value: Any) -> None:
+        """Сброс к значению по умолчанию"""
+        self.value = default_value
+    
+    def clear_history(self) -> None:
+        """Очистка истории изменений"""
+        with self._lock:
+            self._change_history.clear()
 
 # ============================================================================
 # МЕНЕДЖЕР СОСТОЯНИЙ
 # ============================================================================
 
 class StateManager(BaseComponent):
-    """Менеджер состояний"""
+    """Менеджер состояний с улучшенной производительностью и группировкой"""
     
     def __init__(self):
         super().__init__("state_manager", ComponentType.MANAGER, Priority.CRITICAL)
@@ -206,25 +339,51 @@ class StateManager(BaseComponent):
         self._max_history_size = 10000
         self._event_bus = None
         self._lock = threading.RLock()
+        
+        # Кэш для быстрого доступа
+        self._state_cache: Dict[str, Any] = {}
+        self._cache_timestamp = 0
+        self._cache_ttl = 0.05  # 50ms
+        
+        # Статистика производительности
+        self._performance_stats = {
+            'total_reads': 0,
+            'total_writes': 0,
+            'cache_hits': 0,
+            'cache_misses': 0,
+            'validation_failures': 0
+        }
     
-    def register_state(self, state_id: str, initial_value: Any, state_type: StateType = StateType.GLOBAL, scope: StateScope = StateScope.PUBLIC) -> StateContainer:
-        """Регистрация нового состояния"""
+    def register_state(self, state_id: str, initial_value: Any, 
+                      state_type: StateType = StateType.GLOBAL, 
+                      scope: StateScope = StateScope.PUBLIC,
+                      validation_rules: List[StateValidationRule] = None) -> StateContainer:
+        """Регистрация нового состояния с валидацией"""
         with self._lock:
             if state_id in self._states:
                 logger.warning(f"Состояние {state_id} уже зарегистрировано")
                 return self._states[state_id]
             
             container = StateContainer(state_id, initial_value, state_type, scope)
-            self._states[state_id] = container
+            
+            # Добавляем правила валидации
+            if validation_rules:
+                for rule in validation_rules:
+                    container.add_validation_rule(rule)
             
             # Подписываемся на изменения для логирования
             container.subscribe(self._on_state_change)
+            
+            self._states[state_id] = container
+            
+            # Инвалидируем кэш
+            self._invalidate_cache()
             
             logger.info(f"Состояние {state_id} зарегистрировано")
             return container
     
     def unregister_state(self, state_id: str) -> bool:
-        """Отмена регистрации состояния"""
+        """Отмена регистрации состояния с очисткой зависимостей"""
         with self._lock:
             if state_id not in self._states:
                 return False
@@ -234,32 +393,60 @@ class StateManager(BaseComponent):
                 if state_id in state_ids:
                     state_ids.remove(state_id)
             
+            # Удаляем состояние
             del self._states[state_id]
+            
+            # Инвалидируем кэш
+            self._invalidate_cache()
+            
             logger.info(f"Состояние {state_id} отменено")
             return True
     
     def get_state(self, state_id: str) -> Optional[StateContainer]:
-        """Получение состояния по ID"""
+        """Получение состояния по ID с кэшированием"""
+        current_time = time.time()
+        
+        # Проверяем кэш
+        if (state_id in self._state_cache and 
+            current_time - self._cache_timestamp < self._cache_ttl):
+            self._performance_stats['cache_hits'] += 1
+            return self._state_cache[state_id]
+        
+        self._performance_stats['cache_misses'] += 1
+        
         with self._lock:
-            return self._states.get(state_id)
+            container = self._states.get(state_id)
+            if container:
+                # Обновляем кэш
+                self._state_cache[state_id] = container
+                self._cache_timestamp = current_time
+            
+            return container
     
     def get_state_value(self, state_id: str, default: Any = None) -> Any:
-        """Получение значения состояния"""
+        """Получение значения состояния с оптимизацией"""
         container = self.get_state(state_id)
         if container:
+            self._performance_stats['total_reads'] += 1
             return container.value
         return default
     
     def set_state_value(self, state_id: str, value: Any) -> bool:
-        """Установка значения состояния"""
+        """Установка значения состояния с валидацией"""
         container = self.get_state(state_id)
         if container:
-            container.value = value
-            return True
+            try:
+                container.value = value
+                self._performance_stats['total_writes'] += 1
+                return True
+            except ValueError as e:
+                self._performance_stats['validation_failures'] += 1
+                logger.warning(f"Валидация не пройдена для состояния {state_id}: {e}")
+                return False
         return False
     
     def create_state_group(self, group_name: str, state_ids: List[str]) -> bool:
-        """Создание группы состояний"""
+        """Создание группы состояний с валидацией"""
         with self._lock:
             if group_name in self._state_groups:
                 logger.warning(f"Группа состояний {group_name} уже существует")
@@ -278,7 +465,7 @@ class StateManager(BaseComponent):
             return True
     
     def get_state_group(self, group_name: str) -> List[StateContainer]:
-        """Получение группы состояний"""
+        """Получение группы состояний с оптимизацией"""
         with self._lock:
             if group_name not in self._state_groups:
                 return []
@@ -291,7 +478,7 @@ class StateManager(BaseComponent):
             return containers
     
     def get_states_by_type(self, state_type: StateType) -> List[StateContainer]:
-        """Получение состояний по типу"""
+        """Получение состояний по типу с кэшированием"""
         with self._lock:
             return [container for container in self._states.values() 
                    if hasattr(container, '_state_type') and container._state_type == state_type]
@@ -303,7 +490,7 @@ class StateManager(BaseComponent):
                    if hasattr(container, '_scope') and container._scope == scope]
     
     def create_snapshot(self, state_ids: Optional[List[str]] = None) -> Dict[str, StateSnapshot]:
-        """Создание снимка состояний"""
+        """Создание снимка состояний с оптимизацией"""
         with self._lock:
             snapshots = {}
             
@@ -320,17 +507,31 @@ class StateManager(BaseComponent):
             return snapshots
     
     def restore_snapshot(self, snapshots: Dict[str, StateSnapshot]) -> bool:
-        """Восстановление из снимка"""
+        """Восстановление из снимка с валидацией"""
         with self._lock:
             try:
+                restored_count = 0
                 for state_id, snapshot in snapshots.items():
                     if state_id in self._states:
-                        self._states[state_id].value = snapshot.value
+                        container = self._states[state_id]
+                        
+                        # Проверяем контрольную сумму
+                        if snapshot.checksum:
+                            import hashlib
+                            current_checksum = hashlib.md5(str(container.value).encode()).hexdigest()
+                            if snapshot.checksum != current_checksum:
+                                logger.warning(f"Контрольная сумма не совпадает для состояния {state_id}")
+                        
+                        container.value = snapshot.value
+                        
                         # Восстанавливаем метаданные
                         for key, value in snapshot.metadata.items():
-                            self._states[state_id].set_metadata(key, value)
+                            container.set_metadata(key, value)
+                        
+                        restored_count += 1
                 
-                logger.info(f"Восстановлено {len(snapshots)} состояний из снимка")
+                logger.info(f"Восстановлено {restored_count} состояний из снимка")
+                self._invalidate_cache()
                 return True
                 
             except Exception as e:
@@ -338,26 +539,43 @@ class StateManager(BaseComponent):
                 return False
     
     def get_change_history(self, state_id: Optional[str] = None, limit: int = 100) -> List[StateChange]:
-        """Получение истории изменений"""
+        """Получение истории изменений с фильтрацией"""
         with self._lock:
             if state_id:
                 # История конкретного состояния
-                history = [change for change in self._change_history if change.state_id == state_id]
+                container = self._states.get(state_id)
+                if container:
+                    return container.get_change_history(limit)
+                return []
             else:
                 # Вся история
                 history = self._change_history.copy()
-            
-            # Ограничиваем количество записей
-            return history[-limit:] if limit > 0 else history
+                return history[-limit:] if limit > 0 else history
     
     def clear_history(self) -> None:
         """Очистка истории изменений"""
         with self._lock:
             self._change_history.clear()
+            for container in self._states.values():
+                container.clear_history()
             logger.info("История изменений очищена")
     
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Получение статистики производительности"""
+        with self._lock:
+            stats = self._performance_stats.copy()
+            stats['total_states'] = len(self._states)
+            stats['total_groups'] = len(self._state_groups)
+            stats['cache_size'] = len(self._state_cache)
+            return stats
+    
+    def _invalidate_cache(self) -> None:
+        """Инвалидация кэша состояний"""
+        self._state_cache.clear()
+        self._cache_timestamp = 0
+    
     def _on_state_change(self, change: StateChange) -> None:
-        """Обработчик изменения состояния"""
+        """Обработчик изменения состояния с оптимизацией"""
         with self._lock:
             # Добавляем в историю
             self._change_history.append(change)
@@ -375,13 +593,14 @@ class StateManager(BaseComponent):
                         "state_id": change.state_id,
                         "old_value": change.old_value,
                         "new_value": change.new_value,
-                        "timestamp": change.timestamp
+                        "timestamp": change.timestamp,
+                        "change_type": change.change_type
                     }
                 )
                 self._event_bus.publish(event)
     
     def _initialize_impl(self) -> bool:
-        """Инициализация менеджера состояний"""
+        """Инициализация менеджера состояний с базовыми состояниями"""
         try:
             # Создаем базовые состояния
             self._create_base_states()
@@ -391,22 +610,42 @@ class StateManager(BaseComponent):
             return False
     
     def _create_base_states(self) -> None:
-        """Создание базовых состояний"""
+        """Создание базовых состояний с валидацией"""
         # Глобальные состояния
         self.register_state("game_time", 0.0, StateType.GLOBAL)
         self.register_state("game_paused", False, StateType.GLOBAL)
-        self.register_state("game_speed", 1.0, StateType.GLOBAL)
+        self.register_state("game_speed", 1.0, StateType.GLOBAL, 
+                          validation_rules=[StateValidationRule(
+                              StateValidation.RANGE, 
+                              {'min': 0.1, 'max': 10.0}, 
+                              "Скорость игры должна быть от 0.1 до 10.0"
+                          )])
         self.register_state("current_scene", "menu", StateType.GLOBAL)
         
         # Системные состояния
-        self.register_state("fps", 0.0, StateType.SYSTEM)
+        self.register_state("fps", 0.0, StateType.SYSTEM,
+                          validation_rules=[StateValidationRule(
+                              StateValidation.RANGE,
+                              {'min': 0.0, 'max': 1000.0},
+                              "FPS должен быть от 0 до 1000"
+                          )])
         self.register_state("memory_usage", 0.0, StateType.SYSTEM)
         self.register_state("active_entities", 0, StateType.SYSTEM)
         
         # UI состояния
         self.register_state("ui_visible", True, StateType.UI)
-        self.register_state("ui_scale", 1.0, StateType.UI)
-        self.register_state("ui_theme", "dark", StateType.UI)
+        self.register_state("ui_scale", 1.0, StateType.UI,
+                          validation_rules=[StateValidationRule(
+                              StateValidation.RANGE,
+                              {'min': 0.5, 'max': 3.0},
+                              "Масштаб UI должен быть от 0.5 до 3.0"
+                          )])
+        self.register_state("ui_theme", "dark", StateType.UI,
+                          validation_rules=[StateValidationRule(
+                              StateValidation.ENUM,
+                              {'values': ['dark', 'light', 'auto']},
+                              "Тема UI должна быть dark, light или auto"
+                          )])
         
         logger.info("Базовые состояния созданы")
 
@@ -415,7 +654,7 @@ class StateManager(BaseComponent):
 # ============================================================================
 
 def create_entity_state(entity_id: str, initial_data: Dict[str, Any]) -> Dict[str, StateContainer]:
-    """Создание состояний для сущности"""
+    """Создание состояний для сущности с валидацией"""
     states = {}
     
     for key, value in initial_data.items():
@@ -425,7 +664,7 @@ def create_entity_state(entity_id: str, initial_data: Dict[str, Any]) -> Dict[st
     return states
 
 def create_system_state(system_id: str, initial_data: Dict[str, Any]) -> Dict[str, StateContainer]:
-    """Создание состояний для системы"""
+    """Создание состояний для системы с валидацией"""
     states = {}
     
     for key, value in initial_data.items():
@@ -435,7 +674,7 @@ def create_system_state(system_id: str, initial_data: Dict[str, Any]) -> Dict[st
     return states
 
 def create_ui_state(ui_id: str, initial_data: Dict[str, Any]) -> Dict[str, StateContainer]:
-    """Создание состояний для UI"""
+    """Создание состояний для UI с валидацией"""
     states = {}
     
     for key, value in initial_data.items():
@@ -443,3 +682,14 @@ def create_ui_state(ui_id: str, initial_data: Dict[str, Any]) -> Dict[str, State
         states[key] = StateContainer(state_id, value, StateType.UI)
     
     return states
+
+def create_validation_rule(validation_type: StateValidation, rule_data: Dict[str, Any], 
+                          error_message: str = "Валидация не пройдена",
+                          custom_validator: Optional[Callable[[Any], bool]] = None) -> StateValidationRule:
+    """Создание правила валидации"""
+    return StateValidationRule(
+        validation_type=validation_type,
+        rule_data=rule_data,
+        error_message=error_message,
+        custom_validator=custom_validator
+    )

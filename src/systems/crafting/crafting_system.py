@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from core.interfaces import ISystem, SystemPriority, SystemState
 from core.state_manager import StateManager
 from core.repository import RepositoryManager, DataType, StorageType
-from core.constants import (
+from core.constants import constants_manager, (
     ItemType, ItemRarity, ItemCategory, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )

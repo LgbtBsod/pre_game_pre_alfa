@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 
-from core.constants import (
+from core.constants import constants_manager, (
     StatType, DamageType, AIState, ItemType, EmotionType, 
     GeneType, EntityType, ItemSlot, BASE_STATS, PROBABILITY_CONSTANTS
 )

@@ -14,7 +14,7 @@ from core.system_interfaces import BaseGameSystem
 from core.architecture import Priority, LifecycleState
 from core.state_manager import StateManager, StateType, StateScope
 from core.repository import RepositoryManager, DataType, StorageType
-from core.constants import (
+from core.constants import constants_manager, (
     GeneType, GeneRarity, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )

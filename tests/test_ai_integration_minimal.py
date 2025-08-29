@@ -4,7 +4,7 @@ import unittest
 
 class TestAIIntegrationMinimal(unittest.TestCase):
     def test_register_and_decide(self):
-        from src.systems.ai.ai_interface import AISystemFactory, AISystemManager
+        from systems.ai.ai_interface import AISystemFactory, AISystemManager
 
         # Create AI manager and a basic system
         mgr = AISystemManager()

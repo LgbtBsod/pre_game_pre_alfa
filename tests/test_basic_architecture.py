@@ -89,7 +89,7 @@ class TestBasicArchitecture(unittest.TestCase):
     def test_import_constants(self):
         """Тест импорта констант"""
         try:
-            from src.core.constants import BASE_STATS, PROBABILITY_CONSTANTS
+            from src.core.constants import constants_manager, BASE_STATS, PROBABILITY_CONSTANTS
             self.assertIsNotNone(BASE_STATS)
             self.assertIsNotNone(PROBABILITY_CONSTANTS)
         except ImportError as e:

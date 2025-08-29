@@ -11,7 +11,7 @@ import time
 import logging
 
 from .interfaces import ISystem, SystemPriority, SystemState
-from .constants import SYSTEM_LIMITS, TIME_CONSTANTS_RO, get_float
+from .constants import constants_manager, SYSTEM_LIMITS, TIME_CONSTANTS_RO, get_float
 
 
 @dataclass

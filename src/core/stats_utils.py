@@ -4,7 +4,7 @@
 """
 
 from typing import Dict, List, Any, Optional
-from .constants import BASE_STATS
+from .constants import constants_manager, BASE_STATS
 
 
 # Группы статистик для удобной работы
@@ -266,7 +266,7 @@ def calculate_stats_from_attributes(base_stats: dict, attributes: dict) -> dict:
     Returns:
         Словарь с рассчитанными характеристиками
     """
-    from .constants import STAT_CALCULATION_FORMULAS
+    # STAT_CALCULATION_FORMULAS moved to constants_manager
     
     result = base_stats.copy()
     
@@ -292,7 +292,7 @@ def get_skill_cost_multiplier(cost_sources: list) -> float:
     Returns:
         Множитель силы навыка
     """
-    from .constants import SKILL_POWER_MULTIPLIERS
+    # SKILL_POWER_MULTIPLIERS moved to constants_manager
     
     cost_count = len(cost_sources)
     if cost_count == 0:

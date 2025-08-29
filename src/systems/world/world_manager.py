@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import (
+from core.constants import constants_manager, (
     StatType, BASE_STATS, PROBABILITY_CONSTANTS, 
     TIME_CONSTANTS, SYSTEM_LIMITS, WorldObjectType, ObjectState
 )

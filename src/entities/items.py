@@ -9,7 +9,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 
-from core.constants import ItemType, ItemRarity, ItemCategory, DamageType, StatType, ItemSlot
+from core.constants import constants_manager, ItemType, ItemRarity, ItemCategory, DamageType, StatType, ItemSlot
 
 logger = logging.getLogger(__name__)
 

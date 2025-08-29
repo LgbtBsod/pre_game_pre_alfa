@@ -11,7 +11,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
 from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import (
+from core.constants import constants_manager, (
     ItemType, ItemRarity, WeaponType, ArmorType, AccessoryType, ConsumableType,
     DamageType, StatType, SkillType, SkillCategory, GeneType, GeneRarity, EffectCategory,
     EnemyType, BossType, ContentType, ContentRarity,

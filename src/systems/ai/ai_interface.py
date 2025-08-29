@@ -11,7 +11,7 @@ from enum import Enum
 import logging
 import importlib.util
 from core.interfaces import ISystem, SystemPriority, SystemState
-from core.constants import AIState, AIBehavior as AIPersonality, AIState as ActionType
+from core.constants import constants_manager, AIState, AIBehavior as AIPersonality, AIState as ActionType
 
 logger = logging.getLogger(__name__)
 

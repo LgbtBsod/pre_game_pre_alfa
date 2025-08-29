@@ -34,9 +34,9 @@ class DummyScene:
 class TestSceneManagerEvents(unittest.TestCase):
     def test_scene_change_updates_state_and_emits_event(self):
         # Lazy import to avoid Panda3D requirements
-        from src.core.scene_manager import SceneManager
-        from src.core.event_system import EventSystem
-        from src.core.state_manager import StateManager
+        from core.scene_manager import SceneManager
+        from core.event_system import EventSystem
+        from core.state_manager import StateManager
 
         # Create minimal stand-ins for Panda3D nodes
         class RenderNode:

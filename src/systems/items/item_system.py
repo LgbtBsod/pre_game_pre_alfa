@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 
 from core.system_interfaces import BaseGameSystem, Priority
-from core.constants import (
+from core.constants import constants_manager, (
     ItemType, ItemRarity, ItemCategory, DamageType, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
     TIME_CONSTANTS_RO, get_float

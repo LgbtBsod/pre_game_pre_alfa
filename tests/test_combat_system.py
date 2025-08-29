@@ -16,7 +16,7 @@ from src.core.architecture import Priority, LifecycleState
 from src.core.state_manager import StateManager, StateType
 from src.core.repository import RepositoryManager, DataType, StorageType
 from src.systems.combat.combat_system import CombatSystem, CombatStats, AttackResult, CombatAction
-from src.core.constants import DamageType, AttackType
+from src.core.constants import constants_manager, DamageType, AttackType
 
 class TestCombatSystem(unittest.TestCase):
     """Тесты для системы боя"""

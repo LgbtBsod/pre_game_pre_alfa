@@ -14,7 +14,7 @@ from core.system_interfaces import BaseGameSystem
 from core.architecture import Priority, LifecycleState
 from core.state_manager import StateManager, StateType, StateScope
 from core.repository import RepositoryManager, DataType, StorageType
-from core.constants import (
+from core.constants import constants_manager, (
     EffectCategory, TriggerType, DamageType, StatType,
     BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
     TIME_CONSTANTS_RO, get_float, normalize_trigger, normalize_ui_event
