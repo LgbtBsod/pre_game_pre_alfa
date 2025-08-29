@@ -30,6 +30,7 @@ from .resource_manager import ResourceManager
 from .performance_manager import PerformanceManager
 from .system_factory import SystemFactory
 from .plugin_manager import PluginManager
+from .event_adapter import EventBusAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,7 @@ class GameEngine(ShowBase):
         # Существующие менеджеры (для обратной совместимости)
         self.system_manager: Optional[SystemManager] = None
         self.event_system: Optional[EventSystem] = None
+        self.event_adapter: Optional[EventBusAdapter] = None
         self.system_factory: Optional[SystemFactory] = None
         self.scene_manager: Optional[SceneManager] = None
         self.resource_manager: Optional[ResourceManager] = None
@@ -222,6 +224,11 @@ class GameEngine(ShowBase):
             if not self.event_system.initialize():
                 logger.error("Не удалось инициализировать систему событий")
                 return False
+            # Мост: адаптер on/emit поверх EventSystem
+            try:
+                self.event_adapter = EventBusAdapter(self.event_system)
+            except Exception:
+                self.event_adapter = None
             
             # 3. Менеджер ресурсов
             self.resource_manager = ResourceManager()
@@ -235,8 +242,8 @@ class GameEngine(ShowBase):
                 logger.error("Не удалось инициализировать менеджер производительности")
                 return False
             
-            # 5. Менеджер сцен
-            self.scene_manager = SceneManager(self.render, self.resource_manager)
+            # 5. Менеджер сцен (передаем system_manager для централизованного апдейта сценой)
+            self.scene_manager = SceneManager(self.render, self.resource_manager, None)
             if not self.scene_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер сцен")
                 return False
@@ -246,12 +253,19 @@ class GameEngine(ShowBase):
             
             # 7. Менеджер систем
             self.system_manager = SystemManager(self.event_system)
+            # Привяжем менеджер систем к менеджеру сцен (для доступа из сцены)
+            try:
+                if self.scene_manager:
+                    self.scene_manager.system_manager = self.system_manager
+            except Exception:
+                pass
 
             # 8. Менеджер плагинов
             self.plugin_manager = PluginManager()
             discovered = self.plugin_manager.discover()
             base_context = {
                 "event_system": self.event_system,
+                "event_bus": self.event_adapter or self.event_system,
                 "config_manager": self.config_manager,
                 "resource_manager": self.resource_manager,
                 "system_manager": self.system_manager,
@@ -288,10 +302,14 @@ class GameEngine(ShowBase):
     def _integrate_architectures(self) -> bool:
         """Интеграция старой и новой архитектуры"""
         try:
-            # Связываем шину событий с системой событий
+            # Связываем шину событий с системой событий (через адаптер)
             if self.event_bus and self.event_system:
-                # Здесь можно добавить мост между системами событий
-                pass
+                try:
+                    adapter = self.event_adapter or EventBusAdapter(self.event_system)
+                    # Прокидываем базовые события производительности в обе стороны
+                    self.event_bus.on("system_error", lambda e: adapter.emit("system_error", e.data))
+                except Exception:
+                    pass
             
             # Связываем менеджер состояний с системами
             if self.state_manager:
@@ -346,6 +364,7 @@ class GameEngine(ShowBase):
                 'damage_system',
                 'inventory_system',
                 'item_system',
+                'social_system',
                 'emotion_system',
                 'evolution_system',
                 'ui_system',
@@ -565,9 +584,11 @@ class GameEngine(ShowBase):
                 frame_time_ms = (time.time() - frame_start) * 1000.0
                 try:
                     from .performance_manager import PerformanceMetric
-                    self.performance_manager.record_metric(PerformanceMetric.FRAME_TIME, frame_time_ms, "engine")
+                    # Логирование FPS зависит от конфигурации
                     current_fps = 1000.0 / max(0.001, frame_time_ms)
-                    self.performance_manager.record_metric(PerformanceMetric.FPS, current_fps, "engine")
+                    if self.config_manager and self.config_manager.get('performance', 'enable_fps_logging', True):
+                        self.performance_manager.record_metric(PerformanceMetric.FRAME_TIME, frame_time_ms, "engine")
+                        self.performance_manager.record_metric(PerformanceMetric.FPS, current_fps, "engine")
                 except Exception:
                     pass
                 # Простая защита бюджета кадра на основе max_fps

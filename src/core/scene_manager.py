@@ -62,9 +62,11 @@ class Scene(ABC):
 class SceneManager(ISceneManager):
     """Менеджер сцен для Panda3D"""
     
-    def __init__(self, render_node, resource_manager):
+    def __init__(self, render_node, resource_manager, system_manager=None):
         self.render_node = render_node
         self.resource_manager = resource_manager
+        # Доступ к менеджеру систем для централизованных обновлений сценой
+        self.system_manager = system_manager
         
         # Свойства для интерфейса ISystem
         self._system_name = "scene_manager"

@@ -16,7 +16,8 @@ from ...core.state_manager import StateManager, StateType, StateScope
 from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     EvolutionStage, EvolutionType, GeneType, GeneRarity, StatType,
-    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float
 )
 
 logger = logging.getLogger(__name__)
@@ -86,7 +87,7 @@ class EvolutionSystem(BaseGameSystem):
             'mutation_chance': PROBABILITY_CONSTANTS["base_mutation_chance"],
             'adaptation_chance': PROBABILITY_CONSTANTS["base_adaptation_chance"],
             'gene_expression_rate': 0.1,
-            'evolution_cooldown': TIME_CONSTANTS["evolution_cooldown"]
+            'evolution_cooldown': get_float(TIME_CONSTANTS_RO, "evolution_cooldown", 60.0)
         }
         
         # Статистика системы (теперь управляется через StateManager)

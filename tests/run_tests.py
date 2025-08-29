@@ -53,6 +53,24 @@ def run_all_tests():
         print(f"❌ Ошибка импорта CombatSystem тестов: {e}")
     
     # Добавляем тесты для других систем (когда они будут созданы)
+    # Легкий интеграционный тест: совместимость on/emit alias в EventSystem
+    try:
+        from src.core.event_system import EventSystem, EventPriority
+        class IntegrationEventAlias(unittest.TestCase):
+            def runTest(self):
+                es = EventSystem()
+                es.initialize()
+                hit = {"n": 0}
+                def h(ev):
+                    hit["n"] += 1
+                self.assertTrue(es.on("_alias_test", h, EventPriority.NORMAL))
+                self.assertTrue(es.emit_event("_alias_test", {"ok": True}, "test", EventPriority.NORMAL))
+                es.process_events()
+                self.assertEqual(hit["n"], 1)
+        test_suite.addTest(IntegrationEventAlias())
+        print("✅ Интеграционный тест: event on/emit alias добавлен")
+    except Exception as e:
+        print(f"⚠️  Интеграционный тест event alias пропущен: {e}")
     
     print(f"\n📊 Всего тестовых случаев: {test_suite.countTestCases()}")
     print("=" * 80)

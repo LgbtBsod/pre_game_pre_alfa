@@ -12,7 +12,8 @@ from dataclasses import dataclass, field
 from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     ItemType, ItemRarity, ItemCategory, DamageType, StatType,
-    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
+    TIME_CONSTANTS_RO, get_float
 )
 
 logger = logging.getLogger(__name__)
@@ -73,7 +74,7 @@ class ItemSystem(BaseGameSystem):
         
         # Настройки системы
         self.system_settings = {
-            'max_items_per_entity': SYSTEM_LIMITS["max_items_per_entity"],
+            'max_items_per_entity': SYSTEM_LIMITS_RO["max_items_per_entity"],
             'max_item_level': 100,
             'durability_decay_enabled': True,
             'item_combining_enabled': True,
@@ -115,22 +116,23 @@ class ItemSystem(BaseGameSystem):
     def update(self, delta_time: float) -> bool:
         """Обновление системы предметов"""
         try:
-            if self._system_state != SystemState.READY:
+            # Используем базовую проверку состояния из BaseGameSystem
+            if not super().update(delta_time):
                 return False
-            
+
             start_time = time.time()
-            
+
             # Обновляем износ предметов
             if self.system_settings['durability_decay_enabled']:
                 self._update_item_durability(delta_time)
-            
+
             # Обновляем статистику системы
             self._update_system_stats()
-            
+
             self.system_stats['update_time'] = time.time() - start_time
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Ошибка обновления системы предметов: {e}")
             return False
@@ -611,10 +613,36 @@ class ItemSystem(BaseGameSystem):
             if item.stack_size > 1:
                 item.stack_size -= 1
                 logger.debug(f"Использован расходуемый предмет {item.item_id} у {entity_id}")
+                # Эмитим событие для применения эффектов расходника
+                try:
+                    if self.event_bus and item.special_effects:
+                        for se in item.special_effects:
+                            effect_id = getattr(se, 'effect_id', None)
+                            if effect_id:
+                                self.event_bus.emit("apply_effect", {
+                                    'target_id': target_id or entity_id,
+                                    'effect_id': effect_id,
+                                    'applied_by': entity_id
+                                })
+                except Exception:
+                    pass
                 return True
             else:
                 # Предмет полностью израсходован
-                return self.destroy_item_from_entity(entity_id, item.item_id)
+                used = self.destroy_item_from_entity(entity_id, item.item_id)
+                try:
+                    if used and self.event_bus and item.special_effects:
+                        for se in item.special_effects:
+                            effect_id = getattr(se, 'effect_id', None)
+                            if effect_id:
+                                self.event_bus.emit("apply_effect", {
+                                    'target_id': target_id or entity_id,
+                                    'effect_id': effect_id,
+                                    'applied_by': entity_id
+                                })
+                except Exception:
+                    pass
+                return used
                 
         except Exception as e:
             logger.error(f"Ошибка использования расходуемого предмета {item.item_id}: {e}")

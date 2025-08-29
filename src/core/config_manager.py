@@ -58,6 +58,8 @@ class PerformanceConfig:
     enable_multithreading: bool = True
     texture_quality: str = "high"
     shadow_quality: str = "medium"
+    enable_fps_logging: bool = True
+    enable_event_metrics: bool = True
 
 class ConfigManager(IConfigManager):
     """Менеджер конфигурации игры"""

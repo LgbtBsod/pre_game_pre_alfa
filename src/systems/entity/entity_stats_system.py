@@ -12,7 +12,8 @@ from dataclasses import dataclass, field
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     StatType, StatCategory, DamageType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float
 )
 from ...core.stats_utils import (
     STAT_GROUPS, ENTITY_STAT_TEMPLATES, get_entity_template,
@@ -117,7 +118,7 @@ class EntityStatsSystem(ISystem):
             'max_level': SYSTEM_LIMITS["max_entity_level"],
             'experience_scaling': 1.5,
             'stats_per_level': 5,
-            'modifier_cleanup_interval': TIME_CONSTANTS["modifier_cleanup_interval"],
+            'modifier_cleanup_interval': get_float(TIME_CONSTANTS_RO, "modifier_cleanup_interval", 5.0),
             'auto_regen_enabled': True,
             'regen_interval': 1.0  # секунды
         }

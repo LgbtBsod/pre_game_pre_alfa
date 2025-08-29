@@ -1,3 +1,21 @@
+- Constants module improvements:
+  - Added alias normalization for `DamageType` (magical→magic) and trigger names.
+  - Introduced `freeze_constants(mapping)` helper to guard dicts with MappingProxyType.
+  - Added legacy key `effect_update_interval_legacy` and clarified the active `effect_update_interval`.
+  - Exposed read-only views: `TIME_CONSTANTS_RO`, `SYSTEM_LIMITS_RO`, `UI_SETTINGS_RO`, `WORLD_SETTINGS_RO`, `PROBABILITY_CONSTANTS_RO`.
+  - Added safe getters: `get_float`, `get_int`, `get_bool`, `get_enum`.
+  - Integrated `TIME_CONSTANTS_RO` + safe getter in `EffectSystem` (update throttle) and in imports for `SkillSystem`.
+  - Adopted RO constants + safe getters in `InventorySystem`, `DamageSystem`, `ItemSystem` for time-based throttles and intervals.
+  - UISystem: added UI trigger normalization with aliases; routes through global normalizer when applicable.
+  - EntityRegistry integration: entities are now registered/unregistered in `src/scenes/game_scene.py` on spawn/despawn, enabling id→object resolution for event handlers.
+  - Added `DEFAULT_RESISTANCES_RO`, `DAMAGE_MULTIPLIERS_RO`, `normalize_damage_type`, and `get_time_constant` helper.
+  - Removed duplication of `ui_animation_duration` by introducing `ui_animation_duration_legacy` and aliasing in `get_time_constant`.
+- EventBus API: добавлены алиасы `on`/`emit` для унификации с вызовами в системах.
+ - EventBus API: добавлены алиасы `on`/`emit` для унификации с вызовами в системах.
+ - В `GameEngine` добавлен `EventBusAdapter` — мост между новой шиной и legacy `EventSystem`.
+- Performance: троттлинг обновлений
+  - `EffectSystem` использует `TIME_CONSTANTS.effect_update_interval`.
+  - `InventorySystem` использует `TIME_CONSTANTS.inventory_update_interval`.
 # Current Status
 
 ## 2025-08-29
@@ -13,6 +31,10 @@
   - `SkillSystem` publishes `skill_used` + `deal_damage`/`apply_effect` events to bus.
   - `DamageSystem` subscribes to `deal_damage`.
   - `EffectSystem` subscribes to `apply_effect`/`remove_effect`.
+  - `InventorySystem` emits `item_added_to_inventory`/`item_removed_from_inventory`.
+  - `ItemSystem` applies consumable special effects via `apply_effect` events.
+  - `EmotionSystem` reacts to `item_added_to_inventory` with small satisfaction.
+  - Добавлен `core/entity_registry.py` для разрешения id → объект в обработчиках событий.
 - Test runner reliability on Windows:
   - `tests/run_tests.py` now forces UTF-8 stdout to prevent encoding crashes.
 
@@ -60,14 +82,14 @@ All changes preserve existing mechanics and integrate within existing modules wi
 - [x] **Исправление тестов систем** - приведение в соответствие с реальными интерфейсами ✅
 - [ ] **Тестирование архитектуры** - проверка работы интегрированных систем
 - [ ] **Оптимизация производительности** - профилирование критических участков
--  [] PyToarch  -  проверить интеграцию с пайторч
+- [ ] **PyTorch/Stable Baselines3 интеграция** - проверить и документировать
 
 #### Приоритет 2 (Средний)
 - [x] **Создание системы тестирования** - базовые тесты архитектуры, тесты систем ✅
 - [x] **Исправление тестов систем** - приведение в соответствие с реальными интерфейсами ✅
 - [ ] **Расширение функциональности** - новые типы генов, улучшенная эволюция
 - [ ] **Улучшение системы событий** - расширение EventBus для сложных событий
-- [ ] **Добавление системы плагинов** - модульная расширяемость
+- [x] **Добавление системы плагинов** - модульная расширяемость (менеджер, интерфейсы, пример)
 
 #### Приоритет 3 (Низкий)
 - [ ] **Добавление тестирования** - unit тесты, интеграционные тесты
@@ -114,11 +136,11 @@ All changes preserve existing mechanics and integrate within existing modules wi
 
 ### 🎯 Следующие приоритеты
 
-1. **Провести комплексное тестирование** - проверка всех интегрированных систем ✅
-2. **Исправить оставшиеся проблемы с тестами** - работа с mock объектами и ожиданиями тестов
-3. **Оптимизировать производительность** - профилирование и улучшения
-4. **Расширить функциональность** - новые возможности эволюции и генов
-5. **Добавить систему плагинов** - модульная расширяемость
+1. Включить мост событий (`EventBusAdapter`) во все окружения и проверить поток событий
+2. Провести комплексное тестирование интегрированных систем (Windows приоритет)
+3. Оптимизировать производительность: метрики кадров, троттлинг, профили
+4. Расширить контент: генератор уникальных скиллов/предметов/эффектов
+5. Завершить документацию: планы/статус/интеграция с учётом плагинов
 
 ### 📈 Достижения
 
@@ -152,5 +174,5 @@ All changes preserve existing mechanics and integrate within existing modules wi
 
 ---
 
-*Последнее обновление: Исправлены основные проблемы с константами и методами, тесты проходят на 78%*
-*Следующий этап: Исправление оставшихся проблем с тестами и полное тестирование архитектуры*
+*Последнее обновление: Добавлен `EventBusAdapter` и актуализирован план развития*
+*Следующий этап: Тестирование мостика событий и профилирование систем*

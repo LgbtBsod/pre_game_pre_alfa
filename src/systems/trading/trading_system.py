@@ -16,7 +16,8 @@ from ...core.state_manager import StateManager, StateType, StateScope
 from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     TradeType, TradeStatus, CurrencyType, TradeCategory, TradeRarity, TradeLocation,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float
 )
 
 from .trading_data import TradeOffer, TradeItem, TradeHistory, MarketData, TradeContract
@@ -65,8 +66,8 @@ class TradingSystem(BaseGameSystem):
             'tax_rate': PROBABILITY_CONSTANTS["tax_rate"],
             'reputation_impact': PROBABILITY_CONSTANTS["reputation_impact"],
             'price_volatility': PROBABILITY_CONSTANTS["price_volatility"],
-            'market_update_interval': TIME_CONSTANTS["market_update_interval"],
-            'offer_expiration_time': TIME_CONSTANTS["offer_expiration_time"]
+            'market_update_interval': get_float(TIME_CONSTANTS_RO, "market_update_interval", 3600.0),
+            'offer_expiration_time': get_float(TIME_CONSTANTS_RO, "offer_expiration_time", 604800.0)
         }
         
         # Статистика системы (теперь управляется через StateManager)

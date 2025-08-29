@@ -20,6 +20,12 @@ class SystemFactory:
         self.config_manager = config_manager
         self.event_system = event_system
         self.system_manager = system_manager or SystemManager(event_system)
+        # Адаптер для совместимости с системами, ожидающими event_bus API
+        try:
+            from .event_adapter import EventBusAdapter  # локальный импорт во избежание циклов
+            self.event_bus_adapter = EventBusAdapter(self.event_system)
+        except Exception:
+            self.event_bus_adapter = None
         
         # Реестр систем
         self.system_registry: Dict[str, Type[ISystem]] = {}
@@ -40,7 +46,8 @@ class SystemFactory:
             'ui_system': ['event_system', 'config_manager', 'effect_system'],
             'render_system': ['event_system', 'config_manager', 'effect_system'],
             'effect_system': ['event_system', 'config_manager'],
-            'damage_system': ['event_system', 'config_manager']
+            'damage_system': ['event_system', 'config_manager'],
+            'social_system': ['event_system', 'config_manager']
         }
         
         # Автоматическая регистрация систем
@@ -65,10 +72,10 @@ class SystemFactory:
                 logger.error(f"Система {system_name} не зарегистрирована")
                 return None
             
-            # Проверяем зависимости (контекстные зависимости считаются удовлетворенными)
+            # Предупреждаем о незакрытых зависимостях, но не блокируем создание.
+            # Порядок инициализации обеспечивается менеджером систем.
             if not self._check_dependencies(system_name):
-                logger.error(f"Не выполнены зависимости для системы {system_name}")
-                return None
+                logger.warning(f"Некоторые зависимости для {system_name} еще не созданы — создание продолжится, инициализация будет упорядочена")
             
             # Создаем систему
             system_class = self.system_registry[system_name]
@@ -79,6 +86,13 @@ class SystemFactory:
             if 'event_system' in system_class.__init__.__code__.co_varnames:
                 init_kwargs.setdefault('event_system', self.event_system)
             system = system_class(**init_kwargs)
+
+            # Инъекция адаптера event_bus для совместимости
+            try:
+                if getattr(system, 'event_bus', None) is None and self.event_bus_adapter is not None:
+                    setattr(system, 'event_bus', self.event_bus_adapter)
+            except Exception:
+                pass
             
             # Добавляем в менеджер систем
             dependencies = self.system_dependencies.get(system_name, [])
@@ -99,43 +113,27 @@ class SystemFactory:
         return self.created_systems.get(system_name)
     
     def initialize_all_systems(self) -> bool:
-        """Инициализация всех систем"""
+        """Инициализация всех систем через менеджер систем (без двойной инициализации)."""
         try:
-            logger.info("Инициализация всех систем...")
-            
-            # Определяем порядок инициализации на основе зависимостей
-            init_order = self._determine_initialization_order()
-            
-            for system_name in init_order:
-                if system_name in self.created_systems:
-                    system = self.created_systems[system_name]
-                    if not system.initialize():
-                        logger.error(f"Не удалось инициализировать систему {system_name}")
-                        return False
-                    logger.info(f"Система {system_name} инициализирована")
-            
-            # Инициализируем менеджер систем
-            if not self.system_manager.initialize():
-                logger.error("Не удалось инициализировать менеджер систем")
-                return False
-            
-            logger.info("Все системы успешно инициализированы")
-            return True
-            
+            logger.info("Инициализация всех систем (через SystemManager)...")
+            return self.system_manager.initialize()
         except Exception as e:
             logger.error(f"Ошибка инициализации систем: {e}")
             return False
     
     def _check_dependencies(self, system_name: str) -> bool:
-        """Проверка зависимостей системы"""
+        """Проверка зависимостей системы.
+        Контекстные зависимости (config_manager, event_system и пр.) считаются удовлетворенными."""
         dependencies = self.system_dependencies.get(system_name, [])
-        
+        context_deps = {"event_system", "config_manager", "resource_manager", "scene_manager", "system_manager"}
+        ok = True
         for dep in dependencies:
+            if dep in context_deps:
+                continue
             if dep not in self.created_systems:
-                logger.warning(f"Зависимость {dep} для системы {system_name} не создана")
-                return False
-        
-        return True
+                logger.debug(f"Зависимость {dep} для системы {system_name} еще не создана")
+                ok = False
+        return ok
     
     def _determine_initialization_order(self) -> list:
         """Определение порядка инициализации систем"""
@@ -171,11 +169,16 @@ class SystemFactory:
     def update_all_systems(self, delta_time: float) -> None:
         """Обновление всех систем"""
         try:
-            for system_name, system in self.created_systems.items():
-                try:
-                    system.update(delta_time)
-                except Exception as e:
-                    logger.error(f"Ошибка обновления системы {system_name}: {e}")
+            # Делегируем обновление менеджеру систем, чтобы избежать двойных апдейтов
+            if self.system_manager:
+                self.system_manager.update_all_systems(delta_time)
+            else:
+                # Fallback на прямое обновление при отсутствии менеджера
+                for system_name, system in self.created_systems.items():
+                    try:
+                        system.update(delta_time)
+                    except Exception as e:
+                        logger.error(f"Ошибка обновления системы {system_name}: {e}")
         except Exception as e:
             logger.error(f"Ошибка обновления систем: {e}")
     
@@ -227,6 +230,13 @@ class SystemFactory:
             
             from ..systems.items.item_system import ItemSystem
             self.register_system('item_system', ItemSystem)
+            
+            # Социальная система
+            try:
+                from ..systems.social.social_system import SocialSystem
+                self.register_system('social_system', SocialSystem)
+            except Exception:
+                pass
             
             from ..systems.emotion.emotion_system import EmotionSystem
             self.register_system('emotion_system', EmotionSystem)

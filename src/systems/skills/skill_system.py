@@ -12,8 +12,9 @@ from dataclasses import dataclass, field
 from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     SkillType, SkillCategory, DamageType, StatType, TriggerType,
-    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
-    SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS
+    BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
+    SKILL_GENERATION_TEMPLATES, SKILL_POWER_MULTIPLIERS,
+    TIME_CONSTANTS_RO, get_float
 )
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ class SkillSystem(BaseGameSystem):
         
         # Настройки системы
         self.system_settings = {
-            'max_skills_per_entity': SYSTEM_LIMITS["max_skills_per_entity"],
+            'max_skills_per_entity': SYSTEM_LIMITS_RO["max_skills_per_entity"],
             'max_skill_level': 20,
             'cooldown_reduction_cap': 0.8,  # Максимум 80% сокращения
             'skill_combining_enabled': True,

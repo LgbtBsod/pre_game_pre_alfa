@@ -16,8 +16,10 @@ from ...core.state_manager import StateManager, StateType, StateScope
 from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     EffectCategory, TriggerType, DamageType, StatType,
-    BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    BASE_STATS, PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float, normalize_trigger, normalize_ui_event
 )
+from ...core.entity_registry import get_entity
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +90,7 @@ class EffectSystem(BaseGameSystem):
         self.system_settings = {
             'max_effects_per_entity': SYSTEM_LIMITS["max_effects_per_entity"],
             'max_special_effects': 100,
-            'effect_cleanup_interval': TIME_CONSTANTS["effect_cleanup_interval"],
+            'effect_cleanup_interval': get_float(TIME_CONSTANTS_RO, "effect_cleanup_interval", 60.0),
             'stacking_enabled': True,
             'effect_combining_enabled': True
         }
@@ -195,8 +197,17 @@ class EffectSystem(BaseGameSystem):
             
             start_time = time.time()
             
+            # Троттлинг обновления согласно конфигу
+            if not hasattr(self, '_accumulated_time'):
+                self._accumulated_time = 0.0
+            self._accumulated_time += delta_time
+            if self._accumulated_time < get_float(TIME_CONSTANTS_RO, "effect_update_interval", 0.1):
+                return True
+            throttle_dt = self._accumulated_time
+            self._accumulated_time = 0.0
+            
             # Обновляем активные эффекты
-            self._update_active_effects(delta_time)
+            self._update_active_effects(throttle_dt)
             
             # Очищаем истекшие эффекты
             self._cleanup_expired_effects()
@@ -394,6 +405,9 @@ class EffectSystem(BaseGameSystem):
     def handle_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий - интеграция с новой архитектурой"""
         try:
+            if isinstance(event_type, str):
+                norm_tr = normalize_trigger(event_type)
+                event_type = norm_tr.value if norm_tr else normalize_ui_event(event_type)
             if event_type == "effect_applied":
                 return self._handle_effect_applied(event_data)
             elif event_type == "effect_removed":
@@ -821,11 +835,19 @@ class EffectSystem(BaseGameSystem):
     def _on_apply_effect_event(self, data: Dict[str, Any]) -> None:
         try:
             effect_id = data.get('effect_id')
+            target = data.get('target')
             target_id = data.get('target_id') or data.get('entity_id')
-            applied_by = data.get('applied_by')
+            applied_by = data.get('applied_by') or data.get('source_id')
+            if target is None and target_id:
+                target = get_entity(target_id)
             duration = data.get('duration')
-            if effect_id and target_id:
-                self.apply_effect_to_entity(effect_id, target_id, applied_by, duration)
+            if effect_id and (target_id or target is not None):
+                # В системе эффектов активные эффекты хранятся по entity_id, но используем id, если объект известен
+                resolved_target_id = target_id
+                if resolved_target_id is None and target is not None:
+                    resolved_target_id = getattr(target, 'id', getattr(target, 'entity_id', None))
+                if resolved_target_id:
+                    self.apply_effect_to_entity(effect_id, resolved_target_id, applied_by, duration)
         except Exception:
             pass
 

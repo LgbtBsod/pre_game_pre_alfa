@@ -16,7 +16,8 @@ from ...core.state_manager import StateManager, StateType, StateScope
 from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     RelationshipType, InteractionType, ReputationType, SocialStatus, FactionType, CommunicationChannel,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float
 )
 
 from .social_data import Relationship, Interaction, Reputation
@@ -69,7 +70,7 @@ class SocialSystem(BaseGameSystem):
         self.system_settings = {
             'max_relationships': SYSTEM_LIMITS["max_relationships"],
             'relationship_decay_rate': PROBABILITY_CONSTANTS["relationship_decay_rate"],
-            'interaction_cooldown': TIME_CONSTANTS["interaction_cooldown"],
+            'interaction_cooldown': get_float(TIME_CONSTANTS_RO, "interaction_cooldown", 300.0),
             'reputation_decay_rate': PROBABILITY_CONSTANTS["reputation_decay_rate"],
             'faction_influence': PROBABILITY_CONSTANTS["faction_influence"],
             'interaction_success_rate': PROBABILITY_CONSTANTS["interaction_success_rate"]
@@ -97,9 +98,9 @@ class SocialSystem(BaseGameSystem):
             if event_bus is not None:
                 self.event_bus = event_bus
             
+            # Допускаем работу в деградированном режиме без внешних менеджеров
             if not self.state_manager or not self.repository_manager:
-                logger.error("Не заданы зависимости state_manager или repository_manager")
-                return False
+                logger.warning("SocialSystem: отсутствуют state_manager или repository_manager — работаем в локальном режиме")
             
             # Регистрация состояний системы
             self._register_system_states()
@@ -490,7 +491,7 @@ class SocialSystem(BaseGameSystem):
                 for relationship in profile.relationships.values():
                     # Затухание только для старых отношений
                     time_since_last = time.time() - relationship.last_interaction
-                    if time_since_last > TIME_CONSTANTS["relationship_update_interval"]:
+                    if time_since_last > get_float(TIME_CONSTANTS_RO, "relationship_update_interval", 3600.0):
                         relationship.strength *= (1.0 - decay_rate)
                         
         except Exception as e:

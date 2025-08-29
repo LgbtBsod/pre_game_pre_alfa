@@ -16,7 +16,8 @@ from ...core.state_manager import StateManager, StateType, StateScope
 from ...core.repository import RepositoryManager, DataType, StorageType
 from ...core.constants import (
     QuestType, QuestStatus, QuestRewardType, QuestDifficulty, QuestCategory,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float
 )
 
 from .quest_data import Quest, QuestObjective, QuestReward, QuestPrerequisite
@@ -74,7 +75,7 @@ class QuestSystem(BaseGameSystem):
         self.system_settings = {
             'max_active_quests': SYSTEM_LIMITS["max_active_quests"],
             'max_daily_quests': SYSTEM_LIMITS["max_daily_quests"],
-            'quest_expiration_time': TIME_CONSTANTS["quest_expiration_time"],
+            'quest_expiration_time': get_float(TIME_CONSTANTS_RO, "quest_expiration_time", 86400.0),
             'quest_chain_bonus': 1.5,
             'hidden_quest_chance': PROBABILITY_CONSTANTS["hidden_quest_chance"],
             'epic_quest_chance': PROBABILITY_CONSTANTS["epic_quest_chance"]
@@ -104,8 +105,7 @@ class QuestSystem(BaseGameSystem):
                 self.event_bus = event_bus
             
             if not self.state_manager or not self.repository_manager:
-                logger.error("Не заданы зависимости state_manager или repository_manager")
-                return False
+                logger.warning("QuestSystem: отсутствуют state_manager или repository_manager — работаем в локальном режиме")
             
             # Регистрация состояний системы
             self._register_system_states()

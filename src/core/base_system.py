@@ -11,7 +11,7 @@ import time
 import logging
 
 from .interfaces import ISystem, SystemPriority, SystemState
-from .constants import SYSTEM_LIMITS, TIME_CONSTANTS
+from .constants import SYSTEM_LIMITS, TIME_CONSTANTS_RO, get_float
 
 
 @dataclass
@@ -51,7 +51,7 @@ class BaseSystem(ISystem, ABC):
         
         # Время последнего обновления
         self._last_update = 0.0
-        self._update_interval = TIME_CONSTANTS["update_interval"]
+        self._update_interval = get_float(TIME_CONSTANTS_RO, "update_interval", 1.0/60.0)
         
         # Кэш для оптимизации
         self._cache: Dict[str, Any] = {}

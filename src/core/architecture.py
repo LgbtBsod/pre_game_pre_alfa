@@ -364,6 +364,13 @@ class EventBus(BaseComponent, IEventBus):
         
         self._event_queue.append(event)
         return True
+
+    # --- Aliases for convenience ---
+    def on(self, event_type: str, handler: callable, priority: Priority = Priority.NORMAL) -> bool:
+        return self.subscribe(event_type, handler, priority)
+
+    def emit(self, event_type: str, data: Dict[str, Any] = None, priority: Priority = Priority.NORMAL) -> bool:
+        return self.publish(create_event(event_type, self.component_id, data, priority))
     
     def process_events(self) -> int:
         """Обработка событий в очереди"""

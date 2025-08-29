@@ -81,6 +81,7 @@ class UnifiedAISystem(BaseGameSystem):
         # Внешние зависимости
         self.config_manager = config_manager
         self.event_system = event_system
+        self.event_bus = None
         
         # Конфигурация системы
         self.config = UnifiedAIConfig()
@@ -133,9 +134,20 @@ class UnifiedAISystem(BaseGameSystem):
             if not self._initialize_subsystems():
                 return False
             
-            # Регистрация обработчиков событий
-            if self.event_system:
-                self._register_event_handlers()
+            # Регистрация обработчиков событий через event_bus (fallback на event_system)
+            try:
+                if self.event_bus:
+                    self.event_bus.on("entity_created", self._on_entity_created)
+                    self.event_bus.on("entity_destroyed", self._on_entity_destroyed)
+                    self.event_bus.on("combat_started", self._on_combat_started)
+                    self.event_bus.on("combat_ended", self._on_combat_ended)
+                    self.event_bus.on("damage_dealt", self._on_damage_dealt)
+                    self.event_bus.on("damage_received", self._on_damage_received)
+                elif self.event_system:
+                    self._register_event_handlers()
+            except Exception:
+                if self.event_system:
+                    self._register_event_handlers()
             
             # Регистрация состояний и репозиториев
             self._register_system_states()

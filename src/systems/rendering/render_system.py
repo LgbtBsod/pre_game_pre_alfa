@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     RenderQuality, RenderLayer, StatType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS,
+    TIME_CONSTANTS_RO, get_float, get_time_constant
 )
 from ...core.constants import EmotionType
 

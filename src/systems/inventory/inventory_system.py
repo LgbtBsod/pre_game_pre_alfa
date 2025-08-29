@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 from ...core.system_interfaces import BaseGameSystem, Priority
 from ...core.constants import (
     ItemType, ItemRarity, ItemCategory, StatType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
+    TIME_CONSTANTS_RO, get_float
 )
 
 logger = logging.getLogger(__name__)
@@ -31,8 +32,8 @@ class Inventory:
     """Инвентарь сущности"""
     entity_id: str
     slots: List[InventorySlot] = field(default_factory=list)
-    max_slots: int = SYSTEM_LIMITS["max_inventory_slots"]
-    max_weight: float = SYSTEM_LIMITS["max_inventory_weight"]
+    max_slots: int = SYSTEM_LIMITS_RO["max_inventory_slots"]
+    max_weight: float = SYSTEM_LIMITS_RO["max_inventory_weight"]
     current_weight: float = 0.0
     is_expandable: bool = True
     expansion_cost: int = 100
@@ -44,7 +45,7 @@ class ItemStack:
     """Стек предметов"""
     item_id: str
     count: int
-    max_stack_size: int = SYSTEM_LIMITS["max_item_stack_size"]
+    max_stack_size: int = SYSTEM_LIMITS_RO["max_item_stack_size"]
     quality: float = 1.0
     durability: float = 1.0
     created_time: float = field(default_factory=time.time)
@@ -67,10 +68,10 @@ class InventorySystem(BaseGameSystem):
         
         # Настройки системы
         self.system_settings = {
-            'default_slots': SYSTEM_LIMITS["default_inventory_slots"],
-            'max_slots': SYSTEM_LIMITS["max_inventory_slots"],
-            'max_weight': SYSTEM_LIMITS["max_inventory_weight"],
-            'max_stack_size': SYSTEM_LIMITS["max_item_stack_size"],
+            'default_slots': SYSTEM_LIMITS_RO["default_inventory_slots"],
+            'max_slots': SYSTEM_LIMITS_RO["max_inventory_slots"],
+            'max_weight': SYSTEM_LIMITS_RO["max_inventory_weight"],
+            'max_stack_size': SYSTEM_LIMITS_RO["max_item_stack_size"],
             'weight_check_enabled': True,
             'stacking_enabled': True,
             'auto_sort_enabled': False
@@ -169,11 +170,20 @@ class InventorySystem(BaseGameSystem):
             
             start_time = time.time()
             
+            # Троттлинг обновления согласно конфигу
+            if not hasattr(self, '_accum_time'):
+                self._accum_time = 0.0
+            self._accum_time += delta_time
+            if self._accum_time < get_float(TIME_CONSTANTS_RO, "inventory_update_interval", 0.1):
+                return
+            throttle_dt = self._accum_time
+            self._accum_time = 0.0
+            
             # Обновляем инвентари
-            self._update_inventories(delta_time)
+            self._update_inventories(throttle_dt)
             
             # Проверяем предметы на истечение срока
-            self._check_expired_items(delta_time)
+            self._check_expired_items(throttle_dt)
             
             # Обновляем статистику системы
             self._update_system_stats()
@@ -225,9 +235,11 @@ class InventorySystem(BaseGameSystem):
             return
             
         try:
-            self.repository_manager.register_repository("inventories", "inventories", "memory")
-            self.repository_manager.register_repository("item_stacks", "item_stacks", "memory")
-            self.repository_manager.register_repository("inventory_history", "inventory_history", "memory")
+            from ...core.repository import DataType, StorageType
+            self.repository_manager.register_repository("inventories", DataType.DYNAMIC_DATA, StorageType.MEMORY, self.inventories)
+            self.repository_manager.register_repository("item_stacks", DataType.ENTITY_DATA, StorageType.MEMORY, self.item_stacks)
+            self.repository_manager.register_repository("inventory_history", DataType.HISTORY, StorageType.MEMORY, self.inventory_history)
+            self.repository_manager.register_repository("inventory_metrics", DataType.STATISTICS, StorageType.MEMORY, {})
             logger.debug("Репозитории системы инвентаря зарегистрированы")
             
         except Exception as e:
@@ -376,7 +388,7 @@ class InventorySystem(BaseGameSystem):
     
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
-        return {
+        info = {
             'name': self.system_name,
             'state': self.system_state.value,
             'priority': self.system_priority.value,
@@ -386,6 +398,9 @@ class InventorySystem(BaseGameSystem):
             'total_weight': self.system_stats['total_weight'],
             'stats': self.system_stats
         }
+        info['items_added'] = self.system_stats.get('items_added', 0)
+        info['items_removed'] = self.system_stats.get('items_removed', 0)
+        return info
     
     def _setup_inventory_system(self) -> None:
         """Настройка системы инвентаря"""
@@ -699,6 +714,19 @@ class InventorySystem(BaseGameSystem):
             
             self.system_stats['items_added'] += 1
             logger.debug(f"Добавлен предмет {item_id} в инвентарь {entity_id}")
+
+            # Эмитим событие для систем эмоций/эффектов/рендера
+            try:
+                if self.event_bus:
+                    self.event_bus.emit("item_added_to_inventory", {
+                        'entity_id': entity_id,
+                        'item_id': item_id,
+                        'count': count,
+                        'slot_id': target_slot.slot_id,
+                        'quality': quality
+                    })
+            except Exception:
+                pass
             return True
             
         except Exception as e:
@@ -778,6 +806,18 @@ class InventorySystem(BaseGameSystem):
             
             self.system_stats['items_removed'] += 1
             logger.debug(f"Удален предмет {item_id} из инвентаря {entity_id}")
+
+            # Эмитим событие об удалении
+            try:
+                if self.event_bus:
+                    self.event_bus.emit("item_removed_from_inventory", {
+                        'entity_id': entity_id,
+                        'item_id': item_id,
+                        'count': removed_count,
+                        'slot_id': target_slot.slot_id
+                    })
+            except Exception:
+                pass
             return True
             
         except Exception as e:

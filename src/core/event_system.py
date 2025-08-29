@@ -96,6 +96,15 @@ class EventSystem(IEventSystem):
                    priority: EventPriority = EventPriority.NORMAL) -> bool:
         return self.emit(event_type, event_data, source, priority)
 
+    # --- Aliases to unify with EventBus API ---
+    def on(self, event_type: str, handler: Callable, priority: EventPriority = EventPriority.NORMAL) -> bool:
+        """Alias compatible with EventBus.on(event_type, handler, priority)."""
+        try:
+            subscriber_id = getattr(handler, '__name__', 'subscriber')
+            return self.subscribe(event_type, handler, subscriber_id, priority)
+        except Exception:
+            return False
+
     def subscribe(self, event_type: str, callback: Callable, 
                   subscriber_id: str = "unknown", 
                   priority: EventPriority = EventPriority.NORMAL) -> bool:
@@ -191,6 +200,23 @@ class EventSystem(IEventSystem):
         
         try:
             processed_count = 0
+            # Метрики: периодическая сводка по очереди событий раз в ~5 секунд
+            try:
+                now = time.time()
+                if not hasattr(self, '_last_metrics_log'):
+                    self._last_metrics_log = 0.0
+                # Читаем флаг из конфигурации, если доступен через глобальный менеджер
+                enable_metrics = True
+                try:
+                    from .config_manager import ConfigManager  # локально
+                    # Если конфиг загружен глобально, можно внедрить через init в будущем
+                except Exception:
+                    pass
+                if now - self._last_metrics_log >= 5.0 and enable_metrics:
+                    logger.debug(f"[events] queue_len={len(self.event_queue)} processed_total={self.events_processed} emitted_total={self.events_emitted}")
+                    self._last_metrics_log = now
+            except Exception:
+                pass
             
             # Обрабатываем события по приоритету
             while self.event_queue:

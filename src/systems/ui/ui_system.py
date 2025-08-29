@@ -14,9 +14,10 @@ from enum import Enum
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     UIElementType, UIState, StatType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
+    PROBABILITY_CONSTANTS, SYSTEM_LIMITS_RO,
     WorldObjectType, ObjectCategory, ObjectState, CreatorMode, ToolType,
-    WORLD_SETTINGS, UI_SETTINGS, DEFAULT_OBJECT_TEMPLATES, UI_COLORS
+    WORLD_SETTINGS, UI_SETTINGS, DEFAULT_OBJECT_TEMPLATES, UI_COLORS,
+    get_time_constant, normalize_trigger, normalize_ui_event
 )
 
 logger = logging.getLogger(__name__)
@@ -146,8 +147,8 @@ class UISystem(ISystem):
         # Настройки системы
         self.system_settings = UI_SETTINGS.copy()
         self.system_settings.update({
-            'max_ui_elements': SYSTEM_LIMITS["max_ui_elements"],
-            'max_layers': SYSTEM_LIMITS["max_ui_layers"],
+            'max_ui_elements': SYSTEM_LIMITS_RO["max_ui_elements"],
+            'max_layers': SYSTEM_LIMITS_RO["max_ui_layers"],
             'grid_snap': WORLD_SETTINGS["grid_snap"],
             'grid_size': WORLD_SETTINGS["grid_size"],
             'show_preview': WORLD_SETTINGS["show_preview"],
@@ -212,6 +213,54 @@ class UISystem(ISystem):
             logger.error(f"Ошибка инициализации системы UI: {e}")
             self._system_state = SystemState.ERROR
             return False
+
+    # --- Normalizers -------------------------------------------------------
+    def _normalize_element_type(self, value: Any) -> UIElementType:
+        try:
+            if isinstance(value, UIElementType):
+                return value
+            if isinstance(value, str):
+                v = value.strip().lower()
+                for e in UIElementType:
+                    if e.value == v or e.name.lower() == v:
+                        return e
+            return UIElementType.PANEL
+        except Exception:
+            return UIElementType.PANEL
+
+    def _normalize_ui_state(self, value: Any) -> UIState:
+        try:
+            if isinstance(value, UIState):
+                return value
+            if isinstance(value, str):
+                v = value.strip().lower()
+                for s in UIState:
+                    if s.value == v or s.name.lower() == v:
+                        return s
+            return UIState.NORMAL
+        except Exception:
+            return UIState.NORMAL
+
+    def _normalize_event_handlers(self, handlers: Dict[str, str]) -> Dict[str, str]:
+        try:
+            normalized: Dict[str, str] = {}
+            for k, v in (handlers or {}).items():
+                if not isinstance(k, str):
+                    continue
+                key = k.strip().lower()
+                # Локальные алиасы для UI событий
+                key = normalize_ui_event(key)
+                # Попытка нормализовать общесистемным normalizer (если совпадает по семантике)
+                try:
+                    norm = normalize_trigger(key)
+                    if hasattr(norm, 'value'):
+                        key = norm.value
+                except Exception:
+                    pass
+                normalized[key] = v
+            return normalized
+        except Exception:
+            return handlers or {}
     
     def update(self, delta_time: float) -> bool:
         """Обновление системы UI"""
@@ -255,6 +304,8 @@ class UISystem(ISystem):
         """Применение настроек частоты обновления и лимита очереди"""
         try:
             hz = int(self.system_settings.get('ui_update_hz', 30))
+            # UI FPS может зависеть от глобальной константы, с поддержкой legacy алиасов
+            ui_anim_dur = get_time_constant("ui_animation_duration", 0.3)
             self._update_interval = 1.0 / max(1, hz)
             self._max_events_per_tick = int(self.system_settings.get('max_events_per_tick', 64))
         except Exception as e:
@@ -979,13 +1030,13 @@ class UISystem(ISystem):
             # Создаем UI элемент
             ui_element = UIElement(
                 element_id=element_id,
-                element_type=UIElementType(element_data.get('element_type', UIElementType.PANEL.value)),
+                element_type=self._normalize_element_type(element_data.get('element_type', UIElementType.PANEL.value)),
                 name=element_data.get('name', ''),
                 position=element_data.get('position', (0.0, 0.0)),
                 size=element_data.get('size', (100.0, 100.0)),
                 visible=element_data.get('visible', True),
                 enabled=element_data.get('enabled', True),
-                state=UIState(element_data.get('state', UIState.NORMAL.value)),
+                state=self._normalize_ui_state(element_data.get('state', UIState.NORMAL.value)),
                 text=norm_text,
                 icon=element_data.get('icon', ''),
                 color=element_data.get('color', (255, 255, 255, 255)),
@@ -993,7 +1044,7 @@ class UISystem(ISystem):
                 border_color=element_data.get('border_color', (128, 128, 128, 255)),
                 font_size=element_data.get('font_size', 14),
                 parent_id=element_data.get('parent_id'),
-                event_handlers=element_data.get('event_handlers', {}),
+                event_handlers=self._normalize_event_handlers(element_data.get('event_handlers', {})),
                 custom_data=element_data.get('custom_data', {}),
                 layer=int(element_data.get('layer', 0))
             )
@@ -1031,6 +1082,14 @@ class UISystem(ISystem):
                 except Exception:
                     update_data['text'] = str(update_data['text'])
             
+            # Нормализация enum-полей при обновлении
+            if 'element_type' in update_data:
+                update_data['element_type'] = self._normalize_element_type(update_data['element_type'])
+            if 'state' in update_data:
+                update_data['state'] = self._normalize_ui_state(update_data['state'])
+            if 'event_handlers' in update_data and isinstance(update_data['event_handlers'], dict):
+                update_data['event_handlers'] = self._normalize_event_handlers(update_data['event_handlers'])
+
             # Обновляем свойства
             for key, value in update_data.items():
                 if hasattr(ui_element, key):

@@ -12,7 +12,7 @@ from panda3d.core import NodePath, PandaNode, Vec3, Point3, LVector3
 from panda3d.core import OrthographicLens, PerspectiveLens
 from panda3d.core import DirectionalLight, AmbientLight
 from panda3d.core import TransparencyAttrib, AntialiasAttrib
-from panda3d.core import TextNode, PandaNode
+from panda3d.core import TextNode
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 from direct.gui.DirectButton import DirectButton
@@ -28,6 +28,7 @@ from ..systems.effects.effect_system import EffectSystem
 from ..systems.items.item_system import ItemFactory
 from ..systems.skills.skill_system import SkillTree
 from ..systems.content.content_generator import ContentGenerator
+from ..core.entity_registry import register_entity, unregister_entity
 
 logger = logging.getLogger(__name__)
 
@@ -388,6 +389,10 @@ class GameScene(Scene):
             self.effect_system.register_item_effects(lightning_ring)
         
         self.entities.append(player)
+        try:
+            register_entity(player['id'], player)
+        except Exception:
+            pass
         
         logger.debug("Тестовый игрок создан с системами")
     
@@ -503,6 +508,10 @@ class GameScene(Scene):
                     logger.info(f"NPC {config['id']} не смог изучить Исцеление (ограничения генома)")
             
             self.entities.append(npc)
+            try:
+                register_entity(npc['id'], npc)
+            except Exception:
+                pass
             
         logger.debug(f"Создано {len(npc_configs)} тестовых NPC с системами")
     
@@ -568,7 +577,7 @@ class GameScene(Scene):
     def _create_basic_geometry(self, entity: Dict[str, Any]) -> NodePath:
         """Создание базовой геометрии для сущности"""
         from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
-        from panda3d.core import GeomVertexWriter, GeomTriangles, GeomNode
+        from panda3d.core import GeomVertexWriter, GeomTriangles
         
         entity_type = entity.get('type', 'unknown')
         
@@ -657,37 +666,11 @@ class GameScene(Scene):
         np.setColor(0, 1, 1, 0.8)  # Неоновый голубой
         
         return np
-        for i in range(segments):
-            i1 = i
-            i2 = (i + 1) % segments
-            i3 = i + segments
-            i4 = (i + 1) % segments + segments
-            
-            # Первый треугольник
-            prim.addVertices(i1, i2, i3)
-            prim.closePrimitive()
-            # Второй треугольник
-            prim.addVertices(i2, i4, i3)
-            prim.closePrimitive()
-        
-        # Создаем геометрию
-        geom = Geom(vdata)
-        geom.addPrimitive(prim)
-        
-        # Создаем узел
-        node = GeomNode('player')
-        node.addGeom(geom)
-        
-        # Создаем NodePath и устанавливаем позицию
-        np = self.entities_root.attachNewNode(node)
-        np.setPos(entity['x'], entity['y'], entity['z'])
-        
-        return np
     
     def _create_npc_geometry(self, entity: Dict[str, Any]) -> NodePath:
         """Создание геометрии NPC (куб с неоновым эффектом)"""
         from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
-        from panda3d.core import GeomVertexWriter, GeomTriangles, GeomNode
+        from panda3d.core import GeomVertexWriter, GeomTriangles
         
         # Создаем куб для NPC
         format = GeomVertexFormat.getV3c4()
@@ -751,7 +734,7 @@ class GameScene(Scene):
     def _create_cube_geometry(self, entity: Dict[str, Any]) -> NodePath:
         """Создание базовой кубической геометрии"""
         from panda3d.core import GeomNode, Geom, GeomVertexData, GeomVertexFormat
-        from panda3d.core import GeomVertexWriter, GeomTriangles, GeomNode
+        from panda3d.core import GeomVertexWriter, GeomTriangles
         
         # Создаем геометрию куба
         format = GeomVertexFormat.getV3c4()
@@ -1036,22 +1019,24 @@ class GameScene(Scene):
     def _update_game_systems(self, delta_time: float):
         """Обновление игровых систем"""
         try:
-            # Обновляем AI систему
-            self.ai_manager.update_all_systems(delta_time)
+            # Если доступен менеджер систем в сцене — доверяем обновление ему
+            if hasattr(self, 'scene_manager') and hasattr(self.scene_manager, 'system_manager') and self.scene_manager.system_manager:
+                try:
+                    self.scene_manager.system_manager.update_all_systems(delta_time)
+                    return
+                except Exception:
+                    pass
             
-            # Обновляем систему боя
-            if 'combat' in self.systems and hasattr(self.systems['combat'], 'update_combat'):
-                self.systems['combat'].update_combat(delta_time)
-            
-            # Обновляем систему крафтинга
-            if 'crafting' in self.systems and hasattr(self.systems['crafting'], 'update_crafting'):
-                self.systems['crafting'].update_crafting(delta_time)
-                
-            # Обновляем систему эффектов
-            if 'evolution' in self.systems and hasattr(self.systems['evolution'], 'update_effects'):
-                self.systems['evolution'].update_effects(delta_time)
+            # Иначе fallback: минимально необходимое локальное обновление
+            try:
+                self.ai_manager.update_all_systems(delta_time)
+            except Exception:
+                pass
             if hasattr(self, 'effect_system'):
-                self.effect_system.update(delta_time)
+                try:
+                    self.effect_system.update(delta_time)
+                except Exception:
+                    pass
             
         except Exception as e:
             logger.warning(f"Ошибка обновления игровых систем: {e}")
@@ -1094,6 +1079,10 @@ class GameScene(Scene):
                     }
                     obj['node'] = self._create_entity_node(obj)
                     self.entities.append(obj)
+                    try:
+                        register_entity(obj['id'], obj)
+                    except Exception:
+                        pass
             except Exception:
                 pass
     
@@ -1494,6 +1483,10 @@ class GameScene(Scene):
             if entity['node']:
                 entity['node'].removeNode()
             self.entities.remove(entity)
+            try:
+                unregister_entity(entity['id'])
+            except Exception:
+                pass
             
             # Создаем новую сущность того же типа (реинкарнация)
             if entity['type'] == 'player':

@@ -54,6 +54,7 @@ class AIIntegrationSystem:
     def __init__(self, event_system=None, ai_system: AISystem = None, combat_system: CombatSystem = None, 
                  content_db: ContentDatabase = None, inventory_system = None):
         self.event_system = event_system
+        self.event_bus = None
         self.ai_system = ai_system
         self.combat_system = combat_system
         self.content_db = content_db
@@ -65,9 +66,21 @@ class AIIntegrationSystem:
         # Системы характеристик для сущностей
         self.entity_stats: Dict[str, EntityStats] = {}
         
-        # Подписка на события
-        if self.event_system:
-            self._subscribe_to_events()
+        # Подписка на события через event_bus (fallback на event_system)
+        try:
+            if self.event_bus:
+                self.event_bus.on("entity_damaged", self._on_entity_damaged)
+                self.event_bus.on("entity_healed", self._on_entity_healed)
+                self.event_bus.on("item_acquired", self._on_item_acquired)
+                self.event_bus.on("skill_learned", self._on_skill_learned)
+                self.event_bus.on("level_up", self._on_level_up)
+                self.event_bus.on("combat_started", self._on_combat_started)
+                self.event_bus.on("combat_ended", self._on_combat_ended)
+            elif self.event_system:
+                self._subscribe_to_events()
+        except Exception:
+            if self.event_system:
+                self._subscribe_to_events()
         
         logger.info("AI Integration System инициализирована")
     

@@ -10,7 +10,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 from ...core.system_interfaces import BaseGameSystem, Priority
-from ...core.constants import SYSTEM_LIMITS, TIME_CONSTANTS, PROBABILITY_CONSTANTS, DamageType
+from ...core.constants import (
+    SYSTEM_LIMITS_RO, PROBABILITY_CONSTANTS, DamageType,
+    TIME_CONSTANTS_RO, get_float, canonicalize_damage_type
+)
+from ...core.entity_registry import get_entity
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +44,7 @@ class Damage:
         # Учет сопротивлений
         resistance = target.get_resistance(self.damage_type)
         # Ограничиваем проникновение максимальным значением
-        penetration = min(self.penetration, SYSTEM_LIMITS["max_penetration_value"])
+        penetration = min(self.penetration, SYSTEM_LIMITS_RO["max_penetration_value"])
         resistance = max(0, resistance - penetration)  # Применяем проникновение
         # Ограничиваем сопротивление максимальным значением
         resistance = min(resistance, PROBABILITY_CONSTANTS["base_resistance_cap"])
@@ -56,7 +60,7 @@ class Damage:
         
         # Ограничиваем финальный урон
         final_damage = max(PROBABILITY_CONSTANTS["base_damage_floor"], 
-                          min(SYSTEM_LIMITS["max_damage_value"], final_damage))
+                          min(SYSTEM_LIMITS_RO["max_damage_value"], final_damage))
         
         return int(final_damage)
 
@@ -91,7 +95,7 @@ class DamageSystem(BaseGameSystem):
         
         # Настройки системы
         self.system_settings = {
-            'max_damage_modifiers': SYSTEM_LIMITS["max_damage_modifiers"],
+            'max_damage_modifiers': SYSTEM_LIMITS_RO["max_damage_modifiers"],
             'damage_combination_threshold': PROBABILITY_CONSTANTS["base_damage_combination_threshold"],
             'critical_chance_base': PROBABILITY_CONSTANTS["base_critical_chance"],
             'critical_multiplier_base': PROBABILITY_CONSTANTS["base_critical_multiplier"]
@@ -146,11 +150,11 @@ class DamageSystem(BaseGameSystem):
     
     def add_damage_modifier(self, modifier: DamageModifier):
         """Добавление модификатора урона"""
-        if len(self.damage_modifiers) < SYSTEM_LIMITS["max_damage_modifiers"]:
+        if len(self.damage_modifiers) < SYSTEM_LIMITS_RO["max_damage_modifiers"]:
             self.damage_modifiers[modifier.source] = modifier
             logger.debug(f"Добавлен модификатор урона: {modifier.source}")
         else:
-            logger.warning(f"Достигнут лимит модификаторов урона: {SYSTEM_LIMITS['max_damage_modifiers']}")
+            logger.warning(f"Достигнут лимит модификаторов урона: {SYSTEM_LIMITS_RO['max_damage_modifiers']}")
     
     def remove_damage_modifier(self, source: str):
         """Удаление модификатора урона"""
@@ -216,7 +220,7 @@ class DamageSystem(BaseGameSystem):
         self._last_cleanup_time += dt
         
         # Очищаем только через определенные интервалы
-        if self._last_cleanup_time < TIME_CONSTANTS["damage_modifier_cleanup"]:
+        if self._last_cleanup_time < get_float(TIME_CONSTANTS_RO, "damage_modifier_cleanup", 5.0):
             return
         
         expired_modifiers = []
@@ -240,22 +244,28 @@ class DamageSystem(BaseGameSystem):
             'damage_stats': self.damage_stats,
             'active_modifiers': len(self.damage_modifiers),
             'system_limits': {
-                'max_damage_modifiers': SYSTEM_LIMITS["max_damage_modifiers"],
-                'max_damage_value': SYSTEM_LIMITS["max_damage_value"],
-                'max_penetration_value': SYSTEM_LIMITS["max_penetration_value"]
+                'max_damage_modifiers': SYSTEM_LIMITS_RO["max_damage_modifiers"],
+                'max_damage_value': SYSTEM_LIMITS_RO["max_damage_value"],
+                'max_penetration_value': SYSTEM_LIMITS_RO["max_penetration_value"]
             }
         }
 
     # --- Event bus integration ---
     def _on_deal_damage_event(self, data: Dict[str, Any]) -> None:
         try:
-            target = data.get('target') or data.get('target_id')
-            source = data.get('source') or data.get('source_id')
+            target = data.get('target')
+            source = data.get('source')
+            target_id = data.get('target_id')
+            source_id = data.get('source_id')
+            if target is None and target_id:
+                target = get_entity(target_id)
+            if source is None and source_id:
+                source = get_entity(source_id)
             amount = data.get('amount', 0)
             damage_type = data.get('damage_type', DamageType.PHYSICAL.value)
             # В реальной интеграции здесь получаем объекты сущностей по id
             if hasattr(target, 'take_damage'):
-                dmg = Damage(amount=amount, damage_type=DamageType(damage_type), source=source)
+                dmg = Damage(amount=amount, damage_type=canonicalize_damage_type(damage_type), source=source)
                 self.deal_damage(target, dmg)
         except Exception:
             pass

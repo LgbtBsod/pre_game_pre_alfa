@@ -4,7 +4,8 @@
 """
 
 from enum import Enum
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Union, Type, Iterable
+from types import MappingProxyType
 
 # ============================================================================
 # ТИПЫ УРОНА
@@ -653,6 +654,7 @@ class AttackType(Enum):
     RANGED = "ranged"
     MAGIC = "magic"
     SPECIAL = "special"
+    CRITICAL = "critical"
     COUNTER = "counter"
     AREA = "area"
     CHAIN = "chain"
@@ -1421,11 +1423,13 @@ TIME_CONSTANTS = {
     "cleanup_interval": 60.0,  # интервал очистки (1 минута)
     "combat_timeout": 300.0,  # таймаут боя (5 минут)
     "ai_decision_delay": 0.5,  # задержка решений AI
-    "effect_update_interval": 1.0,  # интервал обновления эффектов
+    # deprecated: используйте ключ ниже "effect_update_interval" (актуальный)
+    "effect_update_interval_legacy": 1.0,
     # Временные константы для режима "творца мира"
     "creator_update_interval": 1.0 / 30.0,  # интервал обновления творца мира
     "object_placement_delay": 0.1,  # задержка размещения объектов
-    "ui_animation_duration": 0.3,  # длительность анимации UI
+    # deprecated: используйте ключ ниже в секции UI ("ui_animation_duration")
+    "ui_animation_duration_legacy": 0.3,
     "grid_update_interval": 1.0,  # интервал обновления сетки
     # Временные константы для системы урона
     "damage_effect_duration": 0.5,  # длительность эффекта урона
@@ -1435,7 +1439,7 @@ TIME_CONSTANTS = {
     "damage_modifier_cleanup": 5.0,   # интервал очистки модификаторов урона
     # Временные константы для системы эффектов
     "effect_cleanup_interval": 60.0,  # интервал очистки эффектов
-    "effect_update_interval": 0.1,    # интервал обновления эффектов
+    "effect_update_interval": 0.1,    # интервал обновления эффектов (актуальный)
     "effect_animation_duration": 0.5, # длительность анимации эффекта
     # Временные константы для системы скиллов
     "skill_cooldown_tolerance": 0.1,  # допуск для кулдауна скиллов
@@ -2058,7 +2062,11 @@ def apply_item_template(item_type: str, template_name: str, level: int = 1, rari
 def get_damage_type_by_name(name: str) -> DamageType:
     """Получение типа урона по имени"""
     try:
-        return DamageType(name.lower())
+        # Нормализация алиасов: magical -> magic
+        normalized = name.lower().strip()
+        if normalized == "magical":
+            normalized = "magic"
+        return DamageType(normalized)
     except ValueError:
         return DamageType.PHYSICAL
 
@@ -2103,6 +2111,170 @@ def enum_to_dict(enum_class) -> Dict[str, str]:
 def dict_to_enum(enum_class, data: Dict[str, str]):
     """Конвертация словаря в перечисление"""
     return {k: enum_class(v) for k, v in data.items()}
+
+# ============================================================================
+# НОРМАЛИЗАТОРЫ/АЛИАСЫ ДЛЯ СОВМЕСТИМОСТИ
+# ============================================================================
+
+_TRIGGER_ALIASES = {
+    "combat_start": "on_enter_combat",
+    "enter_combat": "on_enter_combat",
+    "exit_combat": "on_exit_combat",
+}
+
+def normalize_trigger(value: str) -> Optional[TriggerType]:
+    """Нормализует строковое значение триггера к TriggerType, учитывая алиасы."""
+    if not value:
+        return None
+    key = value.lower().strip()
+    key = _TRIGGER_ALIASES.get(key, key)
+    try:
+        return TriggerType(key)
+    except ValueError:
+        return None
+
+def freeze_constants(mapping: Dict[str, Any]) -> MappingProxyType:
+    """Возвращает read-only proxy для защиты глобальных словарей констант."""
+    return MappingProxyType(mapping)
+
+# Публичные read-only представления ключевых словарей (используйте их для чтения)
+TIME_CONSTANTS_RO = freeze_constants(TIME_CONSTANTS)
+SYSTEM_LIMITS_RO = freeze_constants(SYSTEM_LIMITS)
+UI_SETTINGS_RO = freeze_constants(UI_SETTINGS)
+WORLD_SETTINGS_RO = freeze_constants(WORLD_SETTINGS)
+PROBABILITY_CONSTANTS_RO = freeze_constants(PROBABILITY_CONSTANTS)
+DEFAULT_RESISTANCES_RO = freeze_constants({k.value if hasattr(k, 'value') else k: v for k, v in DEFAULT_RESISTANCES.items()})
+DAMAGE_MULTIPLIERS_RO = freeze_constants({k.value if hasattr(k, 'value') else k: v for k, v in DAMAGE_MULTIPLIERS.items()})
+
+# Алиасы для типов урона
+_DAMAGE_TYPE_ALIASES = {
+    "magical": "magic",
+    "elec": "lightning",
+    "ice": "cold",
+    "psy": "psychic",
+}
+
+def normalize_damage_type(value: Optional[str]) -> Optional[DamageType]:
+    """Возвращает DamageType с учетом алиасов; None если распознать нельзя."""
+    if not value:
+        return None
+    key = value.lower().strip()
+    key = _DAMAGE_TYPE_ALIASES.get(key, key)
+    try:
+        return DamageType(key)
+    except ValueError:
+        return None
+
+_TIME_KEY_ALIASES = {
+    # legacy -> canonical
+    "effect_update_interval_legacy": "effect_update_interval",
+    "ui_animation_duration_legacy": "ui_animation_duration",
+}
+
+def get_time_constant(name: str, default: float) -> float:
+    """Безопасное получение временной константы (float) с поддержкой legacy-ключей."""
+    # прямой доступ
+    value = TIME_CONSTANTS_RO.get(name)
+    if value is not None:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            pass
+    # alias lookup (canonical <- legacy)
+    for legacy, canonical in _TIME_KEY_ALIASES.items():
+        if canonical == name:
+            v = TIME_CONSTANTS_RO.get(legacy)
+            if v is not None:
+                try:
+                    return float(v)
+                except (TypeError, ValueError):
+                    break
+    # fallback
+    return default
+
+# UI event aliases centralization
+_UI_EVENT_ALIASES = {
+    "mouseover": "hover",
+    "mouseenter": "hover",
+    "mouse_enter": "hover",
+    "mouseout": "unhover",
+    "mouseleave": "unhover",
+    "mouse_leave": "unhover",
+    "mousedown": "mouse_down",
+    "mouse_down": "mouse_down",
+    "mouseup": "mouse_up",
+    "mouse_up": "mouse_up",
+    "click_down": "mouse_down",
+    "click_up": "mouse_up",
+    "dblclick": "double_click",
+    "doubleclick": "double_click",
+    "contextmenu": "right_click",
+    "rightclick": "right_click",
+    "wheel": "scroll",
+    "mousewheel": "scroll",
+    "keypress": "key_press",
+    "keyup": "key_up",
+    "keydown": "key_down",
+}
+
+def normalize_ui_event(value: Optional[str]) -> str:
+    """Нормализует имя UI-события к каноническому виду с учётом алиасов."""
+    if not value:
+        return ""
+    try:
+        key = str(value).strip().lower()
+        return _UI_EVENT_ALIASES.get(key, key)
+    except Exception:
+        return str(value).strip().lower()
+
+def canonicalize_damage_type(value: Union[str, DamageType, None]) -> Optional[DamageType]:
+    """Возвращает канонический DamageType (MAGICAL→MAGIC), либо None."""
+    if value is None:
+        return None
+    if isinstance(value, DamageType):
+        if value.name == "MAGICAL":
+            return DamageType.MAGIC
+        return value
+    return normalize_damage_type(str(value))
+
+# ============================================================================
+# SAFE GETTERS
+# ============================================================================
+
+def get_float(mapping: Dict[str, Any], key: str, default: float) -> float:
+    value = mapping.get(key, default)
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+def get_int(mapping: Dict[str, Any], key: str, default: int) -> int:
+    value = mapping.get(key, default)
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+def get_bool(mapping: Dict[str, Any], key: str, default: bool) -> bool:
+    value = mapping.get(key, default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.lower().strip() in ("1", "true", "yes", "y", "on")
+    return default
+
+def get_enum(enum_cls: Type[Enum], mapping: Dict[str, Any], key: str, default: Enum) -> Enum:
+    raw = mapping.get(key)
+    if isinstance(raw, enum_cls):
+        return raw
+    if isinstance(raw, str):
+        try:
+            return enum_cls(raw.lower())
+        except Exception:
+            return default
+    return default
 
 # ============================================================================
 # ВАЛИДАТОРЫ
