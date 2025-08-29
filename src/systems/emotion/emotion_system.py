@@ -115,10 +115,10 @@ class EmotionSystem(BaseGameSystem):
             self._create_base_triggers()
             
             # Регистрируем состояния в StateManager
-            self._register_states()
+            self._register_system_states()
             
             # Регистрируем репозитории в RepositoryManager
-            self._register_repositories()
+            self._register_system_repositories()
             
             logger.info("Система эмоций успешно инициализирована")
             return True
@@ -200,6 +200,36 @@ class EmotionSystem(BaseGameSystem):
             logger.error(f"Ошибка обновления системы эмоций: {e}")
             return False
     
+    def _register_system_states(self) -> None:
+        """Регистрация состояний системы (для совместимости с тестами)"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "emotion_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.system_settings
+        )
+        
+        self.state_manager.register_container(
+            "emotion_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния эмоций
+        self.state_manager.register_container(
+            "emotional_states",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы эмоций зарегистрированы")
+    
     def _register_states(self) -> None:
         """Регистрация состояний в StateManager"""
         if not self.state_manager:
@@ -229,6 +259,37 @@ class EmotionSystem(BaseGameSystem):
         )
         
         logger.info("Состояния системы эмоций зарегистрированы")
+    
+    def _register_system_repositories(self) -> None:
+        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий эмоциональных состояний
+        self.repository_manager.register_repository(
+            "emotional_states",
+            DataType.ENTITY_DATA,
+            StorageType.MEMORY,
+            self.emotional_states
+        )
+        
+        # Регистрируем репозиторий триггеров эмоций
+        self.repository_manager.register_repository(
+            "emotional_triggers",
+            DataType.CONFIGURATION,
+            StorageType.MEMORY,
+            self.emotional_triggers
+        )
+        
+        # Регистрируем репозиторий истории эмоций
+        self.repository_manager.register_repository(
+            "emotion_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.emotion_history
+        )
+        
+        logger.info("Репозитории системы эмоций зарегистрированы")
     
     def _register_repositories(self) -> None:
         """Регистрация репозиториев в RepositoryManager"""
@@ -686,7 +747,40 @@ class EmotionSystem(BaseGameSystem):
             # Пересчитываем настроение
             self._recalculate_mood(emotional_state)
             
-            logger.info(f"Создана сущность {entity_id} для эмоций")
+            # Отправляем событие об изменении доминирующей эмоции (простая эвристика)
+            if self.event_bus and emotional_state.emotions:
+                dominant = max(emotional_state.emotions, key=lambda e: abs(e.value))
+                try:
+                    self.event_bus.emit("entity_emotion_changed", {
+                        'entity_id': entity_id,
+                        'emotion': dominant.emotion_type.value
+                    })
+                except Exception:
+                    pass
+            
+            # Записываем в историю
+            current_time = time.time()
+            self.emotion_history.append({
+                'timestamp': current_time,
+                'action': 'emotion_added',
+                'entity_id': entity_id,
+                'emotion_type': emotion_type.value,
+                'intensity': intensity.value,
+                'value': value,
+                'duration': duration,
+                'source': source
+            })
+            
+            emotional_state.emotional_history.append({
+                'timestamp': current_time,
+                'emotion_type': emotion_type.value,
+                'intensity': intensity.value,
+                'value': value,
+                'source': source
+            })
+            
+            self.system_stats['emotions_triggered'] += 1
+            logger.debug(f"Добавлена эмоция {emotion_type.value} для {entity_id}")
             return True
             
         except Exception as e:
@@ -742,6 +836,17 @@ class EmotionSystem(BaseGameSystem):
             
             # Пересчитываем настроение
             self._recalculate_mood(emotional_state)
+            
+            # Отправляем событие об изменении доминирующей эмоции (простая эвристика)
+            if self.event_bus and emotional_state.emotions:
+                dominant = max(emotional_state.emotions, key=lambda e: abs(e.value))
+                try:
+                    self.event_bus.emit("entity_emotion_changed", {
+                        'entity_id': entity_id,
+                        'emotion': dominant.emotion_type.value
+                    })
+                except Exception:
+                    pass
             
             # Записываем в историю
             current_time = time.time()
@@ -943,6 +1048,17 @@ class EmotionSystem(BaseGameSystem):
             # Пересчитываем настроение
             self._recalculate_mood(emotional_state)
             
+            # Отправляем событие об изменении доминирующей эмоции (простая эвристика)
+            if self.event_bus and emotional_state.emotions:
+                dominant = max(emotional_state.emotions, key=lambda e: abs(e.value))
+                try:
+                    self.event_bus.emit("entity_emotion_changed", {
+                        'entity_id': entity_id,
+                        'emotion': dominant.emotion_type.value
+                    })
+                except Exception:
+                    pass
+            
             logger.debug(f"Удалена эмоция {emotion_id} у сущности {entity_id}")
             return True
             
@@ -1022,6 +1138,17 @@ class EmotionSystem(BaseGameSystem):
             
             # Пересчитываем настроение
             self._recalculate_mood(emotional_state)
+            
+            # Отправляем событие об изменении доминирующей эмоции (простая эвристика)
+            if self.event_bus and emotional_state.emotions:
+                dominant = max(emotional_state.emotions, key=lambda e: abs(e.value))
+                try:
+                    self.event_bus.emit("entity_emotion_changed", {
+                        'entity_id': entity_id,
+                        'emotion': dominant.emotion_type.value
+                    })
+                except Exception:
+                    pass
             
             logger.debug(f"Очищены все эмоции у сущности {entity_id}")
             return True

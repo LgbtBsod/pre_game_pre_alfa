@@ -1,0 +1,115 @@
+#!/usr/bin/env python3
+"""
+Типы квестов и связанные перечисления
+"""
+
+from enum import Enum
+from typing import Dict, Any
+
+class QuestType(Enum):
+    """Типы квестов"""
+    # Основные типы
+    MAIN_QUEST = "main_quest"
+    SIDE_QUEST = "side_quest"
+    DAILY_QUEST = "daily_quest"
+    WEEKLY_QUEST = "weekly_quest"
+    EVENT_QUEST = "event_quest"
+    
+    # Специализированные квесты
+    EXPLORATION_QUEST = "exploration_quest"
+    COMBAT_QUEST = "combat_quest"
+    CRAFTING_QUEST = "crafting_quest"
+    SOCIAL_QUEST = "social_quest"
+    SURVIVAL_QUEST = "survival_quest"
+    
+    # Эволюционные квесты
+    EVOLUTION_QUEST = "evolution_quest"
+    MUTATION_QUEST = "mutation_quest"
+    ADAPTATION_QUEST = "adaptation_quest"
+    GENE_QUEST = "gene_quest"
+    
+    # Эмоциональные квесты
+    EMOTIONAL_QUEST = "emotional_quest"
+    THERAPY_QUEST = "therapy_quest"
+    EMPATHY_QUEST = "empathy_quest"
+    COURAGE_QUEST = "courage_quest"
+    
+    # Скрытые квесты
+    HIDDEN_QUEST = "hidden_quest"
+    SECRET_QUEST = "secret_quest"
+    MYSTERY_QUEST = "mystery_quest"
+    LEGENDARY_QUEST = "legendary_quest"
+
+class QuestStatus(Enum):
+    """Статусы квестов"""
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ABANDONED = "abandoned"
+    EXPIRED = "expired"
+    LOCKED = "locked"
+    AVAILABLE = "available"
+
+class QuestRewardType(Enum):
+    """Типы наград за квесты"""
+    # Материальные награды
+    EXPERIENCE = "experience"
+    GOLD = "gold"
+    ITEMS = "items"
+    MATERIALS = "materials"
+    CURRENCY = "currency"
+    
+    # Эволюционные награды
+    EVOLUTION_POINTS = "evolution_points"
+    GENE_FRAGMENTS = "gene_fragments"
+    MUTATION_CHANCES = "mutation_chances"
+    ADAPTATION_BONUS = "adaptation_bonus"
+    
+    # Эмоциональные награды
+    EMOTIONAL_STABILITY = "emotional_stability"
+    EMPATHY_BOOST = "empathy_boost"
+    COURAGE_BOOST = "courage_boost"
+    CALMNESS_BOOST = "calmness_boost"
+    
+    # Способности и навыки
+    SKILL_POINTS = "skill_points"
+    ABILITY_UNLOCKS = "ability_unlocks"
+    SPELL_LEARNING = "spell_learning"
+    TECHNIQUE_MASTERY = "technique_mastery"
+    
+    # Социальные награды
+    REPUTATION = "reputation"
+    ALLIANCE_POINTS = "alliance_points"
+    FACTION_STANDING = "faction_standing"
+    RELATIONSHIP_BOOST = "relationship_boost"
+    
+    # Специальные награды
+    TITLE = "title"
+    ACHIEVEMENT = "achievement"
+    COSMETIC_ITEM = "cosmetic_item"
+    SPECIAL_ACCESS = "special_access"
+
+class QuestDifficulty(Enum):
+    """Сложность квестов"""
+    TRIVIAL = "trivial"
+    EASY = "easy"
+    NORMAL = "normal"
+    HARD = "hard"
+    EXPERT = "expert"
+    MASTER = "master"
+    LEGENDARY = "legendary"
+    MYTHIC = "mythic"
+
+class QuestCategory(Enum):
+    """Категории квестов"""
+    STORY = "story"
+    COMBAT = "combat"
+    EXPLORATION = "exploration"
+    CRAFTING = "crafting"
+    SOCIAL = "social"
+    SURVIVAL = "survival"
+    EVOLUTION = "evolution"
+    EMOTIONAL = "emotional"
+    MYSTERY = "mystery"
+    EVENT = "event"

@@ -114,10 +114,10 @@ class GenomeSystem(BaseGameSystem):
             self._load_genetic_templates()
             
             # Регистрируем состояния в StateManager
-            self._register_states()
+            self._register_system_states()
             
             # Регистрируем репозитории в RepositoryManager
-            self._register_repositories()
+            self._register_system_repositories()
             
             logger.info("Система генома успешно инициализирована")
             return True
@@ -199,6 +199,36 @@ class GenomeSystem(BaseGameSystem):
             logger.error(f"Ошибка обновления системы генома: {e}")
             return False
     
+    def _register_system_states(self) -> None:
+        """Регистрация состояний системы (для совместимости с тестами)"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "genome_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.system_settings
+        )
+        
+        self.state_manager.register_container(
+            "genome_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния геномов
+        self.state_manager.register_container(
+            "genome_profiles",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы генома зарегистрированы")
+    
     def _register_states(self) -> None:
         """Регистрация состояний в StateManager"""
         if not self.state_manager:
@@ -228,6 +258,37 @@ class GenomeSystem(BaseGameSystem):
         )
         
         logger.info("Состояния системы генома зарегистрированы")
+    
+    def _register_system_repositories(self) -> None:
+        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий генетических шаблонов
+        self.repository_manager.register_repository(
+            "genetic_templates",
+            DataType.CONFIGURATION,
+            StorageType.MEMORY,
+            self.genetic_templates
+        )
+        
+        # Регистрируем репозиторий истории генетических изменений
+        self.repository_manager.register_repository(
+            "genetic_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.genetic_history
+        )
+        
+        # Регистрируем репозиторий профилей геномов
+        self.repository_manager.register_repository(
+            "genome_profiles",
+            DataType.ENTITY_DATA,
+            StorageType.MEMORY,
+            self.genome_profiles
+        )
+        
+        logger.info("Репозитории системы генома зарегистрированы")
     
     def _register_repositories(self) -> None:
         """Регистрация репозиториев в RepositoryManager"""

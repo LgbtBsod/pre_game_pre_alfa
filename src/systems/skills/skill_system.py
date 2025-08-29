@@ -135,8 +135,8 @@ class SkillSystem(BaseGameSystem):
             self._register_base_skills()
             
             # Регистрация состояний и репозиториев
-            self._register_states()
-            self._register_repositories()
+            self._register_system_states()
+            self._register_system_repositories()
             
             logger.info("Система навыков успешно инициализирована")
             return True
@@ -214,6 +214,53 @@ class SkillSystem(BaseGameSystem):
         except Exception as e:
             logger.error(f"Ошибка обновления системы навыков: {e}")
     
+    def _register_system_states(self):
+        """Регистрация состояний системы (для совместимости с тестами)"""
+        if not self.state_manager:
+            return
+            
+        try:
+            # Настройки системы навыков
+            self.state_manager.register_state(
+                "skill_system_settings",
+                self.system_settings
+            )
+            
+            # Статистика системы навыков
+            self.state_manager.register_state(
+                "skill_system_stats",
+                self.system_stats
+            )
+            
+            # Зарегистрированные навыки
+            self.state_manager.register_state(
+                "registered_skills",
+                {skill_id: {
+                    "name": skill.name,
+                    "skill_type": skill.skill_type.value,
+                    "category": skill.category.value,
+                    "level": skill.level,
+                    "max_level": skill.max_level
+                } for skill_id, skill in self.registered_skills.items()}
+            )
+            
+            # Навыки сущностей
+            self.state_manager.register_state(
+                "entity_skills",
+                {entity_id: {
+                    skill_id: {
+                        "name": skill.name,
+                        "level": skill.level,
+                        "cooldown": skill.cooldown.current_cooldown
+                    } for skill_id, skill in skills.items()
+                } for entity_id, skills in self.entity_skills.items()}
+            )
+            
+            logger.debug("Состояния системы навыков зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации состояний системы навыков: {e}")
+    
     def _register_states(self):
         """Регистрация состояний в StateManager"""
         if not self.state_manager:
@@ -260,6 +307,45 @@ class SkillSystem(BaseGameSystem):
             
         except Exception as e:
             logger.warning(f"Ошибка регистрации состояний системы навыков: {e}")
+    
+    def _register_system_repositories(self):
+        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Зарегистрированные навыки
+            self.repository_manager.register_repository(
+                "registered_skills",
+                "registered_skills",
+                "memory"
+            )
+            
+            # Навыки сущностей
+            self.repository_manager.register_repository(
+                "entity_skills",
+                "entity_skills",
+                "memory"
+            )
+            
+            # Перезарядки навыков
+            self.repository_manager.register_repository(
+                "skill_cooldowns",
+                "skill_cooldowns",
+                "memory"
+            )
+            
+            # История навыков
+            self.repository_manager.register_repository(
+                "skill_history",
+                "skill_history",
+                "memory"
+            )
+            
+            logger.debug("Репозитории системы навыков зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации репозиториев системы навыков: {e}")
     
     def _register_repositories(self):
         """Регистрация репозиториев в RepositoryManager"""

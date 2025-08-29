@@ -4,7 +4,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic
+from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Protocol
 from dataclasses import dataclass, field
 import logging
 import time
@@ -322,28 +322,17 @@ class ICombatSystem(IGameSystem):
         """Получение боевой статистики"""
         pass
 
-class IEffectSystem(IGameSystem):
-    """Интерфейс системы эффектов"""
-    
-    @abstractmethod
-    def apply_effect(self, target_id: str, effect_id: str, source_id: str = None) -> bool:
-        """Применение эффекта"""
-        pass
-    
-    @abstractmethod
-    def remove_effect(self, target_id: str, effect_id: str) -> bool:
-        """Удаление эффекта"""
-        pass
-    
-    @abstractmethod
-    def get_active_effects(self, entity_id: str) -> List[Dict[str, Any]]:
-        """Получение активных эффектов"""
-        pass
-    
-    @abstractmethod
-    def register_effect(self, effect_data: Dict[str, Any]) -> bool:
-        """Регистрация эффекта"""
-        pass
+class IRenderSystem(Protocol):
+    def initialize(self, *args, **kwargs) -> bool: ...
+    def add_object(self, object_id: str, render_data: Dict[str, Any]) -> bool: ...
+    def remove_object(self, object_id: str) -> bool: ...
+    def update(self, delta_time: float) -> None: ...
+
+class IEffectSystem(Protocol):
+    def initialize(self, *args, **kwargs) -> bool: ...
+    def apply_effect(self, target_id: str, effect_id: str, params: Dict[str, Any]) -> bool: ...
+    def remove_effect(self, target_id: str, effect_id: str) -> bool: ...
+    def update(self, delta_time: float) -> None: ...
 
 class IAISystem(IGameSystem):
     """Интерфейс системы ИИ"""
@@ -413,6 +402,22 @@ class ISkillSystem(IGameSystem):
     def upgrade_skill(self, entity_id: str, skill_id: str) -> bool:
         """Улучшение навыка"""
         pass
+
+class IQuestSystem(Protocol):
+    def initialize(self, state_manager, repository_manager, event_bus=None) -> bool: ...
+    def start_quest(self, entity_id: str, quest_id: str) -> bool: ...
+    def update(self, delta_time: float) -> None: ...
+
+class ITradingSystem(Protocol):
+    def initialize(self, state_manager, repository_manager, event_bus=None) -> bool: ...
+    def create_trade_offer(self, seller_id: str, items, price: float, currency_type=None, trade_type=None) -> Optional[str]: ...
+    def accept_trade_offer(self, offer_id: str, buyer_id: str, quantity: int = None) -> bool: ...
+    def update(self, delta_time: float) -> None: ...
+
+class ISocialSystem(Protocol):
+    def initialize(self, state_manager, repository_manager, event_bus=None) -> bool: ...
+    def perform_interaction(self, initiator_id: str, target_id: str, interaction_type, success: bool = True, data: Dict[str, Any] = None) -> bool: ...
+    def update(self, delta_time: float) -> None: ...
 
 # ============================================================================
 # УТИЛИТЫ ДЛЯ РАБОТЫ С СИСТЕМАМИ

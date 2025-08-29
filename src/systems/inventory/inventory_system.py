@@ -104,8 +104,8 @@ class InventorySystem(BaseGameSystem):
             self._create_base_inventory_templates()
             
             # Регистрация состояний и репозиториев
-            self._register_states()
-            self._register_repositories()
+            self._register_system_states()
+            self._register_system_repositories()
             
             logger.info("Система инвентаря успешно инициализирована")
             return True
@@ -186,6 +186,41 @@ class InventorySystem(BaseGameSystem):
         except Exception as e:
             logger.error(f"Ошибка обновления системы инвентаря: {e}")
     
+    def _register_system_states(self):
+        """Регистрация состояний системы (для совместимости с тестами)"""
+        if not self.state_manager:
+            return
+            
+        try:
+            # Настройки системы инвентаря
+            self.state_manager.register_state(
+                "inventory_system_settings",
+                self.system_settings
+            )
+            
+            # Статистика системы инвентаря
+            self.state_manager.register_state(
+                "inventory_system_stats",
+                self.system_stats
+            )
+            
+            # Активные инвентари
+            self.state_manager.register_state(
+                "active_inventories",
+                {entity_id: {
+                    "max_slots": inv.max_slots,
+                    "current_weight": inv.current_weight,
+                    "max_weight": inv.max_weight,
+                    "is_expandable": inv.is_expandable,
+                    "slot_count": len(inv.slots)
+                } for entity_id, inv in self.inventories.items()}
+            )
+            
+            logger.debug("Состояния системы инвентаря зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации состояний системы инвентаря: {e}")
+    
     def _register_states(self):
         """Регистрация состояний в StateManager"""
         if not self.state_manager:
@@ -220,6 +255,38 @@ class InventorySystem(BaseGameSystem):
             
         except Exception as e:
             logger.warning(f"Ошибка регистрации состояний системы инвентаря: {e}")
+    
+    def _register_system_repositories(self):
+        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # Инвентари
+            self.repository_manager.register_repository(
+                "inventories",
+                "inventories",
+                "memory"
+            )
+            
+            # Стеки предметов
+            self.repository_manager.register_repository(
+                "item_stacks",
+                "item_stacks",
+                "memory"
+            )
+            
+            # История инвентаря
+            self.repository_manager.register_repository(
+                "inventory_history",
+                "inventory_history",
+                "memory"
+            )
+            
+            logger.debug("Репозитории системы инвентаря зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации репозиториев системы инвентаря: {e}")
     
     def _register_repositories(self):
         """Регистрация репозиториев в RepositoryManager"""

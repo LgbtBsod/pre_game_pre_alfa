@@ -138,8 +138,8 @@ class UnifiedAISystem(BaseGameSystem):
                 self._register_event_handlers()
             
             # Регистрация состояний и репозиториев
-            self._register_states()
-            self._register_repositories()
+            self._register_system_states()
+            self._register_system_repositories()
             
             logger.info("Unified AI System успешно инициализирована")
             return True
@@ -273,8 +273,8 @@ class UnifiedAISystem(BaseGameSystem):
         self.event_system.subscribe("damage_dealt", self._on_damage_dealt)
         self.event_system.subscribe("damage_received", self._on_damage_received)
     
-    def _register_states(self):
-        """Регистрация состояний в StateManager"""
+    def _register_system_states(self):
+        """Регистрация состояний системы (для совместимости с тестами)"""
         if not self.state_manager:
             return
             
@@ -318,6 +318,98 @@ class UnifiedAISystem(BaseGameSystem):
             
         except Exception as e:
             logger.warning(f"Ошибка регистрации состояний AI системы: {e}")
+    
+    def _register_states(self):
+        """Регистрация состояний в StateManager"""
+        if not self.state_manager:
+            return
+            
+        try:
+            # Основные настройки AI системы
+            self.state_manager.register_state(
+                "ai_system_settings",
+                {
+                    "enable_behavior_trees": self.config.enable_behavior_trees,
+                    "enable_neural_networks": self.config.enable_neural_networks,
+                    "enable_rule_based": self.config.enable_rule_based,
+                    "enable_learning": self.config.enable_learning,
+                    "max_ai_entities": self.config.max_ai_entities,
+                    "update_frequency": self.config.update_frequency,
+                    "learning_rate": self.config.learning_rate,
+                    "default_behavior": self.config.default_behavior.value,
+                    "default_difficulty": self.config.default_difficulty.value
+                }
+            )
+            
+            # Статистика AI системы
+            self.state_manager.register_state(
+                "ai_system_stats",
+                self.stats
+            )
+            
+            # Активные AI сущности
+            self.state_manager.register_state(
+                "active_ai_entities",
+                {entity_id: {
+                    "entity_id": data.entity_type,
+                    "behavior": data.behavior.value,
+                    "difficulty": data.difficulty.value,
+                    "current_state": data.current_state.value,
+                    "position": data.position,
+                    "target": data.target
+                } for entity_id, data in self.ai_entities.items()}
+            )
+            
+            logger.debug("Состояния AI системы зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации состояний AI системы: {e}")
+    
+    def _register_system_repositories(self):
+        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        if not self.repository_manager:
+            return
+            
+        try:
+            # AI сущности
+            self.repository_manager.register_repository(
+                "ai_entities",
+                "ai_entities",
+                "memory"
+            )
+            
+            # Решения AI
+            self.repository_manager.register_repository(
+                "ai_decisions",
+                "ai_decisions",
+                "memory"
+            )
+            
+            # Группы AI
+            self.repository_manager.register_repository(
+                "ai_groups",
+                "ai_groups",
+                "memory"
+            )
+            
+            # Глобальная память
+            self.repository_manager.register_repository(
+                "ai_global_memory",
+                "global_memory",
+                "memory"
+            )
+            
+            # Пул опыта
+            self.repository_manager.register_repository(
+                "ai_experience_pool",
+                "experience_pool",
+                "memory"
+            )
+            
+            logger.debug("Репозитории AI системы зарегистрированы")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка регистрации репозиториев AI системы: {e}")
     
     def _register_repositories(self):
         """Регистрация репозиториев в RepositoryManager"""

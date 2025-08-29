@@ -523,6 +523,11 @@ class EvolutionSystem(BaseGameSystem):
     def create_evolution_entity(self, entity_id: str, initial_genes: List[Dict[str, Any]] = None) -> bool:
         """Создание сущности для эволюции"""
         try:
+            # Проверяем корректность entity_id
+            if not entity_id or entity_id.strip() == "":
+                logger.warning("Попытка создания сущности с пустым ID")
+                return False
+            
             if entity_id in self.evolution_progress:
                 logger.warning(f"Сущность {entity_id} уже существует в системе эволюции")
                 return False
@@ -555,6 +560,9 @@ class EvolutionSystem(BaseGameSystem):
             self.evolution_progress[entity_id] = progress
             self.entity_genes[entity_id] = base_genes
             
+            # Обновляем статистику
+            self.system_stats['entities_evolving'] = len(self.evolution_progress)
+            
             logger.info(f"Создана сущность {entity_id} для эволюции с {len(base_genes)} генами")
             return True
             
@@ -575,6 +583,9 @@ class EvolutionSystem(BaseGameSystem):
             if entity_id in self.entity_genes:
                 del self.entity_genes[entity_id]
             
+            # Обновляем статистику
+            self.system_stats['entities_evolving'] = len(self.evolution_progress)
+            
             logger.info(f"Сущность {entity_id} удалена из системы эволюции")
             return True
             
@@ -591,6 +602,13 @@ class EvolutionSystem(BaseGameSystem):
             
             progress = self.evolution_progress[entity_id]
             progress.evolution_points += points
+            
+            # Проверяем, нужно ли запустить эволюцию
+            if progress.evolution_points >= progress.required_points:
+                if self._trigger_evolution(entity_id, progress):
+                    # Сбрасываем очки и увеличиваем требуемые для следующего этапа
+                    progress.evolution_points = 0
+                    progress.required_points = int(progress.required_points * 1.5)
             
             # Записываем в историю
             current_time = time.time()
@@ -769,11 +787,11 @@ class EvolutionSystem(BaseGameSystem):
                     gene_id=f"evolution_{stage.value}_{i}_{entity_id}",
                     gene_type=gene_type,
                     rarity=rarity,
-                    strength=1.0 + (stage.value * 0.2),
-                    mutation_chance=0.01 + (stage.value * 0.005),
+                    strength=1.0 + (list(EvolutionStage).index(stage) * 0.2),
+                    mutation_chance=0.01 + (list(EvolutionStage).index(stage) * 0.005),
                     expression_level=1.0,
                     dominant=random.random() < 0.3,
-                    generation=stage.value
+                    generation=list(EvolutionStage).index(stage) + 1
                 )
                 
                 new_genes.append(gene)

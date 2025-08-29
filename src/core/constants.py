@@ -22,6 +22,7 @@ class DamageType(Enum):
     DARK = "dark"
     ARCANE = "arcane"
     MAGIC = "magic"
+    MAGICAL = "magical"
     TRUE = "true"
     ACID = "acid"
     COLD = "cold"
@@ -223,6 +224,7 @@ class SkillCategory(Enum):
 
 class GeneType(Enum):
     """Типы генов"""
+    # Базовые атрибуты
     STRENGTH = "strength"
     AGILITY = "agility"
     INTELLIGENCE = "intelligence"
@@ -235,6 +237,77 @@ class GeneType(Enum):
     ADAPTATION = "adaptation"
     MUTATION = "mutation"
     EVOLUTION = "evolution"
+    
+    # Новые расширенные типы генов
+    # Элементальные гены
+    FIRE_AFFINITY = "fire_affinity"
+    ICE_AFFINITY = "ice_affinity"
+    LIGHTNING_AFFINITY = "lightning_affinity"
+    EARTH_AFFINITY = "earth_affinity"
+    WIND_AFFINITY = "wind_affinity"
+    WATER_AFFINITY = "water_affinity"
+    LIGHT_AFFINITY = "light_affinity"
+    DARK_AFFINITY = "dark_affinity"
+    
+    # Специальные способности
+    TELEPATHY = "telepathy"
+    TELEKINESIS = "telekinesis"
+    SHAPESHIFTING = "shapeshifting"
+    REGENERATION = "regeneration"
+    IMMORTALITY = "immortality"
+    PHASING = "phasing"
+    TIME_MANIPULATION = "time_manipulation"
+    SPACE_MANIPULATION = "space_manipulation"
+    
+    # Эмоциональные гены
+    EMOTIONAL_STABILITY = "emotional_stability"
+    EMPATHY = "empathy"
+    COURAGE = "courage"
+    CALMNESS = "calmness"
+    AGGRESSION = "aggression"
+    FEAR_RESISTANCE = "fear_resistance"
+    
+    # Когнитивные гены
+    MEMORY_ENHANCEMENT = "memory_enhancement"
+    LEARNING_SPEED = "learning_speed"
+    CREATIVITY = "creativity"
+    LOGICAL_THINKING = "logical_thinking"
+    INTUITION = "intuition"
+    FOCUS = "focus"
+    
+    # Физические мутации
+    WINGS = "wings"
+    SCALES = "scales"
+    FUR = "fur"
+    CLAWS = "claws"
+    FANGS = "fangs"
+    HORNS = "horns"
+    TAIL = "tail"
+    EXTRA_LIMBS = "extra_limbs"
+    
+    # Метаболические гены
+    FAST_METABOLISM = "fast_metabolism"
+    SLOW_METABOLISM = "slow_metabolism"
+    TOXIN_RESISTANCE = "toxin_resistance"
+    DISEASE_RESISTANCE = "disease_resistance"
+    HEALING_FACTOR = "healing_factor"
+    AGING_RESISTANCE = "aging_resistance"
+    
+    # Социальные гены
+    LEADERSHIP = "leadership"
+    DIPLOMACY = "diplomacy"
+    INTIMIDATION = "intimidation"
+    PERSUASION = "persuasion"
+    TEAMWORK = "teamwork"
+    SOLITARY = "solitary"
+    
+    # Специализированные гены
+    CRAFTING_MASTERY = "crafting_mastery"
+    COMBAT_MASTERY = "combat_mastery"
+    MAGIC_MASTERY = "magic_mastery"
+    STEALTH_MASTERY = "stealth_mastery"
+    SURVIVAL_MASTERY = "survival_mastery"
+    EXPLORATION_MASTERY = "exploration_mastery"
 
 class GeneRarity(Enum):
     """Редкость генов"""
@@ -260,6 +333,36 @@ class EvolutionStage(Enum):
     LEGENDARY = "legendary"
     MYTHIC = "mythic"
     DIVINE = "divine"
+    
+    def __lt__(self, other):
+        if isinstance(other, EvolutionStage):
+            order = {
+                EvolutionStage.BASIC: 0,
+                EvolutionStage.INTERMEDIATE: 1,
+                EvolutionStage.ADVANCED: 2,
+                EvolutionStage.ELITE: 3,
+                EvolutionStage.MASTER: 4,
+                EvolutionStage.LEGENDARY: 5,
+                EvolutionStage.MYTHIC: 6,
+                EvolutionStage.DIVINE: 7
+            }
+            return order[self] < order[other]
+        return NotImplemented
+    
+    def __le__(self, other):
+        if isinstance(other, EvolutionStage):
+            return self < other or self == other
+        return NotImplemented
+    
+    def __gt__(self, other):
+        if isinstance(other, EvolutionStage):
+            return not self <= other
+        return NotImplemented
+    
+    def __ge__(self, other):
+        if isinstance(other, EvolutionStage):
+            return not self < other
+        return NotImplemented
 
 class EvolutionType(Enum):
     """Типы эволюции"""
@@ -269,6 +372,75 @@ class EvolutionType(Enum):
     FUSION = "fusion"
     ABSORPTION = "absorption"
     TRANSFORMATION = "transformation"
+    
+    # Новые типы эволюции
+    # Элементальная эволюция
+    FIRE_EVOLUTION = "fire_evolution"
+    ICE_EVOLUTION = "ice_evolution"
+    LIGHTNING_EVOLUTION = "lightning_evolution"
+    EARTH_EVOLUTION = "earth_evolution"
+    WIND_EVOLUTION = "wind_evolution"
+    WATER_EVOLUTION = "water_evolution"
+    LIGHT_EVOLUTION = "light_evolution"
+    DARK_EVOLUTION = "dark_evolution"
+    
+    # Специальная эволюция
+    PSYCHIC_EVOLUTION = "psychic_evolution"
+    TECHNOLOGICAL_EVOLUTION = "technological_evolution"
+    SPIRITUAL_EVOLUTION = "spiritual_evolution"
+    CHAOS_EVOLUTION = "chaos_evolution"
+    ORDER_EVOLUTION = "order_evolution"
+    VOID_EVOLUTION = "void_evolution"
+    
+    # Гибридная эволюция
+    HYBRID_EVOLUTION = "hybrid_evolution"
+    CHIMERA_EVOLUTION = "chimera_evolution"
+    SYMBIOTIC_EVOLUTION = "symbiotic_evolution"
+    PARASITIC_EVOLUTION = "parasitic_evolution"
+    
+    # Космическая эволюция
+    COSMIC_EVOLUTION = "cosmic_evolution"
+    DIMENSIONAL_EVOLUTION = "dimensional_evolution"
+    TEMPORAL_EVOLUTION = "temporal_evolution"
+    QUANTUM_EVOLUTION = "quantum_evolution"
+
+class EvolutionTriggerType(Enum):
+    """Типы триггеров эволюции"""
+    LEVEL_UP = "level_up"
+    COMBAT_VICTORY = "combat_victory"
+    ENVIRONMENTAL_STRESS = "environmental_stress"
+    EMOTIONAL_CRISIS = "emotional_crisis"
+    GENETIC_MUTATION = "genetic_mutation"
+    EXTERNAL_CATALYST = "external_catalyst"
+    TIME_PASSAGE = "time_passage"
+    SOCIAL_INTERACTION = "social_interaction"
+    EXPLORATION_DISCOVERY = "exploration_discovery"
+    CRAFTING_MASTERY = "crafting_mastery"
+    MAGIC_MASTERY = "magic_mastery"
+    SURVIVAL_CHALLENGE = "survival_challenge"
+
+class EvolutionPath(Enum):
+    """Пути эволюции"""
+    WARRIOR = "warrior"
+    MAGE = "mage"
+    ROGUE = "rogue"
+    HEALER = "healer"
+    SUMMONER = "summoner"
+    ELEMENTALIST = "elementalist"
+    PSYCHIC = "psychic"
+    TECHNOMANCER = "technomancer"
+    SHAPESHIFTER = "shapeshifter"
+    NECROMANCER = "necromancer"
+    PALADIN = "paladin"
+    DRUID = "druid"
+    MONK = "monk"
+    BARD = "bard"
+    RANGER = "ranger"
+    BERSERKER = "berserker"
+    ASSASSIN = "assassin"
+    GUARDIAN = "guardian"
+    SAGE = "sage"
+    WANDERER = "wanderer"
 
 # ============================================================================
 # ТИПЫ ЭМОЦИЙ
@@ -276,6 +448,7 @@ class EvolutionType(Enum):
 
 class EmotionType(Enum):
     """Типы эмоций"""
+    # Базовые эмоции
     JOY = "joy"
     SADNESS = "sadness"
     ANGER = "anger"
@@ -290,14 +463,87 @@ class EmotionType(Enum):
     EXCITEMENT = "excitement"
     CALMNESS = "calmness"
     ANXIETY = "anxiety"
+    
+    # Новые расширенные эмоции
+    # Позитивные эмоции
+    EUPHORIA = "euphoria"
+    CONTENTMENT = "contentment"
+    GRATITUDE = "gratitude"
+    HOPE = "hope"
+    INSPIRATION = "inspiration"
+    PRIDE = "pride"
+    SATISFACTION = "satisfaction"
+    WONDER = "wonder"
+    AMUSEMENT = "amusement"
+    ADMIRATION = "admiration"
+    
+    # Негативные эмоции
+    DESPAIR = "despair"
+    RAGE = "rage"
+    TERROR = "terror"
+    SHAME = "shame"
+    GUILT = "guilt"
+    ENVY = "envy"
+    JEALOUSY = "jealousy"
+    DISAPPOINTMENT = "disappointment"
+    FRUSTRATION = "frustration"
+    LONELINESS = "loneliness"
+    
+    # Социальные эмоции
+    EMPATHY = "empathy"
+    COMPASSION = "compassion"
+    CONTEMPT = "contempt"
+    INDIGNATION = "indignation"
+    SYMPATHY = "sympathy"
+    PITY = "pity"
+    RESPECT = "respect"
+    DISRESPECT = "disrespect"
+    LOYALTY = "loyalty"
+    
+    # Когнитивные эмоции
+    CURIOSITY = "curiosity"
+    INTEREST = "interest"
+    BOREDOM = "boredom"
+    FASCINATION = "fascination"
+    PERPLEXITY = "perplexity"
+    CERTAINTY = "certainty"
+    DOUBT = "doubt"
+    
+    # Эстетические эмоции
+    AWE = "awe"
+    BEAUTY = "beauty"
+    SUBLIME = "sublime"
+    UGLINESS = "ugliness"
+    HARMONY = "harmony"
+    DISCORD = "discord"
+    
+    # Моральные эмоции
+    RIGHTEOUSNESS = "righteousness"
+    REMORSE = "remorse"
+    INNOCENCE = "innocence"
+    CORRUPTION = "corruption"
+    HONOR = "honor"
+    DISHONOR = "dishonor"
+    
+    # Экзистенциальные эмоции
+    MEANINGFULNESS = "meaningfulness"
+    MEANINGLESSNESS = "meaninglessness"
+    TRANSCENDENCE = "transcendence"
+    ISOLATION = "isolation"
+    CONNECTION = "connection"
+    DISCONNECTION = "disconnection"
 
 class EmotionIntensity(Enum):
     """Интенсивность эмоций"""
     MINIMAL = "minimal"
     WEAK = "weak"
+    LOW = "low"
     MODERATE = "moderate"
+    MEDIUM = "medium"
     STRONG = "strong"
+    HIGH = "high"
     INTENSE = "intense"
+    EXTREME = "extreme"
     OVERWHELMING = "overwhelming"
 
 # ============================================================================
@@ -402,6 +648,7 @@ class CombatState(Enum):
 
 class AttackType(Enum):
     """Типы атак"""
+    NORMAL = "normal"
     MELEE = "melee"
     RANGED = "ranged"
     MAGIC = "magic"
@@ -1145,6 +1392,25 @@ SYSTEM_LIMITS = {
     "max_memory_level": 100,
     "max_experience_per_type": 999999,
     "max_skill_memory": 50,
+    
+    # Система квестов
+    "max_active_quests": 10,
+    "max_daily_quests": 5,
+    "max_quest_chains": 5,
+    "max_quest_objectives": 10,
+    "max_quest_rewards": 10,
+    
+    # Система торговли
+    "max_active_offers": 20,
+    "max_trade_history": 100,
+    "max_market_items": 1000,
+    "max_contract_duration": 604800.0,  # 7 дней
+    
+    # Система социального взаимодействия
+    "max_relationships": 100,
+    "max_interactions_per_day": 50,
+    "max_reputation_types": 20,
+    "max_faction_members": 1000,
 }
 
 # Временные константы
@@ -1186,6 +1452,7 @@ TIME_CONSTANTS = {
     # Временные константы для системы генома
     "mutation_check_interval": 10.0,  # интервал проверки мутаций
     "evolution_trigger_delay": 5.0,   # задержка триггера эволюции
+    "evolution_cooldown": 60.0,       # кулдаун эволюции (1 минута)
     "gene_expression_interval": 1.0,  # интервал экспрессии генов
     # Временные константы для системы эмоций
     "emotion_update_interval": 0.5,   # интервал обновления эмоций
@@ -1206,7 +1473,25 @@ TIME_CONSTANTS = {
     # Временные константы для системы UI
     "ui_update_interval": 0.016,       # интервал обновления UI
     "ui_animation_duration": 0.3,      # длительность анимации UI
-    "ui_event_delay": 0.1              # задержка событий UI
+    "ui_event_delay": 0.1,             # задержка событий UI
+    
+    # Временные константы для системы квестов
+    "quest_expiration_time": 86400.0,  # время истечения квеста (24 часа)
+    "quest_chain_delay": 300.0,        # задержка между квестами в цепочке (5 минут)
+    "daily_quest_reset": 86400.0,      # сброс ежедневных квестов (24 часа)
+    "weekly_quest_reset": 604800.0,    # сброс еженедельных квестов (7 дней)
+    
+    # Временные константы для системы торговли
+    "offer_expiration_time": 604800.0, # время истечения предложения (7 дней)
+    "market_update_interval": 3600.0,  # интервал обновления рынка (1 час)
+    "trade_cooldown": 60.0,            # кулдаун между сделками (1 минута)
+    "contract_duration": 604800.0,     # длительность контракта (7 дней)
+    
+    # Временные константы для системы социального взаимодействия
+    "interaction_cooldown": 300.0,     # кулдаун между взаимодействиями (5 минут)
+    "reputation_decay_interval": 86400.0, # интервал затухания репутации (24 часа)
+    "relationship_update_interval": 3600.0, # интервал обновления отношений (1 час)
+    "faction_influence_update": 1800.0,    # интервал обновления влияния фракций (30 минут)
 }
 
 # Вероятности и шансы
@@ -1216,6 +1501,7 @@ PROBABILITY_CONSTANTS = {
     "base_dodge_chance": 0.1,
     "base_block_chance": 0.15,
     "base_mutation_chance": 0.01,
+    "base_adaptation_chance": 0.05,
     "base_evolution_chance": 0.1,
     "base_drop_chance": 0.1,
     "base_craft_success": 0.8,
@@ -1239,7 +1525,28 @@ PROBABILITY_CONSTANTS = {
     # Критические удары
     "max_critical_chance": 0.95,
     "min_critical_multiplier": 1.5,
-    "max_critical_multiplier": 10.0
+    "max_critical_multiplier": 10.0,
+    
+    # Система квестов
+    "hidden_quest_chance": 0.1,
+    "epic_quest_chance": 0.05,
+    "quest_completion_bonus": 1.2,
+    "quest_failure_penalty": 0.8,
+    "quest_time_bonus": 1.1,
+    
+    # Система торговли
+    "transaction_fee": 0.05,  # 5% комиссия
+    "tax_rate": 0.02,  # 2% налог
+    "reputation_impact": 0.1,
+    "price_volatility": 0.1,
+    "bulk_discount_rate": 0.1,
+    
+    # Система социального взаимодействия
+    "relationship_decay_rate": 0.01,
+    "reputation_decay_rate": 0.005,
+    "faction_influence": 0.1,
+    "interaction_success_rate": 0.8,
+    "betrayal_chance": 0.05
 }
 
 # Сопротивления по умолчанию (автоматически генерируются)
@@ -1856,3 +2163,666 @@ def validate_creator_mode(mode: str) -> bool:
 def validate_tool_type(tool_type: str) -> bool:
     """Валидация типа инструмента"""
     return is_valid_enum_value(ToolType, tool_type)
+
+# ============================================================================
+# КОНСТАНТЫ ДЛЯ НОВЫХ СИСТЕМ
+# ============================================================================
+
+# Константы для системы квестов
+QUEST_CONSTANTS = {
+    "max_active_quests": 10,
+    "max_daily_quests": 5,
+    "quest_expiration_time": 86400.0,  # 24 часа в секундах
+    "quest_chain_bonus": 1.5,
+    "hidden_quest_chance": 0.1,
+    "epic_quest_chance": 0.05,
+    "quest_completion_bonus": 1.2,
+    "quest_failure_penalty": 0.8,
+    "quest_time_bonus": 1.1,
+    "quest_difficulty_multiplier": {
+        "trivial": 0.5,
+        "easy": 0.8,
+        "normal": 1.0,
+        "hard": 1.5,
+        "expert": 2.0,
+        "master": 3.0,
+        "legendary": 5.0,
+        "mythic": 10.0
+    }
+}
+
+# Константы для системы торговли
+TRADING_CONSTANTS = {
+    "max_active_offers": 20,
+    "offer_expiration_time": 604800.0,  # 7 дней в секундах
+    "transaction_fee": 0.05,  # 5% комиссия
+    "tax_rate": 0.02,  # 2% налог
+    "reputation_impact": 0.1,
+    "price_volatility": 0.1,
+    "market_update_interval": 3600.0,  # 1 час
+    "bulk_discount_threshold": 10,
+    "bulk_discount_rate": 0.1,
+    "quality_multiplier": {
+        "poor": 0.5,
+        "common": 1.0,
+        "uncommon": 1.5,
+        "rare": 3.0,
+        "epic": 7.0,
+        "legendary": 15.0,
+        "mythic": 30.0,
+        "divine": 100.0
+    }
+}
+
+# Константы для социальной системы
+SOCIAL_CONSTANTS = {
+    "max_relationships": 100,
+    "relationship_decay_rate": 0.01,
+    "interaction_cooldown": 300.0,  # 5 минут
+    "reputation_decay_rate": 0.005,
+    "faction_influence": 0.1,
+    "social_status_requirements": {
+        "peasant": 0,
+        "citizen": 100,
+        "merchant": 500,
+        "noble": 1000,
+        "royal": 5000,
+        "legendary": 10000,
+        "mythic": 50000
+    },
+    "relationship_strength": {
+        "stranger": 0,
+        "acquaintance": 10,
+        "friend": 50,
+        "close_friend": 100,
+        "best_friend": 200,
+        "family": 300,
+        "spouse": 500
+    }
+}
+
+# Константы для системы эволюции (расширенные)
+EVOLUTION_CONSTANTS = {
+    "max_evolution_stage": 8,
+    "evolution_points_per_level": 10,
+    "mutation_chance_base": 0.05,
+    "adaptation_chance_base": 0.03,
+    "gene_expression_rate": 0.1,
+    "evolution_cooldown": 3600.0,  # 1 час
+    "stage_requirements": {
+        "basic": 0,
+        "intermediate": 100,
+        "advanced": 300,
+        "elite": 600,
+        "master": 1000,
+        "legendary": 2000,
+        "mythic": 5000,
+        "divine": 10000
+    },
+    "evolution_bonuses": {
+        "basic": 1.0,
+        "intermediate": 1.2,
+        "advanced": 1.5,
+        "elite": 2.0,
+        "master": 3.0,
+        "legendary": 5.0,
+        "mythic": 10.0,
+        "divine": 20.0
+    }
+}
+
+# Константы для системы эмоций (расширенные)
+EMOTION_CONSTANTS = {
+    "max_emotion_intensity": 10,
+    "emotion_decay_rate": 0.1,
+    "emotion_influence_radius": 5.0,
+    "emotional_stability_threshold": 0.5,
+    "empathy_range": 3.0,
+    "courage_boost_factor": 1.5,
+    "fear_resistance_bonus": 0.2,
+    "emotion_combination_bonus": 1.3,
+    "emotional_exhaustion_threshold": 8.0,
+    "emotion_recovery_rate": 0.05
+}
+
+# Константы для системы генома (расширенные)
+GENOME_CONSTANTS = {
+    "max_genes_per_entity": 50,
+    "mutation_rate": 0.01,
+    "recombination_rate": 0.02,
+    "gene_expression_threshold": 0.5,
+    "genome_complexity_limit": 1000,
+    "trait_activation_chance": 0.7,
+    "gene_stability_factor": 0.9,
+    "mutation_stability": 0.8,
+    "gene_combination_bonus": 1.2,
+    "genome_evolution_rate": 0.1
+}
+
+# Константы для системы боя (расширенные)
+COMBAT_CONSTANTS = {
+    "base_attack_speed": 1.0,
+    "base_defense": 10,
+    "critical_hit_chance": 0.05,
+    "critical_hit_multiplier": 2.0,
+    "dodge_chance": 0.1,
+    "block_chance": 0.15,
+    "parry_chance": 0.1,
+    "counter_attack_chance": 0.2,
+    "stun_duration": 2.0,
+    "bleed_damage": 5,
+    "poison_damage": 3,
+    "burn_damage": 4,
+    "freeze_duration": 1.5,
+    "shock_damage": 6,
+    "combo_multiplier": 1.2,
+    "chain_attack_bonus": 1.1
+}
+
+# Константы для системы навыков (расширенные)
+SKILL_CONSTANTS = {
+    "max_skill_level": 100,
+    "skill_points_per_level": 5,
+    "skill_learning_rate": 0.1,
+    "skill_decay_rate": 0.01,
+    "skill_specialization_bonus": 1.5,
+    "skill_combination_bonus": 1.3,
+    "skill_mastery_threshold": 90,
+    "skill_evolution_chance": 0.05,
+    "skill_synergy_bonus": 1.2,
+    "skill_adaptation_rate": 0.1
+}
+
+# Константы для системы инвентаря (расширенные)
+INVENTORY_CONSTANTS = {
+    "max_inventory_slots": 50,
+    "max_stack_size": 999,
+    "weight_limit": 100.0,
+    "encumbrance_threshold": 0.8,
+    "item_durability_decay": 0.01,
+    "repair_efficiency": 0.8,
+    "enchantment_success_rate": 0.7,
+    "disenchant_efficiency": 0.5,
+    "item_quality_bonus": 1.2,
+    "inventory_organization_bonus": 1.1
+}
+
+# Константы для системы крафтинга (расширенные)
+CRAFTING_CONSTANTS = {
+    "base_crafting_success": 0.8,
+    "quality_material_bonus": 1.3,
+    "skill_crafting_bonus": 1.2,
+    "tool_quality_bonus": 1.1,
+    "recipe_complexity_penalty": 0.9,
+    "experimental_crafting_chance": 0.1,
+    "masterwork_chance": 0.05,
+    "critical_crafting_chance": 0.02,
+    "crafting_failure_penalty": 0.5,
+    "crafting_experience_gain": 10
+}
+
+# Константы для системы мира (расширенные)
+WORLD_CONSTANTS = {
+    "world_size": 1000,
+    "chunk_size": 16,
+    "render_distance": 8,
+    "day_night_cycle": 1200.0,  # 20 минут
+    "weather_change_interval": 300.0,  # 5 минут
+    "season_duration": 7200.0,  # 2 часа
+    "resource_respawn_time": 600.0,  # 10 минут
+    "enemy_spawn_rate": 0.1,
+    "loot_drop_rate": 0.3,
+    "exploration_bonus": 1.2
+}
+
+# Константы для системы рендеринга (расширенные)
+RENDERING_CONSTANTS = {
+    "max_fps": 60,
+    "vsync_enabled": True,
+    "antialiasing_level": 4,
+    "shadow_quality": "high",
+    "texture_quality": "high",
+    "particle_effects": True,
+    "bloom_effect": True,
+    "motion_blur": False,
+    "depth_of_field": True,
+    "ambient_occlusion": True
+}
+
+# Константы для системы UI (расширенные)
+UI_CONSTANTS = {
+    "ui_scale": 1.0,
+    "font_size": 14,
+    "button_padding": 5,
+    "menu_transition_speed": 0.3,
+    "tooltip_delay": 0.5,
+    "notification_duration": 3.0,
+    "progress_bar_smoothness": 0.1,
+    "color_blind_mode": False,
+    "high_contrast_mode": False,
+    "accessibility_features": True
+}
+
+# Константы для системы звука (расширенные)
+AUDIO_CONSTANTS = {
+    "master_volume": 1.0,
+    "music_volume": 0.7,
+    "sfx_volume": 0.8,
+    "voice_volume": 0.9,
+    "ambient_volume": 0.5,
+    "spatial_audio": True,
+    "reverb_enabled": True,
+    "echo_enabled": False,
+    "audio_quality": "high",
+    "sample_rate": 44100
+}
+
+# Константы для системы сети (расширенные)
+NETWORK_CONSTANTS = {
+    "max_players": 100,
+    "tick_rate": 60,
+    "interpolation_delay": 0.1,
+    "prediction_enabled": True,
+    "lag_compensation": True,
+    "bandwidth_limit": 1000000,  # 1 MB/s
+    "connection_timeout": 30.0,
+    "reconnect_attempts": 3,
+    "ping_update_interval": 1.0,
+    "packet_loss_threshold": 0.1
+}
+
+# Константы для системы безопасности (расширенные)
+SECURITY_CONSTANTS = {
+    "encryption_enabled": True,
+    "checksum_verification": True,
+    "anti_cheat_enabled": True,
+    "rate_limiting": True,
+    "session_timeout": 3600.0,  # 1 час
+    "max_login_attempts": 5,
+    "password_min_length": 8,
+    "two_factor_auth": False,
+    "backup_frequency": 3600.0,  # 1 час
+    "log_retention_days": 30
+}
+
+# Константы для системы аналитики (расширенные)
+ANALYTICS_CONSTANTS = {
+    "data_collection_enabled": True,
+    "performance_monitoring": True,
+    "error_reporting": True,
+    "usage_statistics": True,
+    "crash_reporting": True,
+    "telemetry_enabled": False,
+    "privacy_mode": True,
+    "data_retention_days": 90,
+    "anonymization_enabled": True,
+    "opt_out_enabled": True
+}
+
+# ============================================================================
+# ТИПЫ КВЕСТОВ
+# ============================================================================
+
+class QuestType(Enum):
+    """Типы квестов"""
+    # Основные типы
+    MAIN_QUEST = "main_quest"
+    SIDE_QUEST = "side_quest"
+    DAILY_QUEST = "daily_quest"
+    WEEKLY_QUEST = "weekly_quest"
+    EVENT_QUEST = "event_quest"
+    
+    # Специализированные квесты
+    EXPLORATION_QUEST = "exploration_quest"
+    COMBAT_QUEST = "combat_quest"
+    CRAFTING_QUEST = "crafting_quest"
+    SOCIAL_QUEST = "social_quest"
+    SURVIVAL_QUEST = "survival_quest"
+    
+    # Эволюционные квесты
+    EVOLUTION_QUEST = "evolution_quest"
+    MUTATION_QUEST = "mutation_quest"
+    ADAPTATION_QUEST = "adaptation_quest"
+    GENE_QUEST = "gene_quest"
+    
+    # Эмоциональные квесты
+    EMOTIONAL_QUEST = "emotional_quest"
+    THERAPY_QUEST = "therapy_quest"
+    EMPATHY_QUEST = "empathy_quest"
+    COURAGE_QUEST = "courage_quest"
+    
+    # Скрытые квесты
+    HIDDEN_QUEST = "hidden_quest"
+    SECRET_QUEST = "secret_quest"
+    MYSTERY_QUEST = "mystery_quest"
+    LEGENDARY_QUEST = "legendary_quest"
+
+class QuestStatus(Enum):
+    """Статусы квестов"""
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ABANDONED = "abandoned"
+    EXPIRED = "expired"
+    LOCKED = "locked"
+    AVAILABLE = "available"
+
+class QuestRewardType(Enum):
+    """Типы наград за квесты"""
+    # Материальные награды
+    EXPERIENCE = "experience"
+    GOLD = "gold"
+    ITEMS = "items"
+    MATERIALS = "materials"
+    CURRENCY = "currency"
+    
+    # Эволюционные награды
+    EVOLUTION_POINTS = "evolution_points"
+    GENE_FRAGMENTS = "gene_fragments"
+    MUTATION_CHANCES = "mutation_chances"
+    ADAPTATION_BONUS = "adaptation_bonus"
+    
+    # Эмоциональные награды
+    EMOTIONAL_STABILITY = "emotional_stability"
+    EMPATHY_BOOST = "empathy_boost"
+    COURAGE_BOOST = "courage_boost"
+    CALMNESS_BOOST = "calmness_boost"
+    
+    # Способности и навыки
+    SKILL_POINTS = "skill_points"
+    ABILITY_UNLOCKS = "ability_unlocks"
+    SPELL_LEARNING = "spell_learning"
+    TECHNIQUE_MASTERY = "technique_mastery"
+    
+    # Социальные награды
+    REPUTATION = "reputation"
+    ALLIANCE_POINTS = "alliance_points"
+    FACTION_STANDING = "faction_standing"
+    RELATIONSHIP_BOOST = "relationship_boost"
+    
+    # Специальные награды
+    TITLE = "title"
+    ACHIEVEMENT = "achievement"
+    COSMETIC_ITEM = "cosmetic_item"
+    SPECIAL_ACCESS = "special_access"
+
+class QuestDifficulty(Enum):
+    """Сложность квестов"""
+    TRIVIAL = "trivial"
+    EASY = "easy"
+    NORMAL = "normal"
+    HARD = "hard"
+    EXPERT = "expert"
+    MASTER = "master"
+    LEGENDARY = "legendary"
+    MYTHIC = "mythic"
+
+class QuestCategory(Enum):
+    """Категории квестов"""
+    STORY = "story"
+    COMBAT = "combat"
+    EXPLORATION = "exploration"
+    CRAFTING = "crafting"
+    SOCIAL = "social"
+    SURVIVAL = "survival"
+    EVOLUTION = "evolution"
+    EMOTIONAL = "emotional"
+    MYSTERY = "mystery"
+    EVENT = "event"
+
+# ============================================================================
+# ТИПЫ ТОРГОВЛИ
+# ============================================================================
+
+class TradeType(Enum):
+    """Типы торговли"""
+    # Основные типы
+    BUY = "buy"
+    SELL = "sell"
+    EXCHANGE = "exchange"
+    AUCTION = "auction"
+    BARTER = "barter"
+    
+    # Специализированные типы
+    BULK_TRADE = "bulk_trade"
+    CONTRACT_TRADE = "contract_trade"
+    FUTURES_TRADE = "futures_trade"
+    OPTIONS_TRADE = "options_trade"
+    
+    # Эволюционные типы
+    GENE_TRADE = "gene_trade"
+    EVOLUTION_TRADE = "evolution_trade"
+    MUTATION_TRADE = "mutation_trade"
+    ADAPTATION_TRADE = "adaptation_trade"
+    
+    # Эмоциональные типы
+    EMOTION_TRADE = "emotion_trade"
+    EXPERIENCE_TRADE = "experience_trade"
+    MEMORY_TRADE = "memory_trade"
+    WISDOM_TRADE = "wisdom_trade"
+
+class TradeStatus(Enum):
+    """Статусы торговли"""
+    PENDING = "pending"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+    FAILED = "failed"
+    DISPUTED = "disputed"
+    REFUNDED = "refunded"
+
+class CurrencyType(Enum):
+    """Типы валют"""
+    # Основные валюты
+    GOLD = "gold"
+    SILVER = "silver"
+    COPPER = "copper"
+    PLATINUM = "platinum"
+    
+    # Специальные валюты
+    CREDITS = "credits"
+    TOKENS = "tokens"
+    POINTS = "points"
+    FRAGMENTS = "fragments"
+    
+    # Эволюционные валюты
+    EVOLUTION_POINTS = "evolution_points"
+    GENE_FRAGMENTS = "gene_fragments"
+    MUTATION_CHANCES = "mutation_chances"
+    ADAPTATION_BONUS = "adaptation_bonus"
+    
+    # Эмоциональные валюты
+    EMOTIONAL_STABILITY = "emotional_stability"
+    EMPATHY_POINTS = "empathy_points"
+    COURAGE_POINTS = "courage_points"
+    WISDOM_POINTS = "wisdom_points"
+
+class TradeCategory(Enum):
+    """Категории торговли"""
+    WEAPONS = "weapons"
+    ARMOR = "armor"
+    CONSUMABLES = "consumables"
+    MATERIALS = "materials"
+    CURRENCY = "currency"
+    SERVICES = "services"
+    INFORMATION = "information"
+    SKILLS = "skills"
+    GENES = "genes"
+    EMOTIONS = "emotions"
+
+class TradeRarity(Enum):
+    """Редкость торговых предметов"""
+    COMMON = "common"
+    UNCOMMON = "uncommon"
+    RARE = "rare"
+    EPIC = "epic"
+    LEGENDARY = "legendary"
+    MYTHIC = "mythic"
+    DIVINE = "divine"
+
+class TradeLocation(Enum):
+    """Места торговли"""
+    MARKETPLACE = "marketplace"
+    SHOP = "shop"
+    AUCTION_HOUSE = "auction_house"
+    BLACK_MARKET = "black_market"
+    TRADING_POST = "trading_post"
+    CARAVAN = "caravan"
+    PORT = "port"
+    GUILD_HALL = "guild_hall"
+    TEMPLE = "temple"
+    ACADEMY = "academy"
+
+# ============================================================================
+# ТИПЫ СОЦИАЛЬНОГО ВЗАИМОДЕЙСТВИЯ
+# ============================================================================
+
+class RelationshipType(Enum):
+    """Типы отношений"""
+    # Базовые отношения
+    STRANGER = "stranger"
+    ACQUAINTANCE = "acquaintance"
+    FRIEND = "friend"
+    CLOSE_FRIEND = "close_friend"
+    BEST_FRIEND = "best_friend"
+    ENEMY = "enemy"
+    RIVAL = "rival"
+    
+    # Семейные отношения
+    FAMILY = "family"
+    PARENT = "parent"
+    CHILD = "child"
+    SIBLING = "sibling"
+    SPOUSE = "spouse"
+    MENTOR = "mentor"
+    STUDENT = "student"
+    
+    # Профессиональные отношения
+    COLLEAGUE = "colleague"
+    BOSS = "boss"
+    SUBORDINATE = "subordinate"
+    PARTNER = "partner"
+    ALLY = "ally"
+    COMPETITOR = "competitor"
+    
+    # Эволюционные отношения
+    EVOLUTION_PARTNER = "evolution_partner"
+    GENE_DONOR = "gene_donor"
+    MUTATION_BUDDY = "mutation_buddy"
+    ADAPTATION_MENTOR = "adaptation_mentor"
+    
+    # Эмоциональные отношения
+    EMOTIONAL_SUPPORT = "emotional_support"
+    THERAPIST = "therapist"
+    EMPATHY_PARTNER = "empathy_partner"
+    COURAGE_INSPIRER = "courage_inspirer"
+
+class InteractionType(Enum):
+    """Типы взаимодействий"""
+    # Базовые взаимодействия
+    GREETING = "greeting"
+    CONVERSATION = "conversation"
+    GIFT_GIVING = "gift_giving"
+    HELP_OFFERED = "help_offered"
+    HELP_RECEIVED = "help_received"
+    
+    # Эмоциональные взаимодействия
+    EMOTIONAL_SUPPORT = "emotional_support"
+    EMPATHY_SHARED = "empathy_shared"
+    COURAGE_GIVEN = "courage_given"
+    COMFORT_PROVIDED = "comfort_provided"
+    
+    # Конфликтные взаимодействия
+    ARGUMENT = "argument"
+    INSULT = "insult"
+    THREAT = "threat"
+    VIOLENCE = "violence"
+    BETRAYAL = "betrayal"
+    
+    # Эволюционные взаимодействия
+    GENE_SHARING = "gene_sharing"
+    MUTATION_HELP = "mutation_help"
+    EVOLUTION_GUIDANCE = "evolution_guidance"
+    ADAPTATION_TRAINING = "adaptation_training"
+    
+    # Торговые взаимодействия
+    TRADE_FAIR = "trade_fair"
+    TRADE_UNFAIR = "trade_unfair"
+    SERVICE_PROVIDED = "service_provided"
+    SERVICE_RECEIVED = "service_received"
+    
+    # Образовательные взаимодействия
+    KNOWLEDGE_SHARED = "knowledge_shared"
+    SKILL_TAUGHT = "skill_taught"
+    WISDOM_IMPARTED = "wisdom_imparted"
+    EXPERIENCE_SHARED = "experience_shared"
+
+class ReputationType(Enum):
+    """Типы репутации"""
+    # Общая репутация
+    GENERAL = "general"
+    HONESTY = "honesty"
+    RELIABILITY = "reliability"
+    GENEROSITY = "generosity"
+    INTELLIGENCE = "intelligence"
+    
+    # Боевая репутация
+    COMBAT_SKILL = "combat_skill"
+    BRAVERY = "bravery"
+    STRATEGY = "strategy"
+    LOYALTY = "loyalty"
+    
+    # Эволюционная репутация
+    EVOLUTION_MASTERY = "evolution_mastery"
+    GENE_EXPERTISE = "gene_expertise"
+    MUTATION_CONTROL = "mutation_control"
+    ADAPTATION_ABILITY = "adaptation_ability"
+    
+    # Эмоциональная репутация
+    EMOTIONAL_STABILITY = "emotional_stability"
+    EMPATHY_LEVEL = "empathy_level"
+    COURAGE_LEVEL = "courage_level"
+    WISDOM_LEVEL = "wisdom_level"
+    
+    # Торговая репутация
+    TRADING_FAIRNESS = "trading_fairness"
+    QUALITY_PROVIDER = "quality_provider"
+    PRICE_REASONABLE = "price_reasonable"
+    SERVICE_QUALITY = "service_quality"
+
+class SocialStatus(Enum):
+    """Социальный статус"""
+    OUTCAST = "outcast"
+    PEASANT = "peasant"
+    CITIZEN = "citizen"
+    MERCHANT = "merchant"
+    NOBLE = "noble"
+    ROYAL = "royal"
+    LEGENDARY = "legendary"
+    MYTHIC = "mythic"
+
+class FactionType(Enum):
+    """Типы фракций"""
+    NEUTRAL = "neutral"
+    EVOLUTIONISTS = "evolutionists"
+    TRADITIONALISTS = "traditionalists"
+    EMOTIONALISTS = "emotionalists"
+    TECHNOLOGISTS = "technologists"
+    MYSTICS = "mystics"
+    WARRIORS = "warriors"
+    TRADERS = "traders"
+    SCHOLARS = "scholars"
+    OUTLAWS = "outlaws"
+
+class CommunicationChannel(Enum):
+    """Каналы коммуникации"""
+    VERBAL = "verbal"
+    NONVERBAL = "nonverbal"
+    TELEPATHIC = "telepathic"
+    EMOTIONAL = "emotional"
+    GESTURAL = "gestural"
+    WRITTEN = "written"
+    DIGITAL = "digital"
+    QUANTUM = "quantum"

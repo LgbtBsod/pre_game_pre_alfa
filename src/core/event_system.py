@@ -120,6 +120,15 @@ class EventSystem(IEventSystem):
             logger.error(f"Ошибка подписки на событие {event_type}: {e}")
             return False
     
+    def subscribe_simple(self, event_type: str, handler):
+        try:
+            return self.subscribe(event_type, handler, handler.__name__ if hasattr(handler, '__name__') else 'plugin', EventPriority.NORMAL)
+        except Exception:
+            try:
+                return self.subscribe(event_type, handler)
+            except Exception:
+                return False
+    
     def unsubscribe(self, event_type: str, subscriber_id: str) -> bool:
         """Отписка от события"""
         try:

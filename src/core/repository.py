@@ -26,13 +26,18 @@ logger = logging.getLogger(__name__)
 class DataType(Enum):
     """Типы данных"""
     ENTITY = "entity"
+    ENTITY_DATA = "entity_data"
+    SYSTEM_DATA = "system_data"
     ITEM = "item"
     SKILL = "skill"
     EFFECT = "effect"
     CONFIG = "config"
+    CONFIGURATION = "configuration"
     SAVE = "save"
     TEMPLATE = "template"
     STATISTICS = "statistics"
+    DYNAMIC_DATA = "dynamic_data"
+    HISTORY = "history"
 
 class StorageType(Enum):
     """Типы хранения"""

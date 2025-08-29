@@ -62,6 +62,7 @@ class UIElement:
     custom_data: Dict[str, Any] = field(default_factory=dict)
     last_update: float = field(default_factory=time.time)
     animation_data: Dict[str, Any] = field(default_factory=dict)
+    layer: int = 0
 
 @dataclass
 class CreatorMode:
@@ -201,7 +202,7 @@ class UISystem(ISystem):
             self._create_object_templates()
             
             # Создаем базовые UI элементы (если нужно)
-            # self._create_base_ui_elements()
+            self._create_base_ui_elements()
             
             self._system_state = SystemState.READY
             logger.info("Система UI успешно инициализирована")
@@ -472,49 +473,10 @@ class UISystem(ISystem):
                 theme_id="light_theme",
                 name="Светлая тема",
                 colors={
-                    'primary': (51, 122, 183, 255),
-                    'secondary': (92, 184, 92, 255),
-                    'success': (92, 184, 92, 255),
-                    'warning': (240, 173, 78, 255),
-                    'danger': (217, 83, 79, 255),
-                    'info': (91, 192, 222, 255),
-                    'light': (248, 249, 250, 255),
-                    'dark': (52, 58, 64, 255),
-                    'white': (255, 255, 255, 255),
-                    'black': (0, 0, 0, 255)
-                },
-                fonts={
-                    'default': 'Arial',
-                    'heading': 'Arial Bold',
-                    'monospace': 'Courier New'
-                },
-                sizes={
-                    'font_small': 12.0,
-                    'font_normal': 14.0,
-                    'font_large': 16.0,
-                    'font_xlarge': 20.0,
-                    'spacing_small': 5.0,
-                    'spacing_normal': 10.0,
-                    'spacing_large': 20.0
-                },
-                is_active=True
-            )
-            
-            # Темная тема
-            dark_theme = UITheme(
-                theme_id="dark_theme",
-                name="Темная тема",
-                colors={
-                    'primary': (0, 123, 255, 255),
-                    'secondary': (108, 117, 125, 255),
-                    'success': (40, 167, 69, 255),
-                    'warning': (255, 193, 7, 255),
-                    'danger': (220, 53, 69, 255),
-                    'info': (23, 162, 184, 255),
-                    'light': (248, 249, 250, 255),
-                    'dark': (52, 58, 64, 255),
-                    'white': (33, 37, 41, 255),
-                    'black': (255, 255, 255, 255)
+                    'primary': (51, 122, 183, 200),
+                    'secondary': (92, 184, 92, 200),
+                    'accent': (91, 192, 222, 220),
+                    'text': (255, 255, 255, 255)
                 },
                 fonts={
                     'default': 'Arial',
@@ -533,11 +495,53 @@ class UISystem(ISystem):
                 is_active=False
             )
             
-            # Добавляем темы
+            # Неоновая полупрозрачная тема (по умолчанию)
+            neon_theme = UITheme(
+                theme_id="neon_theme",
+                name="Неоновая тема",
+                colors={
+                    'primary': (0, 255, 200, 160),
+                    'secondary': (255, 0, 200, 160),
+                    'accent': (0, 120, 255, 180),
+                    'text': (230, 255, 250, 255),
+                    'panel_bg': (10, 10, 20, 140)
+                },
+                fonts={
+                    'default': 'Arial',
+                    'heading': 'Arial Bold'
+                },
+                sizes={
+                    'font_small': 12.0,
+                    'font_normal': 15.0,
+                    'font_large': 18.0,
+                    'font_xlarge': 22.0,
+                    'spacing_small': 6.0,
+                    'spacing_normal': 12.0,
+                    'spacing_large': 24.0
+                },
+                is_active=True
+            )
+            
+            # Темная тема
+            dark_theme = UITheme(
+                theme_id="dark_theme",
+                name="Темная тема",
+                colors={
+                    'primary': (0, 123, 255, 200),
+                    'secondary': (108, 117, 125, 200),
+                    'accent': (23, 162, 184, 200),
+                    'text': (220, 220, 220, 255)
+                },
+                fonts={'default': 'Arial', 'heading': 'Arial Bold'},
+                sizes={'font_small': 12.0,'font_normal': 14.0,'font_large': 16.0,'font_xlarge': 20.0},
+                is_active=False
+            )
+            
             self.ui_themes["light_theme"] = light_theme
+            self.ui_themes["neon_theme"] = neon_theme
             self.ui_themes["dark_theme"] = dark_theme
             
-            logger.info("Созданы базовые темы")
+            logger.info("Созданы базовые темы (по умолчанию: neon_theme)")
             
         except Exception as e:
             logger.error(f"Ошибка создания базовых тем: {e}")
@@ -741,86 +745,81 @@ class UISystem(ISystem):
     def _create_base_ui_elements(self) -> None:
         """Создание базовых UI элементов"""
         try:
-            # Главное меню
-            main_menu = UIElement(
-                element_id="main_menu",
-                element_type=UIElementType.PANEL,
-                name="Главное меню",
-                position=(0.0, 0.0),
-                size=(800.0, 600.0),
-                visible=True,
-                enabled=True,
-                state=UIState.NORMAL,
-                text="Главное меню",
-                background_color=(0, 0, 0, 200),
-                border_color=(128, 128, 128, 255)
-            )
+            # Стартовый экран
+            self._create_screen_panel("start", title="Стартовое меню", buttons=[
+                ("Играть", "start_game"),
+                ("Настройки", "open_settings"),
+                ("Выход", "exit_game")
+            ], layer=1)
             
-            # Кнопка старта
-            start_button = UIElement(
-                element_id="start_button",
-                element_type=UIElementType.BUTTON,
-                name="Старт",
-                position=(0.0, 100.0),
-                size=(200.0, 50.0),
-                visible=True,
-                enabled=True,
-                state=UIState.NORMAL,
-                text="Старт",
-                background_color=(51, 122, 183, 255),
-                border_color=(46, 109, 164, 255),
-                parent_id="main_menu"
-            )
+            # Пауза
+            self._create_screen_panel("pause", title="Пауза", buttons=[
+                ("Продолжить", "resume"),
+                ("Настройки", "open_settings"),
+                ("Выйти в меню", "to_menu")
+            ], layer=2)
             
-            # Кнопка настроек
-            settings_button = UIElement(
-                element_id="settings_button",
-                element_type=UIElementType.BUTTON,
-                name="Настройки",
-                position=(0.0, 50.0),
-                size=(200.0, 50.0),
-                visible=True,
-                enabled=True,
-                state=UIState.NORMAL,
-                text="Настройки",
-                background_color=(92, 184, 92, 255),
-                border_color=(76, 175, 80, 255),
-                parent_id="main_menu"
-            )
+            # Настройки
+            self._create_screen_panel("settings", title="Настройки", buttons=[
+                ("Видео", "settings_video"),
+                ("Аудио", "settings_audio"),
+                ("Управление", "settings_controls")
+            ], layer=2)
             
-            # Кнопка выхода
-            exit_button = UIElement(
-                element_id="exit_button",
-                element_type=UIElementType.BUTTON,
-                name="Выход",
-                position=(0.0, 0.0),
-                size=(200.0, 50.0),
-                visible=True,
-                enabled=True,
-                state=UIState.NORMAL,
-                text="Выход",
-                background_color=(217, 83, 79, 255),
-                border_color=(212, 63, 58, 255),
-                parent_id="main_menu"
-            )
+            # Инвентарь / Гены / Торговля / Крафт — панели-заглушки
+            for sid, title in [
+                ("inventory", "Инвентарь"),
+                ("genes", "Гены"),
+                ("trade", "Торговля"),
+                ("crafting", "Крафт")
+            ]:
+                self._create_screen_panel(sid, title=title, buttons=[], layer=1)
             
-            # Добавляем элементы
-            self.ui_elements["main_menu"] = main_menu
-            self.ui_elements["start_button"] = start_button
-            self.ui_elements["settings_button"] = settings_button
-            self.ui_elements["exit_button"] = exit_button
-            
-            # Обновляем связи
-            main_menu.children = ["start_button", "settings_button", "exit_button"]
-            
-            # Добавляем в макет
-            main_menu_layout = self.ui_layouts["main_menu_layout"]
-            main_menu_layout.elements = ["main_menu", "start_button", "settings_button", "exit_button"]
-            
-            logger.info("Созданы базовые UI элементы")
+            logger.info("Созданы базовые экраны UI")
             
         except Exception as e:
             logger.error(f"Ошибка создания базовых UI элементов: {e}")
+
+    def _create_screen_panel(self, screen_id: str, title: str, buttons: List[tuple], layer: int = 0) -> None:
+        panel_id = f"{screen_id}_panel"
+        title_id = f"{screen_id}_title"
+        
+        self.create_ui_element(panel_id, {
+            'element_type': UIElementType.PANEL.value,
+            'name': title,
+            'position': (0.0, 0.0),
+            'size': (800.0, 500.0),
+            'visible': screen_id == 'start',
+            'background_color': self.ui_themes.get('neon_theme', UITheme('x')).colors.get('panel_bg', (0,0,0,140)),
+            'layer': layer
+        })
+        
+        self.create_ui_element(title_id, {
+            'element_type': UIElementType.LABEL.value,
+            'name': f"{title} - Заголовок",
+            'position': (0.0, 220.0),
+            'size': (500.0, 40.0),
+            'text': title,
+            'color': self.ui_themes.get('neon_theme', UITheme('x')).colors.get('text', (255,255,255,255)),
+            'parent_id': panel_id,
+            'layer': layer
+        })
+        
+        y = 120.0
+        for idx, (btn_text, btn_action) in enumerate(buttons):
+            btn_id = f"{screen_id}_btn_{idx}"
+            self.create_ui_element(btn_id, {
+                'element_type': UIElementType.BUTTON.value,
+                'name': btn_text,
+                'position': (0.0, y),
+                'size': (240.0, 50.0),
+                'text': btn_text,
+                'background_color': self.ui_themes.get('neon_theme', UITheme('x')).colors.get('primary', (0,255,200,160)),
+                'parent_id': panel_id,
+                'event_handlers': {'click': btn_action},
+                'layer': layer
+            })
+            y -= 70.0
     
     def _update_ui_elements(self, delta_time: float) -> None:
         """Обновление UI элементов"""
@@ -881,6 +880,11 @@ class UISystem(ISystem):
             self.system_stats['active_layouts'] = len(self.ui_layouts)
             self.system_stats['active_themes'] = len([t for t in self.ui_themes.values() if t.is_active])
             self.system_stats['active_screens'] = len(self.active_screens)
+            # Распределение по слоям
+            layers = {}
+            for e in self.ui_elements.values():
+                layers[e.layer] = layers.get(e.layer, 0) + 1
+            self.system_stats['layers'] = layers
             
         except Exception as e:
             logger.warning(f"Ошибка обновления статистики системы: {e}")
@@ -965,6 +969,13 @@ class UISystem(ISystem):
                 logger.warning(f"UI элемент {element_id} уже существует")
                 return False
             
+            # Нормализация текста (защита кодировки)
+            raw_text = element_data.get('text', '')
+            try:
+                norm_text = str(raw_text).encode('utf-8', 'ignore').decode('utf-8', 'ignore')
+            except Exception:
+                norm_text = str(raw_text)
+            
             # Создаем UI элемент
             ui_element = UIElement(
                 element_id=element_id,
@@ -975,7 +986,7 @@ class UISystem(ISystem):
                 visible=element_data.get('visible', True),
                 enabled=element_data.get('enabled', True),
                 state=UIState(element_data.get('state', UIState.NORMAL.value)),
-                text=element_data.get('text', ''),
+                text=norm_text,
                 icon=element_data.get('icon', ''),
                 color=element_data.get('color', (255, 255, 255, 255)),
                 background_color=element_data.get('background_color', (0, 0, 0, 128)),
@@ -983,7 +994,8 @@ class UISystem(ISystem):
                 font_size=element_data.get('font_size', 14),
                 parent_id=element_data.get('parent_id'),
                 event_handlers=element_data.get('event_handlers', {}),
-                custom_data=element_data.get('custom_data', {})
+                custom_data=element_data.get('custom_data', {}),
+                layer=int(element_data.get('layer', 0))
             )
             
             # Добавляем в систему
@@ -994,8 +1006,8 @@ class UISystem(ISystem):
                 parent = self.ui_elements[ui_element.parent_id]
                 parent.children.append(element_id)
             
-            # Здесь должна быть логика создания Panda3D GUI элемента
-            # Пока просто логируем
+            # Пересчет слоев для предотвращения наслоения
+            self._resolve_layering()
             
             logger.info(f"Создан UI элемент {element_id}")
             return True
@@ -1012,6 +1024,13 @@ class UISystem(ISystem):
             
             ui_element = self.ui_elements[element_id]
             
+            # Нормализация текста
+            if 'text' in update_data:
+                try:
+                    update_data['text'] = str(update_data['text']).encode('utf-8','ignore').decode('utf-8','ignore')
+                except Exception:
+                    update_data['text'] = str(update_data['text'])
+            
             # Обновляем свойства
             for key, value in update_data.items():
                 if hasattr(ui_element, key):
@@ -1019,8 +1038,9 @@ class UISystem(ISystem):
             
             ui_element.last_update = time.time()
             
-            # Здесь должна быть логика обновления Panda3D GUI элемента
-            # Пока просто логируем
+            # Пересчет слоев
+            if 'layer' in update_data:
+                self._resolve_layering()
             
             logger.debug(f"Обновлен UI элемент {element_id}")
             return True
@@ -1288,3 +1308,26 @@ class UISystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка получения элементов экрана {screen_id}: {e}")
             return []
+
+    def set_element_layer(self, element_id: str, layer: int) -> bool:
+        """Установить слой элемента"""
+        try:
+            if element_id not in self.ui_elements:
+                return False
+            self.ui_elements[element_id].layer = int(layer)
+            self._resolve_layering()
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка установки слоя для {element_id}: {e}")
+            return False
+    
+    def _resolve_layering(self) -> None:
+        """Простейшее разрешение наслоения: порядок по layer и parent"""
+        try:
+            # Здесь может быть логика сортировки/ z-order для движка GUI
+            # Пока просто фиксируем порядок в custom_data
+            ordered = sorted(self.ui_elements.values(), key=lambda e: (e.layer, e.parent_id or '', e.element_id))
+            for idx, el in enumerate(ordered):
+                el.custom_data['z_index'] = idx
+        except Exception as e:
+            logger.debug(f"Ошибка пересчета слоев UI: {e}")

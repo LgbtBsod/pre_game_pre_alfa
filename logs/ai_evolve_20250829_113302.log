@@ -1,0 +1,116 @@
+2025-08-29 11:33:02 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-29 11:33:02 - core.config_manager - DEBUG - Конфигурация сохранена
+2025-08-29 11:33:02 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-29 11:33:02 - core.game_engine - INFO - Игровой движок Panda3D с улучшенной архитектурой инициализирован
+2025-08-29 11:33:02 - core.game_engine - INFO - Начало инициализации игрового движка Panda3D...
+2025-08-29 11:33:02 - core.game_engine - INFO - Panda3D успешно инициализирован
+2025-08-29 11:33:02 - core.game_engine - INFO - Менеджеры новой архитектуры созданы
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Компонент event_bus зарегистрирован
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Компонент state_manager зарегистрирован
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Компонент repository_manager зарегистрирован
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Компонент component_manager зарегистрирован
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Начало инициализации всех компонентов
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Инициализация компонента event_bus
+2025-08-29 11:33:02 - EventBus.event_bus - INFO - Начало инициализации
+2025-08-29 11:33:02 - EventBus.event_bus - INFO - Инициализация завершена успешно
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Инициализация компонента state_manager
+2025-08-29 11:33:02 - StateManager.state_manager - INFO - Начало инициализации
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние game_time зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние game_paused зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние game_speed зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние current_scene зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние fps зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние memory_usage зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние active_entities зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние ui_visible зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние ui_scale зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние ui_theme зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Базовые состояния созданы
+2025-08-29 11:33:02 - StateManager.state_manager - INFO - Инициализация завершена успешно
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Инициализация компонента repository_manager
+2025-08-29 11:33:02 - RepositoryManager.repository_manager - INFO - Начало инициализации
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий entities для типа entity
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий items для типа item
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий skills для типа skill
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий effects для типа effect
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий templates для типа template
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий statistics для типа statistics
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий configs для типа config
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий saves для типа save
+2025-08-29 11:33:02 - core.repository - INFO - Базовые репозитории созданы
+2025-08-29 11:33:02 - RepositoryManager.repository_manager - INFO - Инициализация завершена успешно
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Инициализация компонента component_manager
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Начало инициализации
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Инициализация завершена успешно
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Все компоненты инициализированы
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Начало запуска всех компонентов
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Запуск компонента event_bus
+2025-08-29 11:33:02 - EventBus.event_bus - INFO - Запуск компонента
+2025-08-29 11:33:02 - EventBus.event_bus - INFO - Компонент запущен
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Запуск компонента state_manager
+2025-08-29 11:33:02 - StateManager.state_manager - INFO - Запуск компонента
+2025-08-29 11:33:02 - StateManager.state_manager - INFO - Компонент запущен
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Запуск компонента repository_manager
+2025-08-29 11:33:02 - RepositoryManager.repository_manager - INFO - Запуск компонента
+2025-08-29 11:33:02 - RepositoryManager.repository_manager - INFO - Компонент запущен
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Запуск компонента component_manager
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Запуск компонента
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Компонент запущен
+2025-08-29 11:33:02 - ComponentManager.component_manager - INFO - Все компоненты запущены
+2025-08-29 11:33:02 - core.game_engine - INFO - Новая архитектура успешно инициализирована
+2025-08-29 11:33:02 - core.config_manager - INFO - Загрузка конфигурации...
+2025-08-29 11:33:02 - core.config_manager - DEBUG - Конфигурация сохранена
+2025-08-29 11:33:02 - core.config_manager - INFO - Конфигурация успешно загружена
+2025-08-29 11:33:02 - core.event_system - INFO - Система событий инициализирована
+2025-08-29 11:33:02 - core.event_system - INFO - Система событий успешно инициализирована
+2025-08-29 11:33:02 - core.resource_manager - INFO - Менеджер ресурсов Panda3D инициализирован
+2025-08-29 11:33:02 - core.resource_manager - INFO - Инициализация менеджера ресурсов Panda3D...
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана директория ресурсов: textures
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана директория ресурсов: models
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана директория ресурсов: audio
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана директория ресурсов: shaders
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана директория ресурсов: data
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Загрузчик Panda3D инициализирован
+2025-08-29 11:33:02 - core.resource_manager - WARNING - Не удалось инициализировать аудио менеджер: cannot init abstract class
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана базовая текстура
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Создана базовая модель куба
+2025-08-29 11:33:02 - core.resource_manager - DEBUG - Базовые ресурсы предзагружены
+2025-08-29 11:33:02 - core.resource_manager - INFO - Менеджер ресурсов Panda3D успешно инициализирован
+2025-08-29 11:33:02 - core.performance_manager - INFO - Инициализация менеджера производительности...
+2025-08-29 11:33:02 - core.performance_manager - INFO - Поток мониторинга производительности запущен
+2025-08-29 11:33:02 - core.performance_manager - INFO - Менеджер производительности успешно инициализирован
+2025-08-29 11:33:02 - core.scene_manager - INFO - Инициализация менеджера сцен...
+2025-08-29 11:33:02 - core.scene_manager - INFO - Менеджер сцен успешно инициализирован
+2025-08-29 11:33:02 - core.system_manager - INFO - Менеджер систем инициализирован
+2025-08-29 11:33:02 - core.system_factory - ERROR - Ошибка регистрации систем по умолчанию: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.system_factory - INFO - Фабрика систем инициализирована
+2025-08-29 11:33:02 - core.system_manager - INFO - Менеджер систем инициализирован
+2025-08-29 11:33:02 - core.game_engine - INFO - Плагины обнаружены: ['example_plugin'], отложенная загрузка: ['example_plugin']
+2025-08-29 11:33:02 - core.system_manager - INFO - Инициализация менеджера систем...
+2025-08-29 11:33:02 - core.event_system - DEBUG - Подписка на событие system_ready от system_manager
+2025-08-29 11:33:02 - core.event_system - DEBUG - Подписка на событие system_error от system_manager
+2025-08-29 11:33:02 - core.system_manager - DEBUG - Порядок инициализации систем: []
+2025-08-29 11:33:02 - core.system_manager - INFO - Менеджер систем успешно инициализирован
+2025-08-29 11:33:02 - core.game_engine - INFO - Существующие менеджеры успешно инициализированы
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние engine_running зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние engine_paused зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - WARNING - Состояние current_scene уже зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - WARNING - Состояние fps уже зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - INFO - Состояние frame_count зарегистрировано
+2025-08-29 11:33:02 - core.state_manager - WARNING - Состояние memory_usage уже зарегистрировано
+2025-08-29 11:33:02 - core.game_engine - INFO - Состояния для существующих систем зарегистрированы
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий legacy_entities для типа entity
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий legacy_items для типа item
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий legacy_skills для типа skill
+2025-08-29 11:33:02 - core.repository - INFO - Создан репозиторий legacy_effects для типа effect
+2025-08-29 11:33:02 - core.game_engine - INFO - Репозитории для существующих данных зарегистрированы
+2025-08-29 11:33:02 - core.game_engine - INFO - Архитектуры успешно интегрированы
+2025-08-29 11:33:02 - core.game_engine - INFO - Все менеджеры успешно инициализированы
+2025-08-29 11:33:02 - core.game_engine - WARNING - Не удалось импортировать MenuScene: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.game_engine - WARNING - Не удалось импортировать GameScene: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.game_engine - WARNING - Не удалось импортировать PauseScene: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.game_engine - WARNING - Не удалось импортировать SettingsScene: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.game_engine - WARNING - Не удалось импортировать LoadScene: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.game_engine - WARNING - Не удалось импортировать CreatorScene: attempted relative import beyond top-level package
+2025-08-29 11:33:02 - core.game_engine - ERROR - Нет доступных сцен для инициализации
+2025-08-29 11:33:02 - core.game_engine - ERROR - Не удалось инициализировать игровой движок

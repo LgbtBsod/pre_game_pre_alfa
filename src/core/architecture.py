@@ -131,6 +131,10 @@ class BaseComponent(IComponent):
     def state(self) -> LifecycleState:
         return self._state
     
+    @state.setter
+    def state(self, value: LifecycleState) -> None:
+        self._state = value
+    
     def add_dependency(self, component_id: str) -> None:
         """Добавление зависимости"""
         if component_id not in self._dependencies:

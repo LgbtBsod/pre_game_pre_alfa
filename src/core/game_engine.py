@@ -29,6 +29,7 @@ from .scene_manager import SceneManager
 from .resource_manager import ResourceManager
 from .performance_manager import PerformanceManager
 from .system_factory import SystemFactory
+from .plugin_manager import PluginManager
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,8 @@ class GameEngine(ShowBase):
         self.scene_manager: Optional[SceneManager] = None
         self.resource_manager: Optional[ResourceManager] = None
         self.performance_manager: Optional[PerformanceManager] = None
+        self.plugin_manager: Optional[PluginManager] = None
+        self.lazy_plugins: Dict[str, Any] = {}
         
         logger.info("Игровой движок Panda3D с улучшенной архитектурой инициализирован")
     
@@ -243,19 +246,37 @@ class GameEngine(ShowBase):
             
             # 7. Менеджер систем
             self.system_manager = SystemManager(self.event_system)
-            
-            # 8. Создание и инициализация всех систем через фабрику
-            if not self._create_all_systems():
-                logger.error("Не удалось создать системы через фабрику")
-                return False
-            
-            # 9. Добавляем существующие системы в менеджер
-            self._add_existing_systems_to_manager()
+
+            # 8. Менеджер плагинов
+            self.plugin_manager = PluginManager()
+            discovered = self.plugin_manager.discover()
+            base_context = {
+                "event_system": self.event_system,
+                "config_manager": self.config_manager,
+                "resource_manager": self.resource_manager,
+                "system_manager": self.system_manager,
+                "system_factory": self.system_factory,
+                "scene_manager": self.scene_manager,
+            }
+            self.lazy_plugins = self.plugin_manager.auto_load(base_context)
+            logger.info(f"Плагины обнаружены: {discovered}, отложенная загрузка: {self.lazy_plugins}")
             
             # 10. Инициализация менеджера систем
             if not self.system_manager.initialize():
                 logger.error("Не удалось инициализировать менеджер систем")
                 return False
+            
+            # 11. Привязка расширений плагинов к системам
+            try:
+                if hasattr(self, 'plugin_manager') and self.plugin_manager:
+                    systems_snapshot = {}
+                    try:
+                        systems_snapshot = self.system_manager.systems if hasattr(self.system_manager, 'systems') else {}
+                    except Exception:
+                        pass
+                    self.plugin_manager.bind_system_extensions(systems_snapshot)
+            except Exception as e:
+                logger.warning(f"Ошибка привязки расширений плагинов: {e}")
             
             logger.info("Существующие менеджеры успешно инициализированы")
             return True

@@ -12,8 +12,7 @@ from dataclasses import dataclass, field
 from ...core.interfaces import ISystem, SystemPriority, SystemState
 from ...core.constants import (
     StatType, StatCategory, DamageType, BASE_STATS,
-    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS,
-    STAT_CALCULATION_FORMULAS
+    PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )
 from ...core.stats_utils import (
     STAT_GROUPS, ENTITY_STAT_TEMPLATES, get_entity_template,

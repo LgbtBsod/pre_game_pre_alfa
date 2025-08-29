@@ -13,6 +13,7 @@ from ...core.constants import (
     RenderQuality, RenderLayer, StatType, BASE_STATS,
     PROBABILITY_CONSTANTS, TIME_CONSTANTS, SYSTEM_LIMITS
 )
+from ...core.constants import EmotionType
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +28,7 @@ class RenderObject:
     rotation: tuple = (0.0, 0.0, 0.0)
     scale: tuple = (1.0, 1.0, 1.0)
     visible: bool = True
-    layer: RenderLayer = RenderLayer.MIDDLE
+    layer: RenderLayer = RenderLayer.OBJECTS
     quality: RenderQuality = RenderQuality.MEDIUM
     animation: str = ""
     shader: str = ""
@@ -60,6 +61,10 @@ class RenderSystem(ISystem):
         
         # Объекты для рендеринга
         self.render_objects: Dict[str, RenderObject] = {}
+        
+        # Плейсхолдеры геометрии и эмоции
+        self.placeholders: Dict[str, Dict[str, Any]] = {}
+        self.emotion_rings: Dict[str, Dict[str, Any]] = {}
         
 
         
@@ -146,6 +151,12 @@ class RenderSystem(ISystem):
             
             # Обновляем объекты рендеринга
             self._update_render_objects(delta_time)
+            
+            # Обновляем плейсхолдеры
+            self._update_placeholders(delta_time)
+            
+            # Обновляем кольца эмоций
+            self._update_emotion_rings(delta_time)
             
 
             
@@ -238,7 +249,12 @@ class RenderSystem(ISystem):
                 return self._handle_entity_destroyed(event_data)
             elif event_type == "entity_moved":
                 return self._handle_entity_moved(event_data)
-
+            elif event_type == "entity_emotion_changed":
+                eid = event_data.get('entity_id')
+                emo = event_data.get('emotion')
+                if eid and emo is not None:
+                    return self.update_emotion(eid, emo)
+                return False
             elif event_type == "camera_changed":
                 return self._handle_camera_changed(event_data)
             else:
@@ -335,8 +351,9 @@ class RenderSystem(ISystem):
         try:
             self.system_stats['total_objects'] = len(self.render_objects)
             self.system_stats['visible_objects'] = len([obj for obj in self.render_objects.values() if obj.visible])
-
             self.system_stats['active_cameras'] = len([cam for cam in self.cameras.values() if cam.active])
+            self.system_stats['placeholders'] = len(self.placeholders)
+            self.system_stats['emotion_rings'] = len(self.emotion_rings)
             
         except Exception as e:
             logger.warning(f"Ошибка обновления статистики системы: {e}")
@@ -347,9 +364,21 @@ class RenderSystem(ISystem):
             entity_id = event_data.get('entity_id')
             render_data = event_data.get('render_data', {})
             
-            if entity_id and render_data:
-                return self.create_render_object(entity_id, render_data)
-            return False
+            if not entity_id:
+                return False
+            
+            # Автосоздание плейсхолдера, если нет render_data
+            if not render_data:
+                render_data = {
+                    'placeholder': True,
+                    'shape': 'sphere',
+                    'color': (0.6, 0.7, 0.9, 1.0),
+                    'radius': 0.5,
+                    'position': event_data.get('position', (0.0, 0.0, 0.0)),
+                    'layer': RenderLayer.OBJECTS.value
+                }
+            
+            return self.create_render_object(entity_id, render_data)
             
         except Exception as e:
             logger.error(f"Ошибка обработки события создания сущности: {e}")
@@ -405,7 +434,23 @@ class RenderSystem(ISystem):
                 logger.warning(f"Объект рендеринга для {entity_id} уже существует")
                 return False
             
-            # Создаем объект рендеринга
+            # Если указан плейсхолдер, создаем примитив вместо модели
+            if render_data.get('placeholder'):
+                shape = render_data.get('shape', 'sphere')
+                color = tuple(render_data.get('color', (0.6, 0.6, 0.6, 1.0)))
+                radius = float(render_data.get('radius', 0.5))
+                size = tuple(render_data.get('size', (1.0, 1.0, 1.0)))
+                self.placeholders[entity_id] = {
+                    'shape': shape,
+                    'color': color,
+                    'radius': radius,
+                    'size': size,
+                    'position': render_data.get('position', (0.0, 0.0, 0.0)),
+                    'layer': render_data.get('layer', RenderLayer.OBJECTS.value),
+                    'last_update': time.time()
+                }
+            
+            # Создаем объект рендеринга (даже если плейсхолдер) для унификации
             render_object = RenderObject(
                 object_id=f"render_{entity_id}",
                 entity_id=entity_id,
@@ -415,17 +460,23 @@ class RenderSystem(ISystem):
                 rotation=render_data.get('rotation', (0.0, 0.0, 0.0)),
                 scale=render_data.get('scale', (1.0, 1.0, 1.0)),
                 visible=render_data.get('visible', True),
-                layer=RenderLayer(render_data.get('layer', RenderLayer.MIDDLE.value)),
+                layer=RenderLayer(render_data.get('layer', RenderLayer.OBJECTS.value)),
                 quality=RenderQuality(render_data.get('quality', RenderQuality.MEDIUM.value)),
                 animation=render_data.get('animation', ''),
                 shader=render_data.get('shader', '')
             )
             
-            # Добавляем в систему
             self.render_objects[render_object.object_id] = render_object
             
-            # Здесь должна быть логика создания Panda3D узла
-            # Пока просто логируем
+            # Если задана эмоция, создаем кольцо эмоции
+            if 'emotion' in render_data:
+                try:
+                    emotion = render_data['emotion']
+                    if not isinstance(emotion, EmotionType):
+                        emotion = EmotionType(emotion)
+                    self._set_emotion_ring(entity_id, emotion)
+                except Exception:
+                    pass
             
             logger.info(f"Создан объект рендеринга для {entity_id}")
             return True
@@ -437,6 +488,12 @@ class RenderSystem(ISystem):
     def destroy_render_object(self, entity_id: str) -> bool:
         """Уничтожение объекта рендеринга"""
         try:
+            # Удаляем плейсхолдер и кольцо эмоции
+            if entity_id in self.placeholders:
+                del self.placeholders[entity_id]
+            if entity_id in self.emotion_rings:
+                del self.emotion_rings[entity_id]
+            
             # Ищем объект рендеринга
             object_to_remove = None
             for object_id, render_object in self.render_objects.items():
@@ -606,5 +663,74 @@ class RenderSystem(ISystem):
         except Exception as e:
             logger.error(f"Ошибка получения объектов по слою {layer.value}: {e}")
             return []
+    
+
+    
+    def _update_placeholders(self, delta_time: float) -> None:
+        """Обновление данных плейсхолдеров (примитивов)"""
+        try:
+            t = time.time()
+            for eid, data in self.placeholders.items():
+                # Простая пульсация масштаба для визуальной обратной связи
+                if data.get('shape') == 'sphere':
+                    # пульсация радиуса в render_stats
+                    ro = next((o for o in self.render_objects.values() if o.entity_id == eid), None)
+                    if ro:
+                        phase = (t % 1.0)
+                        ro.render_stats['pulse_scale'] = 1.0 + 0.05 * (1.0 if phase < 0.5 else -1.0)
+                data['last_update'] = t
+        except Exception as e:
+            logger.debug(f"Ошибка обновления плейсхолдеров: {e}")
+    
+    def _emotion_color(self, emotion: EmotionType) -> tuple:
+        """Цвет по эмоции (RGBA)"""
+        mapping = {
+            EmotionType.JOY: (0.2, 0.9, 0.4, 0.7),
+            EmotionType.ANGER: (1.0, 0.2, 0.2, 0.7),
+            EmotionType.FEAR: (0.6, 0.2, 0.8, 0.7),
+            EmotionType.SADNESS: (0.2, 0.4, 1.0, 0.7),
+            EmotionType.CALM: (0.2, 0.8, 0.8, 0.6),
+        }
+        return mapping.get(emotion, (0.8, 0.8, 0.8, 0.6))
+    
+    def _set_emotion_ring(self, entity_id: str, emotion: EmotionType) -> None:
+        """Установить/обновить кольцо эмоции вокруг сущности"""
+        self.emotion_rings[entity_id] = {
+            'emotion': emotion.value,
+            'color': self._emotion_color(emotion),
+            'radius': 0.8,
+            'thickness': 0.05,
+            'last_update': time.time()
+        }
+        # заносим в render_stats
+        ro = next((o for o in self.render_objects.values() if o.entity_id == entity_id), None)
+        if ro:
+            ro.render_stats['emotion_ring'] = self.emotion_rings[entity_id]
+    
+    def update_emotion(self, entity_id: str, emotion: Union[EmotionType, str]) -> bool:
+        """Публичный метод для обновления эмоции сущности"""
+        try:
+            if not isinstance(emotion, EmotionType):
+                emotion = EmotionType(emotion)
+            self._set_emotion_ring(entity_id, emotion)
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка обновления эмоции для {entity_id}: {e}")
+            return False
+    
+    def _update_emotion_rings(self, delta_time: float) -> None:
+        """Обновление эффекта колец эмоций"""
+        try:
+            t = time.time()
+            for eid, ring in self.emotion_rings.items():
+                # Простая анимация толщины
+                phase = (t % 1.0)
+                ring['thickness'] = 0.04 + 0.02 * (1.0 if phase < 0.5 else -1.0)
+                ring['last_update'] = t
+                ro = next((o for o in self.render_objects.values() if o.entity_id == eid), None)
+                if ro:
+                    ro.render_stats['emotion_ring'] = ring
+        except Exception as e:
+            logger.debug(f"Ошибка обновления колец эмоций: {e}")
     
 

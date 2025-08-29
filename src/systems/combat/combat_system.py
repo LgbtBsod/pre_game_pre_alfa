@@ -114,10 +114,10 @@ class CombatSystem(BaseGameSystem):
             self._setup_combat_system()
             
             # Регистрируем состояния в StateManager
-            self._register_states()
+            self._register_system_states()
             
             # Регистрируем репозитории в RepositoryManager
-            self._register_repositories()
+            self._register_system_repositories()
             
             logger.info("Система боя успешно инициализирована")
             return True
@@ -199,6 +199,36 @@ class CombatSystem(BaseGameSystem):
             logger.error(f"Ошибка обновления системы боя: {e}")
             return False
     
+    def _register_system_states(self) -> None:
+        """Регистрация состояний системы (для совместимости с тестами)"""
+        if not self.state_manager:
+            return
+        
+        # Регистрируем состояния системы
+        self.state_manager.register_container(
+            "combat_system_settings",
+            StateType.CONFIGURATION,
+            StateScope.SYSTEM,
+            self.combat_settings
+        )
+        
+        self.state_manager.register_container(
+            "combat_system_stats",
+            StateType.STATISTICS,
+            StateScope.SYSTEM,
+            self.system_stats
+        )
+        
+        # Регистрируем состояния боев
+        self.state_manager.register_container(
+            "active_combats",
+            StateType.DATA,
+            StateScope.GLOBAL,
+            {}
+        )
+        
+        logger.info("Состояния системы боя зарегистрированы")
+    
     def _register_states(self) -> None:
         """Регистрация состояний в StateManager"""
         if not self.state_manager:
@@ -228,6 +258,37 @@ class CombatSystem(BaseGameSystem):
         )
         
         logger.info("Состояния системы боя зарегистрированы")
+    
+    def _register_system_repositories(self) -> None:
+        """Регистрация репозиториев системы (для совместимости с тестами)"""
+        if not self.repository_manager:
+            return
+        
+        # Регистрируем репозиторий активных боев
+        self.repository_manager.register_repository(
+            "active_combats",
+            DataType.DYNAMIC_DATA,
+            StorageType.MEMORY,
+            self.active_combats
+        )
+        
+        # Регистрируем репозиторий боевых статистик
+        self.repository_manager.register_repository(
+            "entity_combat_stats",
+            DataType.ENTITY_DATA,
+            StorageType.MEMORY,
+            self.entity_combat_stats
+        )
+        
+        # Регистрируем репозиторий истории боев
+        self.repository_manager.register_repository(
+            "combat_history",
+            DataType.HISTORY,
+            StorageType.MEMORY,
+            self.combat_history
+        )
+        
+        logger.info("Репозитории системы боя зарегистрированы")
     
     def _register_repositories(self) -> None:
         """Регистрация репозиториев в RepositoryManager"""
@@ -393,6 +454,42 @@ class CombatSystem(BaseGameSystem):
             logger.debug("Система боя настроена")
         except Exception as e:
             logger.warning(f"Не удалось настроить систему боя: {e}")
+    
+    def create_combat(self, combat_id: str, participants: List[str]) -> bool:
+        """Создание нового боя"""
+        try:
+            if combat_id in self.active_combats:
+                logger.warning(f"Бой {combat_id} уже существует")
+                return False
+            
+            if len(participants) < 2:
+                logger.warning(f"Недостаточно участников для боя {combat_id}")
+                return False
+            
+            # Создаем данные боя
+            combat_data = {
+                'combat_id': combat_id,
+                'participants': participants,
+                'state': CombatState.IN_COMBAT,
+                'start_time': time.time(),
+                'duration': 0.0,
+                'turn': 0,
+                'current_attacker': participants[0],
+                'ai_turn': False,
+                'winner': None,
+                'result': None
+            }
+            
+            # Добавляем бой в активные
+            self.active_combats[combat_id] = combat_data
+            self.system_stats['combats_started'] += 1
+            
+            logger.info(f"Создан бой {combat_id} с участниками: {participants}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания боя {combat_id}: {e}")
+            return False
     
     def _update_active_combats(self, delta_time: float) -> None:
         """Обновление активных боев"""
