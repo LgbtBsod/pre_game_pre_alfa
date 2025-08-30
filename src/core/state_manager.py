@@ -21,9 +21,9 @@ from .architecture import BaseComponent, ComponentType, Pri or ity, Event
 
 logger= logging.getLogger(__name__)
 
-# ======================================
+# ==========
 # ТИПЫ СОСТОЯНИЙ
-# ======================================
+# ==========
 
 class StateType(Enum):
     """Типы состояний"""
@@ -50,9 +50,9 @@ class StateValidation(Enum):
         ENUM= "enum"
         CUSTOM= "custom"
 
-        # ======================================
+        # ==========
         # БАЗОВЫЕ КЛАССЫ СОСТОЯНИЙ
-        # ======================================
+        # ==========
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -347,9 +347,9 @@ class StateContain er(IStateContain er[TypeVar('T')]):
             with self._lock:
             self._change_his tory.clear()
 
-            # ======================================
+            # ==========
             # МЕНЕДЖЕР СОСТОЯНИЙ
-            # ======================================
+            # ==========
 
             class StateManager(BaseComponent):
     """Менеджер состояний с улучшенной производительностью и группировкой"""
@@ -696,9 +696,9 @@ class StateContain er(IStateContain er[TypeVar('T')]):
 
         logger.in fo("Базовые состояния созданы")
 
-# ======================================
+# ==========
 # УТИЛИТЫ ДЛЯ РАБОТЫ С СОСТОЯНИЯМИ
-# ======================================
+# ==========
 
 def create_entity_state(entity_id: str, initial_data: Dict[str
     Any]) -> Dict[str, StateContain er]:

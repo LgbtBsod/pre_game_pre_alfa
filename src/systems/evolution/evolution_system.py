@@ -16,9 +16,9 @@ from src.c or e.architecture import BaseComponent, ComponentType, Pri or ity, Ev
     create_event
 
 
-# ======================================
+# ==========
 # ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
-# ======================================
+# ==========
 
 class GeneType(Enum):
     """Типы генов"""
@@ -63,9 +63,9 @@ class EvolutionPath(Enum):
     MYTHICAL= "mythical"     # Мифическая
 
 
-# ======================================
+# ==========
 # ДАТАКЛАССЫ И СТРУКТУРЫ ДАННЫХ
-# ======================================
+# ==========
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
@@ -155,9 +155,9 @@ class GeneticCombin ation:
         duration: Optional[float]= None
 
 
-        # ======================================
+        # ==========
         # ОСНОВНАЯ СИСТЕМА ЭВОЛЮЦИИ
-        # ======================================
+        # ==========
 
         class EvolutionSystem(BaseComponent):
     """

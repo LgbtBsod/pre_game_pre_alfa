@@ -21,9 +21,9 @@ from .architecture import BaseComponent, ComponentType, Pri or ity, Event
 
 logger= logging.getLogger(__name__)
 
-# ======================================
+# ==========
 # ТИПЫ ДАННЫХ
-# ======================================
+# ==========
 
 class DataType(Enum):
     """Типы данных"""
@@ -48,9 +48,9 @@ class DataType(Enum):
     DATABASE= "database"
     CACHE= "cache"
 
-# ======================================
+# ==========
 # БАЗОВЫЕ КЛАССЫ РЕПОЗИТОРИЕВ
-# ======================================
+# ==========
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
@@ -513,9 +513,9 @@ class IReposit or y(Generic[T]):
             logger.err or(f"Ошибка сохранения репозитория {self.reposit or y_id}: {e}")
             return False
 
-# ======================================
+# ==========
 # МЕНЕДЖЕР РЕПОЗИТОРИЕВ
-# ======================================
+# ==========
 
 class Reposit or yManager(BaseComponent):
     """Менеджер репозиториев"""
@@ -634,9 +634,9 @@ class Reposit or yManager(BaseComponent):
 
         logger.in fo("Базовые репозитории созданы")
 
-# ======================================
+# ==========
 # УТИЛИТЫ ДЛЯ РАБОТЫ С РЕПОЗИТОРИЯМИ
-# ======================================
+# ==========
 
 def create_query_filter(field: str, operat or : str, value: Any) -> QueryFilter:
     """Создание фильтра запроса"""

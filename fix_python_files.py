@@ -265,7 +265,11 @@ def validate_python_syntax(content):
     try:
         ast.parse(content)
         return True
-    except SyntaxError:
+    except SyntaxError as e:
+        print(f"    Синтаксическая ошибка: {e}")
+        return False
+    except Exception as e:
+        print(f"    Неожиданная ошибка при проверке синтаксиса: {e}")
         return False
 
 def create_backup(filepath):
@@ -281,6 +285,8 @@ def create_backup(filepath):
 
 def process_file(filepath):
     """Обрабатывает один Python-файл."""
+вреы и    print(f"Обрабатываю файл: {filepath}")
+    
     # Проверяем, не является ли файл самим скриптом
     if os.path.abspath(filepath) == os.path.abspath(__file__):
         print(f"Пропуск самого себя: {filepath}")
@@ -299,11 +305,14 @@ def process_file(filepath):
         return
 
     original_content = content
+    print(f"  Размер файла: {len(content)} символов")
 
     # Проверяем исходный синтаксис
     original_valid = validate_python_syntax(content)
+    print(f"  Исходный синтаксис: {'валиден' if original_valid else 'НЕ ВАЛИДЕН'}")
     
     # Последовательное применение исправлений
+    print("  Применяю исправления...")
     content = fix_indentation(content)
     content = fix_syntax_errors(content)
     content = fix_try_except(content)
@@ -313,9 +322,10 @@ def process_file(filepath):
 
     # Проверяем итоговый синтаксис
     final_valid = validate_python_syntax(content)
+    print(f"  Итоговый синтаксис: {'валиден' if final_valid else 'НЕ ВАЛИДЕН'}")
     
     if not final_valid and original_valid:
-        print(f"Исправления сломали синтаксис: {filepath}. Восстанавливаем из резервной копии.")
+        print(f"  ВНИМАНИЕ: Исправления сломали синтаксис: {filepath}. Восстанавливаем из резервной копии.")
         # Восстанавливаем из резервной копии
         try:
             with open(filepath + '.bak', 'r', encoding='utf-8') as f:
@@ -323,18 +333,18 @@ def process_file(filepath):
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(backup_content)
         except Exception as e:
-            print(f"Ошибка восстановления из резервной копии: {filepath}: {e}")
+            print(f"  Ошибка восстановления из резервной копии: {filepath}: {e}")
         return
 
     if content != original_content:
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"Исправлен: {filepath}")
+            print(f"  ✓ Исправлен: {filepath}")
         except Exception as e:
-            print(f"Ошибка записи в файл {filepath}: {e}")
+            print(f"  ✗ Ошибка записи в файл {filepath}: {e}")
     else:
-        print(f"Без изменений: {filepath}")
+        print(f"  - Без изменений: {filepath}")
         
     # Удаляем резервную копию, если она больше не нужна
     try:
@@ -346,11 +356,22 @@ def process_file(filepath):
 def main():
     """Основная функция для обхода директорий."""
     current_dir = os.getcwd()
+    print(f"Начинаю обработку Python-файлов в директории: {current_dir}")
+    
+    python_files = []
     for root, _, files in os.walk(current_dir):
         for file in files:
             if file.endswith('.py'):
                 filepath = os.path.join(root, file)
-                process_file(filepath)
+                python_files.append(filepath)
+    
+    print(f"Найдено Python-файлов: {len(python_files)}")
+    
+    for i, filepath in enumerate(python_files, 1):
+        print(f"\n[{i}/{len(python_files)}] ", end="")
+        process_file(filepath)
+    
+    print(f"\nОбработка завершена. Обработано файлов: {len(python_files)}")
 
 if __name__ == '__main__':
     main()
