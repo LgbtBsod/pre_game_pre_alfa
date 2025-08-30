@@ -1,0 +1,7 @@
+
+# Автоматически созданные файлы
+.backups/
+.integrity/
+*.backup_*
+*.integrity
+*.bak

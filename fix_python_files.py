@@ -32,8 +32,7 @@ class SmartBackupManager:
         
         # Создаем .gitignore для этих директорий
         gitignore_file = self.project_root / ".gitignore"
-        gitignore_content = """
-# Автоматически созданные файлы
+        gitignore_content = """# Автоматически созданные файлы
 .backups/
 .integrity/
 *.backup_*
@@ -41,13 +40,24 @@ class SmartBackupManager:
 *.bak
 """
         
-        if not gitignore_file.exists():
-            gitignore_file.write_text(gitignore_content.strip())
-        else:
-            # Проверяем, есть ли уже наши записи
-            content = gitignore_file.read_text()
-            if ".backups/" not in content:
-                gitignore_file.write_text(content + gitignore_content)
+        try:
+            if not gitignore_file.exists():
+                with open(gitignore_file, 'w', encoding='utf-8') as f:
+                    f.write(gitignore_content)
+            else:
+                # Проверяем, есть ли уже наши записи
+                try:
+                    with open(gitignore_file, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    if ".backups/" not in content:
+                        with open(gitignore_file, 'a', encoding='utf-8') as f:
+                            f.write('\n' + gitignore_content)
+                except UnicodeDecodeError:
+                    # Если файл в другой кодировке, создаем новый
+                    with open(gitignore_file, 'w', encoding='utf-8') as f:
+                        f.write(gitignore_content)
+        except Exception as e:
+            print(f"    ⚠️ Не удалось обновить .gitignore: {e}")
     
     def load_config(self):
         """Загружает конфигурацию бэкапов."""
@@ -73,7 +83,13 @@ class SmartBackupManager:
     def create_smart_backup(self, filepath, content):
         """Создает умную резервную копию с автоматической очисткой."""
         filepath = Path(filepath)
-        relative_path = filepath.relative_to(self.project_root)
+        
+        try:
+            # Пытаемся получить относительный путь
+            relative_path = filepath.relative_to(self.project_root)
+        except ValueError:
+            # Если не удается получить относительный путь, используем имя файла
+            relative_path = filepath.name
         
         # Создаем безопасное имя файла
         safe_name = str(relative_path).replace('/', '_').replace('\\', '_')
@@ -118,7 +134,13 @@ class SmartBackupManager:
     def create_integrity_file(self, filepath, content):
         """Создает оптимизированный файл целостности."""
         filepath = Path(filepath)
-        relative_path = filepath.relative_to(self.project_root)
+        
+        try:
+            # Пытаемся получить относительный путь
+            relative_path = filepath.relative_to(self.project_root)
+        except ValueError:
+            # Если не удается получить относительный путь, используем имя файла
+            relative_path = filepath.name
         
         # Создаем безопасное имя
         safe_name = str(relative_path).replace('/', '_').replace('\\', '_')
@@ -545,6 +567,153 @@ def apply_preventive_fixes(content):
     
     return content
 
+def analyze_file_damage(content):
+    """Анализирует степень повреждения файла и возвращает детальный отчет."""
+    damage_report = {
+        'total_lines': len(content.splitlines()),
+        'empty_lines': 0,
+        'comment_lines': 0,
+        'code_lines': 0,
+        'syntax_errors': [],
+        'encoding_issues': False,
+        'damage_score': 0,  # 0-100, где 100 - полностью поврежден
+        'recommendations': []
+    }
+    
+    lines = content.splitlines()
+    
+    for i, line in enumerate(lines, 1):
+        stripped = line.strip()
+        
+        if not stripped:
+            damage_report['empty_lines'] += 1
+        elif stripped.startswith('#'):
+            damage_report['comment_lines'] += 1
+        else:
+            damage_report['code_lines'] += 1
+            
+        # Проверяем на очевидные проблемы
+        if any(char in line for char in ['\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07']):
+            damage_report['encoding_issues'] = True
+            damage_report['syntax_errors'].append(f"Строка {i}: Невидимые символы")
+            
+        # Проверяем на разорванные конструкции
+        if stripped and not stripped.endswith(':') and stripped.endswith('('):
+            damage_report['syntax_errors'].append(f"Строка {i}: Незакрытая скобка")
+            
+        if stripped and stripped.startswith(')') and not stripped.startswith('('):
+            damage_report['syntax_errors'].append(f"Строка {i}: Лишняя закрывающая скобка")
+    
+    # Вычисляем оценку повреждения
+    if damage_report['total_lines'] == 0:
+        damage_report['damage_score'] = 100
+    else:
+        # Базовый счетчик
+        damage_score = 0
+        
+        # Штраф за пустые строки (если их много)
+        if damage_report['empty_lines'] > damage_report['total_lines'] * 0.8:
+            damage_score += 20
+            
+        # Штраф за проблемы с кодировкой
+        if damage_report['encoding_issues']:
+            damage_score += 30
+            
+        # Штраф за синтаксические ошибки
+        damage_score += min(len(damage_report['syntax_errors']) * 10, 40)
+        
+        # Штраф за очень короткие файлы
+        if damage_report['total_lines'] < 5:
+            damage_score += 20
+            
+        damage_report['damage_score'] = min(damage_score, 100)
+    
+    # Формируем рекомендации
+    if damage_report['damage_score'] > 80:
+        damage_report['recommendations'].append("Критическое повреждение - требуется экстренный ремонт")
+    elif damage_report['damage_score'] > 50:
+        damage_report['recommendations'].append("Сильное повреждение - требуется агрессивный ремонт")
+    elif damage_report['damage_score'] > 20:
+        damage_report['recommendations'].append("Умеренное повреждение - стандартные исправления")
+    else:
+        damage_report['recommendations'].append("Минимальные повреждения - легкие исправления")
+    
+    if damage_report['encoding_issues']:
+        damage_report['recommendations'].append("Обнаружены проблемы с кодировкой - требуется очистка символов")
+    
+    if len(damage_report['syntax_errors']) > 5:
+        damage_report['recommendations'].append("Много синтаксических ошибок - требуется пошаговое исправление")
+    
+    return damage_report
+
+def smart_repair_strategy(content, damage_report):
+    """Выбирает оптимальную стратегию исправления на основе анализа повреждений."""
+    print(f"    📊 Анализ повреждений: {damage_report['damage_score']}/100")
+    print(f"    📋 Рекомендации: {', '.join(damage_report['recommendations'])}")
+    
+    if damage_report['damage_score'] > 80:
+        print("    🚨 Применяю экстренный ремонт...")
+        return emergency_repair(content)
+    elif damage_report['damage_score'] > 50:
+        print("    🔥 Применяю агрессивный ремонт...")
+        return aggressive_repair(content)
+    elif damage_report['damage_score'] > 20:
+        print("    🔧 Применяю стандартные исправления...")
+        return apply_standard_fixes(content)
+    else:
+        print("    🛡️ Применяю профилактические исправления...")
+        return apply_preventive_fixes(content)
+
+def apply_standard_fixes(content):
+    """Применяет стандартные исправления в оптимальном порядке."""
+    print("    🔧 Стандартные исправления...")
+    
+    # Применяем исправления в порядке от простых к сложным
+    content = fix_indentation(content)
+    content = fix_syntax_errors(content)
+    content = fix_try_except(content)
+    content = fix_empty_blocks(content)
+    content = fix_redundant_else(content)
+    content = fix_imports(content)
+    
+    return content
+
+def enhanced_emergency_repair(content):
+    """Улучшенный экстренный ремонт с пошаговой диагностикой."""
+    print("    🚨 Улучшенный экстренный ремонт...")
+    
+    # Анализируем повреждения
+    damage_report = analyze_file_damage(content)
+    
+    # Применяем исправления поэтапно
+    stages = [
+        ("Очистка символов", fix_corrupted_files),
+        ("Исправление строк", fix_broken_strings),
+        ("Исправление скобок", fix_broken_brackets),
+        ("Исправление dataclass", fix_broken_dataclasses),
+        ("Исправление enum", fix_broken_enums),
+        ("Исправление импортов", fix_broken_imports),
+        ("Исправление классов/функций", fix_broken_classes_and_functions)
+    ]
+    
+    for stage_name, fix_function in stages:
+        print(f"      🔧 {stage_name}...")
+        try:
+            content = fix_function(content)
+            # Проверяем, исправилось ли
+            if validate_python_syntax(content):
+                print(f"      ✅ {stage_name} успешен!")
+                break
+        except Exception as e:
+            print(f"      ⚠️ {stage_name} не удался: {e}")
+    
+    # Если все еще невалиден, применяем агрессивные исправления
+    if not validate_python_syntax(content):
+        print("      🔥 Применяю агрессивные исправления...")
+        content = aggressive_repair(content)
+    
+    return content
+
 def create_file_integrity_check(filepath):
     """Создает файл для проверки целостности в будущем."""
     try:
@@ -552,18 +721,10 @@ def create_file_integrity_check(filepath):
             content = f.read()
         
         # Создаем хеш содержимого
-        import hashlib
         content_hash = hashlib.md5(content.encode('utf-8')).hexdigest()
         
-        # Создаем файл проверки
-        check_file = filepath + '.integrity'
-        with open(check_file, 'w', encoding='utf-8') as f:
-            f.write(f"# Файл проверки целостности для {filepath}\n")
-            f.write(f"# Создан: {__import__('datetime').datetime.now()}\n")
-            f.write(f"# MD5 хеш: {content_hash}\n")
-            f.write(f"# Размер: {len(content)} символов\n")
-        
-        return True
+        # Создаем файл проверки через менеджер
+        return backup_manager.create_integrity_file(filepath, content)
     except Exception as e:
         print(f"    ⚠️ Не удалось создать файл проверки целостности: {e}")
         return False
@@ -947,26 +1108,17 @@ def process_file(filepath):
     original_valid = validate_python_syntax(content)
     print(f"  🔍 Исходный синтаксис: {'✅ валиден' if original_valid else '❌ НЕ ВАЛИДЕН'}")
     
-    # Если файл сильно поврежден, применяем экстренный ремонт
+    # Анализируем повреждения и выбираем стратегию
     if not original_valid:
-        print("  🚨 Файл сильно поврежден, применяю экстренный ремонт...")
-        content = emergency_repair(content)
+        print("  🔍 Анализирую повреждения файла...")
+        damage_report = analyze_file_damage(content)
         
-        # Проверяем результат экстренного ремонта
-        emergency_valid = validate_python_syntax(content)
-        if emergency_valid:
-            print("  ✅ Экстренный ремонт успешен!")
-        else:
-            print("  ⚠️ Экстренный ремонт не помог, применяю стандартные исправления...")
-    
-    # Последовательное применение стандартных исправлений
-    print("  🔧 Применяю стандартные исправления...")
-    content = fix_indentation(content)
-    content = fix_syntax_errors(content)
-    content = fix_try_except(content)
-    content = fix_empty_blocks(content)
-    content = fix_redundant_else(content)
-    content = fix_imports(content)
+        # Выбираем оптимальную стратегию исправления
+        content = smart_repair_strategy(content, damage_report)
+    else:
+        # Для валидных файлов применяем стандартные исправления
+        print("  🔧 Применяю стандартные исправления...")
+        content = apply_standard_fixes(content)
     
     # Применяем профилактические исправления
     content = apply_preventive_fixes(content)
@@ -1048,6 +1200,12 @@ def main():
     
     # Автоматическая очистка резервных копий если проект здоров
     cleanup_backup_files()
+    
+    # Показываем статистику исправлений
+    print_repair_statistics()
+    
+    # Мониторим изменения в файлах
+    monitor_file_changes()
 
 def setup_file_monitoring():
     """Настраивает мониторинг файлов для предотвращения повреждений."""
@@ -1151,6 +1309,176 @@ def cleanup_old_backups_by_age(days_old=7):
     
     print(f"\n  🎉 Очистка завершена!")
     print(f"  ✅ Удалено старых резервных копий: {deleted_count}")
+
+def get_repair_statistics():
+    """Возвращает статистику по исправлениям."""
+    return {
+        'total_files_processed': 0,
+        'files_fixed': 0,
+        'files_unchanged': 0,
+        'files_failed': 0,
+        'emergency_repairs': 0,
+        'aggressive_repairs': 0,
+        'standard_fixes': 0,
+        'preventive_fixes': 0,
+        'total_repair_time': 0.0
+    }
+
+# Глобальная статистика
+repair_stats = get_repair_statistics()
+
+def update_repair_statistics(repair_type, success=True):
+    """Обновляет статистику исправлений."""
+    repair_stats['total_files_processed'] += 1
+    
+    if success:
+        repair_stats['files_fixed'] += 1
+    else:
+        repair_stats['files_failed'] += 1
+    
+    if repair_type == 'emergency':
+        repair_stats['emergency_repairs'] += 1
+    elif repair_type == 'aggressive':
+        repair_stats['aggressive_repairs'] += 1
+    elif repair_type == 'standard':
+        repair_stats['standard_fixes'] += 1
+    elif repair_type == 'preventive':
+        repair_stats['preventive_fixes'] += 1
+
+def print_repair_statistics():
+    """Выводит статистику исправлений."""
+    print("\n📊 Статистика исправлений:")
+    print(f"  📁 Всего обработано файлов: {repair_stats['total_files_processed']}")
+    print(f"  ✅ Успешно исправлено: {repair_stats['files_fixed']}")
+    print(f"  ➖ Без изменений: {repair_stats['files_unchanged']}")
+    print(f"  ❌ Ошибки исправления: {repair_stats['files_failed']}")
+    print(f"  🚨 Экстренных ремонтов: {repair_stats['emergency_repairs']}")
+    print(f"  🔥 Агрессивных ремонтов: {repair_stats['aggressive_repairs']}")
+    print(f"  🔧 Стандартных исправлений: {repair_stats['standard_fixes']}")
+    print(f"  🛡️ Профилактических исправлений: {repair_stats['preventive_fixes']}")
+    
+    if repair_stats['total_repair_time'] > 0:
+        print(f"  ⏱️ Общее время исправлений: {repair_stats['total_repair_time']:.2f} сек")
+
+def enhanced_validate_python_syntax(content):
+    """Улучшенная проверка синтаксиса с детальной диагностикой."""
+    try:
+        # Пытаемся скомпилировать
+        ast.parse(content)
+        return True, None
+    except SyntaxError as e:
+        error_info = {
+            'type': 'SyntaxError',
+            'message': str(e),
+            'line': getattr(e, 'lineno', 'unknown'),
+            'offset': getattr(e, 'offset', 'unknown'),
+            'text': getattr(e, 'text', 'unknown')
+        }
+        return False, error_info
+    except Exception as e:
+        error_info = {
+            'type': 'Exception',
+            'message': str(e),
+            'line': 'unknown',
+            'offset': 'unknown',
+            'text': 'unknown'
+        }
+        return False, error_info
+
+def suggest_fixes_for_error(error_info):
+    """Предлагает исправления на основе ошибки."""
+    suggestions = []
+    
+    if error_info['type'] == 'SyntaxError':
+        message = error_info['message'].lower()
+        
+        if 'unexpected indent' in message:
+            suggestions.append("Проверить отступы - возможно, смешаны табы и пробелы")
+        elif 'missing colon' in message:
+            suggestions.append("Добавить двоеточие после if/for/while/def/class")
+        elif 'invalid syntax' in message:
+            suggestions.append("Проверить синтаксис - возможно, лишние или недостающие скобки")
+        elif 'eol while scanning string literal' in message:
+            suggestions.append("Проверить строки - возможно, незакрытые кавычки")
+        elif 'unexpected eof' in message:
+            suggestions.append("Проверить структуру - возможно, незакрытые блоки")
+    
+    if not suggestions:
+        suggestions.append("Применить экстренный ремонт для критических повреждений")
+    
+    return suggestions
+
+def create_repair_report(filepath, original_valid, final_valid, damage_report=None, repair_type=None):
+    """Создает детальный отчет по исправлению файла."""
+    report = {
+        'filepath': str(filepath),
+        'timestamp': datetime.now().isoformat(),
+        'original_valid': original_valid,
+        'final_valid': final_valid,
+        'repair_type': repair_type,
+        'damage_report': damage_report,
+        'success': final_valid or (not original_valid and final_valid)
+    }
+    
+    # Сохраняем отчет в директорию .integrity
+    report_file = backup_manager.integrity_dir / f"{Path(filepath).stem}_repair_report.json"
+    try:
+        with open(report_file, 'w', encoding='utf-8') as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        print(f"    ⚠️ Не удалось сохранить отчет: {e}")
+    
+    return report
+
+def monitor_file_changes():
+    """Мониторит изменения в файлах проекта."""
+    print("🔍 Мониторинг изменений в файлах...")
+    
+    # Проверяем файлы целостности
+    integrity_files = list(backup_manager.integrity_dir.glob("*.integrity"))
+    
+    if not integrity_files:
+        print("  📋 Файлы целостности не найдены")
+        return
+    
+    print(f"  📋 Найдено файлов целостности: {len(integrity_files)}")
+    
+    changed_files = []
+    unchanged_files = []
+    
+    for integrity_file in integrity_files:
+        try:
+            with open(integrity_file, 'r', encoding='utf-8') as f:
+                metadata = json.load(f)
+            
+            original_file = Path(metadata['file_path'])
+            if original_file.exists():
+                with open(original_file, 'r', encoding='utf-8') as f:
+                    current_content = f.read()
+                
+                current_hash = hashlib.md5(current_content.encode('utf-8')).hexdigest()
+                
+                if current_hash == metadata['md5_hash']:
+                    unchanged_files.append(original_file)
+                else:
+                    changed_files.append((original_file, metadata['md5_hash'], current_hash))
+            else:
+                changed_files.append((original_file, metadata['md5_hash'], 'FILE_NOT_FOUND'))
+                
+        except Exception as e:
+            print(f"    ⚠️ Ошибка проверки {integrity_file}: {e}")
+    
+    print(f"  ✅ Неизмененных файлов: {len(unchanged_files)}")
+    print(f"  🔄 Измененных файлов: {len(changed_files)}")
+    
+    if changed_files:
+        print("  📋 Список измененных файлов:")
+        for file_path, old_hash, new_hash in changed_files[:10]:
+            print(f"    - {file_path.name}")
+        if len(changed_files) > 10:
+            print(f"    ... и еще {len(changed_files) - 10} файлов")
+    
+    return changed_files, unchanged_files
 
 if __name__ == '__main__':
     print("🚀 Запуск улучшенной утилиты исправления Python файлов")
