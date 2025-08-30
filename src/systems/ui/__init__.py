@@ -1,15 +1,29 @@
-#!/usr / bin / env / python3
-"""
-    UI Systems Package
-    Системы пользовательского интерфейса
-"""
-
 from .ui_system import(
-    UISystem, UIElementType, UIElement,
-    W or ldObjectTemplate, Creat or Mode
-)
+from dataclasses import dataclass, field
 
+from enum import Enum
+
+from pathlib import Path
+
+from typing import *
+
+import logging
+
+import os
+
+import re
+
+import sys
+
+import time
+
+#!/usr / bin / env / python3
+"""UI Systems Package
+Системы пользовательского интерфейса"""
+UISystem, UIElementType, UIElement,
+W or ldObjectTemplate, Creat or Mode
+)
 __all__= [
-    'UISystem', 'UIElementType', 'UIElement',
-    'W or ldObjectTemplate', 'Creat or Mode'
+'UISystem', 'UIElementType', 'UIElement',
+'W or ldObjectTemplate', 'Creat or Mode'
 ]

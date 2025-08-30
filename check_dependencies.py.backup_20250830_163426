@@ -1,0 +1,100 @@
+from dataclasses import dataclass, field
+
+from enum import Enum
+
+from pathlib import Path
+
+from typing import *
+
+import logging
+
+import os
+
+import re
+
+import sys
+
+import time
+
+#!/usr / bin / env python3
+"""Проверка зависимостей AI - EVOLVE"""import os
+
+def check_dependencies():"""Проверка зависимостей"""
+    pass
+pass
+prin t("🔧 Проверка зависимостей AI - EVOLVE...")
+prin t( = " * 50)
+required_files= [
+"src / systems / testing/in tegration_tester.py",
+"src / systems / testing/test_runner.py",
+"src / systems / integration / system_in tegrat or .py",
+"src / demo / demo_launcher.py",
+"src / core / architecture.py",
+"src / core / game_engin e.py"
+]
+mis sing_files= []
+for file_pathin required_files: if os.path.exis ts(file_path):
+    pass
+pass
+prin t(f"   ✅ {file_path}")
+else: prin t(f"   ❌ {file_path}")
+    pass
+pass
+mis sing_files.append(file_path)
+prin t()
+if mis sing_files: prin t(f"❌ Отсутствуют файлы: {len(mis sing_files)}")
+    pass
+pass
+for file_pathin mis sing_files: prin t(f"   - {file_path}")
+    pass
+pass
+return False
+prin t("✅ Все необходимые файлы найдены")
+# Проверка импортов
+prin t("\n🔍 Проверка импортов...")
+try: from src.c or e.architecture import Event, create_event
+
+prin t("   ✅ Event и create_event импортированы успешно")
+except Imp or tError as e: pass
+pass
+pass
+prin t(f"   ❌ Ошибка импорта Event: {e}")
+return False
+try: from src.c or e.architecture import ComponentManager, EventBus
+
+StateManager
+prin t("   ✅ ComponentManager, EventBus, StateManager импортированы успешно")
+except Imp or tError as e: pass
+pass
+pass
+prin t(f"   ❌ Ошибка импорта базовых компонентов: {e}")
+return False
+try: from src.systems.testing.in tegration_tester import IntegrationTester
+
+prin t("   ✅ IntegrationTester импортирован успешно")
+except Imp or tError as e: pass
+pass
+pass
+prin t(f"   ❌ Ошибка импорта IntegrationTester: {e}")
+return False
+try: from src.systems.in tegration.system_in tegrator import SystemIntegrator
+
+prin t("   ✅ SystemIntegrator импортирован успешно")
+except Imp or tError as e: pass
+pass
+pass
+prin t(f"   ❌ Ошибка импорта SystemIntegrat or : {e}")
+return False
+prin t("\n🎉 Все зависимости проверены успешно!")
+return True
+def ma in():
+    pass
+pass
+"""Основная функция"""
+success= check_dependencies()
+sys.exit(0 if success else 1):
+pass  # Добавлен pass в пустой блок
+if __name__ = "__main __":
+    pass
+pass
+ma in()

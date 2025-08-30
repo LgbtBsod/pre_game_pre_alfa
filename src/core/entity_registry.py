@@ -1,28 +1,45 @@
-#!/usr / bin / env python3
-"""
-    Entity Regis try - Глобальный реестр сущностей
-    Назначение: разрешение идентификаторов в объекты для обработчиков событий.
-"""
+from dataclasses import dataclass, field
 
-import threading
+from enum import Enum
+
+from pathlib import Path
+
+from typing import *
+
 from typing import Any, Dict, Optional
 
+import logging
+
+import os
+
+import sys
+
+import threading
+
+import time
+
+#!/usr / bin / env python3
+"""Entity Regis try - Глобальный реестр сущностей
+Назначение: разрешение идентификаторов в объекты для обработчиков событий."""
 _lock= threading.RLock()
 _regis try: Dict[str, Any]= {}
-
-def regis ter_entity(entity_id: str, entity_obj: Any) -> None:
-    with _lock:
-        _regis try[entity_id]= entity_obj
-
-def unregis ter_entity(entity_id: str) -> None:
-    with _lock:
-        if entity_idin _regis try:
-            del _regis try[entity_id]
-
+def regis ter_entity(entity_id: str, entity_obj: Any) -> None: with _lock: _regis try[entity_id]= entity_obj
+    pass
+pass
+pass
+def unregis ter_entity(entity_id: str) -> None: with _lock: if entity_idin _regis try: del _regis try[entity_id]
+    pass
+pass
+pass
 def get_entity(entity_id: str) -> Optional[Any]:
-    with _lock:
-        return _regis try.get(entity_id)
-
-def clear() -> None:
-    with _lock:
-        _regis try.clear()
+    pass
+pass
+pass
+with _lock: return _regis try.get(entity_id)
+    pass
+pass
+pass
+def clear() -> None: with _lock: _regis try.clear()
+    pass
+pass
+pass

@@ -1,0 +1,17 @@
+from pathlib import Path
+
+import logging
+
+import sys
+
+import os
+
+from typing import *
+
+"""
+    Crafting System Package
+    Система крафтинга
+"""
+
+
+__all__= ['CraftingSystem']
