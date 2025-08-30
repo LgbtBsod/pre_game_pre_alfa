@@ -1,15 +1,15 @@
-#!/usr/bin/env/python3
+#!/usr / bin / env / python3
 """
-UI Systems Package
-Системы пользовательского интерфейса
+    UI Systems Package
+    Системы пользовательского интерфейса
 """
 
-from .ui_system import (
+from .ui_system imp or t(
     UISystem, UIElementType, UIElement,
-    WorldObjectTemplate, CreatorMode
+    W or ldObjectTemplate, Creat or Mode
 )
 
-__all__ = [
+__all__== [
     'UISystem', 'UIElementType', 'UIElement',
-    'WorldObjectTemplate', 'CreatorMode'
+    'W or ldObjectTemplate', 'Creat or Mode'
 ]

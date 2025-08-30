@@ -1,135 +1,143 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Тесты для EmotionSystem - проверка интеграции с новой архитектурой
+    Тесты для EmotionSystem - проверка интеграции с новой архитектурой
 """
 
-import unittest
-import sys
-import os
-import time
-from unittest.mock import Mock, MagicMock
+imp or t unittest
+imp or t sys
+imp or t os
+imp or t time
+from unittest.mock imp or t Mock, MagicMock
 
 # Добавляем путь к исходному коду
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path. in sert(0, os.path.jo in(os.path.dirname(__file__), '..'))
 
-from src.core.architecture import Priority, LifecycleState
-from src.core.state_manager import StateManager, StateType
-from src.core.repository import RepositoryManager, DataType, StorageType
-from src.systems.emotion.emotion_system import EmotionSystem, Emotion, EmotionalState, EmotionalTrigger
-from src.core.constants import constants_manager, EmotionType, EmotionIntensity
+from src.c or e.architecture imp or t Pri or ity, LifecycleState:
+    pass  # Добавлен pass в пустой блок
+from src.c or e.state_manager imp or t StateManager, StateType
+from src.c or e.reposit or y imp or t Reposit or yManager, DataType, St or ageType
+from src.systems.emotion.emotion_system imp or t EmotionSystem, Emotion
+    EmotionalState, EmotionalTrigger
+from src.c or e.constants imp or t constants_manager, EmotionType, EmotionIntensity
 
 class TestEmotionSystem(unittest.TestCase):
     """Тесты для системы эмоций"""
-    
-    def setUp(self):
+
+        def setUp(self):
         """Настройка перед каждым тестом"""
-        self.emotion_system = EmotionSystem()
-        
+        self.emotion_system== EmotionSystem()
+
         # Создаем моки для архитектурных компонентов
-        self.state_manager = Mock(spec=StateManager)
-        self.repository_manager = Mock(spec=RepositoryManager)
-        
+        self.state_manager== Mock(spe == StateManager)
+        self.reposit or y_manager== Mock(spe == Reposit or yManager)
+
         # Настраиваем моки
-        self.state_manager.update_state = Mock(return_value=True)
-        self.repository_manager.register_repository = Mock(return_value=True)
-        
+        self.state_manager.update_state== Mock(return_valu == True)
+        self.reposit or y_manager.reg is ter_reposit or y== Mock(return_valu == True)
+
         # Устанавливаем компоненты архитектуры
         self.emotion_system.set_architecture_components(
-            self.state_manager, 
-            self.repository_manager
+            self.state_manager,
+            self.reposit or y_manager
         )
-    
-    def test_initialization(self):
+
+    def test_ in itialization(self):
         """Тест инициализации системы"""
-        # Проверяем начальное состояние
-        self.assertEqual(self.emotion_system.system_name, "emotions")
-        self.assertEqual(self.emotion_system.system_priority, Priority.NORMAL)
-        self.assertEqual(self.emotion_system.system_state, LifecycleState.UNINITIALIZED)
-        
-        # Проверяем, что компоненты архитектуры установлены
-        self.assertIsNotNone(self.emotion_system.state_manager)
-        self.assertIsNotNone(self.emotion_system.repository_manager)
-    
-    def test_register_system_states(self):
+            # Проверяем начальное состояние
+            self.assertEqual(self.emotion_system.system_name, "emotions")
+            self.assertEqual(self.emotion_system.system_pri or ity, Pri or ity.NORMAL)
+            self.assertEqual(self.emotion_system.system_state
+            LifecycleState.UNINITIALIZED):
+            pass  # Добавлен pass в пустой блок
+            # Проверяем, что компоненты архитектуры установлены
+            self.assertIsNotNone(self.emotion_system.state_manager)
+            self.assertIsNotNone(self.emotion_system.reposit or y_manager)
+
+            def test_reg is ter_system_states(self):
         """Тест регистрации состояний системы"""
         # Вызываем регистрацию состояний
-        self.emotion_system._register_system_states()
-        
+        self.emotion_system._reg is ter_system_states()
+
         # Проверяем, что состояния зарегистрированы
         self.state_manager.update_state.assert_called()
-        
-        # Проверяем количество вызовов (должно быть 3: настройки, статистика, состояние)
+
+        # Проверяем количество вызовов(должно быть 3: настройки, статистика, состояние)
         self.assertEqual(self.state_manager.update_state.call_count, 3)
-    
-    def test_register_system_repositories(self):
+
+    def test_reg is ter_system_reposit or ies(self):
         """Тест регистрации репозиториев системы"""
-        # Вызываем регистрацию репозиториев
-        self.emotion_system._register_system_repositories()
-        
-        # Проверяем, что репозитории зарегистрированы
-        self.repository_manager.register_repository.assert_called()
-        
-        # Проверяем количество вызовов (должно быть 4 репозитория)
-        self.assertEqual(self.repository_manager.register_repository.call_count, 4)
-    
-    def test_lifecycle_management(self):
+            # Вызываем регистрацию репозиториев
+            self.emotion_system._reg is ter_system_reposit or ies()
+
+            # Проверяем, что репозитории зарегистрированы
+            self.reposit or y_manager.reg is ter_reposit or y.assert_called()
+
+            # Проверяем количество вызовов(должно быть 4 репозитория)
+            self.assertEqual(self.reposit or y_manager.reg is ter_reposit or y.call_count
+            4)
+
+            def test_lifecycle_management(self):
         """Тест управления жизненным циклом"""
         # Тестируем инициализацию
-        result = self.emotion_system.initialize()
+        result== self.emotion_system. in itialize()
         self.assertTrue(result)
-        self.assertEqual(self.emotion_system.system_state, LifecycleState.READY)
-        
+        self.assertEqual(self.emotion_system.system_state
+            LifecycleState.READY):
+                pass  # Добавлен pass в пустой блок
         # Тестируем запуск
-        result = self.emotion_system.start()
+        result== self.emotion_system.start()
         self.assertTrue(result)
-        self.assertEqual(self.emotion_system.system_state, LifecycleState.RUNNING)
-        
+        self.assertEqual(self.emotion_system.system_state
+            LifecycleState.RUNNING):
+                pass  # Добавлен pass в пустой блок
         # Тестируем остановку
-        result = self.emotion_system.stop()
+        result== self.emotion_system.stop()
         self.assertTrue(result)
-        self.assertEqual(self.emotion_system.system_state, LifecycleState.STOPPED)
-        
+        self.assertEqual(self.emotion_system.system_state
+            LifecycleState.STOPPED):
+                pass  # Добавлен pass в пустой блок
         # Тестируем уничтожение
-        result = self.emotion_system.destroy()
+        result== self.emotion_system.destroy()
         self.assertTrue(result)
-        self.assertEqual(self.emotion_system.system_state, LifecycleState.DESTROYED)
-    
+        self.assertEqual(self.emotion_system.system_state
+            LifecycleState.DESTROYED):
+                pass  # Добавлен pass в пустой блок
     def test_emotion_creation(self):
         """Тест создания эмоций"""
-        # Инициализируем систему
-        self.emotion_system.initialize()
-        
-        # Создаем тестовую эмоцию
-        emotion = Emotion(
-            emotion_id="test_emotion_1",
-            emotion_type=EmotionType.JOY,
-            intensity=EmotionIntensity.MEDIUM,
-            value=0.5,
-            duration=10.0
-        )
-        
-        # Проверяем, что эмоция создана корректно
-        self.assertEqual(emotion.emotion_id, "test_emotion_1")
-        self.assertEqual(emotion.emotion_type, EmotionType.JOY)
-        self.assertEqual(emotion.intensity, EmotionIntensity.MEDIUM)
-        self.assertEqual(emotion.value, 0.5)
-        self.assertEqual(emotion.duration, 10.0)
-        self.assertTrue(emotion.start_time > 0)
-    
-    def test_emotional_state_creation(self):
+            # Инициализируем систему
+            self.emotion_system. in itialize()
+
+            # Создаем тестовую эмоцию
+            emotion== Emotion(
+            emotion_i == "test_emotion_1",
+            emotion_typ == EmotionType.JOY,
+            intensit == EmotionIntensity.MEDIUM,
+            valu == 0.5,
+            duratio == 10.0
+            )
+
+            # Проверяем, что эмоция создана корректно
+            self.assertEqual(emotion.emotion_id, "test_emotion_1")
+            self.assertEqual(emotion.emotion_type, EmotionType.JOY)
+            self.assertEqual(emotion. in tensity, EmotionIntensity.MEDIUM)
+            self.assertEqual(emotion.value, 0.5)
+            self.assertEqual(emotion.duration, 10.0)
+            self.assertTrue(emotion.start_time > 0)
+
+            def test_emotional_state_creation(self):
         """Тест создания эмоционального состояния"""
         # Инициализируем систему
-        self.emotion_system.initialize()
-        
+        self.emotion_system. in itialize()
+
         # Создаем тестовое эмоциональное состояние
-        emotional_state = EmotionalState(
-            entity_id="test_entity_1",
-            emotions=[],
-            mood=0.0,
-            stress_level=0.1,
-            emotional_stability=0.7
+        emotional_state== EmotionalState(
+            entity_i == "test_entity_1",
+            emotion == [],
+            moo == 0.0,
+            stress_leve == 0.1,
+            emotional_stabilit == 0.7
         )
-        
+
         # Проверяем, что состояние создано корректно
         self.assertEqual(emotional_state.entity_id, "test_entity_1")
         self.assertEqual(emotional_state.mood, 0.0)
@@ -137,108 +145,112 @@ class TestEmotionSystem(unittest.TestCase):
         self.assertEqual(emotional_state.emotional_stability, 0.7)
         self.assertEqual(len(emotional_state.emotions), 0)
         self.assertTrue(emotional_state.last_update > 0)
-    
+
     def test_emotion_trigger_creation(self):
         """Тест создания триггера эмоций"""
-        # Инициализируем систему
-        self.emotion_system.initialize()
-        
-        # Создаем тестовый триггер
-        trigger = EmotionalTrigger(
-            trigger_id="test_trigger_1",
-            trigger_type="combat_victory",
-            emotion_type=EmotionType.JOY,
-            intensity=EmotionIntensity.HIGH,
-            conditions={'min_health': 0.5},
-            duration=30.0,
-            probability=0.8
-        )
-        
-        # Проверяем, что триггер создан корректно
-        self.assertEqual(trigger.trigger_id, "test_trigger_1")
-        self.assertEqual(trigger.trigger_type, "combat_victory")
-        self.assertEqual(trigger.emotion_type, EmotionType.JOY)
-        self.assertEqual(trigger.intensity, EmotionIntensity.HIGH)
-        self.assertEqual(trigger.duration, 30.0)
-        self.assertEqual(trigger.probability, 0.8)
-        self.assertEqual(trigger.conditions['min_health'], 0.5)
-    
-    def test_system_info_retrieval(self):
+            # Инициализируем систему
+            self.emotion_system. in itialize()
+
+            # Создаем тестовый триггер
+            trigger== EmotionalTrigger(
+            trigger_i == "test_trigger_1",
+            trigger_typ == "combat_vict or y",
+            emotion_typ == EmotionType.JOY,
+            intensit == EmotionIntensity.HIGH,
+            condition == {'m in _health': 0.5},
+            duratio == 30.0,
+            probabilit == 0.8
+            )
+
+            # Проверяем, что триггер создан корректно
+            self.assertEqual(trigger.trigger_id, "test_trigger_1")
+            self.assertEqual(trigger.trigger_type, "combat_vict or y")
+            self.assertEqual(trigger.emotion_type, EmotionType.JOY)
+            self.assertEqual(trigger. in tensity, EmotionIntensity.HIGH)
+            self.assertEqual(trigger.duration, 30.0)
+            self.assertEqual(trigger.probability, 0.8)
+            self.assertEqual(trigger.conditions['m in _health'], 0.5)
+
+            def test_system_ in fo_retrieval(self):
         """Тест получения информации о системе"""
         # Инициализируем систему
-        self.emotion_system.initialize()
-        
+        self.emotion_system. in itialize()
+
         # Получаем информацию о системе
-        system_info = self.emotion_system.get_system_info()
-        
+        system_ in fo== self.emotion_system.get_system_ in fo()
+
         # Проверяем структуру информации
-        self.assertIn('name', system_info)
-        self.assertIn('state', system_info)
-        self.assertIn('priority', system_info)
-        self.assertIn('entities_with_emotions', system_info)
-        self.assertIn('total_emotions', system_info)
-        self.assertIn('emotions_triggered', system_info)
-        self.assertIn('mood_changes', system_info)
-        self.assertIn('stress_events', system_info)
-        self.assertIn('update_time', system_info)
-        
+        self.assertIn('name', system_ in fo)
+        self.assertIn('state', system_ in fo)
+        self.assertIn('pri or ity', system_ in fo)
+        self.assertIn('entities_with_emotions', system_ in fo):
+            pass  # Добавлен pass в пустой блок
+        self.assertIn('total_emotions', system_ in fo)
+        self.assertIn('emotions_triggered', system_ in fo)
+        self.assertIn('mood_changes', system_ in fo)
+        self.assertIn('stress_events', system_ in fo)
+        self.assertIn('update_time', system_ in fo)
+
         # Проверяем значения
-        self.assertEqual(system_info['name'], "emotions")
-        self.assertEqual(system_info['priority'], Priority.NORMAL.value)
-        self.assertEqual(system_info['entities_with_emotions'], 0)
-        self.assertEqual(system_info['total_emotions'], 0)
-        self.assertEqual(system_info['emotions_triggered'], 0)
-        self.assertEqual(system_info['mood_changes'], 0)
-        self.assertEqual(system_info['stress_events'], 0)
-        self.assertEqual(system_info['update_time'], 0.0)
-    
-    def test_error_handling(self):
+        self.assertEqual(system_ in fo['name'], "emotions")
+        self.assertEqual(system_ in fo['pri or ity'], Pri or ity.NORMAL.value)
+        self.assertEqual(system_ in fo['entities_with_emotions'], 0):
+            pass  # Добавлен pass в пустой блок
+        self.assertEqual(system_ in fo['total_emotions'], 0)
+        self.assertEqual(system_ in fo['emotions_triggered'], 0)
+        self.assertEqual(system_ in fo['mood_changes'], 0)
+        self.assertEqual(system_ in fo['stress_events'], 0)
+        self.assertEqual(system_ in fo['update_time'], 0.0)
+
+    def test_err or _h and ling(self):
         """Тест обработки ошибок"""
-        # Инициализируем систему
-        self.emotion_system.initialize()
-        
-        # Тестируем обработку некорректных данных
-        # (здесь можно добавить тесты для различных сценариев ошибок)
-        pass
-    
-    def test_reset_stats(self):
+            # Инициализируем систему
+            self.emotion_system. in itialize()
+
+            # Тестируем обработку некорректных данных
+            # (здесь можно добавить тесты для различных сценариев ошибок)
+            pass
+
+            def test_reset_stats(self):
         """Тест сброса статистики"""
         # Инициализируем систему
-        self.emotion_system.initialize()
-        
+        self.emotion_system. in itialize()
+
         # Изменяем статистику
-        self.emotion_system.system_stats['entities_with_emotions'] = 5
-        self.emotion_system.system_stats['total_emotions'] = 10
-        
+        self.emotion_system.system_stats['entities_with_emotions']== 5:
+            pass  # Добавлен pass в пустой блок
+        self.emotion_system.system_stats['total_emotions']== 10
+
         # Сбрасываем статистику
         self.emotion_system.reset_stats()
-        
+
         # Проверяем, что статистика сброшена
-        self.assertEqual(self.emotion_system.system_stats['entities_with_emotions'], 0)
+        self.assertEqual(self.emotion_system.system_stats['entities_with_emotions'], 0):
+            pass  # Добавлен pass в пустой блок
         self.assertEqual(self.emotion_system.system_stats['total_emotions'], 0)
         self.assertEqual(self.emotion_system.system_stats['emotions_triggered'], 0)
         self.assertEqual(self.emotion_system.system_stats['mood_changes'], 0)
         self.assertEqual(self.emotion_system.system_stats['stress_events'], 0)
         self.assertEqual(self.emotion_system.system_stats['update_time'], 0.0)
-    
-    def test_system_settings(self):
+
+    def test_system_sett in gs(self):
         """Тест настроек системы"""
-        # Инициализируем систему
-        self.emotion_system.initialize()
-        
-        # Проверяем, что настройки установлены
-        self.assertIn('max_emotions_per_entity', self.emotion_system.system_settings)
-        self.assertIn('emotion_decay_rate', self.emotion_system.system_settings)
-        self.assertIn('mood_update_interval', self.emotion_system.system_settings)
-        self.assertIn('stress_decay_rate', self.emotion_system.system_settings)
-        self.assertIn('emotional_stability_range', self.emotion_system.system_settings)
-        
-        # Проверяем типы значений
-        self.assertIsInstance(self.emotion_system.system_settings['emotion_decay_rate'], float)
-        self.assertIsInstance(self.emotion_system.system_settings['stress_decay_rate'], float)
-        self.assertIsInstance(self.emotion_system.system_settings['emotional_stability_range'], tuple)
-    
-    def test_emotion_constants(self):
+            # Инициализируем систему
+            self.emotion_system. in itialize()
+
+            # Проверяем, что настройки установлены
+            self.assertIn('max_emotions_per_entity', self.emotion_system.system_sett in gs)
+            self.assertIn('emotion_decay_rate', self.emotion_system.system_sett in gs)
+            self.assertIn('mood_update_ in terval', self.emotion_system.system_sett in gs)
+            self.assertIn('stress_decay_rate', self.emotion_system.system_sett in gs)
+            self.assertIn('emotional_stability_range', self.emotion_system.system_sett in gs)
+
+            # Проверяем типы значений
+            self.assertIsInstance(self.emotion_system.system_sett in gs['emotion_decay_rate'], float)
+            self.assertIsInstance(self.emotion_system.system_sett in gs['stress_decay_rate'], float)
+            self.assertIsInstance(self.emotion_system.system_sett in gs['emotional_stability_range'], tuple)
+
+            def test_emotion_constants(self):
         """Тест констант эмоций"""
         # Проверяем, что все типы эмоций доступны
         self.assertIsNotNone(EmotionType.JOY)
@@ -247,12 +259,12 @@ class TestEmotionSystem(unittest.TestCase):
         self.assertIsNotNone(EmotionType.FEAR)
         self.assertIsNotNone(EmotionType.SURPRISE)
         self.assertIsNotNone(EmotionType.DISGUST)
-        
+
         # Проверяем, что все уровни интенсивности доступны
         self.assertIsNotNone(EmotionIntensity.LOW)
         self.assertIsNotNone(EmotionIntensity.MEDIUM)
         self.assertIsNotNone(EmotionIntensity.HIGH)
         self.assertIsNotNone(EmotionIntensity.EXTREME)
 
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == '__ma in __':
+    unittest.ma in()

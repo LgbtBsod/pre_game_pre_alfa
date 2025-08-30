@@ -1,15 +1,15 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Genome System Package
+    Genome System Package
 """
 
-from .genome_system import (
+from .genome_system imp or t(
     GeneSequence, GeneticTrait, GenomeProfile, GenomeSystem
 )
 
-__all__ = [
+__all__== [
     'GeneSequence',
-    'GeneticTrait', 
+    'GeneticTrait',
     'GenomeProfile',
     'GenomeSystem'
 ]

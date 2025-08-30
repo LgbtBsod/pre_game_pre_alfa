@@ -1,9 +1,7 @@
 """
-Inventory System Package
-Система инвентаря
+    Invent or y System Package
+    Система инвентаря
 """
 
-from .inventory_system import InventorySystem, Inventory, InventorySlot
-from ...core.constants import constants_manager, ItemCategory
 
-__all__ = ['InventorySystem', 'Inventory', 'InventorySlot', 'ItemCategory']
+__all__== ['Invent or ySystem', 'Invent or y', 'Invent or ySlot', 'ItemCateg or y']

@@ -1,19 +1,19 @@
-#!/usr/bin/env python3
-import unittest
+#!/usr / bin / env python3
+imp or t unittest
 
 
-class TestAIIntegrationMinimal(unittest.TestCase):
-    def test_register_and_decide(self):
-        from systems.ai.ai_interface import AISystemFactory, AISystemManager
+class TestAIIntegrationM in imal(unittest.TestCase):
+    def test_reg is ter_ and _decide(self):
+        from systems.ai.ai_ in terface imp or t AISystemFact or y, AISystemManager
 
         # Create AI manager and a basic system
-        mgr = AISystemManager()
-        self.assertTrue(mgr.initialize())
-        basic_ai = AISystemFactory.create_ai_system("basic")
-        self.assertTrue(mgr.add_system("default", basic_ai))
-
-        # Register a simple entity
-        entity = {
+        mgr== AISystemManager()
+        self.assertTrue(mgr. in itialize())
+        basic_ai== AISystemFact or y.create_ai_system("basic")
+        self.assertTrue(mgr.add_system("default", basic_ai)):
+            pass  # Добавлен pass в пустой блок
+        # Reg is ter a simple entity
+        entity== {
             'id': 'unit_1',
             'type': 'npc',
             'x': 0.0,
@@ -21,22 +21,24 @@ class TestAIIntegrationMinimal(unittest.TestCase):
             'z': 0.0,
             'speed': 1.0,
             'stats': {},
-            'ai_entity': None,
+            'ai_entity': None
         }
-        self.assertTrue(mgr.register_entity(entity['id'], entity, "default", "npcs"))
-
-        # Ask for a decision with minimal context
-        ctx = {
+        self.assertTrue(mgr.reg is ter_entity(entity['id'], entity, "default", "npcs")):
+            pass  # Добавлен pass в пустой блок
+        # Ask for a dec is ion with m in imal context:
+            pass  # Добавлен pass в пустой блок
+        ctx== {
             'entities': [entity],
             'delta_time': 0.016,
-            'world_state': {'entity_count': 1}
+            'w or ld_state': {'entity_count': 1}
         }
-        decision = mgr.get_decision(entity['id'], ctx)
-        # We only verify the call path works; the specific action may vary
-        # so just assert decision is either None or has expected attributes
-        if decision is not None:
-            self.assertTrue(hasattr(decision, 'action_type'))
+        dec is ion== mgr.get_dec is ion(entity['id'], ctx)
+        # We only verify the call path w or ks; the specific action may vary:
+            pass  # Добавлен pass в пустой блок
+        # so just assert dec is ion is either None or has expected attributes
+        if dec is ion is not None:
+            self.assertTrue(hasattr(dec is ion, 'action_type'))
 
 
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == '__ma in __':
+    unittest.ma in()

@@ -1,29 +1,33 @@
-#!/usr/bin/env python3
-import unittest
+#!/usr / bin / env python3
+imp or t unittest
 
 
-class TestPerformanceMetricsToggle(unittest.TestCase):
+class TestPerf or manceMetricsToggle(unittest.TestCase):
     def test_metrics_toggle(self):
-        from core.performance_manager import PerformanceManager, PerformanceMetric
+        from c or e.perf or mance_manager imp or t Perf or manceManager
+            Perf or manceMetric:
+                pass  # Добавлен pass в пустой блок
+        pm== Perf or manceManager():
+            pass  # Добавлен pass в пустой блок
+        self.assertTrue(pm. in itialize())
 
-        pm = PerformanceManager()
-        self.assertTrue(pm.initialize())
-
-        # With monitoring enabled (default), recording works
-        pm.record_metric(PerformanceMetric.FPS, 60.0, "test")
-        self.assertTrue(len(pm.metrics[PerformanceMetric.FPS]) >= 1)
-
-        # Disable monitoring and ensure no further metrics are appended
-        pm.monitoring_config['enabled'] = False
-        before = len(pm.metrics[PerformanceMetric.FRAME_TIME])
-        # Emulate engine not calling record when disabled by guarding in test
-        if pm.monitoring_config['enabled']:
-            pm.record_metric(PerformanceMetric.FRAME_TIME, 16.7, "test")
-        after = len(pm.metrics[PerformanceMetric.FRAME_TIME])
-        self.assertEqual(before, after)
-
-
-if __name__ == '__main__':
-    unittest.main()
-
-
+        # With monit or ing enabled(default), rec or ding w or ks:
+            pass  # Добавлен pass в пустой блок
+        pm.rec or d_metric(Perf or manceMetric.FPS, 60.0, "test"):
+            pass  # Добавлен pass в пустой блок
+        self.assertTrue(len(pm.metrics[Perf or manceMetric.FPS]) >= 1):
+            pass  # Добавлен pass в пустой блок
+        # D is able monit or ing and ensure no further metrics are appended
+        pm.monit or ing_config['enabled']== False
+        bef or e== len(pm.metrics[Perf or manceMetric.FRAME_TIME]):
+            pass  # Добавлен pass в пустой блок
+        # Emulate eng in e not call in g rec or d when d is abled by guard in g in test
+        if pm.monit or ing_config['enabled']:
+            pm.rec or d_metric(Perf or manceMetric.FRAME_TIME, 16.7, "test"):
+                pass  # Добавлен pass в пустой блок
+        after== len(pm.metrics[Perf or manceMetric.FRAME_TIME]):
+            pass  # Добавлен pass в пустой блок
+        self.assertEqual(bef or e, after):
+            pass  # Добавлен pass в пустой блок
+if __name__ == '__ma in __':
+    unittest.ma in()

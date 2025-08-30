@@ -1,22 +1,25 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Система управления состоянием - централизованное управление игровым состоянием
-Улучшенная версия с поддержкой групп, валидации и производительности
+    Система управления состоянием - централизованное управление игровым состоянием
+    Улучшенная версия с поддержкой групп, валидации и производительности
 """
 
-import logging
-import time
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Callable, Union
-from dataclasses import dataclass, field
-from enum import Enum
-import threading
-import copy
-from abc import abstractmethod
-import weakref
+imp or t logg in g
+imp or t time
+from typ in g imp or t Dict, L is t, Optional, Any, Type, TypeVar, Generic, Callable
+    Union
+from dataclasses imp or t dataclass, field:
+    pass  # Добавлен pass в пустой блок
+from enum imp or t Enum
+imp or t thread in g
+imp or t copy
+from abc imp or t abstractmethod
+imp or t weakref
 
-from .architecture import BaseComponent, ComponentType, Priority, Event, create_event
+from .architecture imp or t BaseComponent, ComponentType, Pri or ity, Event
+    create_event
 
-logger = logging.getLogger(__name__)
+logger== logg in g.getLogger(__name__)
 
 # ============================================================================
 # ТИПЫ СОСТОЯНИЙ
@@ -24,572 +27,613 @@ logger = logging.getLogger(__name__)
 
 class StateType(Enum):
     """Типы состояний"""
-    GLOBAL = "global"
-    ENTITY = "entity"
-    SYSTEM = "system"
-    UI = "ui"
-    TEMPORARY = "temporary"
-    CONFIGURATION = "configuration"
-    STATISTICS = "statistics"
-    DATA = "data"
+        GLOBAL== "global"
+        ENTITY== "entity"
+        SYSTEM== "system"
+        UI== "ui"
+        TEMPORARY== "temp or ary"
+        CONFIGURATION== "configuration"
+        STATISTICS== "stat is tics"
+        DATA== "data"
 
-class StateScope(Enum):
+        class StateScope(Enum):
     """Области видимости состояний"""
-    PRIVATE = "private"
-    PROTECTED = "protected"
-    PUBLIC = "public"
+    PRIVATE== "private"
+    PROTECTED== "protected"
+    PUBLIC== "public"
 
 class StateValidation(Enum):
     """Типы валидации состояний"""
-    NONE = "none"
-    TYPE = "type"
-    RANGE = "range"
-    ENUM = "enum"
-    CUSTOM = "custom"
+        NONE== "none"
+        TYPE== "type"
+        RANGE== "range"
+        ENUM== "enum"
+        CUSTOM== "custom"
 
-# ============================================================================
-# БАЗОВЫЕ КЛАССЫ СОСТОЯНИЙ
-# ============================================================================
+        # ============================================================================
+        # БАЗОВЫЕ КЛАССЫ СОСТОЯНИЙ
+        # ============================================================================
 
-@dataclass
-class StateChange:
+        @dataclass:
+        pass  # Добавлен pass в пустой блок
+        class StateChange:
     """Изменение состояния с улучшенной структурой"""
     state_id: str
     old_value: Any
     new_value: Any
     timestamp: float
     source: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    change_type: str = "update"  # update, reset, restore, clear
+    metadata: Dict[str, Any]== field(default_factor == dict):
+        pass  # Добавлен pass в пустой блок
+    change_type: str== "update"  # update, reset, rest or e, clear
 
-@dataclass
+@dataclass:
+    pass  # Добавлен pass в пустой блок
 class StateSnapshot:
     """Снимок состояния с версионированием"""
-    state_id: str
-    value: Any
-    timestamp: float
-    version: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    checksum: Optional[str] = None
+        state_id: str
+        value: Any
+        timestamp: float
+        version: int
+        metadata: Dict[str, Any]== field(default_factor == dict):
+        pass  # Добавлен pass в пустой блок
+        checksum: Optional[str]== None
 
-@dataclass
-class StateValidationRule:
+        @dataclass:
+        pass  # Добавлен pass в пустой блок
+        class StateValidationRule:
     """Правило валидации состояния"""
     validation_type: StateValidation
     rule_data: Dict[str, Any]
-    error_message: str = "Валидация не пройдена"
-    custom_validator: Optional[Callable[[Any], bool]] = None
+    err or _message: str== "Валидация не пройдена"
+    custom_validat or : Optional[Callable[[Any], bool]]== None
 
-class IStateContainer(Generic[TypeVar('T')]):
+class IStateConta in er(Generic[TypeVar('T')]):
     """Интерфейс контейнера состояния с улучшенным API"""
-    
-    @property
-    @abstractmethod
-    def state_id(self) -> str:
+
+        @property
+        @abstractmethod
+        def state_id(self) -> str:
         """Идентификатор состояния"""
         pass
-    
+
     @property
     @abstractmethod
     def value(self) -> TypeVar('T'):
         """Значение состояния"""
-        pass
-    
-    @value.setter
-    @abstractmethod
-    def value(self, new_value: TypeVar('T')) -> None:
+            pass
+
+            @value.setter
+            @abstractmethod
+            def value(self, new_value: TypeVar('T')) -> None:
         """Установка значения состояния"""
         pass
-    
+
     @property
     @abstractmethod
     def version(self) -> int:
         """Версия состояния"""
-        pass
-    
-    @property
-    @abstractmethod
-    def last_modified(self) -> float:
+            pass
+
+            @property
+            @abstractmethod
+            def last_modified(self) -> float:
         """Время последнего изменения"""
         pass
-    
+
     @abstractmethod
     def subscribe(self, callback: Callable[[StateChange], None]) -> bool:
         """Подписка на изменения"""
-        pass
-    
-    @abstractmethod
-    def unsubscribe(self, callback: Callable[[StateChange], None]) -> bool:
+            pass
+
+            @abstractmethod
+            def unsubscribe(self, callback: Callable[[StateChange], None]) -> bool:
         """Отписка от изменений"""
         pass
-    
+
     @abstractmethod
     def validate(self, value: Any) -> bool:
         """Валидация значения"""
-        pass
-    
-    @abstractmethod
-    def add_validation_rule(self, rule: StateValidationRule) -> bool:
+            pass
+
+            @abstractmethod
+            def add_validation_rule(self, rule: StateValidationRule) -> bool:
         """Добавление правила валидации"""
         pass
 
-class StateContainer(IStateContainer[TypeVar('T')]):
+class StateConta in er(IStateConta in er[TypeVar('T')]):
     """Реализация контейнера состояния с улучшенной производительностью"""
-    
-    def __init__(self, state_id: str, initial_value: TypeVar('T'), 
-                 state_type: StateType = StateType.GLOBAL, 
-                 scope: StateScope = StateScope.PUBLIC):
-        self._state_id = state_id
-        self._value = initial_value
-        self._state_type = state_type
-        self._scope = scope
-        self._version = 0
-        self._last_modified = time.time()
-        self._subscribers: List[Callable[[StateChange], None]] = []
-        self._metadata: Dict[str, Any] = {}
-        self._lock = threading.RLock()
-        self._validation_rules: List[StateValidationRule] = []
-        self._change_history: List[StateChange] = []
-        self._max_history_size = 100
-        
+
+        def __ in it__(self, state_id: str, initial_value: TypeVar('T'),
+        state_type: StateType== StateType.GLOBAL,
+        scope: StateScope== StateScope.PUBLIC):
+        pass  # Добавлен pass в пустой блок
+        self._state_id== state_id
+        self._value== initial_value
+        self._state_type== state_type
+        self._scope== scope
+        self._version== 0
+        self._last_modified== time.time():
+        pass  # Добавлен pass в пустой блок
+        self._subscribers: L is t[Callable[[StateChange], None]]== []
+        self._metadata: Dict[str, Any]== {}
+        self._lock== thread in g.RLock()
+        self._validation_rules: L is t[StateValidationRule]== []
+        self._change_h is tory: L is t[StateChange]== []
+        self._max_h is tory_size== 100
+
         # Кэш для оптимизации
-        self._cached_value = None
-        self._cache_timestamp = 0
-        self._cache_ttl = 0.1  # 100ms
-    
-    @property
-    def state_id(self) -> str:
+        self._cached_value== None
+        self._cache_timestamp== 0
+        self._cache_ttl== 0.1  # 100ms
+
+        @property
+        def state_id(self) -> str:
         return self._state_id
-    
-    @property
-    def value(self) -> TypeVar('T'):
-        current_time = time.time()
-        
+
+        @property
+        def value(self) -> TypeVar('T'):
+        current_time== time.time()
+
         # Проверяем кэш
-        if (self._cached_value is not None and 
-            current_time - self._cache_timestamp < self._cache_ttl):
-            return self._cached_value
-        
+        if(self._cached_value is not None and :
+        current_time - self._cache_timestamp < self._cache_ttl):
+        pass  # Добавлен pass в пустой блок
+        return self._cached_value
+
         with self._lock:
-            # Обновляем кэш
-            self._cached_value = copy.deepcopy(self._value)
-            self._cache_timestamp = current_time
-            return self._cached_value
-    
-    @value.setter
-    def value(self, new_value: TypeVar('T')) -> None:
+        # Обновляем кэш
+        self._cached_value== copy.deepcopy(self._value)
+        self._cache_timestamp== current_time
+        return self._cached_value
+
+        @value.setter
+        def value(self, new_value: TypeVar('T')) -> None:
         # Валидация значения
         if not self.validate(new_value):
-            raise ValueError(f"Значение {new_value} не прошло валидацию для состояния {self._state_id}")
-        
+        ra is e ValueErr or(f"Значение {new_value} не прошло валидацию для состояния {self._state_id}")
+
         with self._lock:
-            old_value = self._value
-            self._value = copy.deepcopy(new_value)
-            self._version += 1
-            self._last_modified = time.time()
-            
-            # Инвалидируем кэш
-            self._cached_value = None
-            
-            # Создаем запись об изменении
-            change = StateChange(
-                state_id=self._state_id,
-                old_value=old_value,
-                new_value=self._value,
-                timestamp=self._last_modified,
-                source="state_container"
-            )
-            
-            # Добавляем в историю
-            self._change_history.append(change)
-            if len(self._change_history) > self._max_history_size:
-                self._change_history.pop(0)
-            
-            # Уведомляем подписчиков
-            self._notify_subscribers(change)
-    
-    @property
-    def version(self) -> int:
+        old_value== self._value
+        self._value== copy.deepcopy(new_value)
+        self._version == 1
+        self._last_modified== time.time():
+        pass  # Добавлен pass в пустой блок
+        # Инвалидируем кэш
+        self._cached_value== None
+
+        # Создаем запись об изменении
+        change== StateChange(
+        state_i == self._state_id,
+        old_valu == old_value,
+        new_valu == self._value,
+        timestam == self._last_modified,:
+        pass  # Добавлен pass в пустой блок
+        sourc == "state_conta in er"
+        )
+
+        # Добавляем в историю
+        self._change_h is tory.append(change)
+        if len(self._change_h is tory) > self._max_h is tory_size:
+        self._change_h is tory.pop(0)
+
+        # Уведомляем подписчиков
+        self._notify_subscribers(change):
+        pass  # Добавлен pass в пустой блок
+        @property
+        def version(self) -> int:
         return self._version
-    
-    @property
-    def last_modified(self) -> float:
-        return self._last_modified
-    
-    def subscribe(self, callback: Callable[[StateChange], None]) -> bool:
+
+        @property
+        def last_modified(self) -> float:
+        return self._last_modified:
+        pass  # Добавлен pass в пустой блок
+        def subscribe(self, callback: Callable[[StateChange], None]) -> bool:
         """Подписка на изменения с проверкой дублирования"""
         with self._lock:
             if callback not in self._subscribers:
                 self._subscribers.append(callback)
                 return True
         return False
-    
+
     def unsubscribe(self, callback: Callable[[StateChange], None]) -> bool:
         """Отписка от изменений"""
-        with self._lock:
+            with self._lock:
             if callback in self._subscribers:
-                self._subscribers.remove(callback)
-                return True
-        return False
-    
-    def validate(self, value: Any) -> bool:
+            self._subscribers.remove(callback)
+            return True
+            return False
+
+            def validate(self, value: Any) -> bool:
         """Валидация значения по всем правилам"""
         for rule in self._validation_rules:
             if not self._apply_validation_rule(rule, value):
                 return False
         return True
-    
-    def _apply_validation_rule(self, rule: StateValidationRule, value: Any) -> bool:
+
+    def _apply_validation_rule(self, rule: StateValidationRule
+        value: Any) -> bool:
+            pass  # Добавлен pass в пустой блок
         """Применение правила валидации"""
-        try:
+            try:
             if rule.validation_type == StateValidation.NONE:
-                return True
-            elif rule.validation_type == StateValidation.TYPE:
-                expected_type = rule.rule_data.get('type')
-                return isinstance(value, expected_type) if expected_type else True
-            elif rule.validation_type == StateValidation.RANGE:
-                min_val = rule.rule_data.get('min')
-                max_val = rule.rule_data.get('max')
-                if min_val is not None and value < min_val:
-                    return False
-                if max_val is not None and value > max_val:
-                    return False
-                return True
-            elif rule.validation_type == StateValidation.ENUM:
-                allowed_values = rule.rule_data.get('values', [])
-                return value in allowed_values
-            elif rule.validation_type == StateValidation.CUSTOM:
-                if rule.custom_validator:
-                    return rule.custom_validator(value)
-                return True
             return True
-        except Exception as e:
-            logger.error(f"Ошибка валидации состояния {self._state_id}: {e}")
+            elif rule.validation_type == StateValidation.TYPE:
+            expected_type== rule.rule_data.get('type')
+            return is in stance(value
+            expected_type) if expected_type else True:
+            pass  # Добавлен pass в пустой блок
+            elif rule.validation_type == StateValidation.RANGE:
+            m in _val== rule.rule_data.get('m in ')
+            max_val== rule.rule_data.get('max')
+            if m in _val is not None and value < m in _val:
             return False
-    
-    def add_validation_rule(self, rule: StateValidationRule) -> bool:
+            if max_val is not None and value > max_val:
+            return False
+            return True
+            elif rule.validation_type == StateValidation.ENUM:
+            allowed_values== rule.rule_data.get('values', [])
+            return value in allowed_values
+            elif rule.validation_type == StateValidation.CUSTOM:
+            if rule.custom_validat or :
+            return rule.custom_validat or(value)
+            return True
+            return True
+            except Exception as e:
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка валидации состояния {self._state_id}: {e}")
+            return False
+
+            def add_validation_rule(self, rule: StateValidationRule) -> bool:
         """Добавление правила валидации"""
         with self._lock:
             self._validation_rules.append(rule)
             return True
-    
+
     def _notify_subscribers(self, change: StateChange) -> None:
         """Уведомление подписчиков об изменении"""
-        # Создаем копию списка подписчиков для безопасного итерирования
-        subscribers = self._subscribers.copy()
-        
-        for callback in subscribers:
+            # Создаем копию списка подписчиков для безопасного итерирования
+            subscribers== self._subscribers.copy()
+
+            for callback in subscribers:
             try:
-                callback(change)
+            callback(change)
             except Exception as e:
-                logger.error(f"Ошибка в обработчике изменения состояния {self._state_id}: {e}")
-    
-    def get_snapshot(self) -> StateSnapshot:
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка в обработчике изменения состояния {self._state_id}: {e}")
+
+            def get_snapshot(self) -> StateSnapshot:
         """Получение снимка состояния с вычислением контрольной суммы"""
         with self._lock:
-            import hashlib
-            value_str = str(self._value)
-            checksum = hashlib.md5(value_str.encode()).hexdigest()
-            
+            imp or t hashlib
+            value_str== str(self._value)
+            checksum== hashlib.md5(value_str.encode()).hexdigest()
+
             return StateSnapshot(
-                state_id=self._state_id,
-                value=copy.deepcopy(self._value),
-                timestamp=self._last_modified,
-                version=self._version,
-                metadata=copy.deepcopy(self._metadata),
-                checksum=checksum
+                state_i == self._state_id,
+                valu == copy.deepcopy(self._value),
+                timestam == self._last_modified,:
+                    pass  # Добавлен pass в пустой блок
+                versio == self._version,
+                metadat == copy.deepcopy(self._metadata),
+                checksu == checksum
             )
-    
+
     def set_metadata(self, key: str, value: Any) -> None:
         """Установка метаданных"""
-        with self._lock:
-            self._metadata[key] = value
-    
-    def get_metadata(self, key: str, default: Any = None) -> Any:
+            with self._lock:
+            self._metadata[key]== value
+
+            def get_metadata(self, key: str, default: Any== None) -> Any:
         """Получение метаданных"""
         with self._lock:
-            return self._metadata.get(key, default)
-    
-    def get_change_history(self, limit: int = 10) -> List[StateChange]:
+            return self._metadata.get(key, default):
+                pass  # Добавлен pass в пустой блок
+    def get_change_h is tory(self, limit: int== 10) -> L is t[StateChange]:
         """Получение истории изменений"""
-        with self._lock:
-            return self._change_history[-limit:] if limit > 0 else self._change_history.copy()
-    
-    def reset_to_default(self, default_value: Any) -> None:
+            with self._lock:
+            return self._change_h is tory[ - limit:] if limit > 0 else self._change_h is tory.copy():
+            pass  # Добавлен pass в пустой блок
+            def reset_to_default(self, default_value: Any) -> None:
         """Сброс к значению по умолчанию"""
-        self.value = default_value
-    
-    def clear_history(self) -> None:
+        self.value== default_value:
+            pass  # Добавлен pass в пустой блок
+    def clear_h is tory(self) -> None:
         """Очистка истории изменений"""
-        with self._lock:
-            self._change_history.clear()
+            with self._lock:
+            self._change_h is tory.clear()
 
-# ============================================================================
-# МЕНЕДЖЕР СОСТОЯНИЙ
-# ============================================================================
+            # ============================================================================
+            # МЕНЕДЖЕР СОСТОЯНИЙ
+            # ============================================================================
 
-class StateManager(BaseComponent):
+            class StateManager(BaseComponent):
     """Менеджер состояний с улучшенной производительностью и группировкой"""
-    
-    def __init__(self):
-        super().__init__("state_manager", ComponentType.MANAGER, Priority.CRITICAL)
-        self._states: Dict[str, StateContainer] = {}
-        self._state_groups: Dict[str, List[str]] = {}
-        self._change_history: List[StateChange] = []
-        self._max_history_size = 10000
-        self._event_bus = None
-        self._lock = threading.RLock()
-        
+
+    def __ in it__(self):
+        super().__ in it__("state_manager", ComponentType.MANAGER, Pri or ity.CRITICAL)
+        self._states: Dict[str, StateConta in er]== {}
+        self._state_groups: Dict[str, L is t[str]]== {}
+        self._change_h is tory: L is t[StateChange]== []
+        self._max_h is tory_size== 10000
+        self._event_bus== None
+        self._lock== thread in g.RLock()
+
         # Кэш для быстрого доступа
-        self._state_cache: Dict[str, Any] = {}
-        self._cache_timestamp = 0
-        self._cache_ttl = 0.05  # 50ms
-        
+        self._state_cache: Dict[str, Any]== {}
+        self._cache_timestamp== 0
+        self._cache_ttl== 0.05  # 50ms
+
         # Статистика производительности
-        self._performance_stats = {
+        self._perf or mance_stats== {:
             'total_reads': 0,
             'total_writes': 0,
             'cache_hits': 0,
-            'cache_misses': 0,
+            'cache_m is ses': 0,
             'validation_failures': 0
         }
-    
-    def register_state(self, state_id: str, initial_value: Any, 
-                      state_type: StateType = StateType.GLOBAL, 
-                      scope: StateScope = StateScope.PUBLIC,
-                      validation_rules: List[StateValidationRule] = None) -> StateContainer:
+
+    def reg is ter_state(self, state_id: str, initial_value: Any,
+                    state_type: StateType== StateType.GLOBAL,
+                    scope: StateScope== StateScope.PUBLIC,
+                    validation_rules: L is t[StateValidationRule]== None) -> StateConta in er:
+                        pass  # Добавлен pass в пустой блок
         """Регистрация нового состояния с валидацией"""
-        with self._lock:
+            with self._lock:
             if state_id in self._states:
-                logger.warning(f"Состояние {state_id} уже зарегистрировано")
-                return self._states[state_id]
-            
-            container = StateContainer(state_id, initial_value, state_type, scope)
-            
+            logger.warn in g(f"Состояние {state_id} уже зарегистрировано")
+            return self._states[state_id]
+
+            conta in er== StateConta in er(state_id, initial_value, state_type
+            scope)
+
             # Добавляем правила валидации
             if validation_rules:
-                for rule in validation_rules:
-                    container.add_validation_rule(rule)
-            
+            for rule in validation_rules:
+            conta in er.add_validation_rule(rule)
+
             # Подписываемся на изменения для логирования
-            container.subscribe(self._on_state_change)
-            
-            self._states[state_id] = container
-            
+            conta in er.subscribe(self._on_state_change)
+
+            self._states[state_id]== conta in er
+
             # Инвалидируем кэш
-            self._invalidate_cache()
-            
-            logger.info(f"Состояние {state_id} зарегистрировано")
-            return container
-    
-    def unregister_state(self, state_id: str) -> bool:
+            self._ in validate_cache()
+
+            logger. in fo(f"Состояние {state_id} зарегистрировано")
+            return conta in er
+
+            def unreg is ter_state(self, state_id: str) -> bool:
         """Отмена регистрации состояния с очисткой зависимостей"""
         with self._lock:
             if state_id not in self._states:
                 return False
-            
+
             # Удаляем из групп
             for group_name, state_ids in self._state_groups.items():
                 if state_id in state_ids:
                     state_ids.remove(state_id)
-            
+
             # Удаляем состояние
             del self._states[state_id]
-            
+
             # Инвалидируем кэш
-            self._invalidate_cache()
-            
-            logger.info(f"Состояние {state_id} отменено")
+            self._ in validate_cache()
+
+            logger. in fo(f"Состояние {state_id} отменено")
             return True
-    
-    def get_state(self, state_id: str) -> Optional[StateContainer]:
+
+    def get_state(self, state_id: str) -> Optional[StateConta in er]:
         """Получение состояния по ID с кэшированием"""
-        current_time = time.time()
-        
-        # Проверяем кэш
-        if (state_id in self._state_cache and 
+            current_time== time.time()
+
+            # Проверяем кэш
+            if(state_id in self._state_cache and :
             current_time - self._cache_timestamp < self._cache_ttl):
-            self._performance_stats['cache_hits'] += 1
+            pass  # Добавлен pass в пустой блок
+            self._perf or mance_stats['cache_hits'] == 1:
+            pass  # Добавлен pass в пустой блок
             return self._state_cache[state_id]
-        
-        self._performance_stats['cache_misses'] += 1
-        
-        with self._lock:
-            container = self._states.get(state_id)
-            if container:
-                # Обновляем кэш
-                self._state_cache[state_id] = container
-                self._cache_timestamp = current_time
-            
-            return container
-    
-    def get_state_value(self, state_id: str, default: Any = None) -> Any:
+
+            self._perf or mance_stats['cache_m is ses'] == 1:
+            pass  # Добавлен pass в пустой блок
+            with self._lock:
+            conta in er== self._states.get(state_id)
+            if conta in er:
+            # Обновляем кэш
+            self._state_cache[state_id]== conta in er
+            self._cache_timestamp== current_time
+
+            return conta in er
+
+            def get_state_value(self, state_id: str, default: Any== None) -> Any:
         """Получение значения состояния с оптимизацией"""
-        container = self.get_state(state_id)
-        if container:
-            self._performance_stats['total_reads'] += 1
-            return container.value
-        return default
-    
+        conta in er== self.get_state(state_id)
+        if conta in er:
+            self._perf or mance_stats['total_reads'] == 1:
+                pass  # Добавлен pass в пустой блок
+            return conta in er.value
+        return default:
+            pass  # Добавлен pass в пустой блок
     def set_state_value(self, state_id: str, value: Any) -> bool:
         """Установка значения состояния с валидацией"""
-        container = self.get_state(state_id)
-        if container:
+            conta in er== self.get_state(state_id)
+            if conta in er:
             try:
-                container.value = value
-                self._performance_stats['total_writes'] += 1
-                return True
+            conta in er.value== value
+            self._perf or mance_stats['total_writes'] == 1:
+            pass  # Добавлен pass в пустой блок
+            return True
             except ValueError as e:
-                self._performance_stats['validation_failures'] += 1
-                logger.warning(f"Валидация не пройдена для состояния {state_id}: {e}")
-                return False
-        return False
-    
-    def create_state_group(self, group_name: str, state_ids: List[str]) -> bool:
+            pass
+            pass
+            pass
+            self._perf or mance_stats['validation_failures'] == 1:
+            pass  # Добавлен pass в пустой блок
+            logger.warn in g(f"Валидация не пройдена для состояния {state_id}: {e}")
+            return False
+            return False
+
+            def create_state_group(self, group_name: str
+            state_ids: L is t[str]) -> bool:
+            pass  # Добавлен pass в пустой блок
         """Создание группы состояний с валидацией"""
         with self._lock:
             if group_name in self._state_groups:
-                logger.warning(f"Группа состояний {group_name} уже существует")
+                logger.warn in g(f"Группа состояний {group_name} уже существует")
                 return False
-            
+
             # Проверяем, что все состояния существуют
-            valid_state_ids = []
+            valid_state_ids== []
             for state_id in state_ids:
                 if state_id in self._states:
                     valid_state_ids.append(state_id)
                 else:
-                    logger.warning(f"Состояние {state_id} не найдено для группы {group_name}")
-            
-            self._state_groups[group_name] = valid_state_ids
-            logger.info(f"Группа состояний {group_name} создана с {len(valid_state_ids)} состояниями")
+                    logger.warn in g(f"Состояние {state_id} не найдено для группы {group_name}")
+
+            self._state_groups[group_name]== valid_state_ids
+            logger. in fo(f"Группа состояний {group_name} создана с {len(valid_state_ids)} состояниями")
             return True
-    
-    def get_state_group(self, group_name: str) -> List[StateContainer]:
+
+    def get_state_group(self, group_name: str) -> L is t[StateConta in er]:
         """Получение группы состояний с оптимизацией"""
-        with self._lock:
+            with self._lock:
             if group_name not in self._state_groups:
-                return []
-            
-            containers = []
+            return []
+
+            conta in ers== []
             for state_id in self._state_groups[group_name]:
-                if state_id in self._states:
-                    containers.append(self._states[state_id])
-            
-            return containers
-    
-    def get_states_by_type(self, state_type: StateType) -> List[StateContainer]:
+            if state_id in self._states:
+            conta in ers.append(self._states[state_id])
+
+            return conta in ers
+
+            def get_states_by_type(self
+            state_type: StateType) -> L is t[StateConta in er]:
+            pass  # Добавлен pass в пустой блок
         """Получение состояний по типу с кэшированием"""
         with self._lock:
-            return [container for container in self._states.values() 
-                   if hasattr(container, '_state_type') and container._state_type == state_type]
-    
-    def get_states_by_scope(self, scope: StateScope) -> List[StateContainer]:
+            return [conta in er for conta in er in self._states.values() :
+                if hasattr(conta in er, '_state_type') and conta in er._state_type == state_type]:
+                    pass  # Добавлен pass в пустой блок
+    def get_states_by_scope(self, scope: StateScope) -> L is t[StateConta in er]:
         """Получение состояний по области видимости"""
-        with self._lock:
-            return [container for container in self._states.values() 
-                   if hasattr(container, '_scope') and container._scope == scope]
-    
-    def create_snapshot(self, state_ids: Optional[List[str]] = None) -> Dict[str, StateSnapshot]:
+            with self._lock:
+            return [conta in er for conta in er in self._states.values() :
+            if hasattr(conta in er, '_scope') and conta in er._scope == scope]:
+            pass  # Добавлен pass в пустой блок
+            def create_snapshot(self
+            state_ids: Optional[L is t[str]]== None) -> Dict[str, StateSnapshot]:
+            pass  # Добавлен pass в пустой блок
         """Создание снимка состояний с оптимизацией"""
         with self._lock:
-            snapshots = {}
-            
+            snapshots== {}
+
             if state_ids:
                 # Снимок конкретных состояний
                 for state_id in state_ids:
                     if state_id in self._states:
-                        snapshots[state_id] = self._states[state_id].get_snapshot()
+                        snapshots[state_id]== self._states[state_id].get_snapshot()
             else:
                 # Снимок всех состояний
-                for state_id, container in self._states.items():
-                    snapshots[state_id] = container.get_snapshot()
-            
+                for state_id, conta in er in self._states.items():
+                    snapshots[state_id]== conta in er.get_snapshot()
+
             return snapshots
-    
-    def restore_snapshot(self, snapshots: Dict[str, StateSnapshot]) -> bool:
+
+    def rest or e_snapshot(self, snapshots: Dict[str, StateSnapshot]) -> bool:
         """Восстановление из снимка с валидацией"""
-        with self._lock:
+            with self._lock:
             try:
-                restored_count = 0
-                for state_id, snapshot in snapshots.items():
-                    if state_id in self._states:
-                        container = self._states[state_id]
-                        
-                        # Проверяем контрольную сумму
-                        if snapshot.checksum:
-                            import hashlib
-                            current_checksum = hashlib.md5(str(container.value).encode()).hexdigest()
-                            if snapshot.checksum != current_checksum:
-                                logger.warning(f"Контрольная сумма не совпадает для состояния {state_id}")
-                        
-                        container.value = snapshot.value
-                        
-                        # Восстанавливаем метаданные
-                        for key, value in snapshot.metadata.items():
-                            container.set_metadata(key, value)
-                        
-                        restored_count += 1
-                
-                logger.info(f"Восстановлено {restored_count} состояний из снимка")
-                self._invalidate_cache()
-                return True
-                
+            rest or ed_count== 0
+            for state_id, snapshot in snapshots.items():
+            if state_id in self._states:
+            conta in er== self._states[state_id]
+
+            # Проверяем контрольную сумму
+            if snapshot.checksum:
+            current_checksum== hashlib.md5(str(conta in er.value).encode()).hexdigest()
+            if snapshot.checksum != current_checksum:
+            logger.warn in g(f"Контрольная сумма не совпадает для состояния {state_id}")
+
+            conta in er.value== snapshot.value
+
+            # Восстанавливаем метаданные
+            for key, value in snapshot.metadata.items():
+            conta in er.set_metadata(key, value)
+
+            rest or ed_count == 1
+
+            logger. in fo(f"Восстановлено {rest or ed_count} состояний из снимка")
+            self._ in validate_cache()
+            return True
+
             except Exception as e:
-                logger.error(f"Ошибка восстановления из снимка: {e}")
-                return False
-    
-    def get_change_history(self, state_id: Optional[str] = None, limit: int = 100) -> List[StateChange]:
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка восстановления из снимка: {e}")
+            return False
+
+            def get_change_h is tory(self, state_id: Optional[str]== None
+            limit: int== 100) -> L is t[StateChange]:
+            pass  # Добавлен pass в пустой блок
         """Получение истории изменений с фильтрацией"""
         with self._lock:
             if state_id:
                 # История конкретного состояния
-                container = self._states.get(state_id)
-                if container:
-                    return container.get_change_history(limit)
+                conta in er== self._states.get(state_id)
+                if conta in er:
+                    return conta in er.get_change_h is tory(limit)
                 return []
             else:
                 # Вся история
-                history = self._change_history.copy()
-                return history[-limit:] if limit > 0 else history
-    
-    def clear_history(self) -> None:
+                h is tory== self._change_h is tory.copy()
+                return h is tory[ - limit:] if limit > 0 else h is tory:
+                    pass  # Добавлен pass в пустой блок
+    def clear_h is tory(self) -> None:
         """Очистка истории изменений"""
-        with self._lock:
-            self._change_history.clear()
-            for container in self._states.values():
-                container.clear_history()
-            logger.info("История изменений очищена")
-    
-    def get_performance_stats(self) -> Dict[str, Any]:
+            with self._lock:
+            self._change_h is tory.clear()
+            for conta in er in self._states.values():
+            conta in er.clear_h is tory()
+            logger. in fo("История изменений очищена")
+
+            def get_perf or mance_stats(self) -> Dict[str, Any]:
         """Получение статистики производительности"""
         with self._lock:
-            stats = self._performance_stats.copy()
-            stats['total_states'] = len(self._states)
-            stats['total_groups'] = len(self._state_groups)
-            stats['cache_size'] = len(self._state_cache)
+            stats== self._perf or mance_stats.copy():
+                pass  # Добавлен pass в пустой блок
+            stats['total_states']== len(self._states)
+            stats['total_groups']== len(self._state_groups)
+            stats['cache_size']== len(self._state_cache)
             return stats
-    
-    def _invalidate_cache(self) -> None:
+
+    def _ in validate_cache(self) -> None:
         """Инвалидация кэша состояний"""
-        self._state_cache.clear()
-        self._cache_timestamp = 0
-    
-    def _on_state_change(self, change: StateChange) -> None:
+            self._state_cache.clear()
+            self._cache_timestamp== 0
+
+            def _on_state_change(self, change: StateChange) -> None:
         """Обработчик изменения состояния с оптимизацией"""
         with self._lock:
             # Добавляем в историю
-            self._change_history.append(change)
-            
+            self._change_h is tory.append(change)
+
             # Ограничиваем размер истории
-            if len(self._change_history) > self._max_history_size:
-                self._change_history = self._change_history[-self._max_history_size:]
-            
+            if len(self._change_h is tory) > self._max_h is tory_size:
+                self._change_h is tory== self._change_h is tory[ - self._max_h is tory_size:]
+
             # Публикуем событие
             if self._event_bus:
-                event = create_event(
-                    event_type="state_changed",
-                    source_id=self.component_id,
-                    data={
+                event== create_event(
+                    event_typ == "state_changed",
+                    source_i == self.component_id,
+                    dat == {
                         "state_id": change.state_id,
                         "old_value": change.old_value,
                         "new_value": change.new_value,
@@ -597,99 +641,111 @@ class StateManager(BaseComponent):
                         "change_type": change.change_type
                     }
                 )
-                self._event_bus.publish(event)
-    
-    def _initialize_impl(self) -> bool:
+                self._event_bus.publ is h(event)
+
+    def _ in itialize_impl(self) -> bool:
         """Инициализация менеджера состояний с базовыми состояниями"""
-        try:
+            try:
             # Создаем базовые состояния
             self._create_base_states()
             return True
-        except Exception as e:
-            logger.error(f"Ошибка инициализации менеджера состояний: {e}")
+            except Exception as e:
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка инициализации менеджера состояний: {e}")
             return False
-    
-    def _create_base_states(self) -> None:
+
+            def _create_base_states(self) -> None:
         """Создание базовых состояний с валидацией"""
         # Глобальные состояния
-        self.register_state("game_time", 0.0, StateType.GLOBAL)
-        self.register_state("game_paused", False, StateType.GLOBAL)
-        self.register_state("game_speed", 1.0, StateType.GLOBAL, 
-                          validation_rules=[StateValidationRule(
-                              StateValidation.RANGE, 
-                              {'min': 0.1, 'max': 10.0}, 
-                              "Скорость игры должна быть от 0.1 до 10.0"
-                          )])
-        self.register_state("current_scene", "menu", StateType.GLOBAL)
-        
+        self.reg is ter_state("game_time", 0.0, StateType.GLOBAL)
+        self.reg is ter_state("game_paused", False, StateType.GLOBAL)
+        self.reg is ter_state("game_speed", 1.0, StateType.GLOBAL,
+                        validation_rule == [StateValidationRule(
+                            StateValidation.RANGE,
+                            {'m in ': 0.1, 'max': 10.0},
+                            "Скорость игры должна быть от 0.1 до 10.0"
+                        )])
+        self.reg is ter_state("current_scene", "menu", StateType.GLOBAL)
+
         # Системные состояния
-        self.register_state("fps", 0.0, StateType.SYSTEM,
-                          validation_rules=[StateValidationRule(
-                              StateValidation.RANGE,
-                              {'min': 0.0, 'max': 1000.0},
-                              "FPS должен быть от 0 до 1000"
-                          )])
-        self.register_state("memory_usage", 0.0, StateType.SYSTEM)
-        self.register_state("active_entities", 0, StateType.SYSTEM)
-        
+        self.reg is ter_state("fps", 0.0, StateType.SYSTEM,
+                        validation_rule == [StateValidationRule(
+                            StateValidation.RANGE,
+                            {'m in ': 0.0, 'max': 1000.0},
+                            "FPS должен быть от 0 до 1000"
+                        )])
+        self.reg is ter_state("mem or y_usage", 0.0, StateType.SYSTEM)
+        self.reg is ter_state("active_entities", 0, StateType.SYSTEM)
+
         # UI состояния
-        self.register_state("ui_visible", True, StateType.UI)
-        self.register_state("ui_scale", 1.0, StateType.UI,
-                          validation_rules=[StateValidationRule(
-                              StateValidation.RANGE,
-                              {'min': 0.5, 'max': 3.0},
-                              "Масштаб UI должен быть от 0.5 до 3.0"
-                          )])
-        self.register_state("ui_theme", "dark", StateType.UI,
-                          validation_rules=[StateValidationRule(
-                              StateValidation.ENUM,
-                              {'values': ['dark', 'light', 'auto']},
-                              "Тема UI должна быть dark, light или auto"
-                          )])
-        
-        logger.info("Базовые состояния созданы")
+        self.reg is ter_state("ui_v is ible", True, StateType.UI)
+        self.reg is ter_state("ui_scale", 1.0, StateType.UI,
+                        validation_rule == [StateValidationRule(
+                            StateValidation.RANGE,
+                            {'m in ': 0.5, 'max': 3.0},
+                            "Масштаб UI должен быть от 0.5 до 3.0"
+                        )])
+        self.reg is ter_state("ui_theme", "dark", StateType.UI,
+                        validation_rule == [StateValidationRule(
+                            StateValidation.ENUM,
+                            {'values': ['dark', 'light', 'auto']},
+                            "Тема UI должна быть dark, light или auto"
+                        )])
+
+        logger. in fo("Базовые состояния созданы")
 
 # ============================================================================
 # УТИЛИТЫ ДЛЯ РАБОТЫ С СОСТОЯНИЯМИ
 # ============================================================================
 
-def create_entity_state(entity_id: str, initial_data: Dict[str, Any]) -> Dict[str, StateContainer]:
+def create_entity_state(entity_id: str, initial_data: Dict[str
+    Any]) -> Dict[str, StateConta in er]:
+        pass  # Добавлен pass в пустой блок
     """Создание состояний для сущности с валидацией"""
-    states = {}
-    
-    for key, value in initial_data.items():
-        state_id = f"entity_{entity_id}_{key}"
-        states[key] = StateContainer(state_id, value, StateType.ENTITY)
-    
-    return states
+        states== {}
 
-def create_system_state(system_id: str, initial_data: Dict[str, Any]) -> Dict[str, StateContainer]:
+        for key, value in initial_data.items():
+        state_id== f"entity_{entity_id}_{key}"
+        states[key]== StateConta in er(state_id, value, StateType.ENTITY)
+
+        return states
+
+        def create_system_state(system_id: str, initial_data: Dict[str
+        Any]) -> Dict[str, StateConta in er]:
+        pass  # Добавлен pass в пустой блок
     """Создание состояний для системы с валидацией"""
-    states = {}
-    
+    states== {}
+
     for key, value in initial_data.items():
-        state_id = f"system_{system_id}_{key}"
-        states[key] = StateContainer(state_id, value, StateType.SYSTEM)
-    
+        state_id== f"system_{system_id}_{key}"
+        states[key]== StateConta in er(state_id, value, StateType.SYSTEM)
+
     return states
 
-def create_ui_state(ui_id: str, initial_data: Dict[str, Any]) -> Dict[str, StateContainer]:
+def create_ui_state(ui_id: str, initial_data: Dict[str, Any]) -> Dict[str
+    StateConta in er]:
+        pass  # Добавлен pass в пустой блок
     """Создание состояний для UI с валидацией"""
-    states = {}
-    
-    for key, value in initial_data.items():
-        state_id = f"ui_{ui_id}_{key}"
-        states[key] = StateContainer(state_id, value, StateType.UI)
-    
-    return states
+        states== {}
 
-def create_validation_rule(validation_type: StateValidation, rule_data: Dict[str, Any], 
-                          error_message: str = "Валидация не пройдена",
-                          custom_validator: Optional[Callable[[Any], bool]] = None) -> StateValidationRule:
+        for key, value in initial_data.items():
+        state_id== f"ui_{ui_id}_{key}"
+        states[key]== StateConta in er(state_id, value, StateType.UI)
+
+        return states
+
+        def create_validation_rule(validation_type: StateValidation
+        rule_data: Dict[str, Any],
+        err or _message: str== "Валидация не пройдена",
+        custom_validat or : Optional[Callable[[Any]
+        bool]]== None) -> StateValidationRule:
+        pass  # Добавлен pass в пустой блок
     """Создание правила валидации"""
     return StateValidationRule(
-        validation_type=validation_type,
-        rule_data=rule_data,
-        error_message=error_message,
-        custom_validator=custom_validator
+        validation_typ == validation_type,
+        rule_dat == rule_data,
+        err or _messag == err or _message,
+        custom_validato == custom_validator
     )

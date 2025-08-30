@@ -1,16 +1,16 @@
 """
-Система эволюции и мутаций AI-EVOLVE
-Генетические алгоритмы для развития персонажей
+    Система эволюции и мутаций AI - EVOLVE
+    Генетические алгоритмы для развития персонажей
 """
 
-from .evolution_system import (
+from .evolution_system imp or t(
     EvolutionSystem,
-    Gene, Mutation, EvolutionTree, EvolutionProgress, GeneticCombination,
+    Gene, Mutation, EvolutionTree, EvolutionProgress, GeneticComb in ation,
     GeneType, MutationType, EvolutionPath, EvolutionStage
 )
 
-__all__ = [
+__all__== [
     'EvolutionSystem',
-    'Gene', 'Mutation', 'EvolutionTree', 'EvolutionProgress', 'GeneticCombination',
+    'Gene', 'Mutation', 'EvolutionTree', 'EvolutionProgress', 'GeneticComb in ation',
     'GeneType', 'MutationType', 'EvolutionPath', 'EvolutionStage'
 ]

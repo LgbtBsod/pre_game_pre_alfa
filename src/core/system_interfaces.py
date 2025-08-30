@@ -1,19 +1,22 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Улучшенные интерфейсы для систем - интеграция с новой архитектурой
+    Улучшенные интерфейсы для систем - интеграция с новой архитектурой
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Protocol
-from dataclasses import dataclass, field
-import logging
-import time
+from abc imp or t ABC, abstractmethod
+from typ in g imp or t Dict, L is t, Optional, Any, Type, TypeVar, Generic, Protocol
+from dataclasses imp or t dataclass, field:
+    pass  # Добавлен pass в пустой блок
+imp or t logg in g
+imp or t time
 
-from .architecture import BaseComponent, ComponentType, Priority, LifecycleState
-from .state_manager import StateManager, StateType
-from .repository import RepositoryManager, DataType, StorageType
+from .architecture imp or t BaseComponent, ComponentType, Pri or ity
+    LifecycleState:
+        pass  # Добавлен pass в пустой блок
+from .state_manager imp or t StateManager, StateType
+from .reposit or y imp or t Reposit or yManager, DataType, St or ageType
 
-logger = logging.getLogger(__name__)
+logger== logg in g.getLogger(__name__)
 
 # ============================================================================
 # БАЗОВЫЕ ИНТЕРФЕЙСЫ СИСТЕМ
@@ -21,454 +24,476 @@ logger = logging.getLogger(__name__)
 
 class IGameSystem(ABC):
     """Базовый интерфейс для игровых систем"""
-    
-    @property
-    @abstractmethod
-    def system_name(self) -> str:
+
+        @property
+        @abstractmethod
+        def system_name(self) -> str:
         """Название системы"""
         pass
-    
+
     @property
     @abstractmethod
-    def system_priority(self) -> Priority:
+    def system_pri or ity(self) -> Pri or ity:
         """Приоритет системы"""
-        pass
-    
-    @property
-    @abstractmethod
-    def system_state(self) -> LifecycleState:
+            pass
+
+            @property
+            @abstractmethod
+            def system_state(self) -> LifecycleState:
         """Состояние системы"""
         pass
-    
+
     @abstractmethod
     def initialize(self) -> bool:
         """Инициализация системы"""
-        pass
-    
-    @abstractmethod
-    def start(self) -> bool:
+            pass
+
+            @abstractmethod
+            def start(self) -> bool:
         """Запуск системы"""
         pass
-    
+
     @abstractmethod
     def stop(self) -> bool:
         """Остановка системы"""
-        pass
-    
-    @abstractmethod
-    def destroy(self) -> bool:
+            pass
+
+            @abstractmethod
+            def destroy(self) -> bool:
         """Уничтожение системы"""
         pass
-    
+
     @abstractmethod
     def update(self, delta_time: float) -> bool:
         """Обновление системы"""
-        pass
-    
-    @abstractmethod
-    def get_system_stats(self) -> Dict[str, Any]:
+            pass
+
+            @abstractmethod
+            def get_system_stats(self) -> Dict[str, Any]:
         """Получение статистики системы"""
         pass
-    
+
     @abstractmethod
     def reset_stats(self) -> None:
         """Сброс статистики системы"""
-        pass
+            pass
 
-class BaseGameSystem(BaseComponent, IGameSystem):
+            class BaseGameSystem(BaseComponent, IGameSystem):
     """Базовая реализация игровой системы"""
-    
-    def __init__(self, system_name: str, system_priority: Priority = Priority.NORMAL):
-        super().__init__(system_name, ComponentType.SYSTEM, system_priority)
-        
+
+    def __ in it__(self, system_name: str
+        system_pri or ity: Pri or ity== Pri or ity.NORMAL):
+            pass  # Добавлен pass в пустой блок
+        super().__ in it__(system_name, ComponentType.SYSTEM, system_pri or ity)
+
         # Интеграция с новой архитектурой
-        self.state_manager: Optional[StateManager] = None
-        self.repository_manager: Optional[RepositoryManager] = None
-        self.event_bus = None
-        
+        self.state_manager: Optional[StateManager]== None
+        self.reposit or y_manager: Optional[Reposit or yManager]== None
+        self.event_bus== None
+
         # Статистика системы
-        self.system_stats: Dict[str, Any] = {
+        self.system_stats: Dict[str, Any]== {
             'update_count': 0,
             'total_update_time': 0.0,
             'last_update_time': 0.0,
-            'errors_count': 0,
-            'warnings_count': 0
+            'err or s_count': 0,
+            'warn in gs_count': 0
         }
-        
+
         # Состояния системы
-        self.system_states: Dict[str, str] = {}
-        
+        self.system_states: Dict[str, str]== {}
+
         # Репозитории системы
-        self.system_repositories: Dict[str, str] = {}
-    
+        self.system_reposit or ies: Dict[str, str]== {}
+
     @property
     def system_name(self) -> str:
         return self.component_id
-    
+
     @property
-    def system_priority(self) -> Priority:
-        return self.priority
-    
+    def system_pri or ity(self) -> Pri or ity:
+        return self.pri or ity
+
     @property
     def system_state(self) -> LifecycleState:
         return self.state
-    
-    def set_architecture_components(self, state_manager: StateManager, 
-                                  repository_manager: RepositoryManager, 
-                                  event_bus=None) -> None:
+
+    def set_architecture_components(self, state_manager: StateManager,
+                                reposit or y_manager: Reposit or yManager,
+                                event_bu == None) -> None:
+                                    pass  # Добавлен pass в пустой блок
         """Установка компонентов архитектуры"""
-        self.state_manager = state_manager
-        self.repository_manager = repository_manager
-        self.event_bus = event_bus
-    
-    def register_system_state(self, state_id: str, initial_value: Any, 
-                            state_type: StateType = StateType.SYSTEM) -> bool:
+            self.state_manager== state_manager
+            self.reposit or y_manager== reposit or y_manager
+            self.event_bus== event_bus
+
+            def reg is ter_system_state(self, state_id: str, initial_value: Any,
+            state_type: StateType== StateType.SYSTEM) -> bool:
+            pass  # Добавлен pass в пустой блок
         """Регистрация состояния системы"""
         if not self.state_manager:
             return False
-        
-        full_state_id = f"{self.system_name}_{state_id}"
-        container = self.state_manager.register_state(full_state_id, initial_value, state_type)
-        if container:
-            self.system_states[state_id] = full_state_id
+
+        full_state_id== f"{self.system_name}_{state_id}"
+        conta in er== self.state_manager.reg is ter_state(full_state_id
+            initial_value, state_type)
+        if conta in er:
+            self.system_states[state_id]== full_state_id
             return True
         return False
-    
-    def get_system_state(self, state_id: str, default: Any = None) -> Any:
+
+    def get_system_state(self, state_id: str, default: Any== None) -> Any:
         """Получение состояния системы"""
-        if not self.state_manager or state_id not in self.system_states:
-            return default
-        
-        return self.state_manager.get_state_value(self.system_states[state_id], default)
-    
-    def set_system_state(self, state_id: str, value: Any) -> bool:
+            if not self.state_manager or state_id not in self.system_states:
+            return default:
+            pass  # Добавлен pass в пустой блок
+            return self.state_manager.get_state_value(self.system_states[state_id]
+            default):
+            pass  # Добавлен pass в пустой блок
+            def set_system_state(self, state_id: str, value: Any) -> bool:
         """Установка состояния системы"""
         if not self.state_manager or state_id not in self.system_states:
             return False
-        
-        return self.state_manager.set_state_value(self.system_states[state_id], value)
-    
-    def register_system_repository(self, repository_id: str, data_type: DataType, 
-                                 storage_type: StorageType = StorageType.MEMORY) -> bool:
+
+        return self.state_manager.set_state_value(self.system_states[state_id]
+            value)
+
+    def reg is ter_system_reposit or y(self, reposit or y_id: str
+        data_type: DataType,
+                                st or age_type: St or ageType== St or ageType.MEMORY) -> bool:
+                                    pass  # Добавлен pass в пустой блок
         """Регистрация репозитория системы"""
-        if not self.repository_manager:
+            if not self.reposit or y_manager:
             return False
-        
-        full_repository_id = f"{self.system_name}_{repository_id}"
-        repository = self.repository_manager.create_repository(full_repository_id, data_type, storage_type)
-        if repository:
-            self.system_repositories[repository_id] = full_repository_id
+
+            full_reposit or y_id== f"{self.system_name}_{reposit or y_id}"
+            reposit or y== self.reposit or y_manager.create_reposit or y(full_reposit or y_id
+            data_type, st or age_type)
+            if reposit or y:
+            self.system_reposit or ies[reposit or y_id]== full_reposit or y_id
             return True
-        return False
-    
-    def get_system_repository(self, repository_id: str):
-        """Получение репозитория системы"""
-        if not self.repository_manager or repository_id not in self.system_repositories:
-            return None
-        
-        return self.repository_manager.get_repository(self.system_repositories[repository_id])
-    
-    def publish_system_event(self, event_type: str, data: Dict[str, Any] = None) -> bool:
-        """Публикация события системы"""
-        if not self.event_bus:
             return False
-        
-        from .architecture import create_event
-        event = create_event(event_type, self.system_name, data)
-        return self.event_bus.publish(event)
-    
-    def get_system_stats(self) -> Dict[str, Any]:
+
+            def get_system_reposit or y(self, reposit or y_id: str):
+        """Получение репозитория системы"""
+        if not self.reposit or y_manager or reposit or y_id not in self.system_reposit or ies:
+            return None
+
+        return self.reposit or y_manager.get_reposit or y(self.system_reposit or ies[reposit or y_id])
+
+    def publ is h_system_event(self, event_type: str, data: Dict[str
+        Any]== None) -> bool:
+            pass  # Добавлен pass в пустой блок
+        """Публикация события системы"""
+            if not self.event_bus:
+            return False
+
+            from .architecture imp or t create_event
+            event== create_event(event_type, self.system_name, data)
+            return self.event_bus.publ is h(event)
+
+            def get_system_stats(self) -> Dict[str, Any]:
         """Получение статистики системы"""
-        stats = self.system_stats.copy()
-        stats['system_name'] = self.system_name
-        stats['system_state'] = self.system_state.value
-        stats['system_priority'] = self.system_priority.value
-        stats['update_count'] = self._update_count
-        stats['last_update'] = self._last_update
+        stats== self.system_stats.copy()
+        stats['system_name']== self.system_name
+        stats['system_state']== self.system_state.value
+        stats['system_pri or ity']== self.system_pri or ity.value
+        stats['update_count']== self._update_count
+        stats['last_update']== self._last_update
         return stats
-    
+
     def reset_stats(self) -> None:
         """Сброс статистики системы"""
-        self.system_stats = {
+            self.system_stats== {
             'update_count': 0,
             'total_update_time': 0.0,
             'last_update_time': 0.0,
-            'errors_count': 0,
-            'warnings_count': 0
-        }
-        self._update_count = 0
-    
-    def _initialize_impl(self) -> bool:
+            'err or s_count': 0,
+            'warn in gs_count': 0
+            }
+            self._update_count== 0
+
+            def _ in itialize_impl(self) -> bool:
         """Реализация инициализации системы"""
         try:
-            # Регистрируем базовые состояния системы
-            self._register_base_states()
-            
-            # Регистрируем базовые репозитории системы
-            self._register_base_repositories()
-            
-            # Вызываем специфичную инициализацию
-            return self._initialize_system_impl()
-            
         except Exception as e:
-            logger.error(f"Ошибка инициализации системы {self.system_name}: {e}")
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка инициализации системы {self.system_name}: {e}")
             return False
-    
+
     def _start_impl(self) -> bool:
         """Реализация запуска системы"""
-        try:
+            try:
             return self._start_system_impl()
-        except Exception as e:
-            logger.error(f"Ошибка запуска системы {self.system_name}: {e}")
+            except Exception as e:
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка запуска системы {self.system_name}: {e}")
             return False
-    
-    def _stop_impl(self) -> bool:
+
+            def _stop_impl(self) -> bool:
         """Реализация остановки системы"""
         try:
-            return self._stop_system_impl()
         except Exception as e:
-            logger.error(f"Ошибка остановки системы {self.system_name}: {e}")
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка остановки системы {self.system_name}: {e}")
             return False
-    
+
     def _destroy_impl(self) -> bool:
         """Реализация уничтожения системы"""
-        try:
+            try:
             return self._destroy_system_impl()
-        except Exception as e:
-            logger.error(f"Ошибка уничтожения системы {self.system_name}: {e}")
+            except Exception as e:
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка уничтожения системы {self.system_name}: {e}")
             return False
-    
-    def _update_impl(self, delta_time: float) -> bool:
+
+            def _update_impl(self, delta_time: float) -> bool:
         """Реализация обновления системы"""
         try:
-            update_start = time.time()
-            
-            # Обновляем статистику
-            self.system_stats['update_count'] += 1
-            self.system_stats['last_update_time'] = delta_time
-            self.system_stats['total_update_time'] += delta_time
-            
-            # Вызываем специфичное обновление
-            result = self._update_system_impl(delta_time)
-            
-            # Записываем время обновления
-            update_time = time.time() - update_start
-            self.system_stats['last_update_time'] = update_time
-            
-            return result
-            
         except Exception as e:
-            logger.error(f"Ошибка обновления системы {self.system_name}: {e}")
-            self.system_stats['errors_count'] += 1
+            pass
+            pass
+            pass
+            logger.err or(f"Ошибка обновления системы {self.system_name}: {e}")
+            self.system_stats['err or s_count'] == 1
             return False
-    
-    def _register_base_states(self) -> None:
+
+    def _reg is ter_base_states(self) -> None:
         """Регистрация базовых состояний системы"""
-        self.register_system_state("initialized", False)
-        self.register_system_state("running", False)
-        self.register_system_state("error_count", 0)
-        self.register_system_state("warning_count", 0)
-    
-    def _register_base_repositories(self) -> None:
+            self.reg is ter_system_state(" in itialized", False)
+            self.reg is ter_system_state("runn in g", False)
+            self.reg is ter_system_state("err or _count", 0)
+            self.reg is ter_system_state("warn in g_count", 0)
+
+            def _reg is ter_base_reposit or ies(self) -> None:
         """Регистрация базовых репозиториев системы"""
         # Каждая система может иметь репозиторий для своих данных
-        self.register_system_repository("data", DataType.STATISTICS)
-    
+        self.reg is ter_system_reposit or y("data", DataType.STATISTICS)
+
     # Методы для переопределения в наследниках
-    def _initialize_system_impl(self) -> bool:
+    def _ in itialize_system_impl(self) -> bool:
         """Специфичная инициализация системы"""
-        return True
-    
-    def _start_system_impl(self) -> bool:
+            return True
+
+            def _start_system_impl(self) -> bool:
         """Специфичный запуск системы"""
         return True
-    
+
     def _stop_system_impl(self) -> bool:
         """Специфичная остановка системы"""
-        return True
-    
-    def _destroy_system_impl(self) -> bool:
+            return True
+
+            def _destroy_system_impl(self) -> bool:
         """Специфичное уничтожение системы"""
         return True
-    
+
     def _update_system_impl(self, delta_time: float) -> bool:
         """Специфичное обновление системы"""
-        return True
+            return True
 
-# ============================================================================
-# СПЕЦИАЛИЗИРОВАННЫЕ ИНТЕРФЕЙСЫ
-# ============================================================================
+            # ============================================================================
+            # СПЕЦИАЛИЗИРОВАННЫЕ ИНТЕРФЕЙСЫ
+            # ============================================================================
 
-class ICombatSystem(IGameSystem):
+            class ICombatSystem(IGameSystem):
     """Интерфейс боевой системы"""
-    
+
     @abstractmethod
-    def start_combat(self, participants: List[str]) -> str:
+    def start_combat(self, participants: L is t[str]) -> str:
         """Начало боя"""
-        pass
-    
-    @abstractmethod
-    def end_combat(self, combat_id: str) -> bool:
+            pass
+
+            @abstractmethod
+            def end_combat(self, combat_id: str) -> bool:
         """Завершение боя"""
         pass
-    
+
     @abstractmethod
-    def perform_attack(self, attacker_id: str, target_id: str, attack_data: Dict[str, Any]) -> Dict[str, Any]:
+    def perf or m_attack(self, attacker_id: str, target_id: str
+        attack_data: Dict[str, Any]) -> Dict[str, Any]:
+            pass  # Добавлен pass в пустой блок
         """Выполнение атаки"""
-        pass
-    
-    @abstractmethod
-    def get_combat_stats(self, entity_id: str) -> Dict[str, Any]:
+            pass
+
+            @abstractmethod
+            def get_combat_stats(self, entity_id: str) -> Dict[str, Any]:
         """Получение боевой статистики"""
         pass
 
 class IRenderSystem(Protocol):
-    def initialize(self, *args, **kwargs) -> bool: ...
-    def add_object(self, object_id: str, render_data: Dict[str, Any]) -> bool: ...
+    def initialize(self, *args, * * kwargs) -> bool: ...
+    def add_object(self, object_id: str, render_data: Dict[str
+        Any]) -> bool: ...
     def remove_object(self, object_id: str) -> bool: ...
     def update(self, delta_time: float) -> None: ...
 
 class IEffectSystem(Protocol):
-    def initialize(self, *args, **kwargs) -> bool: ...
-    def apply_effect(self, target_id: str, effect_id: str, params: Dict[str, Any]) -> bool: ...
+    def initialize(self, *args, * * kwargs) -> bool: ...
+    def apply_effect(self, target_id: str, effect_id: str, params: Dict[str
+        Any]) -> bool: ...
     def remove_effect(self, target_id: str, effect_id: str) -> bool: ...
     def update(self, delta_time: float) -> None: ...
 
 class IAISystem(IGameSystem):
     """Интерфейс системы ИИ"""
-    
-    @abstractmethod
-    def register_ai_entity(self, entity_id: str, ai_data: Dict[str, Any]) -> bool:
+
+        @abstractmethod
+        def reg is ter_ai_entity(self, entity_id: str, ai_data: Dict[str
+        Any]) -> bool:
+        pass  # Добавлен pass в пустой блок
         """Регистрация ИИ сущности"""
         pass
-    
+
     @abstractmethod
-    def make_decision(self, entity_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    def make_dec is ion(self, entity_id: str, context: Dict[str
+        Any]) -> Dict[str, Any]:
+            pass  # Добавлен pass в пустой блок
         """Принятие решения ИИ"""
-        pass
-    
-    @abstractmethod
-    def update_ai_behavior(self, entity_id: str, behavior_data: Dict[str, Any]) -> bool:
+            pass
+
+            @abstractmethod
+            def update_ai_behavi or(self, entity_id: str, behavi or _data: Dict[str
+            Any]) -> bool:
+            pass  # Добавлен pass в пустой блок
         """Обновление поведения ИИ"""
         pass
-    
-    @abstractmethod
-    def get_ai_memory(self, entity_id: str) -> Dict[str, Any]:
-        """Получение памяти ИИ"""
-        pass
 
-class IInventorySystem(IGameSystem):
+    @abstractmethod
+    def get_ai_mem or y(self, entity_id: str) -> Dict[str, Any]:
+        """Получение памяти ИИ"""
+            pass
+
+            class IInvent or ySystem(IGameSystem):
     """Интерфейс системы инвентаря"""
-    
+
     @abstractmethod
     def add_item(self, entity_id: str, item_data: Dict[str, Any]) -> bool:
         """Добавление предмета"""
-        pass
-    
-    @abstractmethod
-    def remove_item(self, entity_id: str, item_id: str) -> bool:
+            pass
+
+            @abstractmethod
+            def remove_item(self, entity_id: str, item_id: str) -> bool:
         """Удаление предмета"""
         pass
-    
+
     @abstractmethod
-    def get_inventory(self, entity_id: str) -> List[Dict[str, Any]]:
+    def get_ in vent or y(self, entity_id: str) -> L is t[Dict[str, Any]]:
         """Получение инвентаря"""
-        pass
-    
-    @abstractmethod
-    def equip_item(self, entity_id: str, item_id: str, slot: str) -> bool:
+            pass
+
+            @abstractmethod
+            def equip_item(self, entity_id: str, item_id: str, slot: str) -> bool:
         """Экипировка предмета"""
         pass
 
 class ISkillSystem(IGameSystem):
     """Интерфейс системы навыков"""
-    
-    @abstractmethod
-    def learn_skill(self, entity_id: str, skill_id: str) -> bool:
+
+        @abstractmethod
+        def learn_skill(self, entity_id: str, skill_id: str) -> bool:
         """Изучение навыка"""
         pass
-    
+
     @abstractmethod
-    def use_skill(self, entity_id: str, skill_id: str, target_id: str = None) -> bool:
+    def use_skill(self, entity_id: str, skill_id: str
+        target_id: str== None) -> bool:
+            pass  # Добавлен pass в пустой блок
         """Использование навыка"""
-        pass
-    
-    @abstractmethod
-    def get_skills(self, entity_id: str) -> List[Dict[str, Any]]:
+            pass
+
+            @abstractmethod
+            def get_skills(self, entity_id: str) -> L is t[Dict[str, Any]]:
         """Получение навыков"""
         pass
-    
+
     @abstractmethod
     def upgrade_skill(self, entity_id: str, skill_id: str) -> bool:
         """Улучшение навыка"""
-        pass
+            pass
 
-class IQuestSystem(Protocol):
-    def initialize(self, state_manager, repository_manager, event_bus=None) -> bool: ...
-    def start_quest(self, entity_id: str, quest_id: str) -> bool: ...
-    def update(self, delta_time: float) -> None: ...
+            class IQuestSystem(Protocol):
+            def initialize(self, state_manager, reposit or y_manager
+            event_bu == None) -> bool: ...
+            def start_quest(self, entity_id: str, quest_id: str) -> bool: ...
+            def update(self, delta_time: float) -> None: ...
 
-class ITradingSystem(Protocol):
-    def initialize(self, state_manager, repository_manager, event_bus=None) -> bool: ...
-    def create_trade_offer(self, seller_id: str, items, price: float, currency_type=None, trade_type=None) -> Optional[str]: ...
-    def accept_trade_offer(self, offer_id: str, buyer_id: str, quantity: int = None) -> bool: ...
-    def update(self, delta_time: float) -> None: ...
+            class ITrad in gSystem(Protocol):
+            def initialize(self, state_manager, reposit or y_manager
+            event_bu == None) -> bool: ...
+            def create_trade_offer(self, seller_id: str, items, price: float
+            currency_typ == None, trade_typ == None) -> Optional[str]: ...
+            def accept_trade_offer(self, offer_id: str, buyer_id: str
+            quantity: int== None) -> bool: ...
+            def update(self, delta_time: float) -> None: ...
 
-class ISocialSystem(Protocol):
-    def initialize(self, state_manager, repository_manager, event_bus=None) -> bool: ...
-    def perform_interaction(self, initiator_id: str, target_id: str, interaction_type, success: bool = True, data: Dict[str, Any] = None) -> bool: ...
-    def update(self, delta_time: float) -> None: ...
+            class ISocialSystem(Protocol):
+            def initialize(self, state_manager, reposit or y_manager
+            event_bu == None) -> bool: ...
+            def perf or m_ in teraction(self, initiat or _id: str, target_id: str
+            interaction_type, success: bool== True, data: Dict[str
+            Any]== None) -> bool: ...
+            def update(self, delta_time: float) -> None: ...
 
-# ============================================================================
-# УТИЛИТЫ ДЛЯ РАБОТЫ С СИСТЕМАМИ
-# ============================================================================
+            # ============================================================================
+            # УТИЛИТЫ ДЛЯ РАБОТЫ С СИСТЕМАМИ
+            # ============================================================================
 
-def create_system_state_group(state_manager: StateManager, system_name: str, 
-                            states: Dict[str, Any]) -> bool:
+            def create_system_state_group(state_manager: StateManager, system_name: str,
+            states: Dict[str, Any]) -> bool:
+            pass  # Добавлен pass в пустой блок
     """Создание группы состояний для системы"""
     try:
-        state_ids = []
-        for state_id, initial_value in states.items():
-            full_state_id = f"{system_name}_{state_id}"
-            state_manager.register_state(full_state_id, initial_value, StateType.SYSTEM)
-            state_ids.append(full_state_id)
-        
-        return state_manager.create_state_group(f"{system_name}_states", state_ids)
-        
     except Exception as e:
-        logger.error(f"Ошибка создания группы состояний для системы {system_name}: {e}")
+        pass
+        pass
+        pass
+        logger.err or(f"Ошибка создания группы состояний для системы {system_name}: {e}")
         return False
 
-def create_system_repository_group(repository_manager: RepositoryManager, system_name: str,
-                                 repositories: Dict[str, DataType]) -> bool:
+def create_system_reposit or y_group(reposit or y_manager: Reposit or yManager
+    system_name: str,
+                                reposit or ies: Dict[str, DataType]) -> bool:
+                                    pass  # Добавлен pass в пустой блок
     """Создание группы репозиториев для системы"""
-    try:
-        for repo_id, data_type in repositories.items():
-            full_repo_id = f"{system_name}_{repo_id}"
-            repository_manager.create_repository(full_repo_id, data_type)
-        
+        try:
+        for repo_id, data_type in reposit or ies.items():
+        full_repo_id== f"{system_name}_{repo_id}"
+        reposit or y_manager.create_reposit or y(full_repo_id, data_type)
+
         return True
-        
-    except Exception as e:
-        logger.error(f"Ошибка создания группы репозиториев для системы {system_name}: {e}")
+
+        except Exception as e:
+        pass
+        pass
+        pass
+        logger.err or(f"Ошибка создания группы репозиториев для системы {system_name}: {e}")
         return False
 
-def validate_system_dependencies(system: BaseGameSystem, 
-                               required_components: List[str]) -> bool:
+        def validate_system_dependencies(system: BaseGameSystem,
+        required_components: L is t[str]) -> bool:
+        pass  # Добавлен pass в пустой блок
     """Валидация зависимостей системы"""
-    missing_components = []
-    
+    m is sing_components== []
+
     if "state_manager" in required_components and not system.state_manager:
-        missing_components.append("state_manager")
-    
-    if "repository_manager" in required_components and not system.repository_manager:
-        missing_components.append("repository_manager")
-    
+        m is sing_components.append("state_manager")
+
+    if "reposit or y_manager" in required_components and not system.reposit or y_manager:
+        m is sing_components.append("reposit or y_manager")
+
     if "event_bus" in required_components and not system.event_bus:
-        missing_components.append("event_bus")
-    
-    if missing_components:
-        logger.error(f"Система {system.system_name} не имеет необходимых компонентов: {missing_components}")
+        m is sing_components.append("event_bus")
+
+    if m is sing_components:
+        logger.err or(f"Система {system.system_name} не имеет необходимых компонентов: {m is sing_components}")
         return False
-    
+
     return True

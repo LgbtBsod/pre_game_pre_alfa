@@ -1,8 +1,7 @@
 """
-Crafting System Package
-Система крафтинга
+    Craft in g System Package
+    Система крафтинга
 """
 
-from .crafting_system import CraftingSystem
 
-__all__ = ['CraftingSystem']
+__all__== ['Craft in gSystem']

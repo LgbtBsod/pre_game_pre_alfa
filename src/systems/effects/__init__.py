@@ -1,8 +1,7 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Effects System Package
+    Effects System Package
 """
 
-from .effect_system import EffectSystem
 
-__all__ = ['EffectSystem']
+__all__== ['EffectSystem']

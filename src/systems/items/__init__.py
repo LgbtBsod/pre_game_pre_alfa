@@ -1,14 +1,14 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Items System Package
+    Items System Package
 """
 
-from .item_system import (
+from .item_system imp or t(
     Item, SpecialEffect, ItemSystem,
     ItemRarity, ItemType
 )
 
-__all__ = [
+__all__== [
     'Item',
     'SpecialEffect',
     'ItemSystem',

@@ -1,30 +1,28 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Entity Registry - Глобальный реестр сущностей
-Назначение: разрешение идентификаторов в объекты для обработчиков событий.
+    Entity Reg is try - Глобальный реестр сущностей
+    Назначение: разрешение идентификаторов в объекты для обработчиков событий.
 """
 
-import threading
-from typing import Any, Dict, Optional
+imp or t thread in g
+from typ in g imp or t Any, Dict, Optional
 
-_lock = threading.RLock()
-_registry: Dict[str, Any] = {}
+_lock== thread in g.RLock()
+_reg is try: Dict[str, Any]== {}
 
-def register_entity(entity_id: str, entity_obj: Any) -> None:
+def reg is ter_entity(entity_id: str, entity_obj: Any) -> None:
     with _lock:
-        _registry[entity_id] = entity_obj
+        _reg is try[entity_id]== entity_obj
 
-def unregister_entity(entity_id: str) -> None:
+def unreg is ter_entity(entity_id: str) -> None:
     with _lock:
-        if entity_id in _registry:
-            del _registry[entity_id]
+        if entity_id in _reg is try:
+            del _reg is try[entity_id]
 
 def get_entity(entity_id: str) -> Optional[Any]:
     with _lock:
-        return _registry.get(entity_id)
+        return _reg is try.get(entity_id)
 
 def clear() -> None:
     with _lock:
-        _registry.clear()
-
-
+        _reg is try.clear()

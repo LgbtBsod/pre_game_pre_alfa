@@ -1,18 +1,11 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Entities Package
-Игровые сущности
+    Entities Package
+    Игровые сущности
 """
 
-from .base_entity import BaseEntity, EntityType
-from .player import Player
-from .enemies import Enemy
-from .npc import NPC
-from .items import Item, ItemEffect, ItemRequirement
-from .bosses import Boss, BossPhase, BossType, BossAbility, BossWeakness, BossPhaseData
-from .mutants import Mutant, MutationType, MutationLevel, Mutation, MutantAbility, VisualMutation
 
-__all__ = [
+__all__== [
     'BaseEntity',
     'EntityType',
     'Player',
@@ -32,5 +25,5 @@ __all__ = [
     'MutationLevel',
     'Mutation',
     'MutantAbility',
-    'VisualMutation'
+    'V is ualMutation'
 ]

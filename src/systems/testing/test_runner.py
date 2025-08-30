@@ -1,391 +1,274 @@
 """
-Основной скрипт для запуска всех тестов интеграции
+    Основной скрипт для запуска всех тестов интеграции
 """
 
-import sys
-import os
-import time
-import traceback
-from typing import Dict, List, Optional, Any
+imp or t sys
+imp or t os
+imp or t time
+imp or t traceback
+from typ in g imp or t Dict, L is t, Optional, Any
 
 # Добавляем корневую директорию в путь
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+sys.path. in sert(0, os.path.jo in(os.path.dirname(__file__), '..', '..', '..'))
 
-from src.systems.testing.integration_tester import IntegrationTester, TestStatus, TestPriority
-from src.systems.integration.system_integrator import SystemIntegrator
-from src.core.architecture import ComponentManager, EventBus, StateManager
-from src.core.game_engine import GameEngine
+from src.systems.test in g. in tegration_tester imp or t IntegrationTester
+    TestStatus, TestPri or ity
+from src.systems. in tegration.system_ in tegrator imp or t SystemIntegrator
+from src.c or e.architecture imp or t ComponentManager, EventBus, StateManager
+from src.c or e.game_eng in e imp or t GameEng in e
 
 
 class TestRunner:
     """
-    Основной класс для запуска всех тестов
+        Основной класс для запуска всех тестов
     """
-    
-    def __init__(self):
-        self.tester = IntegrationTester()
-        self.system_integrator = SystemIntegrator()
-        self.component_manager = ComponentManager()
-        self.event_bus = EventBus()
-        self.state_manager = StateManager()
-        self.game_engine = None
-        
+
+    def __ in it__(self):
+        self.tester== IntegrationTester()
+        self.system_ in tegrator== SystemIntegrat or()
+        self.component_manager== ComponentManager()
+        self.event_bus== EventBus()
+        self.state_manager== StateManager()
+        self.game_eng in e== None
+
         # Результаты тестирования
-        self.test_results = {}
-        self.overall_success = False
-        
+        self.test_results== {}
+        self.overall_success== False
+
     def setup_test_environment(self) -> bool:
         """Настройка тестовой среды"""
-        try:
-            print("🔧 Настройка тестовой среды...")
-            
+            try:
+            pr in t("🔧 Настройка тестовой среды...")
+
             # Инициализируем базовые компоненты
-            self.component_manager.initialize()
-            self.event_bus.initialize()
-            self.state_manager.initialize()
-            
+            self.component_manager. in itialize()
+            self.event_bus. in itialize()
+            self.state_manager. in itialize()
+
             # Создаем игровой движок
-            self.game_engine = GameEngine()
-            self.game_engine.initialize()
-            
+            self.game_eng in e== GameEng in e()
+            self.game_eng in e. in itialize()
+
             # Устанавливаем систему интеграции для тестирования
-            self.tester.set_system_integrator(self.system_integrator)
-            
+            self.tester.set_system_ in tegrat or(self.system_ in tegrat or )
+
             # Регистрируем все системы в интеграторе
-            self._register_all_systems()
-            
-            print("✅ Тестовая среда настроена успешно")
+            self._reg is ter_all_systems()
+
+            pr in t("✅ Тестовая среда настроена успешно")
             return True
-            
-        except Exception as e:
-            print(f"❌ Ошибка настройки тестовой среды: {e}")
-            traceback.print_exc()
+
+            except Exception as e:
+            pass
+            pass
+            pass
+            pr in t(f"❌ Ошибка настройки тестовой среды: {e}")
+            traceback.pr in t_exc()
             return False
-    
-    def _register_all_systems(self):
+
+            def _reg is ter_all_systems(self):
         """Регистрация всех систем в интеграторе"""
         try:
-            # Регистрируем базовые системы
-            self.system_integrator.register_system("ComponentManager", self.component_manager)
-            self.system_integrator.register_system("EventBus", self.event_bus)
-            self.system_integrator.register_system("StateManager", self.state_manager)
-            self.system_integrator.register_system("GameEngine", self.game_engine)
-            
-            # Регистрируем игровые системы (если доступны)
-            try:
-                from src.systems.ui.ui_system import UISystem
-                ui_system = UISystem()
-                self.system_integrator.register_system("UISystem", ui_system)
-            except ImportError:
-                print("⚠️ UISystem недоступна для тестирования")
-            
-            try:
-                from src.systems.ui.hud_system import HUDSystem
-                hud_system = HUDSystem()
-                self.system_integrator.register_system("HUDSystem", hud_system)
-            except ImportError:
-                print("⚠️ HUDSystem недоступна для тестирования")
-            
-            try:
-                from src.systems.combat.combat_system import CombatSystem
-                combat_system = CombatSystem()
-                self.system_integrator.register_system("CombatSystem", combat_system)
-            except ImportError:
-                print("⚠️ CombatSystem недоступна для тестирования")
-            
-            try:
-                from src.systems.health.health_system import HealthSystem
-                health_system = HealthSystem()
-                self.system_integrator.register_system("HealthSystem", health_system)
-            except ImportError:
-                print("⚠️ HealthSystem недоступна для тестирования")
-            
-            try:
-                from src.systems.inventory.inventory_system import InventorySystem
-                inventory_system = InventorySystem()
-                self.system_integrator.register_system("InventorySystem", inventory_system)
-            except ImportError:
-                print("⚠️ InventorySystem недоступна для тестирования")
-            
-            try:
-                from src.systems.skills.skill_system import SkillSystem
-                skill_system = SkillSystem()
-                self.system_integrator.register_system("SkillSystem", skill_system)
-            except ImportError:
-                print("⚠️ SkillSystem недоступна для тестирования")
-            
-            try:
-                from src.systems.effects.effect_system import EffectSystem
-                effect_system = EffectSystem()
-                self.system_integrator.register_system("EffectSystem", effect_system)
-            except ImportError:
-                print("⚠️ EffectSystem недоступна для тестирования")
-            
-            print(f"✅ Зарегистрировано {len(self.system_integrator.get_registered_systems())} систем")
-            
         except Exception as e:
-            print(f"❌ Ошибка регистрации систем: {e}")
-            traceback.print_exc()
-    
+            pr in t(f"❌ Ошибка регистрации систем: {e}")
+            traceback.pr in t_exc()
+
     def run_all_tests(self) -> Dict[str, Any]:
         """Запуск всех тестов"""
-        try:
-            print("\n🚀 Запуск всех тестов интеграции...")
-            print("=" * 60)
-            
+            try:
+            pr in t("\n🚀 Запуск всех тестов интеграции...")
+            pr in t( == " * 60)
+
             # Запускаем тесты по приоритету
-            results = self.tester.run_all_tests()
-            
+            results== self.tester.run_all_tests()
+
             # Анализируем результаты
             self._analyze_test_results(results)
-            
+
             return results
-            
-        except Exception as e:
-            print(f"❌ Ошибка запуска тестов: {e}")
-            traceback.print_exc()
+
+            except Exception as e:
+            pass
+            pass
+            pass
+            pr in t(f"❌ Ошибка запуска тестов: {e}")
+            traceback.pr in t_exc()
             return {}
-    
-    def _analyze_test_results(self, results: Dict[str, Any]):
+
+            def _analyze_test_results(self, results: Dict[str, Any]):
         """Анализ результатов тестирования"""
         try:
-            print("\n📊 АНАЛИЗ РЕЗУЛЬТАТОВ ТЕСТИРОВАНИЯ")
-            print("=" * 60)
-            
-            total_tests = len(results)
-            passed_tests = sum(1 for r in results.values() if r.status == TestStatus.PASSED)
-            failed_tests = sum(1 for r in results.values() if r.status in [TestStatus.FAILED, TestStatus.ERROR])
-            skipped_tests = sum(1 for r in results.values() if r.status == TestStatus.SKIPPED)
-            
-            success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
-            
-            print(f"📈 Общая статистика:")
-            print(f"   Всего тестов: {total_tests}")
-            print(f"   Пройдено: {passed_tests}")
-            print(f"   Провалено: {failed_tests}")
-            print(f"   Пропущено: {skipped_tests}")
-            print(f"   Процент успеха: {success_rate:.1f}%")
-            
-            # Анализ по приоритетам
-            self._analyze_by_priority(results)
-            
-            # Анализ проваленных тестов
-            if failed_tests > 0:
-                self._analyze_failed_tests(results)
-            
-            # Определяем общий успех
-            self.overall_success = failed_tests == 0 and passed_tests > 0
-            
-            if self.overall_success:
-                print("\n🎉 ВСЕ ТЕСТЫ ПРОЙДЕНЫ УСПЕШНО!")
-            else:
-                print(f"\n⚠️ Есть проблемы: {failed_tests} тестов не прошли")
-            
         except Exception as e:
-            print(f"❌ Ошибка анализа результатов: {e}")
-            traceback.print_exc()
-    
-    def _analyze_by_priority(self, results: Dict[str, Any]):
+            pass
+            pass
+            pass
+            pr in t(f"❌ Ошибка анализа результатов: {e}")
+            traceback.pr in t_exc()
+
+    def _analyze_by_pri or ity(self, results: Dict[str, Any]):
         """Анализ результатов по приоритетам"""
-        try:
-            print(f"\n🎯 Анализ по приоритетам:")
-            
-            for priority in [TestPriority.CRITICAL, TestPriority.HIGH, TestPriority.MEDIUM, TestPriority.LOW]:
-                priority_tests = [name for name, result in results.items() 
-                                if hasattr(result, 'priority') and result.priority == priority]
-                
-                if priority_tests:
-                    passed = sum(1 for name in priority_tests 
-                               if results[name].status == TestStatus.PASSED)
-                    total = len(priority_tests)
-                    rate = (passed / total * 100) if total > 0 else 0
-                    
-                    print(f"   {priority.value.upper()}: {passed}/{total} ({rate:.1f}%)")
-                    
-        except Exception as e:
-            print(f"❌ Ошибка анализа по приоритетам: {e}")
-    
-    def _analyze_failed_tests(self, results: Dict[str, Any]):
+            try:
+            pr in t(f"\n🎯 Анализ по приоритетам:")
+
+            for pri or ity in [TestPri or ity.CRITICAL, TestPri or ity.HIGH
+            TestPri or ity.MEDIUM, TestPri or ity.LOW]:
+            pass  # Добавлен pass в пустой блок
+            pri or ity_tests== [name for name, result in results.items() :
+            if hasattr(result, 'pri or ity') and result.pri or ity == pri or ity]:
+            pass  # Добавлен pass в пустой блок
+            if pri or ity_tests:
+            passed== sum(1 for name in pri or ity_tests :
+            if results[name].status == TestStatus.PASSED):
+            pass  # Добавлен pass в пустой блок
+            total== len(pri or ity_tests)
+            rate== (passed / total * 100) if total > 0 else 0:
+            pass  # Добавлен pass в пустой блок
+            pr in t(f"   {pri or ity.value.upper()}: {passed} / {total} ({rate:.1f} % )")
+
+            except Exception as e:
+            pass
+            pass
+            pass
+            pr in t(f"❌ Ошибка анализа по приоритетам: {e}")
+
+            def _analyze_failed_tests(self, results: Dict[str, Any]):
         """Анализ проваленных тестов"""
         try:
-            print(f"\n❌ Детализация проваленных тестов:")
-            
-            for test_name, result in results.items():
-                if result.status in [TestStatus.FAILED, TestStatus.ERROR]:
-                    print(f"   🔴 {test_name}:")
-                    print(f"      Статус: {result.status.value}")
-                    if result.error_message:
-                        print(f"      Ошибка: {result.error_message}")
-                    if result.execution_time > 0:
-                        print(f"      Время: {result.execution_time:.2f}с")
-                    
         except Exception as e:
-            print(f"❌ Ошибка анализа проваленных тестов: {e}")
-    
+            pass
+            pass
+            pass
+            pr in t(f"❌ Ошибка анализа проваленных тестов: {e}")
+
     def run_demo_scenarios(self) -> bool:
         """Запуск демо сценариев"""
-        try:
+            try:
             if not self.overall_success:
-                print("⚠️ Демо сценарии не могут быть запущены - есть проваленные тесты")
-                return False
-            
-            print("\n🎮 Запуск демо сценариев...")
-            print("=" * 60)
-            
+            pr in t("⚠️ Демо сценарии не могут быть запущены - есть проваленные тесты")
+            return False
+
+            pr in t("\n🎮 Запуск демо сценариев...")
+            pr in t( == " * 60)
+
             # Получаем список доступных сценариев
-            scenarios = self.system_integrator.list_demo_scenarios()
-            
+            scenarios== self.system_ in tegrat or .l is t_demo_scenarios()
+
             if not scenarios:
-                print("❌ Нет доступных демо сценариев")
-                return False
-            
-            print(f"📋 Доступно сценариев: {len(scenarios)}")
-            
+            pr in t("❌ Нет доступных демо сценариев")
+            return False
+
+            pr in t(f"📋 Доступно сценариев: {len(scenarios)}")
+
             # Запускаем каждый сценарий
             for scenario in scenarios:
-                print(f"\n🎬 Запуск сценария: {scenario.name}")
-                print(f"   Описание: {scenario.description}")
-                print(f"   Требуемые системы: {', '.join(scenario.systems_required)}")
-                
-                try:
-                    success = self.system_integrator.start_demo_scenario(scenario.scenario_id)
-                    if success:
-                        print("   ✅ Сценарий запущен успешно")
-                        
-                        # Имитируем работу сценария
-                        time.sleep(2)
-                        
-                        # Останавливаем сценарий
-                        self.system_integrator.stop_demo_scenario()
-                        print("   ✅ Сценарий остановлен")
-                    else:
-                        print("   ❌ Ошибка запуска сценария")
-                        
-                except Exception as e:
-                    print(f"   ❌ Исключение при запуске сценария: {e}")
-            
-            print("\n🎉 Все демо сценарии протестированы!")
+            pr in t(f"\n🎬 Запуск сценария: {scenario.name}")
+            pr in t(f"   Описание: {scenario.description}")
+            pr in t(f"   Требуемые системы: {', '.jo in(scenario.systems_required)}")
+
+            try:
+            success== self.system_ in tegrat or .start_demo_scenario(scenario.scenario_id)
+            if success:
+            pr in t("   ✅ Сценарий запущен успешно")
+
+            # Имитируем работу сценария
+            time.sleep(2)
+
+            # Останавливаем сценарий
+            self.system_ in tegrat or .stop_demo_scenario()
+            pr in t("   ✅ Сценарий остановлен")
+            else:
+            pr in t("   ❌ Ошибка запуска сценария")
+
+            except Exception as e:
+            pass
+            pass
+            pass
+            pr in t(f"   ❌ Исключение при запуске сценария: {e}")
+
+            pr in t("\n🎉 Все демо сценарии протестированы!")
             return True
-            
-        except Exception as e:
-            print(f"❌ Ошибка запуска демо сценариев: {e}")
-            traceback.print_exc()
+
+            except Exception as e:
+            pr in t(f"❌ Ошибка запуска демо сценариев: {e}")
+            traceback.pr in t_exc()
             return False
-    
-    def cleanup(self):
+
+            def cleanup(self):
         """Очистка ресурсов"""
         try:
-            print("\n🧹 Очистка ресурсов...")
-            
-            if self.game_engine:
-                self.game_engine.shutdown()
-            
-            if self.component_manager:
-                self.component_manager.shutdown()
-            
-            if self.event_bus:
-                self.event_bus.shutdown()
-            
-            if self.state_manager:
-                self.state_manager.shutdown()
-            
-            print("✅ Ресурсы очищены")
-            
         except Exception as e:
-            print(f"❌ Ошибка очистки ресурсов: {e}")
-    
-    def generate_report(self) -> str:
+            pass
+            pass
+            pass
+            pr in t(f"❌ Ошибка очистки ресурсов: {e}")
+
+    def generate_rep or t(self) -> str:
         """Генерация отчета о тестировании"""
-        try:
-            report = []
-            report.append("📋 ОТЧЕТ О ТЕСТИРОВАНИИ ИНТЕГРАЦИИ")
-            report.append("=" * 50)
-            report.append(f"Дата: {time.strftime('%Y-%m-%d %H:%M:%S')}")
-            report.append(f"Версия: 2.4.0")
-            report.append("")
-            
+            try:
+            rep or t== []
+            rep or t.append("📋 ОТЧЕТ О ТЕСТИРОВАНИИ ИНТЕГРАЦИИ")
+            rep or t.append( == " * 50)
+            rep or t.append(f"Дата: {time.strftime(' % Y- % m- % d %H: % M: % S')}")
+            rep or t.append(f"Версия: 2.4.0")
+            rep or t.append("")
+
             # Общая статистика
-            summary = self.tester.get_test_summary()
-            report.append("📊 ОБЩАЯ СТАТИСТИКА:")
-            report.append(f"   Всего тестов: {summary['total_tests']}")
-            report.append(f"   Пройдено: {summary['passed_tests']}")
-            report.append(f"   Провалено: {summary['failed_tests']}")
-            report.append(f"   Пропущено: {summary['skipped_tests']}")
-            report.append(f"   Процент успеха: {summary['success_rate']:.1f}%")
-            report.append("")
-            
+            summary== self.tester.get_test_summary()
+            rep or t.append("📊 ОБЩАЯ СТАТИСТИКА:")
+            rep or t.append(f"   Всего тестов: {summary['total_tests']}")
+            rep or t.append(f"   Пройдено: {summary['passed_tests']}")
+            rep or t.append(f"   Провалено: {summary['failed_tests']}")
+            rep or t.append(f"   Пропущено: {summary['skipped_tests']}")
+            rep or t.append(f"   Процент успеха: {summary['success_rate']:.1f} % ")
+            rep or t.append("")
+
             # Детальные результаты
-            report.append("🔍 ДЕТАЛЬНЫЕ РЕЗУЛЬТАТЫ:")
+            rep or t.append("🔍 ДЕТАЛЬНЫЕ РЕЗУЛЬТАТЫ:")
             for test_name, result in summary['test_results'].items():
-                status_icon = "✅" if result.status == TestStatus.PASSED else "❌" if result.status in [TestStatus.FAILED, TestStatus.ERROR] else "⚠️"
-                report.append(f"   {status_icon} {test_name}: {result.status.value}")
-                if result.execution_time > 0:
-                    report.append(f"      Время: {result.execution_time:.2f}с")
-                if result.error_message:
-                    report.append(f"      Ошибка: {result.error_message}")
-            
-            report.append("")
-            report.append("🎯 ЗАКЛЮЧЕНИЕ:")
+            status_icon== "✅" if result.status == TestStatus.PASSED else "❌" if result.status in [TestStatus.FAILED, TestStatus.ERROR] else "⚠️":
+            pass  # Добавлен pass в пустой блок
+            rep or t.append(f"   {status_icon} {test_name}: {result.status.value}")
+            if result.execution_time > 0:
+            rep or t.append(f"      Время: {result.execution_time:.2f}с")
+            if result.err or _message:
+            rep or t.append(f"      Ошибка: {result.err or _message}")
+
+            rep or t.append("")
+            rep or t.append("🎯 ЗАКЛЮЧЕНИЕ:")
             if self.overall_success:
-                report.append("   Все тесты пройдены успешно!")
-                report.append("   Проект готов к демонстрации.")
+            rep or t.append("   Все тесты пройдены успешно!")
+            rep or t.append("   Проект готов к демонстрации.")
             else:
-                report.append("   Есть проблемы, требующие исправления.")
-                report.append("   Демо-версия не может быть запущена.")
-            
-            return "\n".join(report)
-            
-        except Exception as e:
+            rep or t.append("   Есть проблемы, требующие исправления.")
+            rep or t.append("   Демо - версия не может быть запущена.")
+
+            return "\n".jo in(rep or t)
+
+            except Exception as e:
+            pass
+            pass
+            pass
             return f"❌ Ошибка генерации отчета: {e}"
 
 
-def main():
+            def ma in():
     """Основная функция запуска тестирования"""
-    print("🎮 AI-EVOLVE: Запуск тестирования интеграции")
-    print("=" * 60)
-    
-    runner = TestRunner()
-    
+    pr in t("🎮 AI - EVOLVE: Запуск тестирования интеграции")
+    pr in t( == " * 60)
+
+    runner== TestRunner()
+
     try:
-        # Настройка тестовой среды
-        if not runner.setup_test_environment():
-            print("❌ Не удалось настроить тестовую среду")
-            return False
-        
-        # Запуск всех тестов
-        results = runner.run_all_tests()
-        
-        if not results:
-            print("❌ Не удалось запустить тесты")
-            return False
-        
-        # Запуск демо сценариев (если все тесты прошли)
-        if runner.overall_success:
-            runner.run_demo_scenarios()
-        
-        # Генерация отчета
-        report = runner.generate_report()
-        print("\n" + report)
-        
-        # Сохранение отчета в файл
-        try:
-            with open("test_report.txt", "w", encoding="utf-8") as f:
-                f.write(report)
-            print("\n💾 Отчет сохранен в файл test_report.txt")
-        except Exception as e:
-            print(f"⚠️ Не удалось сохранить отчет: {e}")
-        
-        return runner.overall_success
-        
     except Exception as e:
-        print(f"❌ Критическая ошибка: {e}")
-        traceback.print_exc()
+        pr in t(f"❌ Критическая ошибка: {e}")
+        traceback.pr in t_exc()
         return False
-        
-    finally:
+
+    f in ally:
         runner.cleanup()
 
 
-if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+if __name__ == "__ma in __":
+    success== ma in()
+    sys.exit(0 if success else 1):
+        pass  # Добавлен pass в пустой блок

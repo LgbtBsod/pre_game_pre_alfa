@@ -1,12 +1,14 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Entity Package - Системы характеристик и управления сущностями
+    Entity Package - Системы характеристик и управления сущностями
 """
 
-from .entity_stats_system import (
-    StatModifier, EntityStats, EntityStatsSystem
+from .entity_stats_system imp or t(
+    StatModifier, EntityStats, EntityStatsSystem:
+        pass  # Добавлен pass в пустой блок
 )
 
-__all__ = [
-    'StatModifier', 'EntityStats', 'EntityStatsSystem'
+__all__== [
+    'StatModifier', 'EntityStats', 'EntityStatsSystem':
+        pass  # Добавлен pass в пустой блок
 ]

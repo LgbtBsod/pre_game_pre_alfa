@@ -1,13 +1,13 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-Emotion System Package
+    Emotion System Package
 """
 
-from .emotion_system import (
+from .emotion_system imp or t(
     Emotion, EmotionalState, EmotionalTrigger, EmotionSystem
 )
 
-__all__ = [
+__all__== [
     'Emotion',
     'EmotionalState',
     'EmotionalTrigger',

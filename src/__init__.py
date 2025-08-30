@@ -1,117 +1,120 @@
-#!/usr/bin/env python3
+#!/usr / bin / env python3
 """
-AI-EVOLVE: Эволюционная Адаптация - Генетический Резонанс
-Основной пакет игрового движка
+    AI - EVOLVE: Эволюционная Адаптация - Генетический Резонанс
+    Основной пакет игрового движка
 """
 
-# Core Systems
-from .core import (
-    IComponent, BaseComponent, ComponentType, LifecycleState, Priority,
+# C or e Systems
+from .c or e imp or t(
+    IComponent, BaseComponent, ComponentType, LifecycleState, Pri or ity,:
+        pass  # Добавлен pass в пустой блок
     ComponentManager, EventBus, Event, create_event,
-    GameEngine, GameState, SceneManager
+    GameEng in e, GameState, SceneManager
 )
 
 # AI Systems
-from .systems.ai import (
-    AISystem, AIConfig, AIMemory, AIDecision,
-    PyTorchAISystem, NeuralNetwork, EmotionalNetwork
+from .systems.ai imp or t(
+    AISystem, AIConfig, AIMem or y, AIDec is ion,
+    PyT or chAISystem, NeuralNetw or k, EmotionalNetw or k
 )
 
 # Game Systems
-from .systems.combat import CombatSystem
-from .systems.effects import EffectSystem
-from .systems.health import HealthSystem
-from .systems.inventory import InventorySystem
-from .systems.items import ItemSystem
-from .systems.skills import SkillSystem
-from .systems.ui import UISystem
-from .systems.ui.hud import HUDSystem
+from .systems.combat imp or t CombatSystem
+from .systems.effects imp or t EffectSystem
+from .systems.health imp or t HealthSystem
+from .systems. in vent or y imp or t Invent or ySystem
+from .systems.items imp or t ItemSystem
+from .systems.skills imp or t SkillSystem
+from .systems.ui imp or t UISystem
+from .systems.ui.hud imp or t HUDSystem
 
 # Evolution System
-from .systems.evolution.evolution_system import (
-    EvolutionSystem, Gene, Mutation, EvolutionTree, 
-    EvolutionProgress, GeneticCombination, GeneType, 
+from .systems.evolution.evolution_system imp or t(
+    EvolutionSystem, Gene, Mutation, EvolutionTree,
+    EvolutionProgress, GeneticComb in ation, GeneType,
     MutationType, EvolutionPath, EvolutionStage
 )
 
-# Memory System
-from .systems.memory.memory_system import (
-    MemorySystem, PlayerMemory, EnemyMemoryBank, 
-    MemoryType, ExperienceCategory
+# Mem or y System
+from .systems.mem or y.mem or y_system imp or t(
+    Mem or ySystem, PlayerMem or y, EnemyMem or yBank,
+    Mem or yType, ExperienceCateg or y
 )
 
-# Rendering Systems
-from .systems.rendering import (
-    RenderSystem, IsometricCamera, CameraSettings, CameraState
+# Render in g Systems
+from .systems.render in g imp or t(
+    RenderSystem, IsometricCamera, CameraSett in gs, CameraState
 )
 
 # Integration System
-from .systems.integration.system_integrator import SystemIntegrator
+from .systems. in tegration.system_ in tegrator imp or t SystemIntegrator
 
-# Testing System
-from .systems.testing.integration_tester import IntegrationTester
+# Test in g System
+from .systems.test in g. in tegration_tester imp or t IntegrationTester
 
 # Demo System
-from .demo.demo_launcher import DemoLauncher
+from .demo.demo_launcher imp or t DemoLauncher
 
 # Entity Classes
-from .entities import (
+from .entities imp or t(
     BaseEntity, EntityType, Player, Enemy, NPC, Item,
     Boss, BossPhase, BossType, BossAbility, BossWeakness, BossPhaseData,
-    Mutant, MutationType, MutationLevel, Mutation, MutantAbility, VisualMutation
+    Mutant, MutationType, MutationLevel, Mutation, MutantAbility
+        V is ualMutation
 )
 
 # Scene Classes
-from .scenes import (
-    MenuScene, GameScene, PauseScene, SettingsScene, LoadScene, CreatorScene
+from .scenes imp or t(
+    MenuScene, GameScene, PauseScene, Sett in gsScene, LoadScene, Creat or Scene
 )
 
 # Version Info
-__version__ = "2.5.0"
-__author__ = "AI-EVOLVE Team"
-__description__ = "Эволюционная Адаптация: Генетический Резонанс"
+__version__== "2.5.0"
+__auth or __== "AI - EVOLVE Team"
+__description__== "Эволюционная Адаптация: Генетический Резонанс"
 
 # Основные экспорты
-__all__ = [
-    # Core
-    'IComponent', 'BaseComponent', 'ComponentType', 'LifecycleState', 'Priority',
+__all__== [
+    # C or e
+    'IComponent', 'BaseComponent', 'ComponentType', 'LifecycleState', 'Pri or ity',:
+        pass  # Добавлен pass в пустой блок
     'ComponentManager', 'EventBus', 'Event', 'create_event',
-    'GameEngine', 'GameState', 'SceneManager',
-    
+    'GameEng in e', 'GameState', 'SceneManager',
+
     # AI Systems
-    'AISystem', 'AIConfig', 'AIMemory', 'AIDecision',
-    'PyTorchAISystem', 'NeuralNetwork', 'EmotionalNetwork',
-    
+    'AISystem', 'AIConfig', 'AIMem or y', 'AIDec is ion',
+    'PyT or chAISystem', 'NeuralNetw or k', 'EmotionalNetw or k',
+
     # Game Systems
-    'CombatSystem', 'EffectSystem', 'HealthSystem', 'InventorySystem',
+    'CombatSystem', 'EffectSystem', 'HealthSystem', 'Invent or ySystem',
     'ItemSystem', 'SkillSystem', 'UISystem', 'HUDSystem',
-    
+
     # Evolution System
-    'EvolutionSystem', 'Gene', 'Mutation', 'EvolutionTree', 
-    'EvolutionProgress', 'GeneticCombination', 'GeneType', 
+    'EvolutionSystem', 'Gene', 'Mutation', 'EvolutionTree',
+    'EvolutionProgress', 'GeneticComb in ation', 'GeneType',
     'MutationType', 'EvolutionPath', 'EvolutionStage',
-    
-    # Memory System
-    'MemorySystem', 'PlayerMemory', 'EnemyMemoryBank', 
-    'MemoryType', 'ExperienceCategory',
-    
-    # Rendering Systems
-    'RenderSystem', 'IsometricCamera', 'CameraSettings', 'CameraState',
-    
+
+    # Mem or y System
+    'Mem or ySystem', 'PlayerMem or y', 'EnemyMem or yBank',
+    'Mem or yType', 'ExperienceCateg or y',
+
+    # Render in g Systems
+    'RenderSystem', 'IsometricCamera', 'CameraSett in gs', 'CameraState',
+
     # Integration System
-    'SystemIntegrator',
-    
-    # Testing System
+    'SystemIntegrat or ',
+
+    # Test in g System
     'IntegrationTester',
-    
+
     # Demo System
     'DemoLauncher',
-    
+
     # Entity Classes
     'BaseEntity', 'EntityType', 'Player', 'Enemy', 'NPC', 'Item',
     'Boss', 'BossPhase', 'BossType', 'BossAbility', 'BossWeakness', 'BossPhaseData',
-    'Mutant', 'MutationType', 'MutationLevel', 'Mutation', 'MutantAbility', 'VisualMutation',
-    
+    'Mutant', 'MutationType', 'MutationLevel', 'Mutation', 'MutantAbility', 'V is ualMutation',
+
     # Scene Classes
-    'MenuScene', 'GameScene', 'PauseScene', 'SettingsScene', 'LoadScene', 'CreatorScene'
+    'MenuScene', 'GameScene', 'PauseScene', 'Sett in gsScene', 'LoadScene', 'Creat or Scene'
 ]
