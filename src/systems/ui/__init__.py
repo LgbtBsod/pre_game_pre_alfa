@@ -1,29 +1,12 @@
-from .ui_system import(
-from dataclasses import dataclass, field
-
-from enum import Enum
-
-from pathlib import Path
-
-from typing import *
 
 import logging
 
 import os
 
-import re
-
 import sys
 
-import time
+from pathlib import Path
 
-#!/usr / bin / env / python3
-"""UI Systems Package
-Системы пользовательского интерфейса"""
-UISystem, UIElementType, UIElement,
-W or ldObjectTemplate, Creat or Mode
-)
-__all__= [
-'UISystem', 'UIElementType', 'UIElement',
-'W or ldObjectTemplate', 'Creat or Mode'
-]
+from typing import *
+
+# Тесты для проекта "Эволюционная Адаптация: Генетический Резонанс"

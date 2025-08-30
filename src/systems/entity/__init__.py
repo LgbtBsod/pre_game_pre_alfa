@@ -1,27 +1,12 @@
-from .entity_stats_system import(
-from dataclasses import dataclass, field
-
-from enum import Enum
-
-from pathlib import Path
-
-from typing import *
 
 import logging
 
 import os
 
-import re
-
 import sys
 
-import time
+from pathlib import Path
 
-#!/usr / bin / env python3
-"""Entity Package - Системы характеристик и управления сущностями"""
-StatModifier, EntityStats, EntityStatsSystem: pass  # Добавлен pass в пустой блок
-)
-__all__= [
-'StatModifier', 'EntityStats', 'EntityStatsSystem':
-pass  # Добавлен pass в пустой блок
-]
+from typing import *
+
+# Тесты для проекта "Эволюционная Адаптация: Генетический Резонанс"

@@ -1,485 +1,384 @@
-from .architecture import ComponentManager, EventBus, Pri or ity, ComponentType
-
-from .reposit or y import Reposit or yManager, DataType, St or ageType
-
+from .architecture import ComponentManager, EventBus, Priority, ComponentType
+from .repository import RepositoryManager, DataType, StorageType
 from .state_manager import StateManager, StateType
-
-from dataclasses import dataclass: pass # Добавлен pass в пустой блок
-
+from dataclasses import dataclass
 from direct.showbase.ShowBase import ShowBase
-
 from direct.task import Task
-
 from enum import Enum
-
-from pand a3d.c or e import Win dowProperties
-
+from panda3d.core import WindowProperties
 from pathlib import Path
-
 from typing import *
-
 from typing import Dict, Any, Optional
-
 import logging
-
 import os
-
 import sys
-
 import time
 
-#!/usr / bin / env python3
-"""Game Engin e - Основной игровой движок на Pand a3D
-Упрощенная архитектура с четким разделением ответственности"""import time
-
-# Pand a3D imports
-# Новая архитектура
-LifecycleState: pass  # Добавлен pass в пустой блок
-logger= logging.getLogger(__name__)
-class GameEngin e(ShowBase):"""Основной игровой движок на Pand a3D
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
+#!/usr/bin/env python3
+"""Game Engine - Основной игровой движок на Panda3D
 Упрощенная архитектура с четким разделением ответственности"""
-def __in it__(self, config: Dict[str, Any]):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Инициализация Pand a3D ShowBase
-super().__in it__()
-self.settings= config
-self.running= False
-self.paused= False
-# Состояние игры
-self.current_state= "in itializing"
-self.delta_time= 0.0
-self.last_frame_time= time.time()
-# Статистика
-self.fps= 0
-self.frame_count= 0
-self.start_time= time.time()
-# Новая архитектура - основные менеджеры
-self.component_manager: Optional[ComponentManager]= None
-self.event_bus: Optional[EventBus]= None
-self.state_manager: Optional[StateManager]= None
-self.reposit or y_manager: Optional[Reposit or yManager]= None
-# Адаптеры для существующих систем(только для совместимости)
-self._legacy_adapters= {}
-logger.in fo("Игровой движок Pand a3D с упрощенной архитектурой инициализирован")
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
+
+# Panda3D imports
+# Новая архитектура
+logger = logging.getLogger(__name__)
+
+class GameEngine(ShowBase):
+    """Основной игровой движок на Panda3D
+    Упрощенная архитектура с четким разделением ответственности"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        # Инициализация Panda3D ShowBase
+        super().__init__()
+        self.settings = config
+        self.running = False
+        self.paused = False
+        
+        # Состояние игры
+        self.current_state = "initializing"
+        self.delta_time = 0.0
+        self.last_frame_time = time.time()
+        
+        # Статистика
+        self.fps = 0
+        self.frame_count = 0
+        self.start_time = time.time()
+        
+        # Новая архитектура - основные менеджеры
+        self.component_manager: Optional[ComponentManager] = None
+        self.event_bus: Optional[EventBus] = None
+        self.state_manager: Optional[StateManager] = None
+        self.repository_manager: Optional[RepositoryManager] = None
+        
+        # Адаптеры для существующих систем (только для совместимости)
+        self._legacy_adapters = {}
+        
+        logger.info("Игровой движок Panda3D с упрощенной архитектурой инициализирован")
+    
+    def initialize(self) -> bool:
         """Инициализация игрового движка"""
-try: logger.in fo("Начало инициализации игрового движка Pand a3D...")
-# Инициализация Pand a3D
-if not self._in itialize_pand a3d():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
+        try:
+            logger.info("Начало инициализации игрового движка Panda3D...")
+            
+            # Инициализация Panda3D
+            if not self._initialize_panda3d():
                 return False
-# Инициализация менеджеров новой архитектуры
-if not self._in itialize_new_architecture():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
+            
+            # Инициализация менеджеров новой архитектуры
+            if not self._initialize_new_architecture():
                 return False
-# Создание адаптеров для существующих систем
-if not self._create_legacy_adapters():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
+            
+            # Инициализация существующих систем (для совместимости)
+            if not self._initialize_legacy_systems():
                 return False
-# Привязываем глобальные клавиши управления
-self._bin d_global_in puts()
-            # Настройка задач
-            self._setup_tasks()
-self.current_state= "ready"
-logger.in fo("Игровой движок успешно инициализирован")
+            
+            # Настройка основного цикла
+            if not self._setup_main_loop():
+                return False
+            
+            self.current_state = "ready"
+            logger.info("Игровой движок успешно инициализирован")
             return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Критическая ошибка инициализации: {e}")
-self.current_state= "err or "return False
-def _in itialize_pand a3d(self) -> bool:"""Инициализация базового Pand a3D"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации Pand a3D: {e}")
+            
+        except Exception as e:
+            logger.error(f"Критическая ошибка инициализации игрового движка: {e}")
+            self.current_state = "error"
             return False
-def _in itialize_new_architecture(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
+    
+    def _initialize_panda3d(self) -> bool:
+        """Инициализация базовых компонентов Panda3D"""
+        try:
+            # Настройка окна
+            props = WindowProperties()
+            props.setTitle("AI-EVOLVE: Эволюционная Адаптация")
+            props.setSize(1280, 720)
+            props.setCursorHidden(False)
+            
+            # Применение настроек окна
+            self.win.requestProperties(props)
+            
+            # Настройка камеры
+            self.cam.setPos(0, -20, 0)
+            self.cam.lookAt(0, 0, 0)
+            
+            # Настройка освещения
+            self.setup_lighting()
+            
+            logger.info("Panda3D базовые компоненты инициализированы")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации Panda3D: {e}")
+            return False
+    
+    def _initialize_new_architecture(self) -> bool:
         """Инициализация новой архитектуры"""
         try:
-# Создаем менеджер компонентов
-self.component_manager= ComponentManager()
-# Создаем шину событий
-self.event_bus= EventBus()
-# Создаем менеджер состояний
-self.state_manager= StateManager()
-# Создаем менеджер репозиториев
-self.reposit or y_manager= Reposit or yManager()
-# Регистрируем основные компоненты
-self.component_manager.regis ter_component(self.event_bus)
-self.component_manager.regis ter_component(self.state_manager)
-self.component_manager.regis ter_component(self.reposit or y_manager)
-            # Инициализируем все компоненты
-if not self.component_manager.in itialize_all():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.err or("Ошибка инициализации компонентов")
-                return False
-logger.in fo("Новая архитектура инициализирована")
+            # Создание EventBus
+            self.event_bus = EventBus()
+            logger.info("EventBus создан")
+            
+            # Создание ComponentManager
+            self.component_manager = ComponentManager()
+            logger.info("ComponentManager создан")
+            
+            # Создание StateManager
+            self.state_manager = StateManager()
+            logger.info("StateManager создан")
+            
+            # Создание RepositoryManager
+            self.repository_manager = RepositoryManager()
+            logger.info("RepositoryManager создан")
+            
+            # Регистрация основных менеджеров как компонентов
+            self.component_manager.register_component(self.state_manager)
+            self.component_manager.register_component(self.repository_manager)
+            
+            logger.info("Новая архитектура инициализирована")
             return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации новой архитектуры: {e}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации новой архитектуры: {e}")
             return False
-def _create_legacy_adapters(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Создание адаптеров для существующих систем"""
-try: except Exception as e: logger.err or(f"Ошибка создания адаптеров: {e}")
-                return False
-def _bin d_global_in puts(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Привязка глобальных клавиш управления"""
-try:
-# Переключение сцен
-self.accept("escape", self.toggle_pause)
-self.accept("f1", self.show_debug_in fo)
-self.accept("f2", self.toggle_perfor mance_monit or ):
-pass  # Добавлен pass в пустой блок
-logger.in fo("Глобальные клавиши привязаны")
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка привязки клавиш: {e}")
-def _setup_tasks(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Настройка игровых задач"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка настройки задач: {e}")
-def start(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Запуск игрового движка"""
-try: if self.current_state != "ready":
-logger.err or("Движок не готов к запуску")
-                return False
-logger.in fo("Запуск игрового движка...")
-# Запускаем все компоненты
-if not self.component_manager.start_all():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.err or("Ошибка запуска компонентов")
-            return False
-self.running= True
-self.current_state= "running"
-logger.in fo("Игровой движок запущен")
+    
+    def _initialize_legacy_systems(self) -> bool:
+        """Инициализация существующих систем для совместимости"""
+        try:
+            # Здесь будет инициализация существующих систем
+            # Пока что просто логируем
+            logger.info("Legacy системы подготовлены к инициализации")
             return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка запуска движка: {e}")
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации legacy систем: {e}")
             return False
-def stop(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Остановка игрового движка"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка остановки движка: {e}")
+    
+    def _setup_main_loop(self) -> bool:
+        """Настройка основного игрового цикла"""
+        try:
+            # Добавление задачи обновления
+            self.taskMgr.add(self._update_loop, "GameUpdateLoop")
+            
+            # Добавление задачи рендеринга
+            self.taskMgr.add(self._render_loop, "GameRenderLoop")
+            
+            logger.info("Основной игровой цикл настроен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка настройки основного цикла: {e}")
+            return False
+    
+    def setup_lighting(self):
+        """Настройка освещения сцены"""
+        try:
+            # Основное освещение
+            main_light = self.render.attachNewNode("MainLight")
+            main_light.setPos(10, -10, 10)
+            main_light.lookAt(0, 0, 0)
+            
+            # Ambient освещение
+            ambient_light = self.render.attachNewNode("AmbientLight")
+            ambient_light.setPos(0, 0, 10)
+            
+            logger.debug("Освещение сцены настроено")
+            
+        except Exception as e:
+            logger.warning(f"Ошибка настройки освещения: {e}")
+    
+    def start(self) -> bool:
+        """Запуск игрового движка"""
+        try:
+            if self.current_state != "ready":
+                logger.error(f"Нельзя запустить движок в состоянии {self.current_state}")
                 return False
-def toggle_pause(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Переключение паузы"""if self.running: if self.paused: self.resume()
-else: self.pause()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def pause(self):"""Приостановка игры"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.runningand not self.paused: self.paused= True
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.current_state= "paused"
-logger.in fo("Игра приостановлена")
-def resume(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Возобновление игры"""
-if self.runningand self.paused: self.paused= False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.current_state= "running"
-logger.in fo("Игра возобновлена")
-def show_debug_in fo(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Показать отладочную информацию"""
-if self.component_manager: metrics= self._get_system_metrics()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo(f"Системные метрики: {metrics}")
-def toggle_perfor mance_monit or(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Переключение монитора производительности"""# Реализация монитора производительности
-pass
-def _game_loop(self, task):"""Основной игровой цикл"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка в игровом цикле: {e}")
-return Task.cont
-def _update_components(self, task):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление компонентов"""
-try: if not self.running or self.paused: return Task.cont
-# Обновляем компоненты с ограничением по времени
-start_time= time.time()
-max_update_time= 0.016  # 16ms max
-# Здесь будет обновление компонентов по приоритету
-return Task.cont
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления компонентов: {e}")
-return Task.cont
-def _update_fps(self, task):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление FPS"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления FPS: {e}")
-return Task.cont
-def _get_system_metrics(self) -> Dict[str, Any]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение системных метрик"""metrics= {
-'game_state': self.current_state,
-'running': self.running,
-'paused': self.paused,
-            'fps': self.fps,
-            'frame_count': self.frame_count,
-'delta_time': self.delta_time
-}
-# Метрики компонентов
-if self.component_manager: component_metrics= {}
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-for component_typein ComponentType: components= self.component_manager.get_components_by_type(component_type)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-component_metrics[component_type.value]= len(components)
-metrics['components']= component_metrics
-return metrics
-def get_component(self, component_type: ComponentType
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-component_id: str= None):
-pass  # Добавлен pass в пустой блок"""Получение компонента по типу и ID"""if not self.component_manager: return None
-if component_id: return self.component_manager.get_component(component_id)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-else: components= self.component_manager.get_components_by_type(component_type)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return components[0] if components else None: pass  # Добавлен pass в пустой блок
-def publis h_event(self, event_type: str, data: Any= None):"""Публикация события"""if self.event_bus: return self.event_bus.publis h(event_type, data)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return False
-def subscribe_to_event(self, event_type: str, callback):"""Подписка на событие"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.event_bus: return self.event_bus.subscribe(event_type, callback)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return False
+            
+            logger.info("Запуск игрового движка...")
+            
+            # Запуск всех компонентов
+            if not self.component_manager.start_all():
+                logger.error("Ошибка запуска компонентов")
+                return False
+            
+            self.running = True
+            self.current_state = "running"
+            self.start_time = time.time()
+            
+            logger.info("Игровой движок запущен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска игрового движка: {e}")
+            self.current_state = "error"
+            return False
+    
+    def stop(self) -> bool:
+        """Остановка игрового движка"""
+        try:
+            if not self.running:
+                logger.warning("Попытка остановки уже остановленного движка")
+                return True
+            
+            logger.info("Остановка игрового движка...")
+            
+            # Остановка всех компонентов
+            if not self.component_manager.stop_all():
+                logger.error("Ошибка остановки компонентов")
+                return False
+            
+            self.running = False
+            self.current_state = "stopped"
+            
+            logger.info("Игровой движок остановлен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки игрового движка: {e}")
+            return False
+    
+    def pause(self) -> bool:
+        """Приостановка игрового движка"""
+        try:
+            if not self.running:
+                logger.warning("Нельзя приостановить неработающий движок")
+                return False
+            
+            if self.paused:
+                logger.warning("Движок уже приостановлен")
+                return True
+            
+            logger.info("Приостановка игрового движка...")
+            
+            # Приостановка всех компонентов
+            for component in self.component_manager._components.values():
+                if component.state.value == "running":
+                    component.pause()
+            
+            self.paused = True
+            self.current_state = "paused"
+            
+            logger.info("Игровой движок приостановлен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка приостановки игрового движка: {e}")
+            return False
+    
+    def resume(self) -> bool:
+        """Возобновление игрового движка"""
+        try:
+            if not self.paused:
+                logger.warning("Нельзя возобновить неприостановленный движок")
+                return False
+            
+            logger.info("Возобновление игрового движка...")
+            
+            # Возобновление всех компонентов
+            for component in self.component_manager._components.values():
+                if component.state.value == "paused":
+                    component.resume()
+            
+            self.paused = False
+            self.current_state = "running"
+            
+            logger.info("Игровой движок возобновлен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка возобновления игрового движка: {e}")
+            return False
+    
+    def _update_loop(self, task: Task) -> int:
+        """Основной цикл обновления игры"""
+        try:
+            if not self.running:
+                return Task.cont
+            
+            # Вычисление delta time
+            current_time = time.time()
+            self.delta_time = current_time - self.last_frame_time
+            self.last_frame_time = current_time
+            
+            # Обновление всех компонентов
+            if self.component_manager:
+                self.component_manager.update_all(self.delta_time)
+            
+            # Обновление статистики
+            self.frame_count += 1
+            if self.frame_count % 60 == 0:
+                self.fps = 60.0 / self.delta_time if self.delta_time > 0 else 0
+            
+            return Task.cont
+            
+        except Exception as e:
+            logger.error(f"Ошибка в цикле обновления: {e}")
+            return Task.cont
+    
+    def _render_loop(self, task: Task) -> int:
+        """Цикл рендеринга"""
+        try:
+            if not self.running:
+                return Task.cont
+            
+            # Panda3D автоматически рендерит сцену
+            # Здесь можно добавить дополнительную логику рендеринга
+            
+            return Task.cont
+            
+        except Exception as e:
+            logger.error(f"Ошибка в цикле рендеринга: {e}")
+            return Task.cont
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Получение статистики игрового движка"""
+        try:
+            stats = {
+                "current_state": self.current_state,
+                "running": self.running,
+                "paused": self.paused,
+                "fps": self.fps,
+                "frame_count": self.frame_count,
+                "delta_time": self.delta_time,
+                "uptime": time.time() - self.start_time if self.start_time > 0 else 0
+            }
+            
+            # Добавление статистики компонентов
+            if self.component_manager:
+                stats["components"] = self.component_manager.get_stats()
+            
+            # Добавление статистики событий
+            if self.event_bus:
+                stats["events"] = self.event_bus.get_stats()
+            
+            return stats
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения статистики: {e}")
+            return {"error": str(e)}
+    
+    def cleanup(self):
+        """Очистка ресурсов"""
+        try:
+            logger.info("Начало очистки ресурсов игрового движка...")
+            
+            # Остановка движка
+            if self.running:
+                self.stop()
+            
+            # Уничтожение всех компонентов
+            if self.component_manager:
+                self.component_manager.destroy_all()
+            
+            # Очистка Panda3D
+            self.cleanup()
+            
+            logger.info("Ресурсы игрового движка очищены")
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки ресурсов: {e}")
+    
+    def __del__(self):
+        """Деструктор"""
+        try:
+            self.cleanup()
+        except:
+            pass
