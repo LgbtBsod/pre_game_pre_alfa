@@ -7,6 +7,253 @@ from collections import defaultdict
 from typing import List, Tuple
 import shutil
 import tempfile
+import hashlib
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+
+class SmartBackupManager:
+    """Умный менеджер резервных копий и файлов целостности."""
+    
+    def __init__(self, project_root="."):
+        self.project_root = Path(project_root)
+        self.backup_dir = self.project_root / ".backups"
+        self.integrity_dir = self.project_root / ".integrity"
+        self.config_file = self.project_root / ".backup_config.json"
+        self.max_backups_per_file = 3
+        self.max_backup_age_days = 7
+        self.setup_directories()
+        self.load_config()
+    
+    def setup_directories(self):
+        """Создает необходимые директории."""
+        self.backup_dir.mkdir(exist_ok=True)
+        self.integrity_dir.mkdir(exist_ok=True)
+        
+        # Создаем .gitignore для этих директорий
+        gitignore_file = self.project_root / ".gitignore"
+        gitignore_content = """
+# Автоматически созданные файлы
+.backups/
+.integrity/
+*.backup_*
+*.integrity
+*.bak
+"""
+        
+        if not gitignore_file.exists():
+            gitignore_file.write_text(gitignore_content.strip())
+        else:
+            # Проверяем, есть ли уже наши записи
+            content = gitignore_file.read_text()
+            if ".backups/" not in content:
+                gitignore_file.write_text(content + gitignore_content)
+    
+    def load_config(self):
+        """Загружает конфигурацию бэкапов."""
+        if self.config_file.exists():
+            try:
+                with open(self.config_file, 'r') as f:
+                    config = json.load(f)
+                    self.max_backups_per_file = config.get('max_backups_per_file', 3)
+                    self.max_backup_age_days = config.get('max_backup_age_days', 7)
+            except:
+                pass
+    
+    def save_config(self):
+        """Сохраняет конфигурацию бэкапов."""
+        config = {
+            'max_backups_per_file': self.max_backups_per_file,
+            'max_backup_age_days': self.max_backup_age_days,
+            'last_updated': datetime.now().isoformat()
+        }
+        with open(self.config_file, 'w') as f:
+            json.dump(config, f, indent=2)
+    
+    def create_smart_backup(self, filepath, content):
+        """Создает умную резервную копию с автоматической очисткой."""
+        filepath = Path(filepath)
+        relative_path = filepath.relative_to(self.project_root)
+        
+        # Создаем безопасное имя файла
+        safe_name = str(relative_path).replace('/', '_').replace('\\', '_')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_name = f"{safe_name}.backup_{timestamp}"
+        backup_path = self.backup_dir / backup_name
+        
+        # Создаем бэкап
+        try:
+            with open(backup_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            # Очищаем старые бэкапы для этого файла
+            self.cleanup_old_backups_for_file(safe_name)
+            
+            return str(backup_path)
+        except Exception as e:
+            print(f"    ❌ Ошибка создания бэкапа: {e}")
+            return None
+    
+    def cleanup_old_backups_for_file(self, file_prefix):
+        """Очищает старые бэкапы для конкретного файла."""
+        backups = []
+        for backup_file in self.backup_dir.glob(f"{file_prefix}.backup_*"):
+            try:
+                mtime = datetime.fromtimestamp(backup_file.stat().st_mtime)
+                backups.append((backup_file, mtime))
+            except:
+                continue
+        
+        # Сортируем по времени создания (новые в конце)
+        backups.sort(key=lambda x: x[1])
+        
+        # Удаляем лишние, оставляя только последние max_backups_per_file
+        if len(backups) > self.max_backups_per_file:
+            for backup_file, _ in backups[:-self.max_backups_per_file]:
+                try:
+                    backup_file.unlink()
+                except:
+                    pass
+    
+    def create_integrity_file(self, filepath, content):
+        """Создает оптимизированный файл целостности."""
+        filepath = Path(filepath)
+        relative_path = filepath.relative_to(self.project_root)
+        
+        # Создаем безопасное имя
+        safe_name = str(relative_path).replace('/', '_').replace('\\', '_')
+        integrity_name = f"{safe_name}.integrity"
+        integrity_path = self.integrity_dir / integrity_name
+        
+        # Создаем хеш и метаданные
+        content_hash = hashlib.md5(content.encode('utf-8')).hexdigest()
+        metadata = {
+            'file_path': str(relative_path),
+            'md5_hash': content_hash,
+            'size_bytes': len(content.encode('utf-8')),
+            'last_modified': datetime.now().isoformat(),
+            'backup_count': len(list(self.backup_dir.glob(f"{safe_name}.backup_*")))
+        }
+        
+        try:
+            with open(integrity_path, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=2)
+            return str(integrity_path)
+        except Exception as e:
+            print(f"    ⚠️ Не удалось создать файл целостности: {e}")
+            return None
+    
+    def cleanup_old_files(self):
+        """Очищает старые файлы бэкапов и целостности."""
+        cutoff_date = datetime.now() - timedelta(days=self.max_backup_age_days)
+        
+        # Очищаем старые бэкапы
+        old_backups = []
+        for backup_file in self.backup_dir.glob("*.backup_*"):
+            try:
+                mtime = datetime.fromtimestamp(backup_file.stat().st_mtime)
+                if mtime < cutoff_date:
+                    old_backups.append(backup_file)
+            except:
+                continue
+        
+        if old_backups:
+            print(f"  🧹 Найдено старых бэкапов: {len(old_backups)}")
+            for backup_file in old_backups:
+                try:
+                    backup_file.unlink()
+                except:
+                    pass
+        
+        # Очищаем старые файлы целостности
+        old_integrity = []
+        for integrity_file in self.integrity_dir.glob("*.integrity"):
+            try:
+                mtime = datetime.fromtimestamp(integrity_file.stat().st_mtime)
+                if mtime < cutoff_date:
+                    old_integrity.append(integrity_file)
+            except:
+                continue
+        
+        if old_integrity:
+            print(f"  🧹 Найдено старых файлов целостности: {len(old_integrity)}")
+            for integrity_file in old_integrity:
+                try:
+                    integrity_file.unlink()
+                except:
+                    pass
+    
+    def get_backup_status(self):
+        """Показывает статус бэкапов."""
+        backup_count = len(list(self.backup_dir.glob("*.backup_*")))
+        integrity_count = len(list(self.integrity_dir.glob("*.integrity")))
+        
+        print(f"📊 Статус резервных копий:")
+        print(f"  📁 Бэкапы: {backup_count}")
+        print(f"  📋 Файлы целостности: {integrity_count}")
+        
+        if backup_count > 0:
+            print(f"  💡 Для очистки: backup_manager.cleanup_old_files()")
+        
+        return backup_count, integrity_count
+    
+    def force_cleanup_all(self):
+        """Принудительно удаляет все бэкапы и файлы целостности."""
+        print("🧹 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ ФАЙЛОВ...")
+        
+        backup_count = len(list(self.backup_dir.glob("*.backup_*")))
+        integrity_count = len(list(self.integrity_dir.glob("*.integrity")))
+        
+        if backup_count == 0 and integrity_count == 0:
+            print("  ✅ Файлы для очистки не найдены")
+            return
+        
+        print(f"  📁 Бэкапов для удаления: {backup_count}")
+        print(f"  📋 Файлов целостности для удаления: {integrity_count}")
+        
+        response = input("  ❓ Продолжить удаление? (yes/NO): ").strip().lower()
+        if response != 'yes':
+            print("  ❌ Операция отменена")
+            return
+        
+        # Удаляем все файлы
+        deleted_backups = 0
+        deleted_integrity = 0
+        
+        for backup_file in self.backup_dir.glob("*.backup_*"):
+            try:
+                backup_file.unlink()
+                deleted_backups += 1
+            except:
+                pass
+        
+        for integrity_file in self.integrity_dir.glob("*.integrity"):
+            try:
+                integrity_file.unlink()
+                deleted_integrity += 1
+            except:
+                pass
+        
+        print(f"  ✅ Удалено бэкапов: {deleted_backups}")
+        print(f"  ✅ Удалено файлов целостности: {deleted_integrity}")
+        
+        # Удаляем пустые директории
+        try:
+            if not any(self.backup_dir.iterdir()):
+                self.backup_dir.rmdir()
+                print("  ✅ Удалена пустая директория .backups")
+        except:
+            pass
+        
+        try:
+            if not any(self.integrity_dir.iterdir()):
+                self.integrity_dir.rmdir()
+                print("  ✅ Удалена пустая директория .integrity")
+        except:
+            pass
+
+# Глобальный экземпляр менеджера
+backup_manager = SmartBackupManager()
 
 def fix_corrupted_files(content):
     """Исправляет сильно поврежденные файлы с критическими ошибками."""
@@ -199,23 +446,10 @@ def fix_broken_brackets(content):
 
 def create_backup_with_timestamp(filepath):
     """Создает резервную копию файла с временной меткой."""
-    from datetime import datetime
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Используем директорию .backups для резервных копий
-    backup_dir = ".backups"
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-    
-    # Создаем имя файла с относительным путем
-    relative_path = os.path.relpath(filepath, '.')
-    safe_filename = relative_path.replace('/', '_').replace('\\', '_')
-    backup_filename = f"{safe_filename}.backup_{timestamp}"
-    backup_path = os.path.join(backup_dir, backup_filename)
-    
     try:
-        shutil.copy2(filepath, backup_path)
-        return backup_path
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        return backup_manager.create_smart_backup(filepath, content)
     except Exception as e:
         print(f"    ❌ Ошибка создания резервной копии: {e}")
         return None
@@ -338,25 +572,6 @@ def cleanup_backup_files():
     """Удаляет резервные копии после успешной проверки проекта."""
     print("🧹 Очистка резервных копий...")
     
-    backup_files = []
-    integrity_files = []
-    
-    # Ищем все файлы бэкапа и проверки целостности
-    for root, _, files in os.walk('.'):
-        for file in files:
-            filepath = os.path.join(root, file)
-            if file.endswith('.backup_'):
-                backup_files.append(filepath)
-            elif file.endswith('.integrity'):
-                integrity_files.append(filepath)
-    
-    print(f"  📁 Найдено резервных копий: {len(backup_files)}")
-    print(f"  📋 Найдено файлов проверки целостности: {len(integrity_files)}")
-    
-    if not backup_files:
-        print("  ✅ Резервные копии не найдены")
-        return
-    
     # Проверяем целостность всех Python файлов
     python_files = []
     for root, _, files in os.walk('.'):
@@ -372,7 +587,6 @@ def cleanup_backup_files():
     
     for filepath in python_files:
         try:
-            # Проверяем синтаксис
             with open(filepath, 'r', encoding='utf-8') as f:
                 content = f.read()
             
@@ -386,33 +600,12 @@ def cleanup_backup_files():
     print(f"  ✅ Здоровых файлов: {healthy_files}")
     print(f"  ❌ Проблемных файлов: {len(problematic_files)}")
     
-    # Если все файлы здоровы, удаляем резервные копии
+    # Если все файлы здоровы, очищаем старые файлы
     if len(problematic_files) == 0:
-        print("  🎉 Проект полностью здоров! Удаляю резервные копии...")
-        
-        deleted_backups = 0
-        for backup_file in backup_files:
-            try:
-                os.remove(backup_file)
-                deleted_backups += 1
-            except Exception as e:
-                print(f"    ⚠️ Не удалось удалить {backup_file}: {e}")
-        
-        print(f"  ✅ Удалено резервных копий: {deleted_backups}")
-        
-        # Также удаляем файлы проверки целостности
-        deleted_integrity = 0
-        for integrity_file in integrity_files:
-            try:
-                os.remove(integrity_file)
-                deleted_integrity += 1
-            except Exception as e:
-                print(f"    ⚠️ Не удалось удалить {integrity_file}: {e}")
-        
-        print(f"  ✅ Удалено файлов проверки целостности: {deleted_integrity}")
-        
+        print("  🎉 Проект полностью здоров! Очищаю старые файлы...")
+        backup_manager.cleanup_old_files()
     else:
-        print("  ⚠️ Проект имеет проблемы, резервные копии сохранены")
+        print("  ⚠️ Проект имеет проблемы, файлы сохранены")
         print("  📋 Список проблемных файлов:")
         for filepath, error in problematic_files[:5]:  # Показываем первые 5
             print(f"    - {filepath}: {error}")
@@ -423,19 +616,17 @@ def smart_backup_management():
     """Умное управление резервными копиями с автоматической очисткой."""
     print("🧠 Умное управление резервными копиями...")
     
-    # Создаем директорию для резервных копий если её нет
-    backup_dir = ".backups"
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir)
-        print(f"  📁 Создана директория для резервных копий: {backup_dir}")
-    
     # Перемещаем существующие резервные копии в специальную директорию
     moved_backups = 0
     for root, _, files in os.walk('.'):
         for file in files:
-            if file.endswith('.backup_') and root != backup_dir:
+            if (file.endswith('.backup_') or file.endswith('.bak') or 
+                file.endswith('.integrity')) and root not in ['.backups', '.integrity']:
                 old_path = os.path.join(root, file)
-                new_path = os.path.join(backup_dir, file)
+                if file.endswith('.integrity'):
+                    new_path = backup_manager.integrity_dir / file
+                else:
+                    new_path = backup_manager.backup_dir / file
                 try:
                     shutil.move(old_path, new_path)
                     moved_backups += 1
@@ -443,9 +634,12 @@ def smart_backup_management():
                     print(f"    ⚠️ Не удалось переместить {old_path}: {e}")
     
     if moved_backups > 0:
-        print(f"  📦 Перемещено резервных копий в {backup_dir}: {moved_backups}")
+        print(f"  📦 Перемещено файлов в централизованные директории: {moved_backups}")
     
-    return backup_dir
+    # Очищаем старые файлы
+    backup_manager.cleanup_old_files()
+    
+    return str(backup_manager.backup_dir)
 
 def fix_indentation(content):
     """Заменяет табы на 4 пробела и нормализует отступы."""
@@ -831,7 +1025,7 @@ def main():
     print(f"Начинаю обработку Python-файлов в директории: {current_dir}")
     
     # Настраиваем умное управление резервными копиями
-    backup_dir = smart_backup_management()
+    smart_backup_management()
     
     python_files = []
     for root, _, files in os.walk(current_dir):
@@ -895,160 +1089,48 @@ def setup_file_monitoring():
 def manual_cleanup():
     """Функция для ручной очистки резервных копий."""
     print("🧹 Ручная очистка резервных копий...")
-    cleanup_backup_files()
+    backup_manager.cleanup_old_files()
 
 def show_backup_status():
     """Показывает статус резервных копий."""
-    print("📊 Статус резервных копий...")
-    
-    backup_dir = ".backups"
-    if not os.path.exists(backup_dir):
-        print("  📁 Директория резервных копий не найдена")
-        return
-    
-    backup_files = []
-    for file in os.listdir(backup_dir):
-        if file.endswith('.backup_'):
-            backup_files.append(file)
-    
-    if not backup_files:
-        print("  ✅ Резервные копии не найдены")
-        return
-    
-    print(f"  📁 Найдено резервных копий: {len(backup_files)}")
-    print("  📋 Список резервных копий:")
-    
-    # Группируем по исходным файлам
-    file_groups = {}
-    for backup_file in backup_files:
-        # Извлекаем имя исходного файла
-        parts = backup_file.split('.backup_')
-        if len(parts) >= 2:
-            original_file = parts[0].replace('_', '/').replace('_', '\\')
-            timestamp = parts[1]
-            if original_file not in file_groups:
-                file_groups[original_file] = []
-            file_groups[original_file].append(timestamp)
-    
-    for original_file, timestamps in file_groups.items():
-        print(f"    📄 {original_file}: {len(timestamps)} версий")
-        for timestamp in sorted(timestamps)[-3:]:  # Показываем последние 3
-            print(f"      - {timestamp}")
-        if len(timestamps) > 3:
-            print(f"      ... и еще {len(timestamps) - 3} версий")
-    
-    print(f"\n  💡 Для очистки используйте: cleanup_backup_files()")
+    backup_manager.get_backup_status()
 
 def force_cleanup_all_backups():
     """Принудительно удаляет ВСЕ резервные копии в проекте."""
-    print("🧹 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ РЕЗЕРВНЫХ КОПИЙ...")
-    print("⚠️  ВНИМАНИЕ: Эта операция удалит ВСЕ резервные копии!")
-    
-    # Ищем все файлы бэкапа в проекте
-    all_backup_files = []
-    all_integrity_files = []
-    
-    for root, _, files in os.walk('.'):
-        for file in files:
-            filepath = os.path.join(root, file)
-            if file.endswith('.backup_') or file.endswith('.bak'):
-                all_backup_files.append(filepath)
-            elif file.endswith('.integrity'):
-                all_integrity_files.append(filepath)
-    
-    print(f"  📁 Найдено резервных копий: {len(all_backup_files)}")
-    print(f"  📋 Найдено файлов проверки целостности: {len(all_integrity_files)}")
-    
-    if not all_backup_files and not all_integrity_files:
-        print("  ✅ Резервные копии не найдены")
-        return
-    
-    # Показываем что будет удалено
-    print("\n  📋 Файлы для удаления:")
-    for backup_file in all_backup_files[:10]:  # Показываем первые 10
-        print(f"    - {backup_file}")
-    if len(all_backup_files) > 10:
-        print(f"    ... и еще {len(all_backup_files) - 10} файлов")
-    
-    # Запрашиваем подтверждение
-    response = input("\n  ❓ Продолжить удаление ВСЕХ резервных копий? (yes/NO): ").strip().lower()
-    if response != 'yes':
-        print("  ❌ Операция отменена пользователем")
-        return
-    
-    # Удаляем все резервные копии
-    deleted_backups = 0
-    deleted_integrity = 0
-    
-    print("\n  🗑️ Удаляю резервные копии...")
-    for backup_file in all_backup_files:
-        try:
-            os.remove(backup_file)
-            deleted_backups += 1
-            print(f"    ✅ Удален: {backup_file}")
-        except Exception as e:
-            print(f"    ❌ Ошибка удаления {backup_file}: {e}")
-    
-    print("\n  🗑️ Удаляю файлы проверки целостности...")
-    for integrity_file in all_integrity_files:
-        try:
-            os.remove(integrity_file)
-            deleted_integrity += 1
-            print(f"    ✅ Удален: {integrity_file}")
-        except Exception as e:
-            print(f"    ❌ Ошибка удаления {integrity_file}: {e}")
-    
-    # Удаляем пустые директории .backups
-    backup_dirs = ['.backups']
-    for backup_dir in backup_dirs:
-        if os.path.exists(backup_dir):
-            try:
-                os.rmdir(backup_dir)
-                print(f"    ✅ Удалена пустая директория: {backup_dir}")
-            except Exception:
-                pass  # Директория не пустая
-    
-    print(f"\n  🎉 Очистка завершена!")
-    print(f"  ✅ Удалено резервных копий: {deleted_backups}")
-    print(f"  ✅ Удалено файлов проверки целостности: {deleted_integrity}")
-    print(f"  💡 Теперь проект чист от старых резервных копий!")
+    backup_manager.force_cleanup_all()
 
 def cleanup_old_backups_by_age(days_old=7):
     """Удаляет резервные копии старше указанного количества дней."""
     print(f"🧹 Очистка резервных копий старше {days_old} дней...")
     
-    from datetime import datetime, timedelta
     cutoff_date = datetime.now() - timedelta(days=days_old)
     
-    all_backup_files = []
-    for root, _, files in os.walk('.'):
-        for file in files:
-            if file.endswith('.backup_') or file.endswith('.bak'):
-                filepath = os.path.join(root, file)
-                try:
-                    file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
-                    if file_time < cutoff_date:
-                        all_backup_files.append((filepath, file_time))
-                except Exception:
-                    pass
+    old_backups = []
+    for backup_file in backup_manager.backup_dir.glob("*.backup_*"):
+        try:
+            mtime = datetime.fromtimestamp(backup_file.stat().st_mtime)
+            if mtime < cutoff_date:
+                old_backups.append((backup_file, mtime))
+        except:
+            pass
     
-    if not all_backup_files:
+    if not old_backups:
         print("  ✅ Старые резервные копии не найдены")
         return
     
-    print(f"  📁 Найдено старых резервных копий: {len(all_backup_files)}")
+    print(f"  📁 Найдено старых резервных копий: {len(old_backups)}")
     
     # Сортируем по дате
-    all_backup_files.sort(key=lambda x: x[1])
+    old_backups.sort(key=lambda x: x[1])
     
     # Показываем что будет удалено
     print("  📋 Старые файлы для удаления:")
-    for backup_file, file_time in all_backup_files[:10]:
+    for backup_file, file_time in old_backups[:10]:
         age_days = (datetime.now() - file_time).days
-        print(f"    - {backup_file} (возраст: {age_days} дней)")
+        print(f"    - {backup_file.name} (возраст: {age_days} дней)")
     
-    if len(all_backup_files) > 10:
-        print(f"    ... и еще {len(all_backup_files) - 10} файлов")
+    if len(old_backups) > 10:
+        print(f"    ... и еще {len(old_backups) - 10} файлов")
     
     # Запрашиваем подтверждение
     response = input(f"\n  ❓ Удалить резервные копии старше {days_old} дней? (y/N): ").strip().lower()
@@ -1058,14 +1140,14 @@ def cleanup_old_backups_by_age(days_old=7):
     
     # Удаляем старые резервные копии
     deleted_count = 0
-    for backup_file, file_time in all_backup_files:
+    for backup_file, file_time in old_backups:
         try:
-            os.remove(backup_file)
+            backup_file.unlink()
             deleted_count += 1
             age_days = (datetime.now() - file_time).days
-            print(f"    ✅ Удален: {backup_file} (возраст: {age_days} дней)")
+            print(f"    ✅ Удален: {backup_file.name} (возраст: {age_days} дней)")
         except Exception as e:
-            print(f"    ❌ Ошибка удаления {backup_file}: {e}")
+            print(f"    ❌ Ошибка удаления {backup_file.name}: {e}")
     
     print(f"\n  🎉 Очистка завершена!")
     print(f"  ✅ Удалено старых резервных копий: {deleted_count}")
