@@ -1,5 +1,3 @@
-import os
-
 from dataclasses import dataclass, field
 
 from enum import Enum
@@ -16,6 +14,8 @@ from typing import *
 
 import logging
 
+import os
+
 import sys
 
 import time
@@ -26,8 +26,12 @@ import unittest
 class TestPerfBaselin e(unittest.TestCase):
     pass
 pass
+pass
+pass
 def test_update_tick_budget(self):
     pass
+pass
+pass
 pass
 # Measure update across managers without real Pand a3D loop: pass  # Добавлен pass в пустой блок
 cm= ComponentManager()
@@ -46,11 +50,15 @@ start= time.time()
 for _in range(50):
     pass
 pass
+pass
+pass
 cm.update_all(1.0 / 60.0)
 elapsed_ms= (time.time() - start) * 1000.0
 # Generous baselin e: 50 updates should fit under 500ms on dev machin es
 self.assertLess(elapsed_ms, 500.0)
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 unittest.ma in()

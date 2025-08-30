@@ -37,6 +37,8 @@ class EffectType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы эффектов"""
 BUFF= "buff"                 # Усиливающий эффект
 DEBUFF= "debuff"             # Ослабляющий эффект
@@ -50,6 +52,8 @@ class ConflictResolution(Enum):
     pass
 pass
 pass
+pass
+pass
 """Способы разрешения конфликтов эффектов"""
 IGNORE= "ign or e"             # Игнорировать новый эффект
 REPLACE= "replace"           # Заменить старый эффект
@@ -58,6 +62,8 @@ MERGE= "merge"               # Объединить эффекты
 @dataclass: pass  # Добавлен pass в пустой блок
 class EffectVis uals: pass
     pass
+pass
+pass
 pass
 """Визуальные эффекты"""particle_effect: Optional[str]= None
 sound_effect: Optional[str]= None
@@ -70,6 +76,8 @@ class EffectBalance:"""Баланс эффекта"""base_power: float= 1.0
     pass
 pass
 pass
+pass
+pass
 scaling_fact or : float= 1.0
 pvp_modifier: float= 1.0
 pve_modifier: float= 1.0
@@ -79,6 +87,8 @@ max_stacks: int= 1
 # = class Effect:"""Базовый класс для всех эффектов"""
 def __in it__(:
     pass
+pass
+pass
 pass
 pass
 self,
@@ -123,12 +133,16 @@ def apply(self, target: Any, source: Any, context: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Применение эффекта к цели"""
 try: if contextis None: context= {}
 # Проверка возможности применения
 if not self.can_apply(source, target):
     pass
+pass
+pass
 pass
 pass
 return False
@@ -139,6 +153,8 @@ self.application_context= context
 # Применяем эффект
 if self._apply_effect(target, source, context):
     pass
+pass
+pass
 pass
 pass
 self._on_effect_applied(target, source, context)
@@ -152,6 +168,8 @@ return False
 def remove(self, target: Any) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление эффекта с цели"""
 try: except Exception as e: pass
 pass
@@ -161,11 +179,15 @@ return False
 def update(self, target: Any, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление эффекта"""
 try: if not self.is _active: return True
 # Проверяем истечение времени
 if self.duration > 0and time.time() > self.expiry_time: return self.remove(target)
     pass
+pass
+pass
 pass
 pass
 # Обновляем эффект
@@ -179,6 +201,8 @@ def can_apply(self, source: Any, target: Any, context: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Проверка возможности применения эффекта"""
 try: except Exception as e: pass
@@ -189,10 +213,14 @@ return False
 def conflicts_with(self, other: 'Effect') -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка конфликта с другим эффектом"""return any(tagin other.tags for tagin self.cancellation_tags):
 pass  # Добавлен pass в пустой блок
 def get_modified_value(self, context: Dict[str, Any]) -> Union[in t, float
     pass
+pass
+pass
 pass
 pass
 Dict[str, Any]]:
@@ -204,6 +232,8 @@ logger.err or(f"Ошибка расчета модифицированного �
 return self.value
 def _apply_effect(self, target: Any, source: Any, context: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
@@ -224,12 +254,18 @@ if isin stance(modified_value, dict):
     pass
 pass
 pass
+pass
+pass
 for stat, modifierin modified_value.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(target, stat):
     pass
+pass
+pass
 pass
 pass
 current= getattr(target, stat, 0)
@@ -238,9 +274,13 @@ pass  # Добавлен pass в пустой блок
 else: pass
     pass
 pass
+pass
+pass
 # Прямое применение
 if hasattr(target, 'apply_direct_effect'):
     pass
+pass
+pass
 pass
 pass
 target.apply_direct_effect(modified_value):
@@ -248,9 +288,13 @@ pass  # Добавлен pass в пустой блок
 else: pass
     pass
 pass
+pass
+pass
 # Fallback: пытаемся применить к здоровью
 if hasattr(target, 'health'):
     pass
+pass
+pass
 pass
 pass
 target.health= max(0, target.health + modified_value):
@@ -259,6 +303,8 @@ pass  # Добавлен pass в пустой блок
 self.applied_time= time.time()
 if self.duration > 0: self.expiry_time= self.applied_time + self.duration
     pass
+pass
+pass
 pass
 pass
 # Активируем эффект
@@ -272,6 +318,8 @@ return False
 def _remove_effect(self, target: Any) -> bool: pass
     pass
 pass
+pass
+pass
 """Внутреннее удаление эффекта"""
 try: except Exception as e: pass
 pass
@@ -281,11 +329,15 @@ return False
 def _update_effect(self, target: Any, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Внутреннее обновление эффекта"""# Базовая реализация - ничего не делает
 # Переопределяется в наследниках для специфичной логики
 return True
 def _on_effect_applied(self, target: Any, source: Any, context: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]):
@@ -296,6 +348,8 @@ pass
 logger.err or(f"Ошибка в обработчике применения эффекта {self.name}: {e}")
 def _on_effect_removed(self, target: Any):
     pass
+pass
+pass
 pass
 pass
 """Обработчик удаления эффекта"""
@@ -310,6 +364,8 @@ def _play_vis uals(self, target: Any):
     pass
 pass
 pass
+pass
+pass
 """Воспроизведение визуальных эффектов"""
 try: except Exception as e: pass
 pass
@@ -320,6 +376,8 @@ logger.err or(f"Ошибка воспроизведения визуальных
 """Специальный эффект с дополнительной логикой"""
 def __in it__(:
     pass
+pass
+pass
 pass
 pass
 self,
@@ -358,6 +416,8 @@ def can_trigger(self, source: Any, target: Any, trigger_type: str
     pass
 pass
 pass
+pass
+pass
 context: Dict[str, Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Проверяет, может ли эффект сработать в текущих условиях"""
 try: except Exception as e: pass
@@ -369,6 +429,8 @@ def trigger(self, source: Any, target: Any, context: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Активирует специальный эффект"""
 try: if contextis None: context= {}
@@ -377,15 +439,21 @@ if self.delay > 0: self._schedule_delayed_effect(source, target, context)
     pass
 pass
 pass
+pass
+pass
 return True
 # Применяем основной эффект
 if self.effect.apply(target, source, context):
     pass
 pass
 pass
+pass
+pass
 # Применяем комбинационные эффекты
 for combo_effectin self.combin ation_effects: if combo_effect.can_trigger(source, target
     pass
+pass
+pass
 pass
 pass
 self.trigger_condition, context):
@@ -396,12 +464,16 @@ if self.chain _effects: self._schedule_chain _effects(source, target, context)
     pass
 pass
 pass
+pass
+pass
 # Обновляем данные о срабатывании
 self.last_proc_time= time.time()
 self.proc_count = 1
 # Записываем статистику
 if self.track_statsand hasattr(source, 'effect_statis tics'):
     pass
+pass
+pass
 pass
 pass
 source.effect_statis tics.rec or d_trigger(self.effect.name)
@@ -416,6 +488,8 @@ def _schedule_delayed_effect(self, source: Any, target: Any
     pass
 pass
 pass
+pass
+pass
 context: Dict[str, Any]):
 pass  # Добавлен pass в пустой блок
 """Планирует отложенный эффект"""
@@ -425,6 +499,8 @@ pass
 logger.err or(f"Ошибка планирования отложенного эффекта: {e}")
 def _schedule_chain _effects(self, source: Any, target: Any
     pass
+pass
+pass
 pass
 pass
 context: Dict[str, Any]):
@@ -445,6 +521,8 @@ def __in it__(self):
     pass
 pass
 pass
+pass
+pass
 super().__in it__("effect_system", ComponentType.SYSTEM, Pri or ity.NORMAL)
 # Реестр эффектов
 self.effects_regis try: Dict[str, Effect]= {}
@@ -459,6 +537,8 @@ self.last_cleanup= time.time()
 logger.in fo("Effect System инициализирован")
 def _on_in itialize(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация системы"""
 try:
@@ -476,6 +556,8 @@ return False
 def _on_start(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Запуск системы"""
 try: except Exception as e: pass
 pass
@@ -484,6 +566,8 @@ logger.err or(f"Ошибка запуска Effect System: {e}")
 return False
 def _on_stop(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Остановка системы"""
 try: logger.in fo("Effect System остановлен")
@@ -496,6 +580,8 @@ return False
 def _on_destroy(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение системы"""
 try: except Exception as e: pass
 pass
@@ -504,6 +590,8 @@ logger.err or(f"Ошибка уничтожения Effect System: {e}")
 return False
 def _regis ter_base_effects(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация базовых эффектов"""
@@ -545,6 +633,8 @@ def _regis ter_special_effects(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация специальных эффектов"""
 try: except Exception as e: pass
 pass
@@ -552,6 +642,8 @@ pass
 logger.err or(f"Ошибка регистрации специальных эффектов: {e}")
 def regis ter_effect(self, effect_id: str, effect: Effect) -> bool: pass
     pass
+pass
+pass
 pass
 """Регистрация эффекта в системе"""
 try: if effect_idin self.effects_regis try: logger.warning(f"Эффект {effect_id} уже зарегистрирован")
@@ -568,6 +660,8 @@ def regis ter_special_effect(self, effect_id: str
     pass
 pass
 pass
+pass
+pass
 special_effect: SpecialEffect) -> bool: pass  # Добавлен pass в пустой блок
 """Регистрация специального эффекта в системе"""
 try: except Exception as e: pass
@@ -579,6 +673,8 @@ def apply_effect(self, target: Any, effect_id: str, source: Any= None
     pass
 pass
 pass
+pass
+pass
 context: Dict[str, Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Применение эффекта к цели"""
 try: if effect_id notin self.effects_regis try: logger.warning(f"Эффект {effect_id} не найден")
@@ -588,10 +684,14 @@ if effect.apply(target, source or target, context or {}):
     pass
 pass
 pass
+pass
+pass
 # Добавляем в активные эффекты
 target_id= getattr(target, 'id', str(target))
 if target_id notin self.active_effects: self.active_effects[target_id]= []
     pass
+pass
+pass
 pass
 pass
 self.active_effects[target_id].append(effect)
@@ -607,6 +707,8 @@ return False
 def remove_effect(self, target: Any, effect_name: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление эффекта с цели"""
 try: except Exception as e: pass
 pass
@@ -617,10 +719,14 @@ def clear_all_effects(self):
     pass
 pass
 pass
+pass
+pass
 """Очистка всех эффектов"""
 try: for target_id, effectsin self.active_effects.items():
 for effectin effects: try: pass
     pass
+pass
+pass
 pass
 # Получаем объект цели(в реальной реализации)
 # effect.remove(target)
@@ -634,6 +740,8 @@ logger.in fo("Все эффекты очищены")
 except Exception as e: logger.err or(f"Ошибка очистки всех эффектов: {e}")
 def get_perfor mance_metrics(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение метрик производительности"""

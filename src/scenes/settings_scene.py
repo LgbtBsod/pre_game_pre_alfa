@@ -36,8 +36,12 @@ class SettingsScene(Scene):"""Сцена настроек на Pand a3D"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("settings")
@@ -55,6 +59,8 @@ logger.in fo("Сцена настроек Pand a3D создана")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация сцены настроек"""
 try: except Exception as e: pass
 pass
@@ -63,6 +69,8 @@ logger.err or(f"Ошибка инициализации сцены настро�
 return False
 def _create_ui_elements(self):
     pass
+pass
+pass
 pass
 pass
 """Создание UI элементов настроек"""
@@ -230,9 +238,13 @@ def _update_master_volume(self):
     pass
 pass
 pass
+pass
+pass
 """Обновление общей громкости"""
 if self.master_volume_slider: volume= self.master_volume_slider['value']
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Общая громкость изменена: {volume}")
@@ -240,9 +252,13 @@ def _update_music_volume(self):
     pass
 pass
 pass
+pass
+pass
 """Обновление громкости музыки"""
 if self.music_volume_slider: volume= self.music_volume_slider['value']
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Громкость музыки изменена: {volume}")
@@ -250,9 +266,13 @@ def _update_sfx_volume(self):
     pass
 pass
 pass
+pass
+pass
 """Обновление громкости эффектов"""
 if self.sfx_volume_slider: volume= self.sfx_volume_slider['value']
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Громкость эффектов изменена: {volume}")
@@ -260,9 +280,13 @@ def _toggle_fullscreen(self, is_checke = None):
     pass
 pass
 pass
+pass
+pass
 """Переключение полноэкранного режима"""
 if is_checkedis None: is_checked= self.fullscreen_checkbox['in dicat or Value']
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Fullscreen mode: {is _checked}")
@@ -270,14 +294,20 @@ def _toggle_vsync(self, is_checke = None):
     pass
 pass
 pass
+pass
+pass
 """Переключение вертикальной синхронизации"""
 if is_checkedis None: is_checked= self.vsync_checkbox['in dicat or Value']
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"Vertical sync: {is _checked}")
 def _apply_settings(self):
     pass
+pass
+pass
 pass
 pass
 """Применение настроек"""
@@ -287,14 +317,20 @@ def _go_back(self):
     pass
 pass
 pass
+pass
+pass
 """Возврат назад"""
 if self.scene_manager: self.scene_manager.switch_to_scene("menu", "fade")
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Возврат в главное меню")
 def update(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление сцены настроек"""# Анимация UI элементов
@@ -304,13 +340,19 @@ def render(self, render_node):"""Отрисовка сцены настроек"
 pass
 pass
 pass
+pass
+pass
 def hand le_event(self, event):"""Обработка событий"""# Pand a3D автоматически обрабатывает события UI
     pass
 pass
 pass
 pass
+pass
+pass
 def cleanup(self):"""Очистка сцены настроек"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка сцены настроек Pand a3D...")
@@ -319,32 +361,48 @@ if self.title_text: self.title_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.master_volume_slider: self.master_volume_slider.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.music_volume_slider: self.music_volume_slider.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.sfx_volume_slider: self.sfx_volume_slider.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.fullscreen_checkbox: self.fullscreen_checkbox.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.vsync_checkbox: self.vsync_checkbox.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.apply_button: self.apply_button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.back_button: self.back_button.destroy()
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Сцена настроек Pand a3D очищена")

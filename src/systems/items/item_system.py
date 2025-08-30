@@ -34,6 +34,8 @@ class ItemQuality(Enum):"""Качество предмета"""BROKEN= 0
     pass
 pass
 pass
+pass
+pass
 POOR= 1
 COMMON= 2
 GOOD= 3
@@ -42,6 +44,8 @@ MASTERWORK= 5
 LEGENDARY= 6
 class EffectTrigger(Enum):"""Триггеры эффектов"""
     pass
+pass
+pass
 pass
 pass
 ON_EQUIP= "on_equip"
@@ -61,12 +65,16 @@ class ItemRequirement:"""Требование для использования 
     pass
 pass
 pass
+pass
+pass
 requirement_type: str  # "level", "stat", "skill", "reputation", "quest"
 requirement_value: Any
 comparis on: str= " >= "  # " >= ", " = ", " <= ", " > ", " < "
 description: str= ""@dataclass: pass  # Добавлен pass в пустой блок
 class ItemVis ual:"""Визуальные свойства предмета"""
     pass
+pass
+pass
 pass
 pass
 model_path: str= ""
@@ -82,6 +90,8 @@ class ItemAudio:"""Аудио свойства предмета"""
     pass
 pass
 pass
+pass
+pass
 use_sound: str= ""
 equip_sound: str= ""
 unequip_sound: str= ""
@@ -94,6 +104,8 @@ class ItemDurability:"""Система прочности предмета"""cur
     pass
 pass
 pass
+pass
+pass
 maximum: int= 100
 decay_rate: float= 0.1  # Скорость износа
 repair_cost_multiplier: float= 1.0
@@ -102,6 +114,8 @@ quality_affects_durability: bool= True
 @dataclass: pass  # Добавлен pass в пустой блок
 class SpecialEffect:"""Расширенный специальный эффект предмета"""
     pass
+pass
+pass
 pass
 pass
 effect_id: str
@@ -121,6 +135,8 @@ particle_effect: str= ""
 icon_effect: str= ""@dataclass: pass  # Добавлен pass в пустой блок
 class Item:"""Расширенный игровой предмет"""
     pass
+pass
+pass
 pass
 pass
 item_id: str
@@ -184,9 +200,13 @@ def icon(self) -> str: return self.vis ual.icon_path
     pass
 pass
 pass
+pass
+pass
 @property
 def model(self) -> str: return self.vis ual.model_path
     pass
+pass
+pass
 pass
 pass
 @property
@@ -194,12 +214,18 @@ def sound(self) -> str: return self.audio.use_sound
     pass
 pass
 pass
+pass
+pass
 class ItemSystem(BaseGameSystem):"""Система управления предметами(интегрирована с BaseGameSystem)"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("items", Pri or ity.HIGH)
@@ -232,6 +258,8 @@ logger.in fo("Система предметов инициализирована
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы предметов"""
 try: if not super().in itialize():
 return False
@@ -250,6 +278,8 @@ return False
 def update(self, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление системы предметов"""
 try: except Exception as e: pass
 pass
@@ -259,6 +289,8 @@ return False
 # Пауза / резюмирование покрываются базовым компонентом при необходимости
 def destroy(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Очистка / уничтожение системы предметов"""
 try: logger.in fo("Очистка системы предметов...")
@@ -277,6 +309,8 @@ def get_system_in fo(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение информации о системе"""return {
 'name': self.system_name,
 'state': self.system_state.value,
@@ -292,10 +326,14 @@ def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обраб�
     pass
 pass
 pass
+pass
+pass
 try: if event_type = "item_created":
 return self._hand le_item_created(event_data)
 elif event_type = "item_destroyed":
     pass
+pass
+pass
 pass
 pass
 return self._hand le_item_destroyed(event_data)
@@ -303,14 +341,20 @@ elif event_type = "item_used":
     pass
 pass
 pass
+pass
+pass
 return self._hand le_item_used(event_data)
 elif event_type = "item_upgraded":
     pass
 pass
 pass
+pass
+pass
 return self._hand le_item_upgraded(event_data)
 else: return False
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -321,6 +365,8 @@ return False
 def _regis ter_base_items(self) -> None: pass
     pass
 pass
+pass
+pass
 """Регистрация базовых предметов"""
 try: except Exception as e: pass
 pass
@@ -328,6 +374,8 @@ pass
 logger.err or(f"Ошибка регистрации базовых предметов: {e}")
 def _load_item_templates(self) -> None: pass
     pass
+pass
+pass
 pass
 """Загрузка шаблонов предметов"""
 try:
@@ -375,6 +423,8 @@ logger.err or(f"Ошибка загрузки шаблонов предмето�
 def _update_item_durability(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление износа предметов"""
 try: except Exception as e: pass
 pass
@@ -382,6 +432,8 @@ pass
 logger.warning(f"Ошибка обновления износа предметов: {e}")
 def _update_system_stats(self) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление статистики системы"""
 try: self.system_stats['regis tered_items_count']= len(self.regis tered_items)
@@ -394,6 +446,8 @@ logger.warning(f"Ошибка обновления статистики сист
 def _hand le_item_created(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события создания предмета"""
 try: except Exception as e: pass
 pass
@@ -403,11 +457,15 @@ return False
 def _hand le_item_destroyed(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события уничтожения предмета"""
 try: item_id= event_data.get('item_id')
 entity_id= event_data.get('entity_id')
 if item_idand entity_id: return self.destroy_item_from_entity(entity_id, item_id)
     pass
+pass
+pass
 pass
 pass
 return False
@@ -419,6 +477,8 @@ return False
 def _hand le_item_used(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события использования предмета"""
 try: except Exception as e: pass
 pass
@@ -428,12 +488,16 @@ return False
 def _hand le_item_upgraded(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события улучшения предмета"""
 try: item_id= event_data.get('item_id')
 entity_id= event_data.get('entity_id')
 new_level= event_data.get('new_level')
 if item_idand entity_idand new_level: return self.upgrade_item(entity_id, item_id, new_level)
     pass
+pass
+pass
 pass
 pass
 return False
@@ -446,6 +510,8 @@ def create_item_for _entity(self, item_id: str, entity_id: str
     pass
 pass
 pass
+pass
+pass
 item_data: Dict[str, Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Создание предмета для сущности"""
 try: except Exception as e: pass
@@ -456,6 +522,8 @@ return False
 def destroy_item_from_entity(self, entity_id: str, item_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение предмета у сущности"""
 try: if entity_id notin self.entity_items: return False
 items= self.entity_items[entity_id]
@@ -464,9 +532,13 @@ for itemin items: if item.item_id = item_id: item_to_remove= item
     pass
 pass
 pass
+pass
+pass
 break
 if not item_to_remove: return False
     pass
+pass
+pass
 pass
 pass
 # Удаляем предмет
@@ -474,6 +546,8 @@ items.remove(item_to_remove)
 # Удаляем пустые записи
 if not items: del self.entity_items[entity_id]
     pass
+pass
+pass
 pass
 pass
 # Записываем в историю
@@ -497,6 +571,8 @@ def use_item(self, entity_id: str, item_id: str
     pass
 pass
 pass
+pass
+pass
 target_id: Optional[str]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Использование предмета"""
 try: except Exception as e: pass
@@ -508,6 +584,8 @@ def _use_consumable_item(self, entity_id: str, item: Item
     pass
 pass
 pass
+pass
+pass
 target_id: Optional[str]) -> bool: pass  # Добавлен pass в пустой блок
 """Использование расходуемого предмета"""
 try:
@@ -516,11 +594,15 @@ if item.stack_size > 1: item.stack_size = 1
     pass
 pass
 pass
+pass
+pass
 logger.debug(f"Использован расходуемый предмет {item.item_id} у {entity_id}")
 # Эмитим событие для применения эффектов расходника
 try: if self.event_busand item.special_effects: for sein item.special_effects: effect_id= getattr(se, 'effect_id', None)
 if effect_id: self.event_bus.emit("apply_effect", {
     pass
+pass
+pass
 pass
 pass
 'target_id': target_id or entity_id,
@@ -533,11 +615,15 @@ return True
 else: pass
     pass
 pass
+pass
+pass
 # Предмет полностью израсходован
 used= self.destroy_item_from_entity(entity_id, item.item_id)
 try: if usedand self.event_busand item.special_effects: for sein item.special_effects: effect_id= getattr(se, 'effect_id', None)
 if effect_id: self.event_bus.emit("apply_effect", {
     pass
+pass
+pass
 pass
 pass
 'target_id': target_id or entity_id,
@@ -553,6 +639,8 @@ def _use_weapon_item(self, entity_id: str, item: Item
     pass
 pass
 pass
+pass
+pass
 target_id: Optional[str]) -> bool: pass  # Добавлен pass в пустой блок
 """Использование оружия"""
 try: except Exception as e: pass
@@ -562,6 +650,8 @@ logger.err or(f"Ошибка использования оружия {item.item_
 return False
 def _use_arm or _item(self, entity_id: str, item: Item
     pass
+pass
+pass
 pass
 pass
 target_id: Optional[str]) -> bool: pass  # Добавлен pass в пустой блок
@@ -579,6 +669,8 @@ def upgrade_item(self, entity_id: str, item_id: str
     pass
 pass
 pass
+pass
+pass
 new_level: int) -> bool: pass  # Добавлен pass в пустой блок
 """Улучшение предмета"""
 try: except Exception as e: pass
@@ -590,6 +682,8 @@ def _upgrade_item_stats(self, item: Item, old_level: int
     pass
 pass
 pass
+pass
+pass
 new_level: int) -> None: pass  # Добавлен pass в пустой блок
 """Улучшение характеристик предмета"""
 try: level_multiplier= 1 + (new_level - old_level) * 0.15  # 15%за уровень
@@ -598,15 +692,21 @@ for stat_type, valuein item.stats.items():
     pass
 pass
 pass
+pass
+pass
 item.stats[stat_type]= int(value * level_multiplier)
 # Улучшаем урон
 if item.damage > 0: item.damage= int(item.damage * level_multiplier)
     pass
 pass
 pass
+pass
+pass
 # Улучшаем броню
 if item.armor > 0: item.armor= int(item.armor * level_multiplier)
     pass
+pass
+pass
 pass
 pass
 # Улучшаем стоимость
@@ -619,6 +719,8 @@ def get_entity_items(self, entity_id: str) -> Lis t[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение предметов сущности"""
 try: except Exception as e: pass
 pass
@@ -627,6 +729,8 @@ logger.err or(f"Ошибка получения предметов сущнос�
 return []
 def get_item_in fo(self, item_id: str) -> Optional[Dict[str, Any]]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о предмете"""
@@ -665,6 +769,8 @@ return None
 def regis ter_custom_item(self, item: Item) -> bool: pass
     pass
 pass
+pass
+pass
 """Регистрация пользовательского предмета"""
 try: except Exception as e: pass
 pass
@@ -675,6 +781,8 @@ def get_items_by_categ or y(self, categ or y: ItemCateg or y) -> Lis t[Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]]:
 pass  # Добавлен pass в пустой блок
 """Получение предметов по категории"""
@@ -683,8 +791,12 @@ for itemin self.regis tered_items.values():
     pass
 pass
 pass
+pass
+pass
 if item.categ or y = categ or y: items.append({
     pass
+pass
+pass
 pass
 pass
 'item_id': item.item_id,
@@ -705,6 +817,8 @@ def get_items_by_rarity(self, rarity: ItemRarity) -> Lis t[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение предметов по редкости"""
 try: except Exception as e: pass
 pass
@@ -714,6 +828,8 @@ return []
 def repair_item(self, entity_id: str, item_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Ремонт предмета"""
 try: if entity_id notin self.entity_items: return False
 item_to_repair= None
@@ -721,8 +837,12 @@ for itemin self.entity_items[entity_id]:
     pass
 pass
 pass
+pass
+pass
 if item.item_id = item_id: item_to_repair= item
     pass
+pass
+pass
 pass
 pass
 break
@@ -730,8 +850,12 @@ if not item_to_repair: return False
     pass
 pass
 pass
+pass
+pass
 if item_to_repair.durability.current >= item_to_repair.durability.maximum: logger.debug(f"Предмет {item_id} не нуждается в ремонте")
     pass
+pass
+pass
 pass
 pass
 return True
@@ -748,6 +872,8 @@ def upgrade_item_quality(self, entity_id: str, item_id: str
     pass
 pass
 pass
+pass
+pass
 new_quality: ItemQuality) -> bool: pass  # Добавлен pass в пустой блок
 """Улучшение качества предмета"""
 try: except Exception as e: pass
@@ -759,6 +885,8 @@ def _apply_quality_bonuses(self, item: Item, old_quality: ItemQuality
     pass
 pass
 pass
+pass
+pass
 new_quality: ItemQuality) -> None: pass  # Добавлен pass в пустой блок
 """Применение бонусов качества к предмету"""
 try: quality_multiplier= 1.0 + (new_quality.value - old_quality.value) * 0.1
@@ -767,10 +895,14 @@ for stat_type, valuein item.stats.items():
     pass
 pass
 pass
+pass
+pass
 item.stats[stat_type]= int(value * quality_multiplier)
 # Улучшаем урон
 if item.damage > 0: item.damage= int(item.damage * quality_multiplier)
     pass
+pass
+pass
 pass
 pass
 # Улучшаем броню
@@ -778,11 +910,15 @@ if item.armor > 0: item.armor= int(item.armor * quality_multiplier)
     pass
 pass
 pass
+pass
+pass
 # Улучшаем стоимость
 item.value= int(item.value * quality_multiplier)
 # Улучшаем прочность
 if item.durability.quality_affects_durability: item.durability.maximum= int(item.durability.maximum * quality_multiplier)
     pass
+pass
+pass
 pass
 pass
 item.durability.current= item.durability.maximum
@@ -793,6 +929,8 @@ logger.err or(f"Ошибка применения бонусов качеств�
 def socket_gem(self, entity_id: str, item_id: str, gem_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Вставка камня в гнездо предмета"""
 try: except Exception as e: pass
 pass
@@ -801,6 +939,8 @@ logger.err or(f"Ошибка вставки камня {gem_id} в предме�
 return False
 def _apply_gem_effects(self, item: Item, gem_id: str) -> None: pass
     pass
+pass
+pass
 pass
 """Применение эффектов камня к предмету"""
 try:
@@ -815,6 +955,8 @@ def remove_gem(self, entity_id: str, item_id: str
     pass
 pass
 pass
+pass
+pass
 gem_in dex: int) -> Optional[str]:
 pass  # Добавлен pass в пустой блок
 """Удаление камня из гнезда"""
@@ -825,6 +967,8 @@ logger.err or(f"Ошибка удаления камня из предмета {
 return None
 def _remove_gem_effects(self, item: Item, gem_id: str) -> None: pass
     pass
+pass
+pass
 pass
 """Удаление эффектов камня с предмета"""
 try:
@@ -839,6 +983,8 @@ def get_set_bonus(self, entity_id: str, set_name: str) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение бонуса набора предметов"""
 try: except Exception as e: pass
 pass
@@ -847,6 +993,8 @@ logger.err or(f"Ошибка получения бонуса набора {set_n
 return {}
 def check_item_requirements(self, entity_id: str, item_id: str
     pass
+pass
+pass
 pass
 pass
 entity_stats: Dict[str, Any]) -> Dict[str, Any]:
@@ -858,8 +1006,12 @@ for itemin self.entity_items[entity_id]:
     pass
 pass
 pass
+pass
+pass
 if item.item_id = item_id: item_to_check= item
     pass
+pass
+pass
 pass
 pass
 break
@@ -867,9 +1019,13 @@ if not item_to_check: return {'can_use': False, 'mis sing_requirements': ['item_
     pass
 pass
 pass
+pass
+pass
 mis sing_requirements= []
 for requirementin item_to_check.requirements: if not self._check_single_requirement(requirement
     pass
+pass
+pass
 pass
 pass
 entity_stats):
@@ -896,6 +1052,8 @@ def _check_single_requirement(self, requirement: ItemRequirement
     pass
 pass
 pass
+pass
+pass
 entity_stats: Dict[str, Any]) -> bool: pass  # Добавлен pass в пустой блок
 """Проверка одного требования"""
 try: except Exception as e: pass
@@ -907,6 +1065,8 @@ def get_item_effects_summary(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 item_id: str) -> Dict[str, Any]:
 pass  # Добавлен pass в пустой блок
 """Получение сводки эффектов предмета"""
@@ -916,13 +1076,19 @@ for itemin self.entity_items[entity_id]:
     pass
 pass
 pass
+pass
+pass
 if item.item_id = item_id: item_to_analyze= item
     pass
+pass
+pass
 pass
 pass
 break
 if not item_to_analyze: return {}
     pass
+pass
+pass
 pass
 pass
 effects_summary= {
@@ -938,12 +1104,16 @@ for effectin item_to_analyze.special_effects: if effect.trigger = EffectTrigger.
     pass
 pass
 pass
+pass
+pass
 'name': effect.name,
 'categ or y': effect.categ or y.value,
 'parameters': effect.parameters
 })
 else: effects_summary['triggered_effects'].append({
     pass
+pass
+pass
 pass
 pass
 'name': effect.name,
@@ -956,8 +1126,12 @@ if effect.vis ual_effect: effects_summary['vis ual_effects'].append(effect.vis u
     pass
 pass
 pass
+pass
+pass
 if effect.particle_effect: effects_summary['vis ual_effects'].append(effect.particle_effect)
     pass
+pass
+pass
 pass
 pass
 # Аудио эффекты
@@ -965,9 +1139,13 @@ if effect.sound_effect: effects_summary['audio_effects'].append(effect.sound_eff
     pass
 pass
 pass
+pass
+pass
 # Бонусы набора
 if item_to_analyze.set_name: set_bonus= self.get_set_bonus(entity_id
     pass
+pass
+pass
 pass
 pass
 item_to_analyze.set_name)
@@ -975,9 +1153,13 @@ if set_bonus: effects_summary['set_bonuses']= set_bonus
     pass
 pass
 pass
+pass
+pass
 # Эффекты камней
 for gem_idin item_to_analyze.socketed_gems: effects_summary['socket_effects'].append({
     pass
+pass
+pass
 pass
 pass
 'gem_id': gem_id,
@@ -993,6 +1175,8 @@ def combin e_items(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 item_ids: Lis t[str]) -> Optional[Item]:
 pass  # Добавлен pass в пустой блок
 """Объединение предметов"""
@@ -1004,9 +1188,13 @@ return None
 class ItemFact or y: pass
     pass
 pass
+pass
+pass
 """Фабрика для создания предметов"""@staticmethod
 def create_enhanced_fire_sw or d() -> Item:"""Создание улучшенного огненного меча"""
     pass
+pass
+pass
 pass
 pass
 return Item(
@@ -1068,6 +1256,8 @@ def create_lightning_ring() -> Item:"""Создание кольца молни�
     pass
 pass
 pass
+pass
+pass
 return Item(
 item_i = "lightning_ring",
 nam = "Кольцо Молний",
@@ -1126,6 +1316,8 @@ def create_health_potion() -> Item:"""Создание зелья здоровь
     pass
 pass
 pass
+pass
+pass
 return Item(
 item_i = "health_potion",
 nam = "Зелье Здоровья",
@@ -1176,6 +1368,8 @@ versio = "1.1")
 @staticmethod
 def create_mana_potion() -> Item:"""Создание зелья маны"""
     pass
+pass
+pass
 pass
 pass
 return Item(

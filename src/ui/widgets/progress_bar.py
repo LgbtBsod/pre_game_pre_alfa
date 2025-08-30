@@ -32,6 +32,8 @@ class ProgressBarStyle:"""Стиль прогресс - бара"""# Разме�
     pass
 pass
 pass
+pass
+pass
 width: float= 0.3
 height: float= 0.02
 # Цвета
@@ -49,8 +51,12 @@ class NeonProgressBar:"""Неоновый прогресс - бар с совр�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 title: str= "",
@@ -75,6 +81,8 @@ def create(self, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> DirectFrame: pass  # Добавлен pass в пустой блок
 """Создание прогресс - бара Pand a3D"""
 try:
@@ -89,6 +97,8 @@ main _frame.setPos( * pos)
 # Заголовок
 if self.titleand self.style.show_text: self.title_label= DirectLabel(
     pass
+pass
+pass
 pass
 pass
 tex = self.title,
@@ -126,6 +136,8 @@ if self.style.show_text: self.value_label= DirectLabel(
     pass
 pass
 pass
+pass
+pass
 tex = "0%",
 scal = self.style.text_scale,
 po = (0, 0, 0),
@@ -144,6 +156,8 @@ def set_value(self, current: float, maximum: Optional[float]= None):
     pass
 pass
 pass
+pass
+pass
 """Установка значения прогресс - бара"""
 try: except Exception as e: pass
 pass
@@ -153,6 +167,8 @@ def set_percentage(self, percentage: float):
     pass
 pass
 pass
+pass
+pass
 """Установка процента заполнения"""percentage= max(0.0, m in(100.0, percentage))
 value= (percentage / 100.0) * self.max_value
 self.set_value(value)
@@ -160,9 +176,13 @@ def set_fill_col or(self, col or : Tuple[float, float, float, float]):"""Изм�
     pass
 pass
 pass
+pass
+pass
 self.style.fill_color= color
 def set_title(self, title: str):"""Изменение заголовка"""if self.title_label: self.title_label['text']= title
     pass
+pass
+pass
 pass
 pass
 self.title= title
@@ -170,28 +190,42 @@ def set_vis ible(self, vis ible: bool):"""Показать / скрыть про
     pass
 pass
 pass
+pass
+pass
 if self.b or der_frame: self.b or der_frame.setVis ible(vis ible)
     pass
+pass
+pass
 pass
 pass
 if self.fill_frame: self.fill_frame.setVis ible(vis ible)
     pass
 pass
 pass
+pass
+pass
 if self.title_label: self.title_label.setVis ible(vis ible)
     pass
+pass
+pass
 pass
 pass
 if self.value_label: self.value_label.setVis ible(vis ible)
     pass
 pass
 pass
+pass
+pass
 def destroy(self):"""Уничтожение прогресс - бара"""
     pass
 pass
 pass
+pass
+pass
 if self.background_frame: self.background_frame.destroy()
     pass
+pass
+pass
 pass
 pass
 self.background_frame= None
@@ -199,9 +233,13 @@ if self.b or der_frame: self.b or der_frame.destroy()
     pass
 pass
 pass
+pass
+pass
 self.b or der_frame= None
 if self.fill_frame: self.fill_frame.destroy()
     pass
+pass
+pass
 pass
 pass
 self.fill_frame= None
@@ -209,9 +247,13 @@ if self.title_label: self.title_label.destroy()
     pass
 pass
 pass
+pass
+pass
 self.title_label= None
 if self.value_label: self.value_label.destroy()
     pass
+pass
+pass
 pass
 pass
 self.value_label= None
@@ -220,9 +262,13 @@ class HealthBar(NeonProgressBar):
     pass
 pass
 pass
+pass
+pass
 """Прогресс - бар здоровья"""
 def __in it__(self, paren = None):
     pass
+pass
+pass
 pass
 pass
 style= ProgressBarStyle(
@@ -236,14 +282,20 @@ def set_health(self, current: int, maximum: int):
     pass
 pass
 pass
+pass
+pass
 """Установка здоровья"""
 self.set_value(float(current), float(maximum))
 if self.value_label: self.value_label['text']= f"{current} / {maximum}"class ManaBar(NeonProgressBar):"""Прогресс - бар маны"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, paren = None):
     pass
+pass
+pass
 pass
 pass
 style= ProgressBarStyle(
@@ -257,14 +309,20 @@ def set_mana(self, current: int, maximum: int):
     pass
 pass
 pass
+pass
+pass
 """Установка маны"""
 self.set_value(float(current), float(maximum))
 if self.value_label: self.value_label['text']= f"{current} / {maximum}"class ExperienceBar(NeonProgressBar):"""Прогресс - бар опыта"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, paren = None):
     pass
+pass
+pass
 pass
 pass
 style= ProgressBarStyle(
@@ -278,14 +336,20 @@ def set_experience(self, current: int, maximum: int):
     pass
 pass
 pass
+pass
+pass
 """Установка опыта"""
 self.set_value(float(current), float(maximum))
 if self.value_label: self.value_label['text']= f"{current} / {maximum}"
     pass
 pass
 pass
+pass
+pass
 def create_neon_progress_bar(title: str= "",
     pass
+pass
+pass
 pass
 pass
 style: Optional[ProgressBarStyle]= None,
@@ -299,6 +363,8 @@ def create_health_bar(paren = None, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> HealthBar: pass  # Добавлен pass в пустой блок"""Фабричная функция для создания прогресс - бара здоровья"""health_bar= HealthBar(parent)
 health_bar.create(pos)
 return health_bar
@@ -306,11 +372,15 @@ def create_mana_bar(paren = None, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> ManaBar: pass  # Добавлен pass в пустой блок"""Фабричная функция для создания прогресс - бара маны"""mana_bar= ManaBar(parent)
 mana_bar.create(pos)
 return mana_bar
 def create_experience_bar(paren = None, pos: Tuple[float, float, float]= (0, 0
     pass
+pass
+pass
 pass
 pass
 0)) -> ExperienceBar: pass  # Добавлен pass в пустой блок"""Фабричная функция для создания прогресс - бара опыта"""

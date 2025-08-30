@@ -23,6 +23,8 @@ class QuestType(Enum):"""Типы квестов"""
     pass
 pass
 pass
+pass
+pass
 # Основные типы
 MAIN_QUEST= "main _quest"
 SIDE_QUEST= "side_quest"

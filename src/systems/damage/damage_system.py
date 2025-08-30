@@ -26,6 +26,8 @@ class DamageType(Enum):"""Типы урона в игре"""
     pass
 pass
 pass
+pass
+pass
 PHYSICAL= "physical"      # Физический урон
 FIRE= "fire"              # Огненный урон
 COLD= "cold"              # Ледяной урон
@@ -40,6 +42,8 @@ class DamageCateg or y(Enum):
     pass
 pass
 pass
+pass
+pass
 """Категории урона"""
 DIRECT= "direct"          # Прямой урон
 OVER_TIME= "over_time"    # Урон по времени
@@ -49,6 +53,8 @@ CHAIN= "chain "            # Цепной урон
 @dataclass: pass  # Добавлен pass в пустой блок
 class DamageModifier: pass
     pass
+pass
+pass
 pass
 """Модификатор урона"""multiplier: float= 1.0
 flat_bonus: float= 0.0
@@ -61,12 +67,16 @@ class DamageResis tance:"""Сопротивление урону"""resis tance: 
     pass
 pass
 pass
+pass
+pass
 arm or : float= 0.0       # Броня(для физического урона)
 abs or ption: float= 0.0  # Поглощение урона
 reflection: float= 0.0  # Отражение урона
 @dataclass: pass  # Добавлен pass в пустой блок
 class DamageInstance:"""Экземпляр урона"""amount: float
     pass
+pass
+pass
 pass
 pass
 damage_type: DamageType
@@ -83,8 +93,12 @@ def get_total_amount(self) -> float:"""Получить итоговую сум�
     pass
 pass
 pass
+pass
+pass
 for modifierin self.modifiers: total= total * modifier.multiplier + modifier.flat_bonus: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 return max(0, total)
@@ -92,13 +106,19 @@ def is_critical(self) -> bool:"""Проверить, является ли ур�
     pass
 pass
 pass
+pass
+pass
 return False
 def get_critical_multiplier(self) -> float:"""Получить множитель критического урона"""max_multiplier= 1.0
     pass
 pass
 pass
+pass
+pass
 for modifierin self.modifiers: max_multiplier= max(max_multiplier, modifier.critical_multiplier):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -106,6 +126,8 @@ return max_multiplier
 @dataclass: pass  # Добавлен pass в пустой блок
 class DamageResult:"""Результат применения урона"""origin al_damage: float
     pass
+pass
+pass
 pass
 pass
 fin al_damage: float
@@ -122,9 +144,13 @@ class DamageSystem(BaseComponent):"""Консолидированная сист
     pass
 pass
 pass
+pass
+pass
 Управляет всеми аспектами урона в игре"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -149,6 +175,8 @@ self.combo_timeout= 3.0  # секунды
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы урона"""
 try: except Exception as e: pass
 pass
@@ -159,9 +187,13 @@ def _regis ter_damage_types(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация всех типов урона"""for damage_typein DamageType: self.damage_types[damage_type.value]= damage_type
 def _regis ter_damage_combin ations(self):"""Регистрация комбинаций урона"""# Огонь + Лед= Взрыв
     pass
+pass
+pass
 pass
 pass
 self.damage_combin ations.append((
@@ -197,6 +229,8 @@ def _regis ter_catalytic_effects(self):"""Регистрация каталит�
     pass
 pass
 pass
+pass
+pass
 self.catalytic_effects.append(self._critical_damage_effect)
 # Эффект при комбо
 self.catalytic_effects.append(self._combo_damage_effect)
@@ -204,6 +238,8 @@ self.catalytic_effects.append(self._combo_damage_effect)
 self.catalytic_effects.append(self._reflection_damage_effect)
 def deal_damage(self, target_id: str
     pass
+pass
+pass
 pass
 pass
 damage: DamageInstance) -> DamageResult: pass  # Добавлен pass в пустой блок"""Нанесение урона цели
@@ -230,6 +266,8 @@ arm or _applie = resis tances.get('arm or ', 0.0)
 # Применяем урон к цели
 if fin al_damage > 0: self._apply_damage_to_target(target_id, fin al_damage, damage)
     pass
+pass
+pass
 pass
 pass
 # Обновляем комбо
@@ -260,10 +298,14 @@ def _get_target_resis tances(self, target_id: str) -> Dict[str, float]:
     pass
 pass
 pass
+pass
+pass
 """Получить сопротивления цели"""resis tances= {}
 # Базовые сопротивления
 if target_idin self.resis tance_modifiers: resis tances.update(self.resis tance_modifiers[target_id]):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -272,16 +314,22 @@ if target_idin self.arm or _modifiers: resis tances['arm or ']= self.arm or _mod
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 return resis tances
 def _calculate_fin al_damage(self, damage: DamageInstance
     pass
 pass
 pass
+pass
+pass
 resis tances: Dict[str, float]) -> float: pass  # Добавлен pass в пустой блок"""Рассчитать финальный урон с учетом сопротивлений"""base_damage= damage.get_total_amount()
 # Истинный урон игнорирует все сопротивления
 if damage.damage_type = DamageType.TRUE: return base_damage
     pass
+pass
+pass
 pass
 pass
 # Применяем сопротивление к типу урона
@@ -292,10 +340,14 @@ if damage.damage_type = DamageType.PHYSICAL: armor= resis tances.get('arm or ', 
     pass
 pass
 pass
+pass
+pass
 base_damage = (1.0 - armor * 0.01)  # 1 броня= 1%снижение
 # Применяем критический урон
 if damage.is _critical():
     pass
+pass
+pass
 pass
 pass
 critical_multiplier= damage.get_critical_multiplier()
@@ -303,6 +355,8 @@ base_damage = critical_multiplier
 return max(1, int(base_damage))
 def _apply_damage_to_target(self, target_id: str, damage: float
     pass
+pass
+pass
 pass
 pass
 damage_in stance: DamageInstance):
@@ -315,6 +369,8 @@ def _update_combo(self, source_id: str, damage_type: DamageType):"""Обнови
     pass
 pass
 pass
+pass
+pass
 current_time= time.time()
 combo_key= f"{source_id}_{damage_type.value}"if combo_keyin self.combo_timers:
 # Увеличиваем множитель комбо
@@ -322,6 +378,8 @@ self.combo_multipliers[combo_key]= m in(3.0
 self.combo_multipliers.get(combo_key, 1.0) + 0.2)
 else: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 # Начинаем новое комбо
@@ -333,24 +391,36 @@ def _cleanup_old_combos(self, current_time: float):"""Очистка стары�
     pass
 pass
 pass
+pass
+pass
 for combo_key, timestampin self.combo_timers.items():
     pass
+pass
+pass
 pass
 pass
 if current_time - timestamp > self.combo_timeout: expired_combos.append(combo_key)
     pass
 pass
 pass
+pass
+pass
 for combo_keyin expired_combos: del self.combo_timers[combo_key]
     pass
+pass
+pass
 pass
 pass
 if combo_keyin self.combo_multipliers: del self.combo_multipliers[combo_key]
     pass
 pass
 pass
+pass
+pass
 def _check_damage_combin ations(self, target_id: str
     pass
+pass
+pass
 pass
 pass
 damage: DamageInstance):
@@ -360,10 +430,14 @@ def _apply_catalytic_effects(self, target_id: str, damage: DamageInstance
     pass
 pass
 pass
+pass
+pass
 result: DamageResult):
 pass  # Добавлен pass в пустой блок"""Применить каталитические эффекты"""
 for effect_funcin self.catalytic_effects: try: pass
     pass
+pass
+pass
 pass
 except Exception as e: pass
 pass
@@ -373,15 +447,21 @@ def _add_to_his tory(self, damage: DamageInstance):
     pass
 pass
 pass
+pass
+pass
 """Добавить урон в историю"""self.damage_his tory.append(damage)
 # Ограничиваем размер истории
 if len(self.damage_his tory) > self.max_damage_his tory: self.damage_his tory.pop(0)
     pass
 pass
 pass
+pass
+pass
 # Каталитические эффекты
 def _critical_damage_effect(self, target_id: str, damage: DamageInstance
     pass
+pass
+pass
 pass
 pass
 result: DamageResult):
@@ -392,16 +472,22 @@ def _combo_damage_effect(self, target_id: str, damage: DamageInstance
     pass
 pass
 pass
+pass
+pass
 result: DamageResult):
 pass  # Добавлен pass в пустой блок"""Эффект комбо урона"""
 combo_key= f"{damage.source_id}_{damage.damage_type.value}"if combo_keyin self.combo_multipliers: multiplier= self.combo_multipliers[combo_key]
 if multiplier > 1.5: pass
     pass
 pass
+pass
+pass
 # TODO: Визуальные эффекты комбо
 pass
 def _reflection_damage_effect(self, target_id: str, damage: DamageInstance
     pass
+pass
+pass
 pass
 pass
 result: DamageResult):
@@ -414,8 +500,12 @@ def _create_explosion_effect(self):"""Создать эффект взрыва""
 pass
 pass
 pass
+pass
+pass
 def _create_plasma_effect(self):"""Создать эффект плазмы"""# TODO: Реализовать эффект плазмы
     pass
+pass
+pass
 pass
 pass
 pass
@@ -424,8 +514,12 @@ def _create_c or rosion_effect(self):"""Создать эффект корроз
 pass
 pass
 pass
+pass
+pass
 def _create_shock_effect(self):"""Создать эффект шока"""# TODO: Реализовать эффект шока
     pass
+pass
+pass
 pass
 pass
 pass
@@ -434,14 +528,20 @@ def _create_mental_explosion_effect(self):"""Создать эффект мен�
 pass
 pass
 pass
+pass
+pass
 def _create_mutation_effect(self):"""Создать эффект мутации"""# TODO: Реализовать эффект мутации
     pass
+pass
+pass
 pass
 pass
 pass
 # Публичные методы
 def regis ter_resis tance_modifier(self, entity_id: str
     pass
+pass
+pass
 pass
 pass
 damage_type: DamageType, resis tance: float):
@@ -452,8 +552,12 @@ def regis ter_arm or _modifier(self, entity_id: str, arm or : float):"""Заре
     pass
 pass
 pass
+pass
+pass
 def get_damage_his tory(self
     pass
+pass
+pass
 pass
 pass
 entity_id: Optional[str]= None) -> Lis t[DamageInstance]:
@@ -464,20 +568,28 @@ def get_combo_multiplier(self, source_id: str
     pass
 pass
 pass
+pass
+pass
 damage_type: DamageType) -> float: pass  # Добавлен pass в пустой блок"""Получить множитель комбо"""
 combo_key= f"{source_id}_{damage_type.value}"return self.combo_multipliers.get(combo_key, 1.0)
 def clear_damage_his tory(self):"""Очистить историю урона"""self.damage_his tory.clear()
     pass
 pass
 pass
+pass
+pass
 def get_damage_statis tics(self, entity_id: str) -> Dict[str, Any]:"""Получить статистику урона для сущности"""
     pass
+pass
+pass
 pass
 pass
 entity_damage= [d for din self.damage_his tory if d.target_id = entity_id or d.source_id = entity_id]:
 pass  # Добавлен pass в пустой блок
 if not entity_damage: return {}
     pass
+pass
+pass
 pass
 pass
 total_damage_dealt= sum(d.amount for din entity_damage if d.source_id = entity_id):

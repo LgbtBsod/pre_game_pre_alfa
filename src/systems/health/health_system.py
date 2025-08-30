@@ -26,6 +26,8 @@ class HealthState(Enum):"""Состояния здоровья"""
     pass
 pass
 pass
+pass
+pass
 ALIVE= "alive"            # Жив
 WOUNDED= "wounded"        # Ранен
 CRITICAL= "critical"      # Критическое состояние
@@ -33,6 +35,8 @@ UNCONSCIOUS= "unconscious"  # Без сознания
 DEAD= "dead"              # Мертв
 class ResourceType(Enum):
     pass
+pass
+pass
 pass
 pass
 """Типы ресурсов"""
@@ -46,6 +50,8 @@ SHIELD= "shield"          # Щит
 class ResourcePool: pass
     pass
 pass
+pass
+pass
 """Пул ресурсов"""current: float= 0.0
 maximum: float= 100.0
 regeneration_rate: float= 1.0  # в секунду
@@ -55,22 +61,32 @@ def get_percentage(self) -> float:"""Получить процент запол�
     pass
 pass
 pass
+pass
+pass
 return(self.current / self.maximum) * 100.0
 def is_full(self) -> bool:"""Проверить, полон ли пул"""return self.current >= self.maximum
     pass
+pass
+pass
 pass
 pass
 def is_empty(self) -> bool:"""Проверить, пуст ли пул"""return self.current <= 0
     pass
 pass
 pass
+pass
+pass
 def can_regenerate(self) -> bool:"""Проверить, может ли ресурс восстанавливаться"""return time.time() - self.last_damage_time >= self.regeneration_delay
     pass
+pass
+pass
 pass
 pass
 @dataclass: pass  # Добавлен pass в пустой блок
 class HealthStatus:"""Статус здоровья сущности"""entity_id: str
     pass
+pass
+pass
 pass
 pass
 health: ResourcePool= field(default_factor = lambda: ResourcePool(100.0
@@ -99,9 +115,13 @@ def get_total_health_percentage(self) -> float:"""Получить общий п
     pass
 pass
 pass
+pass
+pass
 total_maximum= self.health.maximum + self.shield.maximum
 if total_maximum <= 0: return 0.0
     pass
+pass
+pass
 pass
 pass
 return(total_current / total_maximum) * 100.0
@@ -109,8 +129,12 @@ def is_alive(self) -> bool:"""Проверить, жива ли сущность
     pass
 pass
 pass
+pass
+pass
 def can_act(self) -> bool:"""Проверить, может ли сущность действовать"""return(self.state != HealthState.DEAD and
     pass
+pass
+pass
 pass
 pass
 self.state != HealthState.UNCONSCIOUS and
@@ -119,9 +143,13 @@ class HealthSystem(BaseComponent):"""Система здоровья
     pass
 pass
 pass
+pass
+pass
 Управляет здоровьем, маной, энергией и состоянием всех сущностей"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -143,6 +171,8 @@ self.regeneration_in terval= 1.0  # секунды
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы здоровья"""
 try: except Exception as e: pass
 pass
@@ -151,6 +181,8 @@ self.logger.err or(f"Ошибка инициализации HealthSystem: {e}")
 return False
 def _regis ter_event_hand lers(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация обработчиков событий"""
@@ -169,10 +201,14 @@ def _setup_regeneration_system(self):
     pass
 pass
 pass
+pass
+pass
 """Настройка системы регенерации"""self.regeneration_in terval= 1.0
 # Управление сущностями
 def regis ter_entity(self, entity_id: str, health: float= 100.0
     pass
+pass
+pass
 pass
 pass
 mana: float= 50.0,
@@ -192,9 +228,13 @@ def unregis ter_entity(self, entity_id: str) -> bool:"""Отменить рег�
     pass
 pass
 pass
+pass
+pass
 del self.health_statuses[entity_id]
 if entity_idin self.regeneration_timers: del self.regeneration_timers[entity_id]
     pass
+pass
+pass
 pass
 pass
 return True
@@ -202,10 +242,14 @@ def get_health_status(self, entity_id: str) -> Optional[HealthStatus]:"""Пол�
     pass
 pass
 pass
+pass
+pass
 return self.health_statuses.get(entity_id)
 # Управление здоровьем
 def take_damage(self, entity_id: str, damage: float, damage_type: str= "physical",
     pass
+pass
+pass
 pass
 pass
 source_id: Optional[str]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -215,10 +259,14 @@ if not status or not status.is _alive():
     pass
 pass
 pass
+pass
+pass
 return False
 # Обрабатываем урон по типу
 if damage_typein self.damage_hand lers: hand ler= self.damage_hand lers[damage_type]
     pass
+pass
+pass
 pass
 pass
 fin al_damage= hand ler(damage, status, source_id)
@@ -226,14 +274,20 @@ else: fin al_damage= damage
     pass
 pass
 pass
+pass
+pass
 # Применяем урон
 if fin al_damage > 0: self._apply_damage(status, fin al_damage, damage_type, source_id)
     pass
 pass
 pass
+pass
+pass
 return True
 def heal(self, entity_id: str, amount: float, healing_type: str= "direct",
     pass
+pass
+pass
 pass
 pass
 source_id: Optional[str]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -242,10 +296,14 @@ if not status or not status.is _alive():
     pass
 pass
 pass
+pass
+pass
 return False
 # Обрабатываем лечение по типу
 if healing_typein self.healing_hand lers: hand ler= self.healing_hand lers[healing_type]
     pass
+pass
+pass
 pass
 pass
 fin al_healing= hand ler(amount, status, source_id)
@@ -253,14 +311,20 @@ else: fin al_healing= amount
     pass
 pass
 pass
+pass
+pass
 # Применяем лечение
 if fin al_healing > 0: self._apply_healing(status, fin al_healing, healing_type, source_id)
     pass
 pass
 pass
+pass
+pass
 return True
 def rest or e_resource(self, entity_id: str, resource_type: ResourceType
     pass
+pass
+pass
 pass
 pass
 amount: float) -> bool: pass  # Добавлен pass в пустой блок"""Восстановить ресурс"""
@@ -269,29 +333,43 @@ if not status: return False
     pass
 pass
 pass
+pass
+pass
 # Определяем пул ресурса
 if resource_type = ResourceType.HEALTH: pool= status.health
     pass
+pass
+pass
 pass
 pass
 elif resource_type = ResourceType.MANA: pool= status.mana
     pass
 pass
 pass
+pass
+pass
 elif resource_type = ResourceType.ENERGY: pool= status.energy
     pass
+pass
+pass
 pass
 pass
 elif resource_type = ResourceType.STAMINA: pool= status.stamin a
     pass
 pass
 pass
+pass
+pass
 elif resource_type = ResourceType.SHIELD: pool= status.shield
     pass
 pass
 pass
+pass
+pass
 else: return False
     pass
+pass
+pass
 pass
 pass
 # Восстанавливаем ресурс
@@ -301,6 +379,8 @@ rest or ed_amount= pool.current - old_value
 # Записываем в историю
 if rest or ed_amount > 0: self._add_to_his tory(status, "rest or e", {
     pass
+pass
+pass
 pass
 pass
 "resource_type": resource_type.value,
@@ -313,6 +393,8 @@ def consume_resource(self, entity_id: str, resource_type: ResourceType
     pass
 pass
 pass
+pass
+pass
 amount: float) -> bool: pass  # Добавлен pass в пустой блок
 """Потратить ресурс"""
 status= self.get_health_status(entity_id)
@@ -320,34 +402,50 @@ if not status: return False
     pass
 pass
 pass
+pass
+pass
 # Определяем пул ресурса
 if resource_type = ResourceType.HEALTH: pool= status.health
     pass
+pass
+pass
 pass
 pass
 elif resource_type = ResourceType.MANA: pool= status.mana
     pass
 pass
 pass
+pass
+pass
 elif resource_type = ResourceType.ENERGY: pool= status.energy
     pass
+pass
+pass
 pass
 pass
 elif resource_type = ResourceType.STAMINA: pool= status.stamin a
     pass
 pass
 pass
+pass
+pass
 elif resource_type = ResourceType.SHIELD: pool= status.shield
     pass
+pass
+pass
 pass
 pass
 else: return False
     pass
 pass
 pass
+pass
+pass
 # Проверяем, достаточно ли ресурса
 if pool.current < amount: return False
     pass
+pass
+pass
 pass
 pass
 # Тратим ресурс
@@ -367,10 +465,14 @@ def _hand le_physical_damage(self, damage: float, status: HealthStatus
     pass
 pass
 pass
+pass
+pass
 source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок
 """Обработка физического урона"""# Урон сначала идет на щит
 if status.shield.current > 0: shield_damage= m in(damage, status.shield.current)
     pass
+pass
+pass
 pass
 pass
 status.shield.current = shield_damage
@@ -380,16 +482,22 @@ def _hand le_magical_damage(self, damage: float, status: HealthStatus
     pass
 pass
 pass
+pass
+pass
 source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок"""Обработка магического урона"""# Магический урон игнорирует щит
 return damage
 def _hand le_pois on_damage(self, damage: float, status: HealthStatus
     pass
 pass
 pass
+pass
+pass
 source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок"""Обработка ядовитого урона"""status.is _pois oned= True
 return damage * 0.5  # Яд наносит меньше урона, но длительно
 def _hand le_burn_damage(self, damage: float, status: HealthStatus
     pass
+pass
+pass
 pass
 pass
 source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок"""Обработка огненного урона"""status.is _burning= True
@@ -399,9 +507,13 @@ def _hand le_direct_healing(self, amount: float, status: HealthStatus
     pass
 pass
 pass
+pass
+pass
 source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок"""Обработка прямого лечения"""return amount
 def _hand le_over_time_healing(self, amount: float, status: HealthStatus
     pass
+pass
+pass
 pass
 pass
 source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок"""Обработка лечения по времени"""return amount * 0.8  # Лечение по времени менее эффективно
@@ -409,10 +521,14 @@ def _hand le_percentage_healing(self, percentage: float
     pass
 pass
 pass
+pass
+pass
 status: HealthStatus, source_id: Optional[str]) -> float: pass  # Добавлен pass в пустой блок"""Обработка процентного лечения"""return(status.health.maximum * percentage) / 100.0
 # Применение изменений
 def _apply_damage(self, status: HealthStatus, damage: float
     pass
+pass
+pass
 pass
 pass
 damage_type: str, source_id: Optional[str]):
@@ -435,8 +551,12 @@ if status.health.current <= 0: self._hand le_death(status, source_id)
     pass
 pass
 pass
+pass
+pass
 def _apply_healing(self, status: HealthStatus, amount: float
     pass
+pass
+pass
 pass
 pass
 healing_type: str, source_id: Optional[str]):
@@ -459,31 +579,45 @@ def _update_health_state(self, status: HealthStatus):
     pass
 pass
 pass
+pass
+pass
 """Обновить состояние здоровья"""health_percentage= status.health.get_percentage()
 if health_percentage <= 0: status.state= HealthState.DEAD
     pass
+pass
+pass
 pass
 pass
 elif health_percentage <= 10: status.state= HealthState.CRITICAL
     pass
 pass
 pass
+pass
+pass
 elif health_percentage <= 25: status.state= HealthState.WOUNDED
     pass
+pass
+pass
 pass
 pass
 else: status.state= HealthState.ALIVE
     pass
 pass
 pass
+pass
+pass
 def _hand le_death(self, status: HealthStatus, source_id: Optional[str]):"""Обработка смерти"""
     pass
+pass
+pass
 pass
 pass
 status.state= HealthState.DEAD
 # Вызываем обработчики смерти
 for hand lerin self.death_hand lers.values():
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -500,19 +634,27 @@ def update_regeneration(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновить регенерацию ресурсов"""current_time= time.time()
 for entity_id, statusin self.health_statuses.items():
     pass
+pass
+pass
 pass
 pass
 if not status.is _alive():
     pass
 pass
 pass
+pass
+pass
 contin ue
 # Проверяем, нужно ли обновлять регенерацию
 if current_time - self.regeneration_timers.get(entity_id
     pass
+pass
+pass
 pass
 pass
 0) < self.regeneration_in terval: pass  # Добавлен pass в пустой блок
@@ -524,8 +666,12 @@ def _regenerate_resources(self, status: HealthStatus, delta_time: float):"""Ре
     pass
 pass
 pass
+pass
+pass
 if status.health.can_regenerate()and not status.health.is _full():
     pass
+pass
+pass
 pass
 pass
 old_health= status.health.current
@@ -537,9 +683,13 @@ if status.health.current > old_health: self._update_health_state(status)
     pass
 pass
 pass
+pass
+pass
 # Регенерация маны
 if status.mana.can_regenerate()and not status.mana.is _full():
     pass
+pass
+pass
 pass
 pass
 status.mana.current= m in(
@@ -551,6 +701,8 @@ if status.energy.can_regenerate()and not status.energy.is _full():
     pass
 pass
 pass
+pass
+pass
 status.energy.current= m in(
 status.energy.maximum,
 status.energy.current + status.energy.regeneration_rate * delta_time
@@ -558,6 +710,8 @@ status.energy.current + status.energy.regeneration_rate * delta_time
 # Регенерация выносливости
 if status.stamin a.can_regenerate()and not status.stamin a.is _full():
     pass
+pass
+pass
 pass
 pass
 status.stamin a.current= m in(
@@ -569,6 +723,8 @@ if status.shield.can_regenerate()and not status.shield.is _full():
     pass
 pass
 pass
+pass
+pass
 status.shield.current= m in(
 status.shield.maximum,
 status.shield.current + status.shield.regeneration_rate * delta_time
@@ -576,6 +732,8 @@ status.shield.current + status.shield.regeneration_rate * delta_time
 # История и статистика
 def _add_to_his tory(self, status: HealthStatus, event_type: str
     pass
+pass
+pass
 pass
 pass
 data: Dict[str, Any]):
@@ -589,8 +747,12 @@ if len(status.health_his tory) > self.max_health_his tory: status.health_his tor
     pass
 pass
 pass
+pass
+pass
 def get_health_his tory(self, entity_id: str
     pass
+pass
+pass
 pass
 pass
 event_type: Optional[str]= None) -> Lis t[Dict[str, Any]]:
@@ -601,8 +763,12 @@ if not status: return []
     pass
 pass
 pass
+pass
+pass
 if event_type: return [e for ein status.health_his tory if e["event_type"] = event_type]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -611,9 +777,13 @@ def get_health_statis tics(self, entity_id: str) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получить статистику здоровья"""status= self.get_health_status(entity_id)
 if not status: return {}
     pass
+pass
+pass
 pass
 pass
 return {"health_percentage": status.health.get_percentage(),
@@ -634,9 +804,13 @@ return {"health_percentage": status.health.get_percentage(),
 def set_max_health(self, entity_id: str, max_health: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Установить максимальное здоровье"""status= self.get_health_status(entity_id)
 if not status: return False
     pass
+pass
+pass
 pass
 pass
 old_max= status.health.maximum
@@ -646,14 +820,20 @@ if old_max > 0: ratio= status.health.current / old_max
     pass
 pass
 pass
+pass
+pass
 status.health.current= max_health * ratio
 return True
 def set_max_mana(self, entity_id: str, max_mana: float) -> bool:"""Установить максимальную ману"""status= self.get_health_status(entity_id)
     pass
 pass
 pass
+pass
+pass
 if not status: return False
     pass
+pass
+pass
 pass
 pass
 old_max= status.mana.maximum
@@ -663,16 +843,22 @@ if old_max > 0: ratio= status.mana.current / old_max
     pass
 pass
 pass
+pass
+pass
 status.mana.current= max_mana * ratio
 return True
 def add_temp or ary_effect(self, entity_id: str, effect_id: str
     pass
 pass
 pass
+pass
+pass
 effect_data: Dict[str, Any]):
 pass  # Добавлен pass в пустой блок"""Добавить временный эффект"""status= self.get_health_status(entity_id)
 if not status: return
     pass
+pass
+pass
 pass
 pass
 status.temp or ary_effects[effect_id]= {"data": effect_data,
@@ -682,22 +868,32 @@ def remove_temp or ary_effect(self, entity_id: str, effect_id: str):
     pass
 pass
 pass
+pass
+pass
 """Убрать временный эффект"""status= self.get_health_status(entity_id)
 if not status: return
     pass
+pass
+pass
 pass
 pass
 if effect_idin status.temp or ary_effects: del status.temp or ary_effects[effect_id]
     pass
 pass
 pass
+pass
+pass
 def clear_all_effects(self, entity_id: str):"""Очистить все временные эффекты"""
     pass
+pass
+pass
 pass
 pass
 status= self.get_health_status(entity_id)
 if not status: return
     pass
+pass
+pass
 pass
 pass
 status.temp or ary_effects.clear()

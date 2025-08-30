@@ -40,6 +40,8 @@ class Emotion:"""Эмоция сущности"""
     pass
 pass
 pass
+pass
+pass
 emotion_id: str
 emotion_type: EmotionType
 intensity: EmotionIntensity
@@ -52,6 +54,8 @@ decay_rate: float= 0.1  # Скорость затухания в секунду
 @dataclass: pass  # Добавлен pass в пустой блок
 class EmotionalState:"""Эмоциональное состояние сущности"""entity_id: str
     pass
+pass
+pass
 pass
 pass
 emotions: Lis t[Emotion]= field(default_factor = list):
@@ -68,6 +72,8 @@ class EmotionalTrigger:"""Триггер эмоции"""trigger_id: str
     pass
 pass
 pass
+pass
+pass
 trigger_type: str
 emotion_type: EmotionType
 intensity: EmotionIntensity
@@ -81,8 +87,12 @@ class EmotionSystem(BaseGameSystem):"""Система управления эм�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("emotions", Pri or ity.NORMAL)
@@ -117,11 +127,15 @@ logger.in fo("Система эмоций инициализирована с н
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы эмоций с новой архитектурой"""
 try: logger.in fo("Инициализация системы эмоций...")
 # Инициализация базового компонента
 if not super().in itialize():
     pass
+pass
+pass
 pass
 pass
 return False
@@ -139,6 +153,8 @@ except Exception: pass
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 logger.in fo("Система эмоций успешно инициализирована")
 return True
@@ -146,6 +162,8 @@ except Exception as e: logger.err or(f"Ошибка инициализации �
 return False
 def start(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Запуск системы эмоций"""
 try: except Exception as e: pass
@@ -155,6 +173,8 @@ logger.err or(f"Ошибка запуска системы эмоций: {e}")
 return False
 def stop(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Остановка системы эмоций"""
 try:
@@ -169,6 +189,8 @@ return False
 def destroy(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение системы эмоций"""
 try: except Exception as e: pass
 pass
@@ -177,6 +199,8 @@ logger.err or(f"Ошибка уничтожения системы эмоций:
 return False
 def update(self, delta_time: float) -> bool: pass
     pass
+pass
+pass
 pass
 """Обновление системы эмоций"""
 try: if not super().update(delta_time):
@@ -200,9 +224,13 @@ return False
 def _regis ter_system_states(self) -> None: pass
     pass
 pass
+pass
+pass
 """Регистрация состояний системы(для совместимости с тестами)"""
 if not self.state_manager: return
     pass
+pass
+pass
 pass
 pass
 # Для тестов используем update_state API у mock - объекта
@@ -221,6 +249,8 @@ pass  # Добавлен pass в пустой блок
 logger.in fo("Состояния системы эмоций зарегистрированы")
 def _regis ter_states(self) -> None: pass
     pass
+pass
+pass
 pass
 """Регистрация состояний в StateManager"""if not self.state_manager: return
 # Регистрируем состояния системы
@@ -246,9 +276,13 @@ logger.in fo("Состояния системы эмоций зарегистр�
 def _regis ter_system_reposit or ies(self) -> None: pass
     pass
 pass
+pass
+pass
 """Регистрация репозиториев системы(для совместимости с тестами)"""
 if not self.reposit or y_manager: return
     pass
+pass
+pass
 pass
 pass
 # Для тестов используем regis ter_reposit or y mock API(3 вызова) и добавляем четвертый пустой репозиторий для совместимости
@@ -257,6 +291,8 @@ pass  # Добавлен pass в пустой блок
 logger.in fo("Репозитории системы эмоций зарегистрированы")
 def _regis ter_reposit or ies(self) -> None: pass
     pass
+pass
+pass
 pass
 """Регистрация репозиториев в Reposit or yManager"""if not self.reposit or y_manager: return
 # Регистрируем репозиторий эмоциональных состояний
@@ -283,9 +319,13 @@ logger.in fo("Репозитории системы эмоций зарегис�
 def _rest or e_from_reposit or ies(self) -> None: pass
     pass
 pass
+pass
+pass
 """Восстановление данных из репозиториев"""
 if not self.reposit or y_manager: return
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -295,9 +335,13 @@ logger.err or(f"Ошибка восстановления данных из ре
 def _save_to_reposit or ies(self) -> None: pass
     pass
 pass
+pass
+pass
 """Сохранение данных в репозитории"""
 if not self.reposit or y_manager: return
     pass
+pass
+pass
 pass
 pass
 try:
@@ -307,8 +351,12 @@ if states_repo: states_repo.clear()
     pass
 pass
 pass
+pass
+pass
 for entity_id, statein self.emotional_states.items():
     pass
+pass
+pass
 pass
 pass
 states_repo.create(entity_id, state)
@@ -318,8 +366,12 @@ if triggers_repo: triggers_repo.clear()
     pass
 pass
 pass
+pass
+pass
 for i, triggerin enumerate(self.emotional_triggers):
     pass
+pass
+pass
 pass
 pass
 triggers_repo.create(f"trigger_{i}", trigger)
@@ -329,8 +381,12 @@ if his tory_repo: his tory_repo.clear()
     pass
 pass
 pass
+pass
+pass
 for i, rec or din enumerate(self.emotion_his tory):
     pass
+pass
+pass
 pass
 pass
 his tory_repo.create(f"his tory_{i}", rec or d)
@@ -342,9 +398,13 @@ logger.err or(f"Ошибка сохранения данных в репозит
 def _update_states(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление состояний в StateManager"""
 if not self.state_manager: return
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -353,6 +413,8 @@ pass
 logger.err or(f"Ошибка обновления состояний: {e}")
 def get_system_stats(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статистики системы"""return {
@@ -367,6 +429,8 @@ def reset_stats(self) -> None:"""Сброс статистики системы"
     pass
 pass
 pass
+pass
+pass
 'entities_with_emotions': 0,
 'total_emotions': 0,
 'emotions_triggered': 0,
@@ -378,10 +442,14 @@ def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обраб�
     pass
 pass
 pass
+pass
+pass
 try: if event_type = "entity_created":
 return self._hand le_entity_created(event_data)
 elif event_type = "entity_destroyed":
     pass
+pass
+pass
 pass
 pass
 return self._hand le_entity_destroyed(event_data)
@@ -389,9 +457,13 @@ elif event_type = "combat_ended":
     pass
 pass
 pass
+pass
+pass
 return self._hand le_combat_ended(event_data)
 elif event_type = "item_acquired":
     pass
+pass
+pass
 pass
 pass
 return self._hand le_item_acquired(event_data)
@@ -399,9 +471,13 @@ elif event_type = "skill_learned":
     pass
 pass
 pass
+pass
+pass
 return self._hand le_skill_learned(event_data)
 else: return False
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -411,6 +487,8 @@ logger.err or(f"Ошибка обработки события {event_type}: {e}
 return False
 def get_system_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о системе"""info= {
@@ -427,13 +505,19 @@ for key in('emotions_triggered', 'mood_changes', 'stress_events', 'update_time')
     pass
 pass
 pass
+pass
+pass
 if keyin self.system_stats: info[key]= self.system_stats[key]
     pass
+pass
+pass
 pass
 pass
 return info
 def _setup_emotion_system(self) -> None:"""Настройка системы эмоций"""
     pass
+pass
+pass
 pass
 pass
 try:
@@ -446,6 +530,8 @@ logger.warning(f"Не удалось настроить систему эмоц�
 def _create_base_triggers(self) -> None: pass
     pass
 pass
+pass
+pass
 """Создание базовых триггеров эмоций"""
 try: except Exception as e: pass
 pass
@@ -454,10 +540,14 @@ logger.err or(f"Ошибка создания базовых триггеров 
 def _update_emotional_states(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление эмоциональных состояний"""
 try: current_time= time.time()
 for entity_id, emotional_statein self.emotional_states.items():
     pass
+pass
+pass
 pass
 pass
 # Обновляем время последнего обновления
@@ -467,15 +557,21 @@ active_emotions= []
 for emotionin emotional_state.emotions: pass
     pass
 pass
+pass
+pass
 # Проверяем, не истекла ли эмоция
 if emotion.duration > 0and current_time - emotion.start_time > emotion.duration: pass
     pass
+pass
+pass
 pass
 # Эмоция истекла, будет удалена
 contin ue
 # Применяем затухание
 if emotion.duration > 0: emotion.value = (1 - emotion.decay_rate * delta_time)
     pass
+pass
+pass
 pass
 pass
 # Ограничиваем значение
@@ -494,6 +590,8 @@ logger.warning(f"Ошибка обновления эмоциональных с
 def _check_emotional_triggers(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Проверка триггеров эмоций"""
 try: except Exception as e: pass
 pass
@@ -501,6 +599,8 @@ pass
 logger.warning(f"Ошибка проверки триггеров эмоций: {e}")
 def _update_system_stats(self) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление статистики системы"""
 try: self.system_stats['entities_with_emotions']= len(self.emotional_states):
@@ -514,6 +614,8 @@ logger.warning(f"Ошибка обновления статистики сист
 def _hand le_entity_created(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события создания сущности"""
 try: except Exception as e: pass
 pass
@@ -523,10 +625,14 @@ return False
 def _hand le_entity_destroyed(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события уничтожения сущности"""
 try: entity_id= event_data.get('entity_id')
 if entity_id: return self.destroy_emotional_entity(entity_id)
     pass
+pass
+pass
 pass
 pass
 return False
@@ -538,6 +644,8 @@ return False
 def _hand le_combat_ended(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события окончания боя"""
 try: except Exception as e: pass
 pass
@@ -547,6 +655,8 @@ return False
 def _hand le_item_acquired(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события получения предмета"""
 try: entity_id= event_data.get('entity_id')
 item_rarity= event_data.get('item_rarity')
@@ -554,10 +664,14 @@ if entity_idand item_rarityand entity_idin self.emotional_states: if item_rarity
     pass
 pass
 pass
+pass
+pass
 self.add_emotion(entity_id, EmotionType.JOY
 EmotionIntensity.HIGH, 0.8, 1800.0)
 elif item_rarity = 'common':
     pass
+pass
+pass
 pass
 pass
 self.add_emotion(entity_id, EmotionType.SATISFACTION
@@ -572,6 +686,8 @@ return False
 def _hand le_skill_learned(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события изучения навыка"""
 try: except Exception as e: pass
 pass
@@ -582,10 +698,14 @@ return False
 def _on_item_added_event(self, data: Dict[str, Any]) -> None: try: pass
     pass
 pass
+pass
+pass
 except Exception: pass
 pass  # Добавлен pass в пустой блок
 def create_emotional_entity(self, entity_id: str
     pass
+pass
+pass
 pass
 pass
 initial_emotions: Lis t[Dict[str, Any]]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -603,6 +723,8 @@ if initial_emotions: for emotion_datain initial_emotions: emotion= Emotion(
     pass
 pass
 pass
+pass
+pass
 emotion_i = f"in itial_{in t(time.time() * 1000)}",
 emotion_typ = EmotionType(emotion_data.get('emotion_type', EmotionType.NEUTRAL.value)),
 intensit = EmotionIntensity(emotion_data.get('in tensity', EmotionIntensity.LOW.value)),
@@ -618,6 +740,8 @@ self._recalculate_mood(emotional_state)
 # Отправляем событие об изменении доминирующей эмоции(простая эвристика)
 if self.event_busand emotional_state.emotions: domin ant= max(emotional_state.emotions
     pass
+pass
+pass
 pass
 pass
 ke = lambda e: abs(e.value))
@@ -644,6 +768,8 @@ return False
 def destroy_emotional_entity(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение сущности из системы эмоций"""
 try: except Exception as e: pass
 pass
@@ -652,6 +778,8 @@ logger.err or(f"Ошибка удаления сущности {entity_id} из 
 return False
 def add_emotion(self, entity_id: str, emotion_type: EmotionType
     pass
+pass
+pass
 pass
 pass
 intensity: EmotionIntensity,
@@ -663,6 +791,8 @@ emotional_state= self.emotional_states[entity_id]
 # Проверяем лимит эмоций
 if len(emotional_state.emotions) >= self.system_settings['max_emotions_per_entity']:
     pass
+pass
+pass
 pass
 pass
 # Удаляем самую слабую эмоцию
@@ -687,6 +817,8 @@ self._recalculate_mood(emotional_state)
 # Отправляем событие об изменении доминирующей эмоции(простая эвристика)
 if self.event_busand emotional_state.emotions: domin ant= max(emotional_state.emotions
     pass
+pass
+pass
 pass
 pass
 ke = lambda e: abs(e.value))
@@ -723,6 +855,8 @@ return False
 def _recalculate_mood(self, emotional_state: EmotionalState) -> None: pass
     pass
 pass
+pass
+pass
 """Пересчет общего настроения"""
 try: except Exception as e: pass
 pass
@@ -730,6 +864,8 @@ pass
 logger.warning(f"Ошибка пересчета настроения: {e}")
 def _get_emotion_weight(self, emotion: Emotion) -> float: pass
     pass
+pass
+pass
 pass
 """Получение веса эмоции для расчета настроения"""
 try:
@@ -746,6 +882,8 @@ if emotion.duration > 0: time_factor= 1.0 - (time.time() - emotion.start_time) /
     pass
 pass
 pass
+pass
+pass
 time_factor= max(0.1, time_fact or )
 weight = time_factor
 return weight
@@ -758,6 +896,8 @@ def _update_stress_level(self, emotional_state: EmotionalState
     pass
 pass
 pass
+pass
+pass
 delta_time: float) -> None: pass  # Добавлен pass в пустой блок
 """Обновление уровня стресса"""
 try: except Exception as e: pass
@@ -766,6 +906,8 @@ pass
 logger.warning(f"Ошибка обновления уровня стресса: {e}")
 def _check_trigger_conditions(self, trigger: EmotionalTrigger) -> bool: pass
     pass
+pass
+pass
 pass
 """Проверка условий триггера"""
 try:
@@ -780,6 +922,8 @@ return False
 def _activate_emotional_trigger(self, trigger: EmotionalTrigger) -> None: pass
     pass
 pass
+pass
+pass
 """Активация триггера эмоций"""
 try: except Exception as e: pass
 pass
@@ -787,6 +931,8 @@ pass
 logger.err or(f"Ошибка активации триггера {trigger.trigger_id}: {e}")
 def get_emotional_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
     pass
+pass
+pass
 pass
 pass
 """Получение эмоционального состояния сущности"""
@@ -812,6 +958,8 @@ for emotionin emotional_state.emotions: pass  # Добавлен pass в пус�
     pass
 pass
 pass
+pass
+pass
 ]
 }
 except Exception as e: pass
@@ -821,6 +969,8 @@ logger.err or(f"Ошибка получения эмоционального с�
 return None
 def get_emotion_his tory(self, entity_id: str
     pass
+pass
+pass
 pass
 pass
 limit: int= 50) -> Lis t[Dict[str, Any]]:
@@ -834,6 +984,8 @@ return []
 def remove_emotion(self, entity_id: str, emotion_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление эмоции"""
 try: if entity_id notin self.emotional_states: return False
 emotional_state= self.emotional_states[entity_id]
@@ -842,9 +994,13 @@ for emotionin emotional_state.emotions: if emotion.emotion_id = emotion_id: emot
     pass
 pass
 pass
+pass
+pass
 break
 if not emotion_to_remove: return False
     pass
+pass
+pass
 pass
 pass
 # Удаляем эмоцию
@@ -854,6 +1010,8 @@ self._recalculate_mood(emotional_state)
 # Отправляем событие об изменении доминирующей эмоции(простая эвристика)
 if self.event_busand emotional_state.emotions: domin ant= max(emotional_state.emotions
     pass
+pass
+pass
 pass
 pass
 ke = lambda e: abs(e.value))
@@ -871,6 +1029,8 @@ def set_emotional_stability(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 stability: float) -> bool: pass  # Добавлен pass в пустой блок
 """Установка эмоциональной стабильности"""
 try: except Exception as e: pass
@@ -882,6 +1042,8 @@ def get_entities_by_mood(self, mood_range: tuple) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 """Получение сущностей по диапазону настроения"""
 try: min _mood, max_mood= mood_range
 entities= []
@@ -889,8 +1051,12 @@ for entity_id, emotional_statein self.emotional_states.items():
     pass
 pass
 pass
+pass
+pass
 if min _mood <= emotional_state.mood <= max_mood: entities.append(entity_id)
     pass
+pass
+pass
 pass
 pass
 return entities
@@ -903,6 +1069,8 @@ def get_entities_by_stress(self, stress_range: tuple) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 """Получение сущностей по диапазону стресса"""
 try: except Exception as e: pass
 pass
@@ -911,6 +1079,8 @@ logger.err or(f"Ошибка получения сущностей по стре
 return []
 def for ce_emotion(self, entity_id: str, emotion_type: EmotionType
     pass
+pass
+pass
 pass
 pass
 intensity: EmotionIntensity,
@@ -925,6 +1095,8 @@ logger.err or(f"Ошибка принудительного добавления
 return False
 def clear_emotions(self, entity_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Очистка всех эмоций сущности"""
 try: except Exception as e: logger.err or(f"Ошибка очистки эмоций у {entity_id}: {e}")

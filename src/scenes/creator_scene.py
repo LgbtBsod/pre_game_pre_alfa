@@ -58,6 +58,8 @@ class Creat or Camera:"""Камера для режима создания"""def
     pass
 pass
 pass
+pass
+pass
 self.camera_node= camera_node
 # Позиция камеры
 self.w or ld_x= 0.0
@@ -73,6 +75,8 @@ def _setup_ or thographic_projection(self):"""Настройка ортогра�
     pass
 pass
 pass
+pass
+pass
 lens.setFilmSize(40, 30)
 lens.setNearFar( - 100, 100)
 self.camera_node.node().setLens(lens)
@@ -83,6 +87,8 @@ def move(self, dx: float, dy: float, dz: float= 0):"""Перемещение к�
     pass
 pass
 pass
+pass
+pass
 self.w or ld_y = dy
 self.w or ld_z = dz
 # Обновляем позицию камеры
@@ -91,15 +97,21 @@ def set_zoom(self, zoom: float):"""Установка масштаба"""self.zo
     pass
 pass
 pass
+pass
+pass
 # Обновляем проекцию
 lens= self.camera_node.node().getLens()
 if isin stance(lens, OrthographicLens):
     pass
 pass
 pass
+pass
+pass
 lens.setFilmSize(40 / self.zoom, 30 / self.zoom)
 def screen_to_w or ld(self, screen_x: float, screen_y: float) -> Tuple[float
     pass
+pass
+pass
 pass
 pass
 float]:
@@ -111,8 +123,12 @@ class Creat or Scene(Scene):"""Сцена режима "Творец мира" �
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("creat or ")
@@ -144,6 +160,8 @@ logger.in fo("Сцена творца мира Pand a3D создана")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация сцены творца мира"""
 try: logger.in fo("Начало инициализации сцены творца мира Pand a3D...")
 # Создание корневых узлов
@@ -154,9 +172,13 @@ if hasattr(self, 'scene_manager')and self.scene_manager: from pand a3d.c or e im
     pass
 pass
 pass
+pass
+pass
 camera_node= self.scene_manager.render_node.fin d(" * */ + Camera")
 if camera_node.is Empty():
     pass
+pass
+pass
 pass
 pass
 camera= Camera('creat or _camera')
@@ -181,25 +203,35 @@ def _create_scene_nodes(self):
     pass
 pass
 pass
+pass
+pass
 """Создание корневых узлов сцены"""
 # Используем корневые узлы, созданные менеджером сцен
 if self.scene_root: self.w or ld_root= self.scene_root.attachNewNode("w or ld")
     pass
 pass
 pass
+pass
+pass
 self.ui_root= self.scene_root.attachNewNode("ui")
 else: pass
     pass
+pass
+pass
 pass
 # Fallback если корневые узлы не созданы
 if hasattr(self, 'scene_manager')and self.scene_manager: self.scene_root= self.scene_manager.render_node.attachNewNode("creat or _scene")
     pass
 pass
 pass
+pass
+pass
 self.w or ld_root= self.scene_root.attachNewNode("w or ld")
 self.ui_root= self.scene_root.attachNewNode("ui")
 def _in itialize_systems(self):
     pass
+pass
+pass
 pass
 pass
 """Инициализация систем"""
@@ -210,11 +242,15 @@ if hasattr(self.w or ld_manager, 'in itialize'):
     pass
 pass
 pass
+pass
+pass
 self.w or ld_manager.in itialize()
 # Создаем UI систему
 self.ui_system= UISystem()
 if hasattr(self.ui_system, 'in itialize'):
     pass
+pass
+pass
 pass
 pass
 self.ui_system.in itialize()
@@ -227,6 +263,8 @@ def _create_ui_elements(self):
     pass
 pass
 pass
+pass
+pass
 """Создание UI элементов для режима творца мира"""
 try: except Exception as e: pass
 pass
@@ -236,9 +274,13 @@ def _setup_lighting(self):
     pass
 pass
 pass
+pass
+pass
 """Настройка освещения для сцены"""
 if not self.scene_root: return
     pass
+pass
+pass
 pass
 pass
 # Основное направленное освещение
@@ -257,6 +299,8 @@ def _create_placement_grid(self):
     pass
 pass
 pass
+pass
+pass
 """Создание сетки для размещения объектов"""
 try: except Exception as e: pass
 pass
@@ -264,6 +308,8 @@ pass
 logger.warning(f"Не удалось создать сетку размещения: {e}")
 def _hand le_tool_button(self, tool_id: str):
     pass
+pass
+pass
 pass
 pass
 """Обработка нажатия кнопки инструмента"""
@@ -274,16 +320,22 @@ elif tool_id = "edit":
     pass
 pass
 pass
+pass
+pass
 self.creation_mode= False
 self.in fo_text.setText("✏️ Режим редактирования: Выберите объект для редактирования")
 elif tool_id = "preview":
     pass
 pass
 pass
+pass
+pass
 self.creation_mode= False
 self.in fo_text.setText("👁️ Режим просмотра: Наблюдайте за созданным миром")
 elif tool_id = "clear":
     pass
+pass
+pass
 pass
 pass
 self._clear_w or ld()
@@ -297,6 +349,8 @@ def _hand le_categ or y_button(self, categ or y_id: str):
     pass
 pass
 pass
+pass
+pass
 """Обработка нажатия кнопки категории"""
 try: except Exception as e: pass
 pass
@@ -306,6 +360,8 @@ def _show_templates_in _properties(self
     pass
 pass
 pass
+pass
+pass
 templates: Lis t[W or ldObjectTemplate]):
 pass  # Добавлен pass в пустой блок
 """Показ шаблонов в панели свойств"""
@@ -313,6 +369,8 @@ try:
 # Очищаем панель свойств
 for childin self.properties_frame.getChildren():
     pass
+pass
+pass
 pass
 pass
 child.destroy()
@@ -328,6 +386,8 @@ paren = self.properties_frame
 # Создаем кнопки для каждого шаблона
 for i, templatein enumerate(templates[:8]):  # Максимум 8 шаблонов
     pass
+pass
+pass
 pass
 pass
 button= DirectButton(
@@ -349,6 +409,8 @@ def _select_template(self, template_id: str):
     pass
 pass
 pass
+pass
+pass
 """Выбор шаблона для размещения"""
 try: except Exception as e: pass
 pass
@@ -358,11 +420,15 @@ def _clear_w or ld(self):
     pass
 pass
 pass
+pass
+pass
 """Очистка мира"""
 try: if self.w or ld_manager:
 # Очищаем все объекты
 for object_idin lis t(self.w or ld_manager.w or ld_objects.keys()):
     pass
+pass
+pass
 pass
 pass
 self.w or ld_manager.remove_w or ld_object(object_id)
@@ -375,6 +441,8 @@ def hand le_mouse_click(self, x: float, y: float, button: str):
     pass
 pass
 pass
+pass
+pass
 """Обработка клика мыши"""
 try: except Exception as e: pass
 pass
@@ -382,6 +450,8 @@ pass
 logger.err or(f"Ошибка обработки клика мыши: {e}")
 def _place_object(self, w or ld_x: float, w or ld_y: float):
     pass
+pass
+pass
 pass
 pass
 """Размещение объекта в мире"""
@@ -404,6 +474,8 @@ object_id= self.w or ld_manager.add_w or ld_object(object_data)
 if object_id: pass
     pass
 pass
+pass
+pass
 # Создаем визуальное представление
 self._create_vis ual_object(object_data)
 # Обновляем статистику
@@ -414,12 +486,16 @@ else: self.in fo_text.setText("❌ Не удалось разместить об
     pass
 pass
 pass
+pass
+pass
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка размещения объекта: {e}")
 def _create_vis ual_object(self, object_data: Dict[str, Any]):
     pass
+pass
+pass
 pass
 pass
 """Создание визуального представления объекта"""
@@ -429,6 +505,8 @@ pass
 logger.warning(f"Не удалось создать визуальное представление объекта: {e}")
 def _update_stats(self):
     pass
+pass
+pass
 pass
 pass
 """Обновление статистики"""
@@ -448,13 +526,19 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление сцены творца мира"""# Обновляем системы
 if self.w or ld_manager: self.w or ld_manager.update(delta_time)
     pass
 pass
 pass
+pass
+pass
 if self.ui_system: self.ui_system.update(delta_time)
     pass
+pass
+pass
 pass
 pass
 # Обновляем статистику
@@ -464,13 +548,19 @@ def render(self, render_node):"""Отрисовка сцены творца ми
 pass
 pass
 pass
+pass
+pass
 def hand le_event(self, event):"""Обработка событий"""# Обработка событий Pand a3D
     pass
 pass
 pass
 pass
+pass
+pass
 def cleanup(self):"""Очистка сцены творца мира"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка сцены творца мира Pand a3D...")
@@ -479,8 +569,12 @@ if self.w or ld_manager: self.w or ld_manager.cleanup()
     pass
 pass
 pass
+pass
+pass
 if self.ui_system: self.ui_system.cleanup()
     pass
+pass
+pass
 pass
 pass
 # Очищаем Pand a3D узлы
@@ -488,21 +582,31 @@ if self.scene_root: self.scene_root.removeNode()
     pass
 pass
 pass
+pass
+pass
 # Очищаем UI элементы
 if self.toolbar_frame: self.toolbar_frame.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.templates_frame: self.templates_frame.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.properties_frame: self.properties_frame.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.stats_frame: self.stats_frame.destroy()
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Сцена творца мира Pand a3D очищена")

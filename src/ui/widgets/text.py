@@ -30,6 +30,8 @@ class TextStyle:"""Стиль текста"""# Цвета
     pass
 pass
 pass
+pass
+pass
 text_col or : Tuple[float, float, float, float]= (0.0, 1.0, 1.0, 1.0)
 shadow_col or : Tuple[float, float, float, float]= (0.0, 0.0, 0.0, 0.8)
 # Размеры
@@ -44,8 +46,12 @@ class NeonText:"""Неоновый текстовый элемент с совр
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 text: str,
@@ -61,6 +67,8 @@ self.text_element= None
 logger.debug(f"Создан неоновый текст: {text}")
 def create(self) -> OnscreenText: pass
     pass
+pass
+pass
 pass
 """Создание текстового элемента Pand a3D"""
 try: self.text_element= OnscreenText(
@@ -86,9 +94,13 @@ def set_text(self, text: str):
     pass
 pass
 pass
+pass
+pass
 """Изменение текста"""
 if self.text_element: self.text_element.setText(text)
     pass
+pass
+pass
 pass
 pass
 self.text= text
@@ -97,10 +109,14 @@ def set_position(self, pos: Tuple[float, float]):
     pass
 pass
 pass
+pass
+pass
 """Изменение позиции"""if self.text_element: self.text_element.setPos( * pos)
 self.pos= pos
 def set_scale(self, scale: float):"""Изменение масштаба"""if self.text_element: self.text_element.setScale(scale)
     pass
+pass
+pass
 pass
 pass
 self.style.scale= scale
@@ -108,9 +124,13 @@ def set_col or(self, col or : Tuple[float, float, float, float]):"""Измене
     pass
 pass
 pass
+pass
+pass
 self.style.text_color= color
 def set_shadow_col or(self, shadow_col or : Tuple[float, float, float
     pass
+pass
+pass
 pass
 pass
 float]):
@@ -120,12 +140,18 @@ def set_vis ible(self, vis ible: bool):"""Показать / скрыть тек
     pass
 pass
 pass
+pass
+pass
 def destroy(self):"""Уничтожение текстового элемента"""
     pass
 pass
 pass
+pass
+pass
 if self.text_element: self.text_element.destroy()
     pass
+pass
+pass
 pass
 pass
 self.text_element= None
@@ -134,9 +160,13 @@ class InfoText(NeonText):
     pass
 pass
 pass
+pass
+pass
 """Информационный текст для HUD"""
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 text: str,
@@ -149,12 +179,16 @@ if info_type = "health":
     pass
 pass
 pass
+pass
+pass
 style= TextStyle(
 text_colo = (1.0, 0.392, 0.392, 1.0),  # Красный
 scal = 0.045
 )
 elif info_type = "mana":
     pass
+pass
+pass
 pass
 pass
 style= TextStyle(
@@ -165,12 +199,16 @@ elif info_type = "ai":
     pass
 pass
 pass
+pass
+pass
 style= TextStyle(
 text_colo = (0.0, 1.0, 1.0, 1.0),  # Голубой
 scal = 0.035
 )
 elif info_type = "skills":
     pass
+pass
+pass
 pass
 pass
 style= TextStyle(
@@ -181,12 +219,16 @@ elif info_type = "items":
     pass
 pass
 pass
+pass
+pass
 style= TextStyle(
 text_colo = (1.0, 0.756, 0.027, 1.0),  # Желтый
 scal = 0.035
 )
 elif info_type = "effects":
     pass
+pass
+pass
 pass
 pass
 style= TextStyle(
@@ -197,12 +239,16 @@ elif info_type = "genome":
     pass
 pass
 pass
+pass
+pass
 style= TextStyle(
 text_colo = (1.0, 0.5, 0.0, 1.0),  # Оранжевый
 scal = 0.035
 )
 elif info_type = "emotion":
     pass
+pass
+pass
 pass
 pass
 style= TextStyle(
@@ -213,10 +259,14 @@ else: style= TextStyle()
     pass
 pass
 pass
+pass
+pass
 super().__in it__(text, pos, style, parent)
 self.in fo_type= info_type
 def create_neon_text(text: str,
     pass
+pass
+pass
 pass
 pass
 pos: Tuple[float, float],
@@ -228,6 +278,8 @@ text_widget.create()
 return text_widget
 def create_in fo_text(text: str,
     pass
+pass
+pass
 pass
 pass
 pos: Tuple[float, float],

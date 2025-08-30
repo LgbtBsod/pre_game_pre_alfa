@@ -35,6 +35,8 @@ class Mem or yType(Enum):"""Типы памяти"""
     pass
 pass
 pass
+pass
+pass
 COMBAT= "combat"
 MOVEMENT= "movement"
 SKILL_USAGE= "skill_usage"
@@ -43,6 +45,8 @@ ENVIRONMENT= "environment"
 SOCIAL= "social"@dataclass: pass  # Добавлен pass в пустой блок
 class Mem or yEntry:"""Запись в памяти"""mem or y_type: Mem or yType
     pass
+pass
+pass
 pass
 pass
 timestamp: float
@@ -55,10 +59,14 @@ def to_dict(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 return asdict(self)
 @classmethod: pass  # Добавлен pass в пустой блок
 def from_dict(cls, data: Dict[str, Any]) -> 'Mem or yEntry':
     pass
+pass
+pass
 pass
 pass
 data['mem or y_type']= Mem or yType(data['mem or y_type'])
@@ -66,6 +74,8 @@ return cls( * *data)
 @dataclass: pass  # Добавлен pass в пустой блок
 class GenerationMem or y:"""Память поколения"""generation_id: int
     pass
+pass
+pass
 pass
 pass
 entity_id: str
@@ -80,6 +90,8 @@ def to_dict(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 data= asdict(self)
 data['entity_type']= self.entity_type.value
 data['mem or ies']= [mem.to_dict() for memin self.mem or ies]:
@@ -90,6 +102,8 @@ def from_dict(cls, data: Dict[str, Any]) -> 'GenerationMem or y':
     pass
 pass
 pass
+pass
+pass
 data['entity_type']= BaseEntityType(data['entity_type'])
 data['mem or ies']= [Mem or yEntry.from_dict(mem) for memin data['mem or ies']]:
 pass  # Добавлен pass в пустой блок
@@ -98,8 +112,12 @@ class AIEntity(BaseEntity):"""Базовая сущность для всех И
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, entity_id: str, entity_type: BaseEntityType, save_slot: str= "default"):
     pass
+pass
+pass
 pass
 pass
 # Инициализируем базовую сущность
@@ -134,13 +152,19 @@ logger.in fo(f"AI Entity создана: {entity_id} ({entity_type.value})")
 def _get_learning_rate(self) -> float: pass
     pass
 pass
+pass
+pass
 """Получение скорости обучения в зависимости от типа сущности"""if self.entity_type = BaseEntityType.PLAYER: return 0.8  # Игрок учится быстро
 elif self.entity_type = BaseEntityType.ENEMY: return 0.3  # Враги учатся медленно, но имеют общую память
     pass
 pass
 pass
+pass
+pass
 else:  # NPC
     pass
+pass
+pass
 pass
 pass
 return 0.5  # Средняя скорость обучения
@@ -148,12 +172,18 @@ def _get_mem or y_capacity(self) -> int:"""Получение емкости п�
     pass
 pass
 pass
+pass
+pass
 elif self.entity_type = BaseEntityType.ENEMY: return 500   # Средняя память для врагов
     pass
 pass
 pass
+pass
+pass
 else:  # NPC
     pass
+pass
+pass
 pass
 pass
 return 300   # Небольшая память для NPC
@@ -161,17 +191,25 @@ def _get_generation_mem or y_capacity(self) -> int:"""Получение емк�
     pass
 pass
 pass
+pass
+pass
 elif self.entity_type = BaseEntityType.ENEMY: return 100  # Очень много поколений для врагов(общая память)
     pass
+pass
+pass
 pass
 pass
 else:  # NPC
     pass
 pass
 pass
+pass
+pass
 return 20   # Несколько поколений для NPC
 def add_mem or y(self, mem or y_type: Mem or yType, context: Dict[str, Any],
     pass
+pass
+pass
 pass
 pass
 action: str, outcome: Dict[str, Any], success: bool):
@@ -195,6 +233,8 @@ self.mem or y.mem or ies.append(mem or y.to_dict())
 if len(self.mem or y.mem or ies) > self.mem or y_capacity: pass
     pass
 pass
+pass
+pass
 # Удаляем старые записи с низкой ценностью
 self.mem or y.mem or ies.s or t(ke = lambda x: x.get('learning_value', 0))
 self.mem or y.mem or ies= self.mem or y.mem or ies[ - self.mem or y_capacity:]
@@ -204,8 +244,12 @@ if success: self.stats['successful_actions'] = 1
     pass
 pass
 pass
+pass
+pass
 else: self.stats['failed_actions'] = 1
     pass
+pass
+pass
 pass
 pass
 # Добавляем опыт
@@ -215,6 +259,8 @@ self.stats['total_experience'] = experience_gain
 logger.debug(f"Добавлена память: {mem or y_type.value} - {action} (успех: {success}, ценность: {learning_value:.2f})")
 def _calculate_learning_value(self, mem or y_type: Mem or yType
     pass
+pass
+pass
 pass
 pass
 context: Dict[str, Any],
@@ -236,8 +282,12 @@ if success: base_value = 1.2
     pass
 pass
 pass
+pass
+pass
 else: base_value = 0.8  # Неудачи тоже важны для обучения
     pass
+pass
+pass
 pass
 pass
 # Дополнительные множители из контекста
@@ -245,29 +295,43 @@ if 'damage_dealt'in outcome: damage= outcome['damage_dealt']
     pass
 pass
 pass
+pass
+pass
 if damage > 0: base_value = m in(1.0 + damage / 100.0, 2.0)
     pass
+pass
+pass
 pass
 pass
 if 'health_lost'in outcome: health_lost= outcome['health_lost']
     pass
 pass
 pass
+pass
+pass
 if health_lost > 0: base_value = 1.1  # Потеря здоровья - важный опыт
     pass
+pass
+pass
 pass
 pass
 if 'skill_used'in context: base_value = 1.1  # Использование скиллов важно
     pass
 pass
 pass
+pass
+pass
 if 'item_used'in context: base_value = 1.05  # Использование предметов
     pass
+pass
+pass
 pass
 pass
 return m in(base_value, 1.0)  # Ограничиваем максимальную ценность
 def get_relevant_mem or ies(self, mem or y_type: Mem or yType, context: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any],
@@ -278,6 +342,8 @@ pass  # Добавлен pass в пустой блок
 # Сортируем по релевантности(простая эвристика)
 def relevance_sc or e(mem or y: Dict[str, Any]) -> float: sc or e= mem or y.get('learning_value', 0)
     pass
+pass
+pass
 pass
 pass
 # Бонус за похожий контекст
@@ -296,6 +362,8 @@ def _calculate_context_similarity(self, context1: Dict[str, Any]
     pass
 pass
 pass
+pass
+pass
 context2: Dict[str, Any]) -> float: pass  # Добавлен pass в пустой блок"""Вычисление схожести контекстов"""if not context1 or not context2: return 0.0
 # Простая эвристика схожести
 common_keys= set(context1.keys()) & set(context2.keys())
@@ -303,14 +371,20 @@ if not common_keys: return 0.0
     pass
 pass
 pass
+pass
+pass
 similarity= 0.0
 for keyin common_keys: val1= context1[key]
     pass
 pass
 pass
+pass
+pass
 val2= context2[key]
 if isin stance(val1, (in t, float))and isin stance(val2, (in t
     pass
+pass
+pass
 pass
 pass
 float)):
@@ -321,8 +395,12 @@ if max_val > 0: similarity = 1.0 - abs(val1 - val2) / max_val
     pass
 pass
 pass
+pass
+pass
 elif isin stance(val1, str)and isin stance(val2, str):
     pass
+pass
+pass
 pass
 pass
 # Строковые значения
@@ -330,13 +408,19 @@ if val1 = val2: similarity = 1.0
     pass
 pass
 pass
+pass
+pass
 elif val1in val2 or val2in val1: similarity = 0.5
     pass
+pass
+pass
 pass
 pass
 return similarity / len(common_keys)
 def end_generation(self, cause_of_death: Optional[str]= None
     pass
+pass
+pass
 pass
 pass
 fin al_stats: Optional[Dict[str, Any]]= None):
@@ -345,10 +429,14 @@ if not fin al_stats: fin al_stats= self.stats.copy()
     pass
 pass
 pass
+pass
+pass
 # Конвертируем память в Mem or yEntry
 mem or ies= []
 for mem_dictin self.mem or y.mem or ies: try: pass
     pass
+pass
+pass
 pass
 except Exception as e: pass
 pass
@@ -372,6 +460,8 @@ self.generation_mem or ies.append(generation_mem or y)
 if len(self.generation_mem or ies) > self.generation_mem or y_capacity: pass
     pass
 pass
+pass
+pass
 # Удаляем старые поколения с низким опытом
 self.generation_mem or ies.s or t(ke = lambda x: x.total_experience)
 self.generation_mem or ies= self.generation_mem or ies[ - self.generation_mem or y_capacity:]
@@ -388,6 +478,8 @@ def get_learning_data(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение данных для обучения ИИ"""# Анализируем память для извлечения паттернов
 patterns= self._analyze_patterns()
 # Получаем статистику успешных действий
@@ -401,13 +493,19 @@ for memin self.mem or y.mem or ies: if mem.get('mem or y_type') = Mem or yType.S
     pass
 pass
 pass
+pass
+pass
 if skill_name notin skill_usage: skill_usage[skill_name]= {'success': 0, 'total': 0}
     pass
+pass
+pass
 pass
 pass
 skill_usage[skill_name]['total'] = 1
 if mem.get('success', False):
     pass
+pass
+pass
 pass
 pass
 skill_usage[skill_name]['success'] = 1
@@ -426,6 +524,8 @@ def _analyze_patterns(self) -> Dict[str, Any]:"""Анализ паттернов
     pass
 pass
 pass
+pass
+pass
 patterns= {
 'preferred_actions': {},
 'successful_combin ations': [],
@@ -438,13 +538,19 @@ for memin self.mem or y.mem or ies: action= mem.get('action', '')
     pass
 pass
 pass
+pass
+pass
 if action notin action_counts: action_counts[action]= {'success': 0, 'total': 0}
     pass
+pass
+pass
 pass
 pass
 action_counts[action]['total'] = 1
 if mem.get('success', False):
     pass
+pass
+pass
 pass
 pass
 action_counts[action]['success'] = 1
@@ -453,9 +559,13 @@ for action, countsin action_counts.items():
     pass
 pass
 pass
+pass
+pass
 success_rate= counts['success'] / counts['total']
 if success_rate > 0.6:  # Успешность выше 60%
     pass
+pass
+pass
 pass
 pass
 patterns['preferred_actions'][action]= success_rate
@@ -465,10 +575,14 @@ for iin range(len(recent_mem or ies) - 1):
     pass
 pass
 pass
+pass
+pass
 mem1= recent_mem or ies[i]
 mem2= recent_mem or ies[i + 1]
 if mem1.get('success', False)and mem2.get('success', False):
     pass
+pass
+pass
 pass
 pass
 combin ation= f"{mem1.get('action', '')} -> {mem2.get('action', '')}"
@@ -476,10 +590,14 @@ if combin ation notin patterns['successful_combin ations']:
     pass
 pass
 pass
+pass
+pass
 patterns['successful_combin ations'].append(combin ation)
 return patterns
 def _get_mem or y_file_path(self) -> str: pass
     pass
+pass
+pass
 pass
 """Получение пути к файлу памяти"""
 mem or y_dir= f"saves / ai_mem or y/{getattr(self, 'save_slot', 'default')}":
@@ -494,16 +612,22 @@ def _load_mem or y(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка памяти из файла"""
 try: file_path= self._get_mem or y_file_path()
 if not os.path.exis ts(file_path):
     pass
 pass
 pass
+pass
+pass
 logger.debug(f"Файл памяти не найден: {file_path}")
 return
 with open(file_path, 'r', encodin = 'utf - 8') as f: mem or y_data= json.load(f)
     pass
+pass
+pass
 pass
 pass
 # Загружаем статистику
@@ -520,6 +644,8 @@ pass
 logger.err or(f"Ошибка загрузки памяти: {e}")
 def get_mem or y_summary(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение сводки памяти"""

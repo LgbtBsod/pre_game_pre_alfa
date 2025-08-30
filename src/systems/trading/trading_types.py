@@ -25,6 +25,8 @@ class TradeType(Enum):"""Типы торговли"""
     pass
 pass
 pass
+pass
+pass
 # Основные типы
 BUY= "buy"
 SELL= "sell"

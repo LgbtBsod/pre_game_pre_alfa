@@ -36,8 +36,12 @@ class MenuScene(Scene):"""Сцена главного меню на Pand a3D"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("menu")
@@ -51,6 +55,8 @@ logger.in fo("Сцена меню Pand a3D создана")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация сцены меню"""
 try: except Exception as e: pass
 pass
@@ -59,6 +65,8 @@ logger.err or(f"Ошибка инициализации сцены меню: {e}
 return False
 def _create_ui_elements(self):
     pass
+pass
+pass
 pass
 pass
 """Создание UI элементов меню"""
@@ -126,9 +134,13 @@ def _start_game(self):
     pass
 pass
 pass
+pass
+pass
 """Начать игру"""
 if self.scene_manager: pass
     pass
+pass
+pass
 pass
 # Скрываем своё UI перед переключением
 try: except Exception: pass
@@ -139,9 +151,13 @@ def _open_creat or(self):
     pass
 pass
 pass
+pass
+pass
 """Открыть творца мира"""
 if self.scene_manager: self.scene_manager.switch_to_scene("creat or ", "fade")
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Переключение на сцену творца мира")
@@ -149,14 +165,20 @@ def _open_settings(self):
     pass
 pass
 pass
+pass
+pass
 """Открыть настройки"""
 if self.scene_manager: self.scene_manager.switch_to_scene("settings", "fade")
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Переключение на сцену настроек")
 def _quit_game(self):
     pass
+pass
+pass
 pass
 pass
 """Выход из игры"""
@@ -167,12 +189,16 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление сцены меню"""
 # Анимация UI элементов
 self.title_text.setText("AI - EVOLVE ENHANCED EDITION")
 pass
 def render(self, render_node):
     pass
+pass
+pass
 pass
 pass
 """Отрисовка сцены меню"""
@@ -183,10 +209,14 @@ def hand le_event(self, event):
     pass
 pass
 pass
+pass
+pass
 """Обработка событий"""# Pand a3D автоматически обрабатывает события кнопок
 pass
 def cleanup(self):"""Очистка сцены меню"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка сцены меню Pand a3D...")
@@ -195,24 +225,36 @@ if self.title_text: self.title_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.start_button: self.start_button.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.creat or _button: self.creat or _button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.settings_button: self.settings_button.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.quit_button: self.quit_button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.background_image: self.background_image.destroy()
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Сцена меню Pand a3D очищена")

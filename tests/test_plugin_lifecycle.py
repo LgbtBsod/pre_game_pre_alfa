@@ -24,8 +24,12 @@ import unittest
 class TestPlugin Lifecycle(unittest.TestCase):
     pass
 pass
+pass
+pass
 def test_example_plugin _lifecycle(self):
     pass
+pass
+pass
 pass
 pm= Plugin Manager(plugin s_di = str(Path('plugin s')))
 dis covered= pm.dis cover()
@@ -40,5 +44,7 @@ pm.destroy_all()
 self.assertEqual(len(pm.loaded_plugin s), 0)
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 unittest.ma in()

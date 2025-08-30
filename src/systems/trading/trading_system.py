@@ -43,6 +43,8 @@ class TradeSession:"""Торговая сессия"""session_id: str
     pass
 pass
 pass
+pass
+pass
 participants: Lis t[str]= field(default_factor = list):
 pass  # Добавлен pass в пустой блок
 offers: Lis t[TradeOffer]= field(default_factor = list):
@@ -56,8 +58,12 @@ class TradingSystem(BaseGameSystem):"""Система управления то�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, state_manager: Optional[StateManager]= None
     pass
+pass
+pass
 pass
 pass
 reposit or y_manager: Optional[Reposit or yManager]= None
@@ -102,6 +108,8 @@ def initialize(self, state_manager: StateManager= None
     pass
 pass
 pass
+pass
+pass
 reposit or y_manager: Reposit or yManager= None, event_bu = None) -> bool: pass  # Добавлен pass в пустой блок
 """Инициализация системы"""
 try: if state_manageris not None: self.state_manager= state_manager
@@ -109,12 +117,18 @@ if reposit or y_manageris not None: self.reposit or y_manager= reposit or y_mana
     pass
 pass
 pass
+pass
+pass
 if event_busis not None: self.event_bus= event_bus
     pass
 pass
 pass
+pass
+pass
 if not self.state_manager or not self.reposit or y_manager: logger.err or("Не заданы зависимости state_manager или reposit or y_manager")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -136,6 +150,8 @@ def _regis ter_system_states(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация состояний системы"""if self.state_manager: self.state_manager.regis ter_state("trading_system_settings",
 self.system_settings,
 StateType.CONFIGURATION,
@@ -149,6 +165,8 @@ StateScope.SYSTEM
 )
 def _regis ter_system_reposit or ies(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация репозиториев системы"""if self.reposit or y_manager: self.reposit or y_manager.create_reposit or y("trade_offers",
@@ -174,10 +192,14 @@ def _in itialize_market_data(self):
     pass
 pass
 pass
+pass
+pass
 """Инициализация рыночных данных"""
 # Создание базовых рыночных данных для основных категорий
 for categ or yin TradeCateg or y: market_data= MarketData(
     pass
+pass
+pass
 pass
 pass
 item_i = f"market_{categ or y.value}",
@@ -192,6 +214,8 @@ def create_trade_offer(self, seller_id: str, items: Lis t[TradeItem]
     pass
 pass
 pass
+pass
+pass
 price: float,
 currency_type: CurrencyType= CurrencyType.GOLD,
 trade_type: TradeType= TradeType.SELL) -> Optional[str]:
@@ -201,6 +225,8 @@ try:
 # Проверка ограничений
 if len(self.active_offers) >= self.system_settings['max_active_offers']:
     pass
+pass
+pass
 pass
 pass
 logger.warning("Достигнут лимит активных предложений")
@@ -228,6 +254,8 @@ def accept_trade_offer(self, offer_id: str, buyer_id: str
     pass
 pass
 pass
+pass
+pass
 quantity: int= None) -> bool: pass  # Добавлен pass в пустой блок
 """Принятие торгового предложения"""
 try: except Exception as e: pass
@@ -239,10 +267,14 @@ def _update_market_data(self, items: Lis t[TradeItem], price: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление рыночных данных"""
 try: for itemin items: market_id= f"market_{item.categ or y.value}"
 if market_idin self.market_data: market_data= self.market_data[market_id]
     pass
+pass
+pass
 pass
 pass
 market_data.update_price(price)
@@ -251,6 +283,8 @@ market_data.total_volume = price
 # Обновление спроса и предложения
 if item.quantity > 0: market_data.supply = item.quantity
     pass
+pass
+pass
 pass
 pass
 market_data.demand = 1
@@ -262,10 +296,14 @@ def get_market_data(self, categ or y: TradeCateg or y) -> Optional[MarketData]:
     pass
 pass
 pass
+pass
+pass
 """Получение рыночных данных для категории"""
 market_id= f"market_{categ or y.value}"return self.market_data.get(market_id)
 def get_active_offers(self
     pass
+pass
+pass
 pass
 pass
 categ or y: Optional[TradeCateg or y]= None) -> Lis t[TradeOffer]:
@@ -274,15 +312,21 @@ if categ or y: offers= [offer for offerin offers: if any(item.categ or y = categ
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 return offers
 def get_trade_his tory(self, entity_id: str) -> Lis t[TradeHis tory]:"""Получение истории торговли для сущности"""return [trade for tradein self.completed_trades: if trade.seller_id = entity_id or trade.buyer_id = entity_id]:
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 def create_contract(self, seller_id: str, buyer_id: str
     pass
+pass
+pass
 pass
 pass
 items: Lis t[TradeItem],
@@ -310,6 +354,8 @@ return None
 def complete_contract(self, contract_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Завершение торгового контракта"""
 try: except Exception as e: pass
 pass
@@ -318,6 +364,8 @@ logger.err or(f"Ошибка завершения контракта: {e}")
 return False
 def update(self, delta_time: float) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление системы"""
 try: current_time= time.time()
@@ -334,6 +382,8 @@ if self.state_manager: self.state_manager.update_state("trading_system_stats", s
     pass
 pass
 pass
+pass
+pass
 except Exception as e: pass
 pass
 pass
@@ -342,14 +392,20 @@ def _check_expired_offers(self, current_time: float):
     pass
 pass
 pass
+pass
+pass
 """Проверка истечения предложений"""
 expired_offers= []
 for offer_id, offerin self.active_offers.items():
     pass
 pass
 pass
+pass
+pass
 if offer.is _expired():
     pass
+pass
+pass
 pass
 pass
 expired_offers.append(offer_id)
@@ -358,10 +414,14 @@ for offer_idin expired_offers: del self.active_offers[offer_id]
     pass
 pass
 pass
+pass
+pass
 self.system_stats['active_offers_count'] = 1
 logger.in fo(f"Предложение {offer_id} истекло")
 def _update_market_prices(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление рыночных цен"""
@@ -369,6 +429,8 @@ try: for market_datain self.market_data.values():
 # Простая модель изменения цен на основе спроса и предложения
 if market_data.supply > 0and market_data.demand > 0: supply_demand _ratio= market_data.demand / market_data.supply
     pass
+pass
+pass
 pass
 pass
 price_change= (supply_demand _ratio - 1.0) * self.system_settings['price_volatility'] * delta_time
@@ -382,14 +444,20 @@ def _check_overdue_contracts(self, current_time: float):
     pass
 pass
 pass
+pass
+pass
 """Проверка просроченных контрактов"""
 overdue_contracts= []
 for contract_id, contractin self.active_contracts.items():
     pass
 pass
 pass
+pass
+pass
 if contract.is _delivery_overdue():
     pass
+pass
+pass
 pass
 pass
 overdue_contracts.append(contract_id)
@@ -398,10 +466,14 @@ for contract_idin overdue_contracts: contract= self.active_contracts[contract_id
     pass
 pass
 pass
+pass
+pass
 contract.status= TradeStatus.FAILED
 logger.warning(f"Контракт {contract_id} просрочен")
 def get_system_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получить информацию о системе"""return {"system_name": "TradingSystem",

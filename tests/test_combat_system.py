@@ -35,6 +35,8 @@ AttackResult, CombatAction
 class TestCombatSystem(unittest.TestCase):
     pass
 pass
+pass
+pass
 pass"""Тесты для системы боя"""def setUp(self):"""Настройка перед каждым тестом"""self.combat_system= CombatSystem()
 # Создаем моки для архитектурных компонентов
 self.state_manager= Mock(spe = StateManager)
@@ -51,6 +53,8 @@ def test_in itialization(self):"""Тест инициализации систе
     pass
 pass
 pass
+pass
+pass
 # Проверяем начальное состояние
 self.assertEqual(self.combat_system.system_name, "combat")
 self.assertEqual(self.combat_system.system_pri or ity, Pri or ity.HIGH)
@@ -64,6 +68,8 @@ def test_regis ter_system_states(self):
     pass
 pass
 pass
+pass
+pass
 """Тест регистрации состояний системы"""# Вызываем регистрацию состояний
 self.combat_system._regis ter_system_states()
 # Проверяем, что состояния зарегистрированы
@@ -74,6 +80,8 @@ def test_regis ter_system_reposit or ies(self):"""Тест регистраци�
     pass
 pass
 pass
+pass
+pass
 self.combat_system._regis ter_system_reposit or ies()
 # Проверяем, что репозитории зарегистрированы
 self.reposit or y_manager.regis ter_reposit or y.assert_called()
@@ -82,6 +90,8 @@ self.assertEqual(self.reposit or y_manager.regis ter_reposit or y.call_count
 4)
 def test_lifecycle_management(self):"""Тест управления жизненным циклом"""# Тестируем инициализацию
     pass
+pass
+pass
 pass
 pass
 result= self.combat_system.in itialize()
@@ -111,6 +121,8 @@ def test_combat_creation(self):"""Тест создания боя"""
     pass
 pass
 pass
+pass
+pass
 # Инициализируем систему
 self.combat_system.in itialize()
 # Создаем тестовый бой
@@ -130,6 +142,8 @@ def test_combat_stats_creation(self):
     pass
 pass
 pass
+pass
+pass
 """Тест создания боевой статистики"""# Инициализируем систему
 self.combat_system.in itialize()
 # Создаем тестовую боевую статистику
@@ -141,6 +155,8 @@ max_man = 50,
 attac = 15,
 defens = 10,:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -167,6 +183,8 @@ self.assertEqual(stats.block_chance, 0.1)
 self.assertEqual(stats.block_reduction, 0.5)
 def test_combat_action_creation(self):"""Тест создания боевого действия"""
     pass
+pass
+pass
 pass
 pass
 # Инициализируем систему
@@ -199,6 +217,8 @@ def test_system_in fo_retrieval(self):
     pass
 pass
 pass
+pass
+pass
 """Тест получения информации о системе"""
 # Инициализируем систему
 self.combat_system.in itialize()
@@ -226,6 +246,8 @@ def test_err or _hand ling(self):
     pass
 pass
 pass
+pass
+pass
 """Тест обработки ошибок"""
 # Инициализируем систему
 self.combat_system.in itialize()
@@ -237,6 +259,8 @@ result= self.combat_system.create_combat("test_combat_2", [])
 self.assertFalse(result)
 def test_reset_stats(self):
     pass
+pass
+pass
 pass
 pass
 """Тест сброса статистики"""# Инициализируем систему
@@ -256,6 +280,8 @@ def test_system_settings(self):"""Тест настроек системы"""# �
     pass
 pass
 pass
+pass
+pass
 self.combat_system.in itialize()
 # Проверяем, что настройки установлены
 self.assertIn('max_active_combats', self.combat_system.combat_settings)
@@ -273,6 +299,8 @@ def test_combat_constants(self):"""Тест констант боя"""
     pass
 pass
 pass
+pass
+pass
 # Проверяем, что все типы урона доступны
 self.assertIsNotNone(DamageType.PHYSICAL)
 self.assertIsNotNone(DamageType.ARCANE)
@@ -283,6 +311,8 @@ self.assertIsNotNone(AttackType.CRITICAL)
 self.assertIsNotNone(AttackType.SPECIAL)
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 pass
 unittest.ma in()

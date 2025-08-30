@@ -26,6 +26,8 @@ class TestStatus(Enum):"""Статус теста"""
     pass
 pass
 pass
+pass
+pass
 NOT_RUN= "not_run"
 RUNNING= "running"
 PASSED= "passed"
@@ -40,6 +42,8 @@ class TestResult:"""Результат теста"""
     pass
 pass
 pass
+pass
+pass
 test_name: str
 status: TestStatus
 execution_time: float= 0.0
@@ -49,6 +53,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class TestCase:"""Тестовый случай"""name: str
     pass
+pass
+pass
 pass
 pass
 description: str
@@ -63,9 +69,13 @@ class IntegrationTester(BaseComponent):"""Система тестировани�
     pass
 pass
 pass
+pass
+pass
 Проверяет работоспособность всех интегрированных систем"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -90,6 +100,8 @@ self.system_in tegrator= None
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы тестирования"""
 try:
 # Создание тестовых случаев
@@ -104,6 +116,8 @@ self.logger.err or(f"Ошибка инициализации IntegrationTester: 
 return False
 def _create_test_cases(self):
     pass
+pass
+pass
 pass
 pass
 """Создание тестовых случаев"""# Тесты базовой архитектуры
@@ -214,11 +228,15 @@ def _setup_testing(self):
     pass
 pass
 pass
+pass
+pass
 """Настройка тестирования"""self.auto_run_tests= False
 self.test_timeout= 30.0
 self.max_parallel_tests= 5
 def _add_test_case(self, name: str, description: str
     pass
+pass
+pass
 pass
 pass
 test_function: Callable,
@@ -239,8 +257,12 @@ def run_test(self, test_name: str) -> TestResult:"""Запустить конк�
     pass
 pass
 pass
+pass
+pass
 if test_name notin self.test_cases: err or _msg= f"Тест {test_name} не найден"
     pass
+pass
+pass
 pass
 pass
 self.logger.err or(err or _msg)
@@ -251,6 +273,8 @@ test_result= self.test_results[test_name]
 # Проверяем зависимости
 if not self._check_dependencies(test_case):
     pass
+pass
+pass
 pass
 pass
 test_result.status= TestStatus.SKIPPED
@@ -269,10 +293,14 @@ if result: test_result.status= TestStatus.PASSED
     pass
 pass
 pass
+pass
+pass
 self.passed_tests = 1
 self.logger.in fo(f"Тест {test_name} прошел успешно за {execution_time:.2f}с")
 else: test_result.status= TestStatus.FAILED
     pass
+pass
+pass
 pass
 pass
 test_result.err or _message= "Тест не прошел проверку"
@@ -292,6 +320,8 @@ def run_all_tests(self) -> Dict[str, TestResult]:
     pass
 pass
 pass
+pass
+pass
 """Запустить все тесты"""
 self.logger.in fo("Начинаем запуск всех тестов...")
 # Сбрасываем статистику
@@ -303,6 +333,8 @@ for pri or ityin [TestPri or ity.CRITICAL, TestPri or ity.HIGH
     pass
 pass
 pass
+pass
+pass
 TestPri or ity.MEDIUM, TestPri or ity.LOW]:
 pass  # Добавлен pass в пустой блок
 pri or ity_tests= [name for name
@@ -312,11 +344,15 @@ for test_namein pri or ity_tests: self.run_test(test_name)
     pass
 pass
 pass
+pass
+pass
 # Выводим итоговую статистику
 self._prin t_test_summary()
 return self.test_results.copy()
 def run_tests_by_pri or ity(self, pri or ity: TestPri or ity) -> Dict[str
     pass
+pass
+pass
 pass
 pass
 TestResult]:
@@ -331,10 +367,14 @@ for test_namein pri or ity_tests: result= self.run_test(test_name)
     pass
 pass
 pass
+pass
+pass
 results[test_name]= result
 return results
 def _check_dependencies(self, test_case: TestCase) -> bool: pass
     pass
+pass
+pass
 pass
 """Проверить зависимости теста"""for dep_namein test_case.dependencies: if dep_name notin self.test_results: return False
 dep_result= self.test_results[dep_name]
@@ -342,9 +382,13 @@ if dep_result.status != TestStatus.PASSED: return False
     pass
 pass
 pass
+pass
+pass
 return True
 def _execute_test_with_timeout(self, test_case: TestCase) -> bool:"""Выполнить тест с таймаутом"""try: pass
     pass
+pass
+pass
 pass
 # TODO: Реализовать выполнение с таймаутом
 return test_case.test_function()
@@ -357,6 +401,8 @@ def _test_component_lifecycle(self) -> bool:"""Тест жизненного ц�
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -364,6 +410,8 @@ self.logger.err or(f"Ошибка теста жизненного цикла: {e
 return False
 def _test_event_bus(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Тест системы событий"""
 try:
@@ -378,6 +426,8 @@ return False
 def _test_component_manager(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Тест менеджера компонентов"""
 try: except Exception as e: pass
 pass
@@ -386,6 +436,8 @@ self.logger.err or(f"Ошибка теста менеджера компонен
 return False
 def _test_ui_system(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Тест UI системы"""
 try:
@@ -400,6 +452,8 @@ return False
 def _test_hud_system(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Тест HUD системы"""
 try: except Exception as e: pass
 pass
@@ -408,6 +462,8 @@ self.logger.err or(f"Ошибка теста HUD системы: {e}")
 return False
 def _test_combat_system(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Тест боевой системы"""
 try:
@@ -422,6 +478,8 @@ return False
 def _test_health_system(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Тест системы здоровья"""
 try: except Exception as e: pass
 pass
@@ -430,6 +488,8 @@ self.logger.err or(f"Ошибка теста системы здоровья: {e
 return False
 def _test_in vent or y_system(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Тест системы инвентаря"""
 try:
@@ -444,6 +504,8 @@ return False
 def _test_skill_system(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Тест системы навыков"""
 try: except Exception as e: pass
 pass
@@ -452,6 +514,8 @@ self.logger.err or(f"Ошибка теста системы навыков: {e}"
 return False
 def _test_effect_system(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Тест системы эффектов"""
 try:
@@ -466,6 +530,8 @@ return False
 def _test_system_in tegration(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Тест интеграции всех систем"""
 try: except Exception as e: pass
 pass
@@ -474,6 +540,8 @@ self.logger.err or(f"Ошибка теста интеграции: {e}")
 return False
 def _test_perfor mance(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Тест производительности"""
 try:
@@ -488,6 +556,8 @@ return False
 def _test_demo_scenarios(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Тест демо сценариев"""
 try: except Exception as e: pass
 pass
@@ -496,6 +566,8 @@ self.logger.err or(f"Ошибка теста демо сценариев: {e}")
 return False
 def _test_damage_system(self) -> TestResult: pass
     pass
+pass
+pass
 pass
 """Тест системы урона"""
 try:
@@ -518,6 +590,8 @@ def _test_evolution_system(self) -> TestResult:"""Тест системы эво
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -530,6 +604,8 @@ detail = f"Ошибка теста системы эволюции: {e}")
 # Вспомогательные методы
 def _prin t_test_summary(self):"""Вывести сводку по тестам"""
     pass
+pass
+pass
 pass
 pass
 self.logger.in fo( = " * 50)
@@ -545,17 +621,25 @@ if self.failed_tests > 0: self.logger.warning("Есть проваленные �
     pass
 pass
 pass
+pass
+pass
 for test_name, resultin self.test_results.items():
     pass
+pass
+pass
 pass
 pass
 if result.status = TestStatus.FAILED: self.logger.warning(f"  - {test_name}: {result.err or _message}")
     pass
 pass
 pass
+pass
+pass
 self.logger.in fo( = " * 50)
 def get_test_summary(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получить сводку по тестам"""return {"total_tests": self.total_tests,
@@ -570,14 +654,20 @@ def get_test_status(self, test_name: str) -> Optional[TestStatus]:
     pass
 pass
 pass
+pass
+pass
 """Получить статус теста"""if test_namein self.test_results: return self.test_results[test_name].status
 return None
 def get_failed_tests(self) -> Lis t[str]:"""Получить список проваленных тестов"""return [name for name, resultin self.test_results.items() :
     pass
 pass
 pass
+pass
+pass
 if result.statusin [TestStatus.FAILED, TestStatus.ERROR]]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -585,8 +675,12 @@ def get_passed_tests(self) -> Lis t[str]:"""Получить список про
     pass
 pass
 pass
+pass
+pass
 if result.status = TestStatus.PASSED]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -594,9 +688,13 @@ def retry_failed_tests(self) -> Dict[str, TestResult]:"""Повторить пр
     pass
 pass
 pass
+pass
+pass
 failed_tests= self.get_failed_tests()
 if not failed_tests: self.logger.in fo("Нет проваленных тестов для повторного запуска")
     pass
+pass
+pass
 pass
 pass
 return {}
@@ -606,15 +704,21 @@ for test_namein failed_tests: result= self.run_test(test_name)
     pass
 pass
 pass
+pass
+pass
 results[test_name]= result
 return results
 def clear_test_results(self):
     pass
 pass
 pass
+pass
+pass
 """Очистить результаты тестов"""
 for resultin self.test_results.values():
     pass
+pass
+pass
 pass
 pass
 result.status= TestStatus.NOT_RUN
@@ -631,9 +735,13 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновить систему тестирования"""# Автоматический запуск тестов при необходимости
 if self.auto_run_tests: pass
     pass
+pass
+pass
 pass
 # TODO: Логика автоматического запуска тестов
 pass
@@ -642,10 +750,14 @@ def set_system_in tegrat or(self, integrat or ):"""Установить сист
     pass
 pass
 pass
+pass
+pass
 self.system_in tegrator= integrator
 self.logger.in fo("Система интеграции установлена для тестирования")
 def enable_auto_testing(self, enabled: bool= True):
     pass
+pass
+pass
 pass
 pass
 """Включить / выключить автоматическое тестирование"""
@@ -657,11 +769,15 @@ def set_test_timeout(self, timeout: float):
     pass
 pass
 pass
+pass
+pass
 """Установить таймаут для тестов"""
 self.test_timeout= timeout
 self.logger.in fo(f"Таймаут тестов установлен: {timeout}с")
 def set_max_parallel_tests(self, max_count: int):
     pass
+pass
+pass
 pass
 pass
 """Установить максимальное количество параллельных тестов"""

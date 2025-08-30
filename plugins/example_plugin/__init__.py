@@ -35,9 +35,13 @@ class Plug in(IPlugin ):
     pass
 pass
 pass
+pass
+pass
 metadata= metadata
 def initialize(self, context: Dict[str, Any]) -> bool: prin t("[ExamplePlugin ] initialize with context keys:", lis t(context.keys()))
     pass
+pass
+pass
 pass
 pass
 self._ctx= context
@@ -46,9 +50,13 @@ def start(self) -> bool: prin t("[ExamplePlugin ] start")
     pass
 pass
 pass
+pass
+pass
 return True
 def stop(self) -> bool: prin t("[ExamplePlugin ] stop")
     pass
+pass
+pass
 pass
 pass
 return True
@@ -56,8 +64,12 @@ def destroy(self) -> bool: prin t("[ExamplePlugin ] destroy")
     pass
 pass
 pass
+pass
+pass
 return True
 def create_plug in() -> IPlugin: return Plug in()
     pass
+pass
+pass
 pass
 pass

@@ -1,5 +1,3 @@
-import sys
-
 from c or e.event_system import EventSystem
 
 from c or e.scene_manager import SceneManager
@@ -20,6 +18,8 @@ import os
 
 import re
 
+import sys
+
 import time
 
 import unittest
@@ -27,6 +27,8 @@ import unittest
 #!/usr / bin / env python3
 class DummyScene: def __in it__(self, name: str):
     pass
+pass
+pass
 pass
 self.name= name
 self.scene_manager= None
@@ -37,43 +39,65 @@ self._vis ible= False
 def initialize(self) -> bool: self.is _initialized= True
     pass
 pass
+pass
+pass
 return True
 def update(self, dt: float):
     pass
+pass
+pass
 pass
 pass
 def render(self, rn):
     pass
 pass
 pass
+pass
+pass
 def hand le_event(self, ev):
     pass
+pass
+pass
 pass
 pass
 def cleanup(self):
     pass
 pass
 pass
+pass
+pass
 def set_vis ible(self, vis ible: bool):
     pass
+pass
+pass
 pass
 self._vis ible= vis ible
 class TestSceneManagerEvents(unittest.TestCase):
     pass
 pass
+pass
+pass
 def test_scene_change_updates_state_and _emits_event(self):
     pass
 pass
+pass
+pass
 class RenderNode: def attachNewNode(self, name):
     pass
+pass
+pass
 pass
 return self
 def setLight(self, *args, * * kwargs):
     pass
 pass
 pass
+pass
+pass
 def removeNode(self):
     pass
+pass
+pass
 pass
 pass
 render= RenderNode()
@@ -92,6 +116,8 @@ hits= {"n": 0, "last": None}
 def _h(ev):
     pass
 pass
+pass
+pass
 hits["n"] = 1
 hits["last"]= ev.data.get("scene")
 es.on("scene_changed", _h)
@@ -108,5 +134,7 @@ self.assertEqual(st.get_state_value("current_scene"), "b")
 self.assertEqual(hits["last"], "b")
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 unittest.ma in()

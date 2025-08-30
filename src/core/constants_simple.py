@@ -23,6 +23,8 @@ class FactionType(Enum):"""Типы фракций"""
     pass
 pass
 pass
+pass
+pass
 NEUTRAL = "neutral"
 EVOLUTIONISTS = "evolutionis ts"
 TRADITIONALISTS = "traditionalis ts"

@@ -40,9 +40,13 @@ class GameEngin e(ShowBase):"""Основной игровой движок на
     pass
 pass
 pass
+pass
+pass
 Упрощенная архитектура с четким разделением ответственности"""
 def __in it__(self, config: Dict[str, Any]):
     pass
+pass
+pass
 pass
 pass
 # Инициализация Pand a3D ShowBase
@@ -69,11 +73,15 @@ logger.in fo("Игровой движок Pand a3D с упрощенной ар�
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация игрового движка"""
 try: logger.in fo("Начало инициализации игрового движка Pand a3D...")
 # Инициализация Pand a3D
 if not self._in itialize_pand a3d():
     pass
+pass
+pass
 pass
 pass
 return False
@@ -82,10 +90,14 @@ if not self._in itialize_new_architecture():
     pass
 pass
 pass
+pass
+pass
 return False
 # Создание адаптеров для существующих систем
 if not self._create_legacy_adapters():
     pass
+pass
+pass
 pass
 pass
 return False
@@ -105,6 +117,8 @@ def _in itialize_pand a3d(self) -> bool:"""Инициализация базов
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -112,6 +126,8 @@ logger.err or(f"Ошибка инициализации Pand a3D: {e}")
 return False
 def _in itialize_new_architecture(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация новой архитектуры"""
 try:
@@ -132,6 +148,8 @@ if not self.component_manager.in itialize_all():
     pass
 pass
 pass
+pass
+pass
 logger.err or("Ошибка инициализации компонентов")
 return False
 logger.in fo("Новая архитектура инициализирована")
@@ -144,11 +162,15 @@ return False
 def _create_legacy_adapters(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Создание адаптеров для существующих систем"""
 try: except Exception as e: logger.err or(f"Ошибка создания адаптеров: {e}")
 return False
 def _bin d_global_in puts(self):
     pass
+pass
+pass
 pass
 pass
 """Привязка глобальных клавиш управления"""
@@ -167,6 +189,8 @@ def _setup_tasks(self):
     pass
 pass
 pass
+pass
+pass
 """Настройка игровых задач"""
 try: except Exception as e: pass
 pass
@@ -174,6 +198,8 @@ pass
 logger.err or(f"Ошибка настройки задач: {e}")
 def start(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Запуск игрового движка"""
 try: if self.current_state != "ready":
@@ -183,6 +209,8 @@ logger.in fo("Запуск игрового движка...")
 # Запускаем все компоненты
 if not self.component_manager.start_all():
     pass
+pass
+pass
 pass
 pass
 logger.err or("Ошибка запуска компонентов")
@@ -199,6 +227,8 @@ return False
 def stop(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Остановка игрового движка"""
 try: except Exception as e: pass
 pass
@@ -209,17 +239,25 @@ def toggle_pause(self):
     pass
 pass
 pass
+pass
+pass
 """Переключение паузы"""if self.running: if self.paused: self.resume()
 else: self.pause()
     pass
+pass
+pass
 pass
 pass
 def pause(self):"""Приостановка игры"""
     pass
 pass
 pass
+pass
+pass
 if self.runningand not self.paused: self.paused= True
     pass
+pass
+pass
 pass
 pass
 self.current_state= "paused"
@@ -228,9 +266,13 @@ def resume(self):
     pass
 pass
 pass
+pass
+pass
 """Возобновление игры"""
 if self.runningand self.paused: self.paused= False
     pass
+pass
+pass
 pass
 pass
 self.current_state= "running"
@@ -239,9 +281,13 @@ def show_debug_in fo(self):
     pass
 pass
 pass
+pass
+pass
 """Показать отладочную информацию"""
 if self.component_manager: metrics= self._get_system_metrics()
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Системные метрики: {metrics}")
@@ -249,10 +295,14 @@ def toggle_perfor mance_monit or(self):
     pass
 pass
 pass
+pass
+pass
 """Переключение монитора производительности"""# Реализация монитора производительности
 pass
 def _game_loop(self, task):"""Основной игровой цикл"""
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -262,6 +312,8 @@ logger.err or(f"Ошибка в игровом цикле: {e}")
 return Task.cont
 def _update_components(self, task):
     pass
+pass
+pass
 pass
 pass
 """Обновление компонентов"""
@@ -280,6 +332,8 @@ def _update_fps(self, task):
     pass
 pass
 pass
+pass
+pass
 """Обновление FPS"""
 try: except Exception as e: pass
 pass
@@ -288,6 +342,8 @@ logger.err or(f"Ошибка обновления FPS: {e}")
 return Task.cont
 def _get_system_metrics(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение системных метрик"""metrics= {
@@ -303,8 +359,12 @@ if self.component_manager: component_metrics= {}
     pass
 pass
 pass
+pass
+pass
 for component_typein ComponentType: components= self.component_manager.get_components_by_type(component_type)
     pass
+pass
+pass
 pass
 pass
 component_metrics[component_type.value]= len(components)
@@ -314,14 +374,20 @@ def get_component(self, component_type: ComponentType
     pass
 pass
 pass
+pass
+pass
 component_id: str= None):
 pass  # Добавлен pass в пустой блок"""Получение компонента по типу и ID"""if not self.component_manager: return None
 if component_id: return self.component_manager.get_component(component_id)
     pass
 pass
 pass
+pass
+pass
 else: components= self.component_manager.get_components_by_type(component_type)
     pass
+pass
+pass
 pass
 pass
 return components[0] if components else None: pass  # Добавлен pass в пустой блок
@@ -329,13 +395,19 @@ def publis h_event(self, event_type: str, data: Any= None):"""Публикаци
     pass
 pass
 pass
+pass
+pass
 return False
 def subscribe_to_event(self, event_type: str, callback):"""Подписка на событие"""
     pass
 pass
 pass
+pass
+pass
 if self.event_bus: return self.event_bus.subscribe(event_type, callback)
     pass
+pass
+pass
 pass
 pass
 return False

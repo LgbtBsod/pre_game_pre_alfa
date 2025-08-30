@@ -29,6 +29,8 @@ class HUD: def __in it__(self, parent_node):
     pass
 pass
 pass
+pass
+pass
 self.parent= parent_node
 self.font= self._load_font()
 # HUD элементы
@@ -46,6 +48,8 @@ self.status_panel= None
 self.in fo_panel= None
 def build(self) -> 'HUD':
     pass
+pass
+pass
 pass
 pass
 # Заголовок игры
@@ -133,9 +137,13 @@ return self
 def destroy(self) -> None: pass
     pass
 pass
+pass
+pass
 """Уничтожение всех HUD элементов"""# Уничтожаем текстовые элементы
 for widgetin [:
     pass
+pass
+pass
 pass
 pass
 self.game_title_text,
@@ -153,26 +161,38 @@ except Exception: pass
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 # Уничтожаем панели
 if self.status_panel: self.status_panel.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.in fo_panel: self.in fo_panel.destroy()
     pass
+pass
+pass
 pass
 pass
 def update_health(self, current: int, maximum: int):"""Обновление здоровья"""
     pass
 pass
 pass
+pass
+pass
 if self.health_bar_text: self.health_bar_text.set_text(f"HP: {current} / {maximum}")
     pass
 pass
 pass
+pass
+pass
 def update_mana(self, current: int, maximum: int):
     pass
+pass
+pass
 pass
 pass
 """Обновление маны"""
@@ -180,8 +200,12 @@ if self.mana_bar_text: self.mana_bar_text.set_text(f"MP: {current} / {maximum}")
     pass
 pass
 pass
+pass
+pass
 def update_ai_status(self, status: str):
     pass
+pass
+pass
 pass
 pass
 """Обновление статуса AI"""
@@ -189,8 +213,12 @@ if self.ai_in fo_text: self.ai_in fo_text.set_text(f"AI: {status}")
     pass
 pass
 pass
+pass
+pass
 def update_skills(self, skills: str):
     pass
+pass
+pass
 pass
 pass
 """Обновление навыков"""
@@ -198,8 +226,12 @@ if self.skills_in fo_text: self.skills_in fo_text.set_text(f"Skills: {skills}")
     pass
 pass
 pass
+pass
+pass
 def update_items(self, items: str):
     pass
+pass
+pass
 pass
 pass
 """Обновление предметов"""
@@ -207,8 +239,12 @@ if self.items_in fo_text: self.items_in fo_text.set_text(f"Items: {items}")
     pass
 pass
 pass
+pass
+pass
 def update_effects(self, effects: str):
     pass
+pass
+pass
 pass
 pass
 """Обновление эффектов"""
@@ -216,8 +252,12 @@ if self.effects_in fo_text: self.effects_in fo_text.set_text(f"Effects: {effects
     pass
 pass
 pass
+pass
+pass
 def update_genome(self, genome: str):
     pass
+pass
+pass
 pass
 pass
 """Обновление генома"""
@@ -225,8 +265,12 @@ if self.genome_in fo_text: self.genome_in fo_text.set_text(f"Genome: {genome}")
     pass
 pass
 pass
+pass
+pass
 def update_emotions(self, emotions: str):
     pass
+pass
+pass
 pass
 pass
 """Обновление эмоций"""
@@ -234,8 +278,12 @@ if self.emotion_bar_text: self.emotion_bar_text.set_text(f"Emotions: {emotions}"
     pass
 pass
 pass
+pass
+pass
 def _load_font(self):
     pass
+pass
+pass
 pass
 pass
 """Загрузка шрифта"""try: except Exception: pass
@@ -243,6 +291,8 @@ pass  # Добавлен pass в пустой блок
 return None
 def create_hud(parent_node) -> HUD:"""Фабричная функция для создания HUD"""
     pass
+pass
+pass
 pass
 pass
 return HUD(parent_node).build()

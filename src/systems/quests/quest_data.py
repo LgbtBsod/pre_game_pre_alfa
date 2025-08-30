@@ -29,6 +29,8 @@ class QuestObjective:"""Цель квеста"""objective_id: str
     pass
 pass
 pass
+pass
+pass
 description: str
 objective_type: str  # kill, collect, reach, interact, etc.
 target: str  # target entity, item, location
@@ -41,9 +43,13 @@ def update_progress(self, amount: int= 1) -> bool:"""Обновить прогр
     pass
 pass
 pass
+pass
+pass
 self.required_amount)
 if self.current_amount >= self.required_amount: self.completed= True
     pass
+pass
+pass
 pass
 pass
 return True
@@ -52,10 +58,14 @@ def get_progress_percentage(self) -> float:"""Получить процент в
     pass
 pass
 pass
+pass
+pass
 return m in(100.0, (self.current_amount / self.required_amount) * 100.0)
 @dataclass: pass  # Добавлен pass в пустой блок
 class QuestReward:"""Награда за квест"""
     pass
+pass
+pass
 pass
 pass
 reward_type: QuestRewardType
@@ -70,6 +80,8 @@ class QuestPrerequis ite:"""Предварительные требования 
     pass
 pass
 pass
+pass
+pass
 target: str
 required_value: Any
 current_value: Any= None
@@ -78,8 +90,12 @@ def check_prerequis ite(self, current_value: Any) -> bool:"""Проверить 
     pass
 pass
 pass
+pass
+pass
 if isin stance(self.required_value, (in t, float)):
     pass
+pass
+pass
 pass
 pass
 self.met= current_value >= self.required_value
@@ -87,10 +103,14 @@ else: self.met= current_value = self.required_value
     pass
 pass
 pass
+pass
+pass
 return self.met
 @dataclass: pass  # Добавлен pass в пустой блок
 class Quest:"""Квест"""quest_id: str
     pass
+pass
+pass
 pass
 pass
 title: str
@@ -129,6 +149,8 @@ def start_quest(self) -> bool:"""Начать квест"""if self.status = Ques
     pass
 pass
 pass
+pass
+pass
 self.status= QuestStatus.IN_PROGRESS
 self.start_time= time.time()
 return True
@@ -137,11 +159,15 @@ def complete_quest(self) -> bool:"""Завершить квест"""if self.stat
     pass
 pass
 pass
+pass
+pass
 self.status= QuestStatus.COMPLETED
 self.end_time= time.time()
 self.completion_count = 1
 if self.start_timeand self.end_time: completion_time= self.end_time - self.start_time
     pass
+pass
+pass
 pass
 pass
 self.average_completion_time= (
@@ -154,12 +180,16 @@ def fail_quest(self) -> bool:"""Провалить квест"""if self.status =
     pass
 pass
 pass
+pass
+pass
 self.end_time= time.time()
 self.failure_count = 1
 return True
 return False
 def aband on_quest(self) -> bool:"""Отказаться от квеста"""if self.status = QuestStatus.IN_PROGRESS: self.status= QuestStatus.ABANDONED
     pass
+pass
+pass
 pass
 pass
 self.end_time= time.time()
@@ -169,9 +199,13 @@ def _check_prerequis ites(self) -> bool:"""Проверить предварит
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 def _check_objectives(self) -> bool:"""Проверить выполнение всех обязательных целей"""required_objectives= [obj for objin self.objectives if not obj.optional]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -181,6 +215,8 @@ def get_progress_percentage(self) -> float:"""Получить общий про
     pass
 pass
 pass
+pass
+pass
 total_progress= sum(obj.get_progress_percentage() for objin self.objectives):
 pass  # Добавлен pass в пустой блок
 return total_progress / len(self.objectives)
@@ -188,13 +224,19 @@ def is_expired(self) -> bool:"""Проверить, истек ли срок к�
     pass
 pass
 pass
+pass
+pass
 return False
 def get_remain ing_time(self) -> Optional[float]:"""Получить оставшееся время"""
     pass
 pass
 pass
+pass
+pass
 if self.time_limitand self.start_time: remain ing= self.time_limit - (time.time() - self.start_time)
     pass
+pass
+pass
 pass
 pass
 return max(0, remain ing)

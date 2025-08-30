@@ -27,6 +27,8 @@ class TradeItem:"""Торговый предмет"""item_id: str
     pass
 pass
 pass
+pass
+pass
 name: str
 description: str
 categ or y: TradeCateg or y
@@ -42,6 +44,8 @@ trade_his tory: Lis t[Dict[str, Any]]= field(default_factor = list):
 pass  # Добавлен pass в пустой блок
 def calculate_price(self, market_conditions: Dict[str
     pass
+pass
+pass
 pass
 pass
 float]= None) -> float: pass  # Добавлен pass в пустой блок"""Рассчитать текущую цену предмета"""if market_conditionsis None: market_conditions= {}
@@ -62,8 +66,12 @@ for condition, multiplierin market_conditions.items():
     pass
 pass
 pass
+pass
+pass
 if conditionin str(self.categ or y.value):
     pass
+pass
+pass
 pass
 pass
 price = multiplier
@@ -72,6 +80,8 @@ return price
 @dataclass: pass  # Добавлен pass в пустой блок
 class TradeOffer:"""Торговое предложение"""offer_id: str
     pass
+pass
+pass
 pass
 pass
 trade_type: TradeType
@@ -98,9 +108,13 @@ def is_expired(self) -> bool:"""Проверить, истек ли срок п�
     pass
 pass
 pass
+pass
+pass
 return False
 def get_remain ing_time(self) -> Optional[float]:"""Получить оставшееся время"""if self.expiration_time: remain ing= self.expiration_time - time.time()
     pass
+pass
+pass
 pass
 pass
 return max(0, remain ing)
@@ -109,8 +123,12 @@ def accept_offer(self, buyer_id: str, quantity: int= None) -> bool:"""Приня
     pass
 pass
 pass
+pass
+pass
 if self.is _expired():
     pass
+pass
+pass
 pass
 pass
 self.status= TradeStatus.EXPIRED
@@ -119,12 +137,18 @@ if quantityis None: quantity= self.min imum_quantity
     pass
 pass
 pass
+pass
+pass
 if quantity < self.min imum_quantity: return False
     pass
 pass
 pass
+pass
+pass
 if self.maximum_quantityand quantity > self.maximum_quantity: return False
     pass
+pass
+pass
 pass
 pass
 self.buyer_id= buyer_id
@@ -134,11 +158,15 @@ def complete_trade(self) -> bool:"""Завершить торговую сдел
     pass
 pass
 pass
+pass
+pass
 self.status= TradeStatus.COMPLETED
 self.completion_time= time.time()
 return True
 def cancel_offer(self) -> bool:"""Отменить предложение"""if self.statusin [TradeStatus.PENDING, TradeStatus.ACTIVE]:
     pass
+pass
+pass
 pass
 pass
 self.status= TradeStatus.CANCELLED
@@ -147,6 +175,8 @@ return False
 @dataclass: pass  # Добавлен pass в пустой блок
 class TradeHis tory:"""История торговли"""trade_id: str
     pass
+pass
+pass
 pass
 pass
 seller_id: str
@@ -170,6 +200,8 @@ class MarketData:"""Рыночные данные"""item_id: str
     pass
 pass
 pass
+pass
+pass
 categ or y: TradeCateg or y
 current_price: float= 0.0
 average_price: float= 0.0
@@ -187,8 +219,12 @@ def update_price(self, new_price: float):"""Обновить цену и ста�
     pass
 pass
 pass
+pass
+pass
 if len(self.price_his tory) > 100:  # Ограничиваем историю
     pass
+pass
+pass
 pass
 pass
 self.price_his tory.pop(0)
@@ -199,13 +235,19 @@ if self.price_his tory: self.average_price= sum(self.price_his tory) / len(self.
     pass
 pass
 pass
+pass
+pass
 # Обновление волатильности
 if len(self.price_his tory) > 1: prices= self.price_his tory[ - 10:]  # Последние 10 цен
     pass
 pass
 pass
+pass
+pass
 if len(prices) > 1: mean_price= sum(prices) / len(prices)
     pass
+pass
+pass
 pass
 pass
 variance= sum((p - mean_price) ** 2 for pin prices) / len(prices):
@@ -214,6 +256,8 @@ self.price_volatility= variance ** 0.5
 @dataclass: pass  # Добавлен pass в пустой блок
 class TradeContract:"""Торговый контракт"""
     pass
+pass
+pass
 pass
 pass
 contract_id: str
@@ -237,13 +281,19 @@ def is_delivery_overdue(self) -> bool:"""Проверить, просрочен�
     pass
 pass
 pass
+pass
+pass
 return False
 def complete_contract(self) -> bool:"""Завершить контракт"""
     pass
 pass
 pass
+pass
+pass
 if self.status = TradeStatus.ACTIVE: self.status= TradeStatus.COMPLETED
     pass
+pass
+pass
 pass
 pass
 self.completion_time= time.time()

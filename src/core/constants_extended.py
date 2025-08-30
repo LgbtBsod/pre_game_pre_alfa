@@ -199,6 +199,8 @@ if isin stance(other, EvolutionStage):
     pass
 pass
 pass
+pass
+pass
 order= {
 EvolutionStage.BASIC: 0,
 EvolutionStage.INTERMEDIATE: 1,
@@ -213,6 +215,8 @@ return order[self] < order[other]
 return NotImplemented
 class EvolutionType(Enum):"""Типы эволюции"""
     pass
+pass
+pass
 pass
 pass
 NATURAL= "natural"

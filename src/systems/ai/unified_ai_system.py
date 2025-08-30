@@ -34,6 +34,8 @@ class AISystemAdapter:"""Адаптер для AI подсистемы"""system_
     pass
 pass
 pass
+pass
+pass
 system_in stance: Any
 pri or ity: int
 is_active: bool= True
@@ -45,6 +47,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class AIEntityData:"""Данные AI сущности"""entity_id: str
     pass
+pass
+pass
 pass
 pass
 entity_type: str
@@ -66,6 +70,8 @@ class AIDecis ion:"""Решение AI"""entity_id: str
     pass
 pass
 pass
+pass
+pass
 decis ion_type: str
 target_id: Optional[str]
 action_data: Dict[str, Any]
@@ -77,8 +83,12 @@ class UnifiedAISystem(BaseComponent):"""Объединенная система 
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("unified_ai", ComponentType.SYSTEM, Pri or ity.HIGH):
@@ -108,6 +118,8 @@ pass  # Добавлен pass в пустой блок
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы"""
 try:
 # Создаем адаптеры для существующих AI систем
@@ -115,6 +127,8 @@ self._create_system_adapters()
 # Проверяем доступность систем
 if not self._validate_systems():
     pass
+pass
+pass
 pass
 pass
 logger.warning("Некоторые AI системы недоступны")
@@ -132,6 +146,8 @@ return False
 def _on_start(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Запуск системы"""
 try: except Exception as e: pass
 pass
@@ -141,11 +157,15 @@ return False
 def _on_stop(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Остановка системы"""
 try:
 # Останавливаем все адаптеры
 for adapterin self.ai_adapters.values():
     pass
+pass
+pass
 pass
 pass
 self._stop_system_adapter(adapter)
@@ -160,6 +180,8 @@ return False
 def _on_destroy(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение системы"""
 try: except Exception as e: pass
 pass
@@ -168,6 +190,8 @@ logger.err or(f"Ошибка уничтожения Unified AI System: {e}")
 return False
 def _create_system_adapters(self):
     pass
+pass
+pass
 pass
 pass
 """Создание адаптеров для существующих AI систем"""
@@ -222,10 +246,14 @@ except Exception as e: logger.err or(f"Ошибка создания адапт�
 def _validate_systems(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка доступности AI систем"""
 available_systems= 0
 for adapterin self.ai_adapters.values():
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -239,6 +267,8 @@ def _setup_fallback_system(self):
     pass
 pass
 pass
+pass
+pass
 """Настройка резервной AI системы"""
 try:
 # Создаем простую резервную систему
@@ -247,9 +277,13 @@ if self.fallback_system.in itialize():
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Резервная AI система настроена")
 else: logger.err or("Не удалось настроить резервную AI систему")
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -258,6 +292,8 @@ pass
 logger.err or(f"Ошибка настройки резервной системы: {e}")
 def _in itialize_global_mem or y(self):
     pass
+pass
+pass
 pass
 pass
 """Инициализация глобальной памяти"""
@@ -269,10 +305,14 @@ def _start_system_adapter(self, adapter: AISystemAdapter):
     pass
 pass
 pass
+pass
+pass
 """Запуск адаптера системы"""
 try: if hasattr(adapter.system_in stance, 'start'):
 if adapter.system_in stance.start():
     pass
+pass
+pass
 pass
 pass
 adapter.is _active= True
@@ -281,9 +321,13 @@ else: adapter.is _active= False
     pass
 pass
 pass
+pass
+pass
 logger.err or(f"Не удалось запустить {adapter.system_name}")
 else: adapter.is _active= True
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Адаптер {adapter.system_name} активирован(без start)")
@@ -296,6 +340,8 @@ def _stop_system_adapter(self, adapter: AISystemAdapter):
     pass
 pass
 pass
+pass
+pass
 """Остановка адаптера системы"""
 try: except Exception as e: pass
 pass
@@ -306,6 +352,8 @@ def get_ai_system(self, system_name: str= None
     pass
 pass
 pass
+pass
+pass
 capability: str= None) -> Optional[Any]:
 pass  # Добавлен pass в пустой блок
 """Получение AI системы по имени или возможностям"""if system_nameand system_namein self.ai_adapters: adapter= self.ai_adapters[system_name]
@@ -313,13 +361,19 @@ if adapter.is _active: return adapter.system_in stance
     pass
 pass
 pass
+pass
+pass
 # Возвращаем систему с нужными возможностями
 if capability: for adapterin self.ai_adapters.values():
     pass
 pass
 pass
+pass
+pass
 if adapter.is _activeand capabilityin adapter.capabilities: return adapter.system_in stance
     pass
+pass
+pass
 pass
 pass
 # Возвращаем систему с наивысшим приоритетом
@@ -329,11 +383,15 @@ if active_adapters: return m in(active_adapters
     pass
 pass
 pass
+pass
+pass
 ke = lambda x: x.pri or ity).system_in stance
 # Возвращаем резервную систему
 return getattr(self, 'fallback_system', None)
 def regis ter_ai_entity(self, entity_id: str, entity_data: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок"""Регистрация AI сущности во всех доступных системах"""
@@ -343,6 +401,8 @@ def update_ai_entity(self, entity_id: str, update_data: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
 """Обновление AI сущности"""
 try: success_count= 0
@@ -350,6 +410,8 @@ try: success_count= 0
 primary_system= self.get_ai_system()
 if primary_systemand hasattr(primary_system, 'update_entity'):
     pass
+pass
+pass
 pass
 pass
 try: if primary_system.update_entity(entity_id, update_data):
@@ -363,12 +425,18 @@ for adapterin self.ai_adapters.values():
     pass
 pass
 pass
+pass
+pass
 if adapter.is _activeand adapter.system_name != "ai_system":
     pass
 pass
 pass
+pass
+pass
 if hasattr(adapter.system_in stance, 'update_entity'):
     pass
+pass
+pass
 pass
 pass
 try: if adapter.system_in stance.update_entity(entity_id
@@ -384,12 +452,18 @@ if entity_idin self.ai_entities: entity= self.ai_entities[entity_id]
     pass
 pass
 pass
+pass
+pass
 for key, valuein update_data.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(entity, key):
     pass
+pass
+pass
 pass
 pass
 setattr(entity, key, value)
@@ -399,11 +473,15 @@ return False
 def remove_ai_entity(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление AI сущности"""
 try: except Exception as e: logger.err or(f"Ошибка удаления AI сущности {entity_id}: {e}")
 return False
 def get_ai_entity_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
     pass
+pass
+pass
 pass
 pass
 """Получение состояния AI сущности"""
@@ -414,9 +492,13 @@ if primary_systemand hasattr(primary_system, 'get_entity_state'):
     pass
 pass
 pass
+pass
+pass
 try: state= primary_system.get_entity_state(entity_id)
 if state: return state
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -426,6 +508,8 @@ logger.err or(f"Ошибка получения состояния из осно
 # Возвращаем локальные данные
 if entity_idin self.ai_entities: entity= self.ai_entities[entity_id]
     pass
+pass
+pass
 pass
 pass
 return {
@@ -448,6 +532,8 @@ def add_experience(self, experience_type: str, amount: float
     pass
 pass
 pass
+pass
+pass
 source: str= None):
 pass  # Добавлен pass в пустой блок
 """Добавление опыта в глобальный пул"""
@@ -459,6 +545,8 @@ def _update_global_mem or y(self, experience_type: str, amount: float
     pass
 pass
 pass
+pass
+pass
 source: str= None):
 pass  # Добавлен pass в пустой блок
 """Обновление глобальной памяти на основе опыта"""
@@ -468,8 +556,12 @@ if "combat_tactics" notin self.global_mem or y: self.global_mem or y["combat_tac
     pass
 pass
 pass
+pass
+pass
 if source: if source notin self.global_mem or y["combat_tactics"]:
     pass
+pass
+pass
 pass
 pass
 self.global_mem or y["combat_tactics"][source]= 0.0
@@ -478,18 +570,26 @@ elif experience_type = "expl or ation":
     pass
 pass
 pass
+pass
+pass
 # Обновляем знания об окружении
 if "environment_knowledge" notin self.global_mem or y: self.global_mem or y["environment_knowledge"]= {}
     pass
+pass
+pass
 pass
 pass
 elif experience_type = "social":
     pass
 pass
 pass
+pass
+pass
 # Обновляем отношения с NPC
 if "npc_relationships" notin self.global_mem or y: self.global_mem or y["npc_relationships"]= {}
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -498,6 +598,8 @@ pass
 logger.err or(f"Ошибка обновления глобальной памяти: {e}")
 def get_perfor mance_metrics(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение метрик производительности"""metrics= {
@@ -514,8 +616,12 @@ for adapterin self.ai_adapters.values():
     pass
 pass
 pass
+pass
+pass
 if adapter.is _active: system_metrics[adapter.system_name]= {
     pass
+pass
+pass
 pass
 pass
 'pri or ity': adapter.pri or ity,
@@ -537,6 +643,8 @@ def initialize(self) -> bool:"""Инициализация резервной с
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -544,6 +652,8 @@ self.logger.err or(f"Ошибка инициализации резервной 
 return False
 def regis ter_entity(self, entity_id: str, entity_data: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
@@ -563,6 +673,8 @@ def update_entity(self, entity_id: str, update_data: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
 """Обновление сущности"""
 try: except Exception as e: pass
@@ -572,6 +684,8 @@ self.logger.err or(f"Ошибка обновления сущности {entity_
 return False
 def remove_entity(self, entity_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Удаление сущности"""
 try: if entity_idin self.entities: del self.entities[entity_id]
@@ -584,6 +698,8 @@ self.logger.err or(f"Ошибка удаления сущности {entity_id}:
 return False
 def get_entity_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
     pass
+pass
+pass
 pass
 pass
 """Получение состояния сущности"""

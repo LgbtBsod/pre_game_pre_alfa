@@ -33,9 +33,13 @@ Location, Dungeon, Settlement, LocationManager
 )
 class TestBiomeSystems(unittest.TestCase):
     pass
+pass
+pass
 pass"""Тесты для систем биомов"""def setUp(self):"""Настройка тестов"""self.biome_manager= BiomeManager()
 def test_biome_creation(self):"""Тест создания биомов"""# Проверяем, что биомы созданы
     pass
+pass
+pass
 pass
 self.assertGreater(len(self.biome_manager.get_all_biomes()), 0)
 self.assertGreater(len(self.biome_manager.get_all_climates()), 0)
@@ -43,9 +47,13 @@ self.assertGreater(len(self.biome_manager.get_all_weather_types()), 0)
 def test_biome_properties(self):"""Тест свойств биомов"""
     pass
 pass
+pass
+pass
 # Проверяем умеренный лес
 for est_props= self.biome_manager.get_biome_properties(BiomeType.TEMPERATE_FOREST):
     pass
+pass
+pass
 pass
 pass  # Добавлен pass в пустой блок
 self.assertIsNotNone(for est_props):
@@ -65,6 +73,8 @@ self.assertEqual(desert_props.danger_level, 0.6)
 def test_climate_properties(self):
     pass
 pass
+pass
+pass
 """Тест свойств климата"""
 # Проверяем умеренный климат
 temperate_climate= self.biome_manager.get_climate_properties(ClimateType.TEMPERATE)
@@ -78,6 +88,8 @@ self.assertEqual(tropical_climate.name, "Тропический")
 self.assertFalse(tropical_climate.seasonal_changes)
 def test_weather_properties(self):
     pass
+pass
+pass
 pass
 """Тест свойств погоды"""
 # Проверяем ясную погоду
@@ -95,6 +107,8 @@ pass  # Добавлен pass в пустой блок
 def test_biome_determin ation(self):
     pass
 pass
+pass
+pass
 """Тест определения биома по параметрам"""# Умеренный лес
 biome= self.biome_manager.determin e_biome(15.0, 0.6, 250.0)
 self.assertEqual(biome, BiomeType.TEMPERATE_FOREST)
@@ -107,6 +121,8 @@ self.assertEqual(biome, BiomeType.MOUNTAINS)
 def test_rand om_weather(self):"""Тест случайной погоды"""# Умеренный климат
     pass
 pass
+pass
+pass
 weather= self.biome_manager.get_rand om_weather(ClimateType.TEMPERATE)
 self.assertIn(weather, [WeatherType.CLEAR, WeatherType.CLOUDY
 WeatherType.RAIN])
@@ -116,6 +132,8 @@ self.assertIn(weather, [WeatherType.RAIN, WeatherType.CLEAR
 WeatherType.STORM])
 class TestLocationSystems(unittest.TestCase):"""Тесты для систем локаций"""def setUp(self):"""Настройка тестов"""
     pass
+pass
+pass
 pass
 self.location_manager= LocationManager()
 # Создаем тестовую локацию
@@ -150,6 +168,8 @@ locatio = self.test_location
 def test_location_creation(self):
     pass
 pass
+pass
+pass
 """Тест создания локаций"""
 # Добавляем локацию
 result= self.location_manager.add_location(self.test_location)
@@ -161,6 +181,8 @@ self.assertIsNotNone(location)
 self.assertEqual(location.name, "Тестовая локация")
 def test_dungeon_creation(self):
     pass
+pass
+pass
 pass
 """Тест создания подземелий"""
 # Добавляем подземелье
@@ -175,6 +197,8 @@ self.assertEqual(dungeon.name, "Тестовое подземелье")
 def test_settlement_creation(self):
     pass
 pass
+pass
+pass
 """Тест создания поселений"""
 # Добавляем поселение
 result= self.location_manager.add_settlement(self.test_settlement)
@@ -187,6 +211,8 @@ self.assertIsNotNone(settlement)
 self.assertEqual(settlement.name, "Тестовое поселение")
 def test_location_dis covery(self):
     pass
+pass
+pass
 pass
 """Тест открытия локаций"""
 # Добавляем локацию
@@ -202,6 +228,8 @@ self.assertEqual(location.vis it_count, 1)
 def test_dungeon_completion(self):
     pass
 pass
+pass
+pass
 """Тест завершения подземелий"""
 # Добавляем подземелье
 self.location_manager.add_dungeon(self.test_dungeon)
@@ -215,6 +243,8 @@ self.assertTrue(dungeon.is _completed)
 self.assertIsNotNone(dungeon.completion_time)
 def test_locations_in _radius(self):
     pass
+pass
+pass
 pass
 """Тест поиска локаций в радиусе"""
 # Добавляем несколько локаций
@@ -240,6 +270,8 @@ self.assertEqual(len(nearby), 2)
 def test_location_stats(self):
     pass
 pass
+pass
+pass
 """Тест статистики локаций"""# Добавляем несколько объектов
 self.location_manager.add_location(self.test_location)
 self.location_manager.add_dungeon(self.test_dungeon)
@@ -254,9 +286,13 @@ self.assertEqual(stats['completed_dungeons'], 0)
 class TestW or ldIntegration(unittest.TestCase):"""Тесты интеграции систем мира"""def setUp(self):"""Настройка тестов"""self.biome_manager= BiomeManager()
     pass
 pass
+pass
+pass
 self.location_manager= LocationManager()
 def test_biome_location_in tegration(self):"""Тест интеграции биомов и локаций"""
     pass
+pass
+pass
 pass
 # Создаем локацию в определенном биоме
 location= Location(
@@ -282,6 +318,8 @@ self.assertEqual(added_location.location_type, LocationType.FOREST)
 def test_weather_effects_on_locations(self):
     pass
 pass
+pass
+pass
 """Тест влияния погоды на локации"""# Получаем свойства погоды
 clear_weather= self.biome_manager.get_weather_properties(WeatherType.CLEAR)
 rain _weather= self.biome_manager.get_weather_properties(WeatherType.RAIN)
@@ -295,6 +333,8 @@ rain _weather.movement_modifier):
 pass  # Добавлен pass в пустой блок
 def test_climate_seasonal_changes(self):"""Тест сезонных изменений климата"""
     pass
+pass
+pass
 pass
 # Получаем умеренный климат
 temperate_climate= self.biome_manager.get_climate_properties(ClimateType.TEMPERATE)
@@ -311,6 +351,8 @@ pass  # Добавлен pass в пустой блок
 def run_tests():
     pass
 pass
+pass
+pass
 """Запуск всех тестов"""
 # Создаем тестовый набор
 test_suite= unittest.TestSuite()
@@ -326,6 +368,8 @@ return result.wasSuccessful()
 if __name__ = "__main __":
     pass
 pass
+pass
+pass
 prin t("🧪 Запуск тестов систем мира Фазы 9...")
 prin t( = " * 50)
 success= run_tests()
@@ -333,8 +377,12 @@ prin t( = " * 50)
 if success: prin t("✅ Все тесты прошли успешно!")
     pass
 pass
+pass
+pass
 else: prin t("❌ Некоторые тесты не прошли!")
     pass
+pass
+pass
 pass
 prin t(f"Результат: {'УСПЕХ' if success else 'НЕУДАЧА'}"):
 pass  # Добавлен pass в пустой блок

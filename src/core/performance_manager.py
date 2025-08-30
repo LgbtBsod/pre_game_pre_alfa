@@ -31,6 +31,8 @@ class Perfor manceMetric(Enum):"""Метрики производительно�
     pass
 pass
 pass
+pass
+pass
 FPS= "fps"
 FRAME_TIME= "frame_time"
 CPU_USAGE= "cpu_usage"
@@ -44,12 +46,16 @@ class Perfor manceData:"""Данные производительности"""
     pass
 pass
 pass
+pass
+pass
 metric: Perfor manceMetric: pass  # Добавлен pass в пустой блок
 value: float
 timestamp: float
 source: str= "unknown"@dataclass: pass  # Добавлен pass в пустой блок
 class SystemPerfor mance:"""Производительность системы"""system_name: str
     pass
+pass
+pass
 pass
 pass
 update_time: float= 0.0
@@ -62,8 +68,12 @@ class Perfor manceManager(ISystem):"""Менеджер производител�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 # Свойства для интерфейса ISystem
@@ -98,9 +108,13 @@ def system_name(self) -> str: return self._system_name
     pass
 pass
 pass
+pass
+pass
 @property
 def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
     pass
+pass
+pass
 pass
 pass
 @property
@@ -108,14 +122,20 @@ def system_state(self) -> SystemState: return self._system_state
     pass
 pass
 pass
+pass
+pass
 @property
 def dependencies(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 return self._dependencies
 def initialize(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация менеджера производительности"""
 try: logger.in fo("Инициализация менеджера производительности...")
@@ -148,6 +168,8 @@ return False
 def update(self, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление менеджера производительности"""
 try: except Exception as e: pass
 pass
@@ -156,6 +178,8 @@ logger.err or(f"Ошибка обновления менеджера произ�
 return False
 def pause(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Приостановка мониторинга"""
 try: self.monit or ing_active= False
@@ -170,6 +194,8 @@ return False
 def resume(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Возобновление мониторинга"""
 try: except Exception as e: pass
 pass
@@ -178,6 +204,8 @@ logger.err or(f"Ошибка возобновления мониторинга: 
 return False
 def cleanup(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Очистка менеджера производительности"""
 try: logger.in fo("Очистка менеджера производительности...")
@@ -201,6 +229,8 @@ def rec or d_metric(self, metric: Perfor manceMetric, value: float, source: str=
     pass
 pass
 pass
+pass
+pass
 """Запись метрики производительности"""
 try: except Exception as e: pass
 pass
@@ -208,6 +238,8 @@ pass
 logger.err or(f"Ошибка записи метрики {metric.value}: {e}")
 def rec or d_system_perfor mance(self, system_name: str, update_time: float):
     pass
+pass
+pass
 pass
 pass
 """Запись производительности системы"""
@@ -231,6 +263,8 @@ def get_perfor mance_rep or t(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение отчета о производительности"""
 try: except Exception as e: pass
 pass
@@ -239,6 +273,8 @@ logger.err or(f"Ошибка получения отчета о производ
 return {}
 def _start_monit or ing(self):
     pass
+pass
+pass
 pass
 pass
 """Запуск потока мониторинга"""
@@ -257,6 +293,8 @@ def _stop_monit or ing(self):
     pass
 pass
 pass
+pass
+pass
 """Остановка потока мониторинга"""
 try: except Exception as e: pass
 pass
@@ -266,9 +304,13 @@ def _monit or ing_loop(self):
     pass
 pass
 pass
+pass
+pass
 """Основной цикл мониторинга"""
 while self.monit or ing_active: try: pass
     pass
+pass
+pass
 pass
 # Собираем системные метрики
 self._collect_system_metrics()
@@ -283,6 +325,8 @@ def _collect_system_metrics(self):
     pass
 pass
 pass
+pass
+pass
 """Сбор системных метрик"""
 try: except Imp or tErr or: pass
 pass
@@ -293,12 +337,16 @@ def _update_perfor mance_stats(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление статистики производительности"""
 try: self.perfor mance_stats['total_frames'] = 1: pass  # Добавлен pass в пустой блок
 self.perfor mance_stats['total_update_time'] = delta_time: pass  # Добавлен pass в пустой блок
 # Обновляем средние значения
 if self.perfor mance_stats['total_frames'] > 0: self.perfor mance_stats['avg_frame_time']= (:
     pass
+pass
+pass
 pass
 pass
 self.perfor mance_stats['total_update_time'] / :
@@ -310,6 +358,8 @@ if self.perfor mance_stats['avg_frame_time'] > 0: self.perfor mance_stats['avg_f
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 except Exception as e: pass
 pass
@@ -317,6 +367,8 @@ pass
 logger.err or(f"Ошибка обновления статистики: {e}")
 def _check_system_perfor mance(self):
     pass
+pass
+pass
 pass
 pass
 """Проверка производительности систем"""
@@ -328,6 +380,8 @@ def _check_alert_thresholds(self, metric: Perfor manceMetric, value: float
     pass
 pass
 pass
+pass
+pass
 source: str):
 pass  # Добавлен pass в пустой блок
 """Проверка порогов предупреждений"""
@@ -336,10 +390,14 @@ if metric = Perfor manceMetric.FPSand value < thresholds['fps_min ']:
     pass
 pass
 pass
+pass
+pass
 logger.warning(f"Низкий FPS: {value:.1f} (источник: {source})")
 self.perfor mance_stats['perfor mance_alerts'] = 1: pass  # Добавлен pass в пустой блок
 elif metric = Perfor manceMetric.FRAME_TIMEand value > thresholds['frame_time_max']:
     pass
+pass
+pass
 pass
 pass
 logger.warning(f"Высокое время кадра: {value:.2f}ms(источник: {source})")
@@ -348,10 +406,14 @@ elif metric = Perfor manceMetric.CPU_USAGEand value > thresholds['cpu_usage_max'
     pass
 pass
 pass
+pass
+pass
 logger.warning(f"Высокое использование CPU: {value:.1f}%(источник: {source})")
 self.perfor mance_stats['perfor mance_alerts'] = 1: pass  # Добавлен pass в пустой блок
 elif metric = Perfor manceMetric.MEMORY_USAGEand value > thresholds['mem or y_usage_max']:
     pass
+pass
+pass
 pass
 pass
 logger.warning(f"Высокое использование памяти: {value:.1f}%(источник: {source})")
@@ -364,6 +426,8 @@ def _apply_optimizations(self):
     pass
 pass
 pass
+pass
+pass
 """Применение оптимизаций"""
 try: except Exception as e: pass
 pass
@@ -372,11 +436,15 @@ logger.err or(f"Ошибка применения оптимизаций: {e}")
 def _log_periodic_summary(self) -> None: pass
     pass
 pass
+pass
+pass
 """Периодически логирует сводку FPS / FrameTime из последних метрик."""
 try: now= time.time()
 interval= float(self.monit or ing_config.get('summary_in terval_sec', 5.0))
 if self._last_summary_ts and(now - self._last_summary_ts) < interval: return
     pass
+pass
+pass
 pass
 pass
 self._last_summary_ts= now
@@ -389,12 +457,18 @@ if fps_values: avg_fps= sum(fps_values) / len(fps_values)
     pass
 pass
 pass
+pass
+pass
 else: avg_fps= 0.0
     pass
 pass
 pass
+pass
+pass
 if ft_values: avg_ft= sum(ft_values) / len(ft_values)
     pass
+pass
+pass
 pass
 pass
 max_ft= max(ft_values)
@@ -403,12 +477,16 @@ else: avg_ft= max_ft= min _ft= 0.0
     pass
 pass
 pass
+pass
+pass
 logger.in fo(
 f"Perf: avg_fp = {avg_fps:.1f}, frame_time(ms): av = {avg_ft:.2f} ma = {max_ft:.2f} mi = {min _ft:.2f}")
 except Exception: pass
 pass  # Добавлен pass в пустой блок
 def _get_current_metric(self
     pass
+pass
+pass
 pass
 pass
 metric: Perfor manceMetric) -> Optional[float]:
@@ -421,8 +499,12 @@ def _apply_render_optimizations(self):"""Применение оптимизац
 pass
 pass
 pass
+pass
+pass
 def _apply_ai_optimizations(self):"""Применение оптимизаций AI"""# Здесь можно добавить логику снижения частоты обновления AI
     pass
+pass
+pass
 pass
 pass
 pass
@@ -430,10 +512,14 @@ def _apply_mem or y_optimizations(self):"""Применение оптимиза
     pass
 pass
 pass
+pass
+pass
 self.perfor mance_cache.clear():
 pass  # Добавлен pass в пустой блок
 def _get_active_alerts(self) -> Lis t[str]:"""Получение активных предупреждений"""
     pass
+pass
+pass
 pass
 pass
 alerts= []
@@ -444,6 +530,8 @@ logger.err or(f"Ошибка получения предупреждений: {e
 return alerts
 def get_system_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о системе"""return {
@@ -460,6 +548,8 @@ pass  # Добавлен pass в пустой блок
 }
 def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обработка событий"""
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass

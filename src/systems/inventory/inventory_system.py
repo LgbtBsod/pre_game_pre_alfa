@@ -26,6 +26,8 @@ class ItemType(Enum):"""Типы предметов"""
     pass
 pass
 pass
+pass
+pass
 WEAPON= "weapon"          # Оружие
 ARMOR= "arm or "            # Броня
 CONSUMABLE= "consumable"  # Расходники
@@ -38,6 +40,8 @@ class ItemRarity(Enum):
     pass
 pass
 pass
+pass
+pass
 """Редкость предметов"""
 COMMON= "common"          # Обычный
 UNCOMMON= "uncommon"      # Необычный
@@ -47,6 +51,8 @@ LEGENDARY= "legendary"    # Легендарный
 MYTHIC= "mythic"          # Мифический
 class EquipmentSlot(Enum):
     pass
+pass
+pass
 pass
 pass
 """Слоты экипировки"""
@@ -70,6 +76,8 @@ TRINKET_2= "trin ket_2"    # Аксессуар 2
 class ItemStats: pass
     pass
 pass
+pass
+pass
 """Характеристики предмета"""damage: float= 0.0
 arm or : float= 0.0
 health: float= 0.0
@@ -84,6 +92,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class Item:"""Базовый класс предмета"""
     pass
+pass
+pass
 pass
 pass
 id: str
@@ -109,6 +119,8 @@ pass  # Добавлен pass в пустой блок
 def can_stack_with(self, other: 'Item') -> bool: pass
     pass
 pass
+pass
+pass
 """Проверить, можно ли сложить с другим предметом"""return(self.id = other.id and
 self.stack_size < self.max_stack and
 other.stack_size < other.max_stack)
@@ -116,9 +128,13 @@ def get_total_stats(self) -> ItemStats:"""Получить общие харак
     pass
 pass
 pass
+pass
+pass
 # Умножаем характеристики на количество
 for attrin ['damage', 'arm or ', 'health', 'mana', 'strength', 'agility', 'in telligence']:
     pass
+pass
+pass
 pass
 pass
 value= getattr(self.stats, attr, 0.0)
@@ -132,6 +148,8 @@ class Invent or ySlot:"""Слот инвентаря"""item: Optional[Item]= Non
     pass
 pass
 pass
+pass
+pass
 quantity: int= 0
 locked: bool= False
 position: Tuple[in t, int]= (0, 0)
@@ -139,12 +157,18 @@ def is_empty(self) -> bool:"""Проверить, пуст ли слот"""retur
     pass
 pass
 pass
+pass
+pass
 def can_accept_item(self, item: Item, quantity: int= 1) -> bool:"""Проверить, можно ли поместить предмет в слот"""if self.locked: return False
     pass
 pass
 pass
+pass
+pass
 if self.is _empty():
     pass
+pass
+pass
 pass
 pass
 return True
@@ -152,10 +176,14 @@ if self.item.id = item.id: return self.quantity + quantity <= self.item.max_stac
     pass
 pass
 pass
+pass
+pass
 return False
 @dataclass: pass  # Добавлен pass в пустой блок
 class EquipmentSet:"""Комплект экипировки"""name: str
     pass
+pass
+pass
 pass
 pass
 pieces: Lis t[str]= field(default_factor = list)  # ID предметов: pass  # Добавлен pass в пустой блок
@@ -167,9 +195,13 @@ class Invent or ySystem(BaseComponent):"""Консолидированная с�
     pass
 pass
 pass
+pass
+pass
 Управляет предметами, экипировкой и интеграцией с другими системами"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -194,6 +226,8 @@ self.max_equipment_slots= len(EquipmentSlot)
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы инвентаря"""
 try: except Exception as e: pass
 pass
@@ -202,6 +236,8 @@ self.logger.err or(f"Ошибка инициализации Invent or ySystem: 
 return False
 def _regis ter_base_items(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация базовых предметов"""
@@ -250,12 +286,16 @@ def _regis ter_item_effects(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация эффектов предметов"""
 self.item_effects["basic_attack"]= self._basic_attack_effect
 self.item_effects["basic_defense"]= self._basic_defense_effect: pass  # Добавлен pass в пустой блок
 self.item_effects["rest or e_health"]= self._rest or e_health_effect
 def _regis ter_equipment_sets(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация комплектов экипировки"""
@@ -271,6 +311,8 @@ set_bonus_level = {
 self.equipment_sets["begin ner_set"]= begin ner_set
 def _regis ter_crafting_recipes(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация рецептов крафтинга"""# Рецепт улучшенной сабли
@@ -295,6 +337,8 @@ def create_in vent or y(self, entity_id: str, size: Optional[in t]= None) -> 'In
     pass
 pass
 pass
+pass
+pass
 """Создать инвентарь для сущности"""if entity_idin self.in vent or ies: return self.in vent or ies[entity_id]
 invent or y_size= size or self.max_in vent or y_size
 invent or y= Invent or y(entity_id, invent or y_size, self)
@@ -304,14 +348,20 @@ def get_in vent or y(self, entity_id: str) -> Optional['Invent or y']:"""Пол�
     pass
 pass
 pass
+pass
+pass
 def create_item(self, template_id: str
     pass
+pass
+pass
 pass
 pass
 quantity: int= 1) -> Optional[Item]:
 pass  # Добавлен pass в пустой блок"""Создать предмет по шаблону"""
 if template_id notin self.item_templates: self.logger.warning(f"Шаблон предмета не найден: {template_id}")
     pass
+pass
+pass
 pass
 pass
 return None
@@ -336,9 +386,13 @@ return item
 def add_item_to_in vent or y(self, entity_id: str, item: Item) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавить предмет в инвентарь"""invent or y= self.get_in vent or y(entity_id)
 if not invent or y: invent or y= self.create_in vent or y(entity_id)
     pass
+pass
+pass
 pass
 pass
 return invent or y.add_item(item)
@@ -346,9 +400,13 @@ def remove_item_from_in vent or y(self, entity_id: str, item_id: str
     pass
 pass
 pass
+pass
+pass
 quantity: int= 1) -> bool: pass  # Добавлен pass в пустой блок"""Убрать предмет из инвентаря"""invent or y= self.get_in vent or y(entity_id)
 if not invent or y: return False
     pass
+pass
+pass
 pass
 pass
 return invent or y.remove_item(item_id, quantity)
@@ -357,14 +415,20 @@ def equip_item(self, entity_id: str, item: Item
     pass
 pass
 pass
+pass
+pass
 slot: EquipmentSlot) -> bool: pass  # Добавлен pass в пустой блок"""Экипировать предмет"""invent or y= self.get_in vent or y(entity_id)
 if not invent or y: return False
     pass
 pass
 pass
+pass
+pass
 return invent or y.equip_item(item, slot)
 def unequip_item(self, entity_id: str
     pass
+pass
+pass
 pass
 pass
 slot: EquipmentSlot) -> Optional[Item]:
@@ -373,13 +437,19 @@ if not invent or y: return None
     pass
 pass
 pass
+pass
+pass
 return invent or y.unequip_item(slot)
 def get_equipment_bonuses(self, entity_id: str) -> Dict[str, float]:"""Получить бонусы от экипировки"""invent or y= self.get_in vent or y(entity_id)
     pass
 pass
 pass
+pass
+pass
 if not invent or y: return {}
     pass
+pass
+pass
 pass
 pass
 return invent or y.get_equipment_bonuses()
@@ -388,8 +458,12 @@ def can_craft_item(self, entity_id: str, recipe_id: str) -> bool:"""Провер
     pass
 pass
 pass
+pass
+pass
 if recipe_id notin self.crafting_recipes: return False
     pass
+pass
+pass
 pass
 pass
 recipe= self.crafting_recipes[recipe_id]
@@ -398,13 +472,19 @@ if not invent or y: return False
     pass
 pass
 pass
+pass
+pass
 # Проверяем наличие материалов
 for material_id, required_quantityin recipe["materials"].items():
     pass
 pass
 pass
+pass
+pass
 if not invent or y.has_item(material_id, required_quantity):
     pass
+pass
+pass
 pass
 pass
 return False
@@ -414,9 +494,13 @@ def craft_item(self, entity_id: str, recipe_id: str) -> Optional[Item]:
     pass
 pass
 pass
+pass
+pass
 """Скрафтить предмет"""
 if not self.can_craft_item(entity_id, recipe_id):
     pass
+pass
+pass
 pass
 pass
 return None
@@ -427,6 +511,8 @@ for material_id, required_quantityin recipe["materials"].items():
     pass
 pass
 pass
+pass
+pass
 invent or y.remove_item(material_id, required_quantity)
 # Создаем результат
 result_item= self.create_item(recipe["result"]["item_id"], recipe["result"]["quantity"])
@@ -434,10 +520,14 @@ if result_item: invent or y.add_item(result_item)
     pass
 pass
 pass
+pass
+pass
 return result_item
 # Эффекты предметов
 def _basic_attack_effect(self, entity_id: str, context: Dict[str, Any]):
     pass
+pass
+pass
 pass
 pass
 """Эффект базовой атаки"""# TODO: Интеграция с боевой системой
@@ -447,8 +537,12 @@ def _basic_defense_effect(self, entity_id: str, context: Dict[str, Any]):"""Эф
 pass
 pass
 pass
+pass
+pass
 def _rest or e_health_effect(self, entity_id: str, context: Dict[str, Any]):"""Эффект восстановления здоровья"""# TODO: Интеграция с системой здоровья
     pass
+pass
+pass
 pass
 pass
 pass
@@ -457,16 +551,24 @@ def get_item_template(self, template_id: str) -> Optional[Item]:"""Получи�
     pass
 pass
 pass
+pass
+pass
 def regis ter_item_template(self, template: Item):"""Зарегистрировать шаблон предмета"""self.item_templates[template.id]= template
     pass
+pass
+pass
 pass
 pass
 def get_crafting_recipe(self, recipe_id: str) -> Optional[Dict[str, Any]]:"""Получить рецепт крафтинга"""return self.crafting_recipes.get(recipe_id)
     pass
 pass
 pass
+pass
+pass
 def regis ter_crafting_recipe(self, recipe: Dict[str, Any]):"""Зарегистрировать рецепт крафтинга"""
     pass
+pass
+pass
 pass
 pass
 self.crafting_recipes[recipe["id"]]= recipe
@@ -474,14 +576,20 @@ def get_entity_items(self, entity_id: str) -> Lis t[Item]:
     pass
 pass
 pass
+pass
+pass
 """Получить все предметы сущности"""invent or y= self.get_in vent or y(entity_id)
 if not invent or y: return []
     pass
 pass
 pass
+pass
+pass
 return invent or y.get_all_items()
 def get_entity_equipment(self, entity_id: str) -> Dict[EquipmentSlot
     pass
+pass
+pass
 pass
 pass
 Item]:
@@ -490,9 +598,13 @@ if not invent or y: return {}
     pass
 pass
 pass
+pass
+pass
 return invent or y.get_equipment()
 class Invent or y:"""Инвентарь сущности"""def __in it__(self, entity_id: str, size: int, system: Invent or ySystem):
     pass
+pass
+pass
 pass
 pass
 self.entity_id= entity_id
@@ -502,6 +614,8 @@ self.system= system
 self.slots: Lis t[Invent or ySlot]= []
 for iin range(size):
     pass
+pass
+pass
 pass
 pass
 row= i // 10
@@ -516,10 +630,14 @@ def add_item(self, item: Item) -> bool:"""Добавить предмет в и�
     pass
 pass
 pass
+pass
+pass
 slot= self._fin d_slot_for _item(item):
 pass  # Добавлен pass в пустой блок
 if not slot: return False
     pass
+pass
+pass
 pass
 pass
 # Добавляем предмет
@@ -527,10 +645,14 @@ if slot.is _empty():
     pass
 pass
 pass
+pass
+pass
 slot.item= item
 slot.quantity= item.stack_size
 else: pass
     pass
+pass
+pass
 pass
 # Складываем с существующим предметом
 max_add= m in(item.stack_size, slot.item.max_stack - slot.quantity)
@@ -538,6 +660,8 @@ slot.quantity = max_add
 # Если остался излишек, создаем новый слот
 if max_add < item.stack_size: remain ing_item= Item(
     pass
+pass
+pass
 pass
 pass
 i = item.id,
@@ -561,9 +685,13 @@ def remove_item(self, item_id: str, quantity: int= 1) -> bool:"""Убрать п
     pass
 pass
 pass
+pass
+pass
 slot= self._fin d_slot_by_item_id(item_id)
 if not slot: return False
     pass
+pass
+pass
 pass
 pass
 # Убираем предмет
@@ -571,9 +699,13 @@ if slot.quantity <= quantity: slot.item= None
     pass
 pass
 pass
+pass
+pass
 slot.quantity= 0
 else: slot.quantity = quantity
     pass
+pass
+pass
 pass
 pass
 return True
@@ -581,12 +713,18 @@ def has_item(self, item_id: str, quantity: int= 1) -> bool:"""Проверить
     pass
 pass
 pass
+pass
+pass
 for slotin self.slots: if slot.itemand slot.item.id = item_id: total_quantity = slot.quantity
     pass
 pass
 pass
+pass
+pass
 if total_quantity >= quantity: return True
     pass
+pass
+pass
 pass
 pass
 return False
@@ -594,14 +732,20 @@ def equip_item(self, item: Item, slot: EquipmentSlot) -> bool:"""Экипиро�
     pass
 pass
 pass
+pass
+pass
 if not self._check_equipment_requirements(item):
     pass
+pass
+pass
 pass
 pass
 return False
 # Снимаем предыдущий предмет
 if slotin self.equipment: self.unequip_item(slot)
     pass
+pass
+pass
 pass
 pass
 # Экипируем новый предмет
@@ -611,6 +755,8 @@ self._apply_equipment_effects(item, True)
 return True
 def unequip_item(self, slot: EquipmentSlot) -> Optional[Item]:"""Снять предмет с экипировки"""if slot notin self.equipment: return None
     pass
+pass
+pass
 pass
 pass
 item= self.equipment[slot]
@@ -623,9 +769,13 @@ def get_equipment_bonuses(self) -> Dict[str, float]:"""Получить бону
     pass
 pass
 pass
+pass
+pass
 bonuses= {}
 for itemin self.equipment.values():
     pass
+pass
+pass
 pass
 pass
 stats= item.get_total_stats()
@@ -634,14 +784,20 @@ for attrin ['damage', 'arm or ', 'health', 'mana', 'strength', 'agility', 'in te
     pass
 pass
 pass
+pass
+pass
 value= getattr(stats, attr, 0.0)
 if value > 0: bonuses[attr]= bonuses.get(attr, 0.0) + value
     pass
 pass
 pass
+pass
+pass
 # Складываем сопротивления
 for resis tance_type, resis tance_valuein stats.resis tance.items():
     pass
+pass
+pass
 pass
 pass
 bonuses[f"resis tance_{resis tance_type}"]= bonuses.get(f"resis tance_{resis tance_type}", 0.0) + resis tance_value
@@ -650,9 +806,13 @@ def get_all_items(self) -> Lis t[Item]:
     pass
 pass
 pass
+pass
+pass
 """Получить все предметы в инвентаре"""items= []
 for slotin self.slots: if not slot.is _empty():
     pass
+pass
+pass
 pass
 pass
 items.append(slot.item)
@@ -661,17 +821,25 @@ def get_equipment(self) -> Dict[EquipmentSlot, Item]:"""Получить эки�
     pass
 pass
 pass
+pass
+pass
 def _fin d_slot_for _item(self, item: Item) -> Optional[Invent or ySlot]:"""Найти слот для предмета"""# Сначала ищем слот с таким же предметом для складывания
     pass
+pass
+pass
 pass
 pass
 if self.auto_stack: for slotin self.slots: if slot.itemand slot.item.id = item.idand slot.quantity < slot.item.max_stack: return slot
     pass
 pass
 pass
+pass
+pass
 # Ищем пустой слот
 for slotin self.slots: if slot.is _empty():
     pass
+pass
+pass
 pass
 pass
 return slot
@@ -680,9 +848,13 @@ def _fin d_slot_by_item_id(self, item_id: str) -> Optional[Invent or ySlot]:"""�
     pass
 pass
 pass
+pass
+pass
 return None
 def _check_equipment_requirements(self, item: Item) -> bool:"""Проверить требования для экипировки"""# TODO: Проверка уровня, характеристик и других требований
     pass
+pass
+pass
 pass
 pass
 return True
@@ -690,8 +862,12 @@ def _apply_equipment_effects(self, item: Item, equipping: bool):"""Примен�
     pass
 pass
 pass
+pass
+pass
 for effect_namein item.effects: if effect_namein self.system.item_effects: effect_func= self.system.item_effects[effect_name]
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass

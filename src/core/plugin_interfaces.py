@@ -23,10 +23,14 @@ class Plugin LoadType(Enum):
     pass
 pass
 pass
+pass
+pass
 EAGER= "eager"
 LAZY= "lazy"
 class Plugin Scope(Enum):
     pass
+pass
+pass
 pass
 pass
 GLOBAL= "global"
@@ -36,6 +40,8 @@ SCENE= "scene"
 pass  # Добавлен pass в пустой блок
 class Plugin Metadata: plugin _id: str
     pass
+pass
+pass
 pass
 pass
 name: str
@@ -52,25 +58,37 @@ class IPlug in(Protocol):"""Базовый протокол плагина"""met
     pass
 pass
 pass
+pass
+pass
 def initialize(self, context: Dict[str, Any]) -> bool: ...
     pass
+pass
+pass
 pass
 pass
 def start(self) -> bool: ...
     pass
 pass
 pass
+pass
+pass
 def stop(self) -> bool: ...
     pass
+pass
+pass
 pass
 pass
 def destroy(self) -> bool: ...
     pass
 pass
 pass
+pass
+pass
 @runtime_checkable
 class IEventAwarePlug in(IPlugin , Protocol):"""Плагин, умеющий подписываться на события"""def regis ter_event_hand lers(self, subscribe: Callable[[str, Callable]
     pass
+pass
+pass
 pass
 pass
 None]) -> None: ...
@@ -79,12 +97,18 @@ class ISystemExtension(Protocol):"""Расширение для конкретн
     pass
 pass
 pass
+pass
+pass
 target_system: str
 def attach(self, system: Any) -> None: ...
     pass
 pass
 pass
+pass
+pass
 def detach(self, system: Any) -> None: ...
     pass
+pass
+pass
 pass
 pass

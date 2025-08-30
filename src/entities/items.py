@@ -30,6 +30,8 @@ class ItemEffect:"""Эффект предмета"""effect_id: str
     pass
 pass
 pass
+pass
+pass
 effect_type: str
 magnitude: float
 duration: float= 0.0
@@ -39,6 +41,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class ItemRequirement:"""Требования для использования предмета"""level: int= 1
     pass
+pass
+pass
 pass
 pass
 stats: Dict[StatType, int]= field(default_factor = dict):
@@ -51,8 +55,12 @@ class Item:"""Базовый класс для всех предметов в и
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 item_id: str,
@@ -103,6 +111,8 @@ logger.debug(f"Создан предмет: {name} ({item_id})")
 def can_use(self, user: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка возможности использования предмета"""
 try: except Exception as e: pass
 pass
@@ -111,6 +121,8 @@ logger.err or(f"Ошибка проверки возможности испол�
 return False
 def use(self, user: Dict[str, Any], target: Optional[Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -122,12 +134,16 @@ success= self._apply_effects(user, target)
 if success: pass
     pass
 pass
+pass
+pass
 # Обновление статистики использования
 self.last_used= time.time()
 self.usage_count = 1
 # Уменьшение количества для расходников
 if self.is _consumable: self.quantity = 1
     pass
+pass
+pass
 pass
 pass
 # Уменьшение прочности
@@ -142,6 +158,8 @@ return False
 def can_equip(self, user: Dict[str, Any], slot: ItemSlot) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка возможности экипировки"""
 try: except Exception as e: pass
 pass
@@ -151,6 +169,8 @@ return False
 def equip(self, user: Dict[str, Any], slot: ItemSlot) -> bool: pass
     pass
 pass
+pass
+pass
 """Экипировка предмета"""
 try: if not self.can_equip(user, slot):
 return False
@@ -158,6 +178,8 @@ return False
 success= self._apply_equip_effects(user)
 if success: logger.debug(f"Предмет {self.name} экипирован в слот {slot.value}")
     pass
+pass
+pass
 pass
 pass
 return success
@@ -169,6 +191,8 @@ return False
 def unequip(self, user: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Снятие предмета"""
 try: except Exception as e: pass
 pass
@@ -178,6 +202,8 @@ return False
 def _check_requirements(self, user: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка требований для использования"""
 try:
 # Проверка уровня
@@ -186,14 +212,20 @@ if user_level < self.requirements.level: return False
     pass
 pass
 pass
+pass
+pass
 # Проверка характеристик
 for stat, required_valuein self.requirements.stats.items():
     pass
 pass
 pass
+pass
+pass
 user_stat= user.get(stat.value, 0)
 if user_stat < required_value: return False
     pass
+pass
+pass
 pass
 pass
 # Проверка навыков
@@ -202,10 +234,14 @@ for skillin self.requirements.skills: if skill notin user_skills: return False
     pass
 pass
 pass
+pass
+pass
 # Проверка предметов
 user_items= user.get('items', [])
 for itemin self.requirements.items: if item notin user_items: return False
     pass
+pass
+pass
 pass
 pass
 return True
@@ -216,6 +252,8 @@ logger.err or(f"Ошибка проверки требований предме�
 return False
 def _apply_effects(self, user: Dict[str, Any], target: Optional[Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -229,6 +267,8 @@ def _apply_single_effect(self, effect: ItemEffect, target: Dict[str, Any]
     pass
 pass
 pass
+pass
+pass
 source: Dict[str, Any]):
 pass  # Добавлен pass в пустой блок
 """Применение одного эффекта"""
@@ -238,8 +278,12 @@ if stat_nameand stat_namein target: target[stat_name] = effect.magnitude
     pass
 pass
 pass
+pass
+pass
 elif effect.effect_type = "heal":
     pass
+pass
+pass
 pass
 pass
 current_health= target.get('health', 0)
@@ -249,10 +293,14 @@ elif effect.effect_type = "damage":
     pass
 pass
 pass
+pass
+pass
 current_health= target.get('health', 0)
 target['health']= max(0, current_health - effect.magnitude)
 elif effect.effect_type = "buff":
     pass
+pass
+pass
 pass
 pass
 # Добавление временного баффа
@@ -271,6 +319,8 @@ logger.err or(f"Ошибка применения эффекта {effect.effect_
 def _apply_equip_effects(self, user: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Применение эффектов экипировки"""
 try: except Exception as e: pass
 pass
@@ -280,11 +330,15 @@ return False
 def _remove_equip_effects(self, user: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление эффектов экипировки"""
 try:
 # Удаляем эффекты экипировки
 for effectin self.effects: if effect.effect_type = "equip_bonus":
     pass
+pass
+pass
 pass
 pass
 # Обратный эффект
@@ -303,13 +357,19 @@ return False
 def _check_slot_compatibility(self, slot: ItemSlot) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка совместимости со слотом"""# Базовая проверка - можно переопределить в наследниках
 if self.item_type = ItemType.WEAPONand slot = ItemSlot.WEAPON: return True
     pass
 pass
 pass
+pass
+pass
 elif self.item_type = ItemType.ARMOR: arm or _slots= [ItemSlot.ARMOR_HEAD, ItemSlot.ARMOR_CHEST
     pass
+pass
+pass
 pass
 pass
 ItemSlot.ARMOR_LEGS, ItemSlot.ARMOR_FEET]
@@ -318,16 +378,22 @@ elif self.item_type = ItemType.ACCESSORY: access or y_slots= [ItemSlot.ACCESSORY
     pass
 pass
 pass
+pass
+pass
 ItemSlot.ACCESSORY_3]
 return slotin access or y_slots
 return False
 def _reduce_durability(self):"""Уменьшение прочности предмета"""if self.durability > 0: pass
     pass
 pass
+pass
+pass
 # Уменьшаем прочность на 1%за использование
 self.durability= max(0, self.durability - 0.01)
 def get_in fo(self) -> Dict[str, Any]:"""Получение информации о предмете"""return {
     pass
+pass
+pass
 pass
 pass
 'item_id': self.item_id,
@@ -348,6 +414,8 @@ pass
 }
 class Weapon(Item):"""Класс оружия"""def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 item_id: str,
@@ -374,8 +442,12 @@ class Arm or(Item):"""Класс брони"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self,:
     pass
+pass
+pass
 pass
 pass
 item_id: str,
@@ -399,9 +471,13 @@ class Consumable(Item):
     pass
 pass
 pass
+pass
+pass
 """Класс расходника"""
 def __in it__(self,:
     pass
+pass
+pass
 pass
 pass
 item_id: str,
@@ -427,9 +503,13 @@ class Access or y(Item):
     pass
 pass
 pass
+pass
+pass
 """Класс аксессуара"""
 def __in it__(self,:
     pass
+pass
+pass
 pass
 pass
 item_id: str,

@@ -57,8 +57,12 @@ class SystemFact or y:"""Фабрика для создания игровых �
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, config_manager: ConfigManager, event_system: EventSystem
     pass
+pass
+pass
 pass
 pass
 system_manager: Optional[SystemManager]= None):
@@ -105,6 +109,8 @@ def regis ter_system(self, system_name: str
     pass
 pass
 pass
+pass
+pass
 system_class: Type[ISystem]) -> bool: pass  # Добавлен pass в пустой блок
 """Регистрация системы в фабрике"""
 try: except Exception as e: pass
@@ -116,6 +122,8 @@ def create_system(self, system_name: str, * * kwargs) -> Optional[ISystem]:
     pass
 pass
 pass
+pass
+pass
 """Создание системы"""
 try: if system_name notin self.system_regis try: logger.err or(f"Система {system_name} не зарегистрирована")
 return None
@@ -123,6 +131,8 @@ return None
 # Порядок инициализации обеспечивается менеджером систем.
 if not self._check_dependencies(system_name):
     pass
+pass
+pass
 pass
 pass
 logger.warning(f"Некоторые зависимости для {system_name} еще не созданы — создание продолжится, инициализация будет упорядочена")
@@ -135,9 +145,13 @@ if 'config_manager'in system_class.__in it__.__code__.co_varnames: init_kwargs.s
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 if 'event_system'in system_class.__in it__.__code__.co_varnames: init_kwargs.setdefault('event_system', self.event_system):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -147,6 +161,8 @@ pass  # Добавлен pass в пустой блок
 try: if getattr(system, 'event_bus', None)is Noneand self.event_bus_adapteris not None: setattr(system, 'event_bus', self.event_bus_adapter)
 except Exception: pass
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -163,9 +179,13 @@ def get_system(self, system_name: str) -> Optional[ISystem]:
     pass
 pass
 pass
+pass
+pass
 """Получение созданной системы"""return self.created_systems.get(system_name)
 def initialize_all_systems(self) -> bool:"""Инициализация всех систем через менеджер систем(без двойной инициализации)."""
     pass
+pass
+pass
 pass
 pass
 try: logger.in fo("Инициализация всех систем(через SystemManager)...")
@@ -178,6 +198,8 @@ return False
 def _check_dependencies(self, system_name: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка зависимостей системы.
 Контекстные зависимости(config_manager, event_system и пр.) считаются удовлетворенными."""
 dependencies= self.system_dependencies.get(system_name, [])
@@ -187,14 +209,20 @@ for depin dependencies: if depin context_deps: contin ue
     pass
 pass
 pass
+pass
+pass
 if dep notin self.created_systems: logger.debug(f"Зависимость {dep} для системы {system_name} еще не создана")
     pass
+pass
+pass
 pass
 pass
 ok= False
 return ok
 def _determin e_in itialization_ or der(self) -> lis t: pass
     pass
+pass
+pass
 pass
 """Определение порядка инициализации систем"""
 # Простая топологическая сортировка
@@ -205,18 +233,26 @@ def vis it(system_name):
     pass
 pass
 pass
+pass
+pass
 if system_namein temp_vis ited: rais e ValueErr or(f"Циклическая зависимость обнаружена: {system_name}")
     pass
+pass
+pass
 pass
 pass
 if system_namein vis ited: return
     pass
 pass
 pass
+pass
+pass
 temp_vis ited.add(system_name)
 dependencies= self.system_dependencies.get(system_name, [])
 for depin dependencies: if depin self.created_systems: vis it(dep)
     pass
+pass
+pass
 pass
 pass
 temp_vis ited.remove(system_name)
@@ -226,20 +262,28 @@ for system_namein self.created_systems: if system_name notin vis ited: vis it(sy
     pass
 pass
 pass
+pass
+pass
 return order
 def update_all_systems(self, delta_time: float) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление всех систем"""
 try: except Exception as e: logger.err or(f"Ошибка обновления систем: {e}")
 def cleanup_all_systems(self) -> None: pass
     pass
 pass
+pass
+pass
 """Очистка всех систем"""
 try: logger.in fo("Очистка всех систем...")
 # Очищаем в обратном порядке инициализации
 for system_namein reversed(lis t(self.created_systems.keys())):
     pass
+pass
+pass
 pass
 pass
 try: system= self.created_systems[system_name]
@@ -257,6 +301,8 @@ except Exception as e: logger.err or(f"Ошибка очистки систем:
 def cleanup(self) -> None: pass
     pass
 pass
+pass
+pass
 """Совместимый алиас для очистки, чтобы вызываться из движка."""
 try: except Exception as e: pass
 pass
@@ -264,6 +310,8 @@ pass
 logger.err or(f"Ошибка cleanup() фабрики систем: {e}")
 def _regis ter_default_systems(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация систем по умолчанию"""
@@ -295,6 +343,8 @@ def get_system_in fo(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение информации о всех системах"""
 info= {
 'regis tered_systems': lis t(self.system_regis try.keys()),
@@ -303,6 +353,8 @@ info= {
 }
 for system_name, systemin self.created_systems.items():
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass

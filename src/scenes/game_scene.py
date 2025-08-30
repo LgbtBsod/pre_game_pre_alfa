@@ -76,6 +76,8 @@ class IsometricCamera:"""Изометрическая камера для Pand a
     pass
 pass
 pass
+pass
+pass
 self.camera_node= camera_node
 # Позиция камеры в мировых координатах
 self.w or ld_x= 0.0
@@ -95,6 +97,8 @@ def _setup_is ometric_projection(self):"""Настройка изометрич�
     pass
 pass
 pass
+pass
+pass
 lens.setFilmSize(40, 30)
 lens.setNearFar( - 100, 100)
 self.camera_node.node().setLens(lens)
@@ -103,6 +107,8 @@ self.camera_node.setPos(self.w or ld_x, self.w or ld_y, self.w or ld_z)
 self.camera_node.lookAt(0, 0, 0)
 def w or ld_to_screen(self, w or ld_x: float, w or ld_y: float
     pass
+pass
+pass
 pass
 pass
 w or ld_z: float= 0) -> Tuple[float, float, float]:
@@ -123,6 +129,8 @@ def screen_to_w or ld(self, screen_x: float, screen_y: float
     pass
 pass
 pass
+pass
+pass
 screen_z: float= 0) -> Tuple[float, float, float]:
 pass  # Добавлен pass в пустой блок"""Преобразование экранных координат в мировые"""# Обратная изометрическая проекция
 w or ld_x= (screen_x / self.cos_angle + screen_y / self.sin _angle) / 2 + self.w or ld_x
@@ -133,6 +141,8 @@ def move(self, dx: float, dy: float, dz: float= 0):"""Перемещение к�
     pass
 pass
 pass
+pass
+pass
 self.w or ld_y = dy
 self.w or ld_z = dz
 # Обновляем позицию камеры
@@ -141,15 +151,21 @@ def set_zoom(self, zoom: float):"""Установка масштаба"""self.zo
     pass
 pass
 pass
+pass
+pass
 # Обновляем проекцию
 lens= self.camera_node.node().getLens()
 if isin stance(lens, OrthographicLens):
     pass
 pass
 pass
+pass
+pass
 lens.setFilmSize(40 / self.zoom, 30 / self.zoom)
 def follow_entity(self, entity: Dict[str, Any], smooth: float= 0.1):"""Следование за сущностью"""target_x= entity.get('x', 0)
     pass
+pass
+pass
 pass
 pass
 target_y= entity.get('y', 0)
@@ -164,8 +180,12 @@ class GameScene(Scene):"""Основная игровая сцена на Pand a
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("game")
@@ -201,6 +221,8 @@ logger.in fo("Игровая сцена Pand a3D создана")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация игровой сцены"""
 try: logger.in fo("Начало инициализации игровой сцены Pand a3D...")
 # Создание корневых узлов
@@ -234,10 +256,14 @@ def _create_scene_nodes(self):
     pass
 pass
 pass
+pass
+pass
 """Создание корневых узлов сцены"""
 # Используем корневые узлы, созданные менеджером сцен
 if self.scene_root: self.entities_root= self.scene_root.attachNewNode("entities")
     pass
+pass
+pass
 pass
 pass
 self.particles_root= self.scene_root.attachNewNode("particles")
@@ -249,9 +275,13 @@ self.ui_root= self.scene_root.attachNewNode("ui")
 else: pass
     pass
 pass
+pass
+pass
 # Fallback если корневые узлы не созданы
 if hasattr(self, 'scene_manager')and self.scene_manager: self.scene_root= self.scene_manager.render_node.attachNewNode("game_scene")
     pass
+pass
+pass
 pass
 pass
 self.entities_root= self.scene_root.attachNewNode("entities")
@@ -262,6 +292,8 @@ pass
 self.ui_root= self.scene_root.attachNewNode("ui")
 def _in itialize_game_systems(self):
     pass
+pass
+pass
 pass
 pass
 """Инициализация игровых систем"""
@@ -279,8 +311,12 @@ for system_name, systemin self.systems.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(system, 'in itialize'):
     pass
+pass
+pass
 pass
 pass
 system.in itialize()
@@ -297,6 +333,8 @@ def _create_in itial_objects(self):
     pass
 pass
 pass
+pass
+pass
 """Создание начальных игровых объектов"""
 try: except Exception as e: pass
 pass
@@ -304,6 +342,8 @@ pass
 logger.warning(f"Не удалось создать некоторые объекты: {e}")
 def _create_test_player(self):
     pass
+pass
+pass
 pass
 pass
 """Создание тестового игрока с AI - управлением и системами"""
@@ -350,9 +390,13 @@ if self.entities_root: player['node']= self._create_entity_node(player)
     pass
 pass
 pass
+pass
+pass
 # Применяем бонусы от генома к характеристикам
 if 'genome'in playerand hasattr(player['genome'], 'get_stat_boosts'):
     pass
+pass
+pass
 pass
 pass
 stat_boosts= player['genome'].get_stat_boosts()
@@ -360,8 +404,12 @@ for stat, boostin stat_boosts.items():
     pass
 pass
 pass
+pass
+pass
 if statin player['stats']:
     pass
+pass
+pass
 pass
 pass
 player['stats'][stat] = int(boost * 10)  # Увеличиваем характеристики
@@ -369,9 +417,13 @@ if stat = 'health'and 'max_health'in player: player['max_health'] = int(boost * 
     pass
 pass
 pass
+pass
+pass
 player['health']= player['max_health']
 if stat = 'mana'and 'max_mana'in player: player['max_mana'] = int(boost * 10)
     pass
+pass
+pass
 pass
 pass
 player['mana']= player['max_mana']
@@ -391,18 +443,26 @@ if player['skill_tree'].learn_skill("Огненный шар", player):
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Игрок изучил Огненный шар")
 else: logger.in fo("Игрок не смог изучить Огненный шар(ограничения генома)")
     pass
+pass
+pass
 pass
 pass
 if player['skill_tree'].learn_skill("Исцеление", player):
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Игрок изучил Исцеление")
 else: logger.in fo("Игрок не смог изучить Исцеление(ограничения генома)")
     pass
+pass
+pass
 pass
 pass
 # Добавляем предметы
@@ -417,6 +477,8 @@ if hasattr(self, 'effect_system'):
     pass
 pass
 pass
+pass
+pass
 self.effect_system.regis ter_item_effects(fire_sw or d)
 self.effect_system.regis ter_item_effects(lightning_ring)
 self.entities.append(player)
@@ -425,10 +487,14 @@ except Exception: pass
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 logger.debug("Тестовый игрок создан с системами")
 def _create_test_npcs(self):
     pass
+pass
+pass
 pass
 pass
 """Создание тестовых NPC с AI и системами"""
@@ -450,6 +516,8 @@ pass  # Добавлен pass в пустой блок
 ]
 for configin npc_configs: npc= {'id': config['id'],
     pass
+pass
+pass
 pass
 pass
 'type': 'npc',
@@ -494,9 +562,13 @@ if self.entities_root: npc['node']= self._create_entity_node(npc)
     pass
 pass
 pass
+pass
+pass
 # Применяем бонусы от генома к характеристикам(если доступен API)
 if 'genome'in npcand hasattr(npc['genome'], 'get_stat_boosts'):
     pass
+pass
+pass
 pass
 pass
 stat_boosts= npc['genome'].get_stat_boosts()
@@ -504,8 +576,12 @@ for stat, boostin stat_boosts.items():
     pass
 pass
 pass
+pass
+pass
 if statin npc['stats']:
     pass
+pass
+pass
 pass
 pass
 npc['stats'][stat] = int(boost * 8)
@@ -513,9 +589,13 @@ if stat = 'health'and 'max_health'in npc: npc['max_health'] = int(boost * 15)
     pass
 pass
 pass
+pass
+pass
 npc['health']= npc['max_health']
 if stat = 'mana'and 'max_mana'in npc: npc['max_mana'] = int(boost * 8)
     pass
+pass
+pass
 pass
 pass
 npc['mana']= npc['max_mana']
@@ -524,6 +604,8 @@ npc['skill_tree'].skill_poin ts= 5
 # Добавляем скиллы в зависимости от личности
 if config['ai_personality'] = 'aggressive':
     pass
+pass
+pass
 pass
 pass
 # Используем ContentGenerator для создания скиллов
@@ -535,13 +617,19 @@ if npc['skill_tree'].learn_skill("Огненный шар", npc):
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"NPC {config['id']} изучил Огненный шар")
 else: logger.in fo(f"NPC {config['id']} не смог изучить Огненный шар(ограничения генома)")
     pass
 pass
 pass
+pass
+pass
 elif config['ai_personality'] = 'defensive':
     pass
+pass
+pass
 pass
 pass
 # Используем ContentGenerator для создания скиллов
@@ -553,9 +641,13 @@ if npc['skill_tree'].learn_skill("Исцеление", npc):
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"NPC {config['id']} изучил Исцеление")
 else: logger.in fo(f"NPC {config['id']} не смог изучить Исцеление(ограничения генома)")
     pass
+pass
+pass
 pass
 pass
 self.entities.append(npc)
@@ -564,6 +656,8 @@ pass  # Добавлен pass в пустой блок
 logger.debug(f"Создано {len(npc_configs)} тестовых NPC с системами")
 def _create_test_items_and _skills(self):
     pass
+pass
+pass
 pass
 pass
 """Создание тестовых предметов и скиллов"""
@@ -585,6 +679,8 @@ def _regis ter_entities_in _ai(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация всех сущностей в AI системе"""
 try: except Exception as e: pass
 pass
@@ -593,11 +689,15 @@ logger.err or(f"Ошибка регистрации сущностей в AI с�
 def _create_entity_node(self, entity: Dict[str, Any]) -> NodePath: pass
     pass
 pass
+pass
+pass
 """Создание Pand a3D узла для сущности с проверкой ассетов"""
 # Проверяем наличие ассетов
 asset_path= entity.get('asset_path', '')
 if asset_pathand self._asset_exis ts(asset_path):
     pass
+pass
+pass
 pass
 pass
 # Загружаем модель из ассета
@@ -607,9 +707,13 @@ if model_loaderand hasattr(model_loader, 'loadModel'):
     pass
 pass
 pass
+pass
+pass
 model= model_loader.loadModel(asset_path)
 if model: pass
     pass
+pass
+pass
 pass
 # loadModel возвращает NodePath — репарентим в иерархию сцены
 model.reparentTo(self.entities_root)
@@ -625,12 +729,16 @@ return self._create_basic_geometry(entity)
 def _asset_exis ts(self, asset_path: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка существования ассета"""import os
 
 return os.path.exis ts(asset_path)
 def _create_basic_geometry(self, entity: Dict[str, Any]) -> NodePath:"""Создание базовой геометрии для сущности"""from pand a3d.c or e import GeomNode, Geom, GeomVertexData
 
     pass
+pass
+pass
 pass
 pass
 GeomVertexF or mat
@@ -640,9 +748,13 @@ if entity_type = 'player':
     pass
 pass
 pass
+pass
+pass
 return self._create_player_geometry(entity)
 elif entity_type = 'npc':
     pass
+pass
+pass
 pass
 pass
 return self._create_npc_geometry(entity)
@@ -650,14 +762,20 @@ else: return self._create_cube_geometry(entity)
     pass
 pass
 pass
+pass
+pass
 def _create_player_geometry(self, entity: Dict[str, Any]) -> NodePath:"""Создание геометрии игрока(цилиндр с неоновым эффектом)"""from pand a3d.c or e import GeomVertexWriter, GeomTriangles, GeomNode
 
     pass
 pass
 pass
+pass
+pass
 # Создаем цилиндр для игрока
 format= GeomVertexF or mat.getV3c4():
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -677,6 +795,8 @@ for iin range(segments):
     pass
 pass
 pass
+pass
+pass
 angle= (i / segments) * 2 * 3.14159
 x= radius * math.cos(angle)
 y= radius * math.s in(angle)
@@ -686,6 +806,8 @@ col or s.append((0.0, 1.0, 1.0, 1.0))
 # Нижняя крышка
 for iin range(segments):
     pass
+pass
+pass
 pass
 pass
 angle= (i / segments) * 2 * 3.14159
@@ -698,6 +820,8 @@ for v, cin zip(vertices, col or s):
     pass
 pass
 pass
+pass
+pass
 vertex.addData3( * v)
 col or .addData4( * c)
 # Создаем треугольники
@@ -707,6 +831,8 @@ for iin range(segments):
     pass
 pass
 pass
+pass
+pass
 next_i= (i + 1)%segments
 # Первый треугольник
 prim.addVertices(i, next_i, i + segments)
@@ -714,6 +840,8 @@ prim.addVertices(next_i, next_i + segments, i + segments)
 # Верхняя и нижняя крышки
 for iin range(1, segments - 1):
     pass
+pass
+pass
 pass
 pass
 # Верхняя крышка
@@ -737,8 +865,12 @@ def _create_npc_geometry(self, entity: Dict[str, Any]) -> NodePath:"""Созда
     pass
 pass
 pass
+pass
+pass
 format= GeomVertexF or mat.getV3c4():
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -760,9 +892,13 @@ if personality = 'aggressive':
     pass
 pass
 pass
+pass
+pass
 npc_color= (1.0, 100 / 255.0, 100 / 255.0, 1.0)  # Неоновый красный
 elif personality = 'defensive':
     pass
+pass
+pass
 pass
 pass
 npc_color= (100 / 255.0, 1.0, 100 / 255.0, 1.0)  # Неоновый зеленый
@@ -770,9 +906,13 @@ else: npc_color= (1.0, 1.0, 100 / 255.0, 1.0)  # Неоновый желтый
     pass
 pass
 pass
+pass
+pass
 # Добавляем вершины
 for vin vertices: vertex.addData3( * v)
     pass
+pass
+pass
 pass
 pass
 col or .addData4(npc_col or )
@@ -784,6 +924,8 @@ faces= [
 ]
 for facein faces: prim.addVertices( * face)
     pass
+pass
+pass
 pass
 pass
 prim.closePrimitive()
@@ -801,8 +943,12 @@ def _create_cube_geometry(self, entity: Dict[str, Any]) -> NodePath:"""Созд�
     pass
 pass
 pass
+pass
+pass
 format= GeomVertexF or mat.getV3c4():
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -823,6 +969,8 @@ for vin vertices: vertex.addData3( * v)
     pass
 pass
 pass
+pass
+pass
 col or .addData4( * entity['col or '])
 # Создаем треугольники
 prim= GeomTriangles(Geom.UHStatic)
@@ -832,6 +980,8 @@ faces= [
 ]
 for facein faces: prim.addVertices( * face)
     pass
+pass
+pass
 pass
 pass
 prim.closePrimitive()
@@ -849,8 +999,12 @@ def _setup_lighting(self):"""Настройка освещения для сце
     pass
 pass
 pass
+pass
+pass
 if not self.scene_root: return
     pass
+pass
+pass
 pass
 pass
 # Основное направленное освещение
@@ -867,6 +1021,8 @@ self.scene_root.setLight(alnp)
 logger.debug("Освещение игровой сцены настроено")
 def _create_ui_elements(self):
     pass
+pass
+pass
 pass
 pass
 """Создание UI элементов Pand a3D"""
@@ -901,6 +1057,8 @@ for i, (emotion_type, emoji, col or )in enumerate(emotion_configs):
     pass
 pass
 pass
+pass
+pass
 button= DirectButton(
 tex = emoji,
 po = (0.8 + i * 0.15, 0, 0.8),
@@ -918,14 +1076,20 @@ def _apply_emotion(self, emotion_type: str):
     pass
 pass
 pass
+pass
+pass
 """Применяет эмоцию к игроку"""
 player= next((e for ein self.entities if e['type'] = 'player'), None):
 pass  # Добавлен pass в пустой блок
 if playerand 'emotion_system'in player: try: pass
     pass
 pass
+pass
+pass
 if hasattr(player['emotion_system'], 'add_emotion'):
     pass
+pass
+pass
 pass
 pass
 emotion_enum= EmotionType(emotion_type)
@@ -942,6 +1106,8 @@ pass  # Добавлен pass в пустой блок
 logger.in fo(f"Игрок применил эмоцию: {emotion_type}")
 def update(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление игровой сцены"""if self.game_paused: return
@@ -967,10 +1133,14 @@ def _update_game_systems(self, delta_time: float):"""Обновление игр
     pass
 pass
 pass
+pass
+pass
 try:
 # Если доступен менеджер систем в сцене — доверяем обновление ему
 if hasattr(self, 'scene_manager')and hasattr(self.scene_manager, 'system_manager')and self.scene_manager.system_manager: try: pass
     pass
+pass
+pass
 pass
 self.scene_manager.system_manager.update_all_systems(delta_time)
 return
@@ -982,14 +1152,20 @@ except Exception: pass
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 if hasattr(self, 'effect_system'):
     pass
 pass
 pass
+pass
+pass
 try: self.effect_system.update(delta_time)
 except Exception: pass
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -998,14 +1174,20 @@ def _update_entities(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление игровых сущностей"""for entityin self.entities:
 # Обновляем системы сущности
 if 'skill_tree'in entity: entity['skill_tree'].update(delta_time)
     pass
 pass
 pass
+pass
+pass
 if entity['type'] = 'player':
     pass
+pass
+pass
 pass
 pass
 self._update_player_ai(entity
@@ -1014,10 +1196,14 @@ elif entity['type'] = 'npc':
     pass
 pass
 pass
+pass
+pass
 self._update_npc_ai(entity, delta_time)  # NPC управляются AI
 # Обновляем позицию Pand a3D узла
 if entity.get('node'):
     pass
+pass
+pass
 pass
 pass
 entity['node'].setPos(entity['x'], entity['y'], entity['z'])
@@ -1025,9 +1211,13 @@ entity['node'].setPos(entity['x'], entity['y'], entity['z'])
 if self.creat or _mode: try: pass
     pass
 pass
+pass
+pass
 except Exception: pass  # Добавлен pass в пустой блок
 def _update_player_ai(self, player: dict, delta_time: float):"""Обновление игрока через AI с использованием скиллов и предметов"""# Получаем решение AI для игрока
     pass
+pass
+pass
 pass
 pass
 context= {
@@ -1042,10 +1232,14 @@ decis ion= self.ai_manager.get_decis ion(player['id'], context)
 if decis ion: pass
     pass
 pass
+pass
+pass
 # AI принимает решение о движении и использовании скиллов
 self._execute_ai_decis ion(player, decis ion, delta_time)
 def _update_npc_ai(self, npc: dict, delta_time: float):"""Обновление NPC через AI с использованием скиллов"""# Получаем решение AI для NPC
     pass
+pass
+pass
 pass
 pass
 context= {
@@ -1060,10 +1254,14 @@ decis ion= self.ai_manager.get_decis ion(npc['id'], context)
 if decis ion: pass
     pass
 pass
+pass
+pass
 # AI принимает решение о движении и использовании скиллов
 self._execute_ai_decis ion(npc, decis ion, delta_time)
 def _execute_ai_decis ion(self, entity: dict, decis ion: AIDecis ion
     pass
+pass
+pass
 pass
 pass
 delta_time: float):
@@ -1071,9 +1269,13 @@ pass  # Добавлен pass в пустой блок"""Выполнение р
 if decis ion.action_type = ActionType.MOVE: pass
     pass
 pass
+pass
+pass
 # Движение к цели
 if decis ion.parametersand 'target_x'in decis ion.parametersand 'target_y'in decis ion.parameters: target_x= decis ion.parameters['target_x']
     pass
+pass
+pass
 pass
 pass
 target_y= decis ion.parameters['target_y']
@@ -1083,6 +1285,8 @@ dis tance= math.sqrt(dx * dx + dy * dy)
 if dis tance > 0.5: pass
     pass
 pass
+pass
+pass
 # Нормализуем вектор движения
 dx= dx / dis tance * entity['speed'] * delta_time
 dy= dy / dis tance * entity['speed'] * delta_time
@@ -1091,18 +1295,26 @@ entity['y'] = dy
 elif decis ion.action_type = ActionType.ATTACK: pass
     pass
 pass
+pass
+pass
 # Атака цели с использованием скиллов и предметов
 if decis ion.target: target_entity= next((e for ein self.entities if e.get('id') = decis ion.target), None):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
 if target_entity: pass
     pass
 pass
+pass
+pass
 # Проверяем, есть ли готовые скиллы
 if 'skill_tree'in entity: recommended_skill= entity['skill_tree'].get_ai_recommended_skill(entity, {
     pass
+pass
+pass
 pass
 pass
 'target': target_entity,
@@ -1110,6 +1322,8 @@ pass
 })
 if recommended_skilland recommended_skill.can_use(entity
     pass
+pass
+pass
 pass
 pass
 target_entity):
@@ -1121,6 +1335,8 @@ context)
 # Записываем в память AI
 if 'ai_entity'in entity: ai_entity= entity['ai_entity']
     pass
+pass
+pass
 pass
 pass
 ai_entity.add_mem or y(
@@ -1136,6 +1352,8 @@ if hasattr(self, 'effect_system'):
     pass
 pass
 pass
+pass
+pass
 self.effect_system.trigger_effect(
 'ON_SPELL_CAST',
 entity,
@@ -1145,6 +1363,8 @@ context
 else: pass
     pass
 pass
+pass
+pass
 # Обычная атака
 dx= target_entity['x'] - entity['x']
 dy= target_entity['y'] - entity['y']
@@ -1153,15 +1373,21 @@ if dis tance <= 3:  # Дистанция атаки
     pass
 pass
 pass
+pass
+pass
 # Наносим урон
 if 'health'in target_entity: damage= 10
     pass
+pass
+pass
 pass
 pass
 target_entity['health']= max(0, target_entity['health'] - damage)
 # Записываем в память AI
 if 'ai_entity'in entity: ai_entity= entity['ai_entity']
     pass
+pass
+pass
 pass
 pass
 ai_entity.add_mem or y(
@@ -1176,11 +1402,15 @@ if 'genome'in entity: experience_gain ed= damage * 0.1  # Опыт пропор�
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"Геном {entity['id']} получил опыт: {experience_gain ed}")
 # Активируем триггеры эффектов оружия
 context= {'damage_dealt': damage, 'damage_type': 'physical'}
 if hasattr(self, 'effect_system'):
     pass
+pass
+pass
 pass
 pass
 self.effect_system.trigger_effect(
@@ -1192,9 +1422,13 @@ context
 elif decis ion.action_type = ActionType.EXPLORE: pass
     pass
 pass
+pass
+pass
 # Исследование
 if rand om.rand om() < 0.1:  # 10%шанс изменить направление
     pass
+pass
+pass
 pass
 pass
 entity['target_x']= rand om.unifor m( - 10, 10):
@@ -1206,10 +1440,14 @@ def _fin d_nearest_enemy(self, entity: dict) -> Optional[dict]:
     pass
 pass
 pass
+pass
+pass
 """Поиск ближайшего врага"""enemies= [e for ein self.entities if e['type'] = 'npc'and e != entity]:
 pass  # Добавлен pass в пустой блок
 if not enemies: return None
     pass
+pass
+pass
 pass
 pass
 nearest= None
@@ -1218,16 +1456,22 @@ for enemyin enemies: dx= enemy['x'] - entity['x']
     pass
 pass
 pass
+pass
+pass
 dy= enemy['y'] - entity['y']
 dis tance= math.sqrt(dx * dx + dy * dy)
 if dis tance < min _dis tance: min _dis tance= dis tance
     pass
 pass
 pass
+pass
+pass
 nearest= enemy
 return nearest
 def _get_w or ld_state(self) -> Dict[str, Any]:"""Получение состояния игрового мира"""return {
     pass
+pass
+pass
 pass
 pass
 'entity_count': len(self.entities),
@@ -1241,11 +1485,15 @@ def _update_particles(self, delta_time: float):"""Обновление част�
     pass
 pass
 pass
+pass
+pass
 self.particles= [p for pin self.particles if p.get('life', 0) > 0]:
 pass  # Добавлен pass в пустой блок
 # Обновляем оставшиеся частицы
 for particlein self.particles: particle['life'] = delta_time: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 particle['x'] = particle.get('vx', 0) * delta_time
@@ -1255,11 +1503,15 @@ def _update_ui(self, delta_time: float):"""Обновление UI"""
     pass
 pass
 pass
+pass
+pass
 # Обновление полоски здоровья
 player= next((e for ein self.entities if e['type'] = 'player'), None):
 pass  # Добавлен pass в пустой блок
 if playerand self.health_bar_text: health= int(player.get('health', 100))
     pass
+pass
+pass
 pass
 pass
 max_health= int(player.get('max_health', 100))
@@ -1269,11 +1521,15 @@ if playerand self.mana_bar_text: mana= int(player.get('mana', 100))
     pass
 pass
 pass
+pass
+pass
 max_mana= int(player.get('max_mana', 100))
 self.mana_bar_text.setText(f"MP: {mana} / {max_mana}")
 # Обновление информации об AI
 if playerand self.ai_in fo_text: pass
     pass
+pass
+pass
 pass
 # Получаем информацию о состоянии AI
 context= {'entities': self.entities, 'delta_time': delta_time}
@@ -1284,6 +1540,8 @@ if ai_entity: mem or y_summary= ai_entity.get_mem or y_summary()
     pass
 pass
 pass
+pass
+pass
 generation_in fo= f"Gen: {mem or y_summary['current_generation']}"
 experience_in fo= f"Exp: {mem or y_summary['total_experience']:.1f}"
 success_rate= f"Success: {mem or y_summary['success_rate']:.1%}"
@@ -1291,16 +1549,24 @@ if decis ion: self.ai_in fo_text.setText(f"AI: {decis ion.action_type.value} | {
     pass
 pass
 pass
+pass
+pass
 else: self.ai_in fo_text.setText(f"AI: No decis ion | {generation_in fo} | {experience_in fo} | {success_rate}")
     pass
+pass
+pass
 pass
 pass
 else: if decis ion: self.ai_in fo_text.setText(f"AI: {decis ion.action_type.value} (conf: {decis ion.confidence:.2f})")
     pass
 pass
 pass
+pass
+pass
 else: self.ai_in fo_text.setText("AI: No decis ion")
     pass
+pass
+pass
 pass
 pass
 # Обновление информации о скиллах
@@ -1308,8 +1574,12 @@ if playerand self.skills_in fo_text: skill_tree= player.get('skill_tree')
     pass
 pass
 pass
+pass
+pass
 if skill_tree: learned_skills= skill_tree.learned_skills
     pass
+pass
+pass
 pass
 pass
 ready_skills= [s for sin learned_skills if skill_tree.skills[s].can_use(player)]:
@@ -1319,9 +1589,13 @@ else: self.skills_in fo_text.setText("Skills: None")
     pass
 pass
 pass
+pass
+pass
 # Обновление информации о предметах
 if playerand self.items_in fo_text: equipment= player.get('equipment', {})
     pass
+pass
+pass
 pass
 pass
 invent or y= player.get('in vent or y', [])
@@ -1331,8 +1605,12 @@ if playerand self.effects_in fo_text: effect_stats= player.get('effect_statis ti
     pass
 pass
 pass
+pass
+pass
 if effect_statsand hasattr(effect_stats, 'effect_triggers'):
     pass
+pass
+pass
 pass
 pass
 total_triggers= sum(effect_stats.effect_triggers.values())
@@ -1341,13 +1619,19 @@ else: self.effects_in fo_text.setText("Effects: None")
     pass
 pass
 pass
+pass
+pass
 # Обновление информации о геноме
 if playerand self.genome_in fo_text: genome= player.get('genome')
     pass
 pass
 pass
+pass
+pass
 if genomeand hasattr(genome, 'generation')and hasattr(genome, 'mutation_count')and hasattr(genome, 'get_evolution_potential'):
     pass
+pass
+pass
 pass
 pass
 generation= genome.generation
@@ -1358,13 +1642,19 @@ else: self.genome_in fo_text.setText("Genome: None")
     pass
 pass
 pass
+pass
+pass
 # Обновление информации об эмоциях
 if playerand self.emotion_bar_text: emotion_system= player.get('emotion_system')
     pass
 pass
 pass
+pass
+pass
 if emotion_systemand hasattr(emotion_system, 'get_emotion_summary'):
     pass
+pass
+pass
 pass
 pass
 emotion_summary= emotion_system.get_emotion_summary()
@@ -1386,9 +1676,13 @@ else: self.emotion_bar_text.setText("😐 Emotions: None")
     pass
 pass
 pass
+pass
+pass
 # Обновление отладочной информации
 if self.debug_textand self.show_debug: entities_count= len(self.entities)
     pass
+pass
+pass
 pass
 pass
 particles_count= len(self.particles)
@@ -1399,6 +1693,8 @@ def _update_camera(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление изометрической камеры"""if not self.camera: return
 # Находим игрока для следования
 player= next((e for ein self.entities if e['type'] = 'player'), None):
@@ -1406,14 +1702,20 @@ pass  # Добавлен pass в пустой блок
 if player: pass
     pass
 pass
+pass
+pass
 # Плавно следуем за игроком
 self.camera.follow_entity(player, smoot = 0.05)
 def _bin d_in puts(self) -> None:"""Привязка горячих клавиш для игровой сцены"""
     pass
 pass
 pass
+pass
+pass
 if self._bin d_scene_in puts_done: return
     pass
+pass
+pass
 pass
 pass
 try: def _toggle_creat or():
@@ -1429,6 +1731,8 @@ def render(self, render_node):
     pass
 pass
 pass
+pass
+pass
 """Отрисовка игровой сцены"""# Pand a3D автоматически отрисовывает сцену
 # Здесь можно добавить дополнительную логику рендеринга
 pass
@@ -1437,8 +1741,12 @@ def hand le_event(self, event):"""Обработка событий"""# Обра
 pass
 pass
 pass
+pass
+pass
 def cleanup(self):"""Очистка игровой сцены"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка игровой сцены Pand a3D...")
@@ -1449,8 +1757,12 @@ for systemin self.systems.values():
     pass
 pass
 pass
+pass
+pass
 if hasattr(system, 'cleanup'):
     pass
+pass
+pass
 pass
 pass
 system.cleanup()
@@ -1459,41 +1771,61 @@ if self.scene_root: self.scene_root.removeNode()
     pass
 pass
 pass
+pass
+pass
 # Очищаем UI элементы
 if self.game_title_text: self.game_title_text.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.health_bar_text: self.health_bar_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.mana_bar_text: self.mana_bar_text.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.ai_in fo_text: self.ai_in fo_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.skills_in fo_text: self.skills_in fo_text.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.items_in fo_text: self.items_in fo_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.effects_in fo_text: self.effects_in fo_text.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.genome_in fo_text: self.genome_in fo_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.emotion_bar_text: self.emotion_bar_text.destroy()
     pass
+pass
+pass
 pass
 pass
 # Уничтожаем кнопки эмоций
@@ -1501,12 +1833,18 @@ for buttonin self.emotion_buttons.values():
     pass
 pass
 pass
+pass
+pass
 if button: button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.debug_text: self.debug_text.destroy()
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Игровая сцена Pand a3D очищена")
@@ -1514,10 +1852,14 @@ def _check_entity_deaths(self):
     pass
 pass
 pass
+pass
+pass
 """Проверка смерти сущностей и завершение поколений"""
 entities_to_remove= []
 for entityin self.entities: if entity.get('health', 0) <= 0and 'ai_entity'in entity: pass
     pass
+pass
+pass
 pass
 # Сущность умерла, завершаем поколение
 ai_entity= entity['ai_entity']
@@ -1540,11 +1882,15 @@ for entityin entities_to_remove: if entity['node']:
     pass
 pass
 pass
+pass
+pass
 entity['node'].removeNode()
 self.entities.remove(entity)
 try: unregis ter_entity(entity['id'])
 except Exception: pass
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -1553,9 +1899,13 @@ if entity['type'] = 'player':
     pass
 pass
 pass
+pass
+pass
 self._create_test_player()
 elif entity['type'] = 'npc':
     pass
+pass
+pass
 pass
 pass
 self._create_test_npcs()

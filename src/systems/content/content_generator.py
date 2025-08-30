@@ -41,6 +41,8 @@ class GenerationConfig:"""Конфигурация генерации конте
     pass
 pass
 pass
+pass
+pass
 arm or _count: int= 3
 access or y_count: int= 2
 consumable_count: int= 4
@@ -53,6 +55,8 @@ boss_count: int= 3
 @dataclass: pass  # Добавлен pass в пустой блок
 class ContentItem:"""Элемент контента"""
     pass
+pass
+pass
 pass
 pass
 item_id: str
@@ -71,6 +75,8 @@ class EnemyData:"""Данные врага"""enemy_id: str
     pass
 pass
 pass
+pass
+pass
 name: str
 enemy_type: EnemyType
 level: int= 1
@@ -78,6 +84,8 @@ health: int= 100
 attack: int= 20
 defense: int= 10
     pass
+pass
+pass
 pass
 pass
 speed: float= 1.0
@@ -91,6 +99,8 @@ class BossData:"""Данные босса"""boss_id: str
     pass
 pass
 pass
+pass
+pass
 name: str
 boss_type: BossType
 level: int= 10
@@ -98,6 +108,8 @@ health: int= 1000
 attack: int= 100
 defense: int= 50
     pass
+pass
+pass
 pass
 pass
 speed: float= 1.5
@@ -112,8 +124,12 @@ class ContentGenerat or(ISystem):"""Система генерации проце
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, content_databas = None, seed: int= None):
     pass
+pass
+pass
 pass
 pass
 self._system_name= "content_generat or "
@@ -157,9 +173,13 @@ def system_name(self) -> str: return self._system_name
     pass
 pass
 pass
+pass
+pass
 @property
 def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
     pass
+pass
+pass
 pass
 pass
 @property
@@ -167,14 +187,20 @@ def system_state(self) -> SystemState: return self._system_state
     pass
 pass
 pass
+pass
+pass
 @property
 def dependencies(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 return self._dependencies
 def initialize(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация системы генерации контента"""
 try: except Exception as e: pass
@@ -185,6 +211,8 @@ self._system_state= SystemState.ERROR
 return False
 def update(self, delta_time: float) -> bool: pass
     pass
+pass
+pass
 pass
 """Обновление системы генерации контента"""
 try: if self._system_state != SystemState.READY: return False
@@ -201,6 +229,8 @@ return False
 def pause(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Приостановка системы генерации контента"""
 try: except Exception as e: pass
 pass
@@ -209,6 +239,8 @@ logger.err or(f"Ошибка приостановки системы генер�
 return False
 def resume(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Возобновление системы генерации контента"""
 try: if self._system_state = SystemState.PAUSED: self._system_state= SystemState.READY
@@ -223,6 +255,8 @@ return False
 def cleanup(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Очистка системы генерации контента"""
 try: except Exception as e: pass
 pass
@@ -231,6 +265,8 @@ logger.err or(f"Ошибка очистки системы генерации к
 return False
 def get_system_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о системе"""return {
@@ -252,6 +288,8 @@ def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обраб�
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -259,6 +297,8 @@ logger.err or(f"Ошибка обработки события {event_type}: {e}
 return False
 def _setup_content_generat or(self) -> None: pass
     pass
+pass
+pass
 pass
 """Настройка системы генерации контента"""
 try:
@@ -271,6 +311,8 @@ logger.warning(f"Не удалось настроить систему гене�
 def _load_all_templates(self) -> None: pass
     pass
 pass
+pass
+pass
 """Загрузка всех шаблонов"""
 try: except Exception as e: pass
 pass
@@ -278,6 +320,8 @@ pass
 logger.err or(f"Ошибка загрузки шаблонов: {e}")
 def _load_weapon_templates(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Загрузка шаблонов оружия"""
@@ -318,6 +362,8 @@ def _load_arm or _templates(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка шаблонов брони"""
 try: except Exception as e: pass
 pass
@@ -326,6 +372,8 @@ logger.err or(f"Ошибка загрузки шаблонов брони: {e}")
 return {}
 def _load_access or y_templates(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Загрузка шаблонов аксессуаров"""
@@ -357,6 +405,8 @@ def _load_gene_templates(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка шаблонов генов"""
 try: except Exception as e: pass
 pass
@@ -365,6 +415,8 @@ logger.err or(f"Ошибка загрузки шаблонов генов: {e}")
 return {}
 def _load_skill_templates(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Загрузка шаблонов навыков"""
@@ -404,6 +456,8 @@ def _load_effect_templates(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка шаблонов эффектов"""
 try: except Exception as e: pass
 pass
@@ -412,6 +466,8 @@ logger.err or(f"Ошибка загрузки шаблонов эффектов:
 return {}
 def _load_skill_generation_templates(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Загрузка шаблонов генерации навыков"""
@@ -446,6 +502,8 @@ def _load_item_generation_templates(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка шаблонов генерации предметов"""
 try: except Exception as e: pass
 pass
@@ -454,6 +512,8 @@ logger.err or(f"Ошибка загрузки шаблонов генераци�
 return {}
 def _load_unique_effect_templates(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Загрузка шаблонов уникальных эффектов"""
@@ -488,6 +548,8 @@ def _load_item_templates(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка шаблонов предметов(перенесено из constants.py)"""
 try: except Exception as e: pass
 pass
@@ -496,6 +558,8 @@ logger.err or(f"Ошибка загрузки шаблонов предмето�
 return {}
 def _update_system_stats(self) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление статистики системы"""
 try:
@@ -520,6 +584,8 @@ def _hand le_content_generation_requested(self, event_data: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
 """Обработка события запроса генерации контента"""
 try: except Exception as e: pass
@@ -530,6 +596,8 @@ return False
 def _hand le_template_updated(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события обновления шаблона"""
 try: template_type= event_data.get('template_type')
 template_id= event_data.get('template_id')
@@ -537,9 +605,13 @@ template_data= event_data.get('template_data')
 if template_typeand template_idand template_data: pass
     pass
 pass
+pass
+pass
 # Обновляем соответствующий шаблон
 if template_type = 'weapon':
     pass
+pass
+pass
 pass
 pass
 self.weapon_templates[template_id]= template_data
@@ -547,9 +619,13 @@ elif template_type = 'arm or ':
     pass
 pass
 pass
+pass
+pass
 self.arm or _templates[template_id]= template_data
 elif template_type = 'skill':
     pass
+pass
+pass
 pass
 pass
 self.skill_templates[template_id]= template_data
@@ -566,6 +642,8 @@ def _hand le_generation_config_changed(self, event_data: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
 """Обработка события изменения конфигурации генерации"""
 try: except Exception as e: pass
@@ -577,6 +655,8 @@ def generate_content(self, content_type: str, count: int= 1
     pass
 pass
 pass
+pass
+pass
 level: int= 1) -> Lis t[ContentItem]:
 pass  # Добавлен pass в пустой блок
 """Генерация контента указанного типа"""
@@ -585,8 +665,12 @@ for iin range(count):
     pass
 pass
 pass
+pass
+pass
 if content_type = 'weapon':
     pass
+pass
+pass
 pass
 pass
 item= self._generate_weapon(level)
@@ -594,9 +678,13 @@ elif content_type = 'arm or ':
     pass
 pass
 pass
+pass
+pass
 item= self._generate_arm or(level)
 elif content_type = 'access or y':
     pass
+pass
+pass
 pass
 pass
 item= self._generate_access or y(level)
@@ -604,9 +692,13 @@ elif content_type = 'gene':
     pass
 pass
 pass
+pass
+pass
 item= self._generate_gene(level)
 elif content_type = 'skill':
     pass
+pass
+pass
 pass
 pass
 item= self._generate_skill(level)
@@ -614,9 +706,13 @@ elif content_type = 'effect':
     pass
 pass
 pass
+pass
+pass
 item= self._generate_effect(level)
 elif content_type = 'enemy':
     pass
+pass
+pass
 pass
 pass
 item= self._generate_enemy(level)
@@ -624,14 +720,20 @@ elif content_type = 'boss':
     pass
 pass
 pass
+pass
+pass
 item= self._generate_boss(level)
 else: logger.warning(f"Неизвестный тип контента: {content_type}")
     pass
 pass
 pass
+pass
+pass
 contin ue
 if item: generated_items.append(item)
     pass
+pass
+pass
 pass
 pass
 # Обновляем статистику
@@ -646,6 +748,8 @@ def _generate_weapon(self, level: int) -> Optional[ContentItem]:
     pass
 pass
 pass
+pass
+pass
 """Генерация оружия с улучшенной уникальностью"""
 try: except Exception as e: pass
 pass
@@ -654,6 +758,8 @@ logger.err or(f"Ошибка генерации оружия: {e}")
 return None
 def _generate_skill_name(self, skill_type: str, level: int) -> str: pass
     pass
+pass
+pass
 pass
 """Генерация уникального имени для скилла"""prefixes= {"physical": ["Мощный", "Быстрый", "Смертоносный", "Точный", "Разрушительный"],
 "magical": ["Мистический", "Древний", "Запрещенный", "Священный", "Темный"],
@@ -685,8 +791,12 @@ if effects: effects_desc= f" Особые свойства: {', '.jo in(effects)
     pass
 pass
 pass
+pass
+pass
 def _generate_unique_effects(self, level: int) -> lis t:"""Генерация уникальных эффектов"""effects= []
     pass
+pass
+pass
 pass
 pass
 effect_pool= [
@@ -701,8 +811,12 @@ for _in range(num_effects):
     pass
 pass
 pass
+pass
+pass
 if self.rand om_generat or .rand om() < 0.3:  # 30%шанс эффекта
     pass
+pass
+pass
 pass
 pass
 effect= self.rand om_generat or .choice(effect_pool)
@@ -710,9 +824,13 @@ if effect notin effects: effects.append(effect)
     pass
 pass
 pass
+pass
+pass
 return effects
 def _generate_arm or(self, level: int) -> Optional[ContentItem]:"""Генерация брони"""
     pass
+pass
+pass
 pass
 pass
 try:
@@ -765,6 +883,8 @@ def _generate_access or y(self, level: int) -> Optional[ContentItem]:
     pass
 pass
 pass
+pass
+pass
 """Генерация аксессуара"""
 try: except Exception as e: pass
 pass
@@ -773,6 +893,8 @@ logger.err or(f"Ошибка генерации аксессуара: {e}")
 return None
 def _generate_access or y_effects(self, level: int) -> lis t: pass
     pass
+pass
+pass
 pass
 """Генерация эффектов для аксессуаров"""effects= []
 effect_pool= [
@@ -786,8 +908,12 @@ for _in range(num_effects):
     pass
 pass
 pass
+pass
+pass
 if self.rand om_generat or .rand om() < 0.4:  # 40%шанс эффекта
     pass
+pass
+pass
 pass
 pass
 effect= self.rand om_generat or .choice(effect_pool)
@@ -795,9 +921,13 @@ if effect notin effects: effects.append(effect)
     pass
 pass
 pass
+pass
+pass
 return effects
 def _generate_gene(self, level: int) -> Optional[ContentItem]:"""Генерация гена"""
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -807,6 +937,8 @@ logger.err or(f"Ошибка генерации гена: {e}")
 return None
 def _generate_skill(self, level: int) -> Optional[ContentItem]:
     pass
+pass
+pass
 pass
 pass
 """Генерация навыка с использованием новых шаблонов"""
@@ -821,10 +953,14 @@ if skill_type = "physical":
     pass
 pass
 pass
+pass
+pass
 cost_sources= ["stamin a"]
 base_cost= template["base_cost"]
 elif skill_type = "magical":
     pass
+pass
+pass
 pass
 pass
 # Магические скиллы могут тратить несколько ресурсов
@@ -835,6 +971,8 @@ else:  # free
     pass
 pass
 pass
+pass
+pass
 cost_sources= []
 base_cost= 0
 # Рассчитываем мощность скилла на основе источников затрат
@@ -843,16 +981,24 @@ if cost_sources: if len(cost_sources) = 1: power_multiplier= SKILL_POWER_MULTIPL
     pass
 pass
 pass
+pass
+pass
 elif len(cost_sources) = 2: power_multiplier= SKILL_POWER_MULTIPLIERS["dual_cost"]
     pass
+pass
+pass
 pass
 pass
 elif len(cost_sources) >= 3: power_multiplier= SKILL_POWER_MULTIPLIERS["triple_cost"]
     pass
 pass
 pass
+pass
+pass
 else: power_multiplier= SKILL_POWER_MULTIPLIERS["no_cost"]
     pass
+pass
+pass
 pass
 pass
 # Генерируем характеристики скилла
@@ -890,6 +1036,8 @@ def _generate_effect(self, level: int) -> Optional[ContentItem]:
     pass
 pass
 pass
+pass
+pass
 """Генерация эффекта"""
 try: except Exception as e: pass
 pass
@@ -898,6 +1046,8 @@ logger.err or(f"Ошибка генерации эффекта: {e}")
 return None
 def _generate_enemy(self, level: int) -> Optional[ContentItem]:
     pass
+pass
+pass
 pass
 pass
 """Генерация врага"""
@@ -932,6 +1082,8 @@ def _generate_boss(self, level: int) -> Optional[ContentItem]:
     pass
 pass
 pass
+pass
+pass
 """Генерация босса"""
 try: except Exception as e: pass
 pass
@@ -940,6 +1092,8 @@ logger.err or(f"Ошибка генерации босса: {e}")
 return None
 def _generate_rarity(self) -> ContentRarity: pass
     pass
+pass
+pass
 pass
 """Генерация редкости"""
 try:
@@ -959,9 +1113,13 @@ for rarity, weightin rarity_weights.items():
     pass
 pass
 pass
+pass
+pass
 cumulative_weight = weight
 if rand _value <= cumulative_weight: return rarity
     pass
+pass
+pass
 pass
 pass
 # По умолчанию возвращаем обычную редкость
@@ -974,6 +1132,8 @@ return ContentRarity.COMMON
 def _update_generation_stats(self, content_type: str, count: int) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление статистики генерации"""
 try: except Exception as e: pass
 pass
@@ -981,6 +1141,8 @@ pass
 logger.warning(f"Ошибка обновления статистики генерации: {e}")
 def get_generation_stats(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статистики генерации"""
@@ -991,14 +1153,20 @@ pass
 pass
 pass
 pass
+pass
+pass
 logger.err or(f"Ошибка получения статистики генерации: {e}")
 return {}
 def apply_item_template(self, item_type: str, template_name: str, level: int= 1, rarity: str= "common") -> dict: pass
     pass
 pass
+pass
+pass
 """Применение шаблона предмета к базовым характеристикам"""
 if item_type notin self.item_templates or template_name notin self.item_templates[item_type]:
     pass
+pass
+pass
 pass
 pass
 return ITEM_STATS[item_type].copy()
@@ -1009,8 +1177,12 @@ for stat, multiplierin template["base_multipliers"].items():
     pass
 pass
 pass
+pass
+pass
 if statin item_stats: if isin stance(item_stats[stat], (in t, float)):
     pass
+pass
+pass
 pass
 pass
 item_stats[stat]= int(item_stats[stat] * multiplier * level)
@@ -1037,8 +1209,12 @@ for statin ["attack", "defense", "health", "mana", "stamin a"]:
     pass
 pass
 pass
+pass
+pass
 if statin item_statsand isin stance(item_stats[stat], (in t
     pass
+pass
+pass
 pass
 pass
 float)):
@@ -1047,6 +1223,8 @@ item_stats[stat]= int(item_stats[stat] * rarity_mult)
 return item_stats
 def generate_session_content(self, session_id: str
     pass
+pass
+pass
 pass
 pass
 config: GenerationConfig= None) -> Dict[str, Lis t[ContentItem]]:
@@ -1091,8 +1269,12 @@ for content_type, itemsin session_content.items():
     pass
 pass
 pass
+pass
+pass
 for itemin items: item.session_id= session_id
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Сгенерирован контент для сессии {session_id}: {sum(len(items) for itemsin session_content.values())} объектов"):
@@ -1107,6 +1289,8 @@ def get_template_in fo(self, template_type: str) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение информации о шаблонах"""
 try: except Exception as e: pass
 pass
@@ -1115,6 +1299,8 @@ logger.err or(f"Ошибка получения информации о шабл
 return {'count': 0, 'templates': []}
 def generate_effect_combin ations(self, session_id: str
     pass
+pass
+pass
 pass
 pass
 count: int= 10) -> Lis t[ContentItem]:
@@ -1136,11 +1322,15 @@ for iin range(count):
     pass
 pass
 pass
+pass
+pass
 # Выбираем два случайных базовых эффекта
 effect1= self.rand om_generat or .choice(base_effects)
 effect2= self.rand om_generat or .choice(base_effects)
 if effect1 = effect2: contin ue
     pass
+pass
+pass
 pass
 pass
 # Создаем комбинированный эффект

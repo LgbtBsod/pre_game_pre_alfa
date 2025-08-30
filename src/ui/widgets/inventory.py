@@ -36,6 +36,8 @@ class Invent or ySlotStyle:"""Стиль слота инвентаря"""# Ра�
     pass
 pass
 pass
+pass
+pass
 width: float= 0.08
 height: float= 0.08
 # Цвета
@@ -49,6 +51,8 @@ show_tooltip: bool= True
 @dataclass: pass  # Добавлен pass в пустой блок
 class Invent or yStyle:"""Стиль инвентаря"""# Размеры
     pass
+pass
+pass
 pass
 pass
 width: float= 0.8
@@ -67,8 +71,12 @@ class Invent or ySlot:"""Слот инвентаря"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 slot_id: int,
@@ -92,6 +100,8 @@ def create(self, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> DirectFrame: pass  # Добавлен pass в пустой блок
 """Создание слота Pand a3D"""
 try: except Exception as e: pass
@@ -103,10 +113,14 @@ def set_item(self, item_data: Optional[Dict[str, Any]]):
     pass
 pass
 pass
+pass
+pass
 """Установка предмета в слот"""
 try: self.item_data= item_data
 if item_data: pass
     pass
+pass
+pass
 pass
 # Предмет есть
 self.background_frame['frameCol or ']= self.style.filled_color
@@ -117,14 +131,20 @@ if count > 1: self.count_label['text']= str(count)
     pass
 pass
 pass
+pass
+pass
 self.count_label.setVis ible(True)
 else: self.count_label.setVis ible(False)
     pass
 pass
 pass
+pass
+pass
 logger.debug(f"Предмет {item_data.get('name', 'Unknown')} помещен в слот {self.slot_id}")
 else: pass
     pass
+pass
+pass
 pass
 # Слот пустой
 self.background_frame['frameCol or ']= self.style.empty_color
@@ -139,6 +159,8 @@ def highlight(self, highlighted: bool):
     pass
 pass
 pass
+pass
+pass
 """Подсветка слота"""
 try: except Exception as e: pass
 pass
@@ -148,14 +170,20 @@ def select(self, selected: bool):
     pass
 pass
 pass
+pass
+pass
 """Выбор слота"""
 try: self.is _selected= selected
 if selected: self.b or der_frame['frameCol or ']= self.style.highlight_color
     pass
 pass
 pass
+pass
+pass
 else: self.b or der_frame['frameCol or ']= self.style.b or der_color
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -166,17 +194,25 @@ def get_item(self) -> Optional[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение предмета из слота"""return self.item_data
 def is_empty(self) -> bool:"""Проверка, пуст ли слот"""return self.item_datais None
     pass
+pass
+pass
 pass
 pass
 def destroy(self):"""Уничтожение слота"""
     pass
 pass
 pass
+pass
+pass
 if self.background_frame: self.background_frame.destroy()
     pass
+pass
+pass
 pass
 pass
 self.background_frame= None
@@ -184,9 +220,13 @@ if self.b or der_frame: self.b or der_frame.destroy()
     pass
 pass
 pass
+pass
+pass
 self.b or der_frame= None
 if self.item_label: self.item_label.destroy()
     pass
+pass
+pass
 pass
 pass
 self.item_label= None
@@ -194,14 +234,20 @@ if self.count_label: self.count_label.destroy()
     pass
 pass
 pass
+pass
+pass
 self.count_label= None
 logger.debug(f"Слот инвентаря {self.slot_id} уничтожен")
 class NeonInvent or y: pass
     pass
 pass
+pass
+pass
 """Неоновый инвентарь с современным дизайном"""
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 title: str= "INVENTORY",
@@ -227,6 +273,8 @@ def create(self, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> DirectFrame: pass  # Добавлен pass в пустой блок
 """Создание инвентаря Pand a3D"""
 try: except Exception as e: pass
@@ -236,6 +284,8 @@ logger.err or(f"Ошибка создания инвентаря {self.title}: {
 return None
 def _create_slots(self):
     pass
+pass
+pass
 pass
 pass
 """Создание слотов инвентаря"""
@@ -255,8 +305,12 @@ for rowin range(self.style.slots_per_column):
     pass
 pass
 pass
+pass
+pass
 for colin range(self.style.slots_per_row):
     pass
+pass
+pass
 pass
 pass
 # Позиция слота
@@ -278,6 +332,8 @@ def _create_control_buttons(self):
     pass
 pass
 pass
+pass
+pass
 """Создание кнопок управления"""
 try: except Exception as e: pass
 pass
@@ -285,6 +341,8 @@ pass
 logger.err or(f"Ошибка создания кнопок управления: {e}")
 def add_item(self, item_data: Dict[str, Any]
     pass
+pass
+pass
 pass
 pass
 slot_id: Optional[in t]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -295,8 +353,12 @@ for i, slotin enumerate(self.slots):
     pass
 pass
 pass
+pass
+pass
 if slot.is _empty():
     pass
+pass
+pass
 pass
 pass
 slot_id= i
@@ -305,11 +367,15 @@ if slot_idis not Noneand 0 <= slot_id < len(self.slots):
     pass
 pass
 pass
+pass
+pass
 self.slots[slot_id].set_item(item_data)
 logger.debug(f"Предмет {item_data.get('name', 'Unknown')} добавлен в слот {slot_id}")
 return True
 else: logger.warning(f"Не удалось найти свободный слот для предмета {item_data.get('name', 'Unknown')}")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -322,6 +388,8 @@ def remove_item(self, slot_id: int) -> Optional[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Удаление предмета из инвентаря"""
 try: except Exception as e: pass
 pass
@@ -332,11 +400,15 @@ def select_slot(self, slot_id: int):
     pass
 pass
 pass
+pass
+pass
 """Выбор слота"""
 try:
 # Снимаем выделение с предыдущего слота
 if self.selected_slotis not Noneand 0 <= self.selected_slot < len(self.slots):
     pass
+pass
+pass
 pass
 pass
 self.slots[self.selected_slot].select(False)
@@ -345,11 +417,15 @@ if 0 <= slot_id < len(self.slots):
     pass
 pass
 pass
+pass
+pass
 self.slots[slot_id].select(True)
 self.selected_slot= slot_id
 logger.debug(f"Выбран слот {slot_id}")
 else: self.selected_slot= None
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -360,6 +436,8 @@ def get_selected_item(self) -> Optional[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение выбранного предмета"""if self.selected_slotis not Noneand 0 <= self.selected_slot < len(self.slots):
 return self.slots[self.selected_slot].get_item()
 return None
@@ -367,11 +445,15 @@ def s or t_in vent or y(self):"""Сортировка инвентаря"""
     pass
 pass
 pass
+pass
+pass
 try:
 # Собираем все предметы
 items= []
 for slotin self.slots: if not slot.is _empty():
     pass
+pass
+pass
 pass
 pass
 items.append(slot.get_item())
@@ -383,8 +465,12 @@ for i, itemin enumerate(items):
     pass
 pass
 pass
+pass
+pass
 if i < len(self.slots):
     pass
+pass
+pass
 pass
 pass
 self.slots[i].set_item(item)
@@ -397,6 +483,8 @@ def clear_in vent or y(self):
     pass
 pass
 pass
+pass
+pass
 """Очистка инвентаря"""
 try: except Exception as e: pass
 pass
@@ -406,14 +494,20 @@ def set_vis ible(self, vis ible: bool):
     pass
 pass
 pass
+pass
+pass
 """Показать / скрыть инвентарь"""if self.background_panel: self.background_panel.set_vis ible(vis ible)
 def destroy(self):"""Уничтожение инвентаря"""
     pass
 pass
 pass
+pass
+pass
 # Уничтожаем слоты
 for slotin self.slots: slot.destroy()
     pass
+pass
+pass
 pass
 pass
 self.slots.clear()
@@ -422,12 +516,18 @@ if self.use_button: self.use_button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.drop_button: self.drop_button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.s or t_button: self.s or t_button.destroy()
     pass
+pass
+pass
 pass
 pass
 # Уничтожаем панель
@@ -435,9 +535,13 @@ if self.background_panel: self.background_panel.destroy()
     pass
 pass
 pass
+pass
+pass
 logger.debug(f"Инвентарь {self.title} уничтожен")
 def create_neon_in vent or y(title: str= "INVENTORY",
     pass
+pass
+pass
 pass
 pass
 style: Optional[Invent or yStyle]= None,

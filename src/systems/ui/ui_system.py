@@ -24,6 +24,8 @@ class UIElementType(Enum):"""Типы UI элементов"""
     pass
 pass
 pass
+pass
+pass
 BUTTON= "button"
 LABEL= "label"
 PROGRESS_BAR= "progress_bar"
@@ -37,6 +39,8 @@ DISABLED= "dis abled"
 ACTIVE= "active"@dataclass: pass  # Добавлен pass в пустой блок
 class UIElement:"""Базовый UI элемент"""
     pass
+pass
+pass
 pass
 pass
 element_id: str
@@ -57,8 +61,12 @@ def is_vis ible(self) -> bool:"""Проверить, видим ли элеме�
     pass
 pass
 pass
+pass
+pass
 if self.state = UIState.HIDDEN: return False
     pass
+pass
+pass
 pass
 pass
 return True
@@ -66,14 +74,20 @@ def is_enabled(self) -> bool:"""Проверить, активен ли элем
     pass
 pass
 pass
+pass
+pass
 if self.state = UIState.DISABLED: return False
     pass
+pass
+pass
 pass
 pass
 return True
 @dataclass: pass  # Добавлен pass в пустой блок
 class HUDData:"""Данные для HUD"""
     pass
+pass
+pass
 pass
 pass
 health_percentage: float= 100.0
@@ -90,9 +104,13 @@ class UISystem(BaseComponent):"""Система UI
     pass
 pass
 pass
+pass
+pass
 Управляет всеми элементами интерфейса и их отображением"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -116,6 +134,8 @@ self.last_update_time= 0.0
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация UI системы"""
 try:
 # Регистрация базовых UI элементов
@@ -130,6 +150,8 @@ self.logger.err or(f"Ошибка инициализации UISystem: {e}")
 return False
 def _regis ter_basic_elements(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация базовых UI элементов"""
@@ -150,6 +172,8 @@ def _setup_event_hand lers(self):
     pass
 pass
 pass
+pass
+pass
 """Настройка обработчиков событий"""
 self.event_hand lers["ui_update"]= self._hand le_ui_update
 self.event_hand lers["hud_update"]= self._hand le_hud_update
@@ -158,6 +182,8 @@ self.event_hand lers["panel_hide"]= self._hand le_panel_hide
 # Создание UI элементов
 def create_element(self, element_id: str, element_type: UIElementType
     pass
+pass
+pass
 pass
 pass
 * * kwargs) -> UIElement: pass  # Добавлен pass в пустой блок
@@ -173,10 +199,14 @@ if element.parent: if element.parent notin self.element_hierarchy: self.element_
     pass
 pass
 pass
+pass
+pass
 self.element_hierarchy[element.parent].append(element_id)
 return element
 def create_button(self, button_id: str, text: str, callback: Callable
     pass
+pass
+pass
 pass
 pass
 * * kwargs) -> UIElement: pass  # Добавлен pass в пустой блок"""Создать кнопку"""
@@ -190,6 +220,8 @@ callback = {"click": callback},
 def create_label(self, label_id: str, text: str, * * kwargs) -> UIElement: pass
     pass
 pass
+pass
+pass
 """Создать текстовую метку"""return self.create_element(
 label_id,
 UIElementType.LABEL,
@@ -200,12 +232,16 @@ def create_progress_bar(self, bar_id: str, * * kwargs) -> UIElement:"""Созд�
     pass
 pass
 pass
+pass
+pass
 bar_id,
 UIElementType.PROGRESS_BAR,
 * * kwargs
 )
 def create_panel(self, panel_id: str, title: str, * * kwargs) -> UIElement:"""Создать панель"""return self.create_element(
     pass
+pass
+pass
 pass
 pass
 panel_id,
@@ -217,6 +253,8 @@ def create_hud(self, hud_id: str, * * kwargs) -> UIElement:"""Создать HUD
     pass
 pass
 pass
+pass
+pass
 hud_id,
 UIElementType.HUD,
 * * kwargs
@@ -226,6 +264,8 @@ def create_hud_data(self, entity_id: str, * * kwargs) -> HUDData:"""Создат
     pass
 pass
 pass
+pass
+pass
 hud_data= HUDData( * *kwargs)
 self.hud_data[entity_id]= hud_data
 return hud_data
@@ -233,13 +273,19 @@ def update_hud_data(self, entity_id: str, * * kwargs):"""Обновить дан
     pass
 pass
 pass
+pass
+pass
 hud_data= self.hud_data[entity_id]
 for key, valuein kwargs.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(hud_data, key):
     pass
+pass
+pass
 pass
 pass
 setattr(hud_data, key, value)
@@ -247,8 +293,12 @@ def get_hud_data(self, entity_id: str) -> Optional[HUDData]:"""Получить 
     pass
 pass
 pass
+pass
+pass
 def show_panel(self, panel_id: str):"""Показать панель"""if panel_id notin self.ui_elements: return
     pass
+pass
+pass
 pass
 pass
 panel= self.ui_elements[panel_id]
@@ -256,9 +306,13 @@ if panel.element_type != UIElementType.PANEL: return
     pass
 pass
 pass
+pass
+pass
 # Добавляем в стек активных панелей
 if panel_id notin self.panel_stack: self.panel_stack.append(panel_id)
     pass
+pass
+pass
 pass
 pass
 # Показываем панель
@@ -269,10 +323,14 @@ for child_idin panel.children: if child_idin self.ui_elements: child= self.ui_el
     pass
 pass
 pass
+pass
+pass
 child.vis ible= True
 child.state= UIState.VISIBLE
 def hide_panel(self, panel_id: str):"""Скрыть панель"""if panel_id notin self.ui_elements: return
     pass
+pass
+pass
 pass
 pass
 panel= self.ui_elements[panel_id]
@@ -280,9 +338,13 @@ if panel.element_type != UIElementType.PANEL: return
     pass
 pass
 pass
+pass
+pass
 # Убираем из стека
 if panel_idin self.panel_stack: self.panel_stack.remove(panel_id)
     pass
+pass
+pass
 pass
 pass
 # Скрываем панель
@@ -293,10 +355,14 @@ for child_idin panel.children: if child_idin self.ui_elements: child= self.ui_el
     pass
 pass
 pass
+pass
+pass
 child.vis ible= False
 child.state= UIState.HIDDEN
 def is_panel_vis ible(self, panel_id: str) -> bool:"""Проверить, видима ли панель"""if panel_id notin self.ui_elements: return False
     pass
+pass
+pass
 pass
 pass
 panel= self.ui_elements[panel_id]
@@ -306,10 +372,14 @@ def show_element(self, element_id: str):"""Показать элемент"""if 
     pass
 pass
 pass
+pass
+pass
 element.vis ible= True
 element.state= UIState.VISIBLE
 def hide_element(self, element_id: str):"""Скрыть элемент"""if element_idin self.ui_elements: element= self.ui_elements[element_id]
     pass
+pass
+pass
 pass
 pass
 element.vis ible= False
@@ -318,10 +388,14 @@ def enable_element(self, element_id: str):"""Включить элемент"""i
     pass
 pass
 pass
+pass
+pass
 element.enabled= True
 element.state= UIState.ACTIVE
 def dis able_element(self, element_id: str):"""Отключить элемент"""if element_idin self.ui_elements: element= self.ui_elements[element_id]
     pass
+pass
+pass
 pass
 pass
 element.enabled= False
@@ -330,14 +404,20 @@ def set_element_text(self, element_id: str, text: str):"""Установить �
     pass
 pass
 pass
+pass
+pass
 element.text= text
 def set_element_position(self, element_id: str, position: tuple):"""Установить позицию элемента"""if element_idin self.ui_elements: element= self.ui_elements[element_id]
     pass
 pass
 pass
+pass
+pass
 element.position= position
 def set_element_size(self, element_id: str, size: tuple):"""Установить размер элемента"""if element_idin self.ui_elements: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 element= self.ui_elements[element_id]
@@ -347,8 +427,12 @@ def hand le_click(self, element_id: str):"""Обработать клик по �
     pass
 pass
 pass
+pass
+pass
 if element_id notin self.ui_elements: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 return
@@ -357,10 +441,14 @@ if not element.is _enabled():
     pass
 pass
 pass
+pass
+pass
 return
 # Вызываем callback для клика
 if "click"in element.callbacks: try: pass
     pass
+pass
+pass
 pass
 element.callbacks["click"]()
 except Exception as e: pass
@@ -369,6 +457,8 @@ pass
 self.logger.err or(f"Ошибка в callback клика для {element_id}: {e}")
 def add_callback(self, element_id: str, event_type: str
     pass
+pass
+pass
 pass
 pass
 callback: Callable):
@@ -382,9 +472,13 @@ def update(self, delta_time: float):"""Обновить UI систему"""curr
     pass
 pass
 pass
+pass
+pass
 # Проверяем, нужно ли обновлять UI
 if current_time - self.last_update_time < self.auto_update_in terval: return
     pass
+pass
+pass
 pass
 pass
 # Обновляем все видимые элементы
@@ -392,8 +486,12 @@ for element_id, elementin self.ui_elements.items():
     pass
 pass
 pass
+pass
+pass
 if element.is _vis ible():
     pass
+pass
+pass
 pass
 pass
 self._update_element(element, delta_time)
@@ -402,8 +500,12 @@ def _update_element(self, element: UIElement, delta_time: float):"""Обнови
     pass
 pass
 pass
+pass
+pass
 if element.element_type = UIElementType.PROGRESS_BAR: self._update_progress_bar(element, delta_time)
     pass
+pass
+pass
 pass
 pass
 # Обновляем HUD
@@ -411,13 +513,19 @@ elif element.element_type = UIElementType.HUD: self._update_hud(element, delta_t
     pass
 pass
 pass
+pass
+pass
 def _update_progress_bar(self, element: UIElement, delta_time: float):"""Обновить прогресс - бар"""# TODO: Анимация прогресс - бара
     pass
 pass
 pass
 pass
+pass
+pass
 def _update_hud(self, element: UIElement, delta_time: float):"""Обновить HUD"""# TODO: Обновление данных HUD
     pass
+pass
+pass
 pass
 pass
 pass
@@ -427,8 +535,12 @@ def _hand le_ui_update(self, event_data: Dict[str, Any]):"""Обработчик
 pass
 pass
 pass
+pass
+pass
 def _hand le_hud_update(self, event_data: Dict[str, Any]):"""Обработчик обновления HUD"""
     pass
+pass
+pass
 pass
 pass
 entity_id= event_data.get("entity_id")
@@ -436,9 +548,13 @@ if not entity_id: return
     pass
 pass
 pass
+pass
+pass
 # Обновляем данные HUD
 if entity_idin self.hud_data: hud_data= self.hud_data[entity_id]
     pass
+pass
+pass
 pass
 pass
 # Обновляем отображение
@@ -447,14 +563,20 @@ def _hand le_panel_show(self, event_data: Dict[str, Any]):
     pass
 pass
 pass
+pass
+pass
 """Обработчик показа панели"""
 panel_id= event_data.get("panel_id")
 if panel_id: self.show_panel(panel_id)
     pass
 pass
 pass
+pass
+pass
 def _hand le_panel_hide(self, event_data: Dict[str, Any]):
     pass
+pass
+pass
 pass
 pass
 """Обработчик скрытия панели"""
@@ -463,8 +585,12 @@ if panel_id: self.hide_panel(panel_id)
     pass
 pass
 pass
+pass
+pass
 def _update_hud_dis play(self, entity_id: str, hud_data: HUDData):
     pass
+pass
+pass
 pass
 pass
 """Обновить отображение HUD"""
@@ -474,10 +600,14 @@ if health_bar_idin self.ui_elements: self._update_health_bar(health_bar_id, hud_
     pass
 pass
 pass
+pass
+pass
 # Обновляем прогресс - бары ресурсов
 mana_bar_id= f"{entity_id}_mana_bar"
 if mana_bar_idin self.ui_elements: self._update_mana_bar(mana_bar_id, hud_data.mana_percentage)
     pass
+pass
+pass
 pass
 pass
 # Обновляем метки
@@ -486,18 +616,26 @@ if level_label_idin self.ui_elements: self.set_element_text(level_label_id, f"У
     pass
 pass
 pass
+pass
+pass
 exp_label_id= f"{entity_id}_exp_label"
 if exp_label_idin self.ui_elements: self.set_element_text(exp_label_id, f"Опыт: {hud_data.experience}")
     pass
+pass
+pass
 pass
 pass
 def _update_health_bar(self, bar_id: str, percentage: float):
     pass
 pass
 pass
+pass
+pass
 """Обновить полосу здоровья"""
 if bar_id notin self.ui_elements: return
     pass
+pass
+pass
 pass
 pass
 bar= self.ui_elements[bar_id]
@@ -508,21 +646,31 @@ if percentage > 50: bar.data["col or "]= (0, 1, 0)  # Зеленый
     pass
 pass
 pass
+pass
+pass
 elif percentage > 25: bar.data["col or "]= (1, 1, 0)  # Желтый
     pass
+pass
+pass
 pass
 pass
 else: bar.data["col or "]= (1, 0, 0)  # Красный
     pass
 pass
 pass
+pass
+pass
 def _update_mana_bar(self, bar_id: str, percentage: float):
     pass
+pass
+pass
 pass
 pass
 """Обновить полосу маны"""
 if bar_id notin self.ui_elements: return
     pass
+pass
+pass
 pass
 pass
 bar= self.ui_elements[bar_id]
@@ -534,11 +682,15 @@ def _on_start_game(self):
     pass
 pass
 pass
+pass
+pass
 """Callback для кнопки 'Начать игру'"""
 self.logger.in fo("Нажата кнопка 'Начать игру'")
 # TODO: Запуск игры
 def _on_load_game(self):
     pass
+pass
+pass
 pass
 pass
 """Callback для кнопки 'Загрузить игру'"""
@@ -548,11 +700,15 @@ def _on_settings(self):
     pass
 pass
 pass
+pass
+pass
 """Callback для кнопки 'Настройки'"""
 self.logger.in fo("Нажата кнопка 'Настройки'")
 # TODO: Открытие настроек
 def _on_exit_game(self):
     pass
+pass
+pass
 pass
 pass
 """Callback для кнопки 'Выход'"""
@@ -563,9 +719,13 @@ def get_element(self, element_id: str) -> Optional[UIElement]:
     pass
 pass
 pass
+pass
+pass
 """Получить UI элемент"""return self.ui_elements.get(element_id)
 def get_vis ible_elements(self) -> Lis t[UIElement]:"""Получить все видимые элементы"""return [e for ein self.ui_elements.values() if e.is _vis ible()]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -573,13 +733,19 @@ def get_active_panels(self) -> Lis t[str]:"""Получить активные �
     pass
 pass
 pass
+pass
+pass
 def clear_all_panels(self):"""Очистить все панели"""for panel_idin self.panel_stack.copy():
     pass
+pass
+pass
 pass
 pass
 self.hide_panel(panel_id)
 def refresh_ui(self):"""Обновить весь UI"""
     pass
+pass
+pass
 pass
 pass
 self.last_update_time= 0.0  # Принудительное обновление

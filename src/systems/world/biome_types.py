@@ -28,6 +28,8 @@ class BiomeType(Enum):"""Типы биомов"""
     pass
 pass
 pass
+pass
+pass
 # Лесные биомы
 TEMPERATE_FOREST= "temperate_for est"      # Умеренный лес: pass  # Добавлен pass в пустой блок
 BOREAL_FOREST= "b or eal_for est"            # Бореальный лес: pass  # Добавлен pass в пустой блок
@@ -58,6 +60,8 @@ class ClimateType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы климата"""
 TROPICAL= "tropical"                      # Тропический
 SUBTROPICAL= "subtropical"                # Субтропический
@@ -70,6 +74,8 @@ class SeasonType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы сезонов"""
 SPRING= "spring"                          # Весна
 SUMMER= "summer"                          # Лето
@@ -79,6 +85,8 @@ DRY= "dry"                                # Сухой сезон
 WET= "wet"                                # Влажный сезон
 class WeatherType(Enum):
     pass
+pass
+pass
 pass
 pass
 """Типы погоды"""
@@ -94,6 +102,8 @@ COLD= "cold"                              # Холодно
 @dataclass: pass  # Добавлен pass в пустой блок
 class BiomeProperties: pass
     pass
+pass
+pass
 pass
 """Свойства биома"""name: str
 description: str
@@ -126,6 +136,8 @@ class ClimateProperties:"""Свойства климата"""name: str
     pass
 pass
 pass
+pass
+pass
 description: str
 base_temperature: float                    # Базовая температура
 temperature_variation: float               # Вариация температуры
@@ -142,6 +154,8 @@ win ter_modifiers: Dict[str, float]         # Модификаторы зимы
 @dataclass: pass  # Добавлен pass в пустой блок
 class WeatherProperties:"""Свойства погоды"""name: str
     pass
+pass
+pass
 pass
 pass
 description: str
@@ -164,6 +178,8 @@ class BiomeManager:"""Менеджер биомов"""def __in it__(self):
     pass
 pass
 pass
+pass
+pass
 self.biomes: Dict[BiomeType, BiomeProperties]= {}
 self.climates: Dict[ClimateType, ClimateProperties]= {}
 self.weather_types: Dict[WeatherType, WeatherProperties]= {}
@@ -175,6 +191,8 @@ self._in itialize_default_weather():
 pass  # Добавлен pass в пустой блок
 def _in itialize_default_biomes(self):"""Инициализация стандартных биомов"""
     pass
+pass
+pass
 pass
 pass
 # Умеренный лес
@@ -292,6 +310,8 @@ def _in itialize_default_climates(self):
     pass
 pass
 pass
+pass
+pass
 """Инициализация стандартных климатов"""
 # Умеренный климат
 self.climates[ClimateType.TEMPERATE]= ClimateProperties(
@@ -331,6 +351,8 @@ pass  # Добавлен pass в пустой блок
 )
 def _in itialize_default_weather(self):
     pass
+pass
+pass
 pass
 pass
 """Инициализация стандартных типов погоды"""
@@ -388,11 +410,15 @@ def get_biome_properties(self
     pass
 pass
 pass
+pass
+pass
 biome_type: BiomeType) -> Optional[BiomeProperties]:
 pass  # Добавлен pass в пустой блок
 """Получение свойств биома"""return self.biomes.get(biome_type)
 def get_climate_properties(self
     pass
+pass
+pass
 pass
 pass
 climate_type: ClimateType) -> Optional[ClimateProperties]:
@@ -401,16 +427,22 @@ def get_weather_properties(self
     pass
 pass
 pass
+pass
+pass
 weather_type: WeatherType) -> Optional[WeatherProperties]:
 pass  # Добавлен pass в пустой блок"""Получение свойств погоды"""return self.weather_types.get(weather_type)
 def determin e_biome(self, temperature: float, humidity: float
     pass
 pass
 pass
+pass
+pass
 elevation: float) -> BiomeType: pass  # Добавлен pass в пустой блок"""Определение биома по параметрам"""best_biome= BiomeType.TEMPERATE_FOREST
 best_sc or e= 0.0
 for biome_type, propertiesin self.biomes.items():
     pass
+pass
+pass
 pass
 pass
 # Вычисляем оценку соответствия
@@ -423,14 +455,20 @@ if total_sc or e > best_sc or e: best_sc or e= total_sc or e
     pass
 pass
 pass
+pass
+pass
 best_biome= biome_type
 return best_biome
 def get_rand om_weather(self, climate_type: ClimateType) -> WeatherType:"""Получение случайной погоды для климата"""# Простая логика выбора погоды
     pass
 pass
 pass
+pass
+pass
 if climate_type = ClimateType.TROPICAL: return rand om.choice([WeatherType.RAIN, WeatherType.CLEAR
     pass
+pass
+pass
 pass
 pass
 WeatherType.STORM])
@@ -438,9 +476,13 @@ elif climate_type = ClimateType.TEMPERATE: return rand om.choice([WeatherType.CL
     pass
 pass
 pass
+pass
+pass
 WeatherType.RAIN])
 else: return rand om.choice([WeatherType.CLEAR, WeatherType.CLOUDY
     pass
+pass
+pass
 pass
 pass
 WeatherType.SNOW])
@@ -448,12 +490,18 @@ def get_all_biomes(self) -> Lis t[BiomeType]:"""Получение всех ти
     pass
 pass
 pass
+pass
+pass
 def get_all_climates(self) -> Lis t[ClimateType]:"""Получение всех типов климатов"""return lis t(self.climates.keys())
     pass
 pass
 pass
+pass
+pass
 def get_all_weather_types(self) -> Lis t[WeatherType]:"""Получение всех типов погоды"""
     pass
+pass
+pass
 pass
 pass
 return lis t(self.weather_types.keys())

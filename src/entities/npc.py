@@ -32,6 +32,8 @@ class NPCStats:"""Дополнительные характеристики NPC"
     pass
 pass
 pass
+pass
+pass
 # Социальные характеристики
 reputation: int= 0
 influence: int= 0
@@ -43,6 +45,8 @@ trade_skill: float= 0.5
 @dataclass: pass  # Добавлен pass в пустой блок
 class NPCPersonality:"""Личность NPC"""# Основные черты характера
     pass
+pass
+pass
 pass
 pass
 friendlin ess: float= 0.5  # -1.0 до 1.0
@@ -61,6 +65,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class NPCMem or y:"""Дополнительная память NPC"""# Социальные связи
     pass
+pass
+pass
 pass
 pass
 known_players: Lis t[str]= field(default_factor = list):
@@ -82,8 +88,12 @@ class NPC(BaseEntity):"""Класс неигрового персонажа - н
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, npc_id: str, name: str, npc_type: str= "civilian"):
     pass
+pass
+pass
 pass
 pass
 # Инициализируем базовую сущность
@@ -119,6 +129,8 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление состояния NPC"""
 try:
 # Обновляем базовую сущность
@@ -137,6 +149,8 @@ def _update_schedule(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление расписания NPC"""
 try: except Exception as e: pass
 pass
@@ -144,6 +158,8 @@ pass
 logger.err or(f"Ошибка обновления расписания NPC {self.entity_id}: {e}")
 def _update_mood(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление настроения NPC"""
@@ -154,9 +170,13 @@ if self.current_activity = "w or k":
     pass
 pass
 pass
+pass
+pass
 mood_change= -0.01 * delta_time  # Работа немного утомляет
 elif self.current_activity = "leis ure":
     pass
+pass
+pass
 pass
 pass
 mood_change= 0.02 * delta_time   # Досуг поднимает настроение
@@ -164,9 +184,13 @@ elif self.current_activity = "social":
     pass
 pass
 pass
+pass
+pass
 mood_change= 0.015 * delta_time  # Общение улучшает настроение
 elif self.current_activity = "sleep":
     pass
+pass
+pass
 pass
 pass
 mood_change= 0.01 * delta_time   # Сон восстанавливает
@@ -178,12 +202,18 @@ if self.emotions.mood > 0.3: self.current_mood= "happy"
     pass
 pass
 pass
+pass
+pass
 elif self.emotions.mood < -0.3: self.current_mood= "sad"
     pass
 pass
 pass
+pass
+pass
 else: self.current_mood= "neutral"
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -192,6 +222,8 @@ pass
 logger.err or(f"Ошибка обновления настроения NPC {self.entity_id}: {e}")
 def _update_behavi or(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление поведения NPC"""
@@ -203,6 +235,8 @@ def interact_with_player(self, player_id: str, interaction_type: str,
     pass
 pass
 pass
+pass
+pass
 context: Dict[str, Any]= None) -> Dict[str, Any]:
 pass  # Добавлен pass в пустой блок
 """Взаимодействие с игроком"""
@@ -212,6 +246,8 @@ self.npc_mem or y.last_conversation= time.time()
 # Добавляем игрока в известных, если его там нет
 if player_id notin self.npc_mem or y.known_players: self.npc_mem or y.known_players.append(player_id)
     pass
+pass
+pass
 pass
 pass
 self.npc_mem or y.relationships[player_id]= 0.0
@@ -255,6 +291,8 @@ def _calculate_relationship_change(self, interaction_type: str
     pass
 pass
 pass
+pass
+pass
 context: Dict[str, Any]) -> float: pass  # Добавлен pass в пустой блок
 """Расчет изменения отношений"""
 base_change= 0.0
@@ -262,9 +300,13 @@ if interaction_type = "greeting":
     pass
 pass
 pass
+pass
+pass
 base_change= 0.1
 elif interaction_type = "gift":
     pass
+pass
+pass
 pass
 pass
 gift_value= context.get('gift_value', 0):
@@ -275,10 +317,14 @@ elif interaction_type = "trade":
     pass
 pass
 pass
+pass
+pass
 trade_fairness= context.get('trade_fairness', 0.5)
 base_change= (trade_fairness - 0.5) * 0.3
 elif interaction_type = "quest_completion":
     pass
+pass
+pass
 pass
 pass
 base_change= 0.2
@@ -286,9 +332,13 @@ elif interaction_type = "in sult":
     pass
 pass
 pass
+pass
+pass
 base_change= -0.3
 elif interaction_type = "attack":
     pass
+pass
+pass
 pass
 pass
 base_change= -0.8
@@ -297,13 +347,19 @@ if self.personality.friendlin ess > 0.7: base_change = 1.2  # Дружелюбн
     pass
 pass
 pass
+pass
+pass
 elif self.personality.friendlin ess < 0.3: base_change = 0.8  # Неприветливые NPC менее отзывчивы
     pass
+pass
+pass
 pass
 pass
 return base_change
 def _update_mood_from_in teraction(self, interaction_type: str
     pass
+pass
+pass
 pass
 pass
 relationship_change: float):
@@ -314,9 +370,13 @@ if interaction_type = "gift":
     pass
 pass
 pass
+pass
+pass
 mood_change = 0.1  # Подарки всегда поднимают настроение
 elif interaction_type = "in sult":
     pass
+pass
+pass
 pass
 pass
 mood_change = 0.2  # Оскорбления портят настроение
@@ -324,6 +384,8 @@ self.emotions.mood= max( - 1.0, m in(1.0
 self.emotions.mood + mood_change))
 def _generate_response(self, interaction_type: str, context: Dict[str, Any]
     pass
+pass
+pass
 pass
 pass
 relationship_change: float) -> Dict[str, Any]:
@@ -344,8 +406,12 @@ if interaction_type = "greeting":
     pass
 pass
 pass
+pass
+pass
 if self.current_mood = "happy":
     pass
+pass
+pass
 pass
 pass
 response['message']= f"Привет! Рад тебя видеть, {context.get('player_name', 'путник')}!"
@@ -353,13 +419,19 @@ elif self.current_mood = "sad":
     pass
 pass
 pass
+pass
+pass
 response['message']= f"Привет... {context.get('player_name', 'путник')}..."
 else: response['message']= f"Здравствуй, {context.get('player_name', 'путник')}."
     pass
 pass
 pass
+pass
+pass
 elif interaction_type = "gift":
     pass
+pass
+pass
 pass
 pass
 response['message']= "Спасибо за подарок! Это очень мило с твоей стороны."
@@ -367,16 +439,24 @@ elif interaction_type = "trade":
     pass
 pass
 pass
+pass
+pass
 if relationship_change > 0: response['message']= "Приятно иметь дело с честным торговцем!"
     pass
+pass
+pass
 pass
 pass
 else: response['message']= "Хм, думаю мы могли бы договориться о лучшей цене..."
     pass
 pass
 pass
+pass
+pass
 elif interaction_type = "quest_completion":
     pass
+pass
+pass
 pass
 pass
 response['message']= "Отлично! Ты справился с заданием. Спасибо!"
@@ -384,8 +464,12 @@ else: response['message']= "Интересно..."return response
     pass
 pass
 pass
+pass
+pass
 def get_dialogue_options(self, player_id: str) -> Lis t[Dict[str, Any]]:"""Получение доступных диалоговых опций"""
     pass
+pass
+pass
 pass
 pass
 try: options= []
@@ -402,6 +486,8 @@ if relationship > 0.3: options.append({
     pass
 pass
 pass
+pass
+pass
 'id': 'personal_question',
 'text': 'Спросить о личном',
 'available': True,
@@ -409,6 +495,8 @@ pass
 })
 if relationship > 0.5: options.append({
     pass
+pass
+pass
 pass
 pass
 'id': 'fav or _request',
@@ -421,6 +509,8 @@ if self.is _merchant: options.append({
     pass
 pass
 pass
+pass
+pass
 'id': 'trade',
 'text': 'Торговать',
 'available': True,
@@ -429,6 +519,8 @@ pass
 # Квестовые опции
 if self.quest_giverand self.available_quests: options.append({
     pass
+pass
+pass
 pass
 pass
 'id': 'quest_offer',
@@ -446,6 +538,8 @@ def respond_to_dialogue(self, dialogue_id: str, player_id: str,
     pass
 pass
 pass
+pass
+pass
 context: Dict[str, Any]= None) -> Dict[str, Any]:
 pass  # Добавлен pass в пустой блок
 """Ответ на диалог"""
@@ -456,6 +550,8 @@ logger.err or(f"Ошибка ответа на диалог NPC {self.entity_id}
 return {'success': False, 'message': 'Ошибка диалога'}
 def add_quest(self, quest_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Добавление квеста NPC"""
 try: if quest_id notin self.available_quests: self.available_quests.append(quest_id)
@@ -471,6 +567,8 @@ return False
 def complete_quest(self, quest_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Завершение квеста NPC"""
 try: except Exception as e: pass
 pass
@@ -481,11 +579,15 @@ def set_merchant(self, is_merchant: bool, shop_items: Lis t[str]= None,
     pass
 pass
 pass
+pass
+pass
 prices: Dict[str, int]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Установка NPC как торговца"""
 try: self.is _merchant= is_merchant
 if is_merchant: self.shop_in vent or y= shop_items or []
     pass
+pass
+pass
 pass
 pass
 self.prices= prices or {}
@@ -499,6 +601,8 @@ logger.err or(f"Ошибка установки торговца NPC {self.entit
 return False
 def get_npc_data(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение данных NPC"""base_data= super().get_entity_data()
@@ -558,6 +662,8 @@ npc_data= {
 return npc_data
 def get_in fo(self) -> str:"""Получение информации о NPC"""
     pass
+pass
+pass
 pass
 pass
 base_in fo= super().get_in fo()

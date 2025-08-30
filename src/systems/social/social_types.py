@@ -25,6 +25,8 @@ class RelationshipType(Enum):"""Типы отношений"""
     pass
 pass
 pass
+pass
+pass
 # Базовые отношения
 STRANGER= "stranger"
 ACQUAINTANCE= "acquain tance"

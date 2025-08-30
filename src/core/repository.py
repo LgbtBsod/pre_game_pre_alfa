@@ -59,6 +59,8 @@ class DataRec or d:"""Запись данных"""id: str
     pass
 pass
 pass
+pass
+pass
 data_type: DataType
 data: Any
 created_at: float
@@ -71,6 +73,8 @@ class QueryFilter:"""Фильтр для запросов"""field: str
     pass
 pass
 pass
+pass
+pass
 operat or : str  # eq, ne, gt, lt, gte, lte, in, not_in , contain s, regex
 value: Any
 @dataclass: pass  # Добавлен pass в пустой блок
@@ -78,10 +82,14 @@ class QueryS or t:"""Сортировка для запросов"""field: str
     pass
 pass
 pass
+pass
+pass
 direction: str  # asc, desc
 @dataclass: pass  # Добавлен pass в пустой блок
 class QueryOptions:"""Опции запроса"""limit: Optional[in t]= None
     pass
+pass
+pass
 pass
 pass
 offset: int= 0
@@ -94,9 +102,13 @@ class IReposit or y(Generic[T]):"""Интерфейс репозитория"""@
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def reposit or y_id(self) -> str:"""Идентификатор репозитория"""pass
     pass
+pass
+pass
 pass
 pass
 @property
@@ -105,9 +117,13 @@ def data_type(self) -> DataType:"""Тип данных"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def create(self, id: str, data: T, metadata: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок"""Создание записи"""pass
@@ -116,9 +132,13 @@ def read(self, id: str) -> Optional[T]:"""Чтение записи"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def update(self, id: str, data: T, metadata: Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок"""Обновление записи"""pass
@@ -127,9 +147,13 @@ def delete(self, id: str) -> bool:"""Удаление записи"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def exis ts(self, id: str) -> bool:"""Проверка существования записи"""pass
     pass
+pass
+pass
 pass
 pass
 @abstractmethod
@@ -137,9 +161,13 @@ def query(self, options: QueryOptions) -> Lis t[T]:"""Запрос данных"
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def count(self, options: QueryOptions= None) -> int:"""Подсчет записей"""pass
     pass
+pass
+pass
 pass
 pass
 @abstractmethod
@@ -147,9 +175,13 @@ def clear(self) -> bool:"""Очистка репозитория"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def backup(self) -> Dict[str, Any]:"""Создание резервной копии"""pass
     pass
+pass
+pass
 pass
 pass
 @abstractmethod
@@ -157,8 +189,12 @@ def rest or e(self, backup: Dict[str, Any]) -> bool:"""Восстановлен�
     pass
 pass
 pass
+pass
+pass
 class BaseReposit or y(BaseComponent, IReposit or y[T]):"""Базовая реализация репозитория"""def __in it__(self, reposit or y_id: str, data_type: DataType
     pass
+pass
+pass
 pass
 pass
 st or age_type: St or ageType= St or ageType.MEMORY):
@@ -178,18 +214,26 @@ def reposit or y_id(self) -> str: return self.component_id
     pass
 pass
 pass
+pass
+pass
 @property
 def data_type(self) -> DataType: return self._data_type
     pass
+pass
+pass
 pass
 pass
 def create(self, id: str, data: T, metadata: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок"""Создание записи"""
 with self._lock: if idin self._rec or ds: logger.warning(f"Запись {id} уже существует в репозитории {self.reposit or y_id}")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -211,9 +255,13 @@ def read(self, id: str) -> Optional[T]:
     pass
 pass
 pass
+pass
+pass
 """Чтение записи"""with self._lock: rec or d= self._rec or ds.get(id)
 if rec or d: return copy.deepcopy(rec or d.data)
     pass
+pass
+pass
 pass
 pass
 return None
@@ -221,9 +269,13 @@ def update(self, id: str, data: T, metadata: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок"""Обновление записи"""
 with self._lock: if id notin self._rec or ds: logger.warning(f"Запись {id} не найдена в репозитории {self.reposit or y_id}")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -235,15 +287,21 @@ if metadata: rec or d.metadata.update(metadata)
     pass
 pass
 pass
+pass
+pass
 self._update_in dexes(id, rec or d)
 logger.debug(f"Обновлена запись {id} в репозитории {self.reposit or y_id}")
 return True
 def delete(self, id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление записи"""
 with self._lock: if id notin self._rec or ds: return False
     pass
+pass
+pass
 pass
 pass
 rec or d= self._rec or ds[id]
@@ -254,9 +312,13 @@ return True
 def exis ts(self, id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка существования записи"""with self._lock: return idin self._rec or ds
 def query(self, options: QueryOptions) -> Lis t[T]:"""Запрос данных"""with self._lock: pass
     pass
+pass
+pass
 pass
 # Применяем фильтры
 filtered_ids= self._apply_filters(options.filters)
@@ -272,14 +334,20 @@ def count(self, options: QueryOptions= None) -> int:"""Подсчет запис
     pass
 pass
 pass
+pass
+pass
 filtered_ids= self._apply_filters(options.filters)
 return len(filtered_ids)
 def clear(self) -> bool:"""Очистка репозитория"""
     pass
 pass
 pass
+pass
+pass
 with self._lock: self._rec or ds.clear()
     pass
+pass
+pass
 pass
 pass
 self._in dexes.clear()
@@ -287,6 +355,8 @@ logger.in fo(f"Репозиторий {self.reposit or y_id} очищен")
 return True
 def backup(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Создание резервной копии"""with self._lock: backup= {"reposit or y_id": self.reposit or y_id,
@@ -298,6 +368,8 @@ pass
 }
 for id, rec or din self._rec or ds.items():
     pass
+pass
+pass
 pass
 pass
 backup["rec or ds"][id]= {
@@ -313,9 +385,13 @@ return backup
 def rest or e(self, backup: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Восстановление из резервной копии"""
 with self._lock: try: pass
     pass
+pass
+pass
 pass
 except Exception as e: pass
 pass
@@ -325,9 +401,13 @@ return False
 def add_in dex(self, field: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавление индекса"""
 with self._lock: if fieldin self._in dexes: return True
     pass
+pass
+pass
 pass
 pass
 self._in dexes[field]= {}
@@ -336,15 +416,21 @@ for id, rec or din self._rec or ds.items():
     pass
 pass
 pass
+pass
+pass
 self._add_to_in dex(field, id, rec or d)
 logger.in fo(f"Добавлен индекс {field} в репозиторий {self.reposit or y_id}")
 return True
 def remove_in dex(self, field: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление индекса"""
 with self._lock: if fieldin self._in dexes: del self._in dexes[field]
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Удален индекс {field} из репозитория {self.reposit or y_id}")
@@ -353,13 +439,19 @@ return False
 def _update_in dexes(self, id: str, rec or d: DataRec or d) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление индексов для записи"""for fieldin self._in dexes: self._add_to_in dex(field, id, rec or d)
 def _remove_from_in dexes(self, id: str, rec or d: DataRec or d) -> None:"""Удаление записи из индексов"""for fieldin self._in dexes: self._remove_from_in dex(field, id, rec or d)
     pass
 pass
 pass
+pass
+pass
 def _add_to_in dex(self, field: str, id: str, rec or d: DataRec or d) -> None:"""Добавление записи в индекс"""
     pass
+pass
+pass
 pass
 pass
 try: value= self._get_field_value(rec or d.data, field)
@@ -367,9 +459,13 @@ if valueis not None: if value notin self._in dexes[field]:
     pass
 pass
 pass
+pass
+pass
 self._in dexes[field][value]= []
 if id notin self._in dexes[field][value]:
     pass
+pass
+pass
 pass
 pass
 self._in dexes[field][value].append(id)
@@ -381,6 +477,8 @@ def _remove_from_in dex(self, field: str, id: str
     pass
 pass
 pass
+pass
+pass
 rec or d: DataRec or d) -> None: pass  # Добавлен pass в пустой блок
 """Удаление записи из индекса"""
 try: except Exception as e: pass
@@ -390,10 +488,14 @@ logger.warning(f"Ошибка удаления из индекса {field}: {e}"
 def _get_field_value(self, data: Any, field: str) -> Any: pass
     pass
 pass
+pass
+pass
 """Получение значения поля из данных"""if isin stance(data, dict):
 return data.get(field)
 elif hasattr(data, field):
     pass
+pass
+pass
 pass
 pass
 return getattr(data, field)
@@ -401,25 +503,37 @@ else: return None
     pass
 pass
 pass
+pass
+pass
 def _apply_filters(self, filters: Lis t[QueryFilter]) -> Lis t[str]:"""Применение фильтров"""
     pass
+pass
+pass
 pass
 pass
 if not filters: return lis t(self._rec or ds.keys())
     pass
 pass
 pass
+pass
+pass
 filtered_ids= set(self._rec or ds.keys())
 for filter_objin filters: if filter_obj.fieldin self._in dexes: pass
     pass
+pass
+pass
 pass
 # Используем индекс
 if filter_obj.operator = "eq":
     pass
 pass
 pass
+pass
+pass
 if filter_obj.valuein self._in dexes[filter_obj.field]:
     pass
+pass
+pass
 pass
 pass
 filtered_ids = set(self._in dexes[filter_obj.field][filter_obj.value])
@@ -427,8 +541,12 @@ else: filtered_ids.clear()
     pass
 pass
 pass
+pass
+pass
 elif filter_obj.operator = "in ":
     pass
+pass
+pass
 pass
 pass
 matching_ids= set()
@@ -436,10 +554,14 @@ for valuein filter_obj.value: if valuein self._in dexes[filter_obj.field]:
     pass
 pass
 pass
+pass
+pass
 matching_ids.update(self._in dexes[filter_obj.field][value])
 filtered_ids = matching_ids
 else: pass
     pass
+pass
+pass
 pass
 # Фильтруем вручную
 matching_ids= set()
@@ -447,8 +569,12 @@ for id, rec or din self._rec or ds.items():
     pass
 pass
 pass
+pass
+pass
 if self._matches_filter(rec or d.data, filter_obj):
     pass
+pass
+pass
 pass
 pass
 matching_ids.add(id)
@@ -457,10 +583,14 @@ return lis t(filtered_ids)
 def _matches_filter(self, data: Any, filter_obj: QueryFilter) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка соответствия фильтру"""
 value= self._get_field_value(data, filter_obj.field)
 if filter_obj.operator = "eq":
     pass
+pass
+pass
 pass
 pass
 return value = filter_obj.value
@@ -468,9 +598,13 @@ elif filter_obj.operator = "ne":
     pass
 pass
 pass
+pass
+pass
 return value != filter_obj.value
 elif filter_obj.operator = "gt":
     pass
+pass
+pass
 pass
 pass
 return value > filter_obj.value
@@ -478,9 +612,13 @@ elif filter_obj.operator = "lt":
     pass
 pass
 pass
+pass
+pass
 return value < filter_obj.value
 elif filter_obj.operator = "gte":
     pass
+pass
+pass
 pass
 pass
 return value >= filter_obj.value
@@ -488,9 +626,13 @@ elif filter_obj.operator = "lte":
     pass
 pass
 pass
+pass
+pass
 return value <= filter_obj.value
 elif filter_obj.operator = "in ":
     pass
+pass
+pass
 pass
 pass
 return valuein filter_obj.value
@@ -498,9 +640,13 @@ elif filter_obj.operator = "not_in ":
     pass
 pass
 pass
+pass
+pass
 return value notin filter_obj.value
 elif filter_obj.operator = "contain s":
     pass
+pass
+pass
 pass
 pass
 return filter_obj.valuein str(value)
@@ -508,10 +654,14 @@ elif filter_obj.operator = "regex":
     pass
 pass
 pass
+pass
+pass
 return bool(re.search(filter_obj.value, str(value)))
 return False
 def _apply_s or ting(self, ids: Lis t[str]
     pass
+pass
+pass
 pass
 pass
 s or t: Lis t[QueryS or t]) -> Lis t[str]:
@@ -521,8 +671,12 @@ if not s or t: return ids
     pass
 pass
 pass
+pass
+pass
 def s or t_key(id: str) -> tuple: rec or d= self._rec or ds[id]
     pass
+pass
+pass
 pass
 pass
 key_values= []
@@ -530,8 +684,12 @@ for s or t_objin s or t: value= self._get_field_value(rec or d.data, s or t_obj.
     pass
 pass
 pass
+pass
+pass
 if s or t_obj.direction = "desc":
     pass
+pass
+pass
 pass
 pass
 value= (valueis None
@@ -540,12 +698,16 @@ else: value= (valueis not None
     pass
 pass
 pass
+pass
+pass
 value)  # None в начало при сортировке по возрастанию
 key_values.append(value)
 return tuple(key_values)
 return s or ted(ids, ke = sort_key)
 def _apply_pagin ation(self, ids: Lis t[str], limit: Optional[in t]
     pass
+pass
+pass
 pass
 pass
 offset: int) -> Lis t[str]:
@@ -559,15 +721,21 @@ def _update_impl(self, delta_time: float) -> bool:"""Обновление - ав
     pass
 pass
 pass
+pass
+pass
 self._last_save= time.time()
 return True
 def _save_data(self) -> bool:"""Сохранение данных"""if self._st or age_type = St or ageType.FILE: return self._save_to_file()
     pass
 pass
 pass
+pass
+pass
 return True
 def _save_to_file(self) -> bool:"""Сохранение в файл"""
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -582,6 +750,8 @@ def __in it__(self):
     pass
 pass
 pass
+pass
+pass
 super().__in it__("reposit or y_manager", ComponentType.MANAGER, Pri or ity.HIGH)
 self._reposit or ies: Dict[str, IReposit or y]= {}
 self._reposit or y_fact or ies: Dict[DataType, Callable]= {}
@@ -589,9 +759,13 @@ self._lock= threading.RLock()
 def regis ter_reposit or y(self, reposit or y: IReposit or y) -> bool: pass
     pass
 pass
+pass
+pass
 """Регистрация репозитория"""
 with self._lock: if reposit or y.reposit or y_idin self._reposit or ies: logger.warning(f"Репозиторий {reposit or y.reposit or y_id} уже зарегистрирован")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -601,9 +775,13 @@ return True
 def unregis ter_reposit or y(self, reposit or y_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Отмена регистрации репозитория"""
 with self._lock: if reposit or y_id notin self._reposit or ies: return False
     pass
+pass
+pass
 pass
 pass
 del self._reposit or ies[reposit or y_id]
@@ -613,9 +791,13 @@ def get_reposit or y(self, reposit or y_id: str) -> Optional[IReposit or y]:
     pass
 pass
 pass
+pass
+pass
 """Получение репозитория по ID"""with self._lock: return self._reposit or ies.get(reposit or y_id)
 def get_reposit or ies_by_type(self
     pass
+pass
+pass
 pass
 pass
 data_type: DataType) -> Lis t[IReposit or y]:
@@ -624,15 +806,21 @@ if repo.data_type = data_type]:
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 def create_reposit or y(self, reposit or y_id: str, data_type: DataType
     pass
+pass
+pass
 pass
 pass
 st or age_type: St or ageType= St or ageType.MEMORY) -> Optional[IReposit or y]:
 pass  # Добавлен pass в пустой блок"""Создание нового репозитория"""
 with self._lock: if reposit or y_idin self._reposit or ies: logger.warning(f"Репозиторий {reposit or y_id} уже существует")
     pass
+pass
+pass
 pass
 pass
 return self._reposit or ies[reposit or y_id]
@@ -644,11 +832,15 @@ def backup_all(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Создание резервной копии всех репозиториев"""with self._lock: backup= {"timestamp": time.time(),
 "reposit or ies": {}
 }
 for reposit or y_id, reposit or yin self._reposit or ies.items():
     pass
+pass
+pass
 pass
 pass
 try: backup["reposit or ies"][reposit or y_id]= reposit or y.backup()
@@ -658,14 +850,20 @@ pass
 pass
 pass
 pass
+pass
+pass
 logger.err or(f"Ошибка резервного копирования репозитория {reposit or y_id}: {e}")
 return backup
 def rest or e_all(self, backup: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Восстановление всех репозиториев"""
 with self._lock: try: pass
     pass
+pass
+pass
 pass
 except Exception as e: pass
 pass
@@ -674,6 +872,8 @@ logger.err or(f"Ошибка восстановления репозиторие
 return False
 def _in itialize_impl(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация менеджера репозиториев"""
 try:
@@ -687,6 +887,8 @@ logger.err or(f"Ошибка инициализации менеджера ре�
 return False
 def _create_base_reposit or ies(self) -> None: pass
     pass
+pass
+pass
 pass
 """Создание базовых репозиториев"""
 # Репозитории для игровых данных
@@ -707,9 +909,13 @@ return QueryFilter(fiel = field, operato = operat or , valu = value)
 def create_query_s or t(field: str, direction: str= "asc") -> QueryS or t: pass
     pass
 pass
+pass
+pass
 """Создание сортировки запроса"""return QueryS or t(fiel = field, directio = direction)
 def create_query_options(limit: Optional[in t]= None, offset: int= 0,
     pass
+pass
+pass
 pass
 pass
 filters: Lis t[QueryFilter]= None

@@ -98,6 +98,8 @@ def get_stats_by_group(group_name: str) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 """Получает список названий статистик, принадлежащих указанной группе.
 Args: group_name: Название группы статистик
 Returns: Список названий статистик в группе
@@ -106,9 +108,13 @@ if group_name notin STAT_GROUPS: rais e KeyErr or(f"Группа статист�
     pass
 pass
 pass
+pass
+pass
 return STAT_GROUPS[group_name]
 def get_entity_template(template_name: str) -> Dict[str, int]:
     pass
+pass
+pass
 pass
 pass
 """Получает шаблон атрибутов для указанного типа сущности.
@@ -119,9 +125,13 @@ if template_name notin ENTITY_STAT_TEMPLATES: rais e KeyErr or(f"Шаблон '{
     pass
 pass
 pass
+pass
+pass
 return ENTITY_STAT_TEMPLATES[template_name].copy()
 def apply_stat_template(base_stats: dict, template_name: str
     pass
+pass
+pass
 pass
 pass
 level: int= 1) -> dict: pass  # Добавлен pass в пустой блок
@@ -136,8 +146,12 @@ for attr, valuein template.items():
     pass
 pass
 pass
+pass
+pass
 if attrin result: pass
     pass
+pass
+pass
 pass
 # Атрибуты масштабируются линейно с уровнем
 result[attr]= value * level
@@ -145,9 +159,13 @@ else: result[attr]= value * level
     pass
 pass
 pass
+pass
+pass
 return result
 def validate_stats(stats: dict) -> Dict[str, Any]:"""Валидирует словарь характеристик на полноту и разумность значений.
     pass
+pass
+pass
 pass
 pass
 Args: stats: Словарь характеристик для валидации
@@ -162,17 +180,25 @@ if mis sing_attrs: issues.append(f"Отсутствуют обязательны
     pass
 pass
 pass
+pass
+pass
 # Проверяем разумность значений атрибутов
 for attrin required_attrs: if attrin stats: value= stats[attr]
     pass
+pass
+pass
 pass
 pass
 if not isin stance(value, (in t, float)) or value < 0: issues.append(f"Атрибут {attr} должен быть положительным числом, получено: {value}")
     pass
 pass
 pass
+pass
+pass
 elif value > 100: warnings.append(f"Атрибут {attr} имеет очень высокое значение: {value}")
     pass
+pass
+pass
 pass
 pass
 # Проверяем другие характеристики
@@ -180,17 +206,25 @@ for stat_name, valuein stats.items():
     pass
 pass
 pass
+pass
+pass
 if stat_name notin required_attrs: if isin stance(value, (in t, float)):
     pass
+pass
+pass
 pass
 pass
 if value < 0and stat_name notin ["critical_chance", "parry_chance", "evasion_chance", "resis t_chance"]:
     pass
 pass
 pass
+pass
+pass
 issues.append(f"Характеристика {stat_name} не может быть отрицательной: {value}")
 elif value > 1000: warnings.append(f"Характеристика {stat_name} имеет очень высокое значение: {value}")
     pass
+pass
+pass
 pass
 pass
 is_valid= len(is sues) = 0
@@ -201,6 +235,8 @@ return {
 }
 def merge_stats(base_stats: dict, additional_stats: dict
     pass
+pass
+pass
 pass
 pass
 override: bool= False) -> dict: pass  # Добавлен pass в пустой блок
@@ -214,12 +250,18 @@ for key, valuein additional_stats.items():
     pass
 pass
 pass
+pass
+pass
 if keyin resultand not override: pass
     pass
+pass
+pass
 pass
 # Добавляем к существующему значению
 if isin stance(value, (in t, float))and isin stance(result[key], (in t
     pass
+pass
+pass
 pass
 pass
 float)):
@@ -228,16 +270,22 @@ result[key] = value
 else: pass
     pass
 pass
+pass
+pass
 # Для нечисловых значений перезаписываем
 result[key]= value
 else: pass
     pass
+pass
+pass
 pass
 # Просто добавляем новое значение
 result[key]= value
 return result
 def scale_stats_by_level(stats: dict, level: int, base_level: int= 1) -> dict:"""Масштабирует числовые характеристики на основе уровня.
     pass
+pass
+pass
 pass
 pass
 Args: stats: Словарь характеристик для масштабирования
@@ -248,8 +296,12 @@ if level <= 0: rais e ValueErr or("Уровень должен быть поло
     pass
 pass
 pass
+pass
+pass
 if base_level <= 0: rais e ValueErr or("Базовый уровень должен быть положительным числом")
     pass
+pass
+pass
 pass
 pass
 result= {}
@@ -258,12 +310,18 @@ for key, valuein stats.items():
     pass
 pass
 pass
+pass
+pass
 if isin stance(value, (in t, float)):
     pass
 pass
 pass
+pass
+pass
 if keyin STAT_GROUPS["c or e_attributes"]:
     pass
+pass
+pass
 pass
 pass
 # Атрибуты масштабируются линейно
@@ -271,16 +329,22 @@ result[key]= int(value * scale_fact or )
 else: pass
     pass
 pass
+pass
+pass
 # Остальные характеристики масштабируются по квадратичному закону
 result[key]= int(value * (scale_factor ** 0.5))
 else: pass
     pass
+pass
+pass
 pass
 # Нечисловые значения копируются как есть
 result[key]= value
 return result
 def calculate_stats_from_attributes(base_stats: dict
     pass
+pass
+pass
 pass
 pass
 attributes: dict) -> dict: pass  # Добавлен pass в пустой блок
@@ -294,6 +358,8 @@ for stat_name, for mulain STAT_CALCULATION_FORMULAS.items():
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -302,6 +368,8 @@ contin ue
 return result
 def get_skill_cost_multiplier(cost_sources: lis t) -> float:"""
     pass
+pass
+pass
 pass
 pass
 Рассчитывает множитель силы навыка на основе количества источников затрат.
@@ -314,15 +382,23 @@ if cost_count = 0: return SKILL_POWER_MULTIPLIERS["no_cost"]
     pass
 pass
 pass
+pass
+pass
 elif cost_count = 1: return SKILL_POWER_MULTIPLIERS["single_cost"]
     pass
+pass
+pass
 pass
 pass
 elif cost_count = 2: return SKILL_POWER_MULTIPLIERS["dual_cost"]
     pass
 pass
 pass
+pass
+pass
 else: return SKILL_POWER_MULTIPLIERS["triple_cost"]
     pass
+pass
+pass
 pass
 pass

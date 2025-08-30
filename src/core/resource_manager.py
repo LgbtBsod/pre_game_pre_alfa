@@ -37,8 +37,12 @@ class ResourceManager(IResourceManager):"""Менеджер ресурсов д�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 self.base_path= Path("assets")
@@ -52,6 +56,8 @@ logger.in fo("Менеджер ресурсов Pand a3D инициализир�
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация менеджера ресурсов"""
 try: except Exception as e: pass
 pass
@@ -60,6 +66,8 @@ logger.err or(f"Ошибка инициализации менеджера ре�
 return False
 def _create_resource_direct or ies(self):
     pass
+pass
+pass
 pass
 pass
 """Создание директорий ресурсов"""direct or ies= ["textures",
@@ -72,10 +80,14 @@ for direct or yin direct or ies: dir_path= self.base_path / direct or y
     pass
 pass
 pass
+pass
+pass
 dir_path.mkdir(parent = True, exis t_o = True)
 logger.debug(f"Создана директория ресурсов: {direct or y}")
 def _in itialize_loader(self):
     pass
+pass
+pass
 pass
 pass
 """Инициализация загрузчика Pand a3D"""
@@ -85,6 +97,8 @@ pass
 logger.warning(f"Не удалось инициализировать загрузчик: {e}")
 def _in itialize_audio(self):
     pass
+pass
+pass
 pass
 pass
 """Инициализация аудио менеджера"""
@@ -100,6 +114,8 @@ def _preload_basic_resources(self):
     pass
 pass
 pass
+pass
+pass
 """Предзагрузка базовых ресурсов"""
 try: except Exception as e: pass
 pass
@@ -110,10 +126,14 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление системы"""# ResourceManager не требует постоянного обновления
 pass
 def cleanup(self):"""Очистка системы"""
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -124,6 +144,8 @@ logger.err or(f"Ошибка очистки ResourceManager: {e}")
 def load_resource(self, resource_path: str, resource_type: str) -> Any: pass
     pass
 pass
+pass
+pass
 """Загрузка ресурса"""
 try: if resource_type = "texture":
 return self.load_texture(resource_path)
@@ -131,14 +153,20 @@ elif resource_type = "model":
     pass
 pass
 pass
+pass
+pass
 return self.load_model(resource_path)
 elif resource_type = "sound":
     pass
 pass
 pass
+pass
+pass
 return self.load_sound(resource_path)
 else: logger.warning(f"Неизвестный тип ресурса: {resource_type}")
     pass
+pass
+pass
 pass
 pass
 return None
@@ -150,6 +178,8 @@ return None
 def unload_resource(self, resource_path: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Выгрузка ресурса"""
 try: except Exception as e: pass
 pass
@@ -160,13 +190,19 @@ def get_resource(self, resource_path: str) -> Optional[Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение ресурса"""return self.cache.get(resource_path)
 def is_resource_loaded(self, resource_path: str) -> bool:"""Проверка загрузки ресурса"""return resource_pathin self.cache
     pass
 pass
 pass
+pass
+pass
 def _create_basic_textures(self):"""Создание базовых текстур"""
     pass
+pass
+pass
 pass
 pass
 # Создаем простую текстуру для тестирования
@@ -179,11 +215,15 @@ for iin range(64 * 64 * 4):
     pass
 pass
 pass
+pass
+pass
 data.setElement(i, 128)  # Серый цвет
 self.textures["basic"]= texture
 logger.debug("Создана базовая текстура")
 def _create_basic_models(self):
     pass
+pass
+pass
 pass
 pass
 """Создание базовых моделей"""
@@ -194,9 +234,13 @@ logger.debug("Создана базовая модель куба")
 def _create_cube_model(self) -> NodePath: pass
     pass
 pass
+pass
+pass
 """Создание модели куба"""# Создаем геометрию куба
 format= GeomVertexF or mat.getV3c4():
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -214,6 +258,8 @@ for vin vertices: vertex.addData3( * v)
     pass
 pass
 pass
+pass
+pass
 col or .addData4(1, 1, 1, 1)  # Белый цвет
 # Создаем треугольники
 prim= GeomTriangles(Geom.UHStatic)
@@ -223,6 +269,8 @@ faces= [
 ]
 for facein faces: prim.addVertices( * face)
     pass
+pass
+pass
 pass
 pass
 prim.closePrimitive()
@@ -237,8 +285,12 @@ def load_texture(self, texture_path: str) -> Optional[Texture]:"""Загрузк
     pass
 pass
 pass
+pass
+pass
 if texture_pathin self.textures: return self.textures[texture_path]
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -250,14 +302,20 @@ def load_model(self, model_path: str) -> Optional[NodePath]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка модели"""
 if model_pathin self.models: return self.models[model_path].copy()
     pass
 pass
 pass
+pass
+pass
 try: full_path= self.base_path / "models" / model_path
 if not full_path.exis ts():
     pass
+pass
+pass
 pass
 pass
 logger.warning(f"Модель не найдена: {model_path}")
@@ -267,8 +325,12 @@ if self.loader: model= self.loader.loadModel(str(full_path))
     pass
 pass
 pass
+pass
+pass
 if model: self.models[model_path]= model
     pass
+pass
+pass
 pass
 pass
 logger.debug(f"Модель загружена: {model_path}")
@@ -284,9 +346,13 @@ def load_sound(self, sound_path: str) -> Optional[AudioSound]:
     pass
 pass
 pass
+pass
+pass
 """Загрузка звука"""
 if sound_pathin self.sounds: return self.sounds[sound_path]
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -298,9 +364,13 @@ def get_texture(self, texture_name: str) -> Optional[Texture]:
     pass
 pass
 pass
+pass
+pass
 """Получение текстуры по имени"""return self.textures.get(texture_name)
 def get_model(self, model_name: str) -> Optional[NodePath]:"""Получение модели по имени"""model= self.models.get(model_name)
     pass
+pass
+pass
 pass
 pass
 return model.copy() if model else None: pass  # Добавлен pass в пустой блок
@@ -308,8 +378,12 @@ def get_sound(self, sound_name: str) -> Optional[AudioSound]:"""Получени
     pass
 pass
 pass
+pass
+pass
 def create_simple_texture(self, name: str, width: int, height: int
     pass
+pass
+pass
 pass
 pass
 col or : tuple) -> Texture: pass  # Добавлен pass в пустой блок"""Создание простой текстуры"""
@@ -323,6 +397,8 @@ for iin range(0, width * height * 4, 4):
     pass
 pass
 pass
+pass
+pass
 data.setElement(i, col or [0])     # R
 data.setElement(i + 1, col or [1]) # G
 data.setElement(i + 2, col or [2]) # B
@@ -334,10 +410,14 @@ def create_simple_model(self, name: str, vertices: lis t, faces: lis t
     pass
 pass
 pass
+pass
+pass
 col or : tuple= (1, 1, 1, 1)) -> NodePath: pass  # Добавлен pass в пустой блок
 """Создание простой модели"""
 format= GeomVertexF or mat.getV3c4():
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -350,11 +430,15 @@ for vin vertices: vertex.addData3( * v)
     pass
 pass
 pass
+pass
+pass
 col or _writer.addData4( * col or )
 # Создаем треугольники
 prim= GeomTriangles(Geom.UHStatic)
 for facein faces: prim.addVertices( * face)
     pass
+pass
+pass
 pass
 pass
 prim.closePrimitive()
@@ -372,11 +456,15 @@ def clear_cache(self):
     pass
 pass
 pass
+pass
+pass
 """Очистка кэша ресурсов"""
 self.cache.clear()
 logger.in fo("Кэш ресурсов очищен")
 def get_resource_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о ресурсах"""return {
@@ -390,6 +478,8 @@ pass
 }
 def cleanup(self):"""Очистка менеджера ресурсов"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка менеджера ресурсов Pand a3D...")

@@ -47,6 +47,8 @@ DemoScenario
 class DemoLauncher: pass"""Основной класс для запуска демо - версии"""def __in it__(self):
     pass
 pass
+pass
+pass
 self.system_in tegrator= SystemIntegrat or()
 self.component_manager= ComponentManager()
 self.event_bus= EventBus()
@@ -66,6 +68,8 @@ self.is _running= False
 self.demo_thread= None
 def initialize_demo(self) -> bool:"""Инициализация демо - версии"""
     pass
+pass
+pass
 pass
 pass
 try: prin t("🎮 Инициализация демо - версии AI - EVOLVE...")
@@ -95,6 +99,8 @@ def _create_game_systems(self):
     pass
 pass
 pass
+pass
+pass
 """Создание игровых систем"""
 try: except Exception as e: pass
 pass
@@ -103,6 +109,8 @@ prin t(f"❌ Ошибка создания игровых систем: {e}")
 rais e
 def _regis ter_systems(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация всех систем в интеграторе"""
@@ -130,6 +138,8 @@ def _in tegrate_all_systems(self):
     pass
 pass
 pass
+pass
+pass
 """Интеграция всех систем"""
 try: except Exception as e: pass
 pass
@@ -140,6 +150,8 @@ def show_demo_menu(self):
     pass
 pass
 pass
+pass
+pass
 """Показать меню демо - версии"""
 prin t("\n🎮 ДЕМО - ВЕРСИЯ AI - EVOLVE: ЭВОЛЮЦИОННАЯ АДАПТАЦИЯ")
 prin t( = " * 60)
@@ -147,6 +159,8 @@ prin t("Доступные демо сценарии:")
 scenarios= self.system_in tegrat or .lis t_demo_scenarios()
 for i, scenarioin enumerate(scenarios, 1):
     pass
+pass
+pass
 pass
 pass
 prin t(f"   {i}. {scenario.name}")
@@ -162,6 +176,8 @@ prin t( = " * 60)
 def run_demo_scenario(self, scenario_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Запуск демо сценария"""
 try: except Exception as e: pass
 pass
@@ -172,6 +188,8 @@ def _run_demo_loop(self, scenario_id: str):
     pass
 pass
 pass
+pass
+pass
 """Основной цикл демо"""
 try: prin t(f"🔄 Демо сценарий {scenario_id} запущен...")
 # Имитируем работу демо
@@ -179,8 +197,12 @@ for iin range(10):  # 10 секунд демо
     pass
 pass
 pass
+pass
+pass
 if not self.is _running: break
     pass
+pass
+pass
 pass
 pass
 # Обновляем системы
@@ -200,6 +222,8 @@ def _update_demo_systems(self):
     pass
 pass
 pass
+pass
+pass
 """Обновление демо систем"""
 try: except Exception as e: pass
 pass
@@ -209,12 +233,16 @@ def stop_demo(self):
     pass
 pass
 pass
+pass
+pass
 """Остановка демо"""
 try: if self.current_scenario: self.system_in tegrat or .stop_demo_scenario()
 self.current_scenario= None
 self.is _running= False
 if self.demo_threadand self.demo_thread.is _alive():
     pass
+pass
+pass
 pass
 pass
 self.demo_thread.jo in(timeou = 1.0)
@@ -227,6 +255,8 @@ def show_in tegration_status(self):
     pass
 pass
 pass
+pass
+pass
 """Показать статус интеграции"""
 try: except Exception as e: pass
 pass
@@ -236,6 +266,8 @@ def run_all_scenarios(self):
     pass
 pass
 pass
+pass
+pass
 """Запуск всех демо сценариев"""
 try: prin t("\n🚀 Запуск всех демо сценариев...")
 scenarios= self.system_in tegrat or .lis t_demo_scenarios()
@@ -243,19 +275,27 @@ for scenarioin scenarios: prin t(f"\n🎬 Запуск: {scenario.name}")
     pass
 pass
 pass
+pass
+pass
 # Запускаем сценарий
 success= self.run_demo_scenario(scenario.scenario_id)
 if success: pass
     pass
+pass
+pass
 pass
 # Ждем завершения
 while self.is _running: time.sleep(0.5)
     pass
 pass
 pass
+pass
+pass
 prin t(f"✅ {scenario.name} завершен")
 else: prin t(f"❌ {scenario.name} не удалось запустить")
     pass
+pass
+pass
 pass
 pass
 time.sleep(1)  # Пауза между сценариями
@@ -266,6 +306,8 @@ pass
 prin t(f"❌ Ошибка запуска всех сценариев: {e}")
 def run_in teractive_demo(self):
     pass
+pass
+pass
 pass
 pass
 """Интерактивный режим демо"""
@@ -279,6 +321,8 @@ def cleanup(self):
     pass
 pass
 pass
+pass
+pass
 """Очистка ресурсов"""
 try: prin t("\n🧹 Очистка ресурсов демо...")
 # Останавливаем демо
@@ -288,28 +332,42 @@ if self.effect_system: self.effect_system.shutdown()
     pass
 pass
 pass
+pass
+pass
 if self.skill_system: self.skill_system.shutdown()
     pass
+pass
+pass
 pass
 pass
 if self.in vent or y_system: self.in vent or y_system.shutdown()
     pass
 pass
 pass
+pass
+pass
 if self.health_system: self.health_system.shutdown()
     pass
+pass
+pass
 pass
 pass
 if self.combat_system: self.combat_system.shutdown()
     pass
 pass
 pass
+pass
+pass
 if self.hud_system: self.hud_system.shutdown()
     pass
 pass
 pass
+pass
+pass
 if self.ui_system: self.ui_system.shutdown()
     pass
+pass
+pass
 pass
 pass
 # Очищаем базовые компоненты
@@ -317,16 +375,24 @@ if self.game_engin e: self.game_engin e.shutdown()
     pass
 pass
 pass
+pass
+pass
 if self.state_manager: self.state_manager.shutdown()
     pass
+pass
+pass
 pass
 pass
 if self.event_bus: self.event_bus.shutdown()
     pass
 pass
 pass
+pass
+pass
 if self.component_manager: self.component_manager.shutdown()
     pass
+pass
+pass
 pass
 pass
 prin t("✅ Ресурсы демо очищены")
@@ -336,6 +402,8 @@ pass
 prin t(f"❌ Ошибка очистки ресурсов демо: {e}")
 def ma in():
     pass
+pass
+pass
 pass
 pass
 """Основная функция запуска демо"""
@@ -351,6 +419,8 @@ return False
 fin ally: launcher.cleanup()
 if __name__ = "__main __":
     pass
+pass
+pass
 pass
 pass
 success= ma in()

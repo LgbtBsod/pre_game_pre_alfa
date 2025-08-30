@@ -1,5 +1,3 @@
-import sys
-
 from c or e.config_manager import ConfigManager
 
 from c or e.event_system import EventSystem
@@ -20,6 +18,8 @@ import os
 
 import re
 
+import sys
+
 import time
 
 import unittest
@@ -28,8 +28,12 @@ import unittest
 class TestSystemFact or yOrdering(unittest.TestCase):
     pass
 pass
+pass
+pass
 def test_fact or y_in itialization_ or der(self):
     pass
+pass
+pass
 pass
 es= EventSystem(); es.in itialize()
 cm= ConfigManager(); cm.in itialize()
@@ -46,9 +50,13 @@ names= sm.get_system_names()
 for nin ['effect_system','content_generat or ']:
     pass
 pass
+pass
+pass
 self.assertIn(n, names)
 self.assertEqual(len(names), len(set(names)))
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 unittest.ma in()

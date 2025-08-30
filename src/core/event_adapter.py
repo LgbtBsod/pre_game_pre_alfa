@@ -26,8 +26,12 @@ class EventBusAdapter:"""Адаптер, предоставляющий API on()
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, event_system: EventSystem):
     pass
+pass
+pass
 pass
 pass
 self._event_system= event_system
@@ -36,10 +40,14 @@ def on(self, event_type: str, hand ler: Callable
     pass
 pass
 pass
+pass
+pass
 pri or ity: Any= None) -> bool: pass  # Добавлен pass в пустой блок
 try: prio= EventPri or ity.NORMAL
 if isin stance(pri or ity, EventPri or ity):
     pass
+pass
+pass
 pass
 pass
 prio= pri or ity
@@ -56,10 +64,14 @@ def emit(self, event_type: str, data: Dict[str, Any]= None
     pass
 pass
 pass
+pass
+pass
 pri or ity: Any= None) -> bool: pass  # Добавлен pass в пустой блок
 try: prio= EventPri or ity.NORMAL
 if isin stance(pri or ity, EventPri or ity):
     pass
+pass
+pass
 pass
 pass
 prio= pri or ity

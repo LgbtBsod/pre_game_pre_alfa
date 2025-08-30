@@ -37,6 +37,8 @@ class Recipe:"""Рецепт крафтинга"""
     pass
 pass
 pass
+pass
+pass
 recipe_id: str
 name: str
 description: str
@@ -59,6 +61,8 @@ class CraftingSession:"""Сессия крафтинга"""session_id: str
     pass
 pass
 pass
+pass
+pass
 entity_id: str
 recipe_id: str
 start_time: float= field(default_factor = time.time):
@@ -76,6 +80,8 @@ class CraftingResult:"""Результат крафтинга"""
     pass
 pass
 pass
+pass
+pass
 success: bool
 item_id: str= ""
 item_count: int= 0
@@ -88,8 +94,12 @@ class CraftingSystem(ISystem):"""Система крафтинга"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 self._system_name= "crafting"
@@ -129,9 +139,13 @@ def system_name(self) -> str: return self._system_name
     pass
 pass
 pass
+pass
+pass
 @property
 def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
     pass
+pass
+pass
 pass
 pass
 @property
@@ -139,14 +153,20 @@ def system_state(self) -> SystemState: return self._system_state
     pass
 pass
 pass
+pass
+pass
 @property
 def dependencies(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 return self._dependencies
 def initialize(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация системы крафтинга"""
 try: logger.in fo("Инициализация системы крафтинга...")
@@ -169,6 +189,8 @@ return False
 def update(self, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление системы крафтинга"""
 try: except Exception as e: pass
 pass
@@ -177,6 +199,8 @@ logger.err or(f"Ошибка обновления системы крафтин�
 return False
 def pause(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Приостановка системы крафтинга"""
 try: if self._system_state = SystemState.READY: self._system_state= SystemState.PAUSED
@@ -191,6 +215,8 @@ return False
 def resume(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Возобновление системы крафтинга"""
 try: except Exception as e: pass
 pass
@@ -199,6 +225,8 @@ logger.err or(f"Ошибка возобновления системы краф�
 return False
 def cleanup(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Очистка системы крафтинга"""
 try: logger.in fo("Очистка системы крафтинга...")
@@ -227,6 +255,8 @@ def get_system_in fo(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение информации о системе"""info= {
 'name': self.system_name,
 'state': self.system_state.value,
@@ -244,8 +274,12 @@ def _regis ter_system_states(self) -> None:"""Регистрация состо�
     pass
 pass
 pass
+pass
+pass
 if not self.state_manager: return
     pass
+pass
+pass
 pass
 pass
 try:
@@ -267,11 +301,15 @@ pass  # Добавлен pass в пустой блок
 def _regis ter_system_reposit or ies(self) -> None: pass
     pass
 pass
+pass
+pass
 """Регистрация репозиториев системы(mock - friendly)."""if not self.reposit or y_manager: return
 try: except Exception: pass
 pass  # Добавлен pass в пустой блок
 def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обработка событий"""
     pass
+pass
+pass
 pass
 pass
 try: if event_type = "entity_created":
@@ -280,9 +318,13 @@ elif event_type = "entity_destroyed":
     pass
 pass
 pass
+pass
+pass
 return self._hand le_entity_destroyed(event_data)
 elif event_type = "item_acquired":
     pass
+pass
+pass
 pass
 pass
 return self._hand le_item_acquired(event_data)
@@ -290,9 +332,13 @@ elif event_type = "skill_learned":
     pass
 pass
 pass
+pass
+pass
 return self._hand le_skill_learned(event_data)
 else: return False
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -303,6 +349,8 @@ return False
 def _setup_crafting_system(self) -> None: pass
     pass
 pass
+pass
+pass
 """Настройка системы крафтинга"""
 try: except Exception as e: pass
 pass
@@ -310,6 +358,8 @@ pass
 logger.warning(f"Не удалось настроить систему крафтинга: {e}")
 def _create_base_recipes(self) -> None: pass
     pass
+pass
+pass
 pass
 """Создание базовых рецептов"""
 try:
@@ -443,6 +493,8 @@ for recipein all_recipes: self.recipes[recipe.recipe_id]= recipe
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"Создано {len(all_recipes)} базовых рецептов")
 except Exception as e: pass
 pass
@@ -451,6 +503,8 @@ logger.err or(f"Ошибка создания базовых рецептов: {
 def _update_crafting_sessions(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление активных сессий крафтинга"""
 try: except Exception as e: pass
 pass
@@ -458,6 +512,8 @@ pass
 logger.warning(f"Ошибка обновления сессий крафтинга: {e}")
 def _check_completed_sessions(self) -> None: pass
     pass
+pass
+pass
 pass
 """Проверка завершенных сессий"""
 try:
@@ -470,9 +526,13 @@ if session.is _completed or session.is _failed: pass  # Добавлен pass в
     pass
 pass
 pass
+pass
+pass
 ]
 for session_idin completed_sessions: del self.crafting_sessions[session_id]
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -482,6 +542,8 @@ logger.warning(f"Ошибка проверки завершенных сесси
 def _update_system_stats(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление статистики системы"""
 try: except Exception as e: pass
 pass
@@ -490,11 +552,15 @@ logger.warning(f"Ошибка обновления статистики сист
 def _hand le_entity_created(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события создания сущности"""
 try: entity_id= event_data.get('entity_id')
 crafting_skills= event_data.get('crafting_skills', [])
 if entity_id: pass
     pass
+pass
+pass
 pass
 # Здесь можно добавить логику для новых сущностей
 logger.debug(f"Обработано событие создания сущности {entity_id}")
@@ -508,6 +574,8 @@ return False
 def _hand le_entity_destroyed(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события уничтожения сущности"""
 try: except Exception as e: pass
 pass
@@ -517,12 +585,16 @@ return False
 def _hand le_item_acquired(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события получения предмета"""
 try: entity_id= event_data.get('entity_id')
 item_id= event_data.get('item_id')
 item_type= event_data.get('item_type')
 if entity_idand item_idand item_type: pass
     pass
+pass
+pass
 pass
 # Проверяем, не разблокирует ли предмет новые рецепты
 self._check_recipe_unlocks(entity_id, item_id, item_type)
@@ -536,6 +608,8 @@ return False
 def _hand le_skill_learned(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события изучения навыка"""
 try: except Exception as e: pass
 pass
@@ -544,6 +618,8 @@ logger.err or(f"Ошибка обработки события изучения 
 return False
 def start_crafting(self, entity_id: str, recipe_id: str
     pass
+pass
+pass
 pass
 pass
 materials: Dict[str, int]= None) -> Optional[str]:
@@ -557,11 +633,15 @@ if not self._check_recipe_requirements(entity_id, recipe):
     pass
 pass
 pass
+pass
+pass
 logger.warning(f"Не выполнены требования рецепта {recipe_id}")
 return None
 # Проверяем лимит сессий
 if len(self.crafting_sessions) >= self.system_settings['max_crafting_sessions']:
     pass
+pass
+pass
 pass
 pass
 logger.warning("Достигнут лимит активных сессий крафтинга")
@@ -595,6 +675,8 @@ def _check_recipe_requirements(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 recipe: Recipe) -> bool: pass  # Добавлен pass в пустой блок
 """Проверка требований рецепта"""
 try: except Exception as e: pass
@@ -604,6 +686,8 @@ logger.warning(f"Ошибка проверки требований рецепт
 return False
 def _check_crafting_success(self, recipe: Recipe
     pass
+pass
+pass
 pass
 pass
 session: CraftingSession) -> bool: pass  # Добавлен pass в пустой блок
@@ -616,8 +700,12 @@ if rand om.rand om() <= base_chance: return True
     pass
 pass
 pass
+pass
+pass
 else: return False
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -629,6 +717,8 @@ def _complete_crafting_session(self, session: CraftingSession
     pass
 pass
 pass
+pass
+pass
 success: bool) -> None: pass  # Добавлен pass в пустой блок
 """Завершение сессии крафтинга"""
 try: except Exception as e: pass
@@ -637,6 +727,8 @@ pass
 logger.err or(f"Ошибка завершения сессии крафтинга: {e}")
 def _cancel_entity_crafting_sessions(self, entity_id: str) -> None: pass
     pass
+pass
+pass
 pass
 """Отмена всех сессий крафтинга сущности"""
 try: sessions_to_cancel= [
@@ -647,9 +739,13 @@ if session.entity_id = entity_id: pass  # Добавлен pass в пустой 
     pass
 pass
 pass
+pass
+pass
 ]
 for session_idin sessions_to_cancel: session= self.crafting_sessions[session_id]
     pass
+pass
+pass
 pass
 pass
 session.is _failed= True
@@ -671,6 +767,8 @@ def _check_recipe_unlocks(self, entity_id: str, item_id: str
     pass
 pass
 pass
+pass
+pass
 item_type: str) -> None: pass  # Добавлен pass в пустой блок
 """Проверка разблокировки рецептов при получении предмета"""
 try: except Exception as e: pass
@@ -679,6 +777,8 @@ pass
 logger.warning(f"Ошибка проверки разблокировки рецептов: {e}")
 def _check_item_recipe_unlock(self, recipe: Recipe, item_id: str
     pass
+pass
+pass
 pass
 pass
 item_type: str) -> bool: pass  # Добавлен pass в пустой блок
@@ -696,6 +796,8 @@ def _check_skill_recipe_unlocks(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 skill_name: str) -> None: pass  # Добавлен pass в пустой блок
 """Проверка разблокировки рецептов при изучении навыка"""
 try: except Exception as e: pass
@@ -704,6 +806,8 @@ pass
 logger.warning(f"Ошибка проверки разблокировки рецептов навыком: {e}")
 def _check_skill_recipe_unlock(self, recipe: Recipe
     pass
+pass
+pass
 pass
 pass
 skill_name: str) -> bool: pass  # Добавлен pass в пустой блок
@@ -721,6 +825,8 @@ def get_recipe_in fo(self, recipe_id: str) -> Optional[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение информации о рецепте"""
 try: except Exception as e: pass
 pass
@@ -731,6 +837,8 @@ def get_available_recipes(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 categ or y: str= None) -> Lis t[Dict[str, Any]]:
 pass  # Добавлен pass в пустой блок
 """Получение доступных рецептов"""
@@ -739,12 +847,18 @@ for recipein self.recipes.values():
     pass
 pass
 pass
+pass
+pass
 if not recipe.is _dis covered: contin ue
     pass
 pass
 pass
+pass
+pass
 if categ or yand recipe.categ or y != categ or y: contin ue
     pass
+pass
+pass
 pass
 pass
 # Проверяем доступность
@@ -752,9 +866,13 @@ if self._check_recipe_requirements(entity_id, recipe):
     pass
 pass
 pass
+pass
+pass
 recipe_in fo= self.get_recipe_in fo(recipe.recipe_id)
 if recipe_in fo: available_recipes.append(recipe_in fo)
     pass
+pass
+pass
 pass
 pass
 return available_recipes
@@ -767,6 +885,8 @@ def get_crafting_session_in fo(self, session_id: str) -> Optional[Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]]:
 pass  # Добавлен pass в пустой блок
 """Получение информации о сессии крафтинга"""
@@ -777,6 +897,8 @@ logger.err or(f"Ошибка получения информации о сесс
 return None
 def cancel_crafting(self, session_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Отмена крафтинга"""
 try: if session_id notin self.crafting_sessions: return False
@@ -802,6 +924,8 @@ def get_crafting_his tory(self, entity_id: str= None
     pass
 pass
 pass
+pass
+pass
 limit: int= 50) -> Lis t[Dict[str, Any]]:
 pass  # Добавлен pass в пустой блок
 """Получение истории крафтинга"""
@@ -813,10 +937,14 @@ return []
 def add_custom_recipe(self, recipe_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавление пользовательского рецепта"""
 try: recipe_id= recipe_data.get('recipe_id')
 if not recipe_id or recipe_idin self.recipes: return False
     pass
+pass
+pass
 pass
 pass
 # Создаем новый рецепт
@@ -851,6 +979,8 @@ logger.err or(f"Ошибка добавления пользовательско
 return False
 def remove_recipe(self, recipe_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Удаление рецепта"""
 try: except Exception as e: pass

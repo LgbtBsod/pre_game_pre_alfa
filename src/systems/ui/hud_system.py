@@ -24,6 +24,8 @@ class HUDType(Enum):"""Типы HUD"""
     pass
 pass
 pass
+pass
+pass
 MAIN_HUD= "main _hud"           # Основной HUD
 COMBAT_HUD= "combat_hud"       # Боевой HUD
 INVENTORY_HUD= "in vent or y_hud" # HUD инвентаря
@@ -31,6 +33,8 @@ SKILLS_HUD= "skills_hud"       # HUD навыков
 EFFECTS_HUD= "effects_hud"     # HUD эффектов
 class HUDLayout(Enum):
     pass
+pass
+pass
 pass
 pass
 """Расположения HUD элементов"""
@@ -42,6 +46,8 @@ CENTER= "center"
 FULL_SCREEN= "full_screen"@dataclass: pass  # Добавлен pass в пустой блок
 class HUDElement:"""Элемент HUD"""element_id: str
     pass
+pass
+pass
 pass
 pass
 element_type: str
@@ -57,6 +63,8 @@ class HealthBar:"""Полоса здоровья"""current: float= 100.0
     pass
 pass
 pass
+pass
+pass
 maximum: float= 100.0
 percentage: float= 100.0
 col or : Tuple[float, float, float]= (0, 1, 0)  # RGB
@@ -66,6 +74,8 @@ shield_value: float= 0.0
 @dataclass: pass  # Добавлен pass в пустой блок
 class ResourceBar:"""Полоса ресурса"""
     pass
+pass
+pass
 pass
 pass
 current: float= 100.0
@@ -78,6 +88,8 @@ class EffectIcon:"""Иконка эффекта"""
     pass
 pass
 pass
+pass
+pass
 effect_id: str
 effect_name: str
 icon_path: str
@@ -88,6 +100,8 @@ tooltip_text: str= ""class HUDSystem(BaseComponent):"""Система HUD
 Специализированная система для отображения игровых механик"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -109,6 +123,8 @@ self.show_debug_in fo= False
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация HUD системы"""
 try:
 # Создание базовых HUD элементов
@@ -125,6 +141,8 @@ def _create_basic_hud(self):
     pass
 pass
 pass
+pass
+pass
 """Создание базовых HUD элементов"""# Основной HUD
 self.create_main _hud()
 # Боевой HUD
@@ -139,8 +157,12 @@ def _setup_updates(self):"""Настройка обновлений"""self.auto_
     pass
 pass
 pass
+pass
+pass
 def create_main _hud(self):"""Создать основной HUD"""
     pass
+pass
+pass
 pass
 pass
 # Полоса здоровья
@@ -185,6 +207,8 @@ def create_combat_hud(self):
     pass
 pass
 pass
+pass
+pass
 """Создать боевой HUD"""
 # Индикатор боевого состояния
 combat_state_element= HUDElement(
@@ -208,6 +232,8 @@ self.hud_elements["in itiative_in dicat or "]= initiative_element
 self._add_to_layout(HUDLayout.TOP_LEFT, ["combat_state_in dicat or ", "in itiative_in dicat or "])
 def create_in vent or y_hud(self):
     pass
+pass
+pass
 pass
 pass
 """Создать HUD инвентаря"""
@@ -235,10 +261,14 @@ def create_skills_hud(self):
     pass
 pass
 pass
+pass
+pass
 """Создать HUD навыков"""
 # Слоты навыков
 for iin range(4):
     pass
+pass
+pass
 pass
 pass
 skill_slot_element= HUDElement(
@@ -253,6 +283,8 @@ self.hud_elements[f"skill_slot_{i}"]= skill_slot_element
 self._add_to_layout(HUDLayout.TOP_LEFT, ["skill_slot_0", "skill_slot_1", "skill_slot_2", "skill_slot_3"])
 def create_effects_hud(self):
     pass
+pass
+pass
 pass
 pass
 """Создать HUD эффектов"""
@@ -271,15 +303,21 @@ def _add_to_layout(self, layout: HUDLayout, element_ids: Lis t[str]):
     pass
 pass
 pass
+pass
+pass
 """Добавить элементы в layout"""if layout notin self.hud_layouts: self.hud_layouts[layout]= []
 for element_idin element_ids: if element_id notin self.hud_layouts[layout]:
     pass
+pass
+pass
 pass
 pass
 self.hud_layouts[layout].append(element_id)
 # Управление данными HUD
 def update_health_bar(self, entity_id: str, current: float, maximum: float
     pass
+pass
+pass
 pass
 pass
 shield: float= 0.0):
@@ -295,14 +333,20 @@ if health_bar.percentage > 50: health_bar.color= (0, 1, 0)  # Зеленый
     pass
 pass
 pass
+pass
+pass
 health_bar.is _critical= False
 elif health_bar.percentage > 25: health_bar.color= (1, 1, 0)  # Желтый
     pass
 pass
 pass
+pass
+pass
 health_bar.is _critical= False
 else: health_bar.color= (1, 0, 0)  # Красный
     pass
+pass
+pass
 pass
 pass
 health_bar.is _critical= True
@@ -312,11 +356,15 @@ def update_resource_bar(self, entity_id: str, resource_type: str
     pass
 pass
 pass
+pass
+pass
 current: float, maximum: float, regeneration_rate: float= 0.0):
 pass  # Добавлен pass в пустой блок"""Обновить полосу ресурса"""
 bar_id= f"{entity_id}_{resource_type}"
 if bar_id notin self.resource_bars: self.resource_bars[bar_id]= ResourceBar()
     pass
+pass
+pass
 pass
 pass
 resource_bar= self.resource_bars[bar_id]
@@ -330,9 +378,13 @@ if resource_type = "mana":
     pass
 pass
 pass
+pass
+pass
 resource_bar.color= (0, 0, 1)  # Синий
 elif resource_type = "energy":
     pass
+pass
+pass
 pass
 pass
 resource_bar.color= (1, 0.5, 0)  # Оранжевый
@@ -340,15 +392,21 @@ elif resource_type = "stamin a":
     pass
 pass
 pass
+pass
+pass
 resource_bar.color= (0.5, 0.5, 0.5)  # Серый
 else: resource_bar.color= (1, 1, 1)  # Белый
     pass
+pass
+pass
 pass
 pass
 # Обновляем отображение
 self._update_resource_dis play(bar_id, resource_bar)
 def update_combat_state(self, entity_id: str, state: str
     pass
+pass
+pass
 pass
 pass
 initiative: float= 0.0):
@@ -360,6 +418,8 @@ if state_element_idin self.hud_elements: element= self.hud_elements[state_elemen
     pass
 pass
 pass
+pass
+pass
 element.data["combat_state"]= state
 element.data["text"]= f"Бой: {state}"
 # Обновляем индикатор инициативы
@@ -368,10 +428,14 @@ if initiative_element_idin self.hud_elements: element= self.hud_elements[in itia
     pass
 pass
 pass
+pass
+pass
 element.data["in itiative"]= initiative
 element.data["percentage"]= m in(100.0, initiative)
 def update_in vent or y_in fo(self, entity_id: str, item_count: int
     pass
+pass
+pass
 pass
 pass
 max_items: int, weight: float, max_weight: float):
@@ -383,6 +447,8 @@ if count_element_idin self.hud_elements: element= self.hud_elements[count_elemen
     pass
 pass
 pass
+pass
+pass
 element.data["item_count"]= item_count
 element.data["max_items"]= max_items
 element.data["text"]= f"Предметы: {item_count} / {max_items}"
@@ -390,6 +456,8 @@ element.data["text"]= f"Предметы: {item_count} / {max_items}"
 weight_element_id= f"{entity_id}_weight"
 if weight_element_idin self.hud_elements: element= self.hud_elements[weight_element_id]
     pass
+pass
+pass
 pass
 pass
 element.data["current_weight"]= weight
@@ -400,16 +468,24 @@ if element.data["percentage"] > 80: element.data["col or "]= (1, 0, 0)  # Кра
     pass
 pass
 pass
+pass
+pass
 elif element.data["percentage"] > 60: element.data["col or "]= (1, 1, 0)  # Желтый
     pass
+pass
+pass
 pass
 pass
 else: element.data["col or "]= (0, 1, 0)  # Зеленый
     pass
 pass
 pass
+pass
+pass
 def update_skill_slots(self, entity_id: str, skills: Lis t[Dict[str, Any]]):
     pass
+pass
+pass
 pass
 pass
 """Обновить слоты навыков"""
@@ -417,9 +493,13 @@ for i, skillin enumerate(skills[:4]):  # Максимум 4 слота
     pass
 pass
 pass
+pass
+pass
 slot_element_id= f"{entity_id}_skill_slot_{i}"
 if slot_element_idin self.hud_elements: element= self.hud_elements[slot_element_id]
     pass
+pass
+pass
 pass
 pass
 element.data["skill_name"]= skill.get("name", "")
@@ -431,9 +511,13 @@ def update_effects(self, entity_id: str, effects: Lis t[Dict[str, Any]]):
     pass
 pass
 pass
+pass
+pass
 """Обновить активные эффекты"""
 if entity_id notin self.effect_icons: self.effect_icons[entity_id]= []
     pass
+pass
+pass
 pass
 pass
 # Очищаем старые эффекты
@@ -441,6 +525,8 @@ self.effect_icons[entity_id].clear()
 # Добавляем новые эффекты
 for effectin effects: effect_icon= EffectIcon(
     pass
+pass
+pass
 pass
 pass
 effect_i = effect.get("id", ""),
@@ -459,11 +545,15 @@ def _update_health_dis play(self, entity_id: str, health_bar: HealthBar):
     pass
 pass
 pass
+pass
+pass
 """Обновить отображение полосы здоровья"""
 # Обновляем основной HUD
 main _health_id= "main _health_bar"
 if main _health_idin self.hud_elements: element= self.hud_elements[main _health_id]
     pass
+pass
+pass
 pass
 pass
 element.data["current"]= health_bar.current
@@ -477,14 +567,20 @@ def _update_resource_dis play(self, bar_id: str, resource_bar: ResourceBar):
     pass
 pass
 pass
+pass
+pass
 """Обновить отображение полосы ресурса"""
 # Находим соответствующий элемент HUD
 for element_id, elementin self.hud_elements.items():
     pass
 pass
 pass
+pass
+pass
 if element.element_type = "resource_bar"and resource_bar.resource_typein element_id: element.data["current"]= resource_bar.current
     pass
+pass
+pass
 pass
 pass
 element.data["maximum"]= resource_bar.maximum
@@ -497,10 +593,14 @@ def _update_effects_dis play(self, entity_id: str):
     pass
 pass
 pass
+pass
+pass
 """Обновить отображение эффектов"""
 effects_panel_id= "effects_panel"
 if effects_panel_idin self.hud_elements: element= self.hud_elements[effects_panel_id]
     pass
+pass
+pass
 pass
 pass
 element.data["effects"]= self.effect_icons.get(entity_id, [])
@@ -510,18 +610,26 @@ def show_hud(self, hud_type: HUDType):
     pass
 pass
 pass
+pass
+pass
 """Показать HUD"""
 # Находим элементы данного типа HUD
 for element_id, elementin self.hud_elements.items():
     pass
 pass
 pass
+pass
+pass
 if element.data.get("hud_type") = hud_type.value: element.vis ible= True
     pass
 pass
 pass
+pass
+pass
 def hide_hud(self, hud_type: HUDType):
     pass
+pass
+pass
 pass
 pass
 """Скрыть HUD"""
@@ -530,12 +638,18 @@ for element_id, elementin self.hud_elements.items():
     pass
 pass
 pass
+pass
+pass
 if element.data.get("hud_type") = hud_type.value: element.vis ible= False
     pass
 pass
 pass
+pass
+pass
 def toggle_hud(self, hud_type: HUDType):
     pass
+pass
+pass
 pass
 pass
 """Переключить видимость HUD"""
@@ -545,8 +659,12 @@ for element_id, elementin self.hud_elements.items():
     pass
 pass
 pass
+pass
+pass
 if element.data.get("hud_type") = hud_type.value: if element.vis ible: vis ible= True
     pass
+pass
+pass
 pass
 pass
 break
@@ -554,13 +672,19 @@ if vis ible: self.hide_hud(hud_type)
     pass
 pass
 pass
+pass
+pass
 else: self.show_hud(hud_type)
     pass
+pass
+pass
 pass
 pass
 # Обновление системы
 def update(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновить HUD систему"""current_time= time.time()
@@ -569,13 +693,19 @@ if current_time - self.last_update_time < self.auto_update_in terval: return
     pass
 pass
 pass
+pass
+pass
 # Обновляем все видимые элементы
 for element_id, elementin self.hud_elements.items():
     pass
 pass
 pass
+pass
+pass
 if element.vis ible: self._update_element(element, delta_time)
     pass
+pass
+pass
 pass
 pass
 self.last_update_time= current_time
@@ -583,9 +713,13 @@ def _update_element(self, element: HUDElement, delta_time: float):"""Обнов�
     pass
 pass
 pass
+pass
+pass
 # Обновляем прогресс - бары
 if element.element_type = "progress_bar":
     pass
+pass
+pass
 pass
 pass
 self._update_progress_bar_animation(element, delta_time)
@@ -594,8 +728,12 @@ elif element.element_type = "panel"and "effects"in element.data: self._update_ef
     pass
 pass
 pass
+pass
+pass
 def _update_progress_bar_animation(self, element: HUDElement
     pass
+pass
+pass
 pass
 pass
 delta_time: float):
@@ -606,6 +744,8 @@ def _update_effects_animation(self, element: HUDElement
     pass
 pass
 pass
+pass
+pass
 delta_time: float):
 pass  # Добавлен pass в пустой блок"""Обновить анимацию эффектов"""# TODO: Анимация эффектов(мерцание, пульсация)
 pass
@@ -614,13 +754,19 @@ def get_hud_element(self, element_id: str) -> Optional[HUDElement]:"""Получ
     pass
 pass
 pass
+pass
+pass
 def get_vis ible_elements(self) -> Lis t[HUDElement]:"""Получить все видимые элементы"""return [e for ein self.hud_elements.values() if e.vis ible]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
 def get_layout_elements(self, layout: HUDLayout) -> Lis t[HUDElement]:"""Получить элементы по layout"""element_ids= self.hud_layouts.get(layout, [])
     pass
+pass
+pass
 pass
 pass
 return [self.hud_elements[eid] for eidin element_ids if eidin self.hud_elements]:
@@ -629,11 +775,15 @@ def set_debug_mode(self, enabled: bool):"""Включить / выключить
     pass
 pass
 pass
+pass
+pass
 self.show_debug_in fo= enabled
 # Показываем / скрываем отладочную информацию
 debug_element_id= "debug_in fo"if debug_element_idin self.hud_elements: self.hud_elements[debug_element_id].vis ible= enabled
 def refresh_all_hud(self):"""Обновить весь HUD"""
     pass
+pass
+pass
 pass
 pass
 self.last_update_time= 0.0  # Принудительное обновление

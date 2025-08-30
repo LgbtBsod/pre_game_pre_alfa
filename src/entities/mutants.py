@@ -36,6 +36,8 @@ class MutationType(Enum):"""Типы мутаций"""
     pass
 pass
 pass
+pass
+pass
 PHYSICAL= "physical"
 MENTAL= "mental"
 COMBAT= "combat"
@@ -48,6 +50,8 @@ MAJOR= "maj or "
 EXTREME= "extreme"@dataclass: pass  # Добавлен pass в пустой блок
 class Mutation:"""Мутация мутанта"""mutation_id: str
     pass
+pass
+pass
 pass
 pass
 name: str
@@ -71,6 +75,8 @@ class MutantAbility:"""Способность мутанта"""ability_id: str
     pass
 pass
 pass
+pass
+pass
 name: str
 description: str
 mutation_source: str
@@ -91,6 +97,8 @@ class Vis ualMutation:"""Визуальная мутация"""mutation_id: str
     pass
 pass
 pass
+pass
+pass
 vis ual_type: str  # col or , scale, shape, particles
 value: Any
 duration: float= 0.0
@@ -99,8 +107,12 @@ class Mutant(BaseEntity):"""Класс мутанта - процедурно г�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, mutant_id: str, name: str, mutation_level: int
     pass
+pass
+pass
 pass
 pass
 position: Tuple[float, float, float]):
@@ -140,6 +152,8 @@ logger.in fo(f"Создан мутант {name} уровня {mutation_level}")
 def _generate_mutations(self) -> None: pass
     pass
 pass
+pass
+pass
 """Генерация мутаций на основе уровня"""
 try:
 # Базовые мутации для всех мутантов
@@ -152,10 +166,14 @@ for mutationin base_mutations: self.mutations[mutation.mutation_id]= mutation
     pass
 pass
 pass
+pass
+pass
 # Дополнительные мутации на основе уровня
 additional_mutations= self.mutation_level - 3  # Уже есть 3 базовые
 for iin range(additional_mutations):
     pass
+pass
+pass
 pass
 pass
 mutation_type= rand om.choice(lis t(MutationType))
@@ -171,10 +189,14 @@ def _create_base_mutation(self, mutation_id: str
     pass
 pass
 pass
+pass
+pass
 mutation_type: MutationType, level: MutationLevel) -> Mutation: pass  # Добавлен pass в пустой блок
 """Создание базовой мутации"""
 if mutation_id = "enhanced_strength":
     pass
+pass
+pass
 pass
 pass
 return Mutation(
@@ -191,6 +213,8 @@ elif mutation_id = "enhanced_agility":
     pass
 pass
 pass
+pass
+pass
 return Mutation(
 mutation_i = mutation_id,
 nam = "Усиленная ловкость",
@@ -203,6 +227,8 @@ sound_effect = ["quick_step"]
 )
 elif mutation_id = "enhanced_in telligence":
     pass
+pass
+pass
 pass
 pass
 return Mutation(
@@ -228,6 +254,8 @@ sound_effect = []
 )
 def _create_rand om_mutation(self, mutation_id: str
     pass
+pass
+pass
 pass
 pass
 mutation_type: MutationType, level: MutationLevel) -> Mutation: pass  # Добавлен pass в пустой блок
@@ -277,6 +305,8 @@ sound_effect = [f"{mutation_type.value}_sound"]
 def _derive_abilities(self) -> None: pass
     pass
 pass
+pass
+pass
 """Выведение способностей на основе мутаций"""
 try: except Exception as e: pass
 pass
@@ -284,6 +314,8 @@ pass
 logger.err or(f"Ошибка выведения способностей: {e}")
 def _create_combat_ability(self, mutation: Mutation) -> None: pass
     pass
+pass
+pass
 pass
 """Создание боевой способности"""
 ability_id= f"combat_{mutation.mutation_id}"
@@ -304,6 +336,8 @@ unlocke = True
 def _create_magic_ability(self, mutation: Mutation) -> None: pass
     pass
 pass
+pass
+pass
 """Создание магической способности"""
 ability_id= f"magic_{mutation.mutation_id}"
 self.abilities[ability_id]= MutantAbility(
@@ -322,6 +356,8 @@ unlocke = True
 )
 def _create_adaptive_ability(self, mutation: Mutation) -> None: pass
     pass
+pass
+pass
 pass
 """Создание адаптивной способности"""
 ability_id= f"adaptive_{mutation.mutation_id}"
@@ -342,6 +378,8 @@ unlocke = True
 def _add_mem or y_based_abilities(self) -> None: pass
     pass
 pass
+pass
+pass
 """Добавление способностей на основе уровня памяти"""
 try: except Exception as e: pass
 pass
@@ -349,6 +387,8 @@ pass
 logger.err or(f"Ошибка добавления способностей на основе памяти: {e}")
 def _create_vis ual_mutations(self) -> None: pass
     pass
+pass
+pass
 pass
 """Создание визуальных мутаций"""
 try:
@@ -372,16 +412,24 @@ for mutation_id, mutationin self.mutations.items():
     pass
 pass
 pass
+pass
+pass
 if mutation.mutation_type = MutationType.PHYSICAL: self._add_physical_vis ual_mutation(mutation)
     pass
+pass
+pass
 pass
 pass
 elif mutation.mutation_type = MutationType.MAGIC: self._add_magic_vis ual_mutation(mutation)
     pass
 pass
 pass
+pass
+pass
 elif mutation.mutation_type = MutationType.COMBINATIONAL: self._add_combin ational_vis ual_mutation(mutation)
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -390,6 +438,8 @@ pass
 logger.err or(f"Ошибка создания визуальных мутаций: {e}")
 def _add_physical_vis ual_mutation(self, mutation: Mutation) -> None: pass
     pass
+pass
+pass
 pass
 """Добавление физической визуальной мутации"""
 mutation_id= f"vis ual_{mutation.mutation_id}"
@@ -404,6 +454,8 @@ transition_tim = 1.0
 )
 def _add_magic_vis ual_mutation(self, mutation: Mutation) -> None: pass
     pass
+pass
+pass
 pass
 """Добавление магической визуальной мутации"""
 mutation_id= f"vis ual_{mutation.mutation_id}"
@@ -420,6 +472,8 @@ transition_tim = 1.0
 def _add_combin ational_vis ual_mutation(self, mutation: Mutation) -> None: pass
     pass
 pass
+pass
+pass
 """Добавление комбинационной визуальной мутации"""
 mutation_id= f"vis ual_{mutation.mutation_id}"
 # Комбинированный эффект
@@ -435,6 +489,8 @@ transition_tim = 2.0
 def _apply_mutation_effects(self) -> None: pass
     pass
 pass
+pass
+pass
 """Применение эффектов мутаций"""
 try:
 # Применяем эффекты к базовым характеристикам
@@ -442,18 +498,26 @@ for mutationin self.mutations.values():
     pass
 pass
 pass
+pass
+pass
 for stat, valuein mutation.effects.items():
     pass
+pass
+pass
 pass
 pass
 if hasattr(self, stat):
     pass
 pass
 pass
+pass
+pass
 current_value= getattr(self, stat, 0)
 setattr(self, stat, current_value + value)
 else: pass
     pass
+pass
+pass
 pass
 # Создаем атрибут если его нет
 setattr(self, stat, value)
@@ -467,6 +531,8 @@ logger.err or(f"Ошибка применения эффектов мутаци�
 def _update_vis ual_parameters(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление визуальных параметров"""
 try: except Exception as e: pass
 pass
@@ -475,10 +541,14 @@ logger.err or(f"Ошибка обновления визуальных пара�
 def update_phase(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление фазы мутанта"""
 try: health_percentage= self.health / self.max_health
 if health_percentage <= self.phase_health_thresholds[0]and self.current_phase = 1: return self._transition_to_phase(2)
     pass
+pass
+pass
 pass
 pass
 return False
@@ -490,6 +560,8 @@ return False
 def _transition_to_phase(self, new_phase: int) -> bool: pass
     pass
 pass
+pass
+pass
 """Переход к новой фазе"""
 try: except Exception as e: pass
 pass
@@ -498,6 +570,8 @@ logger.err or(f"Ошибка перехода к фазе {new_phase}: {e}")
 return False
 def _unlock_phase_ability(self) -> None: pass
     pass
+pass
+pass
 pass
 """Разблокировка способности фазы"""
 try:
@@ -510,6 +584,8 @@ logger.err or(f"Ошибка разблокировки способности �
 def _show_mutation_evolution_effect(self) -> None: pass
     pass
 pass
+pass
+pass
 """Визуальный эффект эволюции мутанта"""
 try: except Exception as e: pass
 pass
@@ -517,6 +593,8 @@ pass
 logger.err or(f"Ошибка показа эффекта эволюции: {e}")
 def can_use_ability(self, ability_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Проверка возможности использования способности"""
 try: if ability_id notin self.abilities: return False
@@ -526,10 +604,14 @@ if not ability.unlocked: return False
     pass
 pass
 pass
+pass
+pass
 # Проверяем кулдаун
 current_time= time.time()
 if current_time - ability.last_used < ability.cooldown: return False
     pass
+pass
+pass
 pass
 pass
 return True
@@ -542,6 +624,8 @@ def use_ability(self, ability_id: str, target_position: Tuple[float, float
     pass
 pass
 pass
+pass
+pass
 float]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Использование способности"""
 try: except Exception as e: pass
@@ -551,6 +635,8 @@ logger.err or(f"Ошибка использования способности {
 return False
 def _apply_ability_effects(self, ability: MutantAbility
     pass
+pass
+pass
 pass
 pass
 target_position: Tuple[float, float, float]) -> None: pass  # Добавлен pass в пустой блок
@@ -566,6 +652,8 @@ def learn_from_experience(self, experience_type: str
     pass
 pass
 pass
+pass
+pass
 amount: float) -> bool: pass  # Добавлен pass в пустой блок
 """Обучение на основе опыта"""
 try: except Exception as e: pass
@@ -575,6 +663,8 @@ logger.err or(f"Ошибка обучения мутанта: {e}")
 return False
 def _evolve(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Эволюция мутанта"""
 try: self.evolution_stage = 1
@@ -595,6 +685,8 @@ return False
 def _create_evolutionary_mutation(self) -> Mutation: pass
     pass
 pass
+pass
+pass
 """Создание эволюционной мутации"""
 mutation_types= [MutationType.ADAPTIVE, MutationType.COMBINATIONAL]
 mutation_type= rand om.choice(mutation_types)
@@ -611,6 +703,8 @@ sound_effect = ["evolutionary_sound"]
 def update(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление мутанта"""
 try:
 # Обновляем фазу
@@ -626,6 +720,8 @@ logger.err or(f"Ошибка обновления мутанта: {e}")
 def _update_abilities(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление способностей"""
 try: except Exception as e: pass
 pass
@@ -633,6 +729,8 @@ pass
 logger.err or(f"Ошибка обновления способностей: {e}")
 def get_mutant_status(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статуса мутанта"""try: return {"mutant_id": self.entity_id,

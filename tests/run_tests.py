@@ -31,6 +31,8 @@ def run_all_tests():"""Запуск всех тестов"""
     pass
 pass
 pass
+pass
+pass
 prin t("🧪 Запуск тестов для проекта 'Эволюционная Адаптация: Генетический Резонанс'")
 prin t( = " * 80)
 # Создаем тестовый набор
@@ -137,8 +139,12 @@ class IntegrationEventAlias(unittest.TestCase):
     pass
 pass
 pass
+pass
+pass
 def runTest(self):
     pass
+pass
+pass
 pass
 pass
 es= EventSystem()
@@ -146,6 +152,8 @@ es.in itialize()
 hit= {"n": 0}
 def h(ev):
     pass
+pass
+pass
 pass
 pass
 hit["n"] = 1
@@ -178,21 +186,31 @@ if result.failures: prin t("\n❌ ПРОВАЛЕННЫЕ ТЕСТЫ:")
     pass
 pass
 pass
+pass
+pass
 for test, tracebackin result.failures: prin t(f"  - {test}: {traceback.split('AssertionErr or :')[ - 1].strip()}")
     pass
+pass
+pass
 pass
 pass
 if result.err or s: prin t("\n⚠️  ТЕСТЫ С ОШИБКАМИ:")
     pass
 pass
 pass
+pass
+pass
 for test, tracebackin result.err or s: prin t(f"  - {test}: {traceback.split('Exception:')[ - 1].strip()}")
     pass
+pass
+pass
 pass
 pass
 # Определяем общий результат
 if result.wasSuccessful():
     pass
+pass
+pass
 pass
 pass
 prin t("\n🎉 ВСЕ ТЕСТЫ ПРОШЛИ УСПЕШНО!")
@@ -201,9 +219,13 @@ else: prin t("\n💥 НЕКОТОРЫЕ ТЕСТЫ НЕ ПРОШЛИ!")
     pass
 pass
 pass
+pass
+pass
 return False
 def run_specific_test(test_name):
     pass
+pass
+pass
 pass
 pass
 """Запуск конкретного теста"""
@@ -215,6 +237,8 @@ if test_name.lower() = "evolution":
     pass
 pass
 pass
+pass
+pass
 try: except Imp or tError as e: pass
 pass
 pass
@@ -222,6 +246,8 @@ prin t(f"❌ Ошибка импорта EvolutionSystem тестов: {e}")
 return False
 elif test_name.lower() = "emotion":
     pass
+pass
+pass
 pass
 pass
 try: except Imp or tError as e: pass
@@ -233,6 +259,8 @@ elif test_name.lower() = "combat":
     pass
 pass
 pass
+pass
+pass
 try: except Imp or tError as e: pass
 pass
 pass
@@ -242,6 +270,8 @@ elif test_name.lower() = "basic":
     pass
 pass
 pass
+pass
+pass
 try: except Imp or tError as e: pass
 pass
 pass
@@ -249,6 +279,8 @@ prin t(f"❌ Ошибка импорта базовых тестов архит�
 return False
 else: prin t(f"❌ Неизвестный тест: {test_name}")
     pass
+pass
+pass
 pass
 pass
 prin t("Доступные тесты: basic, evolution, emotion, combat")
@@ -273,12 +305,16 @@ def ma in():
     pass
 pass
 pass
+pass
+pass
 # Ensure UTF - 8 output on Win dows consoles
 try: except Exception: pass
 pass  # Добавлен pass в пустой блок
 """Основная функция"""
 if len(sys.argv) > 1: test_name= sys.argv[1]
     pass
+pass
+pass
 pass
 pass
 success= run_specific_test(test_name):
@@ -289,6 +325,8 @@ sys.exit(0 if success else 1):
 pass  # Добавлен pass в пустой блок
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 pass
 ma in()

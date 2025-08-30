@@ -30,6 +30,8 @@ class Dis playConfig:"""Конфигурация отображения"""win do
     pass
 pass
 pass
+pass
+pass
 win dow_height: int= 900
 fullscreen: bool= False
 vsync: bool= True
@@ -38,6 +40,8 @@ render_scale: float= 1.0
 @dataclass: pass  # Добавлен pass в пустой блок
 class AudioConfig:"""Конфигурация аудио"""master_volume: float= 1.0
     pass
+pass
+pass
 pass
 pass
 music_volume: float= 0.7
@@ -49,6 +53,8 @@ class GameplayConfig:"""Конфигурация геймплея"""
     pass
 pass
 pass
+pass
+pass
 difficulty: str= "n or mal"
 auto_save: bool= True
 save_in terval: int= 300  # секунды
@@ -58,6 +64,8 @@ class AIConfig:"""Конфигурация ИИ"""learning_rate: float= 0.1
     pass
 pass
 pass
+pass
+pass
 expl or ation_rate: float= 0.1
 mem or y_size: int= 1000
 enable_adaptive_difficulty: bool= True
@@ -65,6 +73,8 @@ ai_update_frequency: float= 0.1
 @dataclass: pass  # Добавлен pass в пустой блок
 class Perfor manceConfig:"""Конфигурация производительности"""
     pass
+pass
+pass
 pass
 pass
 enable_vsync: bool= True
@@ -77,8 +87,12 @@ class ConfigManager(IConfigManager):"""Менеджер конфигурации
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, config_dir: Optional[Path]= None):
     pass
+pass
+pass
 pass
 pass
 self.config_dir= config_dir or Path("config")
@@ -94,6 +108,8 @@ pass  # Добавлен pass в пустой блок
 self._loaded_config: Dict[str, Any]= {}
 def load_config(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Загрузка конфигурации из файлов"""
@@ -138,6 +154,8 @@ return {}
 def _validate_all(self) -> None: pass
     pass
 pass
+pass
+pass
 """Валидация всех секций конфигурации"""
 try: except Exception as e: pass
 pass
@@ -145,6 +163,8 @@ pass
 logger.warning(f"Ошибка валидации конфигурации: {e}")
 def _validate_dis play(self) -> None: self.dis play_config.win dow_width= max(320
     pass
+pass
+pass
 pass
 pass
 int(self.dis play_config.win dow_width))
@@ -158,6 +178,8 @@ def _validate_audio(self) -> None: self.audio_config.master_volume= float(m in(1
     pass
 pass
 pass
+pass
+pass
 self.audio_config.master_volume)))
 self.audio_config.music_volume= float(m in(1.0, max(0.0
 self.audio_config.music_volume)))
@@ -165,6 +187,8 @@ self.audio_config.sfx_volume= float(m in(1.0, max(0.0
 self.audio_config.sfx_volume)))
 def _validate_gameplay(self) -> None: if self.gameplay_config.difficulty notin {"easy", "n or mal", "hard"}:
     pass
+pass
+pass
 pass
 pass
 self.gameplay_config.difficulty= "n or mal":
@@ -175,10 +199,14 @@ if not isin stance(self.gameplay_config.language
     pass
 pass
 pass
+pass
+pass
 str) or len(self.gameplay_config.language) = 0: pass  # Добавлен pass в пустой блок
 self.gameplay_config.language= "en"
 def _validate_ai(self) -> None: self.ai_config.learning_rate= float(m in(1.0, max(0.0
     pass
+pass
+pass
 pass
 pass
 self.ai_config.learning_rate)))
@@ -192,10 +220,14 @@ def _validate_perfor mance(self) -> None: self.perfor mance_config.max_fps= int(
     pass
 pass
 pass
+pass
+pass
 self.perfor mance_config.max_fps))):
 pass  # Добавлен pass в пустой блок
 if self.perfor mance_config.texture_quality notin {"low", "medium", "high"}:
     pass
+pass
+pass
 pass
 pass
 self.perfor mance_config.texture_quality= "high":
@@ -204,10 +236,14 @@ if self.perfor mance_config.shadow_quality notin {"low", "medium", "high"}:
     pass
 pass
 pass
+pass
+pass
 self.perfor mance_config.shadow_quality= "medium":
 pass  # Добавлен pass в пустой блок
 def get_config(self, key: str, default: Any= None) -> Any: pass
     pass
+pass
+pass
 pass
 """Получение значения конфигурации"""
 try: keys= key.split('.')
@@ -216,8 +252,12 @@ for kin keys: if isin stance(value, dict)and kin value: value= value[k]
     pass
 pass
 pass
+pass
+pass
 else: return default: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 return value
@@ -229,6 +269,8 @@ return default: pass  # Добавлен pass в пустой блок
 def set_config(self, key: str, value: Any) -> bool: pass
     pass
 pass
+pass
+pass
 """Установка значения конфигурации"""
 try: except Exception as e: pass
 pass
@@ -237,6 +279,8 @@ logger.err or(f"Ошибка установки конфигурации {key}: 
 return False
 def _save_config(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Сохранение конфигурации в файлы"""
 try:
@@ -259,6 +303,8 @@ except: logger.err or("Ошибка загрузки конфигурации")
 def save_config(self, config: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Сохранение конфигурации"""
 try: except Exception as e: pass
 pass
@@ -268,6 +314,8 @@ return False
 def get_value(self, key: str, default: Any= None) -> Any: pass
     pass
 pass
+pass
+pass
 """Получение значения конфигурации"""
 try:
 # Разбираем ключ(например: "dis play.win dow_width")
@@ -275,8 +323,12 @@ if '.'in key: section, param= key.split('.', 1)
     pass
 pass
 pass
+pass
+pass
 if section = 'dis play'and hasattr(self.dis play_config, param):
     pass
+pass
+pass
 pass
 pass
 return getattr(self.dis play_config, param)
@@ -284,9 +336,13 @@ elif section = 'audio'and hasattr(self.audio_config, param):
     pass
 pass
 pass
+pass
+pass
 return getattr(self.audio_config, param)
 elif section = 'gameplay'and hasattr(self.gameplay_config, param):
     pass
+pass
+pass
 pass
 pass
 return getattr(self.gameplay_config, param)
@@ -294,15 +350,21 @@ elif section = 'ai'and hasattr(self.ai_config, param):
     pass
 pass
 pass
+pass
+pass
 return getattr(self.ai_config, param)
 elif section = 'perfor mance'and hasattr(self.perfor mance_config, param):
     pass
+pass
+pass
 pass
 pass
 return getattr(self.perfor mance_config, param):
 pass  # Добавлен pass в пустой блок
 else: pass
     pass
+pass
+pass
 pass
 # Прямой доступ к загруженной конфигурации
 return self._loaded_config.get(key, default):
@@ -315,6 +377,8 @@ logger.err or(f"Ошибка получения значения {key}: {e}")
 return default: pass  # Добавлен pass в пустой блок
 def set_value(self, key: str, value: Any) -> bool: pass
     pass
+pass
+pass
 pass
 """Установка значения конфигурации"""
 try: except Exception as e: pass
@@ -329,10 +393,14 @@ def _load_dis play_config(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка конфигурации отображения"""
 config_file= self.config_dir / "dis play_config.json"
 if config_file.exis ts():
     pass
+pass
+pass
 pass
 pass
 try: with open(config_file, 'r', encodin = 'utf - 8') as f: data= json.load(f)
@@ -340,8 +408,12 @@ for key, valuein data.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(self.dis play_config, key):
     pass
+pass
+pass
 pass
 pass
 setattr(self.dis play_config, key, value)
@@ -353,10 +425,14 @@ def _load_audio_config(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка конфигурации аудио"""
 config_file= self.config_dir / "audio_config.json"
 if config_file.exis ts():
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -367,10 +443,14 @@ def _load_gameplay_config(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка конфигурации геймплея"""
 config_file= self.config_dir / "gameplay_config.json"
 if config_file.exis ts():
     pass
+pass
+pass
 pass
 pass
 try: with open(config_file, 'r', encodin = 'utf - 8') as f: data= json.load(f)
@@ -378,8 +458,12 @@ for key, valuein data.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(self.gameplay_config, key):
     pass
+pass
+pass
 pass
 pass
 setattr(self.gameplay_config, key, value)
@@ -391,10 +475,14 @@ def _load_ai_config(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка конфигурации ИИ"""
 config_file= self.config_dir / "ai_config.json"
 if config_file.exis ts():
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -405,6 +493,8 @@ def _load_perfor mance_config(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка конфигурации производительности"""
 config_file= self.config_dir / "perfor mance_config.json":
 pass  # Добавлен pass в пустой блок
@@ -412,13 +502,19 @@ if config_file.exis ts():
     pass
 pass
 pass
+pass
+pass
 try: with open(config_file, 'r', encodin = 'utf - 8') as f: data= json.load(f)
 for key, valuein data.items():
     pass
 pass
 pass
+pass
+pass
 if hasattr(self.perfor mance_config, key):
     pass
+pass
+pass
 pass
 pass
 setattr(self.perfor mance_config, key, value):
@@ -431,6 +527,8 @@ def _get_default_config(self) -> Dict[str, Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение конфигурации по умолчанию"""return {
 'dis play': asdict(self.dis play_config),
 'audio': asdict(self.audio_config),
@@ -441,6 +539,8 @@ pass  # Добавлен pass в пустой блок
 }
 def save_config(self):"""Сохранение текущей конфигурации в файлы"""
     pass
+pass
+pass
 pass
 pass
 try: logger.in fo("Сохранение конфигурации...")
@@ -460,6 +560,8 @@ def _save_section_config(self, filename: str, data: Dict[str, Any]):
     pass
 pass
 pass
+pass
+pass
 """Сохранение секции конфигурации в файл"""
 config_file= self.config_dir / filename
 try: except Exception as e: pass
@@ -468,6 +570,8 @@ pass
 logger.err or(f"Ошибка сохранения {filename}: {e}")
 def get(self, section: str, key: str, default: Any= None) -> Any: pass
     pass
+pass
+pass
 pass
 """Получение значения конфигурации"""try: return self._loaded_config.get(section, {}).get(key, default):
 pass  # Добавлен pass в пустой блок
@@ -480,11 +584,15 @@ def set(self, section: str, key: str, value: Any):"""Установка знач
     pass
 pass
 pass
+pass
+pass
 self._loaded_config[section][key]= value
 # Обновляем соответствующий объект конфигурации
 self._update_config_object(section, key, value)
 def _update_config_object(self, section: str, key: str, value: Any):"""Обновление объекта конфигурации"""config_objects= {
     pass
+pass
+pass
 pass
 pass
 'dis play': self.dis play_config,
@@ -497,9 +605,13 @@ if sectionin config_objectsand hasattr(config_objects[section], key):
     pass
 pass
 pass
+pass
+pass
 setattr(config_objects[section], key, value)
 def reset_to_defaults(self):"""Сброс к настройкам по умолчанию"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Сброс конфигурации к настройкам по умолчанию")
@@ -515,6 +627,8 @@ pass  # Добавлен pass в пустой блок
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы"""
 try: self.load_config()
 return True
@@ -527,10 +641,14 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление системы"""# ConfigManager не требует постоянного обновления
 pass
 def cleanup(self):"""Очистка системы"""
     pass
+pass
+pass
 pass
 pass
 try: self.save_config()
@@ -543,10 +661,14 @@ logger.err or(f"Ошибка очистки ConfigManager: {e}")
 def get_value(self, key: str, default: Any= None) -> Any: pass
     pass
 pass
+pass
+pass
 """Получение значения конфигурации"""
 # Поддерживаем формат "section.key"
 if '.'in key: section, subkey= key.split('.', 1)
     pass
+pass
+pass
 pass
 pass
 return self.get(section, subkey, default):
@@ -554,15 +676,21 @@ pass  # Добавлен pass в пустой блок
 else: pass
     pass
 pass
+pass
+pass
 # Ищем во всех секциях
 for sectionin self._loaded_config: if keyin self._loaded_config[section]:
     pass
+pass
+pass
 pass
 pass
 return self._loaded_config[section][key]
 return default: pass  # Добавлен pass в пустой блок
 def set_value(self, key: str, value: Any) -> bool: pass
     pass
+pass
+pass
 pass
 """Установка значения конфигурации"""
 try:
@@ -571,13 +699,19 @@ if '.'in key: section, subkey= key.split('.', 1)
     pass
 pass
 pass
+pass
+pass
 self.set(section, subkey, value)
 else: pass
     pass
 pass
+pass
+pass
 # Устанавливаем в первую доступную секцию
 if self._loaded_config: first_section= lis t(self._loaded_config.keys())[0]
     pass
+pass
+pass
 pass
 pass
 self.set(first_section, key, value)

@@ -37,9 +37,13 @@ class _DummyTarget: def __in it__(self):
     pass
 pass
 pass
+pass
+pass
 self.hp= 100
 def get_resis tance(self, damage_type):
     pass
+pass
+pass
 pass
 pass
 return 0.0
@@ -47,9 +51,13 @@ def get_arm or(self):
     pass
 pass
 pass
+pass
+pass
 return 0.0
 def take_damage(self, amount, damage_type):
     pass
+pass
+pass
 pass
 pass
 self.hp= max(0, self.hp - amount)
@@ -57,8 +65,12 @@ class TestIntegrationEvents(unittest.TestCase):
     pass
 pass
 pass
+pass
+pass
 def test_skills_effects_damage_flow(self):
     pass
+pass
+pass
 pass
 pass
 es= EventSystem()
@@ -111,6 +123,8 @@ def test_in vent or y_emits_item_added_event(self):
     pass
 pass
 pass
+pass
+pass
 es= EventSystem()
 es.in itialize()
 bus= EventBusAdapter(es)
@@ -119,6 +133,8 @@ inv_sys.event_bus= bus
 received= {"count": 0}
 def on_item_added(event):
     pass
+pass
+pass
 pass
 pass
 received["count"] = 1
@@ -131,6 +147,8 @@ es.process_events()
 self.assertEqual(received["count"], 1, "item_added_to_in vent or y should be publis hedand received")
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 pass
 unittest.ma in()

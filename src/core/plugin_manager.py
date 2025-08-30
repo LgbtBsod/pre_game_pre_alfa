@@ -34,8 +34,12 @@ class Plugin Manager:"""Управление плагинами проекта""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, plugin s_dir: str= "plugin s"):
     pass
+pass
+pass
 pass
 pass
 self.plugin s_dir= Path(plugin s_dir)
@@ -49,6 +53,8 @@ def dis cover(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 """Поиск плагинов в каталоге"""
 try: except Exception as e: pass
 pass
@@ -57,6 +63,8 @@ logger.err or(f"Ошибка обнаружения плагинов: {e}")
 return []
 def _load_metadata(self, plugin _path: Path) -> Optional[Plugin Metadata]:
     pass
+pass
+pass
 pass
 pass
 meta_path= plugin _path / "plugin .json"
@@ -69,6 +77,8 @@ def _import_module(self, plugin _path: Path):
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -76,6 +86,8 @@ logger.err or(f"Ошибка импорта модуля плагина {plugin 
 return None
 def load(self, plugin _id: str, context: Dict[str, Any]) -> bool: pass
     pass
+pass
+pass
 pass
 """Загрузка и инициализация плагина по id папки"""
 try: if plugin _id notin self._dis covered: logger.err or(f"Плагин {plugin _id} не обнаружен")
@@ -86,9 +98,13 @@ if moduleis None: return False
     pass
 pass
 pass
+pass
+pass
 # ищем fact or y: create_plug in()
 if hasattr(module, "create_plugin "):
     pass
+pass
+pass
 pass
 pass
 plugin : IPlugin= module.create_plug in()
@@ -96,15 +112,21 @@ elif hasattr(module, "Plugin "):
     pass
 pass
 pass
+pass
+pass
 plugin= getattr(module, "Plugin ")()  # type: ign or e
 else: logger.err or(f"Плагин {plugin _id} не содержит фабрики или класса Plugin ")
     pass
+pass
+pass
 pass
 pass
 return False
 # initialize
 if not plugin .initialize(context):
     pass
+pass
+pass
 pass
 pass
 logger.err or(f"Не удалось инициализировать плагин {plugin _id}")
@@ -122,9 +144,13 @@ def start_all(self) -> None: for pid, pluginin self._loaded.items():
     pass
 pass
 pass
+pass
+pass
 try: plugin .start()
 except Exception as e: pass
     pass
+pass
+pass
 pass
 pass
 pass
@@ -134,9 +160,13 @@ def stop_all(self) -> None: for pid, pluginin self._loaded.items():
     pass
 pass
 pass
+pass
+pass
 try: plugin .stop()
 except Exception as e: pass
     pass
+pass
+pass
 pass
 pass
 pass
@@ -146,9 +176,13 @@ def destroy_all(self) -> None: for pid, pluginin lis t(self._loaded.items()):
     pass
 pass
 pass
+pass
+pass
 try: plugin .destroy()
 except Exception as e: pass
     pass
+pass
+pass
 pass
 pass
 pass
@@ -158,6 +192,8 @@ self._loaded.clear()
 self._contexts.clear()
 def _make_sand box_context(self, base_context: Dict[str, Any]) -> Dict[str
     pass
+pass
+pass
 pass
 pass
 Any]:
@@ -172,6 +208,8 @@ def _check_requirements(self, md: Plugin Metadata, base_context: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]) -> bool: pass  # Добавлен pass в пустой блок
 try: except Exception as e: pass
 pass
@@ -182,10 +220,14 @@ def auto_load(self, base_context: Dict[str, Any]) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 """Автозагрузка EAGER плагинов, возврат LAZY"""
 lazy: Lis t[str]= []
 for pid, pathin self._dis covered.items():
     pass
+pass
+pass
 pass
 pass
 md= self._load_metadata(path)
@@ -193,8 +235,12 @@ if not md: contin ue
     pass
 pass
 pass
+pass
+pass
 if not self._check_requirements(md, base_context):
     pass
+pass
+pass
 pass
 pass
 contin ue
@@ -204,13 +250,19 @@ if md.load_type = Plugin LoadType.EAGER: self.load(pid, ctx)
     pass
 pass
 pass
+pass
+pass
 else: lazy.append(pid)
     pass
+pass
+pass
 pass
 pass
 return lazy
 def start_watching(self, interval: float= 1.0) -> None: pass
     pass
+pass
+pass
 pass
 """Запустить примитивный hot - reload наблюдатель(dev)"""if self._watching: return
 self._watching= True
@@ -218,8 +270,12 @@ def _watch():
     pass
 pass
 pass
+pass
+pass
 while self._watching: try: pass
     pass
+pass
+pass
 pass
 except Exception: pass  # Добавлен pass в пустой блок
 time.sleep(in terval)
@@ -229,8 +285,12 @@ def stop_watching(self) -> None: self._watching= False
     pass
 pass
 pass
+pass
+pass
 if self._watcher_threadand self._watcher_thread.is _alive():
     pass
+pass
+pass
 pass
 pass
 try: except Exception: pass
@@ -239,8 +299,12 @@ def bin d_system_extensions(self, systems: Dict[str, Any]) -> None:"""Подкл
     pass
 pass
 pass
+pass
+pass
 for pid, pluginin self._loaded.items():
     pass
+pass
+pass
 pass
 pass
 try:
@@ -250,13 +314,19 @@ if not module: contin ue
     pass
 pass
 pass
+pass
+pass
 for attr_namein dir(module):
     pass
+pass
+pass
 pass
 pass
 obj= getattr(module, attr_name)
 if isin stance(obj, type):
     pass
+pass
+pass
 pass
 pass
 # классы расширений
@@ -267,9 +337,13 @@ pass
 pass
 pass
 pass
+pass
+pass
 contin ue
 if isin stance(cand idate, ISystemExtension):
     pass
+pass
+pass
 pass
 pass
 target= getattr(cand idate, 'target_system', None)
@@ -277,11 +351,15 @@ if targetand targetin systems: cand idate.attach(systems[target])
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"Плагин {pid}: расширение {attr_name} подключено к {target}")
 except Exception as e: logger.err or(f"Ошибка привязки расширений для плагина {pid}: {e}")
 @property
 def loaded_plugin s(self) -> Dict[str, IPlugin ]:
     pass
+pass
+pass
 pass
 pass
 return self._loaded

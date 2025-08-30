@@ -28,6 +28,8 @@ class LocationType(Enum):"""Типы локаций"""
     pass
 pass
 pass
+pass
+pass
 # Природные локации
 FOREST= "for est"                          # Лес: pass  # Добавлен pass в пустой блок
 MOUNTAIN= "mountain "                      # Гора
@@ -60,6 +62,8 @@ class DungeonType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы подземелий"""
 CAVE= "cave"                              # Пещера
 CRYPT= "crypt"                            # Склеп
@@ -73,6 +77,8 @@ class SettlementType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы поселений"""
 HAMLET= "hamlet"                          # Хутор
 VILLAGE= "village"                        # Деревня
@@ -83,6 +89,8 @@ FORTRESS= "for tress"                      # Крепость: pass  # Доба�
 MONASTERY= "monastery"                    # Монастырь
 class BuildingType(Enum):
     pass
+pass
+pass
 pass
 pass
 """Типы зданий"""
@@ -115,6 +123,8 @@ class Poin tOfInterestType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы точек интереса"""
 # Источники ресурсов
 MINERAL_DEPOSIT= "min eral_deposit"        # Месторождение минералов
@@ -134,6 +144,8 @@ ANCIENT_VAULT= "ancient_vault"            # Древнее хранилище
 @dataclass: pass  # Добавлен pass в пустой блок
 class Location: pass
     pass
+pass
+pass
 pass
 """Базовая локация"""
 location_id: str
@@ -179,6 +191,8 @@ class Dungeon:"""Подземелье"""dungeon_id: str
     pass
 pass
 pass
+pass
+pass
 name: str
 description: str
 dungeon_type: DungeonType
@@ -215,6 +229,8 @@ class Settlement:"""Поселение"""settlement_id: str
     pass
 pass
 pass
+pass
+pass
 name: str
 description: str
 settlement_type: SettlementType
@@ -233,6 +249,8 @@ defenses: Lis t[str]= field(default_factor = list):
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 # Экономика
 trade_goods: Lis t[str]= field(default_factor = list):
@@ -248,6 +266,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class Building:"""Здание"""building_id: str
     pass
+pass
+pass
 pass
 pass
 name: str
@@ -277,6 +297,8 @@ is_always_open: bool= False
 @dataclass: pass  # Добавлен pass в пустой блок
 class Poin tOfInterest:"""Точка интереса"""poi_id: str
     pass
+pass
+pass
 pass
 pass
 name: str
@@ -309,6 +331,8 @@ class LocationManager:"""Менеджер локаций"""def __in it__(self):
     pass
 pass
 pass
+pass
+pass
 self.locations: Dict[str, Location]= {}
 self.dungeons: Dict[str, Dungeon]= {}
 self.settlements: Dict[str, Settlement]= {}
@@ -328,6 +352,8 @@ def add_location(self, location: Location) -> bool:"""Добавление ло�
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -335,6 +361,8 @@ prin t(f"Ошибка добавления локации: {e}")
 return False
 def add_dungeon(self, dungeon: Dungeon) -> bool: pass
     pass
+pass
+pass
 pass
 """Добавление подземелья"""
 try: self.dungeons[dungeon.dungeon_id]= dungeon
@@ -349,6 +377,8 @@ return False
 def add_settlement(self, settlement: Settlement) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавление поселения"""
 try: except Exception as e: pass
 pass
@@ -357,6 +387,8 @@ prin t(f"Ошибка добавления поселения: {e}")
 return False
 def add_building(self, building: Building) -> bool: pass
     pass
+pass
+pass
 pass
 """Добавление здания"""
 try: self.buildings[building.building_id]= building
@@ -371,6 +403,8 @@ return False
 def add_poin t_of_in terest(self, poi: Poin tOfInterest) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавление точки интереса"""
 try: except Exception as e: pass
 pass
@@ -381,25 +415,37 @@ def get_location(self, location_id: str) -> Optional[Location]:
     pass
 pass
 pass
+pass
+pass
 """Получение локации по ID"""return self.locations.get(location_id)
 def get_dungeon(self, dungeon_id: str) -> Optional[Dungeon]:"""Получение подземелья по ID"""return self.dungeons.get(dungeon_id)
     pass
+pass
+pass
 pass
 pass
 def get_settlement(self, settlement_id: str) -> Optional[Settlement]:"""Получение поселения по ID"""return self.settlements.get(settlement_id)
     pass
 pass
 pass
+pass
+pass
 def get_building(self, building_id: str) -> Optional[Building]:"""Получение здания по ID"""return self.buildings.get(building_id)
     pass
+pass
+pass
 pass
 pass
 def get_poin t_of_in terest(self, poi_id: str) -> Optional[Poin tOfInterest]:"""Получение точки интереса по ID"""return self.poin ts_of_in terest.get(poi_id)
     pass
 pass
 pass
+pass
+pass
 def get_locations_in _radius(self, x: float, y: float
     pass
+pass
+pass
 pass
 pass
 radius: float) -> Lis t[Location]:
@@ -408,9 +454,13 @@ for locationin self.locations.values():
     pass
 pass
 pass
+pass
+pass
 dis tance= math.sqrt((location.x - x) * *2 + (location.y - y) * *2)
 if dis tance <= radius: nearby_locations.append(location)
     pass
+pass
+pass
 pass
 pass
 return nearby_locations
@@ -418,8 +468,12 @@ def dis cover_location(self, location_id: str) -> bool:"""Открытие ло�
     pass
 pass
 pass
+pass
+pass
 if locationand not location.is _dis covered: location.is _dis covered= True
     pass
+pass
+pass
 pass
 pass
 location.last_vis ited= time.time()
@@ -431,13 +485,19 @@ def complete_dungeon(self, dungeon_id: str) -> bool:"""Завершение по
     pass
 pass
 pass
+pass
+pass
 if dungeonand not dungeon.is _completed: dungeon.is _completed= True
     pass
+pass
+pass
 pass
 pass
 dungeon.completion_time= time.time()
 if not dungeon.best_time or dungeon.completion_time < dungeon.best_time: dungeon.best_time= dungeon.completion_time
     pass
+pass
+pass
 pass
 pass
 self.stats['completed_dungeons'] = 1
@@ -447,24 +507,36 @@ def get_location_stats(self) -> Dict[str, Any]:"""Получение стати�
     pass
 pass
 pass
+pass
+pass
 def get_all_locations(self) -> Lis t[Location]:"""Получение всех локаций"""return lis t(self.locations.values())
     pass
+pass
+pass
 pass
 pass
 def get_all_dungeons(self) -> Lis t[Dungeon]:"""Получение всех подземелий"""return lis t(self.dungeons.values())
     pass
 pass
 pass
+pass
+pass
 def get_all_settlements(self) -> Lis t[Settlement]:"""Получение всех поселений"""return lis t(self.settlements.values())
     pass
+pass
+pass
 pass
 pass
 def get_all_buildings(self) -> Lis t[Building]:"""Получение всех зданий"""return lis t(self.buildings.values())
     pass
 pass
 pass
+pass
+pass
 def get_all_poin ts_of_in terest(self) -> Lis t[Poin tOfInterest]:"""Получение всех точек интереса"""
     pass
+pass
+pass
 pass
 pass
 return lis t(self.poin ts_of_in terest.values())

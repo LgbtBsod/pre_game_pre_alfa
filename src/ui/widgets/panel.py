@@ -34,6 +34,8 @@ class PanelStyle:"""Стиль панели"""# Цвета фона
     pass
 pass
 pass
+pass
+pass
 background_col or : Tuple[float, float, float, float]= (0.0, 0.0, 0.0, 0.8)
 b or der_col or : Tuple[float, float, float, float]= (0.0, 1.0, 1.0, 0.6)
 # Заголовок
@@ -49,8 +51,12 @@ class NeonPanel:"""Неоновая панель с современным ди�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 title: str= "",
@@ -70,6 +76,8 @@ def create(self, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> DirectFrame: pass  # Добавлен pass в пустой блок
 """Создание панели Pand a3D"""
 try:
@@ -87,6 +95,8 @@ self.background_frame.setPos( * pos)
 # Заголовок
 if self.title: self.title_label= DirectLabel(
     pass
+pass
+pass
 pass
 pass
 tex = self.title,
@@ -115,6 +125,8 @@ def add_button(self, text: str, comman = None, pos: Tuple[float, float
     pass
 pass
 pass
+pass
+pass
 float]= (0, 0, 0)) -> NeonButton: pass  # Добавлен pass в пустой блок
 """Добавление кнопки на панель"""
 try: except Exception as e: pass
@@ -124,6 +136,8 @@ logger.err or(f"Ошибка добавления кнопки {text}: {e}")
 return None
 def add_buttons_grid(self, button_configs: Lis t[Tuple[str, callable
     pass
+pass
+pass
 pass
 pass
 Tuple[float, float, float]]],
@@ -145,14 +159,20 @@ def set_title(self, title: str):
     pass
 pass
 pass
+pass
+pass
 """Изменение заголовка панели"""if self.title_label: self.title_label['text']= title
 self.title= title
 def set_position(self, pos: Tuple[float, float, float]):"""Изменение позиции панели"""if self.background_frame: self.background_frame.setPos( * pos)
     pass
 pass
 pass
+pass
+pass
 def set_size(self, width: float, height: float):"""Изменение размера панели"""if self.background_frame: self.background_frame['frameSize']= ( - width / 2, width / 2, -height / 2, height / 2)
     pass
+pass
+pass
 pass
 pass
 self.style.width= width
@@ -161,8 +181,12 @@ def set_vis ible(self, vis ible: bool):"""Показать / скрыть пан
     pass
 pass
 pass
+pass
+pass
 def clear_content(self):"""Очистка содержимого панели"""
     pass
+pass
+pass
 pass
 pass
 # Уничтожаем кнопки
@@ -170,10 +194,14 @@ for buttonin self.buttons: button.destroy()
     pass
 pass
 pass
+pass
+pass
 self.buttons.clear()
 # Очищаем контентную область
 if self.content_frame: self.content_frame.removeAllChildren()
     pass
+pass
+pass
 pass
 pass
 self.content_frame= DirectFrame(
@@ -188,10 +216,14 @@ def destroy(self):
     pass
 pass
 pass
+pass
+pass
 """Уничтожение панели"""
 # Уничтожаем кнопки
 for buttonin self.buttons: button.destroy()
     pass
+pass
+pass
 pass
 pass
 self.buttons.clear()
@@ -200,10 +232,14 @@ if self.background_frame: self.background_frame.destroy()
     pass
 pass
 pass
+pass
+pass
 self.background_frame= None
 logger.debug(f"Панель {self.title} уничтожена")
 def create_neon_panel(title: str= "",
     pass
+pass
+pass
 pass
 pass
 style: Optional[PanelStyle]= None,

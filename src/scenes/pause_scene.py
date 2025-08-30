@@ -32,8 +32,12 @@ class PauseScene(Scene):"""Сцена паузы на Pand a3D"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("pause")
@@ -46,6 +50,8 @@ logger.in fo("Сцена паузы Pand a3D создана")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация сцены паузы"""
 try: except Exception as e: pass
 pass
@@ -54,6 +60,8 @@ logger.err or(f"Ошибка инициализации сцены паузы: {
 return False
 def _create_ui_elements(self):
     pass
+pass
+pass
 pass
 pass
 """Создание UI элементов паузы"""
@@ -109,9 +117,13 @@ def _resume_game(self):
     pass
 pass
 pass
+pass
+pass
 """Продолжить игру"""
 if self.scene_manager: self.scene_manager.switch_to_scene("game", "in stant")
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Возобновление игры")
@@ -119,9 +131,13 @@ def _open_settings(self):
     pass
 pass
 pass
+pass
+pass
 """Открыть настройки"""
 if self.scene_manager: self.scene_manager.switch_to_scene("settings", "fade")
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Переключение на сцену настроек")
@@ -129,14 +145,20 @@ def _return_to_menu(self):
     pass
 pass
 pass
+pass
+pass
 """Вернуться в главное меню"""
 if self.scene_manager: self.scene_manager.switch_to_scene("menu", "fade")
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Возврат в главное меню")
 def update(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление сцены паузы"""# Анимация UI элементов
@@ -146,13 +168,19 @@ def render(self, render_node):"""Отрисовка сцены паузы"""# Pa
 pass
 pass
 pass
+pass
+pass
 def hand le_event(self, event):"""Обработка событий"""# Pand a3D автоматически обрабатывает события кнопок
     pass
 pass
 pass
 pass
+pass
+pass
 def cleanup(self):"""Очистка сцены паузы"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка сцены паузы Pand a3D...")
@@ -161,16 +189,24 @@ if self.pause_text: self.pause_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.resume_button: self.resume_button.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.settings_button: self.settings_button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.menu_button: self.menu_button.destroy()
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Сцена паузы Pand a3D очищена")

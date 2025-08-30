@@ -43,6 +43,8 @@ class SocialProfile:"""Социальный профиль сущности"""en
     pass
 pass
 pass
+pass
+pass
 relationships: Dict[str, Relationship]= field(default_factor = dict):
 pass  # Добавлен pass в пустой блок
 reputation: Dict[ReputationType, float]= field(default_factor = dict):
@@ -58,6 +60,8 @@ class SocialEvent:"""Социальное событие"""
     pass
 pass
 pass
+pass
+pass
 event_id: str
 event_type: str
 participants: Lis t[str]= field(default_factor = list):
@@ -70,8 +74,12 @@ class SocialSystem(BaseGameSystem):"""Система управления соц
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, state_manager: Optional[StateManager]= None
     pass
+pass
+pass
 pass
 pass
 reposit or y_manager: Optional[Reposit or yManager]= None
@@ -112,6 +120,8 @@ def initialize(self, state_manager: StateManager= None
     pass
 pass
 pass
+pass
+pass
 reposit or y_manager: Reposit or yManager= None, event_bu = None) -> bool: pass  # Добавлен pass в пустой блок
 """Инициализация системы"""
 try: except Exception as e: pass
@@ -121,6 +131,8 @@ logger.err or(f"Ошибка инициализации системы соци�
 return False
 def _regis ter_system_states(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация состояний системы"""if self.state_manager: self.state_manager.regis ter_state("social_system_settings",
@@ -136,6 +148,8 @@ StateScope.SYSTEM
 )
 def _regis ter_system_reposit or ies(self):
     pass
+pass
+pass
 pass
 pass
 """Регистрация репозиториев системы"""if self.reposit or y_manager: self.reposit or y_manager.create_reposit or y("social_profiles",
@@ -161,9 +175,13 @@ def _in itialize_factions(self):
     pass
 pass
 pass
+pass
+pass
 """Инициализация фракций"""
 for faction_typein FactionType: self.factions[faction_type]= {
     pass
+pass
+pass
 pass
 pass
 'name': faction_type.value,
@@ -176,6 +194,8 @@ self.faction_members[faction_type]= []
 def create_social_profile(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Создание социального профиля для сущности"""
 try: except Exception as e: pass
 pass
@@ -184,6 +204,8 @@ logger.err or(f"Ошибка создания социального профи�
 return False
 def create_relationship(self, entity_id: str, target_id: str
     pass
+pass
+pass
 pass
 pass
 relationship_type: RelationshipType,
@@ -195,9 +217,13 @@ if entity_id notin self.social_profiles: self.create_social_profile(entity_id)
     pass
 pass
 pass
+pass
+pass
 profile= self.social_profiles[entity_id]
 if len(profile.relationships) >= self.system_settings['max_relationships']:
     pass
+pass
+pass
 pass
 pass
 logger.warning(f"Достигнут лимит отношений для {entity_id}")
@@ -223,6 +249,8 @@ def perfor m_in teraction(self, initiat or _id: str, target_id: str
     pass
 pass
 pass
+pass
+pass
 interaction_type: InteractionType,
 success: bool= True, data: Dict[str
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -236,6 +264,8 @@ def _update_relationships_from_in teraction(self, interaction: Interaction):
     pass
 pass
 pass
+pass
+pass
 """Обновление отношений на основе взаимодействия"""
 try: initiat or _id= interaction.in itiat or _id
 target_id= interaction.target_id
@@ -245,11 +275,15 @@ if interaction.success: if interaction.in teraction_typein [InteractionType.GREE
     pass
 pass
 pass
+pass
+pass
 InteractionType.CONVERSATION]:
 pass  # Добавлен pass в пустой блок
 relationship_change= 1.0
 elif interaction.in teraction_typein [InteractionType.GIFT_GIVING
     pass
+pass
+pass
 pass
 pass
 InteractionType.HELP_OFFERED]:
@@ -259,11 +293,15 @@ elif interaction.in teraction_typein [InteractionType.EMOTIONAL_SUPPORT
     pass
 pass
 pass
+pass
+pass
 InteractionType.EMPATHY_SHARED]:
 pass  # Добавлен pass в пустой блок
 relationship_change= 3.0
 elif interaction.in teraction_typein [InteractionType.ARGUMENT
     pass
+pass
+pass
 pass
 pass
 InteractionType.INSULT]:
@@ -273,6 +311,8 @@ elif interaction.in teraction_typein [InteractionType.VIOLENCE
     pass
 pass
 pass
+pass
+pass
 InteractionType.BETRAYAL]:
 pass  # Добавлен pass в пустой блок
 relationship_change= -10.0
@@ -280,13 +320,19 @@ else: relationship_change= -1.0
     pass
 pass
 pass
+pass
+pass
 # Обновление отношений
 if initiat or _idin self.social_profiles: profile= self.social_profiles[in itiat or _id]
     pass
 pass
 pass
+pass
+pass
 if target_idin profile.relationships: relationship= profile.relationships[target_id]
     pass
+pass
+pass
 pass
 pass
 relationship.strength= max( - 100.0, m in(100.0
@@ -295,14 +341,20 @@ relationship.last_in teraction= interaction.timestamp
 else: pass
     pass
 pass
+pass
+pass
 # Создание нового отношения
 relationship_type= RelationshipType.STRANGER
 if relationship_change > 0: relationship_type= RelationshipType.ACQUAINTANCE
     pass
 pass
 pass
+pass
+pass
 elif relationship_change < -5: relationship_type= RelationshipType.ENEMY
     pass
+pass
+pass
 pass
 pass
 self.create_relationship(in itiat or _id, target_id
@@ -315,6 +367,8 @@ def _update_reputation_from_in teraction(self, interaction: Interaction):
     pass
 pass
 pass
+pass
+pass
 """Обновление репутации на основе взаимодействия"""
 try: except Exception as e: pass
 pass
@@ -322,6 +376,8 @@ pass
 logger.err or(f"Ошибка обновления репутации: {e}")
 def _create_social_event(self, interaction: Interaction):
     pass
+pass
+pass
 pass
 pass
 """Создание социального события"""
@@ -341,6 +397,8 @@ logger.err or(f"Ошибка создания социального событ�
 def join _faction(self, entity_id: str, faction_type: FactionType) -> bool: pass
     pass
 pass
+pass
+pass
 """Вступление в фракцию"""
 try: except Exception as e: pass
 pass
@@ -350,6 +408,8 @@ return False
 def leave_faction(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Выход из фракции"""
 try: if entity_id notin self.social_profiles: return False
 profile= self.social_profiles[entity_id]
@@ -357,11 +417,15 @@ if not profile.faction: logger.warning(f"{entity_id} не состоит ни в
     pass
 pass
 pass
+pass
+pass
 return False
 faction_type= profile.faction
 # Выход из фракции
 if entity_idin self.faction_members[faction_type]:
     pass
+pass
+pass
 pass
 pass
 self.faction_members[faction_type].remove(entity_id)
@@ -379,6 +443,8 @@ def get_relationship(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 target_id: str) -> Optional[Relationship]:
 pass  # Добавлен pass в пустой блок
 """Получение отношения между сущностями"""if entity_idin self.social_profiles: profile= self.social_profiles[entity_id]
@@ -388,6 +454,8 @@ def get_reputation(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 reputation_type: ReputationType= ReputationType.GENERAL) -> float: pass  # Добавлен pass в пустой блок"""Получение репутации сущности"""if entity_idin self.social_profiles: profile= self.social_profiles[entity_id]
 return profile.reputation.get(reputation_type, 0.0)
 return 0.0
@@ -395,8 +463,12 @@ def get_faction_members(self, faction_type: FactionType) -> Lis t[str]:"""Пол
     pass
 pass
 pass
+pass
+pass
 def update(self, delta_time: float) -> None:"""Обновление системы"""
     pass
+pass
+pass
 pass
 pass
 try: current_time= time.time()
@@ -422,8 +494,12 @@ for profilein self.social_profiles.values():
     pass
 pass
 pass
+pass
+pass
 for reputationin profile.reputation.values():
     pass
+pass
+pass
 pass
 pass
 total_reputation = reputation
@@ -432,9 +508,13 @@ if reputation_count > 0: self.system_stats['average_reputation']= total_reputati
     pass
 pass
 pass
+pass
+pass
 # Обновление состояний в StateManager
 if self.state_manager: self.state_manager.update_state("social_system_stats", self.system_stats)
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -443,6 +523,8 @@ pass
 logger.err or(f"Ошибка обновления системы социального взаимодействия: {e}")
 def _update_relationships_decay(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление затухания отношений"""
@@ -454,20 +536,28 @@ def _update_reputation_decay(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление затухания репутации"""
 try: decay_rate= self.system_settings['reputation_decay_rate'] * delta_time
 for profilein self.social_profiles.values():
     pass
 pass
 pass
+pass
+pass
 for reputation_type
     pass
+pass
+pass
 pass
 pass
 reputation_valuein profile.reputation.items():
 pass  # Добавлен pass в пустой блок
 if reputation_type != ReputationType.GENERAL:  # Общая репутация не затухает
     pass
+pass
+pass
 pass
 pass
 profile.reputation[reputation_type]= reputation_value * (1.0 - decay_rate)
@@ -479,6 +569,8 @@ def _update_faction_in fluence(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление влияния фракций"""
 try: except Exception as e: pass
 pass
@@ -486,6 +578,8 @@ pass
 logger.err or(f"Ошибка обновления влияния фракций: {e}")
 def get_system_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получить информацию о системе"""return {"system_name": "SocialSystem",

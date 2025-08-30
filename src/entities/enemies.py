@@ -36,6 +36,8 @@ class EnemyStats:"""Дополнительные характеристики в
     pass
 pass
 pass
+pass
+pass
 threat_level: int= 1  # 1 - 10, где 10 - самый опасный
 aggression: float= 0.7  # 0.0 до 1.0
 intelligence: float= 0.5  # 0.0 до 1.0
@@ -51,6 +53,8 @@ gold_reward: int= 10
 @dataclass: pass  # Добавлен pass в пустой блок
 class EnemyBehavi or :"""Поведение врага"""
     pass
+pass
+pass
 pass
 pass
 # Типы поведения
@@ -69,11 +73,15 @@ last_attack_time: float= 0.0
 class EnemyMem or y: pass
     pass
 pass
+pass
+pass
 """Память врага"""# Боевая память
 combat_his tory: Lis t[Dict[str, Any]]= field(default_factor = list):
 pass  # Добавлен pass в пустой блок
 defeated_enemies: Lis t[str]= field(default_factor = list):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -90,8 +98,12 @@ class Enemy(BaseEntity):"""Класс врага - наследуется от B
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, enemy_id: str, name: str, enemy_type: str= "basic"):
     pass
+pass
+pass
 pass
 pass
 # Инициализируем базовую сущность
@@ -130,6 +142,8 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление состояния врага"""
 try:
 # Обновляем базовую сущность
@@ -150,6 +164,8 @@ def _update_behavi or(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление поведения врага"""
 try: except Exception as e: pass
 pass
@@ -157,6 +173,8 @@ pass
 logger.err or(f"Ошибка обновления поведения врага {self.entity_id}: {e}")
 def _update_patrol(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление патрулирования"""
@@ -167,10 +185,14 @@ if self.patrol_wait_time > 0: self.patrol_wait_time = delta_time
     pass
 pass
 pass
+pass
+pass
 return
 # Переходим к следующей точке
 if self.current_patrol_in dex < len(self.patrol_poin ts):
     pass
+pass
+pass
 pass
 pass
 target_poin t= self.patrol_poin ts[self.current_patrol_in dex]
@@ -179,6 +201,8 @@ dis tance= self._calculate_dis tance(self.position
 target_poin t)
 if dis tance < 1.0:  # Достигли точки
     pass
+pass
+pass
 pass
 pass
 self.current_patrol_in dex= (self.current_patrol_in dex + 1)%len(self.patrol_poin ts)
@@ -192,6 +216,8 @@ def _update_retreat(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление отступления"""
 try: except Exception as e: pass
 pass
@@ -201,6 +227,8 @@ def _update_abilities(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление способностей"""
 try: current_time= time.time()
 # Проверяем возможность использования способностей
@@ -208,10 +236,14 @@ for abilityin self.abilities: if(ability notin self.ability_cooldowns or: self.a
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 # Способность готова к использованию
 if self.is _in_combatand self.current_target: pass
     pass
+pass
+pass
 pass
 # Используем способность в бою
 self._use_ability(ability)
@@ -222,6 +254,8 @@ logger.err or(f"Ошибка обновления способностей вр�
 def attack(self, target: str, attack_type: str= "basic") -> bool: pass
     pass
 pass
+pass
+pass
 """Атака цели"""
 try: except Exception as e: pass
 pass
@@ -231,11 +265,15 @@ return False
 def use_ability(self, ability_name: str, target: str= None) -> bool: pass
     pass
 pass
+pass
+pass
 """Использование способности"""
 try: if not self.is _alive or ability_name notin self.abilities: return False
 # Проверяем перезарядку
 if(ability_namein self.ability_cooldownsand: self.ability_cooldowns[ability_name] > 0):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -245,11 +283,15 @@ if not self._can_use_ability(ability_name):
     pass
 pass
 pass
+pass
+pass
 return False
 # Используем способность
 success= self._execute_ability(ability_name, target)
 if success: pass
     pass
+pass
+pass
 pass
 # Устанавливаем перезарядку
 cooldown= self._get_ability_cooldown(ability_name)
@@ -274,6 +316,8 @@ return False
 def _can_use_ability(self, ability_name: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка возможности использования способности"""
 try: except Exception as e: pass
 pass
@@ -282,6 +326,8 @@ logger.err or(f"Ошибка проверки способности {ability_na
 return False
 def _get_ability_mana_cost(self, ability_name: str) -> int: pass
     pass
+pass
+pass
 pass
 """Получение стоимости маны способности"""# Базовые стоимости способностей
 costs= {
@@ -296,6 +342,8 @@ def _get_ability_stamin a_cost(self, ability_name: str) -> int:"""Получен
     pass
 pass
 pass
+pass
+pass
 costs= {
 'charge': 30,
 'dash': 20,
@@ -305,6 +353,8 @@ costs= {
 return costs.get(ability_name, 0)
 def _get_ability_cooldown(self, ability_name: str) -> float:"""Получение перезарядки способности"""# Базовые перезарядки способностей
     pass
+pass
+pass
 pass
 pass
 cooldowns= {
@@ -323,6 +373,8 @@ def _execute_ability(self, ability_name: str, target: str= None) -> bool:"""Вы
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -330,6 +382,8 @@ logger.err or(f"Ошибка выполнения способности {abilit
 return False
 def _use_ability(self, ability_name: str):
     pass
+pass
+pass
 pass
 pass
 """Автоматическое использование способности"""
@@ -340,9 +394,13 @@ pass
 pass
 pass
 pass
+pass
+pass
 logger.err or(f"Ошибка автоматического использования способности {ability_name}: {e}")
 def _start_retreat(self):
     pass
+pass
+pass
 pass
 pass
 """Начало отступления"""
@@ -352,6 +410,8 @@ pass
 logger.err or(f"Ошибка начала отступления врага {self.entity_id}: {e}")
 def _end_retreat(self):
     pass
+pass
+pass
 pass
 pass
 """Завершение отступления"""
@@ -380,6 +440,8 @@ def _fin d_retreat_position(self) -> Optional[Tuple[float, float, float]]:
     pass
 pass
 pass
+pass
+pass
 """Поиск позиции для отступления"""
 try: except Exception as e: pass
 pass
@@ -388,6 +450,8 @@ logger.err or(f"Ошибка поиска позиции отступления:
 return None
 def _call_for _help(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Призыв помощи"""
 try: if not self.behavi or .call_for _help: return False
@@ -410,6 +474,8 @@ def _calculate_dis tance(self, pos1: Tuple[float, float, float],
     pass
 pass
 pass
+pass
+pass
 pos2: Tuple[float, float, float]) -> float: pass  # Добавлен pass в пустой блок
 """Расчет расстояния между точками"""
 try: except Exception as e: pass
@@ -419,6 +485,8 @@ logger.err or(f"Ошибка расчета расстояния: {e}")
 return 0.0
 def _rec or d_combat_mem or y(self, action: str, target: str, success: bool,
     pass
+pass
+pass
 pass
 pass
 details: Dict[str, Any]= None):
@@ -438,12 +506,16 @@ if len(self.enemy_mem or y.combat_his tory) > 50: self.enemy_mem or y.combat_his
     pass
 pass
 pass
+pass
+pass
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка записи боевой памяти: {e}")
 def enter_combat(self, target: str):
     pass
+pass
+pass
 pass
 pass
 """Вход в бой"""
@@ -453,6 +525,8 @@ pass
 logger.err or(f"Ошибка входа в бой врагом {self.entity_id}: {e}")
 def exit_combat(self):
     pass
+pass
+pass
 pass
 pass
 """Выход из боя"""
@@ -476,6 +550,8 @@ logger.err or(f"Ошибка выхода из боя врагом {self.entity_
 def add_ability(self, ability_name: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавление способности"""
 try: except Exception as e: pass
 pass
@@ -484,6 +560,8 @@ logger.err or(f"Ошибка добавления способности {abilit
 return False
 def set_patrol_route(self, patrol_poin ts: Lis t[Tuple[float, float
     pass
+pass
+pass
 pass
 pass
 float]]):
@@ -501,6 +579,8 @@ def add_drop_item(self, item_id: str, chance: float= 0.1
     pass
 pass
 pass
+pass
+pass
 guaranteed: bool= False):
 pass  # Добавлен pass в пустой блок
 """Добавление предмета в дроп"""
@@ -510,6 +590,8 @@ pass
 logger.err or(f"Ошибка добавления предмета в дроп: {e}")
 def get_enemy_data(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение данных врага"""base_data= super().get_entity_data()
@@ -573,6 +655,8 @@ pass  # Добавлен pass в пустой блок
 return enemy_data
 def get_in fo(self) -> str:"""Получение информации о враге"""
     pass
+pass
+pass
 pass
 pass
 base_in fo= super().get_in fo()

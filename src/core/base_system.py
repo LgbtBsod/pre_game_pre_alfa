@@ -32,6 +32,8 @@ class SystemStats:"""Статистика системы"""update_count: int= 0
     pass
 pass
 pass
+pass
+pass
 total_update_time: float= 0.0
 last_update_time: float= 0.0
 average_update_time: float= 0.0
@@ -45,9 +47,13 @@ class BaseSystem(ISystem, ABC):"""Базовый класс для всех си
     pass
 pass
 pass
+pass
+pass
 Предоставляет общую функциональность и устраняет дублирование кода"""
 def __in it__(self, name: str
     pass
+pass
+pass
 pass
 pass
 pri or ity: SystemPri or ity= SystemPri or ity.NORMAL):
@@ -78,9 +84,13 @@ self._perfor mance_metrics= {:
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы"""
 if self.in itialized: self.logger.warning(f"Система {self.name} уже инициализирована")
     pass
+pass
+pass
 pass
 pass
 return True
@@ -94,15 +104,21 @@ return False
 def update(self, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление системы"""
 if not self.enabled or not self.in itialized or self.destroyed: return True
     pass
+pass
+pass
 pass
 pass
 # Проверка интервала обновления
 current_time= time.time()
 if current_time - self._last_update < self._update_in terval: return True
     pass
+pass
+pass
 pass
 pass
 self._last_update= current_time
@@ -137,9 +153,13 @@ return False
 def destroy(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение системы"""
 if self.destroyed: return True
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -150,9 +170,13 @@ return False
 def pause(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Приостановка системы"""
 if self.state = SystemState.READY: self.state= SystemState.PAUSED
     pass
+pass
+pass
 pass
 pass
 self.logger.in fo(f"Система {self.name} приостановлена")
@@ -161,9 +185,13 @@ return False
 def resume(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Возобновление системы"""
 if self.state = SystemState.PAUSED: self.state= SystemState.READY
     pass
+pass
+pass
 pass
 pass
 self.logger.in fo(f"Система {self.name} возобновлена")
@@ -172,17 +200,25 @@ return False
 def get_state(self) -> SystemState: pass
     pass
 pass
+pass
+pass
 """Получение состояния системы"""return self.state
 def get_pri or ity(self) -> SystemPri or ity:"""Получение приоритета системы"""return self.pri or ity
     pass
+pass
+pass
 pass
 pass
 def is_enabled(self) -> bool:"""Проверка активности системы"""return self.enabled
     pass
 pass
 pass
+pass
+pass
 def set_enabled(self, enabled: bool) -> None:"""Установка активности системы"""
     pass
+pass
+pass
 pass
 pass
 self.enabled= enabled
@@ -190,12 +226,18 @@ if enabled: self.logger.in fo(f"Система {self.name} включена")
     pass
 pass
 pass
+pass
+pass
 else: self.logger.in fo(f"Система {self.name} отключена")
     pass
 pass
 pass
+pass
+pass
 def get_stats(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статистики системы"""return {"name": self.name,
@@ -219,6 +261,8 @@ pass  # Добавлен pass в пустой блок
 def _update_system_stats(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление статистики системы(общий метод для всех систем)"""
 # Базовая реализация - может быть переопределена в наследниках
 try: except Exception as e: pass
@@ -229,22 +273,32 @@ def get_cache(self, key: str) -> Optional[Any]:
     pass
 pass
 pass
+pass
+pass
 """Получение значения из кэша"""
 if keyin self._cache: cache_entry= self._cache[key]
     pass
+pass
+pass
 pass
 pass
 if time.time() - cache_entry["timestamp"] < self._cache_timeout: return cache_entry["value"]
     pass
 pass
 pass
+pass
+pass
 else: del self._cache[key]
     pass
+pass
+pass
 pass
 pass
 return None
 def set_cache(self, key: str, value: Any) -> None: pass
     pass
+pass
+pass
 pass
 """Установка значения в кэш"""self._cache[key]= {"value": value,
 "timestamp": time.time()
@@ -252,9 +306,13 @@ pass
 def clear_cache(self) -> None: pass
     pass
 pass
+pass
+pass
 """Очистка кэша"""self._cache.clear()
 def get_perfor mance_metrics(self) -> Dict[str, Any]:"""Получение метрик производительности"""return self._perfor mance_metrics.copy():
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -264,14 +322,20 @@ def _in itialize_impl(self) -> bool:"""Реализация инициализа
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def _update_impl(self, delta_time: float) -> bool:"""Реализация обновления системы"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def _destroy_impl(self) -> None:"""Реализация уничтожения системы"""
     pass
+pass
+pass
 pass
 pass
 pass

@@ -23,6 +23,8 @@ def check_dependencies():"""Проверка зависимостей"""
     pass
 pass
 pass
+pass
+pass
 prin t("🔧 Проверка зависимостей AI - EVOLVE...")
 prin t( = " * 50)
 required_files= [
@@ -38,9 +40,13 @@ for file_pathin required_files: if os.path.exis ts(file_path):
     pass
 pass
 pass
+pass
+pass
 prin t(f"   ✅ {file_path}")
 else: prin t(f"   ❌ {file_path}")
     pass
+pass
+pass
 pass
 pass
 mis sing_files.append(file_path)
@@ -49,8 +55,12 @@ if mis sing_files: prin t(f"❌ Отсутствуют файлы: {len(mis sing
     pass
 pass
 pass
+pass
+pass
 for file_pathin mis sing_files: prin t(f"   - {file_path}")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -96,12 +106,16 @@ def ma in():
     pass
 pass
 pass
+pass
+pass
 """Основная функция"""
 success= check_dependencies()
 sys.exit(0 if success else 1):
 pass  # Добавлен pass в пустой блок
 if __name__ = "__main __":
     pass
+pass
+pass
 pass
 pass
 ma in()

@@ -33,9 +33,13 @@ class SystemManager(ISystemManager):"""Менеджер систем
     pass
 pass
 pass
+pass
+pass
 Координирует работу всех игровых систем"""
 def __in it__(self, event_system: EventSystem):
     pass
+pass
+pass
 pass
 pass
 self.event_system= event_system
@@ -50,6 +54,8 @@ logger.in fo("Менеджер систем инициализирован")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация менеджера систем"""
 try: logger.in fo("Инициализация менеджера систем...")
 # Подписываемся на события
@@ -62,8 +68,12 @@ for system_namein self.in itialization_ or der: if system_namein self.systems: s
     pass
 pass
 pass
+pass
+pass
 if not system.in itialize():
     pass
+pass
+pass
 pass
 pass
 logger.err or(f"Не удалось инициализировать систему {system_name}")
@@ -81,6 +91,8 @@ def add_system(self, name: str, system: ISystem
     pass
 pass
 pass
+pass
+pass
 dependencies: Lis t[str]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Добавление системы"""
 try: except Exception as e: pass
@@ -91,6 +103,8 @@ return False
 def remove_system(self, name: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление системы"""
 try: if name notin self.systems: return False
 # Проверяем, не зависит ли от этой системы другая система
@@ -98,8 +112,12 @@ for system_name, depsin self.system_dependencies.items():
     pass
 pass
 pass
+pass
+pass
 if namein deps: logger.warning(f"Нельзя удалить систему {name}, от неё зависит {system_name}")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -122,30 +140,44 @@ def get_system(self, name: str) -> Optional[ISystem]:
     pass
 pass
 pass
+pass
+pass
 """Получение системы"""return self.systems.get(name)
 def has_system(self, name: str) -> bool:"""Проверка наличия системы"""return namein self.systems
     pass
+pass
+pass
 pass
 pass
 def get_system_names(self) -> Lis t[str]:"""Получение списка имен систем"""return lis t(self.systems.keys())
     pass
 pass
 pass
+pass
+pass
 def get_system_count(self) -> int:"""Получение количества систем"""return len(self.systems)
     pass
+pass
+pass
 pass
 pass
 def update_all_systems(self, delta_time: float) -> None:"""Обновление всех систем"""
     pass
 pass
 pass
+pass
+pass
 if not self.is _initialized: return
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: logger.err or(f"Ошибка обновления систем: {e}")
 def _determin e_in itialization_ or der(self) -> None: pass
     pass
+pass
+pass
 pass
 """Определение порядка инициализации систем"""
 try:
@@ -162,6 +194,8 @@ def _topological_s or t(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 """Топологическая сортировка систем по зависимостям"""
 try: except Exception as e: pass
 pass
@@ -170,6 +204,8 @@ logger.err or(f"Ошибка топологической сортировки: 
 return lis t(self.systems.keys())
 def get_system_in fo(self, name: str) -> Optional[Dict[str, Any]]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о системе"""if name notin self.systems: return None
@@ -185,10 +221,14 @@ def get_all_systems_in fo(self) -> Dict[str, Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение информации о всех системах"""return {name: self.get_system_in fo(name) for namein self.systems}:
 pass  # Добавлен pass в пустой блок
 def restart_system(self, name: str) -> bool:"""Перезапуск системы"""
     pass
+pass
+pass
 pass
 pass
 try: if name notin self.systems: return False
@@ -200,10 +240,14 @@ if system.in itialize():
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"Система {name} перезапущена")
 return True
 else: logger.err or(f"Не удалось перезапустить систему {name}")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -215,6 +259,8 @@ return False
 def _hand le_system_ready(self, event_data: Any) -> None: pass
     pass
 pass
+pass
+pass
 """Обработка события готовности системы"""
 try: except Exception as e: pass
 pass
@@ -222,6 +268,8 @@ pass
 logger.err or(f"Ошибка обработки события готовности системы: {e}")
 def _hand le_system_err or(self, event_data: Any) -> None: pass
     pass
+pass
+pass
 pass
 """Обработка события ошибки системы"""
 try: system_name= event_data.get('system', 'unknown')
@@ -234,9 +282,13 @@ logger.err or(f"Ошибка обработки события ошибки си
 def on_event(self, event) -> None: pass
     pass
 pass
+pass
+pass
 """Обработка событий(для обратной совместимости)"""
 if event.event_type = "system_ready":
     pass
+pass
+pass
 pass
 pass
 self._hand le_system_ready(event.data)
@@ -244,15 +296,21 @@ elif event.event_type = "system_err or ":
     pass
 pass
 pass
+pass
+pass
 self._hand le_system_err or(event.data)
 def update(self, delta_time: float) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление менеджера систем"""
 try:
 # Обновляем все системы в правильном порядке
 for system_namein self.system_ or der: if system_namein self.systems: system= self.systems[system_name]
     pass
+pass
+pass
 pass
 pass
 try: system.update(delta_time)
@@ -262,10 +320,14 @@ pass
 pass
 pass
 pass
+pass
+pass
 logger.err or(f"Ошибка обновления системы {system_name}: {e}")
 except Exception as e: logger.err or(f"Ошибка обновления менеджера систем: {e}")
 def cleanup(self) -> None: pass
     pass
+pass
+pass
 pass
 """Очистка менеджера систем"""
 logger.in fo("Очистка менеджера систем...")
@@ -274,13 +336,19 @@ def get_all_systems(self) -> Dict[str, ISystem]:
     pass
 pass
 pass
+pass
+pass
 """Получение всех систем"""return self.systems.copy()
 def regis ter_system(self, name: str, system: ISystem) -> bool:"""Регистрация системы(алиас для add_system)"""return self.add_system(name, system)
     pass
 pass
 pass
+pass
+pass
 def unregis ter_system(self, name: str) -> bool:"""Отмена регистрации системы(алиас для remove_system)"""return self.remove_system(name)
     pass
+pass
+pass
 pass
 pass
 # Глобальный экземпляр менеджера систем
@@ -289,9 +357,13 @@ def get_global_system_manager() -> SystemManager:"""Получение глоб�
     pass
 pass
 pass
+pass
+pass
 if _global_system_manageris None: from .event_system import get_global_event_system
 
     pass
+pass
+pass
 pass
 pass
 event_system= get_global_event_system()
@@ -299,6 +371,8 @@ _global_system_manager= SystemManager(event_system)
 return _global_system_manager
 def set_global_system_manager(system_manager: SystemManager) -> None:"""Установка глобального экземпляра менеджера систем"""
     pass
+pass
+pass
 pass
 pass
 global _global_system_manager

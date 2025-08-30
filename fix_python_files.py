@@ -201,13 +201,23 @@ def create_backup_with_timestamp(filepath):
     """Создает резервную копию файла с временной меткой."""
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_path = f"{filepath}.backup_{timestamp}"
+    
+    # Используем директорию .backups для резервных копий
+    backup_dir = ".backups"
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+    
+    # Создаем имя файла с относительным путем
+    relative_path = os.path.relpath(filepath, '.')
+    safe_filename = relative_path.replace('/', '_').replace('\\', '_')
+    backup_filename = f"{safe_filename}.backup_{timestamp}"
+    backup_path = os.path.join(backup_dir, backup_filename)
     
     try:
         shutil.copy2(filepath, backup_path)
         return backup_path
     except Exception as e:
-        print(f"    Ошибка создания резервной копии: {e}")
+        print(f"    ❌ Ошибка создания резервной копии: {e}")
         return None
 
 def emergency_repair(content):
@@ -278,6 +288,119 @@ def create_file_integrity_check(filepath):
     except Exception as e:
         print(f"    ⚠️ Не удалось создать файл проверки целостности: {e}")
         return False
+
+def cleanup_backup_files():
+    """Удаляет резервные копии после успешной проверки проекта."""
+    print("🧹 Очистка резервных копий...")
+    
+    backup_files = []
+    integrity_files = []
+    
+    # Ищем все файлы бэкапа и проверки целостности
+    for root, _, files in os.walk('.'):
+        for file in files:
+            filepath = os.path.join(root, file)
+            if file.endswith('.backup_'):
+                backup_files.append(filepath)
+            elif file.endswith('.integrity'):
+                integrity_files.append(filepath)
+    
+    print(f"  📁 Найдено резервных копий: {len(backup_files)}")
+    print(f"  📋 Найдено файлов проверки целостности: {len(integrity_files)}")
+    
+    if not backup_files:
+        print("  ✅ Резервные копии не найдены")
+        return
+    
+    # Проверяем целостность всех Python файлов
+    python_files = []
+    for root, _, files in os.walk('.'):
+        for file in files:
+            if file.endswith('.py') and not file.startswith('.'):
+                filepath = os.path.join(root, file)
+                python_files.append(filepath)
+    
+    print(f"  🔍 Проверяю целостность {len(python_files)} Python файлов...")
+    
+    healthy_files = 0
+    problematic_files = []
+    
+    for filepath in python_files:
+        try:
+            # Проверяем синтаксис
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Пытаемся скомпилировать
+            ast.parse(content)
+            healthy_files += 1
+            
+        except Exception as e:
+            problematic_files.append((filepath, str(e)))
+    
+    print(f"  ✅ Здоровых файлов: {healthy_files}")
+    print(f"  ❌ Проблемных файлов: {len(problematic_files)}")
+    
+    # Если все файлы здоровы, удаляем резервные копии
+    if len(problematic_files) == 0:
+        print("  🎉 Проект полностью здоров! Удаляю резервные копии...")
+        
+        deleted_backups = 0
+        for backup_file in backup_files:
+            try:
+                os.remove(backup_file)
+                deleted_backups += 1
+            except Exception as e:
+                print(f"    ⚠️ Не удалось удалить {backup_file}: {e}")
+        
+        print(f"  ✅ Удалено резервных копий: {deleted_backups}")
+        
+        # Также удаляем файлы проверки целостности
+        deleted_integrity = 0
+        for integrity_file in integrity_files:
+            try:
+                os.remove(integrity_file)
+                deleted_integrity += 1
+            except Exception as e:
+                print(f"    ⚠️ Не удалось удалить {integrity_file}: {e}")
+        
+        print(f"  ✅ Удалено файлов проверки целостности: {deleted_integrity}")
+        
+    else:
+        print("  ⚠️ Проект имеет проблемы, резервные копии сохранены")
+        print("  📋 Список проблемных файлов:")
+        for filepath, error in problematic_files[:5]:  # Показываем первые 5
+            print(f"    - {filepath}: {error}")
+        if len(problematic_files) > 5:
+            print(f"    ... и еще {len(problematic_files) - 5} файлов")
+
+def smart_backup_management():
+    """Умное управление резервными копиями с автоматической очисткой."""
+    print("🧠 Умное управление резервными копиями...")
+    
+    # Создаем директорию для резервных копий если её нет
+    backup_dir = ".backups"
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir)
+        print(f"  📁 Создана директория для резервных копий: {backup_dir}")
+    
+    # Перемещаем существующие резервные копии в специальную директорию
+    moved_backups = 0
+    for root, _, files in os.walk('.'):
+        for file in files:
+            if file.endswith('.backup_') and root != backup_dir:
+                old_path = os.path.join(root, file)
+                new_path = os.path.join(backup_dir, file)
+                try:
+                    shutil.move(old_path, new_path)
+                    moved_backups += 1
+                except Exception as e:
+                    print(f"    ⚠️ Не удалось переместить {old_path}: {e}")
+    
+    if moved_backups > 0:
+        print(f"  📦 Перемещено резервных копий в {backup_dir}: {moved_backups}")
+    
+    return backup_dir
 
 def fix_indentation(content):
     """Заменяет табы на 4 пробела и нормализует отступы."""
@@ -647,6 +770,9 @@ def main():
     current_dir = os.getcwd()
     print(f"Начинаю обработку Python-файлов в директории: {current_dir}")
     
+    # Настраиваем умное управление резервными копиями
+    backup_dir = smart_backup_management()
+    
     python_files = []
     for root, _, files in os.walk(current_dir):
         for file in files:
@@ -661,6 +787,13 @@ def main():
         process_file(filepath)
     
     print(f"\nОбработка завершена. Обработано файлов: {len(python_files)}")
+    
+    # После обработки всех файлов проверяем здоровье проекта
+    print("\n" + "=" * 50)
+    print("🔍 Проверка здоровья проекта...")
+    
+    # Автоматическая очистка резервных копий если проект здоров
+    cleanup_backup_files()
 
 def setup_file_monitoring():
     """Настраивает мониторинг файлов для предотвращения повреждений."""
@@ -683,16 +816,68 @@ def setup_file_monitoring():
 - Используйте `python -m py_compile <файл>` для проверки
 
 ### 3. Восстановление
-- При повреждении используйте файлы `.backup_*`
+- При повреждении используйте файлы в директории `.backups/`
 - Запускайте экстренный ремонт для критических повреждений
 
 ### 4. Мониторинг в реальном времени
 - Следите за размером файлов
 - Проверяйте хеши в файлах `.integrity`
 - Обращайте внимание на предупреждения Python
+
+### 5. Умное управление резервными копиями
+- Резервные копии автоматически сохраняются в `.backups/`
+- При здоровом состоянии проекта бэкапы автоматически удаляются
+- Ручная очистка: `python -c "from fix_python_files import cleanup_backup_files; cleanup_backup_files()"`
 """)
     
     print(f"✅ Создан файл руководства: {monitor_file}")
+
+def manual_cleanup():
+    """Функция для ручной очистки резервных копий."""
+    print("🧹 Ручная очистка резервных копий...")
+    cleanup_backup_files()
+
+def show_backup_status():
+    """Показывает статус резервных копий."""
+    print("📊 Статус резервных копий...")
+    
+    backup_dir = ".backups"
+    if not os.path.exists(backup_dir):
+        print("  📁 Директория резервных копий не найдена")
+        return
+    
+    backup_files = []
+    for file in os.listdir(backup_dir):
+        if file.endswith('.backup_'):
+            backup_files.append(file)
+    
+    if not backup_files:
+        print("  ✅ Резервные копии не найдены")
+        return
+    
+    print(f"  📁 Найдено резервных копий: {len(backup_files)}")
+    print("  📋 Список резервных копий:")
+    
+    # Группируем по исходным файлам
+    file_groups = {}
+    for backup_file in backup_files:
+        # Извлекаем имя исходного файла
+        parts = backup_file.split('.backup_')
+        if len(parts) >= 2:
+            original_file = parts[0].replace('_', '/').replace('_', '\\')
+            timestamp = parts[1]
+            if original_file not in file_groups:
+                file_groups[original_file] = []
+            file_groups[original_file].append(timestamp)
+    
+    for original_file, timestamps in file_groups.items():
+        print(f"    📄 {original_file}: {len(timestamps)} версий")
+        for timestamp in sorted(timestamps)[-3:]:  # Показываем последние 3
+            print(f"      - {timestamp}")
+        if len(timestamps) > 3:
+            print(f"      ... и еще {len(timestamps) - 3} версий")
+    
+    print(f"\n  💡 Для очистки используйте: cleanup_backup_files()")
 
 if __name__ == '__main__':
     print("🚀 Запуск улучшенной утилиты исправления Python файлов")
@@ -706,8 +891,13 @@ if __name__ == '__main__':
     
     print("\n" + "=" * 60)
     print("🎉 Обработка завершена!")
-    print("💡 Для предотвращения проблем в будущем:")
+    
+    # Показываем финальный статус резервных копий
+    show_backup_status()
+    
+    print("\n💡 Для предотвращения проблем в будущем:")
     print("   - Регулярно запускайте эту утилиту")
-    print("   - Проверяйте файлы .integrity")
-    print("   - Используйте резервные копии")
+    print("   - Резервные копии автоматически управляются")
+    print("   - При здоровом проекте бэкапы удаляются")
+    print("   - Ручная очистка: manual_cleanup()")
     print("=" * 60)

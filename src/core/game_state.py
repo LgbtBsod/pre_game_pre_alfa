@@ -24,6 +24,8 @@ class GameState(Enum):"""Состояния игры"""
     pass
 pass
 pass
+pass
+pass
 INITIALIZING= auto()      # Инициализация
 MAIN_MENU= auto()         # Главное меню
 LOADING= auto()           # Загрузка

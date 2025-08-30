@@ -30,6 +30,8 @@ class Mem or yType(Enum):"""Типы памяти"""
     pass
 pass
 pass
+pass
+pass
 PLAYER= "player"
 ENEMY= "enemy"
 SHARED= "shared"class ExperienceCateg or y(Enum):"""Категории опыта"""
@@ -47,6 +49,8 @@ class ExperienceEntry:"""Запись опыта"""categ or y: ExperienceCateg o
     pass
 pass
 pass
+pass
+pass
 amount: int
 timestamp: float
 source: str
@@ -56,13 +60,19 @@ def __post_in it__(self):
     pass
 pass
 pass
+pass
+pass
 if self.timestampis None: self.timestamp= time.time()
     pass
+pass
+pass
 pass
 pass
 @dataclass: pass  # Добавлен pass в пустой блок
 class LevelThreshold:"""Порог уровня"""level: int
     pass
+pass
+pass
 pass
 pass
 experience_required: int
@@ -74,8 +84,12 @@ class BaseMem or y(ABC):"""Базовый класс для памяти"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, entity_id: str):
     pass
+pass
+pass
 pass
 pass
 self.entity_id= entity_id
@@ -98,6 +112,8 @@ def add_experience(self, categ or y: ExperienceCateg or y, amount: int,
     pass
 pass
 pass
+pass
+pass
 source: str= "", context: Dict[str, Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Добавление опыта"""
 try: except Exception as e: pass
@@ -108,11 +124,15 @@ return False
 def _check_level_up(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка повышения уровня"""try: current_level= self.level
 required_exp= self._get_experience_for _level(current_level + 1):
 pass  # Добавлен pass в пустой блок
 if self.total_experience >= required_expand current_level < self.max_level: self.level = 1
     pass
+pass
+pass
 pass
 pass
 # Записываем историю повышения
@@ -135,6 +155,8 @@ return False
 def _get_experience_for _level(self, level: int) -> int: pass
     pass
 pass
+pass
+pass
 """Получение требуемого опыта для уровня"""if level <= 1: return 0
 # Формула: base * (scaling ^ (level - 1))
 return int(self.base_experience_per_level * (self.experience_scaling ** (level - 2)))
@@ -143,8 +165,12 @@ def _unlock_level_content(self) -> None:"""Разблокировка конте
 pass
 pass
 pass
+pass
+pass
 def get_experience_progress(self) -> Dict[str, Any]:"""Получение прогресса опыта"""next_level_exp= self._get_experience_for _level(self.level + 1):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -163,9 +189,13 @@ return {"current_level": self.level,
 def get_categ or y_experience(self, categ or y: ExperienceCateg or y) -> int: pass
     pass
 pass
+pass
+pass
 """Получение опыта по категории"""return self.experience.get(categ or y, 0)
 def get_experience_summary(self) -> Dict[str, Any]:"""Получение сводки по опыту"""return {"entity_id": self.entity_id,
     pass
+pass
+pass
 pass
 pass
 "level": self.level,
@@ -180,9 +210,13 @@ class PlayerMem or y(BaseMem or y):
     pass
 pass
 pass
+pass
+pass
 """Память игрока"""
 def __in it__(self, entity_id: str):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(entity_id)
@@ -199,6 +233,8 @@ def add_experience(self, categ or y: ExperienceCateg or y, amount: int,
     pass
 pass
 pass
+pass
+pass
 source: str= "", context: Dict[str, Any]= None,
 multiplier: float= 1.0) -> bool: pass  # Добавлен pass в пустой блок
 """Добавление опыта с множителем"""adjusted_amount= int(amount * multiplier)
@@ -206,6 +242,8 @@ return super().add_experience(categ or y, adjusted_amount, source
 context)
 def _unlock_level_content(self) -> None:"""Разблокировка контента для игрока"""
     pass
+pass
+pass
 pass
 pass
 # Даем очки навыков и атрибутов
@@ -217,9 +255,13 @@ class EnemyMem or yBank(BaseMem or y):
     pass
 pass
 pass
+pass
+pass
 """Общий банк памяти врагов"""
 def __in it__(self, entity_id: str= "enemy_collective"):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(entity_id)
@@ -236,6 +278,8 @@ def add_experience(self, categ or y: ExperienceCateg or y, amount: int,
     pass
 pass
 pass
+pass
+pass
 source: str= "", context: Dict[str, Any]= None,
 multiplier: float= 0.05) -> bool: pass  # Добавлен pass в пустой блок
 """Добавление опыта с низким множителем для врагов"""adjusted_amount= int(amount * multiplier)
@@ -245,9 +289,13 @@ def _unlock_level_content(self) -> None:"""Разблокировка конте
     pass
 pass
 pass
+pass
+pass
 # Эволюция врагов
 if self.level%5 = 0:  # Каждые 5 уровней
     pass
+pass
+pass
 pass
 pass
 self.evolution_stage = 1
@@ -256,6 +304,8 @@ self.adaptation_rate = 0.05
 logger.in fo(f"Враги эволюционировали до стадии {self.evolution_stage}")
 def get_evolution_status(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статуса эволюции врагов"""return {"evolution_stage": self.evolution_stage,
@@ -267,9 +317,13 @@ class Mem or ySystem(BaseComponent):
     pass
 pass
 pass
+pass
+pass
 """Центральная система управления памятью"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -292,6 +346,8 @@ logger.in fo("Система памяти инициализирована")
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы"""
 try:
 # Создаем банк памяти врагов
@@ -308,16 +364,22 @@ return False
 def _regis ter_event_hand lers(self) -> None: pass
     pass
 pass
+pass
+pass
 """Регистрация обработчиков событий"""# TODO: Регистрация обработчиков событий
 pass
 def regis ter_player(self, player_id: str) -> bool:"""Регистрация игрока в системе памяти"""
     pass
 pass
 pass
+pass
+pass
 try: if player_idin self.player_mem or ies: logger.warning(f"Игрок {player_id} уже зарегистрирован")
 return True
 if len(self.player_mem or ies) >= self.max_player_mem or ies: logger.err or(f"Достигнут лимит игроков в системе памяти")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -334,6 +396,8 @@ return False
 def unregis ter_player(self, player_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Отмена регистрации игрока"""
 try: except Exception as e: pass
 pass
@@ -342,6 +406,8 @@ logger.err or(f"Ошибка удаления игрока {player_id}: {e}")
 return False
 def add_player_experience(self, player_id: str
     pass
+pass
+pass
 pass
 pass
 categ or y: ExperienceCateg or y,
@@ -357,8 +423,12 @@ if success: self.total_experience_gain ed = amount
     pass
 pass
 pass
+pass
+pass
 if player_mem or y.level > 1: self.total_level_ups = 1
     pass
+pass
+pass
 pass
 pass
 return success
@@ -369,6 +439,8 @@ logger.err or(f"Ошибка добавления опыта игроку {playe
 return False
 def add_enemy_experience(self, categ or y: ExperienceCateg or y, amount: int,
     pass
+pass
+pass
 pass
 pass
 source: str= "", context: Dict[str, Any]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -382,13 +454,19 @@ def get_player_mem or y(self, player_id: str) -> Optional[PlayerMem or y]:
     pass
 pass
 pass
+pass
+pass
 """Получение памяти игрока"""return self.player_mem or ies.get(player_id)
 def get_enemy_mem or y_bank(self) -> EnemyMem or yBank:"""Получение банка памяти врагов"""return self.enemy_mem or y_bank
     pass
 pass
 pass
+pass
+pass
 def get_mem or y_summary(self) -> Dict[str, Any]:"""Получение сводки по системе памяти"""return {"total_players": len(self.player_mem or ies),
     pass
+pass
+pass
 pass
 pass
 "total_experience_gain ed": self.total_experience_gain ed,
@@ -400,6 +478,8 @@ def update(self, delta_time: float):"""Обновление системы па�
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -407,11 +487,15 @@ logger.err or(f"Ошибка обновления системы памяти: {
 def _cleanup_old_mem or ies(self) -> None: pass
     pass
 pass
+pass
+pass
 """Очистка старых записей памяти"""
 try: current_time= time.time()
 max_age= 86400  # 24 часа
 for player_mem or yin self.player_mem or ies.values():
     pass
+pass
+pass
 pass
 pass
 # Удаляем записи старше 24 часов
@@ -421,12 +505,16 @@ if current_time - entry.timestamp < max_age: pass  # Добавлен pass в п
     pass
 pass
 pass
+pass
+pass
 ]
 # Очищаем историю врагов
 self.enemy_mem or y_bank.experience_his tory= [
 entry for entryin self.enemy_mem or y_bank.experience_his tory: pass  # Добавлен pass в пустой блок
 if current_time - entry.timestamp < max_age: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 ]
@@ -438,6 +526,8 @@ logger.err or(f"Ошибка очистки памяти: {e}")
 def _update_statis tics(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление статистики системы"""
 try: except Exception as e: pass
 pass
@@ -445,6 +535,8 @@ pass
 logger.err or(f"Ошибка обновления статистики: {e}")
 def _on_destroy(self) -> None: pass
     pass
+pass
+pass
 pass
 """Уничтожение системы памяти"""
 try:

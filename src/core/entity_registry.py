@@ -27,19 +27,29 @@ def regis ter_entity(entity_id: str, entity_obj: Any) -> None: with _lock: _regi
     pass
 pass
 pass
+pass
+pass
 def unregis ter_entity(entity_id: str) -> None: with _lock: if entity_idin _regis try: del _regis try[entity_id]
     pass
+pass
+pass
 pass
 pass
 def get_entity(entity_id: str) -> Optional[Any]:
     pass
 pass
 pass
+pass
+pass
 with _lock: return _regis try.get(entity_id)
     pass
 pass
 pass
+pass
+pass
 def clear() -> None: with _lock: _regis try.clear()
     pass
+pass
+pass
 pass
 pass

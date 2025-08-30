@@ -31,11 +31,15 @@ def _configure_console_encoding():
     pass
 pass
 pass
+pass
+pass
 try: except Exception: pass
 pass  # Добавлен pass в пустой блок
 _configure_console_encoding()
 def setup_logging():
     pass
+pass
+pass
 pass
 pass
 """Настройка системы логирования с очисткой старых логов"""
@@ -51,10 +55,14 @@ if logging_config.get("cleanup_on_startup", True):
     pass
 pass
 pass
+pass
+pass
 cleanup_old_logs(log_dir, archive_dir, logging_config)
 # Форматтер для логов
 formatter= logging.F or matter(:
     pass
+pass
+pass
 pass
 pass
 logging_config.get("format", '%(asctime)s -%(name)s -%(levelname)s -%(message)s'),:
@@ -86,9 +94,13 @@ for lib_name, levelin external_libs.items():
     pass
 pass
 pass
+pass
+pass
 try: logging.getLogger(lib_name).setLevel(getattr(logging, level))
 except Exception as e: pass
     pass
+pass
+pass
 pass
 pass
 pass
@@ -101,6 +113,8 @@ prin t(f"📊 Уровень файла: {logging_config.get('file_level', 'DEBU
 prin t(f"📊 Уровень консоли: {logging_config.get('console_level', 'INFO')}")
 def load_logging_config():
     pass
+pass
+pass
 pass
 pass
 """Загрузка конфигурации логирования"""
@@ -127,6 +141,8 @@ def cleanup_old_logs(log_dir: Path, archive_dir: Path, config: dict):"""Очис
     pass
 pass
 pass
+pass
+pass
 try:
 # Получаем все файлы логов(исключаем папку archive)
 log_files= [f for fin log_dir.glob(" * .log") if f.parent = log_dir]:
@@ -135,12 +151,18 @@ if not log_files: prin t("📁 Папка логов пуста")
     pass
 pass
 pass
+pass
+pass
 else: pass
     pass
+pass
+pass
 pass
 # Если есть логи, сохраняем самый последний в архив
 if config.get("save_last_session", True)and log_files: pass
     pass
+pass
+pass
 pass
 # Сортируем по времени модификации(новые сначала)
 log_files.s or t(ke = lambda x: x.stat().st_mtime, revers = True)
@@ -160,6 +182,8 @@ prin t(f"⚠️  Не удалось сохранить лог в архив: {e
 for log_filein log_files: try: pass
     pass
 pass
+pass
+pass
 log_file.unlin k()
 prin t(f"🗑️  Удален старый лог: {log_file.name}")
 except Exception as e: pass
@@ -174,14 +198,20 @@ def cleanup_log_archive(archive_dir: Path, config: dict):
     pass
 pass
 pass
+pass
+pass
 """Очистка архива логов, оставляя только последние 10"""
 try: except Exception as e: prin t(f"⚠️  Ошибка при очистке архива логов: {e}")
 def check_python_version() -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка версии Python"""
 if sys.version_in fo < (3, 8):
     pass
+pass
+pass
 pass
 pass
 prin t("❌ Ошибка: Требуется Python 3.8 или выше")
@@ -191,6 +221,8 @@ return True
 def check_dependencies() -> bool: pass
     pass
 pass
+pass
+pass
 """Проверка зависимостей"""
 required_packages= ['pand a3d', 'numpy']
 optional_packages= ['psutil', 'PIL']
@@ -199,6 +231,8 @@ mis sing_optional= []
 for packagein required_packages: try: pass
     pass
 pass
+pass
+pass
 except Imp or tErr or: pass
 pass
 pass
@@ -206,6 +240,8 @@ mis sing_required.append(package)
 prin t(f"❌ {package} - отсутствует")
 for packagein optional_packages: try: pass
     pass
+pass
+pass
 pass
 except Imp or tErr or: pass
 pass
@@ -216,6 +252,8 @@ if mis sing_required: prin t(f"\n❌ Отсутствуют необходимы
     pass
 pass
 pass
+pass
+pass
 prin t("Установите их командой:")
 prin t(f"pip install {' '.jo in(mis sing_required)}")
 return False
@@ -223,11 +261,15 @@ if mis sing_optional: prin t(f"\n⚠️  Отсутствуют опционал
     pass
 pass
 pass
+pass
+pass
 prin t("Некоторые функции могут работать медленнее")
 prin t(f"pip install {' '.jo in(mis sing_optional)}")
 return True
 def create_direct or ies():
     pass
+pass
+pass
 pass
 pass
 """Создание необходимых директорий"""direct or ies= ["logs",
@@ -245,10 +287,14 @@ for direct or yin direct or ies: dir_path= ROOT_DIR / direct or y
     pass
 pass
 pass
+pass
+pass
 dir_path.mkdir(parent = True, exis t_o = True)
 prin t(f"📁 Создана директория: {direct or y}")
 def initialize_game():
     pass
+pass
+pass
 pass
 pass
 """Инициализация игры"""
@@ -263,6 +309,8 @@ def cleanup_on_exit():
     pass
 pass
 pass
+pass
+pass
 """Очистка ресурсов при выходе из игры"""
 try: prin t("\n🧹 Очистка ресурсов...")
 # Получаем текущий лог - файл
@@ -271,9 +319,13 @@ if hasattr(root_logger, 'current_log_file')and root_logger.current_log_file: cur
     pass
 pass
 pass
+pass
+pass
 # Если лог - файл существует и не пустой, копируем его в архив
 if current_log.exis ts()and current_log.stat().st_size > 0: try: pass
     pass
+pass
+pass
 pass
 archive_dir= ROOT_DIR / "logs" / "archive"
 archive_dir.mkdir(exis t_o = True)
@@ -289,6 +341,8 @@ prin t("✅ Очистка завершена")
 except Exception as e: prin t(f"⚠️  Ошибка при очистке: {e}")
 def ma in():
     pass
+pass
+pass
 pass
 pass
 """Главная функция"""
@@ -313,6 +367,8 @@ if __name__ = "__main __":
     pass
 pass
 pass
+pass
+pass
 try: except SystemExit: pass
 pass
 pass
@@ -323,5 +379,7 @@ cleanup_on_exit()
 sys.exit(1)
 else: sys.exit(exit_code)
     pass
+pass
+pass
 pass
 pass

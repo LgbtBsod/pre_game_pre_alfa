@@ -36,10 +36,14 @@ class BossPhase(Enum):"""Фазы босса"""PHASE_1= 1
     pass
 pass
 pass
+pass
+pass
 PHASE_2= 2
 PHASE_3= 3
 class BossType(Enum):"""Типы боссов"""
     pass
+pass
+pass
 pass
 pass
 ALPHA_MUTANT= "alpha_mutant"
@@ -48,6 +52,8 @@ EVOLUTIONARY= "evolutionary"
 GENETIC_MASTER= "genetic_master"@dataclass: pass  # Добавлен pass в пустой блок
 class BossAbility:"""Способность босса"""ability_id: str
     pass
+pass
+pass
 pass
 pass
 name: str
@@ -70,12 +76,16 @@ class BossWeakness:"""Слабость босса"""damage_type: DamageType
     pass
 pass
 pass
+pass
+pass
 multiplier: float
 phase: BossPhase
 description: str
 @dataclass: pass  # Добавлен pass в пустой блок
 class BossPhaseData:"""Данные фазы босса"""phase: BossPhase
     pass
+pass
+pass
 pass
 pass
 health_threshold: float  # Процент здоровья для активации
@@ -90,8 +100,12 @@ class Boss(BaseEntity):"""Класс босса - многофазовый пр�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, boss_id: str, name: str, boss_type: BossType
     pass
+pass
+pass
 pass
 pass
 position: Tuple[float, float, float]):
@@ -132,10 +146,14 @@ logger.in fo(f"Создан босс {name} типа {boss_type.value}")
 def _in itialize_boss_type(self) -> None: pass
     pass
 pass
+pass
+pass
 """Инициализация типа босса"""if self.boss_type = BossType.ALPHA_MUTANT: self.max_health= 1200
 self.health= self.max_health
 elif self.boss_type = BossType.CHIMERA: self.max_health= 1500
     pass
+pass
+pass
 pass
 pass
 self.health= self.max_health
@@ -143,14 +161,20 @@ elif self.boss_type = BossType.EVOLUTIONARY: self.max_health= 2000
     pass
 pass
 pass
+pass
+pass
 self.health= self.max_health
 elif self.boss_type = BossType.GENETIC_MASTER: self.max_health= 3000
     pass
 pass
 pass
+pass
+pass
 self.health= self.max_health
 def _create_phase_data(self) -> None:"""Создание данных для фаз"""
     pass
+pass
+pass
 pass
 pass
 # Фаза 1
@@ -190,21 +214,31 @@ pass  # Добавлен pass в пустой блок
 def _create_abilities(self) -> None: pass
     pass
 pass
+pass
+pass
 """Создание способностей босса"""if self.boss_type = BossType.ALPHA_MUTANT: self._create_alpha_mutant_abilities()
 elif self.boss_type = BossType.CHIMERA: self._create_chimera_abilities()
     pass
+pass
+pass
 pass
 pass
 elif self.boss_type = BossType.EVOLUTIONARY: self._create_evolutionary_abilities()
     pass
 pass
 pass
+pass
+pass
 elif self.boss_type = BossType.GENETIC_MASTER: self._create_genetic_master_abilities()
     pass
 pass
 pass
+pass
+pass
 def _create_alpha_mutant_abilities(self) -> None:"""Создание способностей Alpha Mutant"""
     pass
+pass
+pass
 pass
 pass
 # Базовая атака
@@ -272,6 +306,8 @@ unlocke = False
 def _create_chimera_abilities(self) -> None: pass
     pass
 pass
+pass
+pass
 """Создание способностей Chimera"""
 # Базовая атака
 self.abilities["basic_attack"]= BossAbility(
@@ -337,6 +373,8 @@ unlocke = False
 def _create_evolutionary_abilities(self) -> None: pass
     pass
 pass
+pass
+pass
 """Создание способностей Evolutionary"""# TODO: Реализовать способности Evolutionary
 pass
 def _create_genetic_master_abilities(self) -> None:"""Создание способностей Genetic Master"""# TODO: Реализовать способности Genetic Master
@@ -344,8 +382,12 @@ def _create_genetic_master_abilities(self) -> None:"""Создание спос�
 pass
 pass
 pass
+pass
+pass
 def _create_weaknesses(self) -> None:"""Создание слабостей босса"""
     pass
+pass
+pass
 pass
 pass
 # Слабости по фазам
@@ -371,8 +413,12 @@ def _create_vis ual_in dicat or s(self) -> None:"""Создание визуал
 pass
 pass
 pass
+pass
+pass
 def update_phase(self) -> bool:"""Обновление фазы босса на основе здоровья"""
     pass
+pass
+pass
 pass
 pass
 try: except Exception as e: pass
@@ -382,6 +428,8 @@ logger.err or(f"Ошибка обновления фазы босса: {e}")
 return False
 def _transition_to_phase(self, new_phase: BossPhase) -> bool: pass
     pass
+pass
+pass
 pass
 """Переход к новой фазе"""
 try: if self.is _phase_transitioning: return False
@@ -408,6 +456,8 @@ return False
 def _unlock_phase_abilities(self) -> None: pass
     pass
 pass
+pass
+pass
 """Разблокировка способностей фазы"""
 try: except Exception as e: pass
 pass
@@ -415,6 +465,8 @@ pass
 logger.err or(f"Ошибка разблокировки способностей: {e}")
 def _update_phase_weaknesses(self) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление слабостей для новой фазы"""
 try: phase_data= self.phase_data[self.current_phase]
@@ -425,14 +477,20 @@ for resis tance_idin phase_data.resis tances: if resis tance_id = "physical":
     pass
 pass
 pass
+pass
+pass
 self.resis tances[DamageType.PHYSICAL]= 0.3
 elif resis tance_id = "lightning":
     pass
 pass
 pass
+pass
+pass
 self.resis tances[DamageType.LIGHTNING]= 0.4
 elif resis tance_id = "acid":
     pass
+pass
+pass
 pass
 pass
 self.resis tances[DamageType.ACID]= 0.5
@@ -443,6 +501,8 @@ logger.err or(f"Ошибка обновления слабостей: {e}")
 def _update_vis ual_in dicat or s(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление визуальных индикаторов"""
 try: except Exception as e: pass
 pass
@@ -451,10 +511,14 @@ logger.err or(f"Ошибка обновления визуальных инди�
 def _play_phase_transition_effects(self) -> None: pass
     pass
 pass
+pass
+pass
 """Воспроизведение эффектов перехода фазы"""
 try: phase_data= self.phase_data[self.current_phase]
 for effect_idin phase_data.phase_transition_effects: if effect_id = "phase_1_complete":
     pass
+pass
+pass
 pass
 pass
 self._play_phase_1_complete_effect()
@@ -462,9 +526,13 @@ elif effect_id = "phase_2_complete":
     pass
 pass
 pass
+pass
+pass
 self._play_phase_2_complete_effect()
 elif effect_id = "phase_3_complete":
     pass
+pass
+pass
 pass
 pass
 self._play_phase_3_complete_effect()
@@ -472,14 +540,20 @@ elif effect_id = "unlock_special_abilities":
     pass
 pass
 pass
+pass
+pass
 self._play_unlock_special_abilities_effect()
 elif effect_id = "unlock_ultimate":
     pass
 pass
 pass
+pass
+pass
 self._play_unlock_ultimate_effect()
 elif effect_id = "fin al_for m":
     pass
+pass
+pass
 pass
 pass
 self._play_fin al_for m_effect():
@@ -491,11 +565,15 @@ logger.err or(f"Ошибка воспроизведения эффектов п�
 def _play_phase_1_complete_effect(self) -> None: pass
     pass
 pass
+pass
+pass
 """Эффект завершения первой фазы"""
 # TODO: Визуальные и звуковые эффекты
 logger.in fo("Воспроизведен эффект завершения первой фазы")
 def _play_phase_2_complete_effect(self) -> None: pass
     pass
+pass
+pass
 pass
 """Эффект завершения второй фазы"""
 # TODO: Визуальные и звуковые эффекты
@@ -503,11 +581,15 @@ logger.in fo("Воспроизведен эффект завершения вт�
 def _play_phase_3_complete_effect(self) -> None: pass
     pass
 pass
+pass
+pass
 """Эффект завершения третьей фазы"""
 # TODO: Визуальные и звуковые эффекты
 logger.in fo("Воспроизведен эффект завершения третьей фазы")
 def _play_unlock_special_abilities_effect(self) -> None: pass
     pass
+pass
+pass
 pass
 """Эффект разблокировки специальных способностей"""
 # TODO: Визуальные и звуковые эффекты
@@ -515,17 +597,23 @@ logger.in fo("Воспроизведен эффект разблокировки
 def _play_unlock_ultimate_effect(self) -> None: pass
     pass
 pass
+pass
+pass
 """Эффект разблокировки ультимативной способности"""
 # TODO: Визуальные и звуковые эффекты
 logger.in fo("Воспроизведен эффект разблокировки ультимативной способности")
 def _play_fin al_for m_effect(self) -> None: pass
     pass
 pass
+pass
+pass
 """Эффект финальной формы"""
 # TODO: Визуальные и звуковые эффекты
 logger.in fo("Воспроизведен эффект финальной формы")
 def can_use_ability(self, ability_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Проверка возможности использования способности"""
 try: except Exception as e: pass
@@ -535,6 +623,8 @@ logger.err or(f"Ошибка проверки способности {ability_id
 return False
 def use_ability(self, ability_id: str, target_position: Tuple[float, float
     pass
+pass
+pass
 pass
 pass
 float]= None) -> bool: pass  # Добавлен pass в пустой блок
@@ -550,8 +640,12 @@ if target_position: self._apply_ability_effects(ability, target_position)
     pass
 pass
 pass
+pass
+pass
 else: self._apply_ability_effects(ability, self.getPos())
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Босс {self.name} использовал способность: {ability.name}")
@@ -565,6 +659,8 @@ def _apply_ability_effects(self, ability: BossAbility
     pass
 pass
 pass
+pass
+pass
 target_position: Tuple[float, float, float]) -> None: pass  # Добавлен pass в пустой блок
 """Применение эффектов способности"""
 try: except Exception as e: pass
@@ -573,6 +669,8 @@ pass
 logger.err or(f"Ошибка применения эффектов способности: {e}")
 def take_damage(self, damage: int, damage_type: DamageType, source: str= "") -> int: pass
     pass
+pass
+pass
 pass
 """Получение урона с учетом сопротивлений"""
 try:
@@ -584,8 +682,12 @@ for weaknessin self.weaknesses.values():
     pass
 pass
 pass
+pass
+pass
 if weakness.damage_type = damage_typeand self.current_phase = weakness.phase: fin al_damage= int(fin al_damage * weakness.multiplier)
     pass
+pass
+pass
 pass
 pass
 break
@@ -598,6 +700,8 @@ if self.health <= 0: self._on_death()
     pass
 pass
 pass
+pass
+pass
 logger.debug(f"Босс {self.name} получил {fin al_damage} урона типа {damage_type.value}")
 return fin al_damage
 except Exception as e: pass
@@ -608,6 +712,8 @@ return 0
 def _on_death(self) -> None: pass
     pass
 pass
+pass
+pass
 """Обработка смерти босса"""
 try: except Exception as e: pass
 pass
@@ -616,6 +722,8 @@ logger.err or(f"Ошибка обработки смерти босса: {e}")
 def update(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление босса"""
 try:
 # Завершаем переход фазы
@@ -623,8 +731,12 @@ if self.is _phase_transitioning: current_time= time.time()
     pass
 pass
 pass
+pass
+pass
 if current_time - self.phase_transition_time >= self.phase_transition_duration: self.is _phase_transitioning= False
     pass
+pass
+pass
 pass
 pass
 # Обновляем способности
@@ -638,6 +750,8 @@ logger.err or(f"Ошибка обновления босса: {e}")
 def _update_abilities(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление способностей"""
 try: except Exception as e: pass
 pass
@@ -645,6 +759,8 @@ pass
 logger.err or(f"Ошибка обновления способностей: {e}")
 def get_boss_status(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статуса босса"""try: return {"boss_id": self.entity_id,
@@ -669,6 +785,8 @@ logger.err or(f"Ошибка получения статуса босса: {e}")
 return {}
 def get_phase_col or(self) -> Tuple[float, float, float, float]:
     pass
+pass
+pass
 pass
 pass
 """Получение цвета фазы"""

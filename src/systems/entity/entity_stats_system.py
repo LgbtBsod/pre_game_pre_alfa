@@ -39,6 +39,8 @@ class StatModifier:"""Модификатор характеристики"""
     pass
 pass
 pass
+pass
+pass
 modifier_id: str
 stat_type: StatType
 value: float
@@ -52,6 +54,8 @@ current_stacks: int= 1
 @dataclass: pass  # Добавлен pass в пустой блок
 class EntityStats:"""Характеристики сущности"""
     pass
+pass
+pass
 pass
 pass
 entity_id: str
@@ -69,6 +73,8 @@ max_stamin a: int= BASE_STATS["stamin a"]
 attack: int= BASE_STATS["attack"]
 defense: int= BASE_STATS["defense"]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -110,9 +116,13 @@ class EntityStatsSystem(ISystem):
     pass
 pass
 pass
+pass
+pass
 """Система управления характеристиками сущностей"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 self._system_name= "entity_stats"
@@ -150,9 +160,13 @@ def system_name(self) -> str: return self._system_name
     pass
 pass
 pass
+pass
+pass
 @property
 def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
     pass
+pass
+pass
 pass
 pass
 @property
@@ -160,14 +174,20 @@ def system_state(self) -> SystemState: return self._system_state
     pass
 pass
 pass
+pass
+pass
 @property
 def dependencies(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 return self._dependencies
 def initialize(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Инициализация системы характеристик"""
 try: except Exception as e: pass
@@ -179,6 +199,8 @@ return False
 def update(self, delta_time: float) -> bool: pass
     pass
 pass
+pass
+pass
 """Обновление системы характеристик"""
 try: if self._system_state != SystemState.READY: return False
 start_time= time.time()
@@ -188,6 +210,8 @@ pass  # Добавлен pass в пустой блок
 # Обновляем регенерацию
 if self.system_settings['auto_regen_enabled']:
     pass
+pass
+pass
 pass
 pass
 self._update_regeneration(delta_time)
@@ -206,6 +230,8 @@ return False
 def pause(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Приостановка системы характеристик"""
 try: except Exception as e: pass
 pass
@@ -214,6 +240,8 @@ logger.err or(f"Ошибка приостановки системы харак�
 return False
 def resume(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Возобновление системы характеристик"""
 try: if self._system_state = SystemState.PAUSED: self._system_state= SystemState.READY
@@ -228,6 +256,8 @@ return False
 def cleanup(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Очистка системы характеристик"""
 try: except Exception as e: pass
 pass
@@ -236,6 +266,8 @@ logger.err or(f"Ошибка очистки системы характерис�
 return False
 def get_system_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о системе"""return {
@@ -252,6 +284,8 @@ def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обраб�
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 pass
@@ -259,6 +293,8 @@ logger.err or(f"Ошибка обработки события {event_type}: {e}
 return False
 def _setup_stats_system(self) -> None: pass
     pass
+pass
+pass
 pass
 """Настройка системы характеристик"""
 try:
@@ -271,6 +307,8 @@ logger.warning(f"Не удалось настроить систему хара�
 def _update_stat_modifiers(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление модификаторов характеристик"""
 try: except Exception as e: pass
 pass
@@ -279,10 +317,14 @@ logger.warning(f"Ошибка обновления модификаторов х
 def _update_regeneration(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление регенерации"""
 try: current_time= time.time()
 for entity_id, statsin self.entity_stats.items():
     pass
+pass
+pass
 pass
 pass
 # Проверяем, нужно ли обновлять регенерацию
@@ -290,8 +332,12 @@ if hasattr(stats, '_last_regen_time'):
     pass
 pass
 pass
+pass
+pass
 if current_time - stats._last_regen_time < self.system_settings['regen_in terval']:
     pass
+pass
+pass
 pass
 pass
 contin ue
@@ -299,9 +345,13 @@ else: stats._last_regen_time= current_time
     pass
 pass
 pass
+pass
+pass
 # Регенерация здоровья
 if stats.health < stats.max_health: regen_amount= int(stats.constitution * 0.1) + 1
     pass
+pass
+pass
 pass
 pass
 stats.health= m in(stats.max_health
@@ -311,10 +361,14 @@ if stats.mana < stats.max_mana: regen_amount= int(stats.in telligence * 0.1) + 1
     pass
 pass
 pass
+pass
+pass
 stats.mana= m in(stats.max_mana, stats.mana + regen_amount)
 # Регенерация выносливости
 if stats.stamin a < stats.max_stamin a: regen_amount= int(stats.agility * 0.1) + 1
     pass
+pass
+pass
 pass
 pass
 stats.stamin a= m in(stats.max_stamin a
@@ -327,6 +381,8 @@ logger.warning(f"Ошибка обновления регенерации: {e}")
 def _cleanup_expired_modifiers(self) -> None: pass
     pass
 pass
+pass
+pass
 """Очистка истекших модификаторов"""
 try: except Exception as e: pass
 pass
@@ -334,6 +390,8 @@ pass
 logger.warning(f"Ошибка очистки истекших модификаторов: {e}")
 def _update_system_stats(self) -> None: pass
     pass
+pass
+pass
 pass
 """Обновление статистики системы"""
 try: self.system_stats['entities_count']= len(self.entity_stats)
@@ -346,6 +404,8 @@ logger.warning(f"Ошибка обновления статистики сист
 def _hand le_entity_created(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события создания сущности"""
 try: except Exception as e: pass
 pass
@@ -355,10 +415,14 @@ return False
 def _hand le_entity_destroyed(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события уничтожения сущности"""
 try: entity_id= event_data.get('entity_id')
 if entity_id: return self.destroy_entity_stats(entity_id)
     pass
+pass
+pass
 pass
 pass
 return False
@@ -370,6 +434,8 @@ return False
 def _hand le_experience_gain ed(self, event_data: Dict[str, Any]) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка события получения опыта"""
 try: except Exception as e: pass
 pass
@@ -378,6 +444,8 @@ logger.err or(f"Ошибка обработки события получени�
 return False
 def _hand le_stats_modified(self, event_data: Dict[str, Any]) -> bool: pass
     pass
+pass
+pass
 pass
 """Обработка события изменения характеристик"""
 try: entity_id= event_data.get('entity_id')
@@ -389,6 +457,8 @@ source= event_data.get('source', 'system')
 duration= event_data.get('duration', 0.0)
 if entity_idand stat_typeand valueis not None: return self.add_stat_modifier(entity_id, stat_type, value
     pass
+pass
+pass
 pass
 pass
 modifier_type, source, duration):
@@ -403,6 +473,8 @@ def create_entity_stats(self, entity_id: str, initial_stats: Dict[str
     pass
 pass
 pass
+pass
+pass
 Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Создание характеристик для сущности"""
 try: except Exception as e: pass
@@ -413,6 +485,8 @@ return False
 def destroy_entity_stats(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Уничтожение характеристик сущности"""
 try: if entity_id notin self.entity_stats: return False
 # Удаляем характеристики
@@ -420,6 +494,8 @@ del self.entity_stats[entity_id]
 # Удаляем модификаторы
 if entity_idin self.stat_modifiers: del self.stat_modifiers[entity_id]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -433,6 +509,8 @@ return False
 def add_experience(self, entity_id: str, experience_amount: int) -> bool: pass
     pass
 pass
+pass
+pass
 """Добавление опыта сущности"""
 try: except Exception as e: pass
 pass
@@ -442,11 +520,15 @@ return False
 def _level_up(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Повышение уровня сущности"""
 try: if entity_id notin self.entity_stats: return False
 stats= self.entity_stats[entity_id]
 if stats.level >= self.system_settings['max_level']:
     pass
+pass
+pass
 pass
 pass
 logger.debug(f"Сущность {entity_id} достигла максимального уровня")
@@ -491,6 +573,8 @@ def add_stat_modifier(self, entity_id: str, stat_type: StatType
     pass
 pass
 pass
+pass
+pass
 value: float,
 modifier_type: str= 'flat', source: str= 'system', duration: float= 0.0) -> bool: pass  # Добавлен pass в пустой блок
 """Добавление модификатора характеристики"""
@@ -503,6 +587,8 @@ def _apply_modifier_to_stats(self, entity_id: str
     pass
 pass
 pass
+pass
+pass
 modifier: StatModifier) -> None: pass  # Добавлен pass в пустой блок
 """Применение модификатора к характеристикам"""
 try: if entity_id notin self.entity_stats: return
@@ -511,9 +597,13 @@ if modifier.modifier_type = 'flat':
     pass
 pass
 pass
+pass
+pass
 # Плоский модификатор
 if modifier.stat_type = StatType.HEALTH: stats.health= max(0, m in(stats.max_health
     pass
+pass
+pass
 pass
 pass
 stats.health + int(modifier.value))):
@@ -522,10 +612,14 @@ elif modifier.stat_type = StatType.MANA: stats.mana= max(0, m in(stats.max_mana
     pass
 pass
 pass
+pass
+pass
 stats.mana + int(modifier.value))):
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.STAMINA: stats.stamin a= max(0, m in(stats.max_stamin a
     pass
+pass
+pass
 pass
 pass
 stats.stamin a + int(modifier.value))):
@@ -534,9 +628,13 @@ elif modifier.stat_type = StatType.ATTACK: stats.attack= max(0, stats.attack + i
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.DEFENSE: stats.defense= max(0
     pass
+pass
+pass
 pass
 pass
 stats.defense + int(modifier.value)):
@@ -545,9 +643,13 @@ elif modifier.stat_type = StatType.SPEED: stats.speed= max(0.1, stats.speed + mo
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.STRENGTH: stats.strength= max(1
     pass
+pass
+pass
 pass
 pass
 stats.strength + int(modifier.value)):
@@ -556,10 +658,14 @@ elif modifier.stat_type = StatType.AGILITY: stats.agility= max(1
     pass
 pass
 pass
+pass
+pass
 stats.agility + int(modifier.value)):
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.INTELLIGENCE: stats.in telligence= max(1
     pass
+pass
+pass
 pass
 pass
 stats.in telligence + int(modifier.value)):
@@ -568,15 +674,21 @@ elif modifier.stat_type = StatType.CONSTITUTION: stats.constitution= max(1
     pass
 pass
 pass
+pass
+pass
 stats.constitution + int(modifier.value)):
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.WISDOM: stats.wis dom= max(1, stats.wis dom + int(modifier.value)):
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.CHARISMA: stats.charis ma= max(1
     pass
+pass
+pass
 pass
 pass
 stats.charis ma + int(modifier.value)):
@@ -585,9 +697,13 @@ elif modifier.modifier_type = 'percent':
     pass
 pass
 pass
+pass
+pass
 # Процентный модификатор
 if modifier.stat_type = StatType.HEALTH: stats.health= int(stats.health * (1 + modifier.value)):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -595,9 +711,13 @@ elif modifier.stat_type = StatType.MANA: stats.mana= int(stats.mana * (1 + modif
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.STAMINA: stats.stamin a= int(stats.stamin a * (1 + modifier.value)):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -605,9 +725,13 @@ elif modifier.stat_type = StatType.ATTACK: stats.attack= int(stats.attack * (1 +
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.DEFENSE: stats.defense= int(stats.defense * (1 + modifier.value)):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -615,9 +739,13 @@ elif modifier.stat_type = StatType.SPEED: stats.speed= stats.speed * (1 + modifi
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.modifier_type = 'multiplier':
     pass
+pass
+pass
 pass
 pass
 # Множительный модификатор
@@ -625,9 +753,13 @@ if modifier.stat_type = StatType.HEALTH: stats.health= int(stats.health * modifi
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.MANA: stats.mana= int(stats.mana * modifier.value):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -635,9 +767,13 @@ elif modifier.stat_type = StatType.STAMINA: stats.stamin a= int(stats.stamin a *
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.ATTACK: stats.attack= int(stats.attack * modifier.value):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -645,9 +781,13 @@ elif modifier.stat_type = StatType.DEFENSE: stats.defense= int(stats.defense * m
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 elif modifier.stat_type = StatType.SPEED: stats.speed= stats.speed * modifier.value: pass  # Добавлен pass в пустой блок
     pass
+pass
+pass
 pass
 pass
 # Обновляем максимальные значения
@@ -655,12 +795,18 @@ if modifier.stat_type = StatType.HEALTH: stats.health= m in(stats.health, stats.
     pass
 pass
 pass
+pass
+pass
 elif modifier.stat_type = StatType.MANA: stats.mana= m in(stats.mana, stats.max_mana)
     pass
 pass
 pass
+pass
+pass
 elif modifier.stat_type = StatType.STAMINA: stats.stamin a= m in(stats.stamin a, stats.max_stamin a)
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -669,6 +815,8 @@ pass
 logger.err or(f"Ошибка применения модификатора для {entity_id}: {e}")
 def get_entity_stats(self, entity_id: str) -> Optional[Dict[str, Any]]:
     pass
+pass
+pass
 pass
 pass
 """Получение характеристик сущности"""
@@ -681,12 +829,16 @@ def get_stat_modifiers(self, entity_id: str) -> Lis t[Dict[str, Any]]:
     pass
 pass
 pass
+pass
+pass
 """Получение модификаторов сущности"""
 try: if entity_id notin self.stat_modifiers: return []
 modifiers_in fo= []:
 pass  # Добавлен pass в пустой блок
 for modifierin self.stat_modifiers[entity_id]:
     pass
+pass
+pass
 pass
 pass
 modifiers_in fo.append({:
@@ -719,6 +871,8 @@ return []
 def remove_stat_modifier(self, entity_id: str, modifier_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Удаление модификатора характеристики"""
 try: except Exception as e: pass
 pass
@@ -729,6 +883,8 @@ def set_stat_value(self, entity_id: str, stat_type: StatType
     pass
 pass
 pass
+pass
+pass
 value: Any) -> bool: pass  # Добавлен pass в пустой блок
 """Установка значения характеристики"""
 try: if entity_id notin self.entity_stats: logger.warning(f"Характеристики сущности {entity_id} не найдены")
@@ -736,6 +892,8 @@ return False
 stats= self.entity_stats[entity_id]
 if hasattr(stats, stat_type.value):
     pass
+pass
+pass
 pass
 pass
 old_value= getattr(stats, stat_type.value)
@@ -757,6 +915,8 @@ else: logger.warning(f"Характеристика {stat_type.value} не на�
     pass
 pass
 pass
+pass
+pass
 return False
 except Exception as e: pass
 pass
@@ -765,6 +925,8 @@ logger.err or(f"Ошибка установки характеристики {st
 return False
 def calculate_damage(self, attacker_id: str, target_id: str
     pass
+pass
+pass
 pass
 pass
 base_damage: int,
@@ -777,6 +939,8 @@ logger.err or(f"Ошибка расчета урона: {e}")
 return base_damage
 def recalculate_stats_from_attributes(self, entity_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Пересчет характеристик из атрибутов"""try: if entity_id notin self.entity_stats: return False
 stats= self.entity_stats[entity_id]
@@ -804,14 +968,20 @@ if old_health > 0: health_ratio= old_health / stats.max_health
     pass
 pass
 pass
+pass
+pass
 stats.health= int(stats.max_health * health_ratio)
 if old_mana > 0: mana_ratio= old_mana / stats.max_mana
     pass
 pass
 pass
+pass
+pass
 stats.mana= int(stats.max_mana * mana_ratio)
 if old_stamin a > 0: stamin a_ratio= old_stamin a / stats.max_stamin a
     pass
+pass
+pass
 pass
 pass
 stats.stamin a= int(stats.max_stamin a * stamin a_ratio)

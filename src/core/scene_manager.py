@@ -33,6 +33,8 @@ class Scene(ABC):"""Базовый класс для всех сцен"""def __i
     pass
 pass
 pass
+pass
+pass
 self.name= name
 self.scene_manager= None
 self.is _initialized= False
@@ -43,9 +45,13 @@ def initialize(self) -> bool:"""Инициализация сцены"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def update(self, delta_time: float):"""Обновление сцены"""pass
     pass
+pass
+pass
 pass
 pass
 @abstractmethod
@@ -53,9 +59,13 @@ def render(self, render_node):"""Отрисовка сцены"""pass
     pass
 pass
 pass
+pass
+pass
 @abstractmethod
 def hand le_event(self, event):"""Обработка событий"""pass
     pass
+pass
+pass
 pass
 pass
 @abstractmethod
@@ -63,28 +73,42 @@ def cleanup(self):"""Очистка сцены"""pass
     pass
 pass
 pass
+pass
+pass
 def set_vis ible(self, vis ible: bool):"""Установка видимости сцены"""if self.scene_root: if vis ible: self.scene_root.show()
     pass
+pass
+pass
 pass
 pass
 else: self.scene_root.hide()
     pass
 pass
 pass
+pass
+pass
 if self.ui_root: if vis ible: self.ui_root.show()
     pass
+pass
+pass
 pass
 pass
 else: self.ui_root.hide()
     pass
 pass
 pass
+pass
+pass
 class SceneManager(ISceneManager):"""Менеджер сцен для Pand a3D"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, render_node, resource_manager, system_manage = None):
     pass
+pass
+pass
 pass
 pass
 self.render_node= render_node
@@ -112,9 +136,13 @@ def system_name(self) -> str: return self._system_name
     pass
 pass
 pass
+pass
+pass
 @property
 def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
     pass
+pass
+pass
 pass
 pass
 @property
@@ -122,14 +150,20 @@ def system_state(self) -> SystemState: return self._system_state
     pass
 pass
 pass
+pass
+pass
 @property
 def dependencies(self) -> Lis t[str]:
     pass
 pass
 pass
+pass
+pass
 return self._dependencies
 def initialize(self) -> bool:"""Инициализация менеджера сцен"""
     pass
+pass
+pass
 pass
 pass
 try: logger.in fo("Инициализация менеджера сцен...")
@@ -141,9 +175,13 @@ if hasattr(builtin s, 'base')and hasattr(builtin s.base, 'aspect2d'):
     pass
 pass
 pass
+pass
+pass
 self.ui_root= builtin s.base.aspect2d.attachNewNode("ui_root")
 else: pass
     pass
+pass
+pass
 pass
 # fallback: создаем под render2d, если доступен
 self.ui_root= builtin s.base.render2d.attachNewNode("ui_root") if hasattr(builtin s.base, 'render2d') else self.render_node.attachNewNode("ui_root"):
@@ -163,9 +201,13 @@ def regis ter_scene(self, name: str, scene: Scene):
     pass
 pass
 pass
+pass
+pass
 """Регистрация сцены"""
 if namein self.scenes: logger.warning(f"Сцена {name} уже зарегистрирована")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -175,14 +217,20 @@ if self.scenes_root: scene.scene_root= self.scenes_root.attachNewNode(f"scene_{n
     pass
 pass
 pass
+pass
+pass
 if self.ui_root: scene.ui_root= self.ui_root.attachNewNode(f"ui_{name}")
     pass
+pass
+pass
 pass
 pass
 self.scenes[name]= scene
 # Инициализация сцены
 if not scene.in itialize():
     pass
+pass
+pass
 pass
 pass
 logger.err or(f"Не удалось инициализировать сцену {name}")
@@ -195,9 +243,13 @@ def unregis ter_scene(self, name: str):
     pass
 pass
 pass
+pass
+pass
 """Отмена регистрации сцены"""
 if name notin self.scenes: return False
     pass
+pass
+pass
 pass
 pass
 scene= self.scenes[name]
@@ -207,8 +259,12 @@ if scene.scene_root: scene.scene_root.removeNode()
     pass
 pass
 pass
+pass
+pass
 if scene.ui_root: scene.ui_root.removeNode()
     pass
+pass
+pass
 pass
 pass
 del self.scenes[name]
@@ -218,9 +274,13 @@ def set_active_scene(self, name: str):
     pass
 pass
 pass
+pass
+pass
 """Установка активной сцены"""
 if name notin self.scenes: logger.err or(f"Сцена {name} не найдена")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -228,10 +288,14 @@ if self._system_state != SystemState.READY: logger.warning("Попытка см�
     pass
 pass
 pass
+pass
+pass
 return False
 # Скрываем предыдущую активную сцену и скрываем её UI
 if self.active_scene: try: pass
     pass
+pass
+pass
 pass
 except Exception: pass
 pass  # Добавлен pass в пустой блок
@@ -250,9 +314,13 @@ def switch_to_scene(self, name: str, transition_type: str= "in stant"):
     pass
 pass
 pass
+pass
+pass
 """Переключение на сцену с переходом"""
 if name notin self.scenes: logger.err or(f"Сцена {name} не найдена")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -260,9 +328,13 @@ if self.transitioning: logger.warning("Переход уже выполняет�
     pass
 pass
 pass
+pass
+pass
 return False
 if self._system_state != SystemState.READY: logger.warning("Попытка переключения сцены до инициализации SceneManager")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -274,9 +346,13 @@ self.transition_progress= 0.0
 if self.active_scene: try: pass
     pass
 pass
+pass
+pass
 self.active_scene.set_vis ible(False)
 if hasattr(self.active_scene, 'ui_root')and self.active_scene.ui_root: self.active_scene.ui_root.hide()
     pass
+pass
+pass
 pass
 pass
 except Exception: pass
@@ -291,16 +367,22 @@ except Exception: pass
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 try: if self.event_system: self.event_system.emit_event("scene_changed", {"scene": name, "transition": transition_type}, "scene_manager")
 except Exception: pass
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 # Завершаем переход для мгновенного переключения
 if transition_type = "in stant":
     pass
+pass
+pass
 pass
 pass
 self.transitioning= False
@@ -310,9 +392,13 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление менеджера сцен"""# Обновление переходов
 if self.transitioning: self._update_transition(delta_time)
     pass
+pass
+pass
 pass
 pass
 # Обновление активной сцены
@@ -320,12 +406,18 @@ if self.active_scene: self.active_scene.update(delta_time)
     pass
 pass
 pass
+pass
+pass
 def _update_transition(self, delta_time: float):"""Обновление перехода между сценами"""
     pass
 pass
 pass
+pass
+pass
 if self.transition_type = "fade":
     pass
+pass
+pass
 pass
 pass
 self.transition_progress = delta_time / 0.5  # 0.5 секунды на переход
@@ -333,9 +425,13 @@ if self.transition_progress >= 1.0: self.transitioning= False
     pass
 pass
 pass
+pass
+pass
 self.transition_progress= 1.0
 def render(self, render_node):
     pass
+pass
+pass
 pass
 pass
 """Отрисовка активной сцены"""if self.active_scene: self.active_scene.render(render_node)
@@ -343,8 +439,12 @@ def hand le_event(self, event):"""Обработка событий активн
     pass
 pass
 pass
+pass
+pass
 def cleanup(self):"""Очистка менеджера сцен"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка менеджера сцен...")
@@ -353,14 +453,20 @@ for scenein self.scenes.values():
     pass
 pass
 pass
+pass
+pass
 scene.cleanup()
 # Очищаем корневые узлы
 if self.scenes_root: self.scenes_root.removeNode()
     pass
 pass
 pass
+pass
+pass
 if self.ui_root: self.ui_root.removeNode()
     pass
+pass
+pass
 pass
 pass
 self.scenes.clear()
@@ -372,13 +478,19 @@ def get_scene(self, name: str) -> Optional[Scene]:
     pass
 pass
 pass
+pass
+pass
 """Получение сцены по имени"""return self.scenes.get(name)
 def remove_scene(self, name: str) -> bool:"""Удаление сцены"""
     pass
 pass
 pass
+pass
+pass
 if name notin self.scenes: return False
     pass
+pass
+pass
 pass
 pass
 scene= self.scenes[name]
@@ -389,10 +501,14 @@ if self.active_scene = scene: self.active_scene= None
     pass
 pass
 pass
+pass
+pass
 logger.in fo(f"Сцена {name} удалена")
 return True
 def get_active_scene(self) -> Optional[Scene]:
     pass
+pass
+pass
 pass
 pass
 """Получение активной сцены"""return self.active_scene
@@ -400,8 +516,12 @@ def update_active_scene(self, delta_time: float) -> None:"""Обновление
     pass
 pass
 pass
+pass
+pass
 def add_scene(self, name: str, scene: Scene) -> bool:"""Добавление сцены"""
     pass
+pass
+pass
 pass
 pass
 try: if namein self.scenes: logger.warning(f"Сцена {name} уже существует")
@@ -409,6 +529,8 @@ return False
 # Инициализируем сцену
 if not scene.in itialize():
     pass
+pass
+pass
 pass
 pass
 logger.err or(f"Не удалось инициализировать сцену {name}")
@@ -419,6 +541,8 @@ scene.scene_manager= self
 # Если это первая сцена, делаем её активной
 if not self.active_scene: self.active_scene= scene
     pass
+pass
+pass
 pass
 pass
 scene.set_vis ible(True)
@@ -433,6 +557,8 @@ def create_scene(self, name: str, scene_type: str) -> Optional[Scene]:
     pass
 pass
 pass
+pass
+pass
 """Создание сцены по типу"""
 try: except Exception as e: pass
 pass
@@ -441,6 +567,8 @@ logger.err or(f"Ошибка создания сцены {name}: {e}")
 return None
 def destroy_scene(self, name: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Уничтожение сцены"""
 return self.remove_scene(name)

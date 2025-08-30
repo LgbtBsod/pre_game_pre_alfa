@@ -26,6 +26,8 @@ def test_biome_types():"""Тест типов биомов"""
     pass
 pass
 pass
+pass
+pass
 try: from src.systems.w or ld.biome_types import BiomeType, ClimateType
 
 SeasonType, WeatherType
@@ -48,6 +50,8 @@ def test_location_types():
     pass
 pass
 pass
+pass
+pass
 """Тест типов локаций"""
 try: except Exception as e: pass
 pass
@@ -55,6 +59,8 @@ prin t(f"❌ Ошибка тестирования типов локаций: {e
 return False
 def test_biome_manager():
     pass
+pass
+pass
 pass
 pass
 """Тест менеджера биомов"""
@@ -79,6 +85,8 @@ def test_location_manager():
     pass
 pass
 pass
+pass
+pass
 """Тест менеджера локаций"""
 try: except Exception as e: pass
 pass
@@ -86,6 +94,8 @@ prin t(f"❌ Ошибка тестирования менеджера локац
 return False
 def test_w or ld_in tegration():
     pass
+pass
+pass
 pass
 pass
 """Тест интеграции систем мира"""
@@ -109,6 +119,8 @@ def ma in():
     pass
 pass
 pass
+pass
+pass
 """Главная функция тестирования"""
 prin t("🚀 ЗАПУСК ПРОСТЫХ ТЕСТОВ ФАЗЫ 9: МИР И ЛОКАЦИИ")
 prin t( = " * 60)
@@ -125,6 +137,8 @@ for test_name, test_funcin tests: prin t(f"\n🧪 Тестирование {test
     pass
 pass
 pass
+pass
+pass
 try: except Exception as e: pass
 pass
 prin t(f"❌ Критическая ошибка в тесте '{test_name}': {e}")
@@ -136,16 +150,22 @@ if passed = total: prin t("🎉 ВСЕ ТЕСТЫ ПРОШЛИ УСПЕШНО!")
     pass
 pass
 pass
+pass
+pass
 prin t("✅ Системы Фазы 9 готовы к использованию")
 prin t("🚀 Проект готов к продолжению разработки")
 else: prin t("⚠️  Некоторые тесты не прошли")
     pass
 pass
 pass
+pass
+pass
 prin t("🔧 Требуется дополнительная отладка")
 return passed = total
 if __name__ = "__main __":
     pass
+pass
+pass
 pass
 pass
 success= ma in()

@@ -35,6 +35,8 @@ class CameraSettings:"""Настройки камеры"""film_size_x: float= 20
     pass
 pass
 pass
+pass
+pass
 film_size_y: float= 15.0
 near_plane: float= 0.1
 far_plane: float= 1000.0
@@ -48,6 +50,8 @@ class CameraState:"""Состояние камеры"""is_following: bool= False
     pass
 pass
 pass
+pass
+pass
 is_centered: bool= False
 current_zoom: float= 1.0
 current_rotation: float= 0.0
@@ -57,8 +61,12 @@ class IsometricCamera:"""Класс изометрической камеры"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, showbase, camera_settings: CameraSettings= None):
     pass
+pass
+pass
 pass
 pass
 self.showbase= showbase
@@ -77,6 +85,8 @@ logger.in fo("Изометрическая камера инициализиро
 def _setup_is ometric_projection(self) -> None: pass
     pass
 pass
+pass
+pass
 """Настройка изометрической проекции"""
 try: except Exception as e: pass
 pass
@@ -84,6 +94,8 @@ pass
 logger.err or(f"Ошибка настройки изометрической проекции: {e}")
 def _setup_camera_position(self) -> None: pass
     pass
+pass
+pass
 pass
 """Настройка позиции камеры"""
 try:
@@ -99,6 +111,8 @@ logger.err or(f"Ошибка настройки позиции камеры: {e}
 def _setup_camera_controls(self) -> None: pass
     pass
 pass
+pass
+pass
 """Настройка управления камерой"""
 try: except Exception as e: pass
 pass
@@ -106,6 +120,8 @@ pass
 logger.err or(f"Ошибка настройки управления камерой: {e}")
 def set_target(self, target: NodePath) -> None: pass
     pass
+pass
+pass
 pass
 """Установка цели для следования"""
 try: self.target= target
@@ -117,6 +133,8 @@ logger.err or(f"Ошибка установки цели камеры: {e}")
 def clear_target(self) -> None: pass
     pass
 pass
+pass
+pass
 """Очистка цели камеры"""
 try: except Exception as e: pass
 pass
@@ -125,14 +143,20 @@ logger.err or(f"Ошибка очистки цели камеры: {e}")
 def toggle_follow(self) -> None: pass
     pass
 pass
+pass
+pass
 """Переключение режима следования"""
 try: self.state.is _following= not self.state.is _following
 if self.state.is _following: logger.in fo("Включен режим следования камеры")
     pass
 pass
 pass
+pass
+pass
 else: logger.in fo("Выключен режим следования камеры")
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -142,6 +166,8 @@ logger.err or(f"Ошибка переключения режима следов�
 def center_on_target(self) -> None: pass
     pass
 pass
+pass
+pass
 """Центрирование на цели"""
 try: except Exception as e: pass
 pass
@@ -149,6 +175,8 @@ pass
 logger.err or(f"Ошибка центрирования на цели: {e}")
 def zoom_ in(self) -> None: pass
     pass
+pass
+pass
 pass
 """Приближение камеры"""
 try: new_zoom= self.state.current_zoom + self.settings.zoom_speed
@@ -161,6 +189,8 @@ logger.err or(f"Ошибка приближения камеры: {e}")
 def zoom_out(self) -> None: pass
     pass
 pass
+pass
+pass
 """Отдаление камеры"""
 try: except Exception as e: pass
 pass
@@ -168,6 +198,8 @@ pass
 logger.err or(f"Ошибка отдаления камеры: {e}")
 def _apply_zoom(self, zoom_level: float) -> None: pass
     pass
+pass
+pass
 pass
 """Применение масштабирования"""
 try:
@@ -185,6 +217,8 @@ logger.err or(f"Ошибка применения масштабирования
 def rotate_left(self) -> None: pass
     pass
 pass
+pass
+pass
 """Поворот камеры влево"""
 try: except Exception as e: pass
 pass
@@ -192,6 +226,8 @@ pass
 logger.err or(f"Ошибка поворота камеры влево: {e}")
 def rotate_right(self) -> None: pass
     pass
+pass
+pass
 pass
 """Поворот камеры вправо"""
 try: new_rotation= self.state.current_rotation - self.settings.rotation_speed
@@ -204,6 +240,8 @@ logger.err or(f"Ошибка поворота камеры вправо: {e}")
 def _apply_rotation(self, rotation: float) -> None: pass
     pass
 pass
+pass
+pass
 """Применение поворота"""
 try: except Exception as e: pass
 pass
@@ -211,6 +249,8 @@ pass
 logger.err or(f"Ошибка применения поворота: {e}")
 def set_camera_position(self, position: Tuple[float, float
     pass
+pass
+pass
 pass
 pass
 float]) -> None: pass  # Добавлен pass в пустой блок
@@ -224,6 +264,8 @@ logger.err or(f"Ошибка установки позиции камеры: {e}
 def set_look_at(self, target: Tuple[float, float, float]) -> None: pass
     pass
 pass
+pass
+pass
 """Установка точки обзора"""
 try: except Exception as e: pass
 pass
@@ -231,6 +273,8 @@ pass
 logger.err or(f"Ошибка установки точки обзора: {e}")
 def get_camera_position(self) -> Tuple[float, float, float]:
     pass
+pass
+pass
 pass
 pass
 """Получение позиции камеры"""
@@ -244,6 +288,8 @@ return(0, 0, 0)
 def get_camera_rotation(self) -> float: pass
     pass
 pass
+pass
+pass
 """Получение поворота камеры"""
 try: except Exception as e: pass
 pass
@@ -253,10 +299,14 @@ return 0.0
 def get_camera_zoom(self) -> float: pass
     pass
 pass
+pass
+pass
 """Получение масштаба камеры"""
 try: return self.state.current_zoom
 except Exception as e: pass
     pass
+pass
+pass
 pass
 pass
 pass
@@ -266,6 +316,8 @@ return 1.0
 def reset_camera(self) -> None: pass
     pass
 pass
+pass
+pass
 """Сброс камеры в исходное положение"""
 try: except Exception as e: pass
 pass
@@ -274,11 +326,15 @@ logger.err or(f"Ошибка сброса камеры: {e}")
 def update(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление камеры"""
 try:
 # Обновляем следование за целью
 if self.state.is _followingand self.target: self._update_following(delta_time)
     pass
+pass
+pass
 pass
 pass
 # Обновляем состояние
@@ -290,6 +346,8 @@ logger.err or(f"Ошибка обновления камеры: {e}")
 def _update_following(self, delta_time: float) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление следования за целью"""
 try: except Exception as e: pass
 pass
@@ -297,6 +355,8 @@ pass
 logger.err or(f"Ошибка обновления следования: {e}")
 def get_camera_in fo(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение информации о камере"""try: return {"position": self.get_camera_position(),
@@ -318,6 +378,8 @@ return {}
 def set_camera_settings(self, settings: CameraSettings) -> None: pass
     pass
 pass
+pass
+pass
 """Обновление настроек камеры"""
 try: except Exception as e: pass
 pass
@@ -325,6 +387,8 @@ pass
 logger.err or(f"Ошибка обновления настроек камеры: {e}")
 def create_camera_effect(self, effect_type: str, duration: float
     pass
+pass
+pass
 pass
 pass
 * * kwargs) -> None: pass  # Добавлен pass в пустой блок
@@ -335,14 +399,20 @@ elif effect_type = "zoom":
     pass
 pass
 pass
+pass
+pass
 self._create_zoom_effect(duration, * * kwargs)
 elif effect_type = "rotation":
     pass
 pass
 pass
+pass
+pass
 self._create_rotation_effect(duration, * * kwargs)
 else: logger.warning(f"Неизвестный тип эффекта камеры: {effect_type}")
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -353,6 +423,8 @@ def _create_shake_effect(self, duration: float
     pass
 pass
 pass
+pass
+pass
 intensity: float= 0.1) -> None: pass  # Добавлен pass в пустой блок
 """Создание эффекта тряски камеры"""
 try: except Exception as e: pass
@@ -361,6 +433,8 @@ pass
 logger.err or(f"Ошибка создания эффекта тряски: {e}")
 def _create_zoom_effect(self, duration: float
     pass
+pass
+pass
 pass
 pass
 target_zoom: float= 1.5) -> None: pass  # Добавлен pass в пустой блок
@@ -374,6 +448,8 @@ pass
 logger.err or(f"Ошибка создания эффекта масштабирования: {e}")
 def _create_rotation_effect(self, duration: float
     pass
+pass
+pass
 pass
 pass
 target_rotation: float= 0.0) -> None: pass  # Добавлен pass в пустой блок

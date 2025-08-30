@@ -31,12 +31,16 @@ class EventPri or ity(Enum):"""Приоритеты событий"""LOW= 0
     pass
 pass
 pass
+pass
+pass
 NORMAL= 1
 HIGH= 2
 CRITICAL= 3
 @dataclass: pass  # Добавлен pass в пустой блок
 class Event:"""Событие"""event_type: str
     pass
+pass
+pass
 pass
 pass
 data: Any
@@ -48,15 +52,21 @@ class EventSubscription:"""Подписка на событие"""callback: Call
     pass
 pass
 pass
+pass
+pass
 pri or ity: EventPri or ity
 subscriber_id: str
 class EventSystem(IEventSystem):"""Центральная система событий
     pass
 pass
 pass
+pass
+pass
 Обеспечивает связь между различными системами игры"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 self.subscriptions: Dict[str
@@ -71,6 +81,8 @@ logger.in fo("Система событий инициализирована")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация системы событий"""
 try: except Exception as e: pass
 pass
@@ -81,10 +93,14 @@ def emit(self, event_type: str, event_data: Any, source: str= "unknown",
     pass
 pass
 pass
+pass
+pass
 pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
 """Эмиссия события"""
 if not self.is _initialized: logger.warning("Система событий не инициализирована")
     pass
+pass
+pass
 pass
 pass
 return False
@@ -110,12 +126,16 @@ def emit_event(self, event_type: str, event_data: Any, source: str= "unknown",
     pass
 pass
 pass
+pass
+pass
 pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
 return self.emit(event_type, event_data, source, pri or ity)
 # - - - Aliases to unify with EventBus API - - -:
 pass  # Добавлен pass в пустой блок
 def on(self, event_type: str, hand ler: Callable
     pass
+pass
+pass
 pass
 pass
 pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
@@ -131,6 +151,8 @@ def subscribe(self, event_type: str, callback: Callable,
     pass
 pass
 pass
+pass
+pass
 subscriber_id: str= "unknown",
 pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
 """Подписка на событие"""
@@ -143,6 +165,8 @@ def subscribe_simple(self, event_type: str, hand ler):
     pass
 pass
 pass
+pass
+pass
 try: except Exception: pass
 pass
 pass
@@ -153,9 +177,13 @@ pass
 pass
 pass
 pass
+pass
+pass
 return False
 def unsubscribe(self, event_type: str, subscriber_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Отписка от события"""
 try: if event_type notin self.subscriptions: return False
@@ -167,6 +195,8 @@ if sub.subscriber_id != subscriber_id: pass  # Добавлен pass в пуст
     pass
 pass
 pass
+pass
+pass
 ]
 removed_count= origin al_length - len(self.subscriptions[event_type])
 # Удаляем пустой список подписок
@@ -174,9 +204,13 @@ if not self.subscriptions[event_type]:
     pass
 pass
 pass
+pass
+pass
 del self.subscriptions[event_type]
 if removed_count > 0: logger.debug(f"Отписано {removed_count} подписок от {event_type} для {subscriber_id}")
     pass
+pass
+pass
 pass
 pass
 return True
@@ -189,6 +223,8 @@ return False
 def unsubscribe_all(self, subscriber_id: str) -> int: pass
     pass
 pass
+pass
+pass
 """Отписка от всех событий для конкретного подписчика"""
 try: except Exception as e: pass
 pass
@@ -198,9 +234,13 @@ return 0
 def process_events(self) -> int: pass
     pass
 pass
+pass
+pass
 """Обработка всех событий в очереди"""
 if not self.is _initialized: return 0
     pass
+pass
+pass
 pass
 pass
 try: processed_count= 0
@@ -208,6 +248,8 @@ try: processed_count= 0
 try: now= time.time()
 if not hasattr(self, '_last_metrics_log'):
     pass
+pass
+pass
 pass
 pass
 self._last_metrics_log= 0.0
@@ -222,11 +264,15 @@ if now - self._last_metrics_log >= 5.0and enable_metrics: logger.debug(f"[events
     pass
 pass
 pass
+pass
+pass
 self._last_metrics_log= now
 except Exception: pass  # Добавлен pass в пустой блок
 # Обрабатываем события по приоритету
 while self.event_queue: pass
     pass
+pass
+pass
 pass
 # Находим событие с наивысшим приоритетом
 highest_pri or ity_event= max(self.event_queue,
@@ -238,6 +284,8 @@ if self._process_single_event(highest_pri or ity_event):
     pass
 pass
 pass
+pass
+pass
 processed_count = 1
 self.events_processed = 1
 return processed_count
@@ -246,11 +294,15 @@ return 0
 def _process_single_event(self, event: Event) -> bool: pass
     pass
 pass
+pass
+pass
 """Обработка одного события"""
 try: except Exception as e: logger.err or(f"Ошибка обработки события {event.event_type}: {e}")
 return False
 def get_subscription_count(self, event_type: str= None) -> int: pass
     pass
+pass
+pass
 pass
 """Получение количества подписок"""if event_type: return len(self.subscriptions.get(event_type, []))
 return sum(len(subs) for subsin self.subscriptions.values()):
@@ -259,14 +311,20 @@ def get_queue_size(self) -> int:"""Получение размера очере�
     pass
 pass
 pass
+pass
+pass
 def clear_queue(self) -> None:"""Очистка очереди событий"""
     pass
+pass
+pass
 pass
 pass
 self.event_queue.clear()
 logger.debug("Очередь событий очищена")
 def get_statis tics(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение статистики системы событий"""return {
@@ -280,14 +338,20 @@ def update(self, delta_time: float) -> None:"""Обновление систем
     pass
 pass
 pass
+pass
+pass
 # Обрабатываем события
 processed= self.process_events()
 if processed > 0: logger.debug(f"Обработано {processed} событий")
     pass
 pass
 pass
+pass
+pass
 def cleanup(self) -> None: pass
     pass
+pass
+pass
 pass
 """Очистка системы событий"""
 logger.in fo("Очистка системы событий...")
@@ -300,15 +364,21 @@ _global_event_system: Optional[EventSystem]= None
 def get_global_event_system() -> EventSystem: pass
     pass
 pass
+pass
+pass
 """Получение глобального экземпляра системы событий"""global _global_event_system
 if _global_event_systemis None: _global_event_system= EventSystem()
     pass
+pass
+pass
 pass
 pass
 _global_event_system.in itialize()
 return _global_event_system
 def set_global_event_system(event_system: EventSystem) -> None:"""Установка глобального экземпляра системы событий"""
     pass
+pass
+pass
 pass
 pass
 global _global_event_system

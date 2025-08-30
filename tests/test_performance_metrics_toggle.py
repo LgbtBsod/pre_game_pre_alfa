@@ -24,8 +24,12 @@ import unittest
 class TestPerfor manceMetricsToggle(unittest.TestCase):
     pass
 pass
+pass
+pass
 def test_metrics_toggle(self):
     pass
+pass
+pass
 pass
 Perfor manceMetric: pass  # Добавлен pass в пустой блок
 pm= Perfor manceManager():
@@ -44,6 +48,8 @@ pass  # Добавлен pass в пустой блок
 if pm.monit or ing_config['enabled']:
     pass
 pass
+pass
+pass
 pm.rec or d_metric(Perfor manceMetric.FRAME_TIME, 16.7, "test"):
 pass  # Добавлен pass в пустой блок
 after= len(pm.metrics[Perfor manceMetric.FRAME_TIME]):
@@ -52,5 +58,7 @@ self.assertEqual(befor e, after):
 pass  # Добавлен pass в пустой блок
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 unittest.ma in()

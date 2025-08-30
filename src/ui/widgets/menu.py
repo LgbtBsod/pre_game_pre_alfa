@@ -34,6 +34,8 @@ class MenuStyle:"""Стиль меню"""# Размеры
     pass
 pass
 pass
+pass
+pass
 width: float= 0.8
 height: float= 0.6
 # Цвета
@@ -49,8 +51,12 @@ class NeonMenu:"""Неоновое меню с современным дизай
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, :
     pass
+pass
+pass
 pass
 pass
 title: str= "",
@@ -74,6 +80,8 @@ def create(self, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> DirectFrame: pass  # Добавлен pass в пустой блок
 """Создание меню Pand a3D"""
 try:
@@ -91,6 +99,8 @@ self.background_frame.setPos( * pos)
 # Заголовок
 if self.title: self.title_label= DirectLabel(
     pass
+pass
+pass
 pass
 pass
 tex = self.title,
@@ -119,6 +129,8 @@ def add_button(self, text: str, command : Optional[Callable]= None,
     pass
 pass
 pass
+pass
+pass
 page: int= 0, pos: Optional[Tuple[float, float
 float]]= None) -> NeonButton: pass  # Добавлен pass в пустой блок
 """Добавление кнопки в меню"""
@@ -131,12 +143,16 @@ def add_buttons(self, button_configs: Lis t[Tuple[str, Optional[Callable]]],
     pass
 pass
 pass
+pass
+pass
 page: int= 0, start_y: float= None):
 pass  # Добавлен pass в пустой блок
 """Добавление нескольких кнопок"""
 try: if start_yis None: start_y= self.style.height / 2 - 0.15
 for i, (text, command )in enumerate(button_configs):
     pass
+pass
+pass
 pass
 pass
 pos= (0, 0, start_y - i * self.style.button_spacing)
@@ -150,6 +166,8 @@ def set_page(self, page: int):
     pass
 pass
 pass
+pass
+pass
 """Переключение на страницу"""
 try: except Exception as e: pass
 pass
@@ -159,13 +177,19 @@ def next_page(self):
     pass
 pass
 pass
+pass
+pass
 """Следующая страница"""if self.current_page < len(self.pages) - 1: self.set_page(self.current_page + 1)
 def prev_page(self):"""Предыдущая страница"""if self.current_page > 0: self.set_page(self.current_page - 1)
     pass
 pass
 pass
+pass
+pass
 def _update_vis ibility(self):"""Обновление видимости элементов по страницам"""
     pass
+pass
+pass
 pass
 pass
 try: for i, buttonin enumerate(self.buttons):
@@ -175,8 +199,12 @@ for page_idx, page_buttonsin enumerate(self.pages):
     pass
 pass
 pass
+pass
+pass
 if any(text = button.text for text, _in page_buttons):
     pass
+pass
+pass
 pass
 pass
 button_page= page_idx
@@ -191,9 +219,13 @@ def show(self):
     pass
 pass
 pass
+pass
+pass
 """Показать меню"""
 if self.background_frame: self.background_frame.setVis ible(True)
     pass
+pass
+pass
 pass
 pass
 self.is _vis ible= True
@@ -203,9 +235,13 @@ def hide(self):
     pass
 pass
 pass
+pass
+pass
 """Скрыть меню"""
 if self.background_frame: self.background_frame.setVis ible(False)
     pass
+pass
+pass
 pass
 pass
 self.is _vis ible= False
@@ -214,13 +250,19 @@ def toggle(self):
     pass
 pass
 pass
+pass
+pass
 """Переключить видимость меню"""if self.is _vis ible: self.hide()
 else: self.show()
     pass
 pass
 pass
+pass
+pass
 def set_title(self, title: str):"""Изменение заголовка меню"""if self.title_label: self.title_label['text']= title
     pass
+pass
+pass
 pass
 pass
 self.title= title
@@ -228,8 +270,12 @@ def clear_buttons(self):"""Очистка всех кнопок"""
     pass
 pass
 pass
+pass
+pass
 for buttonin self.buttons: button.destroy()
     pass
+pass
+pass
 pass
 pass
 self.buttons.clear()
@@ -240,10 +286,14 @@ def destroy(self):
     pass
 pass
 pass
+pass
+pass
 """Уничтожение меню"""
 self.clear_buttons()
 if self.background_frame: self.background_frame.destroy()
     pass
+pass
+pass
 pass
 pass
 self.background_frame= None
@@ -252,9 +302,13 @@ class Main Menu(NeonMenu):
     pass
 pass
 pass
+pass
+pass
 """Главное меню игры"""
 def __in it__(self, paren = None):
     pass
+pass
+pass
 pass
 pass
 style= MenuStyle(
@@ -265,6 +319,8 @@ title_scal = 0.1
 super().__in it__("AI - EVOLVE ENHANCED EDITION", style, parent)
 def create_default_buttons(self):
     pass
+pass
+pass
 pass
 pass
 """Создание стандартных кнопок главного меню"""
@@ -279,9 +335,13 @@ class PauseMenu(NeonMenu):
     pass
 pass
 pass
+pass
+pass
 """Меню паузы"""
 def __in it__(self, paren = None):
     pass
+pass
+pass
 pass
 pass
 style= MenuStyle(
@@ -292,6 +352,8 @@ title_scal = 0.06
 super().__in it__("PAUSED", style, parent)
 def create_default_buttons(self):
     pass
+pass
+pass
 pass
 pass
 """Создание стандартных кнопок меню паузы"""
@@ -305,9 +367,13 @@ class SettingsMenu(NeonMenu):
     pass
 pass
 pass
+pass
+pass
 """Меню настроек"""
 def __in it__(self, paren = None):
     pass
+pass
+pass
 pass
 pass
 style= MenuStyle(
@@ -318,6 +384,8 @@ title_scal = 0.06
 super().__in it__("SETTINGS", style, parent)
 def create_default_buttons(self):
     pass
+pass
+pass
 pass
 pass
 """Создание стандартных кнопок меню настроек"""
@@ -332,6 +400,8 @@ def create_neon_menu(title: str= "",
     pass
 pass
 pass
+pass
+pass
 style: Optional[MenuStyle]= None,
 paren = None,
 pos: Tuple[float, float, float]= (0, 0, 0)) -> NeonMenu: pass  # Добавлен pass в пустой блок
@@ -340,6 +410,8 @@ menu.create(pos)
 return menu
 def create_main _menu(paren = None, pos: Tuple[float, float, float]= (0, 0
     pass
+pass
+pass
 pass
 pass
 0)) -> Main Menu: pass  # Добавлен pass в пустой блок"""Фабричная функция для создания главного меню"""menu= Main Menu(parent)
@@ -351,6 +423,8 @@ def create_pause_menu(paren = None, pos: Tuple[float, float, float]= (0, 0
     pass
 pass
 pass
+pass
+pass
 0)) -> PauseMenu: pass  # Добавлен pass в пустой блок"""Фабричная функция для создания меню паузы"""menu= PauseMenu(parent)
 menu.create(pos)
 menu.create_default_buttons():
@@ -358,6 +432,8 @@ pass  # Добавлен pass в пустой блок
 return menu
 def create_settings_menu(paren = None, pos: Tuple[float, float, float]= (0, 0
     pass
+pass
+pass
 pass
 pass
 0)) -> SettingsMenu: pass  # Добавлен pass в пустой блок"""Фабричная функция для создания меню настроек"""

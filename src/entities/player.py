@@ -32,6 +32,8 @@ class PlayerStats:"""Дополнительные характеристики �
     pass
 pass
 pass
+pass
+pass
 reputation: int= 0
 fame: int= 0
 # Достижения
@@ -44,6 +46,8 @@ persuasion_skill: float= 0.5
 @dataclass: pass  # Добавлен pass в пустой блок
 class PlayerMem or y:"""Дополнительная память игрока"""# История игрока
     pass
+pass
+pass
 pass
 pass
 quests_completed: Lis t[str]= field(default_factor = list):
@@ -60,8 +64,12 @@ class Player(BaseEntity):"""Класс игрока - наследуется о�
     pass
 pass
 pass
+pass
+pass
 def __in it__(self, player_id: str, name: str):
     pass
+pass
+pass
 pass
 pass
 # Инициализируем базовую сущность
@@ -90,6 +98,8 @@ def update(self, delta_time: float):
     pass
 pass
 pass
+pass
+pass
 """Обновление состояния игрока"""
 try: except Exception as e: pass
 pass
@@ -97,6 +107,8 @@ pass
 logger.err or(f"Ошибка обновления игрока {self.entity_id}: {e}")
 def save_game(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Сохранение игры"""
 try: self.player_mem or y.last_save= time.time()
@@ -111,6 +123,8 @@ return False
 def load_game(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Загрузка игры"""
 try: except Exception as e: pass
 pass
@@ -119,6 +133,8 @@ logger.err or(f"Ошибка загрузки игры: {e}")
 return False
 def start_quest(self, quest_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Начало квеста"""
 try: if quest_idin self.active_quests: logger.warning(f"Квест {quest_id} уже активен")
@@ -147,6 +163,8 @@ return False
 def complete_quest(self, quest_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Завершение квеста"""
 try: except Exception as e: pass
 pass
@@ -155,6 +173,8 @@ logger.err or(f"Ошибка завершения квеста: {e}")
 return False
 def vis it_location(self, location_id: str) -> bool: pass
     pass
+pass
+pass
 pass
 """Посещение локации"""
 try: if location_id notin self.player_mem or y.locations_vis ited: self.player_mem or y.locations_vis ited.append(location_id)
@@ -176,6 +196,8 @@ return False
 def meet_npc(self, npc_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Встреча с NPC"""
 try: except Exception as e: pass
 pass
@@ -184,6 +206,8 @@ logger.err or(f"Ошибка встречи с NPC: {e}")
 return False
 def gain _reputation(self, faction: str, amount: int) -> bool: pass
     pass
+pass
+pass
 pass
 """Получение репутации с фракцией"""
 try: current_reputation= self.reputation_with_factions.get(faction, 0):
@@ -210,6 +234,8 @@ logger.err or(f"Ошибка получения репутации: {e}")
 return False
 def get_player_data(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Получение данных игрока"""base_data= super().get_entity_data()
@@ -246,6 +272,8 @@ player_data= {
 return player_data
 def get_in fo(self) -> str:"""Получение информации об игроке"""
     pass
+pass
+pass
 pass
 pass
 base_in fo= super().get_in fo()

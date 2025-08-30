@@ -32,8 +32,12 @@ class LoadScene(Scene):"""Сцена загрузки игры на Pand a3D"""
     pass
 pass
 pass
+pass
+pass
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__("load_game")
@@ -50,6 +54,8 @@ logger.in fo("Сцена загрузки Pand a3D создана")
 def initialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация сцены загрузки"""
 try: except Exception as e: pass
 pass
@@ -58,6 +64,8 @@ logger.err or(f"Ошибка инициализации сцены загруз�
 return False
 def _load_save_files(self):
     pass
+pass
+pass
 pass
 pass
 """Загрузка списка файлов сохранений"""
@@ -70,6 +78,8 @@ self.save_files= [
 logger.debug(f"Загружено {len(self.save_files)} сохранений")
 def _create_ui_elements(self):
     pass
+pass
+pass
 pass
 pass
 """Создание UI элементов загрузки"""
@@ -137,6 +147,8 @@ def _create_save_lis t(self):
     pass
 pass
 pass
+pass
+pass
 """Создание списка сохранений"""
 # Используем корневой узел UI сцены
 parent_node= self.ui_root if self.ui_root else None: pass  # Добавлен pass в пустой блок
@@ -144,6 +156,8 @@ parent_node= self.ui_root if self.ui_root else None: pass  # Добавлен pa
 y_pos= 0.3
 for i, savein enumerate(self.save_files):
     pass
+pass
+pass
 pass
 pass
 save_text= OnscreenText(
@@ -174,9 +188,13 @@ def _select_save(self, save_in dex):
     pass
 pass
 pass
+pass
+pass
 """Выбор сохранения"""
 if 0 <= save_in dex < len(self.save_files):
     pass
+pass
+pass
 pass
 pass
 self.selected_save= save_in dex
@@ -185,9 +203,13 @@ def _load_selected_save(self):
     pass
 pass
 pass
+pass
+pass
 """Загрузка выбранного сохранения"""
 if self.selected_saveis not None: save_name= self.save_files[self.selected_save]['name']
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Загрузка сохранения: {save_name}")
@@ -196,17 +218,25 @@ if self.scene_manager: self.scene_manager.switch_to_scene("game", "fade")
     pass
 pass
 pass
+pass
+pass
 else: logger.warning("Не выбрано сохранение для загрузки")
     pass
+pass
+pass
 pass
 pass
 def _delete_selected_save(self):
     pass
 pass
 pass
+pass
+pass
 """Удаление выбранного сохранения"""
 if self.selected_saveis not None: save_name= self.save_files[self.selected_save]['name']
     pass
+pass
+pass
 pass
 pass
 logger.in fo(f"Удаление сохранения: {save_name}")
@@ -217,8 +247,12 @@ else: logger.warning("Не выбрано сохранение для удале
     pass
 pass
 pass
+pass
+pass
 def _go_back(self):
     pass
+pass
+pass
 pass
 pass
 """Возврат назад"""
@@ -226,9 +260,13 @@ if self.scene_manager: self.scene_manager.switch_to_scene("menu", "fade")
     pass
 pass
 pass
+pass
+pass
 logger.in fo("Возврат в главное меню")
 def update(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Обновление сцены загрузки"""# Анимация UI элементов
@@ -238,13 +276,19 @@ def render(self, render_node):"""Отрисовка сцены загрузки"
 pass
 pass
 pass
+pass
+pass
 def hand le_event(self, event):"""Обработка событий"""# Pand a3D автоматически обрабатывает события UI
     pass
 pass
 pass
 pass
+pass
+pass
 def cleanup(self):"""Очистка сцены загрузки"""
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Очистка сцены загрузки Pand a3D...")
@@ -253,16 +297,24 @@ if self.title_text: self.title_text.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.load_button: self.load_button.destroy()
     pass
+pass
+pass
 pass
 pass
 if self.delete_button: self.delete_button.destroy()
     pass
 pass
 pass
+pass
+pass
 if self.back_button: self.back_button.destroy()
     pass
+pass
+pass
 pass
 pass
 logger.in fo("Сцена загрузки Pand a3D очищена")

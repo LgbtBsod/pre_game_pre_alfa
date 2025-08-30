@@ -26,6 +26,8 @@ class CombatState(Enum):"""Состояния боя"""
     pass
 pass
 pass
+pass
+pass
 IDLE= "idle"              # Бездействие
 IN_COMBAT= "in _combat"    # В бою
 STUNNED= "stunned"        # Оглушен
@@ -33,6 +35,8 @@ FLEEING= "fleeing"        # Бегство
 DEAD= "dead"              # Мертв
 class AttackType(Enum):
     pass
+pass
+pass
 pass
 pass
 """Типы атак"""
@@ -45,6 +49,8 @@ class DefenseType(Enum):
     pass
 pass
 pass
+pass
+pass
 """Типы защиты"""
 BLOCK= "block"            # Блок
 DODGE= "dodge"            # Уклонение
@@ -55,9 +61,13 @@ REFLECT= "reflect"        # Отражение
 class CombatStats: pass
     pass
 pass
+pass
+pass
 """Боевые характеристики"""attack_power: float= 0.0
 defense_power: float= 0.0
     pass
+pass
+pass
 pass
 pass
 critical_chance: float= 0.0
@@ -73,6 +83,8 @@ class CombatAction:"""Боевое действие"""action_type: str
     pass
 pass
 pass
+pass
+pass
 source_id: str
 target_id: Optional[str]= None
 skill_id: Optional[str]= None
@@ -84,6 +96,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class CombatResult:"""Результат боевого действия"""action: CombatAction
     pass
+pass
+pass
 pass
 pass
 success: bool= False
@@ -101,9 +115,13 @@ class CombatSystem(BaseComponent):"""Консолидированная боев
     pass
 pass
 pass
+pass
+pass
 Управляет всеми аспектами боя в игре"""
 def __in it__(self):
     pass
+pass
+pass
 pass
 pass
 super().__in it__(
@@ -129,6 +147,8 @@ self.in itiative_base= 100.0
 def _on_in itialize(self) -> bool: pass
     pass
 pass
+pass
+pass
 """Инициализация боевой системы"""
 try:
 # Регистрация базовых боевых механик
@@ -145,18 +165,26 @@ def _regis ter_combat_mechanics(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация базовых боевых механик"""# TODO: Регистрация механик атак, защиты, движения
 pass
 def _setup_in itiative_system(self):"""Настройка системы инициативы"""self.in itiative_base= 100.0
     pass
 pass
 pass
+pass
+pass
 def enter_combat(self, entity_id: str, target_id: str) -> bool:"""Войти в бой"""
     pass
 pass
 pass
+pass
+pass
 if entity_idin self.combat_statesand self.combat_states[entity_id] = CombatState.DEAD: return False
     pass
+pass
+pass
 pass
 pass
 # Устанавливаем состояние боя
@@ -165,6 +193,8 @@ self.combat_states[entity_id]= CombatState.IN_COMBAT
 combat_id= f"combat_{in t(time.time() * 1000)}"
 if entity_id notin self.active_combats: self.active_combats[entity_id]= {
     pass
+pass
+pass
 pass
 pass
 'combat_id': combat_id,
@@ -177,6 +207,8 @@ if target_id notin self.active_combats[entity_id]['targets']:
     pass
 pass
 pass
+pass
+pass
 self.active_combats[entity_id]['targets'].append(target_id)
 # Обновляем инициативу
 self._update_in itiative(entity_id)
@@ -184,10 +216,14 @@ return True
 def exit_combat(self, entity_id: str) -> bool: pass
     pass
 pass
+pass
+pass
 """Выйти из боя"""if entity_id notin self.combat_states: return False
 # Убираем из активных боев
 if entity_idin self.active_combats: del self.active_combats[entity_id]
     pass
+pass
+pass
 pass
 pass
 # Возвращаем в обычное состояние
@@ -197,13 +233,19 @@ if entity_idin self.in itiative_ or der: self.in itiative_ or der.remove(entity_
     pass
 pass
 pass
+pass
+pass
 if entity_idin self.in itiative_timers: del self.in itiative_timers[entity_id]
     pass
+pass
+pass
 pass
 pass
 return True
 def is_in _combat(self, entity_id: str) -> bool:"""Проверить, находится ли сущность в бою"""return(entity_idin self.combat_states and
     pass
+pass
+pass
 pass
 pass
 self.combat_states[entity_id] = CombatState.IN_COMBAT)
@@ -212,11 +254,15 @@ def perfor m_attack(self, attacker_id: str, target_id: str
     pass
 pass
 pass
+pass
+pass
 skill_id: Optional[str]= None
 item_id: Optional[str]= None) -> CombatResult: pass  # Добавлен pass в пустой блок"""Выполнить атаку"""
 # Проверяем возможность атаки
 if not self._can_attack(attacker_id, target_id):
     pass
+pass
+pass
 pass
 pass
 return CombatResult(
@@ -236,11 +282,15 @@ def perfor m_defense(self, defender_id: str
     pass
 pass
 pass
+pass
+pass
 attack_action: CombatAction) -> CombatResult: pass  # Добавлен pass в пустой блок
 """Выполнить защиту"""
 # Создаем действие защиты
 defense_action= CombatAction("defense", defender_id, attack_action.source_id):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -252,6 +302,8 @@ self._apply_combat_result(result)
 return result
 def perfor m_movement(self, entity_id: str, new_position: Tuple[float, float
     pass
+pass
+pass
 pass
 pass
 float]) -> bool: pass  # Добавлен pass в пустой блок
@@ -268,6 +320,8 @@ def _calculate_attack_result(self, action: CombatAction) -> CombatResult:"""Ра
     pass
 pass
 pass
+pass
+pass
 target_id= action.target_id
 # Получаем характеристики
 attacker_stats= self.combat_stats.get(attacker_id, CombatStats())
@@ -279,11 +333,15 @@ if action.skill_id: base_damage= self._apply_skill_modifiers(base_damage
     pass
 pass
 pass
+pass
+pass
 action.skill_id):
 pass  # Добавлен pass в пустой блок
 # Модификаторы от предмета
 if action.item_id: base_damage= self._apply_item_modifiers(base_damage
     pass
+pass
+pass
 pass
 pass
 action.item_id):
@@ -292,6 +350,8 @@ pass  # Добавлен pass в пустой блок
 critical_hit= rand om.rand om() < attacker_stats.critical_chance
 if critical_hit: base_damage = attacker_stats.critical_multiplier
     pass
+pass
+pass
 pass
 pass
 # Защита цели
@@ -309,9 +369,13 @@ def _calculate_defense_result(self, defense_action: CombatAction
     pass
 pass
 pass
+pass
+pass
 attack_action: CombatAction) -> CombatResult: pass  # Добавлен pass в пустой блок"""Рассчитать результат защиты"""defender_id= defense_action.source_id: pass  # Добавлен pass в пустой блок
 defender_stats= self.combat_stats.get(defender_id, CombatStats()):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -320,14 +384,20 @@ defense_type= self._determin e_defense_type(defender_stats):
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 # Рассчитываем эффективность защиты
 defense_effectiveness= self._calculate_defense_effectiveness(defense_type
     pass
 pass
 pass
+pass
+pass
 defender_stats):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -348,10 +418,14 @@ def _apply_target_defense(self, damage: float
     pass
 pass
 pass
+pass
+pass
 target_stats: CombatStats) -> float: pass  # Добавлен pass в пустой блок"""Применить защиту цели"""fin al_damage= damage
 # Уклонение
 if rand om.rand om() < target_stats.dodge_chance: return 0.0
     pass
+pass
+pass
 pass
 pass
 # Блок
@@ -359,9 +433,13 @@ if rand om.rand om() < target_stats.block_chance: fin al_damage = 0.5
     pass
 pass
 pass
+pass
+pass
 # Парирование
 if rand om.rand om() < target_stats.parry_chance: fin al_damage = 0.3
     pass
+pass
+pass
 pass
 pass
 # Защита
@@ -372,20 +450,30 @@ def _determin e_defense_type(self, stats: CombatStats) -> DefenseType:"""Опр�
     pass
 pass
 pass
+pass
+pass
 if stats.dodge_chance > stats.block_chanceand stats.dodge_chance > stats.parry_chance: return DefenseType.DODGE
     pass
+pass
+pass
 pass
 pass
 elif stats.block_chance > stats.parry_chance: return DefenseType.BLOCK
     pass
 pass
 pass
+pass
+pass
 else: return DefenseType.PARRY
     pass
 pass
 pass
+pass
+pass
 def _calculate_defense_effectiveness(self, defense_type: DefenseType
     pass
+pass
+pass
 pass
 pass
 stats: CombatStats) -> float: pass  # Добавлен pass в пустой блок"""Рассчитать эффективность защиты"""if defense_type = DefenseType.DODGE: return stats.dodge_chance
@@ -393,17 +481,25 @@ elif defense_type = DefenseType.BLOCK: return stats.block_chance
     pass
 pass
 pass
+pass
+pass
 elif defense_type = DefenseType.PARRY: return stats.parry_chance
     pass
+pass
+pass
 pass
 pass
 else: return 0.0
     pass
 pass
 pass
+pass
+pass
 # Модификаторы
 def _apply_skill_modifiers(self, base_damage: float
     pass
+pass
+pass
 pass
 pass
 skill_id: str) -> float: pass  # Добавлен pass в пустой блок"""Применить модификаторы от навыка"""# TODO: Интеграция с системой навыков
@@ -412,23 +508,33 @@ def _apply_item_modifiers(self, base_damage: float, item_id: str) -> float:"""П
     pass
 pass
 pass
+pass
+pass
 return base_damage
 # Проверки
 def _can_attack(self, attacker_id: str, target_id: str) -> bool:"""Проверить возможность атаки"""# Проверяем состояние
     pass
 pass
 pass
+pass
+pass
 if attacker_id notin self.combat_states or self.combat_states[attacker_id] = CombatState.DEAD: return False
     pass
+pass
+pass
 pass
 pass
 if target_id notin self.combat_states or self.combat_states[target_id] = CombatState.DEAD: return False
     pass
 pass
 pass
+pass
+pass
 # Проверяем дистанцию
 if not self._is _in_range(attacker_id, target_id):
     pass
+pass
+pass
 pass
 pass
 return False
@@ -437,10 +543,14 @@ if not self._can_act(attacker_id):
     pass
 pass
 pass
+pass
+pass
 return False
 return True
 def _can_move(self, entity_id: str, new_position: Tuple[float, float
     pass
+pass
+pass
 pass
 pass
 float]) -> bool: pass  # Добавлен pass в пустой блок"""Проверить возможность движения"""# Проверяем состояние
@@ -448,15 +558,21 @@ if entity_id notin self.combat_states or self.combat_states[entity_id] = CombatS
     pass
 pass
 pass
+pass
+pass
 # Проверяем инициативу
 if not self._can_act(entity_id):
     pass
+pass
+pass
 pass
 pass
 return False
 return True
 def _is _in_range(self, attacker_id: str, target_id: str) -> bool:"""Проверить, находится ли цель в зоне атаки"""attacker_pos= self.entity_positions.get(attacker_id, (0, 0, 0))
     pass
+pass
+pass
 pass
 pass
 target_pos= self.entity_positions.get(target_id, (0, 0, 0))
@@ -472,10 +588,14 @@ def _can_act(self, entity_id: str) -> bool:"""Проверить, может л�
     pass
 pass
 pass
+pass
+pass
 return time.time() >= self.in itiative_timers[entity_id]
 # Система инициативы
 def _update_in itiative(self, entity_id: str):"""Обновить инициативу сущности"""if entity_id notin self.in itiative_ or der: self.in itiative_ or der.append(entity_id)
     pass
+pass
+pass
 pass
 pass
 # Рассчитываем время следующего действия
@@ -489,8 +609,12 @@ def get_next_act or(self) -> Optional[str]:"""Получить следующе�
     pass
 pass
 pass
+pass
+pass
 for entity_idin self.in itiative_ or der: if entity_idin self.in itiative_timers: if current_time >= self.in itiative_timers[entity_id]:
     pass
+pass
+pass
 pass
 pass
 return entity_id
@@ -500,10 +624,14 @@ def set_entity_position(self, entity_id: str, position: Tuple[float, float
     pass
 pass
 pass
+pass
+pass
 float]):
 pass  # Добавлен pass в пустой блок"""Установить позицию сущности"""self.entity_positions[entity_id]= position
 def get_entity_position(self, entity_id: str) -> Tuple[float, float
     pass
+pass
+pass
 pass
 pass
 float]:
@@ -512,8 +640,12 @@ def set_attack_range(self, entity_id: str, range_value: float):"""Установ
     pass
 pass
 pass
+pass
+pass
 def _check_attack_range(self, entity_id: str, old_position: Tuple[float
     pass
+pass
+pass
 pass
 pass
 float, float], new_position: Tuple[float, float, float]):
@@ -524,14 +656,20 @@ def _apply_combat_result(self, result: CombatResult):"""Применить ре�
     pass
 pass
 pass
+pass
+pass
 # Применяем урон
 if result.damage_dealt > 0: self._apply_damage(result.action.target_id, result.damage_dealt)
     pass
 pass
 pass
+pass
+pass
 # Применяем эффекты
 for effect_idin result.effects_applied: self._apply_effect(result.action.target_id, effect_id)
     pass
+pass
+pass
 pass
 pass
 # Обновляем инициативу
@@ -541,8 +679,12 @@ def _apply_damage(self, target_id: str, damage: float):"""Применить у�
 pass
 pass
 pass
+pass
+pass
 def _apply_effect(self, target_id: str, effect_id: str):"""Применить эффект"""# TODO: Интеграция с системой эффектов
     pass
+pass
+pass
 pass
 pass
 pass
@@ -551,13 +693,19 @@ def _add_to_his tory(self, action: CombatAction):"""Добавить дейст�
     pass
 pass
 pass
+pass
+pass
 # Ограничиваем размер истории
 if len(self.combat_his tory) > self.max_combat_his tory: self.combat_his tory.pop(0)
     pass
 pass
 pass
+pass
+pass
 def get_combat_his tory(self
     pass
+pass
+pass
 pass
 pass
 entity_id: Optional[str]= None) -> Lis t[CombatAction]:
@@ -568,16 +716,22 @@ def get_combat_statis tics(self, entity_id: str) -> Dict[str, Any]:"""Получ
     pass
 pass
 pass
+pass
+pass
 entity_actions= [a for ain self.combat_his tory if a.source_id = entity_id]:
 pass  # Добавлен pass в пустой блок
 if not entity_actions: return {}
     pass
 pass
 pass
+pass
+pass
 attacks= [a for ain entity_actions if a.action_type = "attack"]:
 pass  # Добавлен pass в пустой блок
 defenses= [a for ain entity_actions if a.action_type = "defense"]:
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -593,21 +747,31 @@ def regis ter_combat_stats(self, entity_id: str, stats: CombatStats):
     pass
 pass
 pass
+pass
+pass
 """Зарегистрировать боевые характеристики"""self.combat_stats[entity_id]= stats
 def get_combat_stats(self, entity_id: str) -> Optional[CombatStats]:"""Получить боевые характеристики"""return self.combat_stats.get(entity_id)
     pass
+pass
+pass
 pass
 pass
 def clear_combat_his tory(self):"""Очистить историю боя"""self.combat_his tory.clear()
     pass
 pass
 pass
+pass
+pass
 def get_active_combats(self) -> Dict[str, Dict[str, Any]]:"""Получить активные бои"""return self.active_combats.copy()
     pass
 pass
 pass
+pass
+pass
 def for ce_exit_combat(self, entity_id: str):"""Принудительно вывести из боя"""
     pass
+pass
+pass
 pass
 pass
 self.exit_combat(entity_id)

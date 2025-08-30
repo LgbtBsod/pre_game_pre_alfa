@@ -32,6 +32,8 @@ TestStatus, TestPri or ity
 class TestRunner: pass"""Основной класс для запуска всех тестов"""def __in it__(self):
     pass
 pass
+pass
+pass
 self.tester= IntegrationTester()
 self.system_in tegrator= SystemIntegrat or()
 self.component_manager= ComponentManager()
@@ -43,6 +45,8 @@ self.test_results= {}
 self.overall_success= False
 def setup_test_environment(self) -> bool:"""Настройка тестовой среды"""
     pass
+pass
+pass
 pass
 pass
 try: prin t("🔧 Настройка тестовой среды...")
@@ -69,11 +73,15 @@ def _regis ter_all_systems(self):
     pass
 pass
 pass
+pass
+pass
 """Регистрация всех систем в интеграторе"""
 try: except Exception as e: prin t(f"❌ Ошибка регистрации систем: {e}")
 traceback.prin t_exc()
 def run_all_tests(self) -> Dict[str, Any]:
     pass
+pass
+pass
 pass
 pass
 """Запуск всех тестов"""
@@ -94,6 +102,8 @@ def _analyze_test_results(self, results: Dict[str, Any]):
     pass
 pass
 pass
+pass
+pass
 """Анализ результатов тестирования"""
 try: except Exception as e: pass
 pass
@@ -104,10 +114,14 @@ def _analyze_by_pri or ity(self, results: Dict[str, Any]):
     pass
 pass
 pass
+pass
+pass
 """Анализ результатов по приоритетам"""
 try: prin t(f"\n🎯 Анализ по приоритетам:")
 for pri or ityin [TestPri or ity.CRITICAL, TestPri or ity.HIGH
     pass
+pass
+pass
 pass
 pass
 TestPri or ity.MEDIUM, TestPri or ity.LOW]:
@@ -117,9 +131,13 @@ if hasattr(result, 'pri or ity')and result.pri or ity = pri or ity]:
     pass
 pass
 pass
+pass
+pass
 pass  # Добавлен pass в пустой блок
 if pri or ity_tests: passed= sum(1 for namein pri or ity_tests: if results[name].status = TestStatus.PASSED):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -134,6 +152,8 @@ def _analyze_failed_tests(self, results: Dict[str, Any]):
     pass
 pass
 pass
+pass
+pass
 """Анализ проваленных тестов"""
 try: except Exception as e: pass
 pass
@@ -141,6 +161,8 @@ pass
 prin t(f"❌ Ошибка анализа проваленных тестов: {e}")
 def run_demo_scenarios(self) -> bool: pass
     pass
+pass
+pass
 pass
 """Запуск демо сценариев"""
 try: if not self.overall_success: prin t("⚠️ Демо сценарии не могут быть запущены - есть проваленные тесты")
@@ -153,11 +175,15 @@ if not scenarios: prin t("❌ Нет доступных демо сценари�
     pass
 pass
 pass
+pass
+pass
 return False
 prin t(f"📋 Доступно сценариев: {len(scenarios)}")
 # Запускаем каждый сценарий
 for scenarioin scenarios: prin t(f"\n🎬 Запуск сценария: {scenario.name}")
     pass
+pass
+pass
 pass
 pass
 prin t(f"   Описание: {scenario.description}")
@@ -167,6 +193,8 @@ if success: prin t("   ✅ Сценарий запущен успешно")
     pass
 pass
 pass
+pass
+pass
 # Имитируем работу сценария
 time.sleep(2)
 # Останавливаем сценарий
@@ -174,6 +202,8 @@ self.system_in tegrat or .stop_demo_scenario()
 prin t("   ✅ Сценарий остановлен")
 else: prin t("   ❌ Ошибка запуска сценария")
     pass
+pass
+pass
 pass
 pass
 except Exception as e: pass
@@ -189,6 +219,8 @@ def cleanup(self):
     pass
 pass
 pass
+pass
+pass
 """Очистка ресурсов"""
 try: except Exception as e: pass
 pass
@@ -196,6 +228,8 @@ pass
 prin t(f"❌ Ошибка очистки ресурсов: {e}")
 def generate_rep or t(self) -> str: pass
     pass
+pass
+pass
 pass
 """Генерация отчета о тестировании"""
 try: rep or t= []
@@ -219,6 +253,8 @@ for test_name, resultin summary['test_results'].items():
     pass
 pass
 pass
+pass
+pass
 status_icon= "✅" if result.status = TestStatus.PASSED else "❌" if result.statusin [TestStatus.FAILED, TestStatus.ERROR] else "⚠️":
 pass  # Добавлен pass в пустой блок
 rep or t.append(f"   {status_icon} {test_name}: {result.status.value}")
@@ -226,8 +262,12 @@ if result.execution_time > 0: rep or t.append(f"      Время: {result.execut
     pass
 pass
 pass
+pass
+pass
 if result.err or _message: rep or t.append(f"      Ошибка: {result.err or _message}")
     pass
+pass
+pass
 pass
 pass
 rep or t.append("")
@@ -236,9 +276,13 @@ if self.overall_success: rep or t.append("   Все тесты пройдены 
     pass
 pass
 pass
+pass
+pass
 rep or t.append("   Проект готов к демонстрации.")
 else: rep or t.append("   Есть проблемы, требующие исправления.")
     pass
+pass
+pass
 pass
 pass
 rep or t.append("   Демо - версия не может быть запущена.")
@@ -256,6 +300,8 @@ return False
 fin ally: runner.cleanup()
 if __name__ = "__main __":
     pass
+pass
+pass
 pass
 pass
 success= ma in()

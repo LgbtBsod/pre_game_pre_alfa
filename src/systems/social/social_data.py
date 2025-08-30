@@ -29,6 +29,8 @@ class Relationship:"""Отношение между двумя сущностя�
     pass
 pass
 pass
+pass
+pass
 relationship_id: str
 entity_id: str
 target_id: str
@@ -45,36 +47,54 @@ def update_trust(self, change: float):"""Обновление уровня до�
     pass
 pass
 pass
+pass
+pass
 def add_experience(self, experience_id: str):"""Добавление общего опыта"""if experience_id notin self.shared_experiences: self.shared_experiences.append(experience_id)
     pass
+pass
+pass
 pass
 pass
 def get_relationship_status(self) -> str:"""Получение статуса отношения"""
     pass
 pass
 pass
+pass
+pass
 if self.strength >= 80: return "excellent"
     pass
+pass
+pass
 pass
 pass
 elif self.strength >= 60: return "good"
     pass
 pass
 pass
+pass
+pass
 elif self.strength >= 40: return "neutral"
     pass
+pass
+pass
 pass
 pass
 elif self.strength >= 20: return "po or "
     pass
 pass
 pass
+pass
+pass
 else: return "hostile"@dataclass: pass  # Добавлен pass в пустой блок
     pass
 pass
 pass
+pass
+pass
 class Interaction:"""Взаимодействие между сущностями"""
     pass
+pass
+pass
 pass
 pass
 interaction_id: str
@@ -93,8 +113,12 @@ def add_witness(self, witness_id: str):"""Добавление свидетел�
     pass
 pass
 pass
+pass
+pass
 def get_in teraction_summary(self) -> Dict[str, Any]:"""Получение краткого описания взаимодействия"""return {"type": self.in teraction_type.value,
     pass
+pass
+pass
 pass
 pass
 "success": self.success,
@@ -105,6 +129,8 @@ pass
 @dataclass: pass  # Добавлен pass в пустой блок
 class Reputation: pass
     pass
+pass
+pass
 pass
 """Репутация сущности"""
 entity_id: str
@@ -119,6 +145,8 @@ his tory: Lis t[Dict[str, Any]]= field(default_factor = list):
 pass  # Добавлен pass в пустой блок
 def update_value(self, change: float, reason: str= ""):
     pass
+pass
+pass
 pass
 pass
 """Обновление значения репутации"""old_value= self.value
@@ -136,8 +164,12 @@ if len(self.his tory) > 100: self.his tory= self.his tory[ - 100:]
     pass
 pass
 pass
+pass
+pass
 def apply_decay(self, delta_time: float):
     pass
+pass
+pass
 pass
 pass
 """Применение затухания репутации"""if self.value != 0: decay_amount= self.decay_rate * delta_time
@@ -145,36 +177,54 @@ if self.value > 0: self.value= max(0, self.value - decay_amount)
     pass
 pass
 pass
+pass
+pass
 else: self.value= m in(0, self.value + decay_amount)
     pass
+pass
+pass
 pass
 pass
 def get_reputation_level(self) -> str:"""Получение уровня репутации"""
     pass
 pass
 pass
+pass
+pass
 if self.value >= 80: return "excellent"
     pass
+pass
+pass
 pass
 pass
 elif self.value >= 60: return "good"
     pass
 pass
 pass
+pass
+pass
 elif self.value >= 40: return "neutral"
     pass
+pass
+pass
 pass
 pass
 elif self.value >= 20: return "po or "
     pass
 pass
 pass
+pass
+pass
 else: return "terrible"@dataclass: pass  # Добавлен pass в пустой блок
     pass
 pass
 pass
+pass
+pass
 class SocialNetw or k:"""Социальная сеть сущности"""entity_id: str
     pass
+pass
+pass
 pass
 pass
 connections: Dict[str, Relationship]= field(default_factor = dict):
@@ -186,14 +236,20 @@ def add_connection(self, relationship: Relationship):"""Добавление с�
     pass
 pass
 pass
+pass
+pass
 self._update_netw or k_strength()
 def remove_connection(self, target_id: str):"""Удаление связи из сети"""if target_idin self.connections: del self.connections[target_id]
     pass
 pass
 pass
+pass
+pass
 self._update_netw or k_strength()
 def _update_netw or k_strength(self):"""Обновление силы сети"""total_strength= sum(rel.strength for relin self.connections.values()):
     pass
+pass
+pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
@@ -202,11 +258,15 @@ def get_in fluential_connections(self
     pass
 pass
 pass
+pass
+pass
 min _strength: float= 50.0) -> Lis t[Relationship]:
 pass  # Добавлен pass в пустой блок"""Получение влиятельных связей"""return [rel for relin self.connections.values() if rel.strength >= min _strength]:
 pass  # Добавлен pass в пустой блок
 def get_netw or k_stats(self) -> Dict[str, Any]:"""Получение статистики сети"""return {"total_connections": len(self.connections),
     pass
+pass
+pass
 pass
 pass
 "netw or k_strength": self.netw or k_strength,
@@ -217,6 +277,8 @@ pass  # Добавлен pass в пустой блок
 @dataclass: pass  # Добавлен pass в пустой блок
 class SocialEvent: pass
     pass
+pass
+pass
 pass
 """Социальное событие"""
 event_id: str
@@ -235,12 +297,18 @@ def add_participant(self, participant_id: str):"""Добавление учас�
     pass
 pass
 pass
+pass
+pass
 def add_witness(self, witness_id: str):"""Добавление свидетеля события"""if witness_id notin self.witnesses: self.witnesses.append(witness_id)
     pass
 pass
 pass
+pass
+pass
 def get_event_summary(self) -> Dict[str, Any]:"""Получение краткого описания события"""return {"type": self.event_type,
     pass
+pass
+pass
 pass
 pass
 "participants_count": len(self.participants),
@@ -252,6 +320,8 @@ pass
 @dataclass: pass  # Добавлен pass в пустой блок
 class FactionData: pass
     pass
+pass
+pass
 pass
 """Данные фракции"""
 faction_id: str
@@ -271,21 +341,31 @@ def add_member(self, member_id: str):"""Добавление члена фрак
     pass
 pass
 pass
+pass
+pass
 def remove_member(self, member_id: str):"""Удаление члена фракции"""if member_idin self.members: self.members.remove(member_id)
     pass
+pass
+pass
 pass
 pass
 def set_leader(self, leader_id: str):"""Назначение лидера фракции"""if leader_idin self.members: self.leader_id= leader_id
     pass
 pass
 pass
+pass
+pass
 def update_in fluence(self, change: float):"""Обновление влияния фракции"""self.in fluence= max(0.0, m in(self.max_in fluence
     pass
+pass
+pass
 pass
 pass
 self.in fluence + change))
 def get_faction_stats(self) -> Dict[str, Any]:"""Получение статистики фракции"""return {"members_count": len(self.members),
     pass
+pass
+pass
 pass
 pass
 "in fluence": self.in fluence,

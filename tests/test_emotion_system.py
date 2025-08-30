@@ -35,6 +35,8 @@ EmotionalState, EmotionalTrigger
 class TestEmotionSystem(unittest.TestCase):
     pass
 pass
+pass
+pass
 pass"""Тесты для системы эмоций"""def setUp(self):"""Настройка перед каждым тестом"""self.emotion_system= EmotionSystem()
 # Создаем моки для архитектурных компонентов
 self.state_manager= Mock(spe = StateManager)
@@ -51,6 +53,8 @@ def test_in itialization(self):"""Тест инициализации систе
     pass
 pass
 pass
+pass
+pass
 # Проверяем начальное состояние
 self.assertEqual(self.emotion_system.system_name, "emotions")
 self.assertEqual(self.emotion_system.system_pri or ity, Pri or ity.NORMAL)
@@ -64,6 +68,8 @@ def test_regis ter_system_states(self):
     pass
 pass
 pass
+pass
+pass
 """Тест регистрации состояний системы"""# Вызываем регистрацию состояний
 self.emotion_system._regis ter_system_states()
 # Проверяем, что состояния зарегистрированы
@@ -74,6 +80,8 @@ def test_regis ter_system_reposit or ies(self):"""Тест регистраци�
     pass
 pass
 pass
+pass
+pass
 self.emotion_system._regis ter_system_reposit or ies()
 # Проверяем, что репозитории зарегистрированы
 self.reposit or y_manager.regis ter_reposit or y.assert_called()
@@ -82,6 +90,8 @@ self.assertEqual(self.reposit or y_manager.regis ter_reposit or y.call_count
 4)
 def test_lifecycle_management(self):"""Тест управления жизненным циклом"""# Тестируем инициализацию
     pass
+pass
+pass
 pass
 pass
 result= self.emotion_system.in itialize()
@@ -111,6 +121,8 @@ def test_emotion_creation(self):"""Тест создания эмоций"""
     pass
 pass
 pass
+pass
+pass
 # Инициализируем систему
 self.emotion_system.in itialize()
 # Создаем тестовую эмоцию
@@ -130,6 +142,8 @@ self.assertEqual(emotion.duration, 10.0)
 self.assertTrue(emotion.start_time > 0)
 def test_emotional_state_creation(self):
     pass
+pass
+pass
 pass
 pass
 """Тест создания эмоционального состояния"""
@@ -152,6 +166,8 @@ self.assertEqual(len(emotional_state.emotions), 0)
 self.assertTrue(emotional_state.last_update > 0)
 def test_emotion_trigger_creation(self):
     pass
+pass
+pass
 pass
 pass
 """Тест создания триггера эмоций"""
@@ -177,6 +193,8 @@ self.assertEqual(trigger.probability, 0.8)
 self.assertEqual(trigger.conditions['min _health'], 0.5)
 def test_system_in fo_retrieval(self):
     pass
+pass
+pass
 pass
 pass
 """Тест получения информации о системе"""
@@ -209,6 +227,8 @@ def test_err or _hand ling(self):
     pass
 pass
 pass
+pass
+pass
 """Тест обработки ошибок"""# Инициализируем систему
 self.emotion_system.in itialize()
 # Тестируем обработку некорректных данных
@@ -216,6 +236,8 @@ self.emotion_system.in itialize()
 pass
 def test_reset_stats(self):"""Тест сброса статистики"""# Инициализируем систему
     pass
+pass
+pass
 pass
 pass
 self.emotion_system.in itialize()
@@ -236,6 +258,8 @@ def test_system_settings(self):"""Тест настроек системы"""# �
     pass
 pass
 pass
+pass
+pass
 self.emotion_system.in itialize()
 # Проверяем, что настройки установлены
 self.assertIn('max_emotions_per_entity', self.emotion_system.system_settings)
@@ -249,6 +273,8 @@ self.assertIsInstance(self.emotion_system.system_settings['stress_decay_rate'], 
 self.assertIsInstance(self.emotion_system.system_settings['emotional_stability_range'], tuple)
 def test_emotion_constants(self):"""Тест констант эмоций"""
     pass
+pass
+pass
 pass
 pass
 # Проверяем, что все типы эмоций доступны
@@ -265,6 +291,8 @@ self.assertIsNotNone(EmotionIntensity.HIGH)
 self.assertIsNotNone(EmotionIntensity.EXTREME)
 if __name__ = '__main __':
     pass
+pass
+pass
 pass
 pass
 unittest.ma in()
