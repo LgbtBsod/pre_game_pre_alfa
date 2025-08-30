@@ -1,24 +1,36 @@
 #!/usr/bin/env python3
 """
-Entities Package - Игровые сущности
+Entities Package
+Игровые сущности
 """
 
-from .base_entity import BaseEntity
-from ..core.constants import constants_manager, EntityType
-from .items import Item, Weapon, Armor, Consumable, Accessory
+from .base_entity import BaseEntity, EntityType
 from .player import Player
-from .npc import NPC
 from .enemies import Enemy
+from .npc import NPC
+from .items import Item, ItemEffect, ItemRequirement
+from .bosses import Boss, BossPhase, BossType, BossAbility, BossWeakness, BossPhaseData
+from .mutants import Mutant, MutationType, MutationLevel, Mutation, MutantAbility, VisualMutation
 
 __all__ = [
     'BaseEntity',
     'EntityType',
-    'Item',
-    'Weapon', 
-    'Armor',
-    'Consumable',
-    'Accessory',
     'Player',
+    'Enemy',
     'NPC',
-    'Enemy'
+    'Item',
+    'ItemEffect',
+    'ItemRequirement',
+    'Boss',
+    'BossPhase',
+    'BossType',
+    'BossAbility',
+    'BossWeakness',
+    'BossPhaseData',
+    'Mutant',
+    'MutationType',
+    'MutationLevel',
+    'Mutation',
+    'MutantAbility',
+    'VisualMutation'
 ]
