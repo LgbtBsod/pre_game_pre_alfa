@@ -177,6 +177,24 @@ class DamageSystem(BaseComponent):
             [DamageType.ACID, DamageType.POISON],
             self._create_corrosion_effect()
         ))
+        
+        # Электричество + Вода = Шок
+        self.damage_combinations.append((
+            [DamageType.LIGHTNING, DamageType.COLD],
+            self._create_shock_effect()
+        ))
+        
+        # Психический + Эмоциональный = Ментальный взрыв
+        self.damage_combinations.append((
+            [DamageType.PSYCHIC, DamageType.EMOTIONAL],
+            self._create_mental_explosion_effect()
+        ))
+        
+        # Генетический + Физический = Мутация
+        self.damage_combinations.append((
+            [DamageType.GENETIC, DamageType.PHYSICAL],
+            self._create_mutation_effect()
+        ))
     
     def _register_catalytic_effects(self):
         """Регистрация каталитических эффектов"""
@@ -386,6 +404,21 @@ class DamageSystem(BaseComponent):
     def _create_corrosion_effect(self):
         """Создать эффект коррозии"""
         # TODO: Реализовать эффект коррозии
+        pass
+    
+    def _create_shock_effect(self):
+        """Создать эффект шока"""
+        # TODO: Реализовать эффект шока
+        pass
+    
+    def _create_mental_explosion_effect(self):
+        """Создать эффект ментального взрыва"""
+        # TODO: Реализовать эффект ментального взрыва
+        pass
+    
+    def _create_mutation_effect(self):
+        """Создать эффект мутации"""
+        # TODO: Реализовать эффект мутации
         pass
     
     # Публичные методы

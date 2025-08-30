@@ -130,14 +130,14 @@ class Skill:
         # Проверка здоровья
         if self.cost.health > 0 and hasattr(user, 'health'):
             if user.health <= self.cost.health:
-            return False
+                return False
     
         # Проверка энергии
         if self.cost.energy > 0 and hasattr(user, 'energy'):
             if user.energy < self.cost.energy:
                 return False
             
-            return True
+        return True
             
     def _check_targets(self, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:
         """Проверить цели"""
@@ -145,16 +145,16 @@ class Skill:
             return True
         
         if target is None:
-                return False
+            return False
             
         # TODO: Дополнительные проверки целей
-            return True
+        return True
             
     def _check_conditions(self, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:
         """Проверить условия использования"""
         for condition in self.requirements.get('conditions', []):
             if not self._evaluate_condition(condition, user, target, context):
-            return False
+                return False
         return True
     
     def _evaluate_condition(self, condition: str, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:
@@ -406,7 +406,7 @@ class SkillSystem(BaseComponent):
                 effect_func = self.skill_effects[effect.effect_type]
                 try:
                     effect_func(effect, user, target, context)
-        except Exception as e:
+                except Exception as e:
                     self.logger.error(f"Ошибка применения эффекта {effect.effect_type}: {e}")
     
     def _update_skill_cooldown(self, user: Any, skill: Skill):

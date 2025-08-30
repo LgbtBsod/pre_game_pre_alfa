@@ -13,7 +13,7 @@ from .performance_manager import PerformanceManager
 # Архитектурные компоненты
 from .architecture import (
     IComponent, BaseComponent, ComponentType, LifecycleState, Priority,
-    ComponentManager, EventBus, StateManager, Event, create_event
+    ComponentManager, EventBus, Event, create_event
 )
 
 __all__ = [
@@ -25,5 +25,5 @@ __all__ = [
     'PerformanceManager',
     # Архитектурные компоненты
     'IComponent', 'BaseComponent', 'ComponentType', 'LifecycleState', 'Priority',
-    'ComponentManager', 'EventBus', 'StateManager', 'Event', 'create_event'
+    'ComponentManager', 'EventBus', 'Event', 'create_event'
 ]

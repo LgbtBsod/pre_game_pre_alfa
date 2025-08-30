@@ -340,7 +340,7 @@ class CombatSystem(BaseComponent):
             return stats.block_chance
         elif defense_type == DefenseType.PARRY:
             return stats.parry_chance
-            else:
+        else:
             return 0.0
     
     # Модификаторы
@@ -481,8 +481,8 @@ class CombatSystem(BaseComponent):
     # История и статистика
     def _add_to_history(self, action: CombatAction):
         """Добавить действие в историю"""
-            self.combat_history.append(action)
-            
+        self.combat_history.append(action)
+        
         # Ограничиваем размер истории
         if len(self.combat_history) > self.max_combat_history:
             self.combat_history.pop(0)
@@ -502,8 +502,8 @@ class CombatSystem(BaseComponent):
         
         attacks = [a for a in entity_actions if a.action_type == "attack"]
         defenses = [a for a in entity_actions if a.action_type == "defense"]
-            
-            return {
+        
+        return {
             'total_actions': len(entity_actions),
             'attacks_performed': len(attacks),
             'defenses_performed': len(defenses),

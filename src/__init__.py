@@ -7,8 +7,8 @@ AI-EVOLVE: Эволюционная Адаптация - Генетически�
 # Core Systems
 from .core import (
     IComponent, BaseComponent, ComponentType, LifecycleState, Priority,
-    ComponentManager, EventBus, StateManager, Event, create_event,
-    GameEngine, GameState, SceneManager, PluginManager
+    ComponentManager, EventBus, Event, create_event,
+    GameEngine, GameState, SceneManager
 )
 
 # AI Systems
@@ -75,8 +75,8 @@ __description__ = "Эволюционная Адаптация: Генетиче
 __all__ = [
     # Core
     'IComponent', 'BaseComponent', 'ComponentType', 'LifecycleState', 'Priority',
-    'ComponentManager', 'EventBus', 'StateManager', 'Event', 'create_event',
-    'GameEngine', 'GameState', 'SceneManager', 'PluginManager',
+    'ComponentManager', 'EventBus', 'Event', 'create_event',
+    'GameEngine', 'GameState', 'SceneManager',
     
     # AI Systems
     'AISystem', 'AIConfig', 'AIMemory', 'AIDecision',
