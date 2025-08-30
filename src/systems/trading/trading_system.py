@@ -1,559 +1,685 @@
-from ...c or e.architecture import Pri or ity, LifecycleState: pass # Добавлен pass в пустой блок
-
-from ...c or e.constants import constants_manager, TradeType, TradeStatus
-
-from ...c or e.reposit or y import Reposit or yManager, DataType, St or ageType
-
-from ...c or e.state_manager import StateManager, StateType, StateScope
-
-from ...c or e.system_in terfaces import BaseGameSystem
-
-from .trading_data import TradeOffer, TradeItem, TradeHis tory, MarketData
-
-from dataclasses import dataclass, field: pass # Добавлен pass в пустой блок
-
+from dataclasses import dataclass, field
 from enum import Enum
-
 from pathlib import Path
-
+from src.core.architecture import BaseComponent, ComponentType, Priority
 from typing import *
-
-from typing import Dict, Lis t, Optional, Any, Union
-
+from typing import Dict, List, Optional, Callable, Any, Union, Tuple
 import logging
-
 import os
-
-import rand om
-
+import random
 import sys
-
 import time
 
-#!/usr / bin / env python3
-"""Система торговли - управление торговлей между сущностями
-Интегрирована с новой модульной архитектурой"""import logging
+#!/usr/bin/env python3
+"""Система торговли - управление торговлей между сущностями"""
 
-CurrencyType, TradeCateg or y, TradeRarity, TradeLocation
-PROBABILITY_CONSTANTS, SYSTEM_LIMITS, TIME_CONSTANTS_RO, get_float
-TradeContract
-logger= logging.getLogger(__name__)
-@dataclass: pass  # Добавлен pass в пустой блок
-class TradeSession:"""Торговая сессия"""session_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-participants: Lis t[str]= field(default_factor = list):
-pass  # Добавлен pass в пустой блок
-offers: Lis t[TradeOffer]= field(default_factor = list):
-pass  # Добавлен pass в пустой блок
-start_time: float= field(default_factor = time.time):
-pass  # Добавлен pass в пустой блок
-end_time: Optional[float]= None
-location: TradeLocation= TradeLocation.MARKETPLACE
-status: TradeStatus= TradeStatus.PENDING
-class TradingSystem(BaseGameSystem):"""Система управления торговлей - интегрирована с новой архитектурой"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self, state_manager: Optional[StateManager]= None
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-reposit or y_manager: Optional[Reposit or yManager]= None
-event_bu = None):
-pass  # Добавлен pass в пустой блок
-super().__in it__("trading", Pri or ity.NORMAL)
-# Интеграция с новой архитектурой
-self.state_manager: Optional[StateManager]= state_manager
-self.reposit or y_manager: Optional[Reposit or yManager]= reposit or y_manager
-self.event_bus= event_bus
-# Торговые предложения(теперь управляются через Reposit or yManager)
-self.active_offers: Dict[str, TradeOffer]= {}
-self.completed_trades: Lis t[TradeHis tory]= []
-self.trade_sessions: Dict[str, TradeSession]= {}
-# Рыночные данные(теперь управляются через Reposit or yManager)
-self.market_data: Dict[str, MarketData]= {}
-self.price_his tory: Dict[str, Lis t[float]]= {}
-# Контракты(теперь управляются через Reposit or yManager)
-self.active_contracts: Dict[str, TradeContract]= {}
-self.completed_contracts: Lis t[TradeContract]= []
-# Настройки системы(теперь управляются через StateManager)
-self.system_settings= {
-'max_active_offers': SYSTEM_LIMITS["max_active_offers"],
-'transaction_fee': PROBABILITY_CONSTANTS["transaction_fee"],
-'tax_rate': PROBABILITY_CONSTANTS["tax_rate"],
-'reputation_impact': PROBABILITY_CONSTANTS["reputation_impact"],
-'price_volatility': PROBABILITY_CONSTANTS["price_volatility"],
-'market_update_in terval': get_float(TIME_CONSTANTS_RO, "market_update_in terval", 3600.0),
-'offer_expiration_time': get_float(TIME_CONSTANTS_RO, "offer_expiration_time", 604800.0)
-}
-# Статистика системы(теперь управляется через StateManager)
-self.system_stats= {
-'total_trades': 0,
-'total_volume': 0.0,
-'active_offers_count': 0,
-'completed_contracts': 0,
-'average_trade_value': 0.0,
-'update_time': 0.0
-}
-logger.in fo("Система торговли инициализирована с новой архитектурой")
-def initialize(self, state_manager: StateManager= None
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-reposit or y_manager: Reposit or yManager= None, event_bu = None) -> bool: pass  # Добавлен pass в пустой блок
-"""Инициализация системы"""
-try: if state_manageris not None: self.state_manager= state_manager
-if reposit or y_manageris not None: self.reposit or y_manager= reposit or y_manager
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if event_busis not None: self.event_bus= event_bus
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if not self.state_manager or not self.reposit or y_manager: logger.err or("Не заданы зависимости state_manager или reposit or y_manager")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return False
-# Регистрация состояний системы
-self._regis ter_system_states()
-# Регистрация репозиториев
-self._regis ter_system_reposit or ies()
-# Инициализация рыночных данных
-self._in itialize_market_data()
-self.state= LifecycleState.INITIALIZED: pass  # Добавлен pass в пустой блок
-logger.in fo("Система торговли успешно инициализирована")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации системы торговли: {e}")
-return False
-def _regis ter_system_states(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Регистрация состояний системы"""if self.state_manager: self.state_manager.regis ter_state("trading_system_settings",
-self.system_settings,
-StateType.CONFIGURATION,
-StateScope.SYSTEM
-)
-self.state_manager.regis ter_state(
-"trading_system_stats",
-self.system_stats,
-StateType.DYNAMIC_DATA,
-StateScope.SYSTEM
-)
-def _regis ter_system_reposit or ies(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Регистрация репозиториев системы"""if self.reposit or y_manager: self.reposit or y_manager.create_reposit or y("trade_offers",
-DataType.ENTITY_DATA,
-St or ageType.MEMORY
-)
-self.reposit or y_manager.create_reposit or y(
-"trade_his tory",
-DataType.HISTORY,
-St or ageType.MEMORY
-)
-self.reposit or y_manager.create_reposit or y(
-"market_data",
-DataType.DYNAMIC_DATA,
-St or ageType.MEMORY
-)
-self.reposit or y_manager.create_reposit or y(
-"trade_contracts",
-DataType.ENTITY_DATA,
-St or ageType.MEMORY
-)
-def _in itialize_market_data(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация рыночных данных"""
-# Создание базовых рыночных данных для основных категорий
-for categ or yin TradeCateg or y: market_data= MarketData(
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-item_i = f"market_{categ or y.value}",
-categor = categ or y,
-current_pric = 100.0,
-average_pric = 100.0,
-suppl = 100,
-deman = 100
-)
-self.market_data[market_data.item_id]= market_data
-def create_trade_offer(self, seller_id: str, items: Lis t[TradeItem]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-price: float,
-currency_type: CurrencyType= CurrencyType.GOLD,
-trade_type: TradeType= TradeType.SELL) -> Optional[str]:
-pass  # Добавлен pass в пустой блок
-"""Создание торгового предложения"""
-try:
-# Проверка ограничений
-if len(self.active_offers) >= self.system_settings['max_active_offers']:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.warning("Достигнут лимит активных предложений")
-return None
-offer_id= f"offer_{seller_id}_{in t(time.time())}"
-offer= TradeOffer(
-offer_i = offer_id,
-trade_typ = trade_type,
-seller_i = seller_id,
-item = items,
-pric = price,
-currency_typ = currency_type,
-expiration_tim = time.time() + self.system_settings['offer_expiration_time']
-)
-self.active_offers[offer_id]= offer
-self.system_stats['active_offers_count'] = 1
-logger.in fo(f"Создано торговое предложение {offer_id}")
-return offer_id
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка создания торгового предложения: {e}")
-return None
-def accept_trade_offer(self, offer_id: str, buyer_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-quantity: int= None) -> bool: pass  # Добавлен pass в пустой блок
-"""Принятие торгового предложения"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка принятия торгового предложения: {e}")
-return False
-def _update_market_data(self, items: Lis t[TradeItem], price: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление рыночных данных"""
-try: for itemin items: market_id= f"market_{item.categ or y.value}"
-if market_idin self.market_data: market_data= self.market_data[market_id]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-market_data.update_price(price)
-market_data.total_trades = 1
-market_data.total_volume = price
-# Обновление спроса и предложения
-if item.quantity > 0: market_data.supply = item.quantity
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-market_data.demand = 1
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления рыночных данных: {e}")
-def get_market_data(self, categ or y: TradeCateg or y) -> Optional[MarketData]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение рыночных данных для категории"""
-market_id= f"market_{categ or y.value}"return self.market_data.get(market_id)
-def get_active_offers(self
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-categ or y: Optional[TradeCateg or y]= None) -> Lis t[TradeOffer]:
-pass  # Добавлен pass в пустой блок"""Получение активных предложений"""offers= lis t(self.active_offers.values())
-if categ or y: offers= [offer for offerin offers: if any(item.categ or y = categ or y for itemin offer.items)]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass  # Добавлен pass в пустой блок
-return offers
-def get_trade_his tory(self, entity_id: str) -> Lis t[TradeHis tory]:"""Получение истории торговли для сущности"""return [trade for tradein self.completed_trades: if trade.seller_id = entity_id or trade.buyer_id = entity_id]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass  # Добавлен pass в пустой блок
-def create_contract(self, seller_id: str, buyer_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-items: Lis t[TradeItem],
-total_price: float
-delivery_time: Optional[float]= None) -> Optional[str]:
-pass  # Добавлен pass в пустой блок"""Создание торгового контракта"""
-try: contract_id= f"contract_{seller_id}_{buyer_id}_{in t(time.time())}"
-contract= TradeContract(
-contract_i = contract_id,
-seller_i = seller_id,
-buyer_i = buyer_id,
-item = items,
-total_pric = total_price,
-delivery_tim = delivery_time,
-statu = TradeStatus.PENDING
-)
-self.active_contracts[contract_id]= contract
-logger.in fo(f"Создан торговый контракт {contract_id}")
-return contract_id
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка создания торгового контракта: {e}")
-return None
-def complete_contract(self, contract_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Завершение торгового контракта"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка завершения контракта: {e}")
-return False
-def update(self, delta_time: float) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление системы"""
-try: current_time= time.time()
-# Проверка истечения предложений
-self._check_expired_offers(current_time)
-# Обновление рыночных данных
-self._update_market_prices(delta_time)
-# Проверка просроченных контрактов
-self._check_overdue_contracts(current_time)
-# Обновление статистики
-self.system_stats['update_time']= current_time
-# Обновление состояний в StateManager
-if self.state_manager: self.state_manager.update_state("trading_system_stats", self.system_stats)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления системы торговли: {e}")
-def _check_expired_offers(self, current_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Проверка истечения предложений"""
-expired_offers= []
-for offer_id, offerin self.active_offers.items():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if offer.is _expired():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-expired_offers.append(offer_id)
-# Удаление истекших предложений
-for offer_idin expired_offers: del self.active_offers[offer_id]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.system_stats['active_offers_count'] = 1
-logger.in fo(f"Предложение {offer_id} истекло")
-def _update_market_prices(self, delta_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление рыночных цен"""
-try: for market_datain self.market_data.values():
-# Простая модель изменения цен на основе спроса и предложения
-if market_data.supply > 0and market_data.demand > 0: supply_demand _ratio= market_data.demand / market_data.supply
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-price_change= (supply_demand _ratio - 1.0) * self.system_settings['price_volatility'] * delta_time
-new_price= market_data.current_price * (1 + price_change)
-market_data.update_price(new_price)
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления рыночных цен: {e}")
-def _check_overdue_contracts(self, current_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Проверка просроченных контрактов"""
-overdue_contracts= []
-for contract_id, contractin self.active_contracts.items():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if contract.is _delivery_overdue():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-overdue_contracts.append(contract_id)
-# Обработка просроченных контрактов
-for contract_idin overdue_contracts: contract= self.active_contracts[contract_id]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-contract.status= TradeStatus.FAILED
-logger.warning(f"Контракт {contract_id} просрочен")
-def get_system_in fo(self) -> Dict[str, Any]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получить информацию о системе"""return {"system_name": "TradingSystem",
-"state": self.state.value,
-"settings": self.system_settings,
-"stats": self.system_stats,
-"active_offers_count": len(self.active_offers),
-"market_categ or ies": len(self.market_data),
-"active_contracts_count": len(self.active_contracts),
-"completed_trades_count": len(self.completed_trades)
-}
+logger = logging.getLogger(__name__)
+
+# = ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
+
+class TradeType(Enum):
+    """Типы торговли"""
+    BUY = "buy"              # Покупка
+    SELL = "sell"            # Продажа
+    EXCHANGE = "exchange"    # Обмен
+    AUCTION = "auction"      # Аукцион
+    CONTRACT = "contract"    # Контракт
+
+class TradeStatus(Enum):
+    """Статус торговли"""
+    PENDING = "pending"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+
+class CurrencyType(Enum):
+    """Типы валют"""
+    GOLD = "gold"
+    SILVER = "silver"
+    COPPER = "copper"
+    CREDITS = "credits"
+    REPUTATION = "reputation"
+
+class TradeCategory(Enum):
+    """Категории товаров"""
+    WEAPONS = "weapons"
+    ARMOR = "armor"
+    CONSUMABLES = "consumables"
+    MATERIALS = "materials"
+    CURRENCY = "currency"
+    SPECIAL = "special"
+
+# = СТРУКТУРЫ ДАННЫХ
+
+@dataclass
+class TradeOffer:
+    """Торговое предложение"""
+    offer_id: str
+    seller_id: str
+    item_id: str
+    item_count: int
+    price: float
+    currency: CurrencyType
+    trade_type: TradeType
+    category: TradeCategory
+    created_at: float = field(default_factory=time.time)
+    expires_at: Optional[float] = None
+    status: TradeStatus = TradeStatus.PENDING
+    description: str = ""
+    quality: float = 1.0
+    requirements: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class TradeItem:
+    """Торговый предмет"""
+    item_id: str
+    name: str
+    description: str
+    category: TradeCategory
+    base_price: float
+    rarity: str = "common"
+    weight: float = 0.0
+    stackable: bool = True
+    max_stack: int = 100
+    tradeable: bool = True
+
+@dataclass
+class TradeHistory:
+    """История торговли"""
+    transaction_id: str
+    buyer_id: str
+    seller_id: str
+    item_id: str
+    item_count: int
+    price: float
+    currency: CurrencyType
+    timestamp: float = field(default_factory=time.time)
+    location: str = ""
+    success: bool = True
+
+@dataclass
+class MarketData:
+    """Рыночные данные"""
+    item_id: str
+    current_price: float
+    average_price: float
+    min_price: float
+    max_price: float
+    supply: int = 0
+    demand: int = 0
+    last_update: float = field(default_factory=time.time)
+    price_history: List[float] = field(default_factory=list)
+
+@dataclass
+class TradeContract:
+    """Торговый контракт"""
+    contract_id: str
+    parties: List[str] = field(default_factory=list)
+    items: Dict[str, int] = field(default_factory=dict)
+    total_value: float = 0.0
+    currency: CurrencyType = CurrencyType.GOLD
+    created_at: float = field(default_factory=time.time)
+    expires_at: Optional[float] = None
+    status: TradeStatus = TradeStatus.PENDING
+    terms: Dict[str, Any] = field(default_factory=dict)
+
+@dataclass
+class TradeSession:
+    """Торговая сессия"""
+    session_id: str
+    participants: List[str] = field(default_factory=list)
+    offers: List[TradeOffer] = field(default_factory=list)
+    start_time: float = field(default_factory=time.time)
+    end_time: Optional[float] = None
+    location: str = ""
+    status: TradeStatus = TradeStatus.PENDING
+
+# = СИСТЕМА ТОРГОВЛИ
+
+class TradingSystem(BaseComponent):
+    """Система торговли"""
+    
+    def __init__(self):
+        super().__init__(
+            component_id="TradingSystem",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.NORMAL
+        )
+        
+        # Торговые данные
+        self.active_offers: Dict[str, TradeOffer] = {}
+        self.completed_trades: List[TradeHistory] = []
+        self.trade_sessions: Dict[str, TradeSession] = {}
+        self.market_data: Dict[str, MarketData] = {}
+        self.active_contracts: Dict[str, TradeContract] = {}
+        self.completed_contracts: List[TradeContract] = []
+        
+        # Торговые предметы
+        self.trade_items: Dict[str, TradeItem] = {}
+        
+        # Статистика
+        self.stats = {
+            "total_transactions": 0,
+            "total_value": 0.0,
+            "active_offers": 0,
+            "completed_contracts": 0,
+            "market_updates": 0
+        }
+        
+        # Callbacks
+        self.trade_callbacks: Dict[str, Callable] = {}
+        self.completion_callbacks: List[Callable] = []
+        self.market_callbacks: List[Callable] = []
+        
+        # Настройки
+        self.settings = {
+            "max_active_offers": 1000,
+            "transaction_fee": 0.05,  # 5%
+            "tax_rate": 0.02,  # 2%
+            "reputation_impact": 0.1,
+            "price_volatility": 0.1,
+            "market_update_interval": 3600.0,  # 1 час
+            "offer_expiry_time": 86400.0  # 24 часа
+        }
+
+    def _on_initialize(self) -> bool:
+        """Инициализация системы торговли"""
+        try:
+            self.logger.info("Инициализация системы торговли")
+            
+            # Загрузка торговых предметов
+            self._load_trade_items()
+            
+            # Инициализация рыночных данных
+            self._initialize_market_data()
+            
+            # Регистрация callbacks
+            self._register_callbacks()
+            
+            self.logger.info("Система торговли инициализирована")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка инициализации системы торговли: {e}")
+            return False
+
+    def _load_trade_items(self):
+        """Загрузка торговых предметов"""
+        try:
+            # Базовые предметы
+            self._add_trade_item(TradeItem(
+                item_id="iron_sword",
+                name="Железный меч",
+                description="Надежный железный меч",
+                category=TradeCategory.WEAPONS,
+                base_price=100.0,
+                rarity="common",
+                weight=2.0
+            ))
+            
+            self._add_trade_item(TradeItem(
+                item_id="leather_armor",
+                name="Кожаная броня",
+                description="Легкая кожаная броня",
+                category=TradeCategory.ARMOR,
+                base_price=80.0,
+                rarity="common",
+                weight=3.0
+            ))
+            
+            self._add_trade_item(TradeItem(
+                item_id="health_potion",
+                name="Зелье здоровья",
+                description="Восстанавливает здоровье",
+                category=TradeCategory.CONSUMABLES,
+                base_price=25.0,
+                rarity="common",
+                weight=0.5,
+                stackable=True,
+                max_stack=50
+            ))
+            
+            self._add_trade_item(TradeItem(
+                item_id="iron_ingot",
+                name="Железный слиток",
+                description="Качественный железный слиток",
+                category=TradeCategory.MATERIALS,
+                base_price=15.0,
+                rarity="common",
+                weight=1.0,
+                stackable=True,
+                max_stack=100
+            ))
+            
+            self.logger.info(f"Загружено {len(self.trade_items)} торговых предметов")
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка загрузки торговых предметов: {e}")
+
+    def _initialize_market_data(self):
+        """Инициализация рыночных данных"""
+        try:
+            for item_id, item in self.trade_items.items():
+                market_data = MarketData(
+                    item_id=item_id,
+                    current_price=item.base_price,
+                    average_price=item.base_price,
+                    min_price=item.base_price * 0.8,
+                    max_price=item.base_price * 1.2,
+                    supply=random.randint(10, 100),
+                    demand=random.randint(5, 50)
+                )
+                self.market_data[item_id] = market_data
+            
+            self.logger.info(f"Инициализированы рыночные данные для {len(self.market_data)} предметов")
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка инициализации рыночных данных: {e}")
+
+    def _register_callbacks(self):
+        """Регистрация callbacks"""
+        try:
+            # Callback для завершения торговли
+            self.completion_callbacks.append(self._on_trade_completed)
+            
+            # Callback для обновления рынка
+            self.market_callbacks.append(self._on_market_updated)
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка регистрации callbacks: {e}")
+
+    def create_offer(self, seller_id: str, item_id: str, item_count: int, 
+                    price: float, currency: CurrencyType = CurrencyType.GOLD,
+                    trade_type: TradeType = TradeType.SELL) -> Optional[str]:
+        """Создание торгового предложения"""
+        try:
+            # Проверка лимита предложений
+            if len(self.active_offers) >= self.settings["max_active_offers"]:
+                self.logger.warning("Достигнут лимит активных предложений")
+                return None
+            
+            # Проверка существования предмета
+            if item_id not in self.trade_items:
+                self.logger.warning(f"Предмет {item_id} не найден в торговой системе")
+                return None
+            
+            trade_item = self.trade_items[item_id]
+            
+            # Проверка возможности торговли
+            if not trade_item.tradeable:
+                self.logger.warning(f"Предмет {item_id} не подлежит торговле")
+                return None
+            
+            # Проверка количества
+            if item_count <= 0 or item_count > trade_item.max_stack:
+                self.logger.warning(f"Недопустимое количество предметов: {item_count}")
+                return None
+            
+            # Проверка цены
+            if price <= 0:
+                self.logger.warning("Цена должна быть положительной")
+                return None
+            
+            # Создание предложения
+            offer_id = f"offer_{seller_id}_{int(time.time())}"
+            offer = TradeOffer(
+                offer_id=offer_id,
+                seller_id=seller_id,
+                item_id=item_id,
+                item_count=item_count,
+                price=price,
+                currency=currency,
+                trade_type=trade_type,
+                category=trade_item.category,
+                expires_at=time.time() + self.settings["offer_expiry_time"],
+                description=trade_item.description,
+                quality=1.0
+            )
+            
+            self.active_offers[offer_id] = offer
+            
+            # Обновление рыночных данных
+            self._update_market_data(item_id, price, item_count, "supply")
+            
+            # Уведомление о создании предложения
+            self._notify_offer_created(offer)
+            
+            self.logger.info(f"Создано предложение {offer_id} для предмета {item_id}")
+            return offer_id
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка создания предложения: {e}")
+            return None
+
+    def accept_offer(self, buyer_id: str, offer_id: str) -> bool:
+        """Принятие торгового предложения"""
+        try:
+            if offer_id not in self.active_offers:
+                self.logger.warning(f"Предложение {offer_id} не найдено")
+                return False
+            
+            offer = self.active_offers[offer_id]
+            
+            # Проверка срока действия
+            if offer.expires_at and time.time() > offer.expires_at:
+                self.logger.warning(f"Предложение {offer_id} истекло")
+                offer.status = TradeStatus.EXPIRED
+                return False
+            
+            # Проверка статуса
+            if offer.status != TradeStatus.PENDING:
+                self.logger.warning(f"Предложение {offer_id} недоступно")
+                return False
+            
+            # Проверка средств покупателя
+            if not self._check_buyer_funds(buyer_id, offer.price, offer.currency):
+                self.logger.warning(f"Недостаточно средств у покупателя {buyer_id}")
+                return False
+            
+            # Проверка наличия предметов у продавца
+            if not self._check_seller_items(offer.seller_id, offer.item_id, offer.item_count):
+                self.logger.warning(f"Недостаточно предметов у продавца {offer.seller_id}")
+                return False
+            
+            # Выполнение сделки
+            success = self._execute_trade(buyer_id, offer)
+            
+            if success:
+                # Создание записи в истории
+                transaction = TradeHistory(
+                    transaction_id=f"trade_{int(time.time())}",
+                    buyer_id=buyer_id,
+                    seller_id=offer.seller_id,
+                    item_id=offer.item_id,
+                    item_count=offer.item_count,
+                    price=offer.price,
+                    currency=offer.currency,
+                    timestamp=time.time(),
+                    success=True
+                )
+                
+                self.completed_trades.append(transaction)
+                
+                # Обновление статистики
+                self.stats["total_transactions"] += 1
+                self.stats["total_value"] += offer.price
+                
+                # Удаление предложения
+                del self.active_offers[offer_id]
+                
+                # Обновление рыночных данных
+                self._update_market_data(offer.item_id, offer.price, offer.item_count, "demand")
+                
+                # Уведомление о завершении сделки
+                self._notify_trade_completed(transaction)
+                
+                self.logger.info(f"Сделка {transaction.transaction_id} завершена успешно")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка принятия предложения: {e}")
+            return False
+
+    def _execute_trade(self, buyer_id: str, offer: TradeOffer) -> bool:
+        """Выполнение торговой сделки"""
+        try:
+            # Расчет комиссии
+            transaction_fee = offer.price * self.settings["transaction_fee"]
+            tax_amount = offer.price * self.settings["tax_rate"]
+            seller_receives = offer.price - transaction_fee - tax_amount
+            
+            # Списание средств у покупателя
+            if not self._deduct_funds(buyer_id, offer.price, offer.currency):
+                return False
+            
+            # Зачисление средств продавцу
+            if not self._add_funds(offer.seller_id, seller_receives, offer.currency):
+                # Возврат средств покупателю при ошибке
+                self._add_funds(buyer_id, offer.price, offer.currency)
+                return False
+            
+            # Передача предметов
+            if not self._transfer_items(offer.seller_id, buyer_id, offer.item_id, offer.item_count):
+                # Возврат средств при ошибке
+                self._add_funds(buyer_id, offer.price, offer.currency)
+                self._deduct_funds(offer.seller_id, seller_receives, offer.currency)
+                return False
+            
+            # Обновление репутации
+            self._update_reputation(buyer_id, offer.seller_id, offer.price)
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка выполнения сделки: {e}")
+            return False
+
+    def _check_buyer_funds(self, buyer_id: str, amount: float, currency: CurrencyType) -> bool:
+        """Проверка средств покупателя"""
+        try:
+            # Здесь должна быть проверка баланса игрока
+            # balance = self._get_player_balance(buyer_id, currency)
+            # return balance >= amount
+            return True  # Временно всегда True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка проверки средств покупателя: {e}")
+            return False
+
+    def _check_seller_items(self, seller_id: str, item_id: str, count: int) -> bool:
+        """Проверка наличия предметов у продавца"""
+        try:
+            # Здесь должна быть проверка инвентаря продавца
+            # inventory = self._get_player_inventory(seller_id)
+            # return inventory.get(item_id, 0) >= count
+            return True  # Временно всегда True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка проверки предметов продавца: {e}")
+            return False
+
+    def _deduct_funds(self, entity_id: str, amount: float, currency: CurrencyType) -> bool:
+        """Списание средств"""
+        try:
+            # Здесь должно быть списание средств
+            # self._update_player_balance(entity_id, currency, -amount)
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка списания средств: {e}")
+            return False
+
+    def _add_funds(self, entity_id: str, amount: float, currency: CurrencyType) -> bool:
+        """Зачисление средств"""
+        try:
+            # Здесь должно быть зачисление средств
+            # self._update_player_balance(entity_id, currency, amount)
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка зачисления средств: {e}")
+            return False
+
+    def _transfer_items(self, from_id: str, to_id: str, item_id: str, count: int) -> bool:
+        """Передача предметов"""
+        try:
+            # Здесь должна быть передача предметов между инвентарями
+            # self._remove_from_inventory(from_id, item_id, count)
+            # self._add_to_inventory(to_id, item_id, count)
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка передачи предметов: {e}")
+            return False
+
+    def _update_reputation(self, buyer_id: str, seller_id: str, amount: float):
+        """Обновление репутации"""
+        try:
+            reputation_change = amount * self.settings["reputation_impact"]
+            # self._update_player_reputation(buyer_id, seller_id, reputation_change)
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления репутации: {e}")
+
+    def _update_market_data(self, item_id: str, price: float, quantity: int, type_: str):
+        """Обновление рыночных данных"""
+        try:
+            if item_id not in self.market_data:
+                return
+            
+            market_data = self.market_data[item_id]
+            
+            # Обновление цены
+            market_data.current_price = price
+            market_data.price_history.append(price)
+            
+            # Ограничение истории цен
+            if len(market_data.price_history) > 100:
+                market_data.price_history = market_data.price_history[-100:]
+            
+            # Обновление статистики
+            if market_data.price_history:
+                market_data.average_price = sum(market_data.price_history) / len(market_data.price_history)
+                market_data.min_price = min(market_data.price_history)
+                market_data.max_price = max(market_data.price_history)
+            
+            # Обновление спроса/предложения
+            if type_ == "supply":
+                market_data.supply += quantity
+            elif type_ == "demand":
+                market_data.demand += quantity
+            
+            market_data.last_update = time.time()
+            
+            # Уведомление об обновлении рынка
+            self._notify_market_updated(item_id, market_data)
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления рыночных данных: {e}")
+
+    def get_market_data(self, item_id: str) -> Optional[MarketData]:
+        """Получение рыночных данных"""
+        return self.market_data.get(item_id)
+
+    def get_active_offers(self, category: Optional[TradeCategory] = None, 
+                         max_price: Optional[float] = None) -> List[TradeOffer]:
+        """Получение активных предложений"""
+        try:
+            offers = []
+            current_time = time.time()
+            
+            for offer in self.active_offers.values():
+                # Проверка срока действия
+                if offer.expires_at and current_time > offer.expires_at:
+                    offer.status = TradeStatus.EXPIRED
+                    continue
+                
+                # Фильтрация по категории
+                if category and offer.category != category:
+                    continue
+                
+                # Фильтрация по цене
+                if max_price and offer.price > max_price:
+                    continue
+                
+                offers.append(offer)
+            
+            return offers
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка получения активных предложений: {e}")
+            return []
+
+    def cancel_offer(self, offer_id: str, seller_id: str) -> bool:
+        """Отмена торгового предложения"""
+        try:
+            if offer_id not in self.active_offers:
+                return False
+            
+            offer = self.active_offers[offer_id]
+            
+            # Проверка владельца
+            if offer.seller_id != seller_id:
+                self.logger.warning(f"Попытка отмены чужого предложения {offer_id}")
+                return False
+            
+            # Отмена предложения
+            offer.status = TradeStatus.CANCELLED
+            del self.active_offers[offer_id]
+            
+            self.logger.info(f"Предложение {offer_id} отменено")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка отмены предложения: {e}")
+            return False
+
+    def _add_trade_item(self, item: TradeItem):
+        """Добавление торгового предмета"""
+        self.trade_items[item.item_id] = item
+
+    def _notify_offer_created(self, offer: TradeOffer):
+        """Уведомление о создании предложения"""
+        try:
+            for callback in self.trade_callbacks.get("offer_created", []):
+                callback(offer)
+        except Exception as e:
+            self.logger.error(f"Ошибка уведомления о создании предложения: {e}")
+
+    def _notify_trade_completed(self, transaction: TradeHistory):
+        """Уведомление о завершении сделки"""
+        try:
+            for callback in self.completion_callbacks:
+                callback(transaction)
+        except Exception as e:
+            self.logger.error(f"Ошибка уведомления о завершении сделки: {e}")
+
+    def _notify_market_updated(self, item_id: str, market_data: MarketData):
+        """Уведомление об обновлении рынка"""
+        try:
+            for callback in self.market_callbacks:
+                callback(item_id, market_data)
+        except Exception as e:
+            self.logger.error(f"Ошибка уведомления об обновлении рынка: {e}")
+
+    def _on_trade_completed(self, transaction: TradeHistory):
+        """Callback при завершении сделки"""
+        self.logger.debug(f"Сделка завершена: {transaction.item_id} x{transaction.item_count} за {transaction.price}")
+
+    def _on_market_updated(self, item_id: str, market_data: MarketData):
+        """Callback при обновлении рынка"""
+        self.logger.debug(f"Рынок обновлен: {item_id} - цена: {market_data.current_price}")
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        return {
+            "total_items": len(self.trade_items),
+            "active_offers": len(self.active_offers),
+            "completed_trades": len(self.completed_trades),
+            "market_items": len(self.market_data),
+            "stats": self.stats.copy()
+        }
+
+    def update(self, delta_time: float):
+        """Обновление системы торговли"""
+        try:
+            # Очистка истекших предложений
+            current_time = time.time()
+            expired_offers = []
+            
+            for offer_id, offer in self.active_offers.items():
+                if offer.expires_at and current_time > offer.expires_at:
+                    offer.status = TradeStatus.EXPIRED
+                    expired_offers.append(offer_id)
+            
+            for offer_id in expired_offers:
+                del self.active_offers[offer_id]
+            
+            # Обновление рыночных данных
+            self.stats["market_updates"] += 1
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления системы торговли: {e}")
