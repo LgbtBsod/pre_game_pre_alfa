@@ -233,6 +233,51 @@ def emergency_repair(content):
     content = fix_broken_imports(content)
     content = fix_broken_classes_and_functions(content)
     
+    # Если файл все еще невалиден, применяем агрессивные исправления
+    if not validate_python_syntax(content):
+        print("    🔥 Применяю агрессивные исправления...")
+        content = aggressive_repair(content)
+    
+    return content
+
+def aggressive_repair(content):
+    """Агрессивный ремонт для критически поврежденных файлов."""
+    print("    💥 Агрессивный ремонт...")
+    
+    # Удаляем все проблемные символы
+    content = re.sub(r'[^\x20-\x7E\n\t]', '', content)
+    
+    # Исправляем разорванные строки более агрессивно
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for line in lines:
+        # Убираем лишние пробелы в начале и конце
+        line = line.strip()
+        
+        # Исправляем очевидные ошибки
+        line = re.sub(r'[^\x20-\x7E]', '', line)  # Только печатные символы
+        
+        # Добавляем исправленную строку
+        if line:
+            fixed_lines.append(line)
+    
+    # Собираем обратно
+    content = '\n'.join(fixed_lines)
+    
+    # Добавляем базовую структуру если файл пустой
+    if not content.strip():
+        content = '''# Восстановленный файл
+# Этот файл был критически поврежден и восстановлен автоматически
+
+def main():
+    """Основная функция"""
+    pass
+
+if __name__ == "__main__":
+    main()
+'''
+    
     return content
 
 def apply_preventive_fixes(content):
@@ -749,21 +794,36 @@ def process_file(filepath):
             print(f"  ❌ Ошибка восстановления из резервной копии: {filepath}: {e}")
         return
 
+    # Проверяем, действительно ли файл исправлен
     if content != original_content:
-        try:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(content)
-            print(f"  ✅ Исправлен: {filepath}")
-        except Exception as e:
-            print(f"  ❌ Ошибка записи в файл {filepath}: {e}")
+        # Проверяем синтаксис исправленного содержимого
+        if final_valid:
+            try:
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                print(f"  ✅ Исправлен: {filepath}")
+            except Exception as e:
+                print(f"  ❌ Ошибка записи в файл {filepath}: {e}")
+        else:
+            print(f"  ⚠️ Файл изменен, но синтаксис невалиден: {filepath}")
+            print(f"  🔄 Восстанавливаю из резервной копии...")
+            try:
+                with open(backup_path, 'r', encoding='utf-8') as f:
+                    backup_content = f.read()
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    f.write(backup_content)
+                print(f"  ✅ Файл восстановлен из резервной копии")
+            except Exception as e:
+                print(f"  ❌ Ошибка восстановления: {e}")
     else:
         print(f"  ➖ Без изменений: {filepath}")
         
     # Сохраняем резервную копию для безопасности
     print(f"  💾 Резервная копия сохранена: {backup_path}")
     
-    # Создаем файл проверки целостности
-    create_file_integrity_check(filepath)
+    # Создаем файл проверки целостности только для валидных файлов
+    if final_valid:
+        create_file_integrity_check(filepath)
 
 def main():
     """Основная функция для обхода директорий."""
@@ -879,6 +939,137 @@ def show_backup_status():
     
     print(f"\n  💡 Для очистки используйте: cleanup_backup_files()")
 
+def force_cleanup_all_backups():
+    """Принудительно удаляет ВСЕ резервные копии в проекте."""
+    print("🧹 ПРИНУДИТЕЛЬНАЯ ОЧИСТКА ВСЕХ РЕЗЕРВНЫХ КОПИЙ...")
+    print("⚠️  ВНИМАНИЕ: Эта операция удалит ВСЕ резервные копии!")
+    
+    # Ищем все файлы бэкапа в проекте
+    all_backup_files = []
+    all_integrity_files = []
+    
+    for root, _, files in os.walk('.'):
+        for file in files:
+            filepath = os.path.join(root, file)
+            if file.endswith('.backup_') or file.endswith('.bak'):
+                all_backup_files.append(filepath)
+            elif file.endswith('.integrity'):
+                all_integrity_files.append(filepath)
+    
+    print(f"  📁 Найдено резервных копий: {len(all_backup_files)}")
+    print(f"  📋 Найдено файлов проверки целостности: {len(all_integrity_files)}")
+    
+    if not all_backup_files and not all_integrity_files:
+        print("  ✅ Резервные копии не найдены")
+        return
+    
+    # Показываем что будет удалено
+    print("\n  📋 Файлы для удаления:")
+    for backup_file in all_backup_files[:10]:  # Показываем первые 10
+        print(f"    - {backup_file}")
+    if len(all_backup_files) > 10:
+        print(f"    ... и еще {len(all_backup_files) - 10} файлов")
+    
+    # Запрашиваем подтверждение
+    response = input("\n  ❓ Продолжить удаление ВСЕХ резервных копий? (yes/NO): ").strip().lower()
+    if response != 'yes':
+        print("  ❌ Операция отменена пользователем")
+        return
+    
+    # Удаляем все резервные копии
+    deleted_backups = 0
+    deleted_integrity = 0
+    
+    print("\n  🗑️ Удаляю резервные копии...")
+    for backup_file in all_backup_files:
+        try:
+            os.remove(backup_file)
+            deleted_backups += 1
+            print(f"    ✅ Удален: {backup_file}")
+        except Exception as e:
+            print(f"    ❌ Ошибка удаления {backup_file}: {e}")
+    
+    print("\n  🗑️ Удаляю файлы проверки целостности...")
+    for integrity_file in all_integrity_files:
+        try:
+            os.remove(integrity_file)
+            deleted_integrity += 1
+            print(f"    ✅ Удален: {integrity_file}")
+        except Exception as e:
+            print(f"    ❌ Ошибка удаления {integrity_file}: {e}")
+    
+    # Удаляем пустые директории .backups
+    backup_dirs = ['.backups']
+    for backup_dir in backup_dirs:
+        if os.path.exists(backup_dir):
+            try:
+                os.rmdir(backup_dir)
+                print(f"    ✅ Удалена пустая директория: {backup_dir}")
+            except Exception:
+                pass  # Директория не пустая
+    
+    print(f"\n  🎉 Очистка завершена!")
+    print(f"  ✅ Удалено резервных копий: {deleted_backups}")
+    print(f"  ✅ Удалено файлов проверки целостности: {deleted_integrity}")
+    print(f"  💡 Теперь проект чист от старых резервных копий!")
+
+def cleanup_old_backups_by_age(days_old=7):
+    """Удаляет резервные копии старше указанного количества дней."""
+    print(f"🧹 Очистка резервных копий старше {days_old} дней...")
+    
+    from datetime import datetime, timedelta
+    cutoff_date = datetime.now() - timedelta(days=days_old)
+    
+    all_backup_files = []
+    for root, _, files in os.walk('.'):
+        for file in files:
+            if file.endswith('.backup_') or file.endswith('.bak'):
+                filepath = os.path.join(root, file)
+                try:
+                    file_time = datetime.fromtimestamp(os.path.getmtime(filepath))
+                    if file_time < cutoff_date:
+                        all_backup_files.append((filepath, file_time))
+                except Exception:
+                    pass
+    
+    if not all_backup_files:
+        print("  ✅ Старые резервные копии не найдены")
+        return
+    
+    print(f"  📁 Найдено старых резервных копий: {len(all_backup_files)}")
+    
+    # Сортируем по дате
+    all_backup_files.sort(key=lambda x: x[1])
+    
+    # Показываем что будет удалено
+    print("  📋 Старые файлы для удаления:")
+    for backup_file, file_time in all_backup_files[:10]:
+        age_days = (datetime.now() - file_time).days
+        print(f"    - {backup_file} (возраст: {age_days} дней)")
+    
+    if len(all_backup_files) > 10:
+        print(f"    ... и еще {len(all_backup_files) - 10} файлов")
+    
+    # Запрашиваем подтверждение
+    response = input(f"\n  ❓ Удалить резервные копии старше {days_old} дней? (y/N): ").strip().lower()
+    if response != 'y':
+        print("  ❌ Операция отменена пользователем")
+        return
+    
+    # Удаляем старые резервные копии
+    deleted_count = 0
+    for backup_file, file_time in all_backup_files:
+        try:
+            os.remove(backup_file)
+            deleted_count += 1
+            age_days = (datetime.now() - file_time).days
+            print(f"    ✅ Удален: {backup_file} (возраст: {age_days} дней)")
+        except Exception as e:
+            print(f"    ❌ Ошибка удаления {backup_file}: {e}")
+    
+    print(f"\n  🎉 Очистка завершена!")
+    print(f"  ✅ Удалено старых резервных копий: {deleted_count}")
+
 if __name__ == '__main__':
     print("🚀 Запуск улучшенной утилиты исправления Python файлов")
     print("=" * 60)
@@ -900,4 +1091,11 @@ if __name__ == '__main__':
     print("   - Резервные копии автоматически управляются")
     print("   - При здоровом проекте бэкапы удаляются")
     print("   - Ручная очистка: manual_cleanup()")
+    
+    # Предлагаем очистку старых резервных копий
+    print("\n🧹 Очистка старых резервных копий:")
+    print("   - force_cleanup_all_backups() - удалить ВСЕ бэкапы")
+    print("   - cleanup_old_backups_by_age(7) - удалить бэкапы старше 7 дней")
+    print("   - show_backup_status() - показать статус бэкапов")
+    
     print("=" * 60)
