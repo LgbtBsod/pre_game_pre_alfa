@@ -1,27 +1,18 @@
+#!/usr/bin/env python3
+"""AI системы для AI-EVOLVE"""
 
-import logging
+from .ai_system import AISystem, AIType, AIState, AIPriority, AIEntity, AIBehavior, AIDecision
+from .ai_interface import AISystemInterface, AISystemFactory, AISystemManager
 
-import os
-
-import sys
-
-from pathlib import Path
-
-from typing import *
-
-#!/usr / bin / env python3
-"""
-    AI Systems Package
-    Системы искусственного интеллекта
-"""
-
-
-__all__= [
+__all__ = [
     'AISystem',
-    'AIConfig',
-    'AIMem or y',
-    'AIDecis ion',
-    'PyT or chAISystem',
-    'NeuralNetw or k',
-    'EmotionalNetw or k'
+    'AIType', 
+    'AIState',
+    'AIPriority',
+    'AIEntity',
+    'AIBehavior',
+    'AIDecision',
+    'AISystemInterface',
+    'AISystemFactory',
+    'AISystemManager'
 ]

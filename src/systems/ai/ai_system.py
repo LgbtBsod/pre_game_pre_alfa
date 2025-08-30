@@ -1,1260 +1,450 @@
-from ...c or e.constants import constants_manager, AIState, AIBehavior
+#!/usr/bin/env python3
+"""Единая система искусственного интеллекта
+Объединяет все AI возможности в одной системе"""
 
-from ...c or e.in terfaces import ISystem, SystemPri or ity, SystemState
-
-from dataclasses import dataclass, field: pass # Добавлен pass в пустой блок
-
+from dataclasses import dataclass, field
 from enum import Enum
-
-from pathlib import Path
-
-from typing import *
-
-from typing import Dict, Lis t, Optional, Any, Tuple, Union
-
+from typing import Dict, List, Optional, Any, Callable, Tuple
 import logging
-
-import math
-
-import os
-
-import rand om
-
-import re
-
-import sys
-
+import random
 import time
+import math
+import threading
+from concurrent.futures import ThreadPoolExecutor
 
-#!/usr / bin / env python3
-"""Система искусственного интеллекта - управление AI сущностями"""import logging
+from src.core.architecture import BaseComponent, ComponentType, Priority
 
-AIDifficulty, StatType, BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS
-SYSTEM_LIMITS: pass  # Добавлен pass в пустой блок
-logger= logging.getLogger(__name__)
-@dataclass: pass  # Добавлен pass в пустой блок
-class AIConfig:"""Конфигурация AI"""behavi or : AIBehavior= AIBehavi or .AGGRESSIVE
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-difficulty: AIDifficulty= AIDifficulty.NORMAL: pass  # Добавлен pass в пустой блок
-reaction_time: float= 0.5
-decis ion_frequency: float= 1.0
-mem or y_duration: float= 300.0  # 5 минут
-group_co or dination: bool= False
-retreat_threshold: float= 0.2
-pursuit_range: float= 100.0
-patrol_radius: float= 50.0
-@dataclass: pass  # Добавлен pass в пустой блок
-class AIMem or y:"""Память AI"""entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-last_seen: float
-last_position: Tuple[float, float, float]
-threat_level: float
-interaction_count: int= 0
-damage_dealt: float= 0.0
-damage_received: float= 0.0
-@dataclass: pass  # Добавлен pass в пустой блок
-class AIDecis ion:"""Решение AI"""decis ion_type: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-target_entity: Optional[str]
-action_data: Dict[str, Any]
-pri or ity: float
-timestamp: float
-executed: bool= False
-class AISystem(ISystem):"""Система управления искусственным интеллектом"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self._system_name= "ai"
-self._system_pri or ity= SystemPri or ity.HIGH
-self._system_state= SystemState.UNINITIALIZED
-self._dependencies= []
-# AI сущности
-self.ai_entities: Dict[str, Dict[str, Any]]= {}
-# Конфигурации AI
-self.ai_configs: Dict[str, AIConfig]= {}
-# Память AI
-self.ai_mem or ies: Dict[str, Dict[str, AIMem or y]]= {}
-# Решения AI
-self.ai_decis ions: Dict[str, Lis t[AIDecis ion]]= {}
-# Группы AI
-self.ai_groups: Dict[str, Lis t[str]]= {}
-# Настройки системы
-self.system_settings= {
-'max_ai_entities': SYSTEM_LIMITS["max_ai_entities"],
-'max_mem or y_per_entity': 100,
-'decis ion_queue_size': 50,
-'update_frequency': 0.1,  # 10 раз в секунду
-'pathfin ding_enabled': True,
-'group_behavi or _enabled': True
-}
-# Статистика системы
-self.system_stats= {
-'ai_entities_count': 0,
-'total_decis ions_made': 0,
-'total_actions_executed': 0,
-'average_reaction_time': 0.0,
-'mem or y_usage': 0,
-'update_time': 0.0
-}
-logger.in fo("Система AI инициализирована")
-@property
-def system_name(self) -> str: return self._system_name
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-def system_state(self) -> SystemState: return self._system_state
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-def dependencies(self) -> Lis t[str]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._dependencies
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация системы AI"""
-try: logger.in fo("Инициализация системы AI...")
-# Настраиваем систему
-self._setup_ai_system()
-self._system_state= SystemState.READY
-logger.in fo("Система AI успешно инициализирована")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации системы AI: {e}")
-self._system_state= SystemState.ERROR
-return False
-def update(self, delta_time: float) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление системы AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления системы AI: {e}")
-return False
-def pause(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Приостановка системы AI"""
-try: if self._system_state = SystemState.READY: self._system_state= SystemState.PAUSED
-logger.in fo("Система AI приостановлена")
-return True
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка приостановки системы AI: {e}")
-return False
-def resume(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Возобновление системы AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка возобновления системы AI: {e}")
-return False
-def cleanup(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Очистка системы AI"""
-try: logger.in fo("Очистка системы AI...")
-# Очищаем все AI сущности
-self.ai_entities.clear()
-self.ai_configs.clear()
-self.ai_mem or ies.clear()
-self.ai_decis ions.clear()
-self.ai_groups.clear()
-# Сбрасываем статистику
-self.system_stats= {
-'ai_entities_count': 0,
-'total_decis ions_made': 0,
-'total_actions_executed': 0,
-'average_reaction_time': 0.0,
-'mem or y_usage': 0,
-'update_time': 0.0
-}
-self._system_state= SystemState.DESTROYED
-logger.in fo("Система AI очищена")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка очистки системы AI: {e}")
-return False
-# - - - Interface shims for AISystemManager compatibility - - -:
-pass  # Добавлен pass в пустой блок
-def regis ter_entity(self, entity_id: str, entity_data: Dict[str, Any], mem or y_group: str= "default") -> bool: try: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Min imal regis tration using available fields
-pos= (
-float(entity_data.get('x', 0.0)),
-float(entity_data.get('y', 0.0)),
-float(entity_data.get('z', 0.0)),
-)
-config= AIConfig()  # default config: pass  # Добавлен pass в пустой блок
-created= self.create_ai_entity(entity_id, config, pos)
-# seed min imal mem or y group holder if needed: pass  # Добавлен pass в пустой блок
-if createdand entity_id notin self.ai_mem or ies: self.ai_mem or ies[entity_id]= {}
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return created
-except Exception as e: pass
-pass
-pass
-logger.err or(f"regis ter_entity shim failed: {e}")
-return False
-def get_decis ion(self, entity_id: str, context: Dict[str, Any]):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try:
-# Trigger decis ion making on demand
-if entity_idin self.ai_entities: self._make_ai_decis ion(entity_id, self.ai_entities[entity_id])
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Return latest pending decis ion if any: pass  # Добавлен pass в пустой блок
-decis ions= self.ai_decis ions.get(entity_id, [])
-for din reversed(decis ions):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if not d.executed: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Provide a min imal object compatible with callers that check attributes: pass  # Добавлен pass в пустой блок
-class _ShimDecis ion: def __in it__(self, dtype, target):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.action_type= type('Action', (), {'value': dtype})
-self.target= target
-self.parameters= {}
-self.confidence= 0.5
-return _ShimDecis ion(d.decis ion_type, d.target_entity)
-return None
-except Exception as e: pass
-pass
-pass
-logger.err or(f"get_decis ion shim failed: {e}")
-return None
-def get_system_in fo(self) -> Dict[str, Any]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение информации о системе"""return {
-'name': self.system_name,
-'state': self.system_state.value,
-'pri or ity': self.system_pri or ity.value,
-'dependencies': self.dependencies,
-'ai_entities': len(self.ai_entities),
-'ai_groups': len(self.ai_groups),
-'total_mem or ies': sum(len(mem or ies) for mem or iesin self.ai_mem or ies.values()),:
-pass  # Добавлен pass в пустой блок
-'total_decis ions': sum(len(decis ions) for decis ionsin self.ai_decis ions.values()),:
-pass  # Добавлен pass в пустой блок
-'stats': self.system_stats
-}
-def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обработка событий"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: if event_type = "ai_entity_created":
-return self._hand le_ai_entity_created(event_data)
-elif event_type = "ai_entity_destroyed":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_ai_entity_destroyed(event_data)
-elif event_type = "entity_detected":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_entity_detected(event_data)
-elif event_type = "combat_started":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_combat_started(event_data)
-elif event_type = "combat_ended":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_combat_ended(event_data)
-else: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события {event_type}: {e}")
-return False
-def _setup_ai_system(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Настройка системы AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Не удалось настроить систему AI: {e}")
-def _update_ai_entities(self, delta_time: float) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление AI сущностей"""
-try: current_time= time.time()
-for entity_id, entity_datain self.ai_entities.items():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if entity_data['state'] = AIState.DEAD: contin ue
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Проверяем, нужно ли принимать решение
-if current_time - entity_data['last_decis ion_time'] >= entity_data['config'].decis ion_frequency: self._make_ai_decis ion(entity_id, entity_data)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-entity_data['last_decis ion_time']= current_time
-# Обновляем поведение
-self._update_ai_behavi or(entity_id, entity_data, delta_time)
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка обновления AI сущностей: {e}")
-def _process_ai_decis ions(self, delta_time: float) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка решений AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка обработки решений AI: {e}")
-def _update_ai_mem or y(self, delta_time: float) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление памяти AI"""
-try: current_time= time.time()
-for entity_id, mem or iesin self.ai_mem or ies.items():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Удаляем устаревшие воспоминания
-valid_mem or ies= {}
-for target_id, mem or yin mem or ies.items():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if current_time - mem or y.last_seen > mem or y.threat_level * 300.0:  # 5 минут * threat_level
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-valid_mem or ies[target_id]= mem or y
-self.ai_mem or ies[entity_id]= valid_mem or ies
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка обновления памяти AI: {e}")
-def _co or dinate_ai_groups(self, delta_time: float) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Координация групп AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка координации групп AI: {e}")
-def _update_system_stats(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление статистики системы"""
-try: self.system_stats['ai_entities_count']= len(self.ai_entities)
-self.system_stats['mem or y_usage']= sum(len(mem or ies) for mem or iesin self.ai_mem or ies.values()):
-pass  # Добавлен pass в пустой блок
-# Среднее время реакции
-if self.system_stats['total_actions_executed'] > 0: total_reaction_time= sum(
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-entity_data['config'].reaction_time
-for entity_datain self.ai_entities.values():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass  # Добавлен pass в пустой блок
-)
-self.system_stats['average_reaction_time']= total_reaction_time / len(self.ai_entities)
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка обновления статистики системы: {e}")
-def _hand le_ai_entity_created(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события создания AI сущности"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события создания AI сущности: {e}")
-return False
-def _hand le_ai_entity_destroyed(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события уничтожения AI сущности"""
-try: entity_id= event_data.get('entity_id')
-if entity_id: return self.destroy_ai_entity(entity_id)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события уничтожения AI сущности: {e}")
-return False
-def _hand le_entity_detected(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события обнаружения сущности"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события обнаружения сущности: {e}")
-return False
-def _hand le_combat_started(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события начала боя"""
-try: combat_id= event_data.get('combat_id')
-participants= event_data.get('participants')
-if combat_idand participants: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# AI сущности переходят в состояние боя
-for participant_idin participants: if participant_idin self.ai_entities: self.ai_entities[participant_id]['state']= AIState.IN_COMBAT
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return True
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события начала боя: {e}")
-return False
-def _hand le_combat_ended(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события окончания боя"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события окончания боя: {e}")
-return False
-def create_ai_entity(self, entity_id: str, ai_config: AIConfig
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-position: Tuple[float, float, float]) -> bool: pass  # Добавлен pass в пустой блок
-"""Создание AI сущности"""
-try: if entity_idin self.ai_entities: logger.warning(f"AI сущность {entity_id} уже существует")
-return False
-if len(self.ai_entities) >= self.system_settings['max_ai_entities']:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.warning("Достигнут лимит AI сущностей")
-return False
-# Создаем AI сущность
-entity_data= {
-'id': entity_id,
-'config': ai_config,
-'position': position,
-'state': AIState.IDLE,
-'last_decis ion_time': time.time(),
-'current_target': None,
-'patrol_poin ts': [],
-'group_id': None
-}
-self.ai_entities[entity_id]= entity_data
-self.ai_configs[entity_id]= ai_config
-self.ai_mem or ies[entity_id]= {}
-self.ai_decis ions[entity_id]= []
-# Генерируем точки патрулирования
-try: patrol_enum= getattr(AIBehavi or , 'PATROL', None)
-except Exception: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-patrol_enum= None
-if patrol_enumis not Noneand ai_config.behavior = patrol_enum: self._generate_patrol_poin ts(entity_id, position
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-ai_config.patrol_radius)
-logger.in fo(f"AI сущность {entity_id} создана")
-return True
-except Exception as e: logger.err or(f"Ошибка создания AI сущности {entity_id}: {e}")
-return False
-def destroy_ai_entity(self, entity_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Уничтожение AI сущности"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка уничтожения AI сущности {entity_id}: {e}")
-return False
-def update_ai_mem or y(self, entity_id: str, target_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-position: Tuple[float, float, float], threat_level: float) -> bool: pass  # Добавлен pass в пустой блок
-"""Обновление памяти AI"""
-try: if entity_id notin self.ai_mem or ies: return False
-current_time= time.time()
-# Создаем или обновляем воспоминание
-mem or y= AIMem or y(
-entity_i = target_id,
-last_see = current_time,
-last_positio = position,
-threat_leve = threat_level
-)
-# Если воспоминание уже существует, обновляем счетчики
-if target_idin self.ai_mem or ies[entity_id]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-old_mem or y= self.ai_mem or ies[entity_id][target_id]
-mem or y.in teraction_count= old_mem or y.in teraction_count + 1
-mem or y.damage_dealt= old_mem or y.damage_dealt
-mem or y.damage_received= old_mem or y.damage_received
-self.ai_mem or ies[entity_id][target_id]= mem or y
-# Ограничиваем количество воспоминаний
-if len(self.ai_mem or ies[entity_id]) > self.system_settings['max_mem or y_per_entity']:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Удаляем самое старое воспоминание
-oldest_mem or y= m in(
-self.ai_mem or ies[entity_id].values(),
-ke = lambda x: x.last_seen
-)
-del self.ai_mem or ies[entity_id][oldest_mem or y.entity_id]
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления памяти AI: {e}")
-return False
-def _make_ai_decis ion(self, entity_id: str, entity_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]) -> None: pass  # Добавлен pass в пустой блок
-"""Принятие решения AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка принятия решения AI для {entity_id}: {e}")
-def _analyze_threats(self, entity_id: str) -> Lis t[Dict[str, Any]]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Анализ угроз для AI сущности"""
-try: threats= []
-if entity_id notin self.ai_mem or ies: return threats
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-current_time= time.time()
-for target_id, mem or yin self.ai_mem or ies[entity_id].items():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Проверяем, не устарело ли воспоминание
-if current_time - mem or y.last_seen > mem or y.threat_level * 300.0: contin ue
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Рассчитываем уровень угрозы
-threat_level= mem or y.threat_level
-if mem or y.damage_received > 0: threat_level = 1.5
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-threats.append({
-'entity_id': target_id,
-'threat_level': threat_level,
-'position': mem or y.last_position,
-'last_seen': mem or y.last_seen
-})
-# Сортируем по уровню угрозы
-threats.s or t(ke = lambda x: x['threat_level'], revers = True)
-return threats
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка анализа угроз для {entity_id}: {e}")
-return []
-def _analyze_opp or tunities(self, entity_id: str) -> Lis t[Dict[str, Any]]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Анализ возможностей для AI сущности"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка анализа возможностей для {entity_id}: {e}")
-return []
-def _execute_ai_decis ion(self, entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение решения AI"""
-try: if entity_id notin self.ai_entities: return False
-entity_data= self.ai_entities[entity_id]
-if decis ion.decis ion_type = "engage":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._execute_engage_action(entity_id, entity_data
-decis ion)
-elif decis ion.decis ion_type = "hunt":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._execute_hunt_action(entity_id, entity_data
-decis ion)
-elif decis ion.decis ion_type = "patrol":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._execute_patrol_action(entity_id, entity_data
-decis ion)
-elif decis ion.decis ion_type = "combat":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._execute_combat_action(entity_id, entity_data
-decis ion)
-elif decis ion.decis ion_type = "retreat":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._execute_retreat_action(entity_id, entity_data
-decis ion)
-elif decis ion.decis ion_type = "return_to_idle":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._execute_return_to_idle_action(entity_id
-entity_data, decis ion)
-else: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения решения AI для {entity_id}: {e}")
-return False
-def _execute_engage_action(self, entity_id: str, entity_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any], decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение действия атаки"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения действия атаки для {entity_id}: {e}")
-return False
-def _execute_hunt_action(self, entity_id: str, entity_data: Dict[str, Any]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение действия охоты"""
-try: target_id= decis ion.target_entity
-if not target_id: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Двигаемся к цели
-if target_idin self.ai_mem or ies[entity_id]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-target_position= self.ai_mem or ies[entity_id][target_id].last_position
-self._move_to_position(entity_id, target_position)
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения действия охоты для {entity_id}: {e}")
-return False
-def _execute_patrol_action(self, entity_id: str, entity_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any], decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение действия патрулирования"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения действия патрулирования для {entity_id}: {e}")
-return False
-def _execute_combat_action(self, entity_id: str, entity_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any], decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение боевого действия"""
-try: target_id= decis ion.target_entity
-if not target_id: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Выполняем атаку
-# Здесь должна быть интеграция с системой боя
-logger.debug(f"AI {entity_id} атакует {target_id}")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения боевого действия для {entity_id}: {e}")
-return False
-def _execute_retreat_action(self, entity_id: str, entity_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any], decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение действия отступления"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения действия отступления для {entity_id}: {e}")
-return False
-def _execute_return_to_idle_action(self, entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-entity_data: Dict[str, Any], decis ion: AIDecis ion) -> bool: pass  # Добавлен pass в пустой блок
-"""Выполнение действия возврата к обычному состоянию"""
-try: entity_data['state']= AIState.IDLE
-entity_data['current_target']= None
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выполнения действия возврата к обычному состоянию для {entity_id}: {e}")
-return False
-def _update_ai_behavi or(self, entity_id: str, entity_data: Dict[str, Any]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-delta_time: float) -> None: pass  # Добавлен pass в пустой блок
-"""Обновление поведения AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления поведения AI для {entity_id}: {e}")
-def _move_to_position(self, entity_id: str, target_position: Tuple[float
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-float, float]) -> None: pass  # Добавлен pass в пустой блок
-"""Движение AI к позиции"""
-try: if entity_id notin self.ai_entities: return
-entity_data= self.ai_entities[entity_id]
-current_pos= entity_data['position']
-# Простое движение - линейная интерполяция
-# В реальной игре здесь должна быть система навигации
-entity_data['position']= target_position
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка движения AI {entity_id}: {e}")
-def _generate_patrol_poin ts(self, entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-center_position: Tuple[float, float, float], radius: float) -> None: pass  # Добавлен pass в пустой блок
-"""Генерация точек патрулирования"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка генерации точек патрулирования для {entity_id}: {e}")
-def _follow_leader(self, follower_id: str, follower_data: Dict[str, Any]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-leader_id: str, leader_data: Dict[str, Any]) -> None: pass  # Добавлен pass в пустой блок
-"""Следование за лидером группы"""
-try: leader_pos= leader_data['position']
-follower_pos= follower_data['position']
-# Двигаемся к лидеру, но с небольшим отступом
-offset= 2.0
-target_pos= (
-leader_pos[0] + rand om.unifor m( - offset, offset),:
-pass  # Добавлен pass в пустой блок
-leader_pos[1],
-leader_pos[2] + rand om.unifor m( - offset, offset):
-pass  # Добавлен pass в пустой блок
-)
-self._move_to_position(follower_id, target_pos)
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка следования за лидером для {follower_id}: {e}")
-def create_ai_group(self, group_id: str, member_ids: Lis t[str]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Создание группы AI"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка создания группы AI {group_id}: {e}")
-return False
-def destroy_ai_group(self, group_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Уничтожение группы AI"""
-try: if group_id notin self.ai_groups: return False
-# Убираем групповую координацию
-for member_idin self.ai_groups[group_id]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if member_idin self.ai_entities: self.ai_entities[member_id]['group_id']= None
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-del self.ai_groups[group_id]
-logger.in fo(f"Группа AI {group_id} уничтожена")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка уничтожения группы AI {group_id}: {e}")
-return False
-def get_ai_entity_in fo(self, entity_id: str) -> Optional[Dict[str, Any]]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение информации об AI сущности"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка получения информации об AI сущности {entity_id}: {e}")
-return None
-def update_ai_config(self, entity_id: str, new_config: AIConfig) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление конфигурации AI"""
-try: if entity_id notin self.ai_entities: return False
-self.ai_configs[entity_id]= new_config
-self.ai_entities[entity_id]['config']= new_config
-logger.in fo(f"Конфигурация AI для {entity_id} обновлена")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления конфигурации AI для {entity_id}: {e}")
-return False
+# = ТИПЫ AI
+class AIType(Enum):
+    """Типы искусственного интеллекта"""
+    BEHAVIOR_TREE = "behavior_tree"
+    STATE_MACHINE = "state_machine"
+    NEURAL_NETWORK = "neural_network"
+    FUZZY_LOGIC = "fuzzy_logic"
+    GENETIC_ALGORITHM = "genetic_algorithm"
+    REINFORCEMENT_LEARNING = "reinforcement_learning"
+
+class AIState(Enum):
+    """Состояния AI"""
+    IDLE = "idle"
+    PATROLLING = "patrolling"
+    CHASING = "chasing"
+    ATTACKING = "attacking"
+    FLEEING = "fleeing"
+    SEARCHING = "searching"
+    RESTING = "resting"
+    INTERACTING = "interacting"
+
+class AIPriority(Enum):
+    """Приоритеты AI"""
+    CRITICAL = "critical"
+    HIGH = "high"
+    NORMAL = "normal"
+    LOW = "low"
+    BACKGROUND = "background"
+
+# = СТРУКТУРЫ ДАННЫХ
+@dataclass
+class AIEntity:
+    """AI сущность"""
+    entity_id: str
+    ai_type: AIType
+    current_state: AIState
+    priority: AIPriority
+    position: Tuple[float, float, float]
+    target_position: Optional[Tuple[float, float, float]] = None
+    target_entity: Optional[str] = None
+    health: float = 100.0
+    max_health: float = 100.0
+    speed: float = 1.0
+    detection_range: float = 10.0
+    attack_range: float = 2.0
+    memory: Dict[str, Any] = field(default_factory=dict)
+    behavior_data: Dict[str, Any] = field(default_factory=dict)
+    last_update: float = field(default_factory=time.time)
+
+@dataclass
+class AIBehavior:
+    """Поведение AI"""
+    behavior_id: str
+    name: str
+    description: str
+    conditions: Dict[str, Any] = field(default_factory=dict)
+    actions: List[str] = field(default_factory=list)
+    priority: int = 0
+    cooldown: float = 0.0
+    last_execution: float = 0.0
+
+@dataclass
+class AIDecision:
+    """Решение AI"""
+    entity_id: str
+    behavior_id: str
+    action: str
+    target: Optional[str] = None
+    position: Optional[Tuple[float, float, float]] = None
+    confidence: float = 1.0
+    timestamp: float = field(default_factory=time.time)
+
+# = НАСТРОЙКИ AI
+@dataclass
+class AISettings:
+    """Настройки AI системы"""
+    update_interval: float = 0.1
+    max_entities: int = 1000
+    max_threads: int = 4
+    enable_multithreading: bool = True
+    enable_learning: bool = True
+    enable_memory: bool = True
+    enable_adaptation: bool = True
+
+# = ЕДИНАЯ AI СИСТЕМА
+class AISystem(BaseComponent):
+    """Единая система искусственного интеллекта"""
+    
+    def __init__(self):
+        super().__init__(
+            component_id="AISystem",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.HIGH
+        )
+        
+        # Настройки системы
+        self.settings = AISettings()
+        
+        # AI сущности
+        self.ai_entities: Dict[str, AIEntity] = {}
+        self.entity_behaviors: Dict[str, List[AIBehavior]] = {}
+        
+        # Поведения и решения
+        self.behaviors: Dict[str, AIBehavior] = {}
+        self.decisions: List[AIDecision] = []
+        
+        # Память и обучение
+        self.global_memory: Dict[str, Any] = {}
+        self.experience_pool: Dict[str, List[Dict[str, Any]]] = {}
+        self.learning_data: Dict[str, Any] = {}
+        
+        # Многопоточность
+        self.executor: Optional[ThreadPoolExecutor] = None
+        self.update_thread: Optional[threading.Thread] = None
+        self.running = False
+        
+        # Статистика
+        self.stats = {
+            "total_entities": 0,
+            "active_entities": 0,
+            "decisions_made": 0,
+            "learning_events": 0,
+            "update_time": 0.0
+        }
+        
+        # Callbacks
+        self.behavior_callbacks: Dict[str, Callable] = {}
+        self.decision_callbacks: List[Callable] = []
+        
+        self.logger = logging.getLogger(__name__)
+    
+    def _on_initialize(self) -> bool:
+        """Инициализация AI системы"""
+        try:
+            # Инициализация поведений
+            self._initialize_behaviors()
+            
+            # Создание пула потоков
+            if self.settings.enable_multithreading:
+                self.executor = ThreadPoolExecutor(max_workers=self.settings.max_threads)
+            
+            # Инициализация памяти
+            if self.settings.enable_memory:
+                self._initialize_memory()
+            
+            self.logger.info("AISystem инициализирован")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка инициализации AISystem: {e}")
+            return False
+    
+    def _initialize_behaviors(self):
+        """Инициализация базовых поведений"""
+        # Поведение патрулирования
+        self.behaviors["patrol"] = AIBehavior(
+            behavior_id="patrol",
+            name="Патрулирование",
+            description="Патрулирование территории",
+            conditions={"state": AIState.IDLE, "has_target": False},
+            actions=["move_to_point", "look_around"],
+            priority=1
+        )
+        
+        # Поведение преследования
+        self.behaviors["chase"] = AIBehavior(
+            behavior_id="chase",
+            name="Преследование",
+            description="Преследование цели",
+            conditions={"has_target": True, "target_in_range": True},
+            actions=["move_to_target", "attack"],
+            priority=5
+        )
+        
+        # Поведение атаки
+        self.behaviors["attack"] = AIBehavior(
+            behavior_id="attack",
+            name="Атака",
+            description="Атака цели",
+            conditions={"target_in_attack_range": True},
+            actions=["perform_attack", "use_abilities"],
+            priority=10
+        )
+        
+        # Поведение бегства
+        self.behaviors["flee"] = AIBehavior(
+            behavior_id="flee",
+            name="Бегство",
+            description="Бегство от опасности",
+            conditions={"health_low": True, "threat_detected": True},
+            actions=["move_away", "find_cover"],
+            priority=8
+        )
+        
+        # Поведение поиска
+        self.behaviors["search"] = AIBehavior(
+            behavior_id="search",
+            name="Поиск",
+            description="Поиск целей или предметов",
+            conditions={"lost_target": True, "has_search_area": True},
+            actions=["explore_area", "investigate_sounds"],
+            priority=3
+        )
+    
+    def _initialize_memory(self):
+        """Инициализация памяти"""
+        self.global_memory = {
+            "threats": {},
+            "resources": {},
+            "territories": {},
+            "allies": {},
+            "enemies": {}
+        }
+    
+    def register_entity(self, entity_id: str, ai_type: AIType, 
+                       position: Tuple[float, float, float], **kwargs) -> bool:
+        """Регистрация AI сущности"""
+        try:
+            if len(self.ai_entities) >= self.settings.max_entities:
+                self.logger.warning(f"Достигнут лимит AI сущностей: {self.settings.max_entities}")
+                return False
+            
+            # Создание AI сущности
+            entity = AIEntity(
+                entity_id=entity_id,
+                ai_type=ai_type,
+                current_state=AIState.IDLE,
+                priority=AIPriority.NORMAL,
+                position=position,
+                **kwargs
+            )
+            
+            self.ai_entities[entity_id] = entity
+            self.entity_behaviors[entity_id] = []
+            
+            # Добавление базовых поведений
+            for behavior in self.behaviors.values():
+                self.entity_behaviors[entity_id].append(behavior)
+            
+            self.stats["total_entities"] += 1
+            self.stats["active_entities"] += 1
+            
+            self.logger.info(f"Зарегистрирована AI сущность {entity_id}")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка регистрации AI сущности {entity_id}: {e}")
+            return False
+    
+    def unregister_entity(self, entity_id: str) -> bool:
+        """Удаление AI сущности"""
+        try:
+            if entity_id in self.ai_entities:
+                del self.ai_entities[entity_id]
+                if entity_id in self.entity_behaviors:
+                    del self.entity_behaviors[entity_id]
+                
+                self.stats["active_entities"] -= 1
+                self.logger.info(f"Удалена AI сущность {entity_id}")
+                return True
+            
+            return False
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка удаления AI сущности {entity_id}: {e}")
+            return False
+    
+    def update_entity(self, entity_id: str, **kwargs) -> bool:
+        """Обновление AI сущности"""
+        try:
+            if entity_id not in self.ai_entities:
+                return False
+            
+            entity = self.ai_entities[entity_id]
+            
+            # Обновление полей
+            for key, value in kwargs.items():
+                if hasattr(entity, key):
+                    setattr(entity, key, value)
+            
+            entity.last_update = time.time()
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления AI сущности {entity_id}: {e}")
+            return False
+    
+    def make_decision(self, entity_id: str) -> Optional[AIDecision]:
+        """Принятие решения для AI сущности"""
+        try:
+            if entity_id not in self.ai_entities:
+                return None
+            
+            entity = self.ai_entities[entity_id]
+            behaviors = self.entity_behaviors.get(entity_id, [])
+            
+            # Фильтрация доступных поведений
+            available_behaviors = []
+            for behavior in behaviors:
+                if self._check_behavior_conditions(entity, behavior):
+                    available_behaviors.append(behavior)
+            
+            if not available_behaviors:
+                return None
+            
+            # Выбор поведения с наивысшим приоритетом
+            best_behavior = max(available_behaviors, key=lambda b: b.priority)
+            
+            # Создание решения
+            decision = AIDecision(
+                entity_id=entity_id,
+                behavior_id=best_behavior.behavior_id,
+                action=best_behavior.actions[0] if best_behavior.actions else "idle",
+                confidence=1.0
+            )
+            
+            # Обновление времени выполнения
+            best_behavior.last_execution = time.time()
+            
+            # Добавление в список решений
+            self.decisions.append(decision)
+            self.stats["decisions_made"] += 1
+            
+            # Уведомление о решении
+            self._notify_decision_made(decision)
+            
+            return decision
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка принятия решения для {entity_id}: {e}")
+            return None
+    
+    def _check_behavior_conditions(self, entity: AIEntity, behavior: AIBehavior) -> bool:
+        """Проверка условий поведения"""
+        try:
+            for condition, value in behavior.conditions.items():
+                if condition == "state" and entity.current_state != value:
+                    return False
+                elif condition == "has_target" and bool(entity.target_entity) != value:
+                    return False
+                elif condition == "target_in_range" and entity.target_position:
+                    distance = self._calculate_distance(entity.position, entity.target_position)
+                    if distance > entity.detection_range:
+                        return False
+                elif condition == "target_in_attack_range" and entity.target_position:
+                    distance = self._calculate_distance(entity.position, entity.target_position)
+                    if distance > entity.attack_range:
+                        return False
+                elif condition == "health_low" and entity.health > entity.max_health * 0.3:
+                    return False
+                elif condition == "threat_detected":
+                    # Проверка наличия угроз в памяти
+                    threats = self.global_memory.get("threats", {})
+                    if not threats:
+                        return False
+                elif condition == "lost_target" and entity.target_entity:
+                    return False
+                elif condition == "has_search_area":
+                    # Проверка наличия области поиска
+                    return True  # Упрощенная проверка
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка проверки условий поведения: {e}")
+            return False
+    
+    def _calculate_distance(self, pos1: Tuple[float, float, float], 
+                          pos2: Tuple[float, float, float]) -> float:
+        """Расчет расстояния между точками"""
+        return math.sqrt(sum((a - b) ** 2 for a, b in zip(pos1, pos2)))
+    
+    def add_behavior_callback(self, behavior_id: str, callback: Callable):
+        """Добавление callback для поведения"""
+        self.behavior_callbacks[behavior_id] = callback
+    
+    def add_decision_callback(self, callback: Callable):
+        """Добавление callback для решений"""
+        self.decision_callbacks.append(callback)
+    
+    def _notify_decision_made(self, decision: AIDecision):
+        """Уведомление о принятом решении"""
+        for callback in self.decision_callbacks:
+            try:
+                callback(decision)
+            except Exception as e:
+                self.logger.error(f"Ошибка в callback решения: {e}")
+    
+    def get_entity_state(self, entity_id: str) -> Optional[AIEntity]:
+        """Получение состояния AI сущности"""
+        return self.ai_entities.get(entity_id)
+    
+    def get_all_entities(self) -> Dict[str, AIEntity]:
+        """Получение всех AI сущностей"""
+        return self.ai_entities.copy()
+    
+    def get_statistics(self) -> Dict[str, Any]:
+        """Получение статистики AI системы"""
+        return {
+            "total_entities": self.stats["total_entities"],
+            "active_entities": self.stats["active_entities"],
+            "decisions_made": self.stats["decisions_made"],
+            "learning_events": self.stats["learning_events"],
+            "update_time": self.stats["update_time"],
+            "behaviors_count": len(self.behaviors),
+            "memory_size": len(self.global_memory)
+        }
+    
+    def clear_memory(self):
+        """Очистка памяти"""
+        self.global_memory.clear()
+        self.experience_pool.clear()
+        self.learning_data.clear()
+        self.logger.info("Память AI системы очищена")
+    
+    def _on_destroy(self):
+        """Уничтожение AI системы"""
+        self.running = False
+        
+        if self.update_thread and self.update_thread.is_alive():
+            self.update_thread.join(timeout=5.0)
+        
+        if self.executor:
+            self.executor.shutdown(wait=True)
+        
+        self.ai_entities.clear()
+        self.entity_behaviors.clear()
+        self.behaviors.clear()
+        self.decisions.clear()
+        self.global_memory.clear()
+        self.experience_pool.clear()
+        self.learning_data.clear()
+        
+        self.logger.info("AISystem уничтожен")

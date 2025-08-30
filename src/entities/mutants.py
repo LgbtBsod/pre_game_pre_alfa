@@ -100,53 +100,53 @@ class Mutant(BaseEntity):
         self.position = position
         self.setPos(*position)
         
-        # Система мутаций
+# Система мутаций
         self.mutations: Dict[str, Mutation] = {}
         self.visual_mutations: Dict[str, VisualMutation] = {}
         self.mutation_history: List[Dict[str, Any]] = []
         
-        # Способности
+# Способности
         self.abilities: Dict[str, MutantAbility] = {}
         self.derived_abilities: List[str] = []
         
-        # Фазы мутанта
+# Фазы мутанта
         self.current_phase = 1
         self.max_phases = 2
         self.phase_health_thresholds = [0.5]  # Переход в фазу 2 при 50% здоровья
         
-        # Адаптивность
+# Адаптивность
         self.adaptation_rate = 0.1
         self.learning_progress = 0.0
         self.evolution_stage = 1
         
-        # Визуальные параметры
+# Визуальные параметры
         self.base_scale = 1.0
         self.base_color = (1, 1, 1, 1)
         self.current_scale = 1.0
         self.current_color = (1, 1, 1, 1)
         
-        # Инициализация
-        self._generate_mutations()
-        self._derive_abilities()
+# Инициализация
+self._generate_mutations()
+self._derive_abilities()
         self._create_visual_mutations()
-        self._apply_mutation_effects()
+self._apply_mutation_effects()
         
         logger.info(f"Создан мутант {name} уровня {mutation_level}")
     
     def _generate_mutations(self) -> None:
-        """Генерация мутаций на основе уровня"""
-        try:
-            # Базовые мутации для всех мутантов
+"""Генерация мутаций на основе уровня"""
+try:
+# Базовые мутации для всех мутантов
             base_mutations = [
-                self._create_base_mutation("enhanced_strength", MutationType.PHYSICAL, MutationLevel.MINOR),
-                self._create_base_mutation("enhanced_agility", MutationType.PHYSICAL, MutationLevel.MINOR),
+self._create_base_mutation("enhanced_strength", MutationType.PHYSICAL, MutationLevel.MINOR),
+self._create_base_mutation("enhanced_agility", MutationType.PHYSICAL, MutationLevel.MINOR),
                 self._create_base_mutation("enhanced_intelligence", MutationType.MENTAL, MutationLevel.MINOR)
             ]
             
             for mutation in base_mutations:
                 self.mutations[mutation.mutation_id] = mutation
             
-            # Дополнительные мутации на основе уровня
+# Дополнительные мутации на основе уровня
             additional_mutations = self.mutation_level - 3  # Уже есть 3 базовые
             for i in range(additional_mutations):
                 mutation_type = random.choice(list(MutationType))
@@ -160,9 +160,9 @@ class Mutant(BaseEntity):
             logger.error(f"Ошибка генерации мутаций: {e}")
     
     def _create_base_mutation(self, mutation_id: str, mutation_type: MutationType, level: MutationLevel) -> Mutation:
-        """Создание базовой мутации"""
+"""Создание базовой мутации"""
         if mutation_id == "enhanced_strength":
-            return Mutation(
+return Mutation(
                 mutation_id=mutation_id,
                 name="Усиленная сила",
                 description="Базовая мутация силы для всех мутантов",
@@ -173,7 +173,7 @@ class Mutant(BaseEntity):
                 sound_effects=["strength_growl"]
             )
         elif mutation_id == "enhanced_agility":
-            return Mutation(
+return Mutation(
                 mutation_id=mutation_id,
                 name="Усиленная ловкость",
                 description="Базовая мутация ловкости для всех мутантов",
@@ -184,7 +184,7 @@ class Mutant(BaseEntity):
                 sound_effects=["agility_whisper"]
             )
         elif mutation_id == "enhanced_intelligence":
-            return Mutation(
+return Mutation(
                 mutation_id=mutation_id,
                 name="Усиленный интеллект",
                 description="Базовая мутация интеллекта для всех мутантов",
@@ -203,39 +203,39 @@ class Mutant(BaseEntity):
         mutation_templates = {
             MutationType.PHYSICAL: {
                 "name": "Физическая мутация",
-                "description": "Улучшает физические характеристики",
+"description": "Улучшает физические характеристики",
                 "effects": {"strength": random.randint(5, 25), "health": random.randint(20, 100)}
-            },
-            MutationType.MENTAL: {
-                "name": "Ментальная мутация",
-                "description": "Улучшает умственные способности",
+},
+MutationType.MENTAL: {
+"name": "Ментальная мутация",
+"description": "Улучшает умственные способности",
                 "effects": {"intelligence": random.randint(5, 20), "magic_power": random.randint(10, 50)}
-            },
-            MutationType.COMBAT: {
-                "name": "Боевая мутация",
-                "description": "Улучшает боевые навыки",
+},
+MutationType.COMBAT: {
+"name": "Боевая мутация",
+"description": "Улучшает боевые навыки",
                 "effects": {"damage": random.randint(10, 40), "critical_chance": random.randint(5, 15)}
-            },
-            MutationType.MAGIC: {
-                "name": "Магическая мутация",
-                "description": "Улучшает магические способности",
+},
+MutationType.MAGIC: {
+"name": "Магическая мутация",
+"description": "Улучшает магические способности",
                 "effects": {"magic_power": random.randint(15, 60), "mana": random.randint(20, 80)}
-            },
-            MutationType.ADAPTIVE: {
-                "name": "Адаптивная мутация",
-                "description": "Адаптируется к окружающей среде",
+},
+MutationType.ADAPTIVE: {
+"name": "Адаптивная мутация",
+"description": "Адаптируется к окружающей среде",
                 "effects": {"adaptation_rate": random.uniform(0.1, 0.3), "resistance": random.randint(5, 20)}
-            },
-            MutationType.COMBINATIONAL: {
-                "name": "Комбинационная мутация",
-                "description": "Комбинирует несколько типов мутаций",
+},
+MutationType.COMBINATIONAL: {
+"name": "Комбинационная мутация",
+"description": "Комбинирует несколько типов мутаций",
                 "effects": {"hybrid_power": random.randint(20, 80), "synergy_bonus": random.randint(10, 30)}
-            }
-        }
+}
+}
         
         template = mutation_templates.get(mutation_type, mutation_templates[MutationType.PHYSICAL])
         
-        return Mutation(
+return Mutation(
             mutation_id=mutation_id,
             name=template["name"],
             description=template["description"],
@@ -247,7 +247,7 @@ class Mutant(BaseEntity):
         )
     
     def _derive_abilities(self) -> None:
-        """Выведение способностей на основе мутаций"""
+"""Выведение способностей на основе мутаций"""
         try:
             # Базовые способности для всех мутантов
             base_abilities = [
@@ -374,8 +374,8 @@ class Mutant(BaseEntity):
             return None
     
     def _create_visual_mutations(self) -> None:
-        """Создание визуальных мутаций"""
-        try:
+"""Создание визуальных мутаций"""
+try:
             for mutation in self.mutations.values():
                 visual_mutation = VisualMutation(
                     mutation_id=mutation.mutation_id,
@@ -413,7 +413,7 @@ class Mutant(BaseEntity):
                                 current_value[effect_name] = 0
                             current_value[effect_name] += effect_value
             
-            # Обновляем визуальные параметры
+# Обновляем визуальные параметры
             self._update_visual_parameters()
             
             logger.info(f"Эффекты мутаций применены к мутанту {self.name}")
@@ -457,27 +457,27 @@ class Mutant(BaseEntity):
             
             # Проверяем кулдаун
             if current_time - ability.last_used < ability.cooldown:
-                return False
+return False
             
             # Проверяем заряды
             if ability.charges is not None and ability.charges <= 0:
-                return False
+return False
             
             # Проверяем требования
             for req_name, req_value in ability.requirements.items():
                 if hasattr(self, req_name):
                     current_value = getattr(self, req_name)
                     if current_value < req_value:
-                        return False
+return False
             
-            return True
+return True
             
         except Exception as e:
             logger.error(f"Ошибка проверки способности {ability_id}: {e}")
-            return False
+return False
     
     def use_ability(self, ability_id: str, target_position: Tuple[float, float, float] = None) -> bool:
-        """Использование способности"""
+"""Использование способности"""
         try:
             if not self.can_use_ability(ability_id):
                 return False
@@ -509,19 +509,19 @@ class Mutant(BaseEntity):
             
         except Exception as e:
             logger.error(f"Ошибка использования способности {ability_id}: {e}")
-            return False
+return False
     
     def _apply_ability_effects(self, ability: MutantAbility, target_position: Tuple[float, float, float]) -> None:
-        """Применение эффектов способности"""
-        try:
-            # TODO: Применение урона, эффектов, визуальных и звуковых эффектов
-            logger.debug(f"Применены эффекты способности {ability.name}")
+"""Применение эффектов способности"""
+try:
+# TODO: Применение урона, эффектов, визуальных и звуковых эффектов
+logger.debug(f"Применены эффекты способности {ability.name}")
             
         except Exception as e:
             logger.error(f"Ошибка применения эффектов способности: {e}")
     
     def learn_from_experience(self, experience_type: str, amount: float) -> bool:
-        """Обучение на основе опыта"""
+"""Обучение на основе опыта"""
         try:
             self.learning_progress += amount
             
@@ -544,36 +544,36 @@ class Mutant(BaseEntity):
             
         except Exception as e:
             logger.error(f"Ошибка обучения мутанта: {e}")
-            return False
+return False
     
     def _evolve(self) -> bool:
-        """Эволюция мутанта"""
+"""Эволюция мутанта"""
         try:
             self.evolution_stage += 1
             
-            # Создаем новую мутацию
+# Создаем новую мутацию
             new_mutation = self._create_evolutionary_mutation()
             self.mutations[new_mutation.mutation_id] = new_mutation
             
-            # Обновляем способности
-            self._derive_abilities()
+# Обновляем способности
+self._derive_abilities()
             
-            # Обновляем визуальные параметры
+# Обновляем визуальные параметры
             self._update_visual_parameters()
             
             logger.info(f"Мутант {self.name} эволюционировал до стадии {self.evolution_stage}")
-            return True
+return True
             
         except Exception as e:
             logger.error(f"Ошибка эволюции мутанта: {e}")
-            return False
+return False
     
     def _create_evolutionary_mutation(self) -> Mutation:
-        """Создание эволюционной мутации"""
+"""Создание эволюционной мутации"""
         mutation_types = [MutationType.ADAPTIVE, MutationType.COMBINATIONAL]
         mutation_type = random.choice(mutation_types)
         
-        return Mutation(
+return Mutation(
             mutation_id=f"evolutionary_{self.evolution_stage}",
             name=f"Эволюционная мутация {self.evolution_stage}",
             description=f"Мутация, полученная в результате эволюции",
@@ -585,8 +585,8 @@ class Mutant(BaseEntity):
         )
     
     def update(self, delta_time: float) -> None:
-        """Обновление мутанта"""
-        try:
+"""Обновление мутанта"""
+try:
             # Обновляем адаптацию
             self._update_adaptation(delta_time)
             
@@ -635,10 +635,10 @@ class Mutant(BaseEntity):
             phase_mutation = self._create_phase_mutation()
             self.mutations[phase_mutation.mutation_id] = phase_mutation
             
-            # Обновляем способности
+# Обновляем способности
             self._derive_abilities()
             
-            # Обновляем визуальные параметры
+# Обновляем визуальные параметры
             self._update_visual_parameters()
             
             logger.info(f"Мутант {self.name} перешел в фазу {self.current_phase}")
@@ -681,14 +681,14 @@ class Mutant(BaseEntity):
         try:
             return {
                 "mutant_id": self.entity_id,
-                "name": self.name,
-                "mutation_level": self.mutation_level,
-                "current_phase": self.current_phase,
-                "evolution_stage": self.evolution_stage,
+"name": self.name,
+"mutation_level": self.mutation_level,
+"current_phase": self.current_phase,
+"evolution_stage": self.evolution_stage,
                 "total_mutations": len(self.mutations),
                 "total_abilities": len(self.abilities),
                 "adaptation_rate": self.adaptation_rate,
-                "learning_progress": self.learning_progress,
+"learning_progress": self.learning_progress,
                 "mutations": [m.name for m in self.mutations.values()],
                 "abilities": [a.name for a in self.abilities.values()],
                 "visual_mutations": [vm.name for vm in self.visual_mutations.values()]
@@ -720,7 +720,7 @@ class Mutant(BaseEntity):
             
         except Exception as e:
             logger.error(f"Ошибка получения боевых характеристик: {e}")
-            return {}
+return {}
     
     def destroy(self) -> bool:
         """Уничтожение мутанта"""

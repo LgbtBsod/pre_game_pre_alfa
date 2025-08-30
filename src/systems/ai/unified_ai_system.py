@@ -697,126 +697,87 @@ pass
 pass
 logger.err or(f"Ошибка обновления глобальной памяти: {e}")
 def get_perfor mance_metrics(self) -> Dict[str, Any]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение метрик производительности"""metrics= {
-'total_ai_entities': len(self.ai_entities),
-'available_systems': len([a for ain self.ai_adapters.values() if a.is _active]),:
-pass  # Добавлен pass в пустой блок
-'last_update': self.last_update,
-'update_count': self.update_count,
-'err or _count': self.err or _count
-}
-# Метрики по системам
-system_metrics= {}
-for adapterin self.ai_adapters.values():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if adapter.is _active: system_metrics[adapter.system_name]= {
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-'pri or ity': adapter.pri or ity,
-'update_count': adapter.update_count,
-'err or _count': adapter.err or _count,
-'last_update': adapter.last_update,
-'capabilities': adapter.capabilities
-}
-metrics['system_metrics']= system_metrics
-metrics['global_mem or y_size']= len(self.global_mem or y)
-metrics['experience_pool']= self.experience_pool.copy()
-return metrics
-# = # РЕЗЕРВНАЯ AI СИСТЕМА
-# = class FallbackAISystem:"""Простая резервная AI система для случаев недоступности основных систем"""def __in it__(self):
-self.entities= {}
-self.in itialized= False
-self.logger= logging.getLogger(__name__)
-def initialize(self) -> bool:"""Инициализация резервной системы"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: except Exception as e: pass
-pass
-pass
-self.logger.err or(f"Ошибка инициализации резервной AI системы: {e}")
+    def get_performance_metrics(self) -> Dict[str, Any]:
+        """Получение метрик производительности"""
+        metrics = {
+            'total_ai_entities': len(self.ai_entities),
+            'available_systems': len([a for a in self.ai_adapters.values() if a.is_active]),
+            'last_update': self.last_update,
+            'update_count': self.update_count,
+            'error_count': self.error_count
+        }
+        
+        # Метрики по системам
+        system_metrics = {}
+        for adapter in self.ai_adapters.values():
+            if adapter.is_active:
+                system_metrics[adapter.system_name] = {
+                    'priority': adapter.priority,
+                    'update_count': adapter.update_count,
+                    'error_count': adapter.error_count,
+                    'last_update': adapter.last_update,
+                    'capabilities': adapter.capabilities
+                }
+        
+        metrics['system_metrics'] = system_metrics
+        metrics['global_memory_size'] = len(self.global_memory)
+        metrics['experience_pool'] = self.experience_pool.copy()
+        return metrics
+# = РЕЗЕРВНАЯ AI СИСТЕМА
+class FallbackAISystem:
+    """Простая резервная AI система для случаев недоступности основных систем"""
+    
+    def __init__(self):
+        self.entities = {}
+        self.initialized = False
+        self.logger = logging.getLogger(__name__)
+    
+    def initialize(self) -> bool:
+        """Инициализация резервной системы"""
+        try:
+            self.initialized = True
+            self.logger.info("Резервная AI система инициализирована")
+            return True
+        except Exception as e:
+            self.logger.error(f"Ошибка инициализации резервной AI системы: {e}")
             return False
-def regis ter_entity(self, entity_id: str, entity_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]) -> bool: pass  # Добавлен pass в пустой блок
-"""Регистрация сущности"""
-try: self.entities[entity_id]= {
-'data': entity_data,
-'state': 'idle',
-'last_update': time.time()
-}
-return True
-except Exception as e: pass
-pass
-pass
-self.logger.err or(f"Ошибка регистрации сущности {entity_id}: {e}")
+    
+    def register_entity(self, entity_id: str, entity_data: Dict[str, Any]) -> bool:
+        """Регистрация сущности"""
+        try:
+            self.entities[entity_id] = {
+                'data': entity_data,
+                'state': 'idle',
+                'last_update': time.time()
+            }
+            return True
+        except Exception as e:
+            self.logger.error(f"Ошибка регистрации сущности {entity_id}: {e}")
             return False
-def update_entity(self, entity_id: str, update_data: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]) -> bool: pass  # Добавлен pass в пустой блок
-"""Обновление сущности"""
-try: except Exception as e: pass
-pass
-pass
-self.logger.err or(f"Ошибка обновления сущности {entity_id}: {e}")
-return False
-def remove_entity(self, entity_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Удаление сущности"""
-try: if entity_idin self.entities: del self.entities[entity_id]
-return True
-return False
-except Exception as e: pass
-pass
-pass
-self.logger.err or(f"Ошибка удаления сущности {entity_id}: {e}")
-return False
-def get_entity_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение состояния сущности"""
-return self.entities.get(entity_id)
+    
+    def update_entity(self, entity_id: str, update_data: Dict[str, Any]) -> bool:
+        """Обновление сущности"""
+        try:
+            if entity_id in self.entities:
+                self.entities[entity_id].update(update_data)
+                self.entities[entity_id]['last_update'] = time.time()
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Ошибка обновления сущности {entity_id}: {e}")
+            return False
+    
+    def remove_entity(self, entity_id: str) -> bool:
+        """Удаление сущности"""
+        try:
+            if entity_id in self.entities:
+                del self.entities[entity_id]
+                return True
+            return False
+        except Exception as e:
+            self.logger.error(f"Ошибка удаления сущности {entity_id}: {e}")
+            return False
+    
+    def get_entity_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
+        """Получение состояния сущности"""
+        return self.entities.get(entity_id)
