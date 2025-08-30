@@ -83,20 +83,20 @@ max_targets: int = 1
 conditions: List[str] = field(default_factory=list)
 @dataclass: class Skill:"""Базовый класс навыка"""
 id: str
-name: str
-description: str
-skill_type: SkillType
-category: SkillCategory
+    name: str
+    description: str
+    skill_type: SkillType
+    category: SkillCategory
 target_type: SkillTarget
-level: int = 1
-max_level: int = 10
+    level: int = 1
+    max_level: int = 10
 level_requirement: int = 1
 cost: SkillCost = field(default_factory=SkillCost)
 effects: List[SkillEffect] = field(default_factory=list)
 requirements: Dict[str, Any] = field(default_factory=dict)
 tags: List[str] = field(default_factory=list)
-icon: str = ""
-animation: str = ""
+    icon: str = ""
+    animation: str = ""
 sound: str = ""created_at: float = field(default_factory=time.time)
 def can_use(self, user: Any, target: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> bool:"""Проверить, можно ли использовать навык"""if contextis None: context = {}
     pass
@@ -124,7 +124,7 @@ pass
 pass
 pass
 pass
-return False
+                return False
 # Проверка ресурсов
 if not self._check_resources(user):
     pass
@@ -134,7 +134,7 @@ pass
 pass
 pass
 pass
-return False
+                    return False
 # Проверка целей
 if not self._check_targets(user, target, context):
     pass
@@ -144,7 +144,7 @@ pass
 pass
 pass
 pass
-return False
+                    return False
 # Проверка условий
 if not self._check_conditions(user, target, context):
     pass
@@ -155,7 +155,7 @@ pass
 pass
 pass
 return False
-return True
+            return True
 def _check_cooldown(self, user: Any) -> bool:"""Проверить кулдаун"""if self.cost.cooldown <= 0: return True
     pass
 pass
@@ -259,7 +259,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 return True
 def _evaluate_condition(self, condition: str, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:"""Оценить условие"""# TODO: Реализовать систему условий
     pass
@@ -283,7 +283,7 @@ pass
 pass
 pass
 Управляет всеми навыками и их использованием"""
-def __init__(self):
+    def __init__(self):
     pass
 pass
 pass
@@ -299,8 +299,8 @@ priority=Priority.HIGH
 # Регистры навыков
 self.skill_templates: Dict[str, Skill] = {}
 self.skill_effects: Dict[str, Callable] = {}
-# Навыки сущностей
-self.entity_skills: Dict[str, Dict[str, Skill]] = {}
+        # Навыки сущностей
+        self.entity_skills: Dict[str, Dict[str, Skill]] = {}
 self.skill_slots: Dict[str, List[SkillSlot]] = {}
 # Система комбо
 self.combo_chains: Dict[str, List[str]] = {}
@@ -318,9 +318,9 @@ pass
 pass
 pass
 pass
-"""Инициализация системы навыков"""
+        """Инициализация системы навыков"""
 try: except Exception as e: self.logger.error(f"Ошибка инициализации SkillSystem: {e}")
-return False
+                return False
 def _register_base_skills(self):
     pass
 pass
@@ -463,7 +463,7 @@ animation=skill_template.animation,
 sound=skill_template.sound
 )
 self.entity_skills[entity_id][skill_id] = skill
-return True
+            return True
 def get_entity_skills(self, entity_id: str) -> List[Skill]:"""Получить навыки сущности"""if entity_id notin self.entity_skills: return []
     pass
 pass
@@ -510,7 +510,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 # Применяем стоимость
 self._apply_skill_cost(user, skill)
 # Применяем эффекты
@@ -593,7 +593,7 @@ pass
 pass
 pass
 pass
-current_time = time.time()
+                current_time = time.time()
 combo_key = f"{entity_id}_combo"if combo_key notin self.combo_chains: self.combo_chains[combo_key] = []
 self.combo_chains[combo_key].append(skill_id)
 self.combo_timers[combo_key] = current_time
@@ -665,7 +665,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 skill = self.get_entity_skill(entity_id, skill_id)
 if not skill: return False
     pass
@@ -678,7 +678,7 @@ pass
 slot = self.skill_slots[entity_id][slot_index]
 slot.skill = skill
 slot.position = slot_index
-return True
+            return True
 def get_skill_slots(self, entity_id: str) -> List[SkillSlot]:"""Получить слоты навыков сущности"""if entity_id notin self.skill_slots: return []
     pass
 pass
@@ -704,7 +704,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 slot = slots[slot_index]
 if not slot.skill: return False
     pass
@@ -805,7 +805,7 @@ pass
 pass
 skill.level += 1
 # TODO: Применение улучшений к навыку
-return True
+            return True
 def get_combo_chain(self, entity_id: str) -> List[str]:"""Получить текущую цепочку комбо"""
     pass
 pass

@@ -654,7 +654,10 @@ def smart_repair_strategy(content, damage_report):
     # Проверяем, есть ли синтаксические ошибки
     has_syntax_errors = len(damage_report['syntax_errors']) > 0
     
-    if has_syntax_errors or damage_report['damage_score'] > 20:
+    if has_syntax_errors or damage_report['damage_score'] > 30:
+        print("    🚨 Применяю улучшенное пошаговое восстановление...")
+        return enhanced_step_by_step_recovery(content)
+    elif has_syntax_errors or damage_report['damage_score'] > 20:
         print("    🚨 Применяю улучшенный экстренный ремонт...")
         return enhanced_emergency_repair(content)
     elif damage_report['damage_score'] > 10:
@@ -692,10 +695,13 @@ def fix_critical_syntax_errors(content):
     for i, line in enumerate(lines):
         stripped = line.strip()
         
-        # Исправляем незакрытые скобки в определениях
+        # Исправляем определения функций и классов
         if re.match(r'^(def|class)\s+\w+\s*\([^)]*$', stripped):
             # Добавляем закрывающую скобку и двоеточие
             line = line.rstrip() + '):'
+        elif re.match(r'^(def|class)\s+\w+\s*$', stripped):
+            # Определение без скобок, добавляем скобки и двоеточие
+            line = line.rstrip() + '():'
         elif re.match(r'^(if|elif|else|for|while|with|try|except|finally)\s*\([^)]*$', stripped):
             # Добавляем закрывающую скобку и двоеточие
             line = line.rstrip() + '):'
@@ -782,6 +788,32 @@ def advanced_string_fix(content):
     # Если файл заканчивается незакрытой строкой, закрываем её
     if in_multiline_string:
         fixed_lines[-1] = fixed_lines[-1] + string_delimiter
+    
+    # Дополнительная проверка на незавершенные многострочные строки
+    content = '\n'.join(fixed_lines)
+    
+    # Ищем незавершенные многострочные строки и исправляем их
+    # Паттерн: """текст без закрывающих """
+    content = re.sub(r'"""([^"]*?)(?=\n|$)', r'"""\1"""', content)
+    content = re.sub(r"'''([^']*?)(?=\n|$)", r"'''\1'''", content)
+    
+    # Ищем строки, которые начинаются с кавычек, но не заканчиваются
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Если строка начинается с кавычки, но не заканчивается ею
+        if (stripped.startswith('"') and not stripped.endswith('"')) or \
+           (stripped.startswith("'") and not stripped.endswith("'")):
+            # Добавляем закрывающую кавычку
+            if stripped.startswith('"'):
+                line = line + '"'
+            else:
+                line = line + "'"
+        
+        fixed_lines.append(line)
     
     return '\n'.join(fixed_lines)
 
@@ -1676,10 +1708,17 @@ def fix_decimal_literals(content):
     # Исправляем числа с точкой в конце
     content = re.sub(r'(\d+)\.(?=\s|$)', r'\1', content)
     
-    # Исправляем числа с точкой в начале
-    content = re.sub(r'(?<=\s|^)\.(\d+)', r'0.\1', content, flags=re.MULTILINE)
+    # Исправляем числа с точкой в начале (упрощенная версия)
+    lines = content.splitlines()
+    fixed_lines = []
     
-    return content
+    for line in lines:
+        # Ищем числа, начинающиеся с точки
+        if re.search(r'^\s*\.\d+', line):
+            line = re.sub(r'^\s*\.(\d+)', r'0.\1', line)
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
 
 def fix_corrupted_imports(content):
     """Исправляет поврежденные импорты."""
@@ -1788,28 +1827,73 @@ def fix_control_flow_structure(content):
     
     return '\n'.join(fixed_lines)
 
-def fix_decimal_literals(content):
-    """Исправляет неверные десятичные литералы."""
-    print("    🔢 Исправляю неверные десятичные числа...")
+def fix_complex_indentation_issues(content):
+    """Исправляет сложные проблемы с отступами."""
+    print("    📏 Исправляю сложные проблемы с отступами...")
     
-    # Исправляем неверные десятичные числа
-    # Например: 123.456.789 -> 123.456789
-    content = re.sub(r'(\d+\.\d+)\.(\d+)', r'\1\2', content)
+    lines = content.splitlines()
+    fixed_lines = []
+    indent_stack = [0]  # Стек отступов
+    current_block_level = 0
     
-    # Исправляем числа с лишними точками
-    content = re.sub(r'(\d+)\.\.(\d+)', r'\1.\2', content)
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if not stripped or stripped.startswith('#'):
+            fixed_lines.append(line)
+            continue
+        
+        current_indent = len(line) - len(line.lstrip())
+        
+        # Определяем тип строки и требуемый отступ
+        if stripped.startswith(('def ', 'class ')):
+            # Функция или класс - новый уровень отступа
+            expected_indent = indent_stack[-1]
+            if current_indent != expected_indent:
+                line = ' ' * expected_indent + stripped
+            indent_stack.append(expected_indent + 4)
+            current_block_level = expected_indent + 4
+        elif stripped.startswith(('if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except', 'finally:', 'with ')):
+            # Управляющая конструкция
+            expected_indent = indent_stack[-1]
+            if current_indent != expected_indent:
+                line = ' ' * expected_indent + stripped
+            indent_stack.append(expected_indent + 4)
+            current_block_level = expected_indent + 4
+        elif stripped.startswith(('return', 'break', 'continue', 'pass', 'raise')):
+            # Операторы должны быть на правильном уровне отступа
+            expected_indent = current_block_level
+            if current_indent != expected_indent:
+                line = ' ' * expected_indent + stripped
+        elif stripped.startswith('import ') or stripped.startswith('from '):
+            # Импорты должны быть на уровне модуля
+            expected_indent = 0
+            if current_indent != expected_indent:
+                line = ' ' * expected_indent + stripped
+        else:
+            # Обычная строка кода
+            if current_indent > current_block_level + 8:
+                # Слишком большой отступ, исправляем
+                line = ' ' * (current_block_level + 4) + stripped
+            elif current_indent < current_block_level and current_indent > 0:
+                # Проверяем, не вышли ли мы из блока
+                while indent_stack and current_indent < indent_stack[-1]:
+                    indent_stack.pop()
+                if indent_stack:
+                    expected_indent = indent_stack[-1] + 4
+                    line = ' ' * expected_indent + stripped
+                    current_block_level = expected_indent
+                else:
+                    # Мы на уровне модуля
+                    line = ' ' * 0 + stripped
+                    current_block_level = 0
+        
+        fixed_lines.append(line)
     
-    # Исправляем числа с точкой в конце
-    content = re.sub(r'(\d+)\.(?=\s|$)', r'\1', content)
-    
-    # Исправляем числа с точкой в начале
-    content = re.sub(r'(?<=\s|^)\.(\d+)', r'0.\1', content)
-    
-    return content
+    return '\n'.join(fixed_lines)
 
-def fix_corrupted_imports(content):
-    """Исправляет поврежденные импорты."""
-    print("    📦 Исправляю поврежденные импорты...")
+def fix_broken_import_statements(content):
+    """Исправляет поврежденные импортные операторы."""
+    print("    📦 Исправляю поврежденные импортные операторы...")
     
     lines = content.splitlines()
     fixed_lines = []
@@ -1819,61 +1903,28 @@ def fix_corrupted_imports(content):
         
         # Исправляем разорванные импорты
         if stripped.startswith('import ') and not stripped.endswith(';'):
-            # Проверяем, есть ли точка в конце
+            # Проверяем на очевидные проблемы
             if stripped.endswith('.'):
                 line = line.rstrip('.')
-            # Проверяем, есть ли неполный импорт
             elif stripped.endswith('from'):
                 line = line.rstrip('from')
             elif stripped.endswith('as'):
                 line = line.rstrip('as')
+            elif stripped.endswith('import'):
+                line = line + ' *'
         
         # Исправляем from ... import
         elif stripped.startswith('from ') and 'import' in stripped:
             if not stripped.endswith(';'):
-                # Проверяем, есть ли неполный импорт
                 if stripped.endswith('import'):
                     line = line + ' *'
                 elif stripped.endswith('import '):
                     line = line + '*'
         
-        fixed_lines.append(line)
-    
-    return '\n'.join(fixed_lines)
-
-def restore_class_structure(content):
-    """Восстанавливает структуру классов."""
-    print("    🏗️ Восстанавливаю структуру классов...")
-    
-    lines = content.splitlines()
-    fixed_lines = []
-    in_class = False
-    class_indent = 0
-    
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        current_indent = len(line) - len(line.lstrip())
-        
-        # Определяем начало класса
-        if stripped.startswith('class '):
-            in_class = True
-            class_indent = current_indent
-            # Проверяем, есть ли двоеточие
-            if not stripped.endswith(':'):
-                line = line.rstrip() + ':'
-        
-        # Если мы в классе, проверяем структуру
-        elif in_class and stripped:
-            if current_indent <= class_indent:
-                # Мы вышли из класса
-                in_class = False
-            elif stripped.startswith(('def ', 'class ')):
-                # Метод или вложенный класс
-                if not stripped.endswith(':'):
-                    line = line.rstrip() + ':'
-                # Проверяем отступ
-                if current_indent != class_indent + 4:
-                    line = ' ' * (class_indent + 4) + stripped
+        # Исправляем очевидные опечатки в импортах
+        line = line.replace('imp or t', 'import')
+        line = line.replace('f rom', 'from')
+        line = line.replace('im port', 'import')
         
         fixed_lines.append(line)
     
@@ -1895,6 +1946,347 @@ def advanced_aggressive_repair(content):
         content = aggressive_repair(content)
     
     return content
+
+def fix_missing_colons(content):
+    """Исправляет отсутствующие двоеточия в критических местах."""
+    print("    🔴 Исправляю отсутствующие двоеточия...")
+    
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Добавляем двоеточия для блоков, которые их требуют
+        if stripped.startswith(('def ', 'class ')):
+            if not stripped.endswith(':'):
+                line = line.rstrip() + ':'
+        elif stripped.startswith(('if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except', 'finally:', 'with ')):
+            if not stripped.endswith(':'):
+                line = line.rstrip() + ':'
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_unterminated_strings(content):
+    """Исправляет незавершенные строки более агрессивно."""
+    print("    📝 Исправляю незавершенные строки...")
+    
+    lines = content.splitlines()
+    fixed_lines = []
+    in_string = False
+    string_char = None
+    
+    for line in lines:
+        # Проверяем на незавершенные строки
+        if '"' in line or "'" in line:
+            # Подсчитываем кавычки
+            single_quotes = line.count("'")
+            double_quotes = line.count('"')
+            
+            # Если нечетное количество кавычек, добавляем закрывающую
+            if single_quotes % 2 == 1:
+                if line.endswith("'"):
+                    line = line + "'"
+                else:
+                    line = line + "'"
+            
+            if double_quotes % 2 == 1:
+                if line.endswith('"'):
+                    line = line + '"'
+                else:
+                    line = line + '"'
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_multiline_strings_aggressive(content):
+    """Агрессивно исправляет незавершенные многострочные строки."""
+    print("    📝 Агрессивно исправляю многострочные строки...")
+    
+    # Ищем паттерны незавершенных многострочных строк
+    # Паттерн 1: """текст без закрывающих """
+    content = re.sub(r'"""([^"]*?)(?=\n|$)', r'"""\1"""', content)
+    content = re.sub(r"'''([^']*?)(?=\n|$)", r"'''\1'''", content)
+    
+    # Паттерн 2: """текст\nтекст\nтекст (без закрывающих)
+    lines = content.splitlines()
+    fixed_lines = []
+    in_multiline = False
+    multiline_content = []
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # Проверяем начало многострочной строки
+        if '"""' in stripped or "'''" in stripped:
+            if not in_multiline:
+                # Начинается новая многострочная строка
+                in_multiline = True
+                multiline_content = [line]
+                if '"""' in stripped:
+                    string_delimiter = '"""'
+                else:
+                    string_delimiter = "'''"
+            else:
+                # Заканчивается многострочная строка
+                if string_delimiter in stripped:
+                    in_multiline = False
+                    multiline_content.append(line)
+                    fixed_lines.extend(multiline_content)
+                    multiline_content = []
+                else:
+                    # Продолжение многострочной строки
+                    multiline_content.append(line)
+        elif in_multiline:
+            # Мы внутри многострочной строки
+            multiline_content.append(line)
+        else:
+            # Обычная строка
+            fixed_lines.append(line)
+    
+    # Если мы все еще в многострочной строке, закрываем её
+    if in_multiline and multiline_content:
+        # Добавляем закрывающий разделитель к последней строке
+        last_line = multiline_content[-1]
+        if string_delimiter == '"""':
+            last_line = last_line + '"""'
+        else:
+            last_line = last_line + "'''"
+        multiline_content[-1] = last_line
+        fixed_lines.extend(multiline_content)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_broken_function_calls(content):
+    """Исправляет поврежденные вызовы функций."""
+    print("    📞 Исправляю поврежденные вызовы функций...")
+    
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Исправляем незавершенные вызовы функций
+        if stripped.endswith('(') and not stripped.startswith('#'):
+            # Ищем имя функции
+            if 'def ' in stripped or 'class ' in stripped:
+                # Это определение, добавляем закрывающую скобку и двоеточие
+                line = line.rstrip() + '):'
+            else:
+                # Это вызов функции, добавляем закрывающую скобку
+                line = line.rstrip() + ')'
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def enhanced_step_by_step_recovery(content):
+    """Улучшенное пошаговое восстановление с дополнительными проверками."""
+    print("    🔄 Применяю улучшенное пошаговое восстановление...")
+    
+    # Шаг 1: Очистка от невидимых символов
+    content = re.sub(r'[^\x20-\x7E\n\t]', '', content)
+    
+    # Шаг 2: Исправление строк
+    content = advanced_string_fix(content)
+    
+    # Шаг 3: Исправление незавершенных строк
+    content = fix_unterminated_strings(content)
+    
+    # Шаг 3.5: Агрессивное исправление многострочных строк
+    content = fix_multiline_strings_aggressive(content)
+    
+    # Шаг 4: Исправление скобок
+    content = smart_bracket_fix(content)
+    
+    # Шаг 5: Исправление двоеточий
+    content = fix_missing_colons(content)
+    
+    # Шаг 6: Исправление вызовов функций
+    content = fix_broken_function_calls(content)
+    
+    # Шаг 7: Исправление импортов
+    content = fix_broken_import_statements(content)
+    
+    # Шаг 8: Исправление сложных отступов
+    content = fix_complex_indentation_issues(content)
+    
+    # Шаг 9: Контекстные исправления
+    content = context_aware_fix(content)
+    
+    # Шаг 9.5: Исправление определений функций и классов
+    content = fix_function_and_class_definitions(content)
+    
+    # Шаг 10: Критические исправления
+    content = fix_critical_syntax_errors(content)
+    
+    # Шаг 11: Финальная очистка
+    content = final_cleanup_and_validation(content)
+    
+    # Шаг 12: Пост-ремонтная валидация
+    content = post_repair_validation(content)
+    
+    return content
+
+def smart_repair_strategy_v2(content, damage_report):
+    """Улучшенная умная стратегия исправления."""
+    print(f"    📊 Анализ повреждений: {damage_report['damage_score']}/100")
+    print(f"    📋 Рекомендации: {', '.join(damage_report['recommendations'])}")
+    
+    # Проверяем, есть ли синтаксические ошибки
+    has_syntax_errors = len(damage_report['syntax_errors']) > 0
+    
+    if has_syntax_errors or damage_report['damage_score'] > 30:
+        print("    🚨 Применяю улучшенное пошаговое восстановление...")
+        return enhanced_step_by_step_recovery(content)
+    elif has_syntax_errors or damage_report['damage_score'] > 20:
+        print("    🚨 Применяю улучшенный экстренный ремонт...")
+        return enhanced_emergency_repair(content)
+    elif damage_report['damage_score'] > 10:
+        print("    🔥 Применяю агрессивный ремонт...")
+        return aggressive_repair(content)
+    else:
+        print("    🛡️ Применяю профилактические исправления...")
+        return apply_preventive_fixes(content)
+
+def ultra_aggressive_repair(content):
+    """Ультра-агрессивный ремонт для критически поврежденных файлов."""
+    print("    💀 Применяю ультра-агрессивный ремонт...")
+    
+    # Применяем все доступные исправления
+    content = fix_decimal_literals(content)
+    content = fix_broken_import_statements(content)
+    content = fix_complex_indentation_issues(content)
+    content = restore_class_structure(content)
+    content = fix_control_flow_structure(content)
+    
+    # Если файл все еще невалиден, применяем продвинутые агрессивные исправления
+    if not validate_python_syntax(content):
+        print("    💥 Применяю продвинутые агрессивные исправления...")
+        content = advanced_aggressive_repair(content)
+    
+    return content
+
+def final_cleanup_and_validation(content):
+    """Финальная очистка и валидация исправленного кода."""
+    print("    🧹 Финальная очистка и валидация...")
+    
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # Убираем лишние пробелы в конце строк
+        line = line.rstrip()
+        
+        # Исправляем очевидные проблемы
+        if stripped.startswith('def ') and not stripped.endswith(':'):
+            if stripped.endswith('()'):
+                line = line + ':'
+            elif stripped.endswith('('):
+                line = line + '):'
+            else:
+                line = line + ':'
+        
+        elif stripped.startswith('class ') and not stripped.endswith(':'):
+            if stripped.endswith('()'):
+                line = line + ':'
+            elif stripped.endswith('('):
+                line = line + '):'
+            else:
+                line = line + ':'
+        
+        elif stripped.startswith(('if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except', 'finally:', 'with ')):
+            if not stripped.endswith(':'):
+                line = line + ':'
+        
+        # Исправляем лишние отступы
+        if stripped and not stripped.startswith('#'):
+            current_indent = len(line) - len(line.lstrip())
+            if current_indent > 0 and current_indent % 4 != 0:
+                # Округляем отступ до ближайшего кратного 4
+                new_indent = (current_indent // 4) * 4
+                line = ' ' * new_indent + stripped
+        
+        fixed_lines.append(line)
+    
+    content = '\n'.join(fixed_lines)
+    
+    # Убираем пустые строки в конце файла
+    content = content.rstrip('\n')
+    
+    # Добавляем одну пустую строку в конце
+    content = content + '\n'
+    
+    return content
+
+def post_repair_validation(content):
+    """Проверяет код после исправления и применяет дополнительные исправления если нужно."""
+    print("    🔍 Пост-ремонтная валидация...")
+    
+    # Проверяем синтаксис
+    if validate_python_syntax(content):
+        print("    ✅ Синтаксис валиден после исправления")
+        return content
+    
+    print("    ⚠️ Синтаксис все еще невалиден, применяю дополнительные исправления...")
+    
+    # Применяем дополнительные исправления
+    content = fix_critical_syntax_errors(content)
+    content = fix_complex_indentation_issues(content)
+    content = final_cleanup_and_validation(content)
+    
+    # Финальная проверка
+    if validate_python_syntax(content):
+        print("    ✅ Синтаксис исправлен после дополнительных исправлений")
+    else:
+        print("    ❌ Синтаксис все еще невалиден после всех исправлений")
+    
+    return content
+
+def fix_function_and_class_definitions(content):
+    """Специально исправляет определения функций и классов."""
+    print("    🏗️ Исправляю определения функций и классов...")
+    
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        
+        # Исправляем определения функций
+        if stripped.startswith('def ') and not stripped.endswith(':'):
+            if stripped.endswith('()'):
+                line = line + ':'
+            elif stripped.endswith('('):
+                line = line + '):'
+            else:
+                # Определение без скобок
+                line = line + '():'
+        
+        # Исправляем определения классов
+        elif stripped.startswith('class ') and not stripped.endswith(':'):
+            if stripped.endswith('()'):
+                line = line + ':'
+            elif stripped.endswith('('):
+                line = line + '):'
+            else:
+                # Определение без скобок
+                line = line + '():'
+        
+        # Исправляем управляющие конструкции
+        elif stripped.startswith(('if ', 'elif ', 'else:', 'for ', 'while ', 'try:', 'except', 'finally:', 'with ')):
+            if not stripped.endswith(':'):
+                line = line + ':'
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
 
 if __name__ == '__main__':
     print("🚀 Запуск улучшенной утилиты исправления Python файлов")

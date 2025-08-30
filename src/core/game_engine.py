@@ -81,7 +81,7 @@ pass
 pass
 pass
 pass
-"""Инициализация игрового движка"""
+        """Инициализация игрового движка"""
 try: logger.in fo("Начало инициализации игрового движка Pand a3D...")
 # Инициализация Pand a3D
 if not self._in itialize_pand a3d():
@@ -92,7 +92,7 @@ pass
 pass
 pass
 pass
-return False
+                return False
 # Инициализация менеджеров новой архитектуры
 if not self._in itialize_new_architecture():
     pass
@@ -102,7 +102,7 @@ pass
 pass
 pass
 pass
-return False
+                return False
 # Создание адаптеров для существующих систем
 if not self._create_legacy_adapters():
     pass
@@ -112,14 +112,14 @@ pass
 pass
 pass
 pass
-return False
+                return False
 # Привязываем глобальные клавиши управления
 self._bin d_global_in puts()
-# Настройка задач
-self._setup_tasks()
+            # Настройка задач
+            self._setup_tasks()
 self.current_state= "ready"
 logger.in fo("Игровой движок успешно инициализирован")
-return True
+            return True
 except Exception as e: pass
 pass
 pass
@@ -137,7 +137,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка инициализации Pand a3D: {e}")
-return False
+            return False
 def _in itialize_new_architecture(self) -> bool: pass
     pass
 pass
@@ -145,8 +145,8 @@ pass
 pass
 pass
 pass
-"""Инициализация новой архитектуры"""
-try:
+        """Инициализация новой архитектуры"""
+        try:
 # Создаем менеджер компонентов
 self.component_manager= ComponentManager()
 # Создаем шину событий
@@ -159,7 +159,7 @@ self.reposit or y_manager= Reposit or yManager()
 self.component_manager.regis ter_component(self.event_bus)
 self.component_manager.regis ter_component(self.state_manager)
 self.component_manager.regis ter_component(self.reposit or y_manager)
-# Инициализируем все компоненты
+            # Инициализируем все компоненты
 if not self.component_manager.in itialize_all():
     pass
 pass
@@ -169,14 +169,14 @@ pass
 pass
 pass
 logger.err or("Ошибка инициализации компонентов")
-return False
+                return False
 logger.in fo("Новая архитектура инициализирована")
-return True
+            return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка инициализации новой архитектуры: {e}")
-return False
+            return False
 def _create_legacy_adapters(self) -> bool: pass
     pass
 pass
@@ -186,7 +186,7 @@ pass
 pass
 """Создание адаптеров для существующих систем"""
 try: except Exception as e: logger.err or(f"Ошибка создания адаптеров: {e}")
-return False
+                return False
 def _bin d_global_in puts(self):
     pass
 pass
@@ -230,7 +230,7 @@ pass
 """Запуск игрового движка"""
 try: if self.current_state != "ready":
 logger.err or("Движок не готов к запуску")
-return False
+                return False
 logger.in fo("Запуск игрового движка...")
 # Запускаем все компоненты
 if not self.component_manager.start_all():
@@ -242,16 +242,16 @@ pass
 pass
 pass
 logger.err or("Ошибка запуска компонентов")
-return False
+            return False
 self.running= True
 self.current_state= "running"
 logger.in fo("Игровой движок запущен")
-return True
+            return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка запуска движка: {e}")
-return False
+            return False
 def stop(self) -> bool: pass
     pass
 pass
@@ -264,7 +264,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка остановки движка: {e}")
-return False
+                return False
 def toggle_pause(self):
     pass
 pass
@@ -406,8 +406,8 @@ pass
 'game_state': self.current_state,
 'running': self.running,
 'paused': self.paused,
-'fps': self.fps,
-'frame_count': self.frame_count,
+            'fps': self.fps,
+            'frame_count': self.frame_count,
 'delta_time': self.delta_time
 }
 # Метрики компонентов

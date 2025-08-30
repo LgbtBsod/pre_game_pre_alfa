@@ -195,7 +195,7 @@ pass
 pass
 pass
 pass
-return True
+            return True
 if self.item.id = item.id: return self.quantity + quantity <= self.item.max_stack
     pass
 pass
@@ -204,7 +204,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 @dataclass: pass  # Добавлен pass в пустой блок
 class EquipmentSet:"""Комплект экипировки"""name: str
     pass
@@ -267,7 +267,7 @@ try: except Exception as e: pass
 pass
 pass
 self.logger.err or(f"Ошибка инициализации Invent or ySystem: {e}")
-return False
+                return False
 def _regis ter_base_items(self):
     pass
 pass
@@ -567,9 +567,9 @@ pass
 pass
 pass
 pass
-return False
+            return False
 # TODO: Проверка навыков крафтинга
-return True
+            return True
 def craft_item(self, entity_id: str, recipe_id: str) -> Optional[Item]:
     pass
 pass
@@ -758,7 +758,7 @@ pass
 pass
 pass
 pass
-# Добавляем предмет
+            # Добавляем предмет
 if slot.is _empty():
     pass
 pass
@@ -839,8 +839,8 @@ pass
 pass
 pass
 pass
-pass
-return True
+                pass
+            return True
 def has_item(self, item_id: str, quantity: int= 1) -> bool:"""Проверить наличие предмета"""total_quantity= 0
     pass
 pass
@@ -865,7 +865,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 def equip_item(self, item: Item, slot: EquipmentSlot) -> bool:"""Экипировать предмет"""# Проверяем требования
     pass
 pass
@@ -882,7 +882,7 @@ pass
 pass
 pass
 pass
-return False
+                return False
 # Снимаем предыдущий предмет
 if slotin self.equipment: self.unequip_item(slot)
     pass
@@ -896,7 +896,7 @@ pass
 self.equipment[slot]= item
 # Применяем эффекты
 self._apply_equipment_effects(item, True)
-return True
+            return True
 def unequip_item(self, slot: EquipmentSlot) -> Optional[Item]:"""Снять предмет с экипировки"""if slot notin self.equipment: return None
     pass
 pass
@@ -1010,8 +1010,8 @@ pass
 pass
 pass
 pass
-return slot
-return None
+                        return slot
+            return None
 def _fin d_slot_by_item_id(self, item_id: str) -> Optional[Invent or ySlot]:"""Найти слот по ID предмета"""for slotin self.slots: if slot.itemand slot.item.id = item_id: return slot
     pass
 pass
@@ -1020,7 +1020,7 @@ pass
 pass
 pass
 pass
-return None
+            return None
 def _check_equipment_requirements(self, item: Item) -> bool:"""Проверить требования для экипировки"""# TODO: Проверка уровня, характеристик и других требований
     pass
 pass
@@ -1029,7 +1029,7 @@ pass
 pass
 pass
 pass
-return True
+            return True
 def _apply_equipment_effects(self, item: Item, equipping: bool):"""Применить эффекты экипировки"""
     pass
 pass

@@ -240,12 +240,12 @@ pass
 pass
 pass
 pass
-"""Инициализация системы эволюции"""
+        """Инициализация системы эволюции"""
 try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка инициализации системы эволюции: {e}")
-return False
+            return False
 def _create_base_genes(self):
     pass
 pass
@@ -256,7 +256,7 @@ pass
 pass
 """Создание базовых генов для всех типов"""
 try:
-# Физические гены
+            # Физические гены
 self._add_gene(Gene(
 gene_i = "gene_strength",
 gene_typ = GeneType.PHYSICAL,
@@ -441,7 +441,7 @@ try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка регистрации персонажа {character_id}: {e}")
-return False
+                return False
 def _in itialize_character_genes(self, character_id: str):
     pass
 pass
@@ -493,12 +493,12 @@ pass
 pass
 mutation_type: MutationType= MutationType.SPONTANEOUS) -> Optional[Mutation]:
 pass  # Добавлен pass в пустой блок
-"""Запуск мутации гена"""
+        """Запуск мутации гена"""
 try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка запуска мутации для персонажа {character_id}: {e}")
-return None
+                return None
 def _apply_mutation(self, mutation: Mutation):
     pass
 pass
@@ -577,7 +577,7 @@ except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка поиска связанных генов: {e}")
-return []
+            return []
 def evolve_gene(self, character_id: str, gene_id: str,
     pass
 pass
@@ -592,7 +592,7 @@ try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка эволюции гена {gene_id} для персонажа {character_id}: {e}")
-return False
+                return False
 def _check_evolution_stages(self, character_id: str):
     pass
 pass
@@ -647,7 +647,7 @@ try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка проверки возможности разблокировки стадии: {e}")
-return False
+                return False
 def _unlock_evolution_stage(self, character_id: str, tree_id: str,
     pass
 pass
@@ -774,7 +774,7 @@ try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка добавления очков эволюции: {e}")
-return False
+            return False
 def _notify_mutation_triggered(self, mutation: Mutation):
     pass
 pass
@@ -995,7 +995,7 @@ try: except Exception as e: pass
 pass
 pass
 self._logger.err or(f"Ошибка проверки возможности активации комбинации: {e}")
-return False
+                return False
 def _activate_genetic_combin ation(self, character_id: str,
     pass
 pass

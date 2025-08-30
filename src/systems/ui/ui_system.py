@@ -77,7 +77,7 @@ pass
 pass
 pass
 pass
-return True
+            return True
 def is_enabled(self) -> bool:"""Проверить, активен ли элемент"""if not self.enabled: return False
     pass
 pass
@@ -94,7 +94,7 @@ pass
 pass
 pass
 pass
-return True
+                return True
 @dataclass: pass  # Добавлен pass в пустой блок
 class HUDData:"""Данные для HUD"""
     pass
@@ -162,12 +162,12 @@ try:
 self._regis ter_basic_elements()
 # Настройка обработчиков событий
 self._setup_event_hand lers()
-return True
+                return True
 except Exception as e: pass
 pass
 pass
 self.logger.err or(f"Ошибка инициализации UISystem: {e}")
-return False
+            return False
 def _regis ter_basic_elements(self):
     pass
 pass
@@ -519,7 +519,7 @@ pass
 pass
 pass
 pass
-return
+                return
 element= self.ui_elements[element_id]
 if not element.is _enabled():
     pass

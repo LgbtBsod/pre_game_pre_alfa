@@ -180,7 +180,7 @@ except Exception as e: pass
 pass
 pass
 self.logger.err or(f"Ошибка инициализации CombatSystem: {e}")
-return False
+                return False
 def _regis ter_combat_mechanics(self):
     pass
 pass
@@ -227,9 +227,9 @@ pass
 pass
 pass
 pass
-'combat_id': combat_id,
+                'combat_id': combat_id,
 'targets': [target_id],
-'start_time': time.time(),
+                'start_time': time.time(),
 'actions': []
 }
 # Добавляем цель в бой
@@ -244,7 +244,7 @@ pass
 self.active_combats[entity_id]['targets'].append(target_id)
 # Обновляем инициативу
 self._update_in itiative(entity_id)
-return True
+            return True
 def exit_combat(self, entity_id: str) -> bool: pass
     pass
 pass
@@ -281,7 +281,7 @@ pass
 pass
 pass
 pass
-return True
+                return True
 def is_in _combat(self, entity_id: str) -> bool:"""Проверить, находится ли сущность в бою"""return(entity_idin self.combat_states and
     pass
 pass
@@ -360,13 +360,13 @@ pass
 pass
 float]) -> bool: pass  # Добавлен pass в пустой блок
 """Выполнить движение"""if not self._can_move(entity_id, new_position):
-return False
+            return False
 # Обновляем позицию
 old_position= self.entity_positions.get(entity_id, (0, 0, 0))
 self.entity_positions[entity_id]= new_position
 # Проверяем, не вышли ли из зоны атаки
 self._check_attack_range(entity_id, old_position, new_position)
-return True
+            return True
 # Расчет результатов
 def _calculate_attack_result(self, action: CombatAction) -> CombatResult:"""Рассчитать результат атаки"""attacker_id= action.source_id
     pass
@@ -423,8 +423,8 @@ actio = action,
 succes = True,
 damage_deal = final_damage,
 critical_hi = critical_hit
-)
-return result
+                )
+                return result
 def _calculate_defense_result(self, defense_action: CombatAction
     pass
 pass
@@ -471,7 +471,7 @@ pass
 pass
 pass
 pass  # Добавлен pass в пустой блок
-# Создаем результат
+            # Создаем результат
 result= CombatResult(
 actio = defense_action,:
 pass  # Добавлен pass в пустой блок
@@ -483,7 +483,7 @@ pass  # Добавлен pass в пустой блок
 parrie = (defense_type = DefenseType.PARRY):
 pass  # Добавлен pass в пустой блок
 )
-return result
+            return result
 def _apply_target_defense(self, damage: float
     pass
 pass
@@ -643,7 +643,7 @@ pass
 pass
 pass
 pass
-return False
+            return False
 # Проверяем инициативу
 if not self._can_act(attacker_id):
     pass
@@ -653,8 +653,8 @@ pass
 pass
 pass
 pass
-return False
-return True
+            return False
+            return True
 def _can_move(self, entity_id: str, new_position: Tuple[float, float
     pass
 pass
@@ -681,8 +681,8 @@ pass
 pass
 pass
 pass
-return False
-return True
+            return False
+            return True
 def _is _in_range(self, attacker_id: str, target_id: str) -> bool:"""Проверить, находится ли цель в зоне атаки"""attacker_pos= self.entity_positions.get(attacker_id, (0, 0, 0))
     pass
 pass

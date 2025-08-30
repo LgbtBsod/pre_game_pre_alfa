@@ -115,7 +115,7 @@ pass
 pass
 self.in tegration_state= "running"
 logger.in fo("AI Integration System запущен")
-return True
+            return True
 except Exception as e: pass
 pass
 pass
@@ -133,7 +133,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка остановки AI Integration System: {e}")
-return False
+            return False
 def _on_destroy(self) -> bool: pass
     pass
 pass
@@ -384,7 +384,7 @@ pass
 pass
 """Удаление AI сущности"""
 try: except Exception as e: logger.err or(f"Ошибка удаления AI сущности {entity_id}: {e}")
-return False
+            return False
 def get_ai_entity_state(self, entity_id: str) -> Optional[Dict[str, Any]]:
     pass
 pass

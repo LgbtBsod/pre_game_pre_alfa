@@ -159,7 +159,7 @@ pass
 pass
 pass
 pass
-return False
+                return False
 # Обновляем контекст
 self.source_id= getattr(source, 'id', str(source))
 self.target_id= getattr(target, 'id', str(target))
@@ -174,13 +174,13 @@ pass
 pass
 pass
 self._on_effect_applied(target, source, context)
-return True
-return False
+            return True
+            return False
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка применения эффекта {self.name}: {e}")
-return False
+                return False
 def remove(self, target: Any) -> bool: pass
     pass
 pass
@@ -193,7 +193,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка удаления эффекта {self.name}: {e}")
-return False
+            return False
 def update(self, target: Any, delta_time: float) -> bool: pass
     pass
 pass
@@ -218,7 +218,7 @@ except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка обновления эффекта {self.name}: {e}")
-return False
+            return False
 def can_apply(self, source: Any, target: Any, context: Dict[str
     pass
 pass
@@ -233,7 +233,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка проверки возможности применения {self.name}: {e}")
-return False
+            return False
 def conflicts_with(self, other: 'Effect') -> bool: pass
     pass
 pass
@@ -355,12 +355,12 @@ pass
 pass
 # Активируем эффект
 self.is _active= True
-return True
+                return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка внутреннего применения эффекта {self.name}: {e}")
-return False
+            return False
 def _remove_effect(self, target: Any) -> bool: pass
     pass
 pass
@@ -373,7 +373,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка внутреннего удаления эффекта {self.name}: {e}")
-return False
+                return False
 def _update_effect(self, target: Any, delta_time: float) -> bool: pass
     pass
 pass
@@ -484,7 +484,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка проверки возможности срабатывания специального эффекта: {e}")
-return False
+            return False
 def trigger(self, source: Any, target: Any, context: Dict[str
     pass
 pass
@@ -550,12 +550,12 @@ pass
 pass
 source.effect_statis tics.rec or d_trigger(self.effect.name)
 return True
-return False
+            return False
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка срабатывания специального эффекта: {e}")
-return False
+            return False
 def _schedule_delayed_effect(self, source: Any, target: Any
     pass
 pass
@@ -627,12 +627,12 @@ self._regis ter_base_effects()
 # Регистрируем специальные эффекты
 self._regis ter_special_effects()
 logger.in fo("Effect System готов к работе")
-return True
+                return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка инициализации Effect System: {e}")
-return False
+            return False
 def _on_start(self) -> bool: pass
     pass
 pass
@@ -645,7 +645,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка запуска Effect System: {e}")
-return False
+            return False
 def _on_stop(self) -> bool: pass
     pass
 pass
@@ -655,12 +655,12 @@ pass
 pass
 """Остановка системы"""
 try: logger.in fo("Effect System остановлен")
-return True
+                return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка остановки Effect System: {e}")
-return False
+            return False
 def _on_destroy(self) -> bool: pass
     pass
 pass
@@ -673,7 +673,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка уничтожения Effect System: {e}")
-return False
+            return False
 def _regis ter_base_effects(self):
     pass
 pass
@@ -739,15 +739,15 @@ pass
 pass
 """Регистрация эффекта в системе"""
 try: if effect_idin self.effects_regis try: logger.warning(f"Эффект {effect_id} уже зарегистрирован")
-return False
+            return False
 self.effects_regis try[effect_id]= effect
 logger.debug(f"Эффект {effect_id} зарегистрирован")
-return True
+            return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка регистрации эффекта {effect_id}: {e}")
-return False
+            return False
 def regis ter_special_effect(self, effect_id: str
     pass
 pass
@@ -762,7 +762,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка регистрации специального эффекта {effect_id}: {e}")
-return False
+            return False
 def apply_effect(self, target: Any, effect_id: str, source: Any= None
     pass
 pass
@@ -774,7 +774,7 @@ pass
 context: Dict[str, Any]= None) -> bool: pass  # Добавлен pass в пустой блок
 """Применение эффекта к цели"""
 try: if effect_id notin self.effects_regis try: logger.warning(f"Эффект {effect_id} не найден")
-return False
+            return False
 effect= self.effects_regis try[effect_id]
 if effect.apply(target, source or target, context or {}):
     pass
@@ -797,13 +797,13 @@ pass
 self.active_effects[target_id].append(effect)
 self.total_effects_applied = 1
 logger.debug(f"Эффект {effect_id} применен к {target_id}")
-return True
-return False
+            return True
+            return False
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка применения эффекта {effect_id}: {e}")
-return False
+                return False
 def remove_effect(self, target: Any, effect_name: str) -> bool: pass
     pass
 pass
@@ -816,7 +816,7 @@ try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка удаления эффекта {effect_name}: {e}")
-return False
+                return False
 def clear_all_effects(self):
     pass
 pass

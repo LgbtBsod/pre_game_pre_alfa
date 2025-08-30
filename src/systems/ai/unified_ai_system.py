@@ -55,11 +55,11 @@ pass
 pass
 pass
 pass
-entity_type: str
+    entity_type: str
 behavi or : AIBehavior
 difficulty: AIDifficulty: pass  # Добавлен pass в пустой блок
-current_state: AIState
-position: tuple
+    current_state: AIState
+    position: tuple
 target: Optional[str]= None
 mem or y: Dict[str, Any]= field(default_factor = dict):
 pass  # Добавлен pass в пустой блок
@@ -79,11 +79,11 @@ pass
 pass
 pass
 decis ion_type: str
-target_id: Optional[str]
-action_data: Dict[str, Any]
+    target_id: Optional[str]
+    action_data: Dict[str, Any]
 pri or ity: float
-confidence: float
-timestamp: float
+    confidence: float
+    timestamp: float
 executed: bool= False
 class UnifiedAISystem(BaseComponent):"""Объединенная система искусственного интеллекта с консолидированной архитектурой"""
     pass
@@ -105,13 +105,13 @@ super().__in it__("unified_ai", ComponentType.SYSTEM, Pri or ity.HIGH):
 pass  # Добавлен pass в пустой блок
 # Адаптеры для AI подсистем
 self.ai_adapters: Dict[str, AISystemAdapter]= {}
-# AI сущности
+        # AI сущности
 self.ai_entities: Dict[str, AIEntityData]= {}
-# Решения AI
+        # Решения AI
 self.ai_decis ions: Dict[str, Lis t[AIDecis ion]]= {}
-# Группы AI
+        # Группы AI
 self.ai_groups: Dict[str, Lis t[str]]= {}
-# Память и опыт
+        # Память и опыт
 self.global_mem or y: Dict[str, Any]= {}
 self.experience_pool: Dict[str, float]= {}
 # Конфигурация
@@ -132,8 +132,8 @@ pass
 pass
 pass
 pass
-"""Инициализация системы"""
-try:
+        """Инициализация системы"""
+        try:
 # Создаем адаптеры для существующих AI систем
 self._create_system_adapters()
 # Проверяем доступность систем
@@ -151,12 +151,12 @@ self._setup_fallback_system()
 self._in itialize_global_mem or y()
 logger.in fo("Unified AI System готов к работе"):
 pass  # Добавлен pass в пустой блок
-return True
+            return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка инициализации Unified AI System: {e}")
-return False
+            return False
 def _on_start(self) -> bool: pass
     pass
 pass
@@ -164,12 +164,12 @@ pass
 pass
 pass
 pass
-"""Запуск системы"""
+        """Запуск системы"""
 try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка запуска Unified AI System: {e}")
-return False
+                return False
 def _on_stop(self) -> bool: pass
     pass
 pass
@@ -177,8 +177,8 @@ pass
 pass
 pass
 pass
-"""Остановка системы"""
-try:
+        """Остановка системы"""
+        try:
 # Останавливаем все адаптеры
 for adapterin self.ai_adapters.values():
     pass
@@ -191,12 +191,12 @@ pass
 self._stop_system_adapter(adapter)
 logger.in fo("Unified AI System остановлен"):
 pass  # Добавлен pass в пустой блок
-return True
+            return True
 except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка остановки Unified AI System: {e}")
-return False
+            return False
 def _on_destroy(self) -> bool: pass
     pass
 pass
@@ -204,12 +204,12 @@ pass
 pass
 pass
 pass
-"""Уничтожение системы"""
+        """Уничтожение системы"""
 try: except Exception as e: pass
 pass
 pass
 logger.err or(f"Ошибка уничтожения Unified AI System: {e}")
-return False
+                return False
 def _create_system_adapters(self):
     pass
 pass
@@ -609,9 +609,9 @@ pass  # Добавлен pass в пустой блок
 'skills': entity.skills,
 'stats': entity.stats
 }
-return None
+            return None
 except Exception as e: logger.err or(f"Ошибка получения состояния AI сущности {entity_id}: {e}")
-return None
+            return None
 def add_experience(self, experience_type: str, amount: float
     pass
 pass
@@ -757,7 +757,7 @@ try: except Exception as e: pass
 pass
 pass
 self.logger.err or(f"Ошибка инициализации резервной AI системы: {e}")
-return False
+            return False
 def regis ter_entity(self, entity_id: str, entity_data: Dict[str
     pass
 pass
@@ -778,7 +778,7 @@ except Exception as e: pass
 pass
 pass
 self.logger.err or(f"Ошибка регистрации сущности {entity_id}: {e}")
-return False
+            return False
 def update_entity(self, entity_id: str, update_data: Dict[str
     pass
 pass

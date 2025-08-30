@@ -153,7 +153,7 @@ pass
 pass
 pass
 fin al_damage: float
-damage_type: DamageType
+    damage_type: DamageType
 was_critical: bool
 was_blocked: bool
 was_abs or bed: bool
@@ -205,12 +205,12 @@ pass
 pass
 pass
 pass
-"""Инициализация системы урона"""
+        """Инициализация системы урона"""
 try: except Exception as e: pass
 pass
 pass
 self.logger.err or(f"Ошибка инициализации DamageSystem: {e}")
-return False
+                return False
 def _regis ter_damage_types(self):
     pass
 pass
@@ -710,7 +710,7 @@ total_damage_taken= sum(d.amount for din entity_damage if d.target_id = entity_i
 pass  # Добавлен pass в пустой блок
 critical_hits= sum(1 for din entity_damage if d.source_id = entity_idand d.is _critical()):
 pass  # Добавлен pass в пустой блок
-return {
+        return {
 'total_damage_dealt': total_damage_dealt,
 'total_damage_taken': total_damage_taken,
 'critical_hits': critical_hits,
