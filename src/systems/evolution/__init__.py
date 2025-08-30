@@ -1,8 +1,16 @@
 """
-Evolution System Package
-Система эволюции существ
+Система эволюции и мутаций AI-EVOLVE
+Генетические алгоритмы для развития персонажей
 """
 
-from .evolution_system import EvolutionSystem, EvolutionStage, EvolutionType
+from .evolution_system import (
+    EvolutionSystem,
+    Gene, Mutation, EvolutionTree, EvolutionProgress, GeneticCombination,
+    GeneType, MutationType, EvolutionPath, EvolutionStage
+)
 
-__all__ = ['EvolutionSystem', 'EvolutionStage', 'EvolutionType']
+__all__ = [
+    'EvolutionSystem',
+    'Gene', 'Mutation', 'EvolutionTree', 'EvolutionProgress', 'GeneticCombination',
+    'GeneType', 'MutationType', 'EvolutionPath', 'EvolutionStage'
+]

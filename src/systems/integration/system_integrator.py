@@ -69,7 +69,65 @@ class SystemIntegrator(BaseComponent):
         self.integration_status: Dict[str, IntegrationInfo] = {}
         
         # Демо сценарии
-        self.demo_scenarios: Dict[str, DemoScenario] = {}
+        self.demo_scenarios: List[DemoScenario] = [
+            DemoScenario(
+                scenario_id="combat_demo",
+                name="Демонстрация боевой системы",
+                description="Показывает работу боевой системы с инициативой, позиционированием и типами атак",
+                systems_required=["CombatSystem", "HealthSystem", "DamageSystem", "UISystem", "HUDSystem"],
+                setup_function=self._setup_combat_demo,
+                cleanup_function=self._cleanup_combat_demo
+            ),
+            DemoScenario(
+                scenario_id="health_demo",
+                name="Демонстрация системы здоровья",
+                description="Показывает работу системы здоровья с ресурсами, состояниями и регенерацией",
+                systems_required=["HealthSystem", "UISystem", "HUDSystem"],
+                setup_function=self._setup_health_demo,
+                cleanup_function=self._cleanup_health_demo
+            ),
+            DemoScenario(
+                scenario_id="inventory_demo",
+                name="Демонстрация системы инвентаря",
+                description="Показывает работу системы инвентаря с предметами, экипировкой и крафтингом",
+                systems_required=["InventorySystem", "UISystem", "HUDSystem"],
+                setup_function=self._setup_inventory_demo,
+                cleanup_function=self._cleanup_inventory_demo
+            ),
+            DemoScenario(
+                scenario_id="skills_demo",
+                name="Демонстрация системы навыков",
+                description="Показывает работу системы навыков с типами, категориями и деревьями",
+                systems_required=["SkillSystem", "UISystem", "HUDSystem"],
+                setup_function=self._setup_skills_demo,
+                cleanup_function=self._cleanup_skills_demo
+            ),
+            DemoScenario(
+                scenario_id="effects_demo",
+                name="Демонстрация системы эффектов",
+                description="Показывает работу системы эффектов с типами, комбинациями и цепочками",
+                systems_required=["EffectSystem", "UISystem", "HUDSystem"],
+                setup_function=self._setup_effects_demo,
+                cleanup_function=self._cleanup_effects_demo
+            ),
+            DemoScenario(
+                scenario_id="evolution_demo",
+                name="Демонстрация системы эволюции",
+                description="Показывает работу системы эволюции с генами, мутациями и эволюционными деревьями",
+                systems_required=["EvolutionSystem", "UISystem", "HUDSystem"],
+                setup_function=self._setup_evolution_demo,
+                cleanup_function=self._cleanup_evolution_demo
+            ),
+            DemoScenario(
+                scenario_id="full_integration_demo",
+                name="Полная интеграция всех систем",
+                description="Демонстрирует работу всех систем вместе",
+                systems_required=["UISystem", "HUDSystem", "CombatSystem", "HealthSystem", 
+                                "InventorySystem", "SkillSystem", "EffectSystem", "EvolutionSystem"],
+                setup_function=self._setup_full_integration,
+                cleanup_function=self._cleanup_full_integration
+            )
+        ]
         self.active_scenario: Optional[str] = None
         
         # Системы для интеграции
@@ -577,6 +635,24 @@ class SystemIntegrator(BaseComponent):
             
         except Exception as e:
             self.logger.error(f"Ошибка очистки демо системы эффектов: {e}")
+    
+    def _setup_evolution_demo(self):
+        """Настройка демо системы эволюции"""
+        try:
+            # TODO: Настройка демо системы эволюции
+            self.logger.info("Настроен демо сценарий системы эволюции")
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка настройки демо системы эволюции: {e}")
+    
+    def _cleanup_evolution_demo(self):
+        """Очистка демо системы эволюции"""
+        try:
+            # TODO: Очистка демо системы эволюции
+            self.logger.info("Очищен демо сценарий системы эволюции")
+            
+        except Exception as e:
+            self.logger.error(f"Ошибка очистки демо системы эволюции: {e}")
     
     def _setup_full_integration(self):
         """Настройка полной интеграции"""

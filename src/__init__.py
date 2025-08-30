@@ -12,7 +12,9 @@ from .core.architecture import (
     ComponentManager,
     EventBus,
     StateManager,
-    RepositoryManager
+    RepositoryManager,
+    Event,
+    create_event
 )
 
 from .core.game_engine import GameEngine
@@ -31,6 +33,13 @@ from .systems.skills.skill_system import SkillSystem, Skill, SkillType
 from .systems.combat.combat_system import CombatSystem, CombatAction, CombatResult
 from .systems.health.health_system import HealthSystem, HealthStatus, ResourceType
 
+# Evolution System
+from .systems.evolution.evolution_system import (
+    EvolutionSystem, Gene, Mutation, EvolutionTree, 
+    EvolutionProgress, GeneticCombination, GeneType, 
+    MutationType, EvolutionPath, EvolutionStage
+)
+
 # UI Systems
 from .systems.ui.ui_system import UISystem, UIElement, UIElementType, UIState
 from .systems.ui.hud_system import HUDSystem, HUDElement, HUDType, HUDLayout
@@ -44,7 +53,6 @@ from .systems.testing.integration_tester import IntegrationTester, TestStatus, T
 # Legacy Systems (для обратной совместимости)
 try:
     from .systems.emotion.emotion_system import EmotionSystem
-    from .systems.evolution.evolution_system import EvolutionSystem
     from .systems.rendering.render_system import RenderSystem
     from .systems.content.content_generator import ContentGenerator
     from .systems.social.social_system import SocialSystem
@@ -68,7 +76,7 @@ from .scenes.load_scene import LoadScene
 from .scenes.creator_scene import CreatorScene
 
 # Version Info
-__version__ = "2.4.0"
+__version__ = "2.4.1"
 __author__ = "AI-EVOLVE Team"
 __description__ = "Эволюционная Адаптация: Генетический Резонанс"
 
@@ -83,6 +91,8 @@ __all__ = [
     'StateManager',
     'RepositoryManager',
     'GameEngine',
+    'Event',
+    'create_event',
     
     # AI Systems
     'UnifiedAISystem',
@@ -110,6 +120,18 @@ __all__ = [
     'HealthStatus',
     'ResourceType',
     
+    # Evolution System
+    'EvolutionSystem',
+    'Gene',
+    'Mutation',
+    'EvolutionTree',
+    'EvolutionProgress',
+    'GeneticCombination',
+    'GeneType',
+    'MutationType',
+    'EvolutionPath',
+    'EvolutionStage',
+    
     # UI Systems
     'UISystem',
     'UIElement',
@@ -133,30 +155,18 @@ __all__ = [
     'TestResult',
     'TestCase',
     
-    # Legacy Systems
-    'EmotionSystem',
-    'EvolutionSystem',
-    'RenderSystem',
-    'ContentGenerator',
-    'SocialSystem',
-    
-    # Entities
+    # Entity Classes
     'BaseEntity',
     'Player',
     'NPC',
     'Enemy',
     'ItemEntity',
     
-    # Scenes
+    # Scene Classes
     'MenuScene',
     'GameScene',
     'PauseScene',
     'SettingsScene',
     'LoadScene',
-    'CreatorScene',
-    
-    # Version
-    '__version__',
-    '__author__',
-    '__description__'
+    'CreatorScene'
 ]
