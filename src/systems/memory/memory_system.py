@@ -4,36 +4,36 @@
     Накопление опыта для персонажей и врагов
 """
 
-imp or t logg in g
-imp or t time
-from abc imp or t ABC, abstractmethod
-from enum imp or t Enum
-from typ in g imp or t Dict, L is t, Optional, Any, Union
-from dataclasses imp or t dataclass, field:
+import logging
+import time
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Dict, Lis t, Optional, Any, Union
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from ...c or e.architecture imp or t BaseComponent, ComponentType, Pri or ity, Event
+from ...c or e.architecture import BaseComponent, ComponentType, Pri or ity, Event
     create_event
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 class Mem or yType(Enum):
     """Типы памяти"""
-        PLAYER== "player"
-        ENEMY== "enemy"
-        SHARED== "shared"
+        PLAYER= "player"
+        ENEMY= "enemy"
+        SHARED= "shared"
 
         class ExperienceCateg or y(Enum):
     """Категории опыта"""
-    KILLS== "kills"
-    DEATHS== "deaths"
-    EXPLORATION== "expl or ation"
-    INTERACTIONS== " in teractions"
-    COMBAT== "combat"
-    CRAFTING== "craft in g"
-    TRADING== "trad in g"
-    QUESTS== "quests"
-    EVOLUTION== "evolution"
-    SOCIAL== "social"
+    KILLS= "kills"
+    DEATHS= "deaths"
+    EXPLORATION= "expl or ation"
+    INTERACTIONS= "in teractions"
+    COMBAT= "combat"
+    CRAFTING= "crafting"
+    TRADING= "trading"
+    QUESTS= "quests"
+    EVOLUTION= "evolution"
+    SOCIAL= "social"
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
@@ -43,11 +43,11 @@ class ExperienceEntry:
         amount: int
         timestamp: float
         source: str
-        context: Dict[str, Any]== field(default_factor == dict):
+        context: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-        def __post_ in it__(self):
-        if self.timestamp is None:
-        self.timestamp== time.time()
+        def __post_in it__(self):
+        if self.timestampis None:
+        self.timestamp= time.time()
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -55,36 +55,36 @@ class ExperienceEntry:
     """Порог уровня"""
     level: int
     experience_required: int
-    rewards: L is t[str]== field(default_factor == list):
+    rewards: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    unlocks: L is t[str]== field(default_factor == list):
+    unlocks: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
 class BaseMem or y(ABC):
     """Базовый класс для памяти"""
 
-        def __ in it__(self, entity_id: str):
-        self.entity_id== entity_id
-        self.experience: Dict[ExperienceCateg or y, int]== {
-        categ or y: 0 for categ or y in ExperienceCateg or y:
+        def __in it__(self, entity_id: str):
+        self.entity_id= entity_id
+        self.experience: Dict[ExperienceCateg or y, int]= {
+        categ or y: 0 for categ or yin ExperienceCateg or y:
         pass  # Добавлен pass в пустой блок
         }
-        self.level== 1
-        self.total_experience== 0
-        self.experience_h is tory: L is t[ExperienceEntry]== []
-        self.level_h is tory: L is t[Dict[str, Any]]== []
+        self.level= 1
+        self.total_experience= 0
+        self.experience_his tory: Lis t[ExperienceEntry]= []
+        self.level_his tory: Lis t[Dict[str, Any]]= []
 
         # Настройки прогрессии
-        self.base_experience_per_level== 100
-        self.experience_scal in g== 1.5
-        self.max_level== 100
+        self.base_experience_per_level= 100
+        self.experience_scaling= 1.5
+        self.max_level= 100
 
         # Система наград
-        self.unlocked_skills: set== set()
-        self.unlocked_content: set== set()
-        self.achievements: set== set()
+        self.unlocked_skills: set= set()
+        self.unlocked_content: set= set()
+        self.achievements: set= set()
 
         def add_experience(self, categ or y: ExperienceCateg or y, amount: int,
-        source: str== "", context: Dict[str, Any]== None) -> bool:
+        source: str= "", context: Dict[str, Any]= None) -> bool:
         pass  # Добавлен pass в пустой блок
         """Добавление опыта"""
         try:
@@ -98,26 +98,26 @@ class BaseMem or y(ABC):
     def _check_level_up(self) -> bool:
         """Проверка повышения уровня"""
             try:
-            current_level== self.level
-            required_exp== self._get_experience_f or _level(current_level + 1):
+            current_level= self.level
+            required_exp= self._get_experience_for _level(current_level + 1):
             pass  # Добавлен pass в пустой блок
-            if self.total_experience >= required_exp and current_level < self.max_level:
-            self.level == 1
+            if self.total_experience >= required_expand current_level < self.max_level:
+            self.level = 1
 
             # Записываем историю повышения
-            level_up_data== {
+            level_up_data= {
             "level": self.level,
             "timestamp": time.time(),
             "total_experience": self.total_experience,
-            "experience_ga in ed": required_exp - self._get_experience_f or _level(current_level):
+            "experience_gain ed": required_exp - self._get_experience_for _level(current_level):
             pass  # Добавлен pass в пустой блок
             }
-            self.level_h is tory.append(level_up_data)
+            self.level_his tory.append(level_up_data)
 
             # Разблокируем контент
             self._unlock_level_content()
 
-            logger. in fo(f"Повышение уровня {self.entity_id}: {current_level} -> {self.level}")
+            logger.in fo(f"Повышение уровня {self.entity_id}: {current_level} -> {self.level}")
             return True
 
             except Exception as e:
@@ -128,13 +128,13 @@ class BaseMem or y(ABC):
 
             return False
 
-            def _get_experience_f or _level(self, level: int) -> int:
+            def _get_experience_for _level(self, level: int) -> int:
         """Получение требуемого опыта для уровня"""
         if level <= 1:
             return 0
 
-        # Формула: base * (scal in g ^ (level - 1))
-        return int(self.base_experience_per_level * (self.experience_scal in g ** (level - 2)))
+        # Формула: base * (scaling ^ (level - 1))
+        return int(self.base_experience_per_level * (self.experience_scaling ** (level - 2)))
 
     def _unlock_level_content(self) -> None:
         """Разблокировка контента для уровня"""
@@ -143,12 +143,12 @@ class BaseMem or y(ABC):
 
             def get_experience_progress(self) -> Dict[str, Any]:
         """Получение прогресса опыта"""
-        next_level_exp== self._get_experience_f or _level(self.level + 1):
+        next_level_exp= self._get_experience_for _level(self.level + 1):
             pass  # Добавлен pass в пустой блок
-        current_level_exp== self._get_experience_f or _level(self.level):
+        current_level_exp= self._get_experience_for _level(self.level):
             pass  # Добавлен pass в пустой блок
-        progress== self.total_experience - current_level_exp
-        required== next_level_exp - current_level_exp
+        progress= self.total_experience - current_level_exp
+        required= next_level_exp - current_level_exp
 
         return {
             "current_level": self.level,
@@ -173,129 +173,129 @@ class BaseMem or y(ABC):
             "total_experience": self.total_experience,
             "categ or y_experience": self.experience.copy(),
             "experience_progress": self.get_experience_progress(),
-            "unlocked_skills": l is t(self.unlocked_skills),
-            "unlocked_content": l is t(self.unlocked_content),
-            "achievements": l is t(self.achievements)
+            "unlocked_skills": lis t(self.unlocked_skills),
+            "unlocked_content": lis t(self.unlocked_content),
+            "achievements": lis t(self.achievements)
         }
 
 class PlayerMem or y(BaseMem or y):
     """Память игрока"""
 
-        def __ in it__(self, entity_id: str):
-        super().__ in it__(entity_id)
+        def __in it__(self, entity_id: str):
+        super().__in it__(entity_id)
 
         # Специфичные для игрока настройки
-        self.base_experience_per_level== 100
-        self.experience_scal in g== 1.2  # Медленнее чем у врагов
-        self.max_level== 100
+        self.base_experience_per_level= 100
+        self.experience_scaling= 1.2  # Медленнее чем у врагов
+        self.max_level= 100
 
         # Дополнительные возможности игрока
-        self.skill_po in ts== 0
-        self.attribute_po in ts== 0
-        self.reputation== 0
+        self.skill_poin ts= 0
+        self.attribute_poin ts= 0
+        self.reputation= 0
 
-        logger. in fo(f"Создана память игрока для {entity_id}")
+        logger.in fo(f"Создана память игрока для {entity_id}")
 
         def add_experience(self, categ or y: ExperienceCateg or y, amount: int,
-        source: str== "", context: Dict[str, Any]== None,
-        multiplier: float== 1.0) -> bool:
+        source: str= "", context: Dict[str, Any]= None,
+        multiplier: float= 1.0) -> bool:
         pass  # Добавлен pass в пустой блок
         """Добавление опыта с множителем"""
-        adjusted_amount== int(amount * multiplier)
+        adjusted_amount= int(amount * multiplier)
         return super().add_experience(categ or y, adjusted_amount, source
             context)
 
     def _unlock_level_content(self) -> None:
         """Разблокировка контента для игрока"""
             # Даем очки навыков и атрибутов
-            self.skill_po in ts == 2
-            self.attribute_po in ts == 1
+            self.skill_poin ts = 2
+            self.attribute_poin ts = 1
 
             # TODO: Разблокировка новых навыков, доступа к локациям и т.д.
-            logger. in fo(f"Разблокирован контент для игрока {self.entity_id} на уровне {self.level}")
+            logger.in fo(f"Разблокирован контент для игрока {self.entity_id} на уровне {self.level}")
 
             class EnemyMem or yBank(BaseMem or y):
     """Общий банк памяти врагов"""
 
-    def __ in it__(self, entity_id: str== "enemy_collective"):
-        super().__ in it__(entity_id)
+    def __in it__(self, entity_id: str= "enemy_collective"):
+        super().__in it__(entity_id)
 
         # Специфичные для врагов настройки
-        self.base_experience_per_level== 500  # Больше опыта для эволюции
-        self.experience_scal in g== 1.8  # Быстрее эволюционируют
-        self.max_level== 50  # Максимальный уровень врагов
+        self.base_experience_per_level= 500  # Больше опыта для эволюции
+        self.experience_scaling= 1.8  # Быстрее эволюционируют
+        self.max_level= 50  # Максимальный уровень врагов
 
         # Коллективные настройки
-        self.shared_skills: set== set()
-        self.evolution_stage== 1
-        self.adaptation_rate== 0.1
+        self.shared_skills: set= set()
+        self.evolution_stage= 1
+        self.adaptation_rate= 0.1
 
-        logger. in fo(f"Создан банк памяти врагов")
+        logger.in fo(f"Создан банк памяти врагов")
 
     def add_experience(self, categ or y: ExperienceCateg or y, amount: int,
-                    source: str== "", context: Dict[str, Any]== None,
-                    multiplier: float== 0.05) -> bool:
+                    source: str= "", context: Dict[str, Any]= None,
+                    multiplier: float= 0.05) -> bool:
                         pass  # Добавлен pass в пустой блок
         """Добавление опыта с низким множителем для врагов"""
-            adjusted_amount== int(amount * multiplier)
+            adjusted_amount= int(amount * multiplier)
             return super().add_experience(categ or y, adjusted_amount, source
             context)
 
             def _unlock_level_content(self) -> None:
         """Разблокировка контента для врагов"""
         # Эволюция врагов
-        if self.level % 5 == 0:  # Каждые 5 уровней
-            self.evolution_stage == 1
-            self.adaptation_rate == 0.05
+        if self.level%5 = 0:  # Каждые 5 уровней
+            self.evolution_stage = 1
+            self.adaptation_rate = 0.05
 
             # TODO: Разблокировка новых способностей врагов
-            logger. in fo(f"Враги эволюционировали до стадии {self.evolution_stage}")
+            logger.in fo(f"Враги эволюционировали до стадии {self.evolution_stage}")
 
     def get_evolution_status(self) -> Dict[str, Any]:
         """Получение статуса эволюции врагов"""
             return {
             "evolution_stage": self.evolution_stage,
             "adaptation_rate": self.adaptation_rate,
-            "shared_skills": l is t(self.shared_skills),
+            "shared_skills": lis t(self.shared_skills),
             "experience_summary": self.get_experience_summary()
             }
 
             class Mem or ySystem(BaseComponent):
     """Центральная система управления памятью"""
 
-    def __ in it__(self):
-        super().__ in it__(
-            component_i == "Mem or ySystem",
-            component_typ == ComponentType.SYSTEM,
-            pri or it == Pri or ity.HIGH
+    def __in it__(self):
+        super().__in it__(
+            component_i = "Mem or ySystem",
+            component_typ = ComponentType.SYSTEM,
+            pri or it = Pri or ity.HIGH
         )
 
         # Хранилище памяти
-        self.player_mem or ies: Dict[str, PlayerMem or y]== {}
-        self.enemy_mem or y_bank== EnemyMem or yBank()
+        self.player_mem or ies: Dict[str, PlayerMem or y]= {}
+        self.enemy_mem or y_bank= EnemyMem or yBank()
 
         # Настройки системы
-        self.max_player_mem or ies== 100
-        self.mem or y_cleanup_ in terval== 3600  # 1 час
-        self.last_cleanup== time.time()
+        self.max_player_mem or ies= 100
+        self.mem or y_cleanup_in terval= 3600  # 1 час
+        self.last_cleanup= time.time()
 
         # Статистика
-        self.total_experience_ga in ed== 0
-        self.total_level_ups== 0
-        self.mem or y_usage== 0
+        self.total_experience_gain ed= 0
+        self.total_level_ups= 0
+        self.mem or y_usage= 0
 
-        logger. in fo("Система памяти инициализирована")
+        logger.in fo("Система памяти инициализирована")
 
-    def _on_ in itialize(self) -> bool:
+    def _on_in itialize(self) -> bool:
         """Инициализация системы"""
             try:
             # Создаем банк памяти врагов
-            self.enemy_mem or y_bank== EnemyMem or yBank()
+            self.enemy_mem or y_bank= EnemyMem or yBank()
 
             # Регистрируем обработчики событий
-            self._reg is ter_event_h and lers()
+            self._regis ter_event_hand lers()
 
-            logger. in fo("Система памяти успешно инициализирована")
+            logger.in fo("Система памяти успешно инициализирована")
             return True
 
             except Exception as e:
@@ -305,16 +305,16 @@ class PlayerMem or y(BaseMem or y):
             logger.err or(f"Ошибка инициализации системы памяти: {e}")
             return False
 
-            def _reg is ter_event_h and lers(self) -> None:
+            def _regis ter_event_hand lers(self) -> None:
         """Регистрация обработчиков событий"""
         # TODO: Регистрация обработчиков событий
         pass
 
-    def reg is ter_player(self, player_id: str) -> bool:
+    def regis ter_player(self, player_id: str) -> bool:
         """Регистрация игрока в системе памяти"""
             try:
-            if player_id in self.player_mem or ies:
-            logger.warn in g(f"Игрок {player_id} уже зарегистрирован")
+            if player_idin self.player_mem or ies:
+            logger.warning(f"Игрок {player_id} уже зарегистрирован")
             return True
 
             if len(self.player_mem or ies) >= self.max_player_mem or ies:
@@ -322,10 +322,10 @@ class PlayerMem or y(BaseMem or y):
             return False
 
             # Создаем память для игрока
-            player_mem or y== PlayerMem or y(player_id)
-            self.player_mem or ies[player_id]== player_mem or y
+            player_mem or y= PlayerMem or y(player_id)
+            self.player_mem or ies[player_id]= player_mem or y
 
-            logger. in fo(f"Игрок {player_id} зарегистрирован в системе памяти")
+            logger.in fo(f"Игрок {player_id} зарегистрирован в системе памяти")
             return True
 
             except Exception as e:
@@ -335,7 +335,7 @@ class PlayerMem or y(BaseMem or y):
             logger.err or(f"Ошибка регистрации игрока {player_id}: {e}")
             return False
 
-            def unreg is ter_player(self, player_id: str) -> bool:
+            def unregis ter_player(self, player_id: str) -> bool:
         """Отмена регистрации игрока"""
         try:
         except Exception as e:
@@ -347,23 +347,23 @@ class PlayerMem or y(BaseMem or y):
 
     def add_player_experience(self, player_id: str
         categ or y: ExperienceCateg or y,
-                            amount: int, source: str== "",
-                            context: Dict[str, Any]== None) -> bool:
+                            amount: int, source: str= "",
+                            context: Dict[str, Any]= None) -> bool:
                                 pass  # Добавлен pass в пустой блок
         """Добавление опыта игроку"""
             try:
-            if player_id not in self.player_mem or ies:
+            if player_id notin self.player_mem or ies:
             logger.err or(f"Игрок {player_id} не найден в системе памяти")
             return False
 
-            player_mem or y== self.player_mem or ies[player_id]
-            success== player_mem or y.add_experience(categ or y, amount, source
+            player_mem or y= self.player_mem or ies[player_id]
+            success= player_mem or y.add_experience(categ or y, amount, source
             context)
 
             if success:
-            self.total_experience_ga in ed == amount
+            self.total_experience_gain ed = amount
             if player_mem or y.level > 1:
-            self.total_level_ups == 1
+            self.total_level_ups = 1
 
             return success
 
@@ -375,7 +375,7 @@ class PlayerMem or y(BaseMem or y):
             return False
 
             def add_enemy_experience(self, categ or y: ExperienceCateg or y, amount: int,
-            source: str== "", context: Dict[str, Any]== None) -> bool:
+            source: str= "", context: Dict[str, Any]= None) -> bool:
             pass  # Добавлен pass в пустой блок
         """Добавление опыта врагам"""
         try:
@@ -398,7 +398,7 @@ class PlayerMem or y(BaseMem or y):
         """Получение сводки по системе памяти"""
             return {
             "total_players": len(self.player_mem or ies),
-            "total_experience_ga in ed": self.total_experience_ga in ed,
+            "total_experience_gain ed": self.total_experience_gain ed,
             "total_level_ups": self.total_level_ups,
             "enemy_evolution_stage": self.enemy_mem or y_bank.evolution_stage,
             "mem or y_usage": self.mem or y_usage,
@@ -417,21 +417,21 @@ class PlayerMem or y(BaseMem or y):
     def _cleanup_old_mem or ies(self) -> None:
         """Очистка старых записей памяти"""
             try:
-            current_time== time.time()
-            max_age== 86400  # 24 часа
+            current_time= time.time()
+            max_age= 86400  # 24 часа
 
-            for player_mem or y in self.player_mem or ies.values():
+            for player_mem or yin self.player_mem or ies.values():
             # Удаляем записи старше 24 часов
-            player_mem or y.experience_h is tory== [
-            entry for entry in player_mem or y.experience_h is tory:
+            player_mem or y.experience_his tory= [
+            entry for entryin player_mem or y.experience_his tory:
             pass  # Добавлен pass в пустой блок
             if current_time - entry.timestamp < max_age:
             pass  # Добавлен pass в пустой блок
             ]
 
             # Очищаем историю врагов
-            self.enemy_mem or y_bank.experience_h is tory== [
-            entry for entry in self.enemy_mem or y_bank.experience_h is tory:
+            self.enemy_mem or y_bank.experience_his tory= [
+            entry for entryin self.enemy_mem or y_bank.experience_his tory:
             pass  # Добавлен pass в пустой блок
             if current_time - entry.timestamp < max_age:
             pass  # Добавлен pass в пустой блок
@@ -445,7 +445,7 @@ class PlayerMem or y(BaseMem or y):
             pass
             logger.err or(f"Ошибка очистки памяти: {e}")
 
-            def _update_stat is tics(self) -> None:
+            def _update_statis tics(self) -> None:
         """Обновление статистики системы"""
         try:
         except Exception as e:
@@ -459,9 +459,9 @@ class PlayerMem or y(BaseMem or y):
             try:
             # Очищаем все данные
             self.player_mem or ies.clear()
-            self.enemy_mem or y_bank== None
+            self.enemy_mem or y_bank= None
 
-            logger. in fo("Система памяти уничтожена")
+            logger.in fo("Система памяти уничтожена")
 
             except Exception as e:
             pass

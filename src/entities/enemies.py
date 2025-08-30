@@ -3,122 +3,122 @@
     Класс Enemy - враги и враждебные сущности
 """
 
-imp or t logg in g
-imp or t time
-imp or t r and om
-imp or t math
-from typ in g imp or t Dict, L is t, Optional, Any, Union, Tuple
-from dataclasses imp or t dataclass, field:
+import logging
+import time
+import rand om
+import math
+from typing import Dict, Lis t, Optional, Any, Union, Tuple
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from ..c or e.constants imp or t constants_manager, StatType, DamageType, AIState
+from ..c or e.constants import constants_manager, StatType, DamageType, AIState
     EntityType
-from .base_entity imp or t BaseEntity, EntityType as BaseEntityType
+from .base_entity import BaseEntity, EntityType as BaseEntityType
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class EnemyStats:
     """Дополнительные характеристики врага"""
         # Боевые характеристики
-        threat_level: int== 1  # 1 - 10, где 10 - самый опасный
-        aggression: float== 0.7  # 0.0 до 1.0
-        intelligence: float== 0.5  # 0.0 до 1.0
+        threat_level: int= 1  # 1 - 10, где 10 - самый опасный
+        aggression: float= 0.7  # 0.0 до 1.0
+        intelligence: float= 0.5  # 0.0 до 1.0
 
         # Специальные способности
-        special_abilities: L is t[str]== field(default_factor == list):
+        special_abilities: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        immunities: L is t[DamageType]== field(default_factor == list):
+        immunities: Lis t[DamageType]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         # Дроп и награды
-        drop_chance: float== 0.3
-        experience_reward: int== 50
-        gold_reward: int== 10
+        drop_chance: float= 0.3
+        experience_reward: int= 50
+        gold_reward: int= 10
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
         class EnemyBehavi or :
     """Поведение врага"""
     # Типы поведения
-    behavi or _type: str== "aggressive"  # aggressive, defensive, stealth, berserk:
+    behavi or _type: str= "aggressive"  # aggressive, defensive, stealth, berserk:
         pass  # Добавлен pass в пустой блок
-    patrol_radius: float== 10.0
-    detection_range: float== 15.0
-    attack_range: float== 2.0
+    patrol_radius: float= 10.0
+    detection_range: float= 15.0
+    attack_range: float= 2.0
 
     # Тактические предпочтения
-    preferred_d is tance: float== 3.0
-    retreat_health_threshold: float== 0.3
-    call_f or _help: bool== True
+    preferred_dis tance: float= 3.0
+    retreat_health_threshold: float= 0.3
+    call_for _help: bool= True
 
     # Временные параметры
-    attack_cooldown: float== 2.0
-    last_attack_time: float== 0.0
+    attack_cooldown: float= 2.0
+    last_attack_time: float= 0.0
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class EnemyMem or y:
     """Память врага"""
         # Боевая память
-        combat_h is tory: L is t[Dict[str, Any]]== field(default_factor == list):
+        combat_his tory: Lis t[Dict[str, Any]]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        defeated_enemies: L is t[str]== field(default_factor == list):
+        defeated_enemies: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        retreat_count: int== 0
+        retreat_count: int= 0
 
         # Тактическая память
-        successful_tactics: L is t[str]== field(default_factor == list):
+        successful_tactics: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        failed_tactics: L is t[str]== field(default_factor == list):
+        failed_tactics: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         # Временные метки
-        last_combat: float== 0.0
-        last_retreat: float== 0.0
+        last_combat: float= 0.0
+        last_retreat: float= 0.0
 
         class Enemy(BaseEntity):
     """Класс врага - наследуется от BaseEntity"""
 
-    def __ in it__(self, enemy_id: str, name: str, enemy_type: str== "basic"):
+    def __in it__(self, enemy_id: str, name: str, enemy_type: str= "basic"):
         # Инициализируем базовую сущность
-        super().__ in it__(enemy_id, BaseEntityType.ENEMY, name)
+        super().__in it__(enemy_id, BaseEntityType.ENEMY, name)
 
         # Дополнительные характеристики врага
-        self.enemy_stats== EnemyStats()
-        self.behavior== EnemyBehavi or()
-        self.enemy_mem or y== EnemyMem or y()
+        self.enemy_stats= EnemyStats()
+        self.behavior= EnemyBehavi or()
+        self.enemy_mem or y= EnemyMem or y()
 
         # Специфичные для врага настройки
-        self. in vent or y.max_slots== 10  # Меньше слотов инвентаря
-        self. in vent or y.max_weight== 50.0  # Меньше веса
-        self.mem or y.max_mem or ies== 80  # Меньше памяти
-        self.mem or y.learn in g_rate== 0.3  # Медленнее учится
+        self.in vent or y.max_slots= 10  # Меньше слотов инвентаря
+        self.in vent or y.max_weight= 50.0  # Меньше веса
+        self.mem or y.max_mem or ies= 80  # Меньше памяти
+        self.mem or y.learning_rate= 0.3  # Медленнее учится
 
         # Боевые параметры
-        self.threat_level== 1
-        self.aggression== 0.7
-        self. in telligence== 0.5
+        self.threat_level= 1
+        self.aggression= 0.7
+        self.in telligence= 0.5
 
         # Состояние боя
-        self. is _retreat in g== False
-        self.retreat_target: Optional[Tuple[float, float, float]]== None
-        self.retreat_start_time== 0.0
-        self.retreat_duration== 10.0  # секунды
+        self.is _retreating= False
+        self.retreat_target: Optional[Tuple[float, float, float]]= None
+        self.retreat_start_time= 0.0
+        self.retreat_duration= 10.0  # секунды
 
         # Способности
-        self.abilities: L is t[str]== []
-        self.ability_cooldowns: Dict[str, float]== {}
-        self.last_ability_use: Dict[str, float]== {}
+        self.abilities: Lis t[str]= []
+        self.ability_cooldowns: Dict[str, float]= {}
+        self.last_ability_use: Dict[str, float]= {}
 
         # Патрулирование
-        self.patrol_po in ts: L is t[Tuple[float, float, float]]== []
-        self.current_patrol_ in dex== 0
-        self.patrol_wait_time== 0.0
+        self.patrol_poin ts: Lis t[Tuple[float, float, float]]= []
+        self.current_patrol_in dex= 0
+        self.patrol_wait_time= 0.0
 
         # Дроп
-        self.drop_table: L is t[Dict[str, Any]]== []
-        self.guaranteed_drops: L is t[str]== []
+        self.drop_table: Lis t[Dict[str, Any]]= []
+        self.guaranteed_drops: Lis t[str]= []
 
-        logger. in fo(f"Создан враг: {name} ({enemy_type})")
+        logger.in fo(f"Создан враг: {name} ({enemy_type})")
 
     def update(self, delta_time: float):
         """Обновление состояния врага"""
@@ -156,26 +156,26 @@ class EnemyMem or y:
     def _update_patrol(self, delta_time: float):
         """Обновление патрулирования"""
             try:
-            if not self.patrol_po in ts or self. is _in_combat or self. is _retreat in g:
+            if not self.patrol_poin ts or self.is _in_combat or self.is _retreating:
             return
 
-            current_time== time.time()
+            current_time= time.time()
 
             # Ждем в точке патруля
             if self.patrol_wait_time > 0:
-            self.patrol_wait_time == delta_time
+            self.patrol_wait_time = delta_time
             return
 
             # Переходим к следующей точке
-            if self.current_patrol_ in dex < len(self.patrol_po in ts):
-            target_po in t== self.patrol_po in ts[self.current_patrol_ in dex]
+            if self.current_patrol_in dex < len(self.patrol_poin ts):
+            target_poin t= self.patrol_poin ts[self.current_patrol_in dex]
 
             # Простое движение к точке(здесь должна быть логика движения)
-            d is tance== self._calculate_d is tance(self.position
-            target_po in t)
-            if d is tance < 1.0:  # Достигли точки
-            self.current_patrol_ in dex== (self.current_patrol_ in dex + 1) % len(self.patrol_po in ts)
-            self.patrol_wait_time== r and om.unif or m(2.0
+            dis tance= self._calculate_dis tance(self.position
+            target_poin t)
+            if dis tance < 1.0:  # Достигли точки
+            self.current_patrol_in dex= (self.current_patrol_in dex + 1)%len(self.patrol_poin ts)
+            self.patrol_wait_time= rand om.unifor m(2.0
             5.0)  # Ждем в точке:
             pass  # Добавлен pass в пустой блок
             except Exception as e:
@@ -196,15 +196,15 @@ class EnemyMem or y:
     def _update_abilities(self, delta_time: float):
         """Обновление способностей"""
             try:
-            current_time== time.time()
+            current_time= time.time()
 
             # Проверяем возможность использования способностей
-            for ability in self.abilities:
-            if(ability not in self.ability_cooldowns or :
+            for abilityin self.abilities:
+            if(ability notin self.ability_cooldowns or :
             self.ability_cooldowns[ability] <= 0):
             pass  # Добавлен pass в пустой блок
             # Способность готова к использованию
-            if self. is _in_combat and self.current_target:
+            if self.is _in_combatand self.current_target:
             # Используем способность в бою
             self._use_ability(ability)
 
@@ -214,7 +214,7 @@ class EnemyMem or y:
             pass
             logger.err or(f"Ошибка обновления способностей врага {self.entity_id}: {e}")
 
-            def attack(self, target: str, attack_type: str== "basic") -> bool:
+            def attack(self, target: str, attack_type: str= "basic") -> bool:
         """Атака цели"""
         try:
         except Exception as e:
@@ -224,14 +224,14 @@ class EnemyMem or y:
             logger.err or(f"Ошибка атаки врага {self.entity_id}: {e}")
             return False
 
-    def use_ability(self, ability_name: str, target: str== None) -> bool:
+    def use_ability(self, ability_name: str, target: str= None) -> bool:
         """Использование способности"""
             try:
-            if not self. is _alive or ability_name not in self.abilities:
+            if not self.is _alive or ability_name notin self.abilities:
             return False
 
             # Проверяем перезарядку
-            if(ability_name in self.ability_cooldowns and :
+            if(ability_namein self.ability_cooldownsand :
             self.ability_cooldowns[ability_name] > 0):
             pass  # Добавлен pass в пустой блок
             return False
@@ -241,13 +241,13 @@ class EnemyMem or y:
             return False
 
             # Используем способность
-            success== self._execute_ability(ability_name, target)
+            success= self._execute_ability(ability_name, target)
 
             if success:
             # Устанавливаем перезарядку
-            cooldown== self._get_ability_cooldown(ability_name)
-            self.ability_cooldowns[ability_name]== cooldown
-            self.last_ability_use[ability_name]== time.time()
+            cooldown= self._get_ability_cooldown(ability_name)
+            self.ability_cooldowns[ability_name]= cooldown
+            self.last_ability_use[ability_name]= time.time()
 
             # Записываем использование в память
             self.add_mem or y('combat', {
@@ -283,7 +283,7 @@ class EnemyMem or y:
     def _get_ability_mana_cost(self, ability_name: str) -> int:
         """Получение стоимости маны способности"""
             # Базовые стоимости способностей
-            costs== {
+            costs= {
             'fireball': 20,
             'heal': 15,
             'buff': 10,
@@ -292,10 +292,10 @@ class EnemyMem or y:
             }
             return costs.get(ability_name, 0)
 
-            def _get_ability_stam in a_cost(self, ability_name: str) -> int:
+            def _get_ability_stamin a_cost(self, ability_name: str) -> int:
         """Получение стоимости выносливости способности"""
         # Базовые стоимости способностей
-        costs== {
+        costs= {
             'charge': 30,
             'dash': 20,
             'block': 15,
@@ -306,7 +306,7 @@ class EnemyMem or y:
     def _get_ability_cooldown(self, ability_name: str) -> float:
         """Получение перезарядки способности"""
             # Базовые перезарядки способностей
-            cooldowns== {
+            cooldowns= {
             'fireball': 5.0,
             'heal': 10.0,
             'buff': 15.0,
@@ -319,7 +319,7 @@ class EnemyMem or y:
             }
             return cooldowns.get(ability_name, 5.0)
 
-            def _execute_ability(self, ability_name: str, target: str== None) -> bool:
+            def _execute_ability(self, ability_name: str, target: str= None) -> bool:
         """Выполнение способности"""
         try:
         except Exception as e:
@@ -353,18 +353,18 @@ class EnemyMem or y:
     def _end_retreat(self):
         """Завершение отступления"""
             try:
-            if not self. is _retreat in g:
+            if not self.is _retreating:
             return
 
-            self. is _retreat in g== False
-            self.retreat_target== None
+            self.is _retreating= False
+            self.retreat_target= None
 
             # Восстанавливаем здоровье после отступления
-            heal_amount== int(self.stats.max_health * 0.3)
+            heal_amount= int(self.stats.max_health * 0.3)
             self.heal(heal_amount, "retreat")
 
             # Возвращаемся к патрулированию
-            self.current_state== AIState.IDLE
+            self.current_state= AIState.IDLE
 
             # Записываем завершение отступления в память
             self.add_mem or y('combat', {
@@ -375,7 +375,7 @@ class EnemyMem or y:
             'new_health': self.stats.health
             }, True)
 
-            logger. in fo(f"Враг {self.entity_id} завершил отступление")
+            logger.in fo(f"Враг {self.entity_id} завершил отступление")
 
             except Exception as e:
             pass
@@ -383,7 +383,7 @@ class EnemyMem or y:
             pass
             logger.err or(f"Ошибка завершения отступления врага {self.entity_id}: {e}")
 
-            def _f in d_retreat_position(self) -> Optional[Tuple[float, float, float]]:
+            def _fin d_retreat_position(self) -> Optional[Tuple[float, float, float]]:
         """Поиск позиции для отступления"""
         try:
         except Exception as e:
@@ -393,10 +393,10 @@ class EnemyMem or y:
             logger.err or(f"Ошибка поиска позиции отступления: {e}")
             return None
 
-    def _call_f or _help(self) -> bool:
+    def _call_for _help(self) -> bool:
         """Призыв помощи"""
             try:
-            if not self.behavi or .call_f or _help:
+            if not self.behavi or .call_for _help:
             return False
 
             # Здесь должна быть логика призыва других врагов
@@ -418,7 +418,7 @@ class EnemyMem or y:
             logger.err or(f"Ошибка призыва помощи врагом {self.entity_id}: {e}")
             return False
 
-            def _calculate_d is tance(self, pos1: Tuple[float, float, float],
+            def _calculate_dis tance(self, pos1: Tuple[float, float, float],
             pos2: Tuple[float, float, float]) -> float:
             pass  # Добавлен pass в пустой блок
         """Расчет расстояния между точками"""
@@ -431,11 +431,11 @@ class EnemyMem or y:
             return 0.0
 
     def _rec or d_combat_mem or y(self, action: str, target: str, success: bool,
-                            details: Dict[str, Any]== None):
+                            details: Dict[str, Any]= None):
                                 pass  # Добавлен pass в пустой блок
         """Запись боевой памяти"""
             try:
-            combat_rec or d== {
+            combat_rec or d= {
             'action': action,
             'target': target,
             'success': success,
@@ -444,11 +444,11 @@ class EnemyMem or y:
             'details': details or {}
             }
 
-            self.enemy_mem or y.combat_h is tory.append(combat_rec or d)
+            self.enemy_mem or y.combat_his tory.append(combat_rec or d)
 
             # Ограничиваем размер истории
-            if len(self.enemy_mem or y.combat_h is tory) > 50:
-            self.enemy_mem or y.combat_h is tory== self.enemy_mem or y.combat_h is tory[ - 50:]
+            if len(self.enemy_mem or y.combat_his tory) > 50:
+            self.enemy_mem or y.combat_his tory= self.enemy_mem or y.combat_his tory[ - 50:]
 
             except Exception as e:
             pass
@@ -468,12 +468,12 @@ class EnemyMem or y:
     def exit_combat(self):
         """Выход из боя"""
             try:
-            if not self. is _in_combat:
+            if not self.is _in_combat:
             return
 
-            self. is _in_combat== False
-            self.current_target== None
-            self.current_state== AIState.IDLE
+            self.is _in_combat= False
+            self.current_target= None
+            self.current_state= AIState.IDLE
 
             # Записываем в память
             self.add_mem or y('combat', {
@@ -502,14 +502,14 @@ class EnemyMem or y:
             logger.err or(f"Ошибка добавления способности {ability_name}: {e}")
             return False
 
-    def set_patrol_route(self, patrol_po in ts: L is t[Tuple[float, float
+    def set_patrol_route(self, patrol_poin ts: Lis t[Tuple[float, float
         float]]):
             pass  # Добавлен pass в пустой блок
         """Установка маршрута патрулирования"""
             try:
-            self.patrol_po in ts== patrol_po in ts
-            self.current_patrol_ in dex== 0
-            self.patrol_wait_time== 0.0
+            self.patrol_poin ts= patrol_poin ts
+            self.current_patrol_in dex= 0
+            self.patrol_wait_time= 0.0
 
             logger.debug(f"Маршрут патрулирования установлен для врага {self.entity_id}")
 
@@ -519,8 +519,8 @@ class EnemyMem or y:
             pass
             logger.err or(f"Ошибка установки маршрута патрулирования: {e}")
 
-            def add_drop_item(self, item_id: str, chance: float== 0.1
-            guaranteed: bool== False):
+            def add_drop_item(self, item_id: str, chance: float= 0.1
+            guaranteed: bool= False):
             pass  # Добавлен pass в пустой блок
         """Добавление предмета в дроп"""
         try:
@@ -532,17 +532,17 @@ class EnemyMem or y:
 
     def get_enemy_data(self) -> Dict[str, Any]:
         """Получение данных врага"""
-            base_data== super().get_entity_data()
+            base_data= super().get_entity_data()
 
             # Добавляем специфичные для врага данные
-            enemy_data== {
+            enemy_data= {
             * * base_data,
             'enemy_stats': {
             'threat_level': self.enemy_stats.threat_level,
             'aggression': self.enemy_stats.aggression,
-            ' in telligence': self.enemy_stats. in telligence,
+            'in telligence': self.enemy_stats.in telligence,
             'special_abilities': self.enemy_stats.special_abilities,
-            'immunities': [immunity.value for immunity in self.enemy_stats.immunities],:
+            'immunities': [immunity.value for immunityin self.enemy_stats.immunities],:
             pass  # Добавлен pass в пустой блок
             'drop_chance': self.enemy_stats.drop_chance,
             'experience_reward': self.enemy_stats.experience_reward,
@@ -553,15 +553,15 @@ class EnemyMem or y:
             'patrol_radius': self.behavi or .patrol_radius,
             'detection_range': self.behavi or .detection_range,
             'attack_range': self.behavi or .attack_range,
-            'preferred_d is tance': self.behavi or .preferred_d is tance,
+            'preferred_dis tance': self.behavi or .preferred_dis tance,
             'retreat_health_threshold': self.behavi or .retreat_health_threshold,
-            'call_f or _help': self.behavi or .call_f or _help,:
+            'call_for _help': self.behavi or .call_for _help,:
             pass  # Добавлен pass в пустой блок
             'attack_cooldown': self.behavi or .attack_cooldown,
             'last_attack_time': self.behavi or .last_attack_time
             },
             'enemy_mem or y': {
-            'combat_h is tory_count': len(self.enemy_mem or y.combat_h is tory),
+            'combat_his tory_count': len(self.enemy_mem or y.combat_his tory),
             'defeated_enemies_count': len(self.enemy_mem or y.defeated_enemies),:
             pass  # Добавлен pass в пустой блок
             'retreat_count': self.enemy_mem or y.retreat_count,
@@ -571,7 +571,7 @@ class EnemyMem or y:
             'last_retreat': self.enemy_mem or y.last_retreat
             },
             'combat_state': {
-            ' is _retreat in g': self. is _retreat in g,
+            'is _retreating': self.is _retreating,
             'retreat_target': self.retreat_target,
             'retreat_start_time': self.retreat_start_time,
             'retreat_duration': self.retreat_duration
@@ -582,8 +582,8 @@ class EnemyMem or y:
             'last_ability_use': self.last_ability_use
             },
             'patrol': {
-            'patrol_po in ts': self.patrol_po in ts,
-            'current_patrol_ in dex': self.current_patrol_ in dex,
+            'patrol_poin ts': self.patrol_poin ts,
+            'current_patrol_in dex': self.current_patrol_in dex,
             'patrol_wait_time': self.patrol_wait_time
             },
             'drops': {
@@ -594,21 +594,21 @@ class EnemyMem or y:
 
             return enemy_data
 
-            def get_ in fo(self) -> str:
+            def get_in fo(self) -> str:
         """Получение информации о враге"""
-        base_ in fo== super().get_ in fo()
+        base_in fo= super().get_in fo()
 
-        enemy_ in fo== (f"\n - -- Враг - - -\n"
+        enemy_in fo= (f"\n - -- Враг - - -\n"
                     f"Уровень угрозы: {self.enemy_stats.threat_level} | "
                     f"Агрессия: {self.enemy_stats.aggression:.2f}\n"
                     f"Поведение: {self.behavi or .behavi or _type} | "
-                    f"Отступление: {'Да' if self. is _retreat in g else 'Нет'}\n":
+                    f"Отступление: {'Да' if self.is _retreating else 'Нет'}\n":
                         pass  # Добавлен pass в пустой блок
                     f"Способности: {len(self.abilities)} | "
-                    f"Патрульные точки: {len(self.patrol_po in ts)}\n"
-                    f"Боевая история: {len(self.enemy_mem or y.combat_h is tory)} | "
+                    f"Патрульные точки: {len(self.patrol_poin ts)}\n"
+                    f"Боевая история: {len(self.enemy_mem or y.combat_his tory)} | "
                     f"Отступлений: {self.enemy_mem or y.retreat_count}\n"
                     f"Награда: {self.enemy_stats.experience_reward} опыта, "
                     f"{self.enemy_stats.gold_reward} золота")
 
-        return base_ in fo + enemy_ in fo
+        return base_in fo + enemy_in fo

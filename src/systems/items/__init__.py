@@ -3,12 +3,13 @@
     Items System Package
 """
 
-from .item_system imp or t(
-    Item, SpecialEffect, ItemSystem,
-    ItemRarity, ItemType
-)
+from item_system import Item
+from item_system import ItemRarity
+from item_system import ItemSystem
+from item_system import ItemType
+from item_system import SpecialEffect
 
-__all__== [
+__all__= [
     'Item',
     'SpecialEffect',
     'ItemSystem',

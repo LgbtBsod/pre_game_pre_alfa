@@ -1,40 +1,40 @@
 #!/usr / bin / env python3
-from dataclasses imp or t dataclass:
+from dataclasses import dataclass:
     pass  # Добавлен pass в пустой блок
-from typ in g imp or t Dict, Any
-from src.c or e.plug in _interfaces imp or t IPlug in , Plug in Metadata, Plug in LoadType
-    Plug in Scope
+from typing import Dict, Any
+from src.c or e.plugin _interfaces import IPlugin , Plugin Metadata, Plugin LoadType
+    Plugin Scope
 
-metadata== Plug in Metadata(
-    plug in _i == "example_plug in ",
-    nam == "Example Plug in ",
-    versio == "0.1.0",
-    autho == "AI",
-    descriptio == "Пример плагина для демонстрации",
-    load_typ == Plug in LoadType.EAGER,
-    scop == Plug in Scope.GLOBAL,
+metadata= Plugin Metadata(
+    plugin _i = "example_plugin ",
+    nam = "Example Plugin ",
+    versio = "0.1.0",
+    autho = "AI",
+    descriptio = "Пример плагина для демонстрации",
+    load_typ = Plugin LoadType.EAGER,
+    scop = Plugin Scope.GLOBAL,
 )
 
-class Plug in(IPlug in ):
-    metadata== metadata
+class Plug in(IPlugin ):
+    metadata= metadata
 
     def initialize(self, context: Dict[str, Any]) -> bool:
-        pr in t("[ExamplePlug in ] initialize with context keys:", l is t(context.keys()))
-        self._ctx== context
+        prin t("[ExamplePlugin ] initialize with context keys:", lis t(context.keys()))
+        self._ctx= context
         return True
 
     def start(self) -> bool:
-        pr in t("[ExamplePlug in ] start")
+        prin t("[ExamplePlugin ] start")
         return True
 
     def stop(self) -> bool:
-        pr in t("[ExamplePlug in ] stop")
+        prin t("[ExamplePlugin ] stop")
         return True
 
     def destroy(self) -> bool:
-        pr in t("[ExamplePlug in ] destroy")
+        prin t("[ExamplePlugin ] destroy")
         return True
 
 
-def create_plug in() -> IPlug in :
+def create_plug in() -> IPlugin :
     return Plug in()

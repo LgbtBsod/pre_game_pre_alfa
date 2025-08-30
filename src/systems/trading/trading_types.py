@@ -3,106 +3,106 @@
     Типы торговли и связанные перечисления
 """
 
-from enum imp or t Enum
-from typ in g imp or t Dict, Any
+from enum import Enum
+from typing import Dict, Any
 
 class TradeType(Enum):
     """Типы торговли"""
         # Основные типы
-        BUY== "buy"
-        SELL== "sell"
-        EXCHANGE== "exchange"
-        AUCTION== "auction"
-        BARTER== "barter"
+        BUY= "buy"
+        SELL= "sell"
+        EXCHANGE= "exchange"
+        AUCTION= "auction"
+        BARTER= "barter"
 
         # Специализированные типы
-        BULK_TRADE== "bulk_trade"
-        CONTRACT_TRADE== "contract_trade"
-        FUTURES_TRADE== "futures_trade"
-        OPTIONS_TRADE== "options_trade"
+        BULK_TRADE= "bulk_trade"
+        CONTRACT_TRADE= "contract_trade"
+        FUTURES_TRADE= "futures_trade"
+        OPTIONS_TRADE= "options_trade"
 
         # Эволюционные типы
-        GENE_TRADE== "gene_trade"
-        EVOLUTION_TRADE== "evolution_trade"
-        MUTATION_TRADE== "mutation_trade"
-        ADAPTATION_TRADE== "adaptation_trade"
+        GENE_TRADE= "gene_trade"
+        EVOLUTION_TRADE= "evolution_trade"
+        MUTATION_TRADE= "mutation_trade"
+        ADAPTATION_TRADE= "adaptation_trade"
 
         # Эмоциональные типы
-        EMOTION_TRADE== "emotion_trade"
-        EXPERIENCE_TRADE== "experience_trade"
-        MEMORY_TRADE== "mem or y_trade"
-        WISDOM_TRADE== "w is dom_trade"
+        EMOTION_TRADE= "emotion_trade"
+        EXPERIENCE_TRADE= "experience_trade"
+        MEMORY_TRADE= "mem or y_trade"
+        WISDOM_TRADE= "wis dom_trade"
 
         class TradeStatus(Enum):
     """Статусы торговли"""
-    PENDING== "pend in g"
-    ACTIVE== "active"
-    COMPLETED== "completed"
-    CANCELLED== "cancelled"
-    EXPIRED== "expired"
-    FAILED== "failed"
-    DISPUTED== "d is puted"
-    REFUNDED== "refunded"
+    PENDING= "pending"
+    ACTIVE= "active"
+    COMPLETED= "completed"
+    CANCELLED= "cancelled"
+    EXPIRED= "expired"
+    FAILED= "failed"
+    DISPUTED= "dis puted"
+    REFUNDED= "refunded"
 
 class CurrencyType(Enum):
     """Типы валют"""
         # Основные валюты
-        GOLD== "gold"
-        SILVER== "silver"
-        COPPER== "copper"
-        PLATINUM== "plat in um"
+        GOLD= "gold"
+        SILVER= "silver"
+        COPPER= "copper"
+        PLATINUM= "platin um"
 
         # Специальные валюты
-        CREDITS== "credits"
-        TOKENS== "tokens"
-        POINTS== "po in ts"
-        FRAGMENTS== "fragments"
+        CREDITS= "credits"
+        TOKENS= "tokens"
+        POINTS= "poin ts"
+        FRAGMENTS= "fragments"
 
         # Эволюционные валюты
-        EVOLUTION_POINTS== "evolution_po in ts"
-        GENE_FRAGMENTS== "gene_fragments"
-        MUTATION_CHANCES== "mutation_chances"
-        ADAPTATION_BONUS== "adaptation_bonus"
+        EVOLUTION_POINTS= "evolution_poin ts"
+        GENE_FRAGMENTS= "gene_fragments"
+        MUTATION_CHANCES= "mutation_chances"
+        ADAPTATION_BONUS= "adaptation_bonus"
 
         # Эмоциональные валюты
-        EMOTIONAL_STABILITY== "emotional_stability"
-        EMPATHY_POINTS== "empathy_po in ts"
-        COURAGE_POINTS== "courage_po in ts"
-        WISDOM_POINTS== "w is dom_po in ts"
+        EMOTIONAL_STABILITY= "emotional_stability"
+        EMPATHY_POINTS= "empathy_poin ts"
+        COURAGE_POINTS= "courage_poin ts"
+        WISDOM_POINTS= "wis dom_poin ts"
 
         class TradeCateg or y(Enum):
     """Категории торговли"""
-    WEAPONS== "weapons"
-    ARMOR== "arm or "
-    CONSUMABLES== "consumables"
-    MATERIALS== "materials"
-    CURRENCY== "currency"
-    SERVICES== "services"
-    INFORMATION== " in formation":
+    WEAPONS= "weapons"
+    ARMOR= "arm or "
+    CONSUMABLES= "consumables"
+    MATERIALS= "materials"
+    CURRENCY= "currency"
+    SERVICES= "services"
+    INFORMATION= "in formation":
         pass  # Добавлен pass в пустой блок
-    SKILLS== "skills"
-    GENES== "genes"
-    EMOTIONS== "emotions"
+    SKILLS= "skills"
+    GENES= "genes"
+    EMOTIONS= "emotions"
 
 class TradeRarity(Enum):
     """Редкость торговых предметов"""
-        COMMON== "common"
-        UNCOMMON== "uncommon"
-        RARE== "rare"
-        EPIC== "epic"
-        LEGENDARY== "legendary"
-        MYTHIC== "mythic"
-        DIVINE== "div in e"
+        COMMON= "common"
+        UNCOMMON= "uncommon"
+        RARE= "rare"
+        EPIC= "epic"
+        LEGENDARY= "legendary"
+        MYTHIC= "mythic"
+        DIVINE= "divin e"
 
         class TradeLocation(Enum):
     """Места торговли"""
-    MARKETPLACE== "marketplace"
-    SHOP== "shop"
-    AUCTION_HOUSE== "auction_house"
-    BLACK_MARKET== "black_market"
-    TRADING_POST== "trad in g_post"
-    CARAVAN== "caravan"
-    PORT== "p or t"
-    GUILD_HALL== "guild_hall"
-    TEMPLE== "temple"
-    ACADEMY== "academy"
+    MARKETPLACE= "marketplace"
+    SHOP= "shop"
+    AUCTION_HOUSE= "auction_house"
+    BLACK_MARKET= "black_market"
+    TRADING_POST= "trading_post"
+    CARAVAN= "caravan"
+    PORT= "p or t"
+    GUILD_HALL= "guild_hall"
+    TEMPLE= "temple"
+    ACADEMY= "academy"

@@ -4,7 +4,7 @@
 """
 
 
-__all__== [
+__all__= [
     'SocialSystem',
     'RelationshipType',
     'InteractionType',

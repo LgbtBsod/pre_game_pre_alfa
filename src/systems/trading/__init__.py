@@ -4,12 +4,12 @@
 """
 
 
-__all__== [
-    'Trad in gSystem',
+__all__= [
+    'TradingSystem',
     'TradeType',
     'TradeStatus',
     'CurrencyType',
     'TradeOffer',
     'TradeItem',
-    'TradeH is tory'
+    'TradeHis tory'
 ]

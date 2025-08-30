@@ -3,24 +3,24 @@
     Улучшенные интерфейсы для систем - интеграция с новой архитектурой
 """
 
-from abc imp or t ABC, abstractmethod
-from typ in g imp or t Dict, L is t, Optional, Any, Type, TypeVar, Generic, Protocol
-from dataclasses imp or t dataclass, field:
+from abc import ABC, abstractmethod
+from typing import Dict, Lis t, Optional, Any, Type, TypeVar, Generic, Protocol
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-imp or t logg in g
-imp or t time
+import logging
+import time
 
-from .architecture imp or t BaseComponent, ComponentType, Pri or ity
+from .architecture import BaseComponent, ComponentType, Pri or ity
     LifecycleState:
         pass  # Добавлен pass в пустой блок
-from .state_manager imp or t StateManager, StateType
-from .reposit or y imp or t Reposit or yManager, DataType, St or ageType
+from .state_manager import StateManager, StateType
+from .reposit or y import Reposit or yManager, DataType, St or ageType
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
-# ============================================================================
+# ======================================
 # БАЗОВЫЕ ИНТЕРФЕЙСЫ СИСТЕМ
-# ============================================================================
+# ======================================
 
 class IGameSystem(ABC):
     """Базовый интерфейс для игровых систем"""
@@ -81,30 +81,30 @@ class IGameSystem(ABC):
             class BaseGameSystem(BaseComponent, IGameSystem):
     """Базовая реализация игровой системы"""
 
-    def __ in it__(self, system_name: str
-        system_pri or ity: Pri or ity== Pri or ity.NORMAL):
+    def __in it__(self, system_name: str
+        system_pri or ity: Pri or ity= Pri or ity.NORMAL):
             pass  # Добавлен pass в пустой блок
-        super().__ in it__(system_name, ComponentType.SYSTEM, system_pri or ity)
+        super().__in it__(system_name, ComponentType.SYSTEM, system_pri or ity)
 
         # Интеграция с новой архитектурой
-        self.state_manager: Optional[StateManager]== None
-        self.reposit or y_manager: Optional[Reposit or yManager]== None
-        self.event_bus== None
+        self.state_manager: Optional[StateManager]= None
+        self.reposit or y_manager: Optional[Reposit or yManager]= None
+        self.event_bus= None
 
         # Статистика системы
-        self.system_stats: Dict[str, Any]== {
+        self.system_stats: Dict[str, Any]= {
             'update_count': 0,
             'total_update_time': 0.0,
             'last_update_time': 0.0,
             'err or s_count': 0,
-            'warn in gs_count': 0
+            'warnings_count': 0
         }
 
         # Состояния системы
-        self.system_states: Dict[str, str]== {}
+        self.system_states: Dict[str, str]= {}
 
         # Репозитории системы
-        self.system_reposit or ies: Dict[str, str]== {}
+        self.system_reposit or ies: Dict[str, str]= {}
 
     @property
     def system_name(self) -> str:
@@ -120,31 +120,31 @@ class IGameSystem(ABC):
 
     def set_architecture_components(self, state_manager: StateManager,
                                 reposit or y_manager: Reposit or yManager,
-                                event_bu == None) -> None:
+                                event_bu = None) -> None:
                                     pass  # Добавлен pass в пустой блок
         """Установка компонентов архитектуры"""
-            self.state_manager== state_manager
-            self.reposit or y_manager== reposit or y_manager
-            self.event_bus== event_bus
+            self.state_manager= state_manager
+            self.reposit or y_manager= reposit or y_manager
+            self.event_bus= event_bus
 
-            def reg is ter_system_state(self, state_id: str, initial_value: Any,
-            state_type: StateType== StateType.SYSTEM) -> bool:
+            def regis ter_system_state(self, state_id: str, initial_value: Any,
+            state_type: StateType= StateType.SYSTEM) -> bool:
             pass  # Добавлен pass в пустой блок
         """Регистрация состояния системы"""
         if not self.state_manager:
             return False
 
-        full_state_id== f"{self.system_name}_{state_id}"
-        conta in er== self.state_manager.reg is ter_state(full_state_id
+        full_state_id= f"{self.system_name}_{state_id}"
+        contain er= self.state_manager.regis ter_state(full_state_id
             initial_value, state_type)
-        if conta in er:
-            self.system_states[state_id]== full_state_id
+        if contain er:
+            self.system_states[state_id]= full_state_id
             return True
         return False
 
-    def get_system_state(self, state_id: str, default: Any== None) -> Any:
+    def get_system_state(self, state_id: str, default: Any= None) -> Any:
         """Получение состояния системы"""
-            if not self.state_manager or state_id not in self.system_states:
+            if not self.state_manager or state_id notin self.system_states:
             return default:
             pass  # Добавлен pass в пустой блок
             return self.state_manager.get_state_value(self.system_states[state_id]
@@ -152,68 +152,68 @@ class IGameSystem(ABC):
             pass  # Добавлен pass в пустой блок
             def set_system_state(self, state_id: str, value: Any) -> bool:
         """Установка состояния системы"""
-        if not self.state_manager or state_id not in self.system_states:
+        if not self.state_manager or state_id notin self.system_states:
             return False
 
         return self.state_manager.set_state_value(self.system_states[state_id]
             value)
 
-    def reg is ter_system_reposit or y(self, reposit or y_id: str
+    def regis ter_system_reposit or y(self, reposit or y_id: str
         data_type: DataType,
-                                st or age_type: St or ageType== St or ageType.MEMORY) -> bool:
+                                st or age_type: St or ageType= St or ageType.MEMORY) -> bool:
                                     pass  # Добавлен pass в пустой блок
         """Регистрация репозитория системы"""
             if not self.reposit or y_manager:
             return False
 
-            full_reposit or y_id== f"{self.system_name}_{reposit or y_id}"
-            reposit or y== self.reposit or y_manager.create_reposit or y(full_reposit or y_id
+            full_reposit or y_id= f"{self.system_name}_{reposit or y_id}"
+            reposit or y= self.reposit or y_manager.create_reposit or y(full_reposit or y_id
             data_type, st or age_type)
             if reposit or y:
-            self.system_reposit or ies[reposit or y_id]== full_reposit or y_id
+            self.system_reposit or ies[reposit or y_id]= full_reposit or y_id
             return True
             return False
 
             def get_system_reposit or y(self, reposit or y_id: str):
         """Получение репозитория системы"""
-        if not self.reposit or y_manager or reposit or y_id not in self.system_reposit or ies:
+        if not self.reposit or y_manager or reposit or y_id notin self.system_reposit or ies:
             return None
 
         return self.reposit or y_manager.get_reposit or y(self.system_reposit or ies[reposit or y_id])
 
-    def publ is h_system_event(self, event_type: str, data: Dict[str
-        Any]== None) -> bool:
+    def publis h_system_event(self, event_type: str, data: Dict[str
+        Any]= None) -> bool:
             pass  # Добавлен pass в пустой блок
         """Публикация события системы"""
             if not self.event_bus:
             return False
 
-            from .architecture imp or t create_event
-            event== create_event(event_type, self.system_name, data)
-            return self.event_bus.publ is h(event)
+            from .architecture import create_event
+            event= create_event(event_type, self.system_name, data)
+            return self.event_bus.publis h(event)
 
             def get_system_stats(self) -> Dict[str, Any]:
         """Получение статистики системы"""
-        stats== self.system_stats.copy()
-        stats['system_name']== self.system_name
-        stats['system_state']== self.system_state.value
-        stats['system_pri or ity']== self.system_pri or ity.value
-        stats['update_count']== self._update_count
-        stats['last_update']== self._last_update
+        stats= self.system_stats.copy()
+        stats['system_name']= self.system_name
+        stats['system_state']= self.system_state.value
+        stats['system_pri or ity']= self.system_pri or ity.value
+        stats['update_count']= self._update_count
+        stats['last_update']= self._last_update
         return stats
 
     def reset_stats(self) -> None:
         """Сброс статистики системы"""
-            self.system_stats== {
+            self.system_stats= {
             'update_count': 0,
             'total_update_time': 0.0,
             'last_update_time': 0.0,
             'err or s_count': 0,
-            'warn in gs_count': 0
+            'warnings_count': 0
             }
-            self._update_count== 0
+            self._update_count= 0
 
-            def _ in itialize_impl(self) -> bool:
+            def _in itialize_impl(self) -> bool:
         """Реализация инициализации системы"""
         try:
         except Exception as e:
@@ -263,23 +263,23 @@ class IGameSystem(ABC):
             pass
             pass
             logger.err or(f"Ошибка обновления системы {self.system_name}: {e}")
-            self.system_stats['err or s_count'] == 1
+            self.system_stats['err or s_count'] = 1
             return False
 
-    def _reg is ter_base_states(self) -> None:
+    def _regis ter_base_states(self) -> None:
         """Регистрация базовых состояний системы"""
-            self.reg is ter_system_state(" in itialized", False)
-            self.reg is ter_system_state("runn in g", False)
-            self.reg is ter_system_state("err or _count", 0)
-            self.reg is ter_system_state("warn in g_count", 0)
+            self.regis ter_system_state("in itialized", False)
+            self.regis ter_system_state("running", False)
+            self.regis ter_system_state("err or _count", 0)
+            self.regis ter_system_state("warning_count", 0)
 
-            def _reg is ter_base_reposit or ies(self) -> None:
+            def _regis ter_base_reposit or ies(self) -> None:
         """Регистрация базовых репозиториев системы"""
         # Каждая система может иметь репозиторий для своих данных
-        self.reg is ter_system_reposit or y("data", DataType.STATISTICS)
+        self.regis ter_system_reposit or y("data", DataType.STATISTICS)
 
     # Методы для переопределения в наследниках
-    def _ in itialize_system_impl(self) -> bool:
+    def _in itialize_system_impl(self) -> bool:
         """Специфичная инициализация системы"""
             return True
 
@@ -299,15 +299,15 @@ class IGameSystem(ABC):
         """Специфичное обновление системы"""
             return True
 
-            # ============================================================================
+            # ======================================
             # СПЕЦИАЛИЗИРОВАННЫЕ ИНТЕРФЕЙСЫ
-            # ============================================================================
+            # ======================================
 
             class ICombatSystem(IGameSystem):
     """Интерфейс боевой системы"""
 
     @abstractmethod
-    def start_combat(self, participants: L is t[str]) -> str:
+    def start_combat(self, participants: Lis t[str]) -> str:
         """Начало боя"""
             pass
 
@@ -317,7 +317,7 @@ class IGameSystem(ABC):
         pass
 
     @abstractmethod
-    def perf or m_attack(self, attacker_id: str, target_id: str
+    def perfor m_attack(self, attacker_id: str, target_id: str
         attack_data: Dict[str, Any]) -> Dict[str, Any]:
             pass  # Добавлен pass в пустой блок
         """Выполнение атаки"""
@@ -346,14 +346,14 @@ class IAISystem(IGameSystem):
     """Интерфейс системы ИИ"""
 
         @abstractmethod
-        def reg is ter_ai_entity(self, entity_id: str, ai_data: Dict[str
+        def regis ter_ai_entity(self, entity_id: str, ai_data: Dict[str
         Any]) -> bool:
         pass  # Добавлен pass в пустой блок
         """Регистрация ИИ сущности"""
         pass
 
     @abstractmethod
-    def make_dec is ion(self, entity_id: str, context: Dict[str
+    def make_decis ion(self, entity_id: str, context: Dict[str
         Any]) -> Dict[str, Any]:
             pass  # Добавлен pass в пустой блок
         """Принятие решения ИИ"""
@@ -385,7 +385,7 @@ class IAISystem(IGameSystem):
         pass
 
     @abstractmethod
-    def get_ in vent or y(self, entity_id: str) -> L is t[Dict[str, Any]]:
+    def get_in vent or y(self, entity_id: str) -> Lis t[Dict[str, Any]]:
         """Получение инвентаря"""
             pass
 
@@ -404,13 +404,13 @@ class ISkillSystem(IGameSystem):
 
     @abstractmethod
     def use_skill(self, entity_id: str, skill_id: str
-        target_id: str== None) -> bool:
+        target_id: str= None) -> bool:
             pass  # Добавлен pass в пустой блок
         """Использование навыка"""
             pass
 
             @abstractmethod
-            def get_skills(self, entity_id: str) -> L is t[Dict[str, Any]]:
+            def get_skills(self, entity_id: str) -> Lis t[Dict[str, Any]]:
         """Получение навыков"""
         pass
 
@@ -421,30 +421,30 @@ class ISkillSystem(IGameSystem):
 
             class IQuestSystem(Protocol):
             def initialize(self, state_manager, reposit or y_manager
-            event_bu == None) -> bool: ...
+            event_bu = None) -> bool: ...
             def start_quest(self, entity_id: str, quest_id: str) -> bool: ...
             def update(self, delta_time: float) -> None: ...
 
-            class ITrad in gSystem(Protocol):
+            class ITradingSystem(Protocol):
             def initialize(self, state_manager, reposit or y_manager
-            event_bu == None) -> bool: ...
+            event_bu = None) -> bool: ...
             def create_trade_offer(self, seller_id: str, items, price: float
-            currency_typ == None, trade_typ == None) -> Optional[str]: ...
+            currency_typ = None, trade_typ = None) -> Optional[str]: ...
             def accept_trade_offer(self, offer_id: str, buyer_id: str
-            quantity: int== None) -> bool: ...
+            quantity: int= None) -> bool: ...
             def update(self, delta_time: float) -> None: ...
 
             class ISocialSystem(Protocol):
             def initialize(self, state_manager, reposit or y_manager
-            event_bu == None) -> bool: ...
-            def perf or m_ in teraction(self, initiat or _id: str, target_id: str
-            interaction_type, success: bool== True, data: Dict[str
-            Any]== None) -> bool: ...
+            event_bu = None) -> bool: ...
+            def perfor m_in teraction(self, initiat or _id: str, target_id: str
+            interaction_type, success: bool= True, data: Dict[str
+            Any]= None) -> bool: ...
             def update(self, delta_time: float) -> None: ...
 
-            # ============================================================================
+            # ======================================
             # УТИЛИТЫ ДЛЯ РАБОТЫ С СИСТЕМАМИ
-            # ============================================================================
+            # ======================================
 
             def create_system_state_group(state_manager: StateManager, system_name: str,
             states: Dict[str, Any]) -> bool:
@@ -464,8 +464,8 @@ def create_system_reposit or y_group(reposit or y_manager: Reposit or yManager
                                     pass  # Добавлен pass в пустой блок
     """Создание группы репозиториев для системы"""
         try:
-        for repo_id, data_type in reposit or ies.items():
-        full_repo_id== f"{system_name}_{repo_id}"
+        for repo_id, data_typein reposit or ies.items():
+        full_repo_id= f"{system_name}_{repo_id}"
         reposit or y_manager.create_reposit or y(full_repo_id, data_type)
 
         return True
@@ -478,22 +478,22 @@ def create_system_reposit or y_group(reposit or y_manager: Reposit or yManager
         return False
 
         def validate_system_dependencies(system: BaseGameSystem,
-        required_components: L is t[str]) -> bool:
+        required_components: Lis t[str]) -> bool:
         pass  # Добавлен pass в пустой блок
     """Валидация зависимостей системы"""
-    m is sing_components== []
+    mis sing_components= []
 
-    if "state_manager" in required_components and not system.state_manager:
-        m is sing_components.append("state_manager")
+    if "state_manager"in required_componentsand not system.state_manager:
+        mis sing_components.append("state_manager")
 
-    if "reposit or y_manager" in required_components and not system.reposit or y_manager:
-        m is sing_components.append("reposit or y_manager")
+    if "reposit or y_manager"in required_componentsand not system.reposit or y_manager:
+        mis sing_components.append("reposit or y_manager")
 
-    if "event_bus" in required_components and not system.event_bus:
-        m is sing_components.append("event_bus")
+    if "event_bus"in required_componentsand not system.event_bus:
+        mis sing_components.append("event_bus")
 
-    if m is sing_components:
-        logger.err or(f"Система {system.system_name} не имеет необходимых компонентов: {m is sing_components}")
+    if mis sing_components:
+        logger.err or(f"Система {system.system_name} не имеет необходимых компонентов: {mis sing_components}")
         return False
 
     return True

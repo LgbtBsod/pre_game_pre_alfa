@@ -1,34 +1,34 @@
 #!/usr / bin / env python3
 """
-    Menu Scene - Сцена главного меню на P and a3D
+    Menu Scene - Сцена главного меню на Pand a3D
 """
 
-imp or t logg in g
-from typ in g imp or t Dict, Any
-from direct.gui.OnscreenText imp or t OnscreenText
-from direct.gui.OnscreenImage imp or t OnscreenImage
-from direct.gui.DirectButton imp or t DirectButton
-from p and a3d.c or e imp or t TextNode
-from p and a3d.c or e imp or t W in dowProperties
+import logging
+from typing import Dict, Any
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
+from direct.gui.DirectButton import DirectButton
+from pand a3d.c or e import TextNode
+from pand a3d.c or e import Win dowProperties
 
-from ..c or e.scene_manager imp or t Scene
+from ..c or e.scene_manager import Scene
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 class MenuScene(Scene):
-    """Сцена главного меню на P and a3D"""
+    """Сцена главного меню на Pand a3D"""
 
-        def __ in it__(self):
-        super().__ in it__("menu")
+        def __in it__(self):
+        super().__in it__("menu")
 
         # UI элементы
-        self.title_text== None
-        self.start_button== None
-        self.sett in gs_button== None
-        self.quit_button== None
-        self.background_image== None
+        self.title_text= None
+        self.start_button= None
+        self.settings_button= None
+        self.quit_button= None
+        self.background_image= None
 
-        logger. in fo("Сцена меню P and a3D создана")
+        logger.in fo("Сцена меню Pand a3D создана")
 
         def initialize(self) -> bool:
         """Инициализация сцены меню"""
@@ -44,67 +44,67 @@ class MenuScene(Scene):
         """Создание UI элементов меню"""
             # Используем корневой узел UI сцены
             # Привязываем к узлу UI текущей сцены(который уже находится под aspect2d)
-            parent_node== self.ui_root if self.ui_root else None:
+            parent_node= self.ui_root if self.ui_root else None:
             pass  # Добавлен pass в пустой блок
             # Современный неоновый заголовок
-            self.title_text== OnscreenText(
-            tex == "AI - EVOLVE ENHANCED EDITION",
-            po == (0, 0.75),
-            scal == 0.14,
-            f == (0.0, 1.0, 1.0, 1.0),  # Неоновый голубой(0..1)
-            alig == TextNode.ACenter,
-            mayChang == False,
-            paren == parent_node,
-            shado == (0, 0, 0, 0.8),
-            shadowOffse == (0.02, 0.02)
+            self.title_text= OnscreenText(
+            tex = "AI - EVOLVE ENHANCED EDITION",
+            po = (0, 0.75),
+            scal = 0.14,
+            f = (0.0, 1.0, 1.0, 1.0),  # Неоновый голубой(0..1)
+            alig = TextNode.ACenter,
+            mayChang = False,
+            paren = parent_node,
+            shado = (0, 0, 0, 0.8),
+            shadowOffse = (0.02, 0.02)
             )
 
             # Кнопка "Начать игру"
-            self.start_button== DirectButton(
-            tex == "START GAME",
-            po == (0, 0, 0.35),
-            scal == 0.1,
-            comman == self._start_game,
-            frameColo == (0.0, 1.0, 0.392, 0.8),  # Неоновый зеленый(0..1)
-            text_f == (1.0, 1.0, 1.0, 1.0),
-            relie == 1,
-            paren == parent_node
+            self.start_button= DirectButton(
+            tex = "START GAME",
+            po = (0, 0, 0.35),
+            scal = 0.1,
+            comman = self._start_game,
+            frameColo = (0.0, 1.0, 0.392, 0.8),  # Неоновый зеленый(0..1)
+            text_f = (1.0, 1.0, 1.0, 1.0),
+            relie = 1,
+            paren = parent_node
             )
 
             # Кнопка "Творец мира"
-            self.creat or _button== DirectButton(
-            tex == "WORLD CREATOR",
-            po == (0, 0, 0.15),
-            scal == 0.1,
-            comman == self._open_creat or ,
-            frameColo == (1.0, 0.756, 0.027, 0.8),  # Неоновый желтый(0..1)
-            text_f == (1.0, 1.0, 1.0, 1.0),
-            relie == 1,
-            paren == parent_node
+            self.creat or _button= DirectButton(
+            tex = "WORLD CREATOR",
+            po = (0, 0, 0.15),
+            scal = 0.1,
+            comman = self._open_creat or ,
+            frameColo = (1.0, 0.756, 0.027, 0.8),  # Неоновый желтый(0..1)
+            text_f = (1.0, 1.0, 1.0, 1.0),
+            relie = 1,
+            paren = parent_node
             )
 
             # Кнопка "Настройки"
-            self.sett in gs_button== DirectButton(
-            tex == "SETTINGS",
-            po == (0, 0, -0.05),
-            scal == 0.1,
-            comman == self._open_sett in gs,
-            frameColo == (1.0, 0.392, 1.0, 0.8),  # Неоновый розовый(0..1)
-            text_f == (1.0, 1.0, 1.0, 1.0),
-            relie == 1,
-            paren == parent_node
+            self.settings_button= DirectButton(
+            tex = "SETTINGS",
+            po = (0, 0, -0.05),
+            scal = 0.1,
+            comman = self._open_settings,
+            frameColo = (1.0, 0.392, 1.0, 0.8),  # Неоновый розовый(0..1)
+            text_f = (1.0, 1.0, 1.0, 1.0),
+            relie = 1,
+            paren = parent_node
             )
 
             # Кнопка "Выход"
-            self.quit_button== DirectButton(
-            tex == "QUIT",
-            po == (0, 0, -0.25),
-            scal == 0.1,
-            comman == self._quit_game,
-            frameColo == (1.0, 0.392, 0.392, 0.8),  # Неоновый красный(0..1)
-            text_f == (1.0, 1.0, 1.0, 1.0),
-            relie == 1,
-            paren == parent_node
+            self.quit_button= DirectButton(
+            tex = "QUIT",
+            po = (0, 0, -0.25),
+            scal = 0.1,
+            comman = self._quit_game,
+            frameColo = (1.0, 0.392, 0.392, 0.8),  # Неоновый красный(0..1)
+            text_f = (1.0, 1.0, 1.0, 1.0),
+            relie = 1,
+            paren = parent_node
             )
 
             logger.debug("UI элементы меню созданы")
@@ -118,25 +118,25 @@ class MenuScene(Scene):
                 pass
                 pass  # Добавлен pass в пустой блок
             self.scene_manager.switch_to_scene("game", "fade")
-            logger. in fo("Переключение на игровую сцену")
+            logger.in fo("Переключение на игровую сцену")
 
     def _open_creat or(self):
         """Открыть творца мира"""
             if self.scene_manager:
             self.scene_manager.switch_to_scene("creat or ", "fade")
-            logger. in fo("Переключение на сцену творца мира")
+            logger.in fo("Переключение на сцену творца мира")
 
-            def _open_sett in gs(self):
+            def _open_settings(self):
         """Открыть настройки"""
         if self.scene_manager:
-            self.scene_manager.switch_to_scene("sett in gs", "fade")
-            logger. in fo("Переключение на сцену настроек")
+            self.scene_manager.switch_to_scene("settings", "fade")
+            logger.in fo("Переключение на сцену настроек")
 
     def _quit_game(self):
         """Выход из игры"""
-            logger. in fo("Выход из игры")
+            logger.in fo("Выход из игры")
             # Здесь можно добавить логику сохранения и выхода
-            imp or t sys
+            import sys
             sys.exit(0)
 
             def update(self, delta_time: float):
@@ -147,18 +147,18 @@ class MenuScene(Scene):
 
     def render(self, render_node):
         """Отрисовка сцены меню"""
-            # P and a3D автоматически отрисовывает UI
+            # Pand a3D автоматически отрисовывает UI
             self.title_text.setText("AI - EVOLVE ENHANCED EDITION")
             pass
 
-            def h and le_event(self, event):
+            def hand le_event(self, event):
         """Обработка событий"""
-        # P and a3D автоматически обрабатывает события кнопок
+        # Pand a3D автоматически обрабатывает события кнопок
         pass
 
     def cleanup(self):
         """Очистка сцены меню"""
-            logger. in fo("Очистка сцены меню P and a3D...")
+            logger.in fo("Очистка сцены меню Pand a3D...")
 
             # Уничтожение UI элементов
             if self.title_text:
@@ -167,11 +167,11 @@ class MenuScene(Scene):
             self.start_button.destroy()
             if self.creat or _button:
             self.creat or _button.destroy()
-            if self.sett in gs_button:
-            self.sett in gs_button.destroy()
+            if self.settings_button:
+            self.settings_button.destroy()
             if self.quit_button:
             self.quit_button.destroy()
             if self.background_image:
             self.background_image.destroy()
 
-            logger. in fo("Сцена меню P and a3D очищена")
+            logger.in fo("Сцена меню Pand a3D очищена")

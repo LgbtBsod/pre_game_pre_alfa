@@ -4,15 +4,15 @@
     Устраняет дублирование кода между системами
 """
 
-from abc imp or t ABC, abstractmethod
-from typ in g imp or t Dict, Any, Optional
-from dataclasses imp or t dataclass, field:
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Optional
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-imp or t time
-imp or t logg in g
+import time
+import logging
 
-from . in terfaces imp or t ISystem, SystemPri or ity, SystemState
-from .constants imp or t constants_manager, SYSTEM_LIMITS, TIME_CONSTANTS_RO
+from .in terfaces import ISystem, SystemPri or ity, SystemState
+from .constants import constants_manager, SYSTEM_LIMITS, TIME_CONSTANTS_RO
     get_float
 
 
@@ -20,16 +20,16 @@ from .constants imp or t constants_manager, SYSTEM_LIMITS, TIME_CONSTANTS_RO
     pass  # Добавлен pass в пустой блок
 class SystemStats:
     """Статистика системы"""
-        update_count: int== 0
-        total_update_time: float== 0.0
-        last_update_time: float== 0.0
-        average_update_time: float== 0.0
-        max_update_time: float== 0.0
-        m in _update_time: float== float(' in f')
-        err or _count: int== 0
-        last_err or _time: float== 0.0
-        mem or y_usage: float== 0.0
-        cpu_usage: float== 0.0
+        update_count: int= 0
+        total_update_time: float= 0.0
+        last_update_time: float= 0.0
+        average_update_time: float= 0.0
+        max_update_time: float= 0.0
+        min _update_time: float= float('in f')
+        err or _count: int= 0
+        last_err or _time: float= 0.0
+        mem or y_usage: float= 0.0
+        cpu_usage: float= 0.0
 
 
         class BaseSystem(ISystem, ABC):
@@ -38,32 +38,32 @@ class SystemStats:
     Предоставляет общую функциональность и устраняет дублирование кода
     """
 
-        def __ in it__(self, name: str
-        pri or ity: SystemPri or ity== SystemPri or ity.NORMAL):
+        def __in it__(self, name: str
+        pri or ity: SystemPri or ity= SystemPri or ity.NORMAL):
         pass  # Добавлен pass в пустой блок
-        self.name== name
-        self.pri or ity== pri or ity
-        self.state== SystemState.UNINITIALIZED
-        self.enabled== True
-        self. in itialized== False
-        self.destroyed== False
+        self.name= name
+        self.pri or ity= pri or ity
+        self.state= SystemState.UNINITIALIZED
+        self.enabled= True
+        self.in itialized= False
+        self.destroyed= False
 
         # Статистика системы
-        self.stats== SystemStats()
+        self.stats= SystemStats()
 
         # Логгер для системы
-        self.logger== logg in g.getLogger(f"system.{name}")
+        self.logger= logging.getLogger(f"system.{name}")
 
         # Время последнего обновления
-        self._last_update== 0.0
-        self._update_ in terval== get_float(TIME_CONSTANTS_RO, "update_ in terval", 1.0 / 60.0)
+        self._last_update= 0.0
+        self._update_in terval= get_float(TIME_CONSTANTS_RO, "update_in terval", 1.0 / 60.0)
 
         # Кэш для оптимизации
-        self._cache: Dict[str, Any]== {}
-        self._cache_timeout== 5.0  # 5 секунд
+        self._cache: Dict[str, Any]= {}
+        self._cache_timeout= 5.0  # 5 секунд
 
         # Метрики производительности
-        self._perf or mance_metrics== {:
+        self._perfor mance_metrics= {:
         "update_calls": 0,
         "total_time": 0.0,
         "peak_mem or y": 0.0,
@@ -72,8 +72,8 @@ class SystemStats:
 
         def initialize(self) -> bool:
         """Инициализация системы"""
-        if self. in itialized:
-            self.logger.warn in g(f"Система {self.name} уже инициализирована")
+        if self.in itialized:
+            self.logger.warning(f"Система {self.name} уже инициализирована")
             return True
 
         try:
@@ -82,43 +82,43 @@ class SystemStats:
             pass
             pass
             self.logger.err or(f"Критическая ошибка при инициализации системы {self.name}: {e}")
-            self.state== SystemState.ERROR
-            self._perf or mance_metrics["err or s"] == 1:
+            self.state= SystemState.ERROR
+            self._perfor mance_metrics["err or s"] = 1:
                 pass  # Добавлен pass в пустой блок
             return False
 
     def update(self, delta_time: float) -> bool:
         """Обновление системы"""
-            if not self.enabled or not self. in itialized or self.destroyed:
+            if not self.enabled or not self.in itialized or self.destroyed:
             return True
 
             # Проверка интервала обновления
-            current_time== time.time()
-            if current_time - self._last_update < self._update_ in terval:
+            current_time= time.time()
+            if current_time - self._last_update < self._update_in terval:
             return True
 
-            self._last_update== current_time
-            start_time== time.time()
+            self._last_update= current_time
+            start_time= time.time()
 
             try:
             # Обновление статистики
-            self.stats.update_count == 1
-            self._perf or mance_metrics["update_calls"] == 1:
+            self.stats.update_count = 1
+            self._perfor mance_metrics["update_calls"] = 1:
             pass  # Добавлен pass в пустой блок
             # Вызов абстрактного метода для специфичного обновления
-            success== self._update_impl(delta_time)
+            success= self._update_impl(delta_time)
 
             # Обновление метрик производительности
-            update_time== time.time() - start_time
-            self.stats.total_update_time == update_time
-            self.stats.last_update_time== update_time
-            self.stats.average_update_time== self.stats.total_update_time / self.stats.update_count
-            self.stats.max_update_time== max(self.stats.max_update_time
+            update_time= time.time() - start_time
+            self.stats.total_update_time = update_time
+            self.stats.last_update_time= update_time
+            self.stats.average_update_time= self.stats.total_update_time / self.stats.update_count
+            self.stats.max_update_time= max(self.stats.max_update_time
             update_time)
-            self.stats.m in _update_time== m in(self.stats.m in _update_time
+            self.stats.min _update_time= m in(self.stats.min _update_time
             update_time)
 
-            self._perf or mance_metrics["total_time"] == update_time:
+            self._perfor mance_metrics["total_time"] = update_time:
             pass  # Добавлен pass в пустой блок
             # Обновление статистики системы
             self._update_system_stats()
@@ -130,9 +130,9 @@ class SystemStats:
             pass
             pass
             self.logger.err or(f"Ошибка обновления системы {self.name}: {e}")
-            self.stats.err or _count == 1
-            self.stats.last_err or _time== time.time()
-            self._perf or mance_metrics["err or s"] == 1:
+            self.stats.err or _count = 1
+            self.stats.last_err or _time= time.time()
+            self._perfor mance_metrics["err or s"] = 1:
             pass  # Добавлен pass в пустой блок
             return False
 
@@ -151,17 +151,17 @@ class SystemStats:
 
     def pause(self) -> bool:
         """Приостановка системы"""
-            if self.state == SystemState.READY:
-            self.state== SystemState.PAUSED
-            self.logger. in fo(f"Система {self.name} приостановлена")
+            if self.state = SystemState.READY:
+            self.state= SystemState.PAUSED
+            self.logger.in fo(f"Система {self.name} приостановлена")
             return True
             return False
 
             def resume(self) -> bool:
         """Возобновление системы"""
-        if self.state == SystemState.PAUSED:
-            self.state== SystemState.READY
-            self.logger. in fo(f"Система {self.name} возобновлена")
+        if self.state = SystemState.PAUSED:
+            self.state= SystemState.READY
+            self.logger.in fo(f"Система {self.name} возобновлена")
             return True
         return False
 
@@ -179,11 +179,11 @@ class SystemStats:
 
             def set_enabled(self, enabled: bool) -> None:
         """Установка активности системы"""
-        self.enabled== enabled
+        self.enabled= enabled
         if enabled:
-            self.logger. in fo(f"Система {self.name} включена")
+            self.logger.in fo(f"Система {self.name} включена")
         else:
-            self.logger. in fo(f"Система {self.name} отключена")
+            self.logger.in fo(f"Система {self.name} отключена")
 
     def get_stats(self) -> Dict[str, Any]:
         """Получение статистики системы"""
@@ -192,18 +192,18 @@ class SystemStats:
             "state": self.state.value,
             "pri or ity": self.pri or ity.value,
             "enabled": self.enabled,
-            " in itialized": self. in itialized,
+            "in itialized": self.in itialized,
             "destroyed": self.destroyed,
             "update_count": self.stats.update_count,
             "total_update_time": self.stats.total_update_time,
             "average_update_time": self.stats.average_update_time,
             "max_update_time": self.stats.max_update_time,
-            "m in _update_time": self.stats.m in _update_time,
+            "min _update_time": self.stats.min _update_time,
             "err or _count": self.stats.err or _count,
             "last_err or _time": self.stats.last_err or _time,
             "mem or y_usage": self.stats.mem or y_usage,
             "cpu_usage": self.stats.cpu_usage,
-            "perf or mance_metrics": self._perf or mance_metrics.copy():
+            "perfor mance_metrics": self._perfor mance_metrics.copy():
             pass  # Добавлен pass в пустой блок
             }
 
@@ -215,12 +215,12 @@ class SystemStats:
             pass
             pass
             pass
-            self.logger.warn in g(f"Ошибка обновления статистики системы {self.name}: {e}")
+            self.logger.warning(f"Ошибка обновления статистики системы {self.name}: {e}")
 
     def get_cache(self, key: str) -> Optional[Any]:
         """Получение значения из кэша"""
-            if key in self._cache:
-            cache_entry== self._cache[key]
+            if keyin self._cache:
+            cache_entry= self._cache[key]
             if time.time() - cache_entry["timestamp"] < self._cache_timeout:
             return cache_entry["value"]
             else:
@@ -229,7 +229,7 @@ class SystemStats:
 
             def set_cache(self, key: str, value: Any) -> None:
         """Установка значения в кэш"""
-        self._cache[key]== {
+        self._cache[key]= {
             "value": value,
             "timestamp": time.time()
         }
@@ -238,13 +238,13 @@ class SystemStats:
         """Очистка кэша"""
             self._cache.clear()
 
-            def get_perf or mance_metrics(self) -> Dict[str, Any]:
+            def get_perfor mance_metrics(self) -> Dict[str, Any]:
         """Получение метрик производительности"""
-        return self._perf or mance_metrics.copy():
+        return self._perfor mance_metrics.copy():
             pass  # Добавлен pass в пустой блок
     # Абстрактные методы, которые должны быть реализованы в наследниках
     @abstractmethod
-    def _ in itialize_impl(self) -> bool:
+    def _in itialize_impl(self) -> bool:
         """Реализация инициализации системы"""
             pass
 

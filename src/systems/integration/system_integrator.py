@@ -2,32 +2,32 @@
     Система интеграции - связывание всех игровых систем для демонстрации
 """
 
-imp or t time
-from typ in g imp or t Dict, L is t, Optional, Callable, Any, Union
-from dataclasses imp or t dataclass, field:
+import time
+from typing import Dict, Lis t, Optional, Callable, Any, Union
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from enum imp or t Enum
+from enum import Enum
 
-from src.c or e.architecture imp or t BaseComponent, ComponentType, Pri or ity
+from src.c or e.architecture import BaseComponent, ComponentType, Pri or ity
 
 
 class IntegrationType(Enum):
     """Типы интеграции"""
-        UI_INTEGRATION== "ui_ in tegration"           # Интеграция с UI
-        HUD_INTEGRATION== "hud_ in tegration"         # Интеграция с HUD
-        COMBAT_INTEGRATION== "combat_ in tegration"   # Интеграция с боевой системой
-        HEALTH_INTEGRATION== "health_ in tegration"   # Интеграция с системой здоровья
-        INVENTORY_INTEGRATION== " in vent or y_ in tegration"  # Интеграция с инвентарем
-        SKILLS_INTEGRATION== "skills_ in tegration"   # Интеграция с навыками
-        EFFECTS_INTEGRATION== "effects_ in tegration" # Интеграция с эффектами
+        UI_INTEGRATION= "ui_in tegration"           # Интеграция с UI
+        HUD_INTEGRATION= "hud_in tegration"         # Интеграция с HUD
+        COMBAT_INTEGRATION= "combat_in tegration"   # Интеграция с боевой системой
+        HEALTH_INTEGRATION= "health_in tegration"   # Интеграция с системой здоровья
+        INVENTORY_INTEGRATION= "in vent or y_in tegration"  # Интеграция с инвентарем
+        SKILLS_INTEGRATION= "skills_in tegration"   # Интеграция с навыками
+        EFFECTS_INTEGRATION= "effects_in tegration" # Интеграция с эффектами
 
 
         class IntegrationStatus(Enum):
     """Статус интеграции"""
-    NOT_INTEGRATED== "not_ in tegrated"
-    PARTIALLY_INTEGRATED== "partially_ in tegrated"
-    FULLY_INTEGRATED== "fully_ in tegrated"
-    ERROR== "err or "
+    NOT_INTEGRATED= "not_in tegrated"
+    PARTIALLY_INTEGRATED= "partially_in tegrated"
+    FULLY_INTEGRATED= "fully_in tegrated"
+    ERROR= "err or "
 
 
 @dataclass:
@@ -37,9 +37,9 @@ class IntegrationInfo:
         system_name: str
         integration_type: IntegrationType
         status: IntegrationStatus
-        last_update: float== 0.0
-        err or _message: str== ""
-        integration_data: Dict[str, Any]== field(default_factor == dict):
+        last_update: float= 0.0
+        err or _message: str= ""
+        integration_data: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -48,10 +48,10 @@ class IntegrationInfo:
     scenario_id: str
     name: str
     description: str
-    systems_required: L is t[str]
-    setup_function: Optional[Callable]== None
-    cleanup_function: Optional[Callable]== None
-    is_active: bool== False
+    systems_required: Lis t[str]
+    setup_function: Optional[Callable]= None
+    cleanup_function: Optional[Callable]= None
+    is_active: bool= False
 
 
 class SystemIntegrat or(BaseComponent):
@@ -60,94 +60,94 @@ class SystemIntegrat or(BaseComponent):
         Связывает все игровые системы для демонстрации и тестирования
     """
 
-    def __ in it__(self):
-        super().__ in it__(
-            nam == "SystemIntegrat or ",
-            component_typ == ComponentType.SYSTEM,
-            pri or it == Pri or ity.HIGH
+    def __in it__(self):
+        super().__in it__(
+            nam = "SystemIntegrat or ",
+            component_typ = ComponentType.SYSTEM,
+            pri or it = Pri or ity.HIGH
         )
 
         # Информация об интеграции
-        self. in tegration_status: Dict[str, IntegrationInfo]== {}
+        self.in tegration_status: Dict[str, IntegrationInfo]= {}
 
         # Демо сценарии
-        self.demo_scenarios: L is t[DemoScenario]== [
+        self.demo_scenarios: Lis t[DemoScenario]= [
             DemoScenario(
-                scenario_i == "combat_demo",
-                nam == "Демонстрация боевой системы",
-                descriptio == "Показывает работу боевой системы с инициативой, позиционированием и типами атак",
-                systems_require == ["CombatSystem", "HealthSystem", "DamageSystem", "UISystem", "HUDSystem"],
-                setup_functio == self._setup_combat_demo,
-                cleanup_functio == self._cleanup_combat_demo
+                scenario_i = "combat_demo",
+                nam = "Демонстрация боевой системы",
+                descriptio = "Показывает работу боевой системы с инициативой, позиционированием и типами атак",
+                systems_require = ["CombatSystem", "HealthSystem", "DamageSystem", "UISystem", "HUDSystem"],
+                setup_functio = self._setup_combat_demo,
+                cleanup_functio = self._cleanup_combat_demo
             ),
             DemoScenario(
-                scenario_i == "health_demo",
-                nam == "Демонстрация системы здоровья",
-                descriptio == "Показывает работу системы здоровья с ресурсами, состояниями и регенерацией",
-                systems_require == ["HealthSystem", "UISystem", "HUDSystem"],
-                setup_functio == self._setup_health_demo,
-                cleanup_functio == self._cleanup_health_demo
+                scenario_i = "health_demo",
+                nam = "Демонстрация системы здоровья",
+                descriptio = "Показывает работу системы здоровья с ресурсами, состояниями и регенерацией",
+                systems_require = ["HealthSystem", "UISystem", "HUDSystem"],
+                setup_functio = self._setup_health_demo,
+                cleanup_functio = self._cleanup_health_demo
             ),
             DemoScenario(
-                scenario_i == "invent or y_demo",
-                nam == "Демонстрация системы инвентаря",
-                descriptio == "Показывает работу системы инвентаря с предметами, экипировкой и крафтингом",
-                systems_require == ["Invent or ySystem", "UISystem", "HUDSystem"],
-                setup_functio == self._setup_ in vent or y_demo,
-                cleanup_functio == self._cleanup_ in vent or y_demo
+                scenario_i = "invent or y_demo",
+                nam = "Демонстрация системы инвентаря",
+                descriptio = "Показывает работу системы инвентаря с предметами, экипировкой и крафтингом",
+                systems_require = ["Invent or ySystem", "UISystem", "HUDSystem"],
+                setup_functio = self._setup_in vent or y_demo,
+                cleanup_functio = self._cleanup_in vent or y_demo
             ),
             DemoScenario(
-                scenario_i == "skills_demo",
-                nam == "Демонстрация системы навыков",
-                descriptio == "Показывает работу системы навыков с типами, категориями и деревьями",
-                systems_require == ["SkillSystem", "UISystem", "HUDSystem"],
-                setup_functio == self._setup_skills_demo,
-                cleanup_functio == self._cleanup_skills_demo
+                scenario_i = "skills_demo",
+                nam = "Демонстрация системы навыков",
+                descriptio = "Показывает работу системы навыков с типами, категориями и деревьями",
+                systems_require = ["SkillSystem", "UISystem", "HUDSystem"],
+                setup_functio = self._setup_skills_demo,
+                cleanup_functio = self._cleanup_skills_demo
             ),
             DemoScenario(
-                scenario_i == "effects_demo",
-                nam == "Демонстрация системы эффектов",
-                descriptio == "Показывает работу системы эффектов с типами, комбинациями и цепочками",
-                systems_require == ["EffectSystem", "UISystem", "HUDSystem"],
-                setup_functio == self._setup_effects_demo,
-                cleanup_functio == self._cleanup_effects_demo
+                scenario_i = "effects_demo",
+                nam = "Демонстрация системы эффектов",
+                descriptio = "Показывает работу системы эффектов с типами, комбинациями и цепочками",
+                systems_require = ["EffectSystem", "UISystem", "HUDSystem"],
+                setup_functio = self._setup_effects_demo,
+                cleanup_functio = self._cleanup_effects_demo
             ),
             DemoScenario(
-                scenario_i == "evolution_demo",
-                nam == "Демонстрация системы эволюции",
-                descriptio == "Показывает работу системы эволюции с генами, мутациями и эволюционными деревьями",
-                systems_require == ["EvolutionSystem", "UISystem", "HUDSystem"],
-                setup_functio == self._setup_evolution_demo,
-                cleanup_functio == self._cleanup_evolution_demo
+                scenario_i = "evolution_demo",
+                nam = "Демонстрация системы эволюции",
+                descriptio = "Показывает работу системы эволюции с генами, мутациями и эволюционными деревьями",
+                systems_require = ["EvolutionSystem", "UISystem", "HUDSystem"],
+                setup_functio = self._setup_evolution_demo,
+                cleanup_functio = self._cleanup_evolution_demo
             ),
             DemoScenario(
-                scenario_i == "full_ in tegration_demo",
-                nam == "Полная интеграция всех систем",
-                descriptio == "Демонстрирует работу всех систем вместе",
-                systems_require == ["UISystem", "HUDSystem", "CombatSystem", "HealthSystem",
+                scenario_i = "full_in tegration_demo",
+                nam = "Полная интеграция всех систем",
+                descriptio = "Демонстрирует работу всех систем вместе",
+                systems_require = ["UISystem", "HUDSystem", "CombatSystem", "HealthSystem",
                                 "Invent or ySystem", "SkillSystem", "EffectSystem", "EvolutionSystem"],
-                setup_functio == self._setup_full_ in tegration,
-                cleanup_functio == self._cleanup_full_ in tegration
+                setup_functio = self._setup_full_in tegration,
+                cleanup_functio = self._cleanup_full_in tegration
             )
         ]
-        self.active_scenario: Optional[str]== None
+        self.active_scenario: Optional[str]= None
 
         # Системы для интеграции
-        self.target_systems: Dict[str, Any]== {}
+        self.target_systems: Dict[str, Any]= {}
 
         # Настройки
-        self.auto_ in tegration== True
-        self. in tegration_ in terval== 1.0  # секунды
-        self.last_ in tegration_time== 0.0
+        self.auto_in tegration= True
+        self.in tegration_in terval= 1.0  # секунды
+        self.last_in tegration_time= 0.0
 
-    def _on_ in itialize(self) -> bool:
+    def _on_in itialize(self) -> bool:
         """Инициализация системы интеграции"""
             try:
             # Создание демо сценариев
             self._create_demo_scenarios()
 
             # Настройка интеграции
-            self._setup_ in tegration()
+            self._setup_in tegration()
 
             return True
             except Exception as e:
@@ -160,107 +160,107 @@ class SystemIntegrat or(BaseComponent):
             def _create_demo_scenarios(self):
         """Создание демо сценариев"""
         # Сценарий 1: Демонстрация боевой системы
-        combat_scenario== DemoScenario(
-            scenario_i == "combat_demo",
-            nam == "Демонстрация боевой системы",
-            descriptio == "Показывает работу боевой системы с инициативой, позиционированием и типами атак",
-            systems_require == ["CombatSystem", "HealthSystem", "DamageSystem", "UISystem", "HUDSystem"],
-            setup_functio == self._setup_combat_demo,
-            cleanup_functio == self._cleanup_combat_demo
+        combat_scenario= DemoScenario(
+            scenario_i = "combat_demo",
+            nam = "Демонстрация боевой системы",
+            descriptio = "Показывает работу боевой системы с инициативой, позиционированием и типами атак",
+            systems_require = ["CombatSystem", "HealthSystem", "DamageSystem", "UISystem", "HUDSystem"],
+            setup_functio = self._setup_combat_demo,
+            cleanup_functio = self._cleanup_combat_demo
         )
-        self.demo_scenarios["combat_demo"]== combat_scenario
+        self.demo_scenarios["combat_demo"]= combat_scenario
 
         # Сценарий 2: Демонстрация системы здоровья
-        health_scenario== DemoScenario(
-            scenario_i == "health_demo",
-            nam == "Демонстрация системы здоровья",
-            descriptio == "Показывает работу системы здоровья с ресурсами, состояниями и регенерацией",
-            systems_require == ["HealthSystem", "UISystem", "HUDSystem"],
-            setup_functio == self._setup_health_demo,
-            cleanup_functio == self._cleanup_health_demo
+        health_scenario= DemoScenario(
+            scenario_i = "health_demo",
+            nam = "Демонстрация системы здоровья",
+            descriptio = "Показывает работу системы здоровья с ресурсами, состояниями и регенерацией",
+            systems_require = ["HealthSystem", "UISystem", "HUDSystem"],
+            setup_functio = self._setup_health_demo,
+            cleanup_functio = self._cleanup_health_demo
         )
-        self.demo_scenarios["health_demo"]== health_scenario
+        self.demo_scenarios["health_demo"]= health_scenario
 
         # Сценарий 3: Демонстрация инвентаря
-        invent or y_scenario== DemoScenario(
-            scenario_i == "invent or y_demo",
-            nam == "Демонстрация системы инвентаря",
-            descriptio == "Показывает работу системы инвентаря с предметами, экипировкой и крафтингом",
-            systems_require == ["Invent or ySystem", "UISystem", "HUDSystem"],
-            setup_functio == self._setup_ in vent or y_demo,
-            cleanup_functio == self._cleanup_ in vent or y_demo
+        invent or y_scenario= DemoScenario(
+            scenario_i = "invent or y_demo",
+            nam = "Демонстрация системы инвентаря",
+            descriptio = "Показывает работу системы инвентаря с предметами, экипировкой и крафтингом",
+            systems_require = ["Invent or ySystem", "UISystem", "HUDSystem"],
+            setup_functio = self._setup_in vent or y_demo,
+            cleanup_functio = self._cleanup_in vent or y_demo
         )
-        self.demo_scenarios[" in vent or y_demo"]== invent or y_scenario
+        self.demo_scenarios["in vent or y_demo"]= invent or y_scenario
 
         # Сценарий 4: Демонстрация навыков
-        skills_scenario== DemoScenario(
-            scenario_i == "skills_demo",
-            nam == "Демонстрация системы навыков",
-            descriptio == "Показывает работу системы навыков с типами, категориями и деревьями",
-            systems_require == ["SkillSystem", "UISystem", "HUDSystem"],
-            setup_functio == self._setup_skills_demo,
-            cleanup_functio == self._cleanup_skills_demo
+        skills_scenario= DemoScenario(
+            scenario_i = "skills_demo",
+            nam = "Демонстрация системы навыков",
+            descriptio = "Показывает работу системы навыков с типами, категориями и деревьями",
+            systems_require = ["SkillSystem", "UISystem", "HUDSystem"],
+            setup_functio = self._setup_skills_demo,
+            cleanup_functio = self._cleanup_skills_demo
         )
-        self.demo_scenarios["skills_demo"]== skills_scenario
+        self.demo_scenarios["skills_demo"]= skills_scenario
 
         # Сценарий 5: Демонстрация эффектов
-        effects_scenario== DemoScenario(
-            scenario_i == "effects_demo",
-            nam == "Демонстрация системы эффектов",
-            descriptio == "Показывает работу системы эффектов с типами, комбинациями и цепочками",
-            systems_require == ["EffectSystem", "UISystem", "HUDSystem"],
-            setup_functio == self._setup_effects_demo,
-            cleanup_functio == self._cleanup_effects_demo
+        effects_scenario= DemoScenario(
+            scenario_i = "effects_demo",
+            nam = "Демонстрация системы эффектов",
+            descriptio = "Показывает работу системы эффектов с типами, комбинациями и цепочками",
+            systems_require = ["EffectSystem", "UISystem", "HUDSystem"],
+            setup_functio = self._setup_effects_demo,
+            cleanup_functio = self._cleanup_effects_demo
         )
-        self.demo_scenarios["effects_demo"]== effects_scenario
+        self.demo_scenarios["effects_demo"]= effects_scenario
 
         # Сценарий 6: Полная интеграция
-        full_scenario== DemoScenario(
-            scenario_i == "full_ in tegration",
-            nam == "Полная интеграция всех систем",
-            descriptio == "Демонстрирует работу всех систем вместе",
-            systems_require == ["CombatSystem", "HealthSystem", "Invent or ySystem", "SkillSystem", "EffectSystem", "UISystem", "HUDSystem"],
-            setup_functio == self._setup_full_ in tegration,
-            cleanup_functio == self._cleanup_full_ in tegration
+        full_scenario= DemoScenario(
+            scenario_i = "full_in tegration",
+            nam = "Полная интеграция всех систем",
+            descriptio = "Демонстрирует работу всех систем вместе",
+            systems_require = ["CombatSystem", "HealthSystem", "Invent or ySystem", "SkillSystem", "EffectSystem", "UISystem", "HUDSystem"],
+            setup_functio = self._setup_full_in tegration,
+            cleanup_functio = self._cleanup_full_in tegration
         )
-        self.demo_scenarios["full_ in tegration"]== full_scenario
+        self.demo_scenarios["full_in tegration"]= full_scenario
 
-    def _setup_ in tegration(self):
+    def _setup_in tegration(self):
         """Настройка интеграции"""
-            self.auto_ in tegration== True
-            self. in tegration_ in terval== 1.0
+            self.auto_in tegration= True
+            self.in tegration_in terval= 1.0
 
             # Регистрация систем
-            def reg is ter_system(self, system_name: str, system_ in stance: Any):
+            def regis ter_system(self, system_name: str, system_in stance: Any):
         """Зарегистрировать систему для интеграции"""
-        self.target_systems[system_name]== system_ in stance
+        self.target_systems[system_name]= system_in stance
 
         # Создаем информацию об интеграции
-        integration_ in fo== IntegrationInfo(
-            system_nam == system_name,
-            integration_typ == IntegrationType.UI_INTEGRATION,  # По умолчанию
-            statu == IntegrationStatus.NOT_INTEGRATED
+        integration_in fo= IntegrationInfo(
+            system_nam = system_name,
+            integration_typ = IntegrationType.UI_INTEGRATION,  # По умолчанию
+            statu = IntegrationStatus.NOT_INTEGRATED
         )
-        self. in tegration_status[system_name]== integration_ in fo
+        self.in tegration_status[system_name]= integration_in fo
 
-        self.logger. in fo(f"Зарегистрирована система: {system_name}")
+        self.logger.in fo(f"Зарегистрирована система: {system_name}")
 
-    def unreg is ter_system(self, system_name: str):
+    def unregis ter_system(self, system_name: str):
         """Отменить регистрацию системы"""
-            if system_name in self.target_systems:
+            if system_namein self.target_systems:
             del self.target_systems[system_name]
 
-            if system_name in self. in tegration_status:
-            del self. in tegration_status[system_name]
+            if system_namein self.in tegration_status:
+            del self.in tegration_status[system_name]
 
-            self.logger. in fo(f"Отменена регистрация системы: {system_name}")
+            self.logger.in fo(f"Отменена регистрация системы: {system_name}")
 
             # Управление интеграцией
             def integrate_system(self, system_name: str
             integration_type: IntegrationType):
             pass  # Добавлен pass в пустой блок
         """Интегрировать систему"""
-        if system_name not in self.target_systems:
+        if system_name notin self.target_systems:
             self.logger.err or(f"Система {system_name} не зарегистрирована")
             return False
 
@@ -269,47 +269,47 @@ class SystemIntegrat or(BaseComponent):
             pass
             pass
             pass
-            integration_ in fo== self. in tegration_status[system_name]
-            integration_ in fo.status== IntegrationStatus.ERROR
-            integration_ in fo.err or _message== str(e)
+            integration_in fo= self.in tegration_status[system_name]
+            integration_in fo.status= IntegrationStatus.ERROR
+            integration_in fo.err or _message= str(e)
             self.logger.err or(f"Исключение при интеграции {system_name}: {e}")
             return False
 
     def integrate_all_systems(self):
         """Интегрировать все системы"""
-            self.logger. in fo("Начинаем интеграцию всех систем...")
+            self.logger.in fo("Начинаем интеграцию всех систем...")
 
-            success_count== 0
-            total_count== len(self.target_systems)
+            success_count= 0
+            total_count= len(self.target_systems)
 
-            for system_name in self.target_systems:
+            for system_namein self.target_systems:
             # Определяем тип интеграции по имени системы
-            if "UI" in system_name:
-            integration_type== IntegrationType.UI_INTEGRATION
-            elif "HUD" in system_name:
-            integration_type== IntegrationType.HUD_INTEGRATION
-            elif "Combat" in system_name:
-            integration_type== IntegrationType.COMBAT_INTEGRATION
-            elif "Health" in system_name:
-            integration_type== IntegrationType.HEALTH_INTEGRATION
-            elif "Invent or y" in system_name:
-            integration_type== IntegrationType.INVENTORY_INTEGRATION
-            elif "Skill" in system_name:
-            integration_type== IntegrationType.SKILLS_INTEGRATION
-            elif "Effect" in system_name:
-            integration_type== IntegrationType.EFFECTS_INTEGRATION
+            if "UI"in system_name:
+            integration_type= IntegrationType.UI_INTEGRATION
+            elif "HUD"in system_name:
+            integration_type= IntegrationType.HUD_INTEGRATION
+            elif "Combat"in system_name:
+            integration_type= IntegrationType.COMBAT_INTEGRATION
+            elif "Health"in system_name:
+            integration_type= IntegrationType.HEALTH_INTEGRATION
+            elif "Invent or y"in system_name:
+            integration_type= IntegrationType.INVENTORY_INTEGRATION
+            elif "Skill"in system_name:
+            integration_type= IntegrationType.SKILLS_INTEGRATION
+            elif "Effect"in system_name:
+            integration_type= IntegrationType.EFFECTS_INTEGRATION
             else:
-            integration_type== IntegrationType.UI_INTEGRATION
+            integration_type= IntegrationType.UI_INTEGRATION
 
-            if self. in tegrate_system(system_name, integration_type):
-            success_count == 1
+            if self.in tegrate_system(system_name, integration_type):
+            success_count = 1
 
-            self.logger. in fo(f"Интеграция завершена: {success_count} / {total_count} систем успешно интегрированы")
-            return success_count == total_count
+            self.logger.in fo(f"Интеграция завершена: {success_count} / {total_count} систем успешно интегрированы")
+            return success_count = total_count
 
             # Методы интеграции по типам
-            def _ in tegrate_with_ui(self, system_name: str
-            system_ in stance: Any) -> bool:
+            def _in tegrate_with_ui(self, system_name: str
+            system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с UI системой"""
         try:
@@ -320,24 +320,24 @@ class SystemIntegrat or(BaseComponent):
             self.logger.err or(f"Ошибка интеграции {system_name} с UI: {e}")
             return False
 
-    def _ in tegrate_with_hud(self, system_name: str
-        system_ in stance: Any) -> bool:
+    def _in tegrate_with_hud(self, system_name: str
+        system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с HUD системой"""
             try:
             # Проверяем, есть ли HUD система
-            if "HUDSystem" not in self.target_systems:
+            if "HUDSystem" notin self.target_systems:
             return False
 
-            hud_system== self.target_systems["HUDSystem"]
+            hud_system= self.target_systems["HUDSystem"]
 
             # Регистрируем HUD элементы для системы
-            if hasattr(system_ in stance, 'create_hud_elements'):
-            system_ in stance.create_hud_elements(hud_system)
+            if hasattr(system_in stance, 'create_hud_elements'):
+            system_in stance.create_hud_elements(hud_system)
 
             # Регистрируем обновления HUD
-            if hasattr(system_ in stance, 'reg is ter_hud_updates'):
-            system_ in stance.reg is ter_hud_updates(hud_system)
+            if hasattr(system_in stance, 'regis ter_hud_updates'):
+            system_in stance.regis ter_hud_updates(hud_system)
 
             return True
 
@@ -348,8 +348,8 @@ class SystemIntegrat or(BaseComponent):
             self.logger.err or(f"Ошибка интеграции {system_name} с HUD: {e}")
             return False
 
-            def _ in tegrate_with_combat(self, system_name: str
-            system_ in stance: Any) -> bool:
+            def _in tegrate_with_combat(self, system_name: str
+            system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с боевой системой"""
         try:
@@ -360,20 +360,20 @@ class SystemIntegrat or(BaseComponent):
             self.logger.err or(f"Ошибка интеграции {system_name} с боевой системой: {e}")
             return False
 
-    def _ in tegrate_with_health(self, system_name: str
-        system_ in stance: Any) -> bool:
+    def _in tegrate_with_health(self, system_name: str
+        system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с системой здоровья"""
             try:
             # Проверяем, есть ли система здоровья
-            if "HealthSystem" not in self.target_systems:
+            if "HealthSystem" notin self.target_systems:
             return False
 
-            health_system== self.target_systems["HealthSystem"]
+            health_system= self.target_systems["HealthSystem"]
 
             # Регистрируем обработчики здоровья
-            if hasattr(system_ in stance, 'reg is ter_health_h and lers'):
-            system_ in stance.reg is ter_health_h and lers(health_system)
+            if hasattr(system_in stance, 'regis ter_health_hand lers'):
+            system_in stance.regis ter_health_hand lers(health_system)
 
             return True
 
@@ -384,8 +384,8 @@ class SystemIntegrat or(BaseComponent):
             self.logger.err or(f"Ошибка интеграции {system_name} с системой здоровья: {e}")
             return False
 
-            def _ in tegrate_with_ in vent or y(self, system_name: str
-            system_ in stance: Any) -> bool:
+            def _in tegrate_with_in vent or y(self, system_name: str
+            system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с системой инвентаря"""
         try:
@@ -396,20 +396,20 @@ class SystemIntegrat or(BaseComponent):
             self.logger.err or(f"Ошибка интеграции {system_name} с системой инвентаря: {e}")
             return False
 
-    def _ in tegrate_with_skills(self, system_name: str
-        system_ in stance: Any) -> bool:
+    def _in tegrate_with_skills(self, system_name: str
+        system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с системой навыков"""
             try:
             # Проверяем, есть ли система навыков
-            if "SkillSystem" not in self.target_systems:
+            if "SkillSystem" notin self.target_systems:
             return False
 
-            skill_system== self.target_systems["SkillSystem"]
+            skill_system= self.target_systems["SkillSystem"]
 
             # Регистрируем обработчики навыков
-            if hasattr(system_ in stance, 'reg is ter_skill_h and lers'):
-            system_ in stance.reg is ter_skill_h and lers(skill_system)
+            if hasattr(system_in stance, 'regis ter_skill_hand lers'):
+            system_in stance.regis ter_skill_hand lers(skill_system)
 
             return True
 
@@ -420,8 +420,8 @@ class SystemIntegrat or(BaseComponent):
             self.logger.err or(f"Ошибка интеграции {system_name} с системой навыков: {e}")
             return False
 
-            def _ in tegrate_with_effects(self, system_name: str
-            system_ in stance: Any) -> bool:
+            def _in tegrate_with_effects(self, system_name: str
+            system_in stance: Any) -> bool:
             pass  # Добавлен pass в пустой блок
         """Интегрировать с системой эффектов"""
         try:
@@ -435,7 +435,7 @@ class SystemIntegrat or(BaseComponent):
     # Управление демо сценариями
     def start_demo_scenario(self, scenario_id: str) -> bool:
         """Запустить демо сценарий"""
-            if scenario_id not in self.demo_scenarios:
+            if scenario_id notin self.demo_scenarios:
             self.logger.err or(f"Сценарий {scenario_id} не найден")
             return False
 
@@ -443,16 +443,16 @@ class SystemIntegrat or(BaseComponent):
             if self.active_scenario:
             self.stop_demo_scenario()
 
-            scenario== self.demo_scenarios[scenario_id]
+            scenario= self.demo_scenarios[scenario_id]
 
             # Проверяем доступность систем
-            m is sing_systems== []
-            for system_name in scenario.systems_required:
-            if system_name not in self.target_systems:
-            m is sing_systems.append(system_name)
+            mis sing_systems= []
+            for system_namein scenario.systems_required:
+            if system_name notin self.target_systems:
+            mis sing_systems.append(system_name)
 
-            if m is sing_systems:
-            self.logger.err or(f"Недоступны системы для сценария {scenario_id}: {m is sing_systems}")
+            if mis sing_systems:
+            self.logger.err or(f"Недоступны системы для сценария {scenario_id}: {mis sing_systems}")
             return False
 
             # Запускаем сценарий
@@ -460,10 +460,10 @@ class SystemIntegrat or(BaseComponent):
             if scenario.setup_function:
             scenario.setup_function()
 
-            scenario. is _active== True
-            self.active_scenario== scenario_id
+            scenario.is _active= True
+            self.active_scenario= scenario_id
 
-            self.logger. in fo(f"Запущен демо сценарий: {scenario.name}")
+            self.logger.in fo(f"Запущен демо сценарий: {scenario.name}")
             return True
 
             except Exception as e:
@@ -478,7 +478,7 @@ class SystemIntegrat or(BaseComponent):
         if not self.active_scenario:
             return
 
-        scenario== self.demo_scenarios[self.active_scenario]
+        scenario= self.demo_scenarios[self.active_scenario]
 
         try:
         except Exception as e:
@@ -493,21 +493,21 @@ class SystemIntegrat or(BaseComponent):
             return self.demo_scenarios[self.active_scenario]
             return None
 
-            def l is t_demo_scenarios(self) -> L is t[DemoScenario]:
+            def lis t_demo_scenarios(self) -> Lis t[DemoScenario]:
         """Получить список всех демо сценариев"""
-        return l is t(self.demo_scenarios.values())
+        return lis t(self.demo_scenarios.values())
 
     # Настройка демо сценариев
     def _setup_combat_demo(self):
         """Настройка демо боевой системы"""
             try:
             # Создаем тестовые сущности
-            combat_system== self.target_systems.get("CombatSystem")
+            combat_system= self.target_systems.get("CombatSystem")
             if combat_system:
             # TODO: Создание тестовых сущностей для демо
             pass
 
-            self.logger. in fo("Настроен демо сценарий боевой системы")
+            self.logger.in fo("Настроен демо сценарий боевой системы")
 
             except Exception as e:
             pass
@@ -528,7 +528,7 @@ class SystemIntegrat or(BaseComponent):
         """Настройка демо системы здоровья"""
             try:
             # TODO: Настройка демо системы здоровья
-            self.logger. in fo("Настроен демо сценарий системы здоровья")
+            self.logger.in fo("Настроен демо сценарий системы здоровья")
 
             except Exception as e:
             pass
@@ -545,11 +545,11 @@ class SystemIntegrat or(BaseComponent):
             pass
             self.logger.err or(f"Ошибка очистки демо системы здоровья: {e}")
 
-    def _setup_ in vent or y_demo(self):
+    def _setup_in vent or y_demo(self):
         """Настройка демо системы инвентаря"""
             try:
             # TODO: Настройка демо системы инвентаря
-            self.logger. in fo("Настроен демо сценарий системы инвентаря")
+            self.logger.in fo("Настроен демо сценарий системы инвентаря")
 
             except Exception as e:
             pass
@@ -557,7 +557,7 @@ class SystemIntegrat or(BaseComponent):
             pass
             self.logger.err or(f"Ошибка настройки демо системы инвентаря: {e}")
 
-            def _cleanup_ in vent or y_demo(self):
+            def _cleanup_in vent or y_demo(self):
         """Очистка демо системы инвентаря"""
         try:
         except Exception as e:
@@ -570,7 +570,7 @@ class SystemIntegrat or(BaseComponent):
         """Настройка демо системы навыков"""
             try:
             # TODO: Настройка демо системы навыков
-            self.logger. in fo("Настроен демо сценарий системы навыков")
+            self.logger.in fo("Настроен демо сценарий системы навыков")
 
             except Exception as e:
             pass
@@ -591,7 +591,7 @@ class SystemIntegrat or(BaseComponent):
         """Настройка демо системы эффектов"""
             try:
             # TODO: Настройка демо системы эффектов
-            self.logger. in fo("Настроен демо сценарий системы эффектов")
+            self.logger.in fo("Настроен демо сценарий системы эффектов")
 
             except Exception as e:
             pass
@@ -612,7 +612,7 @@ class SystemIntegrat or(BaseComponent):
         """Настройка демо системы эволюции"""
             try:
             # TODO: Настройка демо системы эволюции
-            self.logger. in fo("Настроен демо сценарий системы эволюции")
+            self.logger.in fo("Настроен демо сценарий системы эволюции")
 
             except Exception as e:
             pass
@@ -629,11 +629,11 @@ class SystemIntegrat or(BaseComponent):
             pass
             self.logger.err or(f"Ошибка очистки демо системы эволюции: {e}")
 
-    def _setup_full_ in tegration(self):
+    def _setup_full_in tegration(self):
         """Настройка полной интеграции"""
             try:
             # TODO: Настройка полной интеграции всех систем
-            self.logger. in fo("Настроен демо сценарий полной интеграции")
+            self.logger.in fo("Настроен демо сценарий полной интеграции")
 
             except Exception as e:
             pass
@@ -641,7 +641,7 @@ class SystemIntegrat or(BaseComponent):
             pass
             self.logger.err or(f"Ошибка настройки полной интеграции: {e}")
 
-            def _cleanup_full_ in tegration(self):
+            def _cleanup_full_in tegration(self):
         """Очистка полной интеграции"""
         try:
         except Exception as e:
@@ -653,50 +653,50 @@ class SystemIntegrat or(BaseComponent):
     # Обновление системы
     def update(self, delta_time: float):
         """Обновить систему интеграции"""
-            current_time== time.time()
+            current_time= time.time()
 
             # Проверяем, нужно ли выполнять автоматическую интеграцию
-            if self.auto_ in tegration and(current_time - self.last_ in tegration_time >= self. in tegration_ in terval):
-            self. in tegrate_all_systems()
-            self.last_ in tegration_time== current_time
+            if self.auto_in tegration and(current_time - self.last_in tegration_time >= self.in tegration_in terval):
+            self.in tegrate_all_systems()
+            self.last_in tegration_time= current_time
 
             # Публичные методы
-            def get_ in tegration_status(self) -> Dict[str, IntegrationInfo]:
+            def get_in tegration_status(self) -> Dict[str, IntegrationInfo]:
         """Получить статус интеграции всех систем"""
-        return self. in tegration_status.copy()
+        return self.in tegration_status.copy()
 
-    def get_system_ in tegration_status(self
+    def get_system_in tegration_status(self
         system_name: str) -> Optional[IntegrationInfo]:
             pass  # Добавлен pass в пустой блок
         """Получить статус интеграции конкретной системы"""
-            return self. in tegration_status.get(system_name)
+            return self.in tegration_status.get(system_name)
 
-            def get_reg is tered_systems(self) -> L is t[str]:
+            def get_regis tered_systems(self) -> Lis t[str]:
         """Получить список зарегистрированных систем"""
-        return l is t(self.target_systems.keys())
+        return lis t(self.target_systems.keys())
 
-    def is_system_ in tegrated(self, system_name: str) -> bool:
+    def is_system_in tegrated(self, system_name: str) -> bool:
         """Проверить, интегрирована ли система"""
-            if system_name not in self. in tegration_status:
+            if system_name notin self.in tegration_status:
             return False
 
-            status== self. in tegration_status[system_name]
-            return status.status == IntegrationStatus.FULLY_INTEGRATED
+            status= self.in tegration_status[system_name]
+            return status.status = IntegrationStatus.FULLY_INTEGRATED
 
-            def get_ in tegration_summary(self) -> Dict[str, Any]:
+            def get_in tegration_summary(self) -> Dict[str, Any]:
         """Получить сводку по интеграции"""
-        total_systems== len(self. in tegration_status)
-        integrated_systems== sum(1 for info in self. in tegration_status.values() :
-                            if info.status == IntegrationStatus.FULLY_INTEGRATED):
+        total_systems= len(self.in tegration_status)
+        integrated_systems= sum(1 for infoin self.in tegration_status.values() :
+                            if info.status = IntegrationStatus.FULLY_INTEGRATED):
                                 pass  # Добавлен pass в пустой блок
-        err or _systems== sum(1 for info in self. in tegration_status.values() :
-                        if info.status == IntegrationStatus.ERROR):
+        err or _systems= sum(1 for infoin self.in tegration_status.values() :
+                        if info.status = IntegrationStatus.ERROR):
                             pass  # Добавлен pass в пустой блок
         return {
             "total_systems": total_systems,
-            " in tegrated_systems": integrated_systems,
+            "in tegrated_systems": integrated_systems,
             "err or _systems": err or _systems,
-            " in tegration_percentage": ( in tegrated_systems / total_systems * 100) if total_systems > 0 else 0,:
+            "in tegration_percentage": (in tegrated_systems / total_systems * 100) if total_systems > 0 else 0,:
                 pass  # Добавлен pass в пустой блок
             "active_scenario": self.active_scenario,
             "available_scenarios": len(self.demo_scenarios)

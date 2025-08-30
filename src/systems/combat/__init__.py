@@ -4,4 +4,4 @@
 """
 
 
-__all__== ['CombatSystem', 'CombatState', 'AttackType', 'DefenseType', 'CombatStats']
+__all__= ['CombatSystem', 'CombatState', 'AttackType', 'DefenseType', 'CombatStats']

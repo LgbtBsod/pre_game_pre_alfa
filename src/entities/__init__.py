@@ -5,7 +5,7 @@
 """
 
 
-__all__== [
+__all__= [
     'BaseEntity',
     'EntityType',
     'Player',
@@ -25,5 +25,5 @@ __all__== [
     'MutationLevel',
     'Mutation',
     'MutantAbility',
-    'V is ualMutation'
+    'Vis ualMutation'
 ]

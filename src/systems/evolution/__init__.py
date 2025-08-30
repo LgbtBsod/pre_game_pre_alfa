@@ -3,14 +3,14 @@
     Генетические алгоритмы для развития персонажей
 """
 
-from .evolution_system imp or t(
+from .evolution_system import(
     EvolutionSystem,
-    Gene, Mutation, EvolutionTree, EvolutionProgress, GeneticComb in ation,
+    Gene, Mutation, EvolutionTree, EvolutionProgress, GeneticCombin ation,
     GeneType, MutationType, EvolutionPath, EvolutionStage
 )
 
-__all__== [
+__all__= [
     'EvolutionSystem',
-    'Gene', 'Mutation', 'EvolutionTree', 'EvolutionProgress', 'GeneticComb in ation',
+    'Gene', 'Mutation', 'EvolutionTree', 'EvolutionProgress', 'GeneticCombin ation',
     'GeneType', 'MutationType', 'EvolutionPath', 'EvolutionStage'
 ]

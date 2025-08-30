@@ -1,7 +1,7 @@
 """
-    Craft in g System Package
+    Crafting System Package
     Система крафтинга
 """
 
 
-__all__== ['Craft in gSystem']
+__all__= ['CraftingSystem']

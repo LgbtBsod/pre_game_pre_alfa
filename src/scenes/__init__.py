@@ -5,10 +5,10 @@
 """
 
 
-__all__== [
+__all__= [
     'MenuScene',
     'GameScene',
     'PauseScene',
-    'Sett in gsScene',
+    'SettingsScene',
     'LoadScene'
 ]

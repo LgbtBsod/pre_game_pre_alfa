@@ -3,13 +3,13 @@
     Структуры данных для системы социального взаимодействия
 """
 
-imp or t time
-from typ in g imp or t Dict, L is t, Optional, Any
-from dataclasses imp or t dataclass, field:
+import time
+from typing import Dict, Lis t, Optional, Any
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from enum imp or t Enum
+from enum import Enum
 
-from ...c or e.constants imp or t constants_manager, RelationshipType
+from ...c or e.constants import constants_manager, RelationshipType
     InteractionType, ReputationType
 
 @dataclass:
@@ -20,26 +20,26 @@ class Relationship:
         entity_id: str
         target_id: str
         relationship_type: RelationshipType
-        strength: float== 0.0
-        trust_level: float== 0.0
-        last_ in teraction: float== field(default_factor == time.time):
+        strength: float= 0.0
+        trust_level: float= 0.0
+        last_in teraction: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        interaction_count: int== 0
-        shared_experiences: L is t[str]== field(default_factor == list):
+        interaction_count: int= 0
+        shared_experiences: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        notes: str== ""
+        notes: str= ""
 
         def update_strength(self, change: float):
         """Обновление силы отношения"""
-        self.strength== max( - 100.0, m in(100.0, self.strength + change))
+        self.strength= max( - 100.0, m in(100.0, self.strength + change))
 
     def update_trust(self, change: float):
         """Обновление уровня доверия"""
-            self.trust_level== max(0.0, m in(100.0, self.trust_level + change))
+            self.trust_level= max(0.0, m in(100.0, self.trust_level + change))
 
             def add_experience(self, experience_id: str):
         """Добавление общего опыта"""
-        if experience_id not in self.shared_experiences:
+        if experience_id notin self.shared_experiences:
             self.shared_experiences.append(experience_id)
 
     def get_relationship_status(self) -> str:
@@ -63,24 +63,24 @@ class Relationship:
     initiat or _id: str
     target_id: str
     interaction_type: InteractionType
-    success: bool== True
-    data: Dict[str, Any]== field(default_factor == dict):
+    success: bool= True
+    data: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-    timestamp: float== field(default_factor == time.time):
+    timestamp: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-    duration: float== 0.0
-    location: str== ""
-    witnesses: L is t[str]== field(default_factor == list):
+    duration: float= 0.0
+    location: str= ""
+    witnesses: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
     def add_witness(self, witness_id: str):
         """Добавление свидетеля взаимодействия"""
-            if witness_id not in self.witnesses:
+            if witness_id notin self.witnesses:
             self.witnesses.append(witness_id)
 
-            def get_ in teraction_summary(self) -> Dict[str, Any]:
+            def get_in teraction_summary(self) -> Dict[str, Any]:
         """Получение краткого описания взаимодействия"""
         return {
-            "type": self. in teraction_type.value,
+            "type": self.in teraction_type.value,
             "success": self.success,
             "duration": self.duration,
             "location": self.location,
@@ -93,22 +93,22 @@ class Reputation:
     """Репутация сущности"""
         entity_id: str
         reputation_type: ReputationType
-        value: float== 0.0
-        max_value: float== 100.0
-        m in _value: float== -100.0
-        decay_rate: float== 0.01
-        last_update: float== field(default_factor == time.time):
+        value: float= 0.0
+        max_value: float= 100.0
+        min _value: float= -100.0
+        decay_rate: float= 0.01
+        last_update: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        h is tory: L is t[Dict[str, Any]]== field(default_factor == list):
+        his tory: Lis t[Dict[str, Any]]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        def update_value(self, change: float, reason: str== ""):
+        def update_value(self, change: float, reason: str= ""):
         """Обновление значения репутации"""
-        old_value== self.value
-        self.value== max(self.m in _value, m in(self.max_value
+        old_value= self.value
+        self.value= max(self.min _value, m in(self.max_value
             self.value + change))
 
         # Запись в историю
-        self.h is tory.append({
+        self.his tory.append({
             "timestamp": time.time(),
             "old_value": old_value,
             "new_value": self.value,
@@ -117,17 +117,17 @@ class Reputation:
         })
 
         # Ограничение истории
-        if len(self.h is tory) > 100:
-            self.h is tory== self.h is tory[ - 100:]
+        if len(self.his tory) > 100:
+            self.his tory= self.his tory[ - 100:]
 
     def apply_decay(self, delta_time: float):
         """Применение затухания репутации"""
             if self.value != 0:
-            decay_amount== self.decay_rate * delta_time
+            decay_amount= self.decay_rate * delta_time
             if self.value > 0:
-            self.value== max(0, self.value - decay_amount)
+            self.value= max(0, self.value - decay_amount)
             else:
-            self.value== m in(0, self.value + decay_amount)
+            self.value= m in(0, self.value + decay_amount)
 
             def get_reputation_level(self) -> str:
         """Получение уровня репутации"""
@@ -147,44 +147,44 @@ class Reputation:
 class SocialNetw or k:
     """Социальная сеть сущности"""
         entity_id: str
-        connections: Dict[str, Relationship]== field(default_factor == dict):
+        connections: Dict[str, Relationship]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-        influence_radius: float== 10.0
-        max_connections: int== 50
-        netw or k_strength: float== 0.0
+        influence_radius: float= 10.0
+        max_connections: int= 50
+        netw or k_strength: float= 0.0
 
         def add_connection(self, relationship: Relationship):
         """Добавление связи в сеть"""
         if len(self.connections) < self.max_connections:
-            self.connections[relationship.target_id]== relationship
+            self.connections[relationship.target_id]= relationship
             self._update_netw or k_strength()
 
     def remove_connection(self, target_id: str):
         """Удаление связи из сети"""
-            if target_id in self.connections:
+            if target_idin self.connections:
             del self.connections[target_id]
             self._update_netw or k_strength()
 
             def _update_netw or k_strength(self):
         """Обновление силы сети"""
-        total_strength== sum(rel.strength for rel in self.connections.values()):
+        total_strength= sum(rel.strength for relin self.connections.values()):
             pass  # Добавлен pass в пустой блок
-        self.netw or k_strength== total_strength / max(1, len(self.connections))
+        self.netw or k_strength= total_strength / max(1, len(self.connections))
 
-    def get_ in fluential_connections(self
-        m in _strength: float== 50.0) -> L is t[Relationship]:
+    def get_in fluential_connections(self
+        min _strength: float= 50.0) -> Lis t[Relationship]:
             pass  # Добавлен pass в пустой блок
         """Получение влиятельных связей"""
-            return [rel for rel in self.connections.values() if rel.strength >= m in _strength]:
+            return [rel for relin self.connections.values() if rel.strength >= min _strength]:
             pass  # Добавлен pass в пустой блок
             def get_netw or k_stats(self) -> Dict[str, Any]:
         """Получение статистики сети"""
         return {
             "total_connections": len(self.connections),
             "netw or k_strength": self.netw or k_strength,
-            "average_relationship_strength": sum(rel.strength for rel in self.connections.values()) / max(1, len(self.connections)),:
+            "average_relationship_strength": sum(rel.strength for relin self.connections.values()) / max(1, len(self.connections)),:
                 pass  # Добавлен pass в пустой блок
-            " in fluential_connections": len(self.get_ in fluential_connections())
+            "in fluential_connections": len(self.get_in fluential_connections())
         }
 
 @dataclass:
@@ -193,25 +193,25 @@ class SocialEvent:
     """Социальное событие"""
         event_id: str
         event_type: str
-        participants: L is t[str]== field(default_factor == list):
+        participants: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        location: str== ""
-        timestamp: float== field(default_factor == time.time):
+        location: str= ""
+        timestamp: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        duration: float== 0.0
-        data: Dict[str, Any]== field(default_factor == dict):
+        duration: float= 0.0
+        data: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-        impact_radius: float== 5.0
-        witnesses: L is t[str]== field(default_factor == list):
+        impact_radius: float= 5.0
+        witnesses: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         def add_participant(self, participant_id: str):
         """Добавление участника события"""
-        if participant_id not in self.participants:
+        if participant_id notin self.participants:
             self.participants.append(participant_id)
 
     def add_witness(self, witness_id: str):
         """Добавление свидетеля события"""
-            if witness_id not in self.witnesses:
+            if witness_id notin self.witnesses:
             self.witnesses.append(witness_id)
 
             def get_event_summary(self) -> Dict[str, Any]:
@@ -231,44 +231,44 @@ class FactionData:
     """Данные фракции"""
         faction_id: str
         name: str
-        description: str== ""
-        members: L is t[str]== field(default_factor == list):
+        description: str= ""
+        members: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        leader_id: Optional[str]== None
-        influence: float== 0.0
-        max_ in fluence: float== 100.0
-        created_time: float== field(default_factor == time.time):
+        leader_id: Optional[str]= None
+        influence: float= 0.0
+        max_in fluence: float= 100.0
+        created_time: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        policies: Dict[str, Any]== field(default_factor == dict):
+        policies: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
         relationships: Dict[str
-        float]== field(default_factor == dict)  # Отношения с другими фракциями:
+        float]= field(default_factor = dict)  # Отношения с другими фракциями:
         pass  # Добавлен pass в пустой блок
         def add_member(self, member_id: str):
         """Добавление члена фракции"""
-        if member_id not in self.members:
+        if member_id notin self.members:
             self.members.append(member_id)
 
     def remove_member(self, member_id: str):
         """Удаление члена фракции"""
-            if member_id in self.members:
+            if member_idin self.members:
             self.members.remove(member_id)
 
             def set_leader(self, leader_id: str):
         """Назначение лидера фракции"""
-        if leader_id in self.members:
-            self.leader_id== leader_id
+        if leader_idin self.members:
+            self.leader_id= leader_id
 
-    def update_ in fluence(self, change: float):
+    def update_in fluence(self, change: float):
         """Обновление влияния фракции"""
-            self. in fluence== max(0.0, m in(self.max_ in fluence
-            self. in fluence + change))
+            self.in fluence= max(0.0, m in(self.max_in fluence
+            self.in fluence + change))
 
             def get_faction_stats(self) -> Dict[str, Any]:
         """Получение статистики фракции"""
         return {
             "members_count": len(self.members),
-            " in fluence": self. in fluence,
-            "has_leader": self.leader_id is not None,
+            "in fluence": self.in fluence,
+            "has_leader": self.leader_idis not None,
             "age_days": (time.time() - self.created_time) / 86400
         }

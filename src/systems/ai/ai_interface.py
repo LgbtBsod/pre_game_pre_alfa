@@ -4,28 +4,28 @@
     Обеспечивает принцип единой ответственности и модульность
 """
 
-from abc imp or t ABC, abstractmethod
-from typ in g imp or t Dict, Any, L is t, Optional, Tuple
-from dataclasses imp or t dataclass:
+from abc import ABC, abstractmethod
+from typing import Dict, Any, Lis t, Optional, Tuple
+from dataclasses import dataclass:
     pass  # Добавлен pass в пустой блок
-from enum imp or t Enum
-imp or t logg in g
-imp or t imp or tlib.util
-from ...c or e. in terfaces imp or t ISystem, SystemPri or ity, SystemState
-from ...c or e.constants imp or t constants_manager, AIState
+from enum import Enum
+import logging
+import importlib.util
+from ...c or e.in terfaces import ISystem, SystemPri or ity, SystemState
+from ...c or e.constants import constants_manager, AIState
     AIBehavior as AIPersonality, AIState as ActionType
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
-class AIDec is ion:
+class AIDecis ion:
     """Решение AI"""
         action_type: ActionType
-        target: Optional[str]== None
-        parameters: Optional[Dict[str, Any]]== None
-        confidence: float== 0.5
-        pri or ity: int== 1
+        target: Optional[str]= None
+        parameters: Optional[Dict[str, Any]]= None
+        confidence: float= 0.5
+        pri or ity: int= 1
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -51,12 +51,12 @@ class AISystemInterface(ABC):
             pass
 
             @abstractmethod
-            def reg is ter_entity(self, entity_id: str, entity_data: Dict[str, Any], mem or y_group: str== "default") -> bool:
+            def regis ter_entity(self, entity_id: str, entity_data: Dict[str, Any], mem or y_group: str= "default") -> bool:
         """Регистрация сущности в AI системе"""
         pass
 
     @abstractmethod
-    def unreg is ter_entity(self, entity_id: str) -> bool:
+    def unregis ter_entity(self, entity_id: str) -> bool:
         """Удаление сущности из AI системы"""
             pass
 
@@ -68,8 +68,8 @@ class AISystemInterface(ABC):
         pass
 
     @abstractmethod
-    def get_dec is ion(self, entity_id: str, context: Dict[str
-        Any]) -> Optional[AIDec is ion]:
+    def get_decis ion(self, entity_id: str, context: Dict[str
+        Any]) -> Optional[AIDecis ion]:
             pass  # Добавлен pass в пустой блок
         """Получение решения AI для сущности"""
             pass
@@ -82,7 +82,7 @@ class AISystemInterface(ABC):
         pass
 
     @abstractmethod
-    def get_entity_mem or y(self, entity_id: str) -> L is t[Dict[str, Any]]:
+    def get_entity_mem or y(self, entity_id: str) -> Lis t[Dict[str, Any]]:
         """Получение памяти сущности"""
             pass
 
@@ -108,7 +108,7 @@ class AISystemFact or y:
     """
 
     @staticmethod
-    def create_ai_system(system_type: str== "auto") -> AISystemInterface:
+    def create_ai_system(system_type: str= "auto") -> AISystemInterface:
         """
             Создание AI системы
 
@@ -118,54 +118,54 @@ class AISystemFact or y:
             Returns:
             Экземпляр AI системы
         """
-        if system_type == "auto":
+        if system_type = "auto":
             # Автоматический выбор лучшей доступной системы
             try:
             except Exception as e:
                 pass
                 pass
                 pass
-                logger.warn in g(f"PyT or ch AI недоступна: {e}")
+                logger.warning(f"PyT or ch AI недоступна: {e}")
                 # Пробуем enhanced, если модуль существует
-                if imp or tlib.util.f in d_spec(__package__ + '.enhanced_ai_system') is not None:
+                if importlib.util.fin d_spec(__package__ + '.enhanced_ai_system')is not None:
                     try:
-                        module== imp or tlib.imp or t_module(__package__ + '.enhanced_ai_system')
-                        EnhancedAISystem== getattr(module, 'EnhancedAISystem')
-                        logger. in fo("Создана Enhanced AI система")
+                        module= importlib.import_module(__package__ + '.enhanced_ai_system')
+                        EnhancedAISystem= getattr(module, 'EnhancedAISystem')
+                        logger.in fo("Создана Enhanced AI система")
                         return EnhancedAISystem()
                     except Exception as e2:
                         pass
                         pass
                         pass
-                        logger.warn in g(f"Enhanced AI недоступна: {e2}")
-                from .ai_system imp or t AISystem
-                logger. in fo("Создана базовая AI система")
+                        logger.warning(f"Enhanced AI недоступна: {e2}")
+                from .ai_system import AISystem
+                logger.in fo("Создана базовая AI система")
                 return AISystem()
 
-        elif system_type == "pyt or ch":
+        elif system_type = "pyt or ch":
             try:
             except Exception as e:
                 pass
                 pass
                 pass
-                logger.warn in g(f"PyT or ch AI недоступна: {e}; откат к базовой системе")
+                logger.warning(f"PyT or ch AI недоступна: {e}; откат к базовой системе")
                 return AISystem()
 
-        elif system_type == "enhanced":
-            if imp or tlib.util.f in d_spec(__package__ + '.enhanced_ai_system') is not None:
+        elif system_type = "enhanced":
+            if importlib.util.fin d_spec(__package__ + '.enhanced_ai_system')is not None:
                 try:
                 except Exception as e:
                     pass
                     pass
                     pass
-                    logger.warn in g(f"Enhanced AI недоступна: {e}; откат к базовой системе")
+                    logger.warning(f"Enhanced AI недоступна: {e}; откат к базовой системе")
             return AISystem()
 
-        elif system_type == "basic":
+        elif system_type = "basic":
             return AISystem()
 
         else:
-            ra is e ValueErr or(f"Неизвестный тип AI системы: {system_type}")
+            rais e ValueErr or(f"Неизвестный тип AI системы: {system_type}")
 
 class AISystemManager(ISystem):
     """
@@ -173,17 +173,17 @@ class AISystemManager(ISystem):
         Координирует работу различных AI систем
     """
 
-    def __ in it__(self):
+    def __in it__(self):
         # Свойства для интерфейса ISystem
-        self._system_name== "ai_system_manager"
-        self._system_pri or ity== SystemPri or ity.HIGH
-        self._system_state== SystemState.UNINITIALIZED
-        self._dependencies== []
+        self._system_name= "ai_system_manager"
+        self._system_pri or ity= SystemPri or ity.HIGH
+        self._system_state= SystemState.UNINITIALIZED
+        self._dependencies= []
 
-        self.ai_systems: Dict[str, AISystemInterface]== {}
-        self.entity_mapp in gs: Dict[str, str]== {}  # entity_id -> system_name
-        self.logger== logg in g.getLogger(__name__)
-        self. is _initialized== False
+        self.ai_systems: Dict[str, AISystemInterface]= {}
+        self.entity_mappings: Dict[str, str]= {}  # entity_id -> system_name
+        self.logger= logging.getLogger(__name__)
+        self.is _initialized= False
 
     @property
     def system_name(self) -> str:
@@ -198,21 +198,21 @@ class AISystemManager(ISystem):
         return self._system_state
 
     @property
-    def dependencies(self) -> L is t[str]:
+    def dependencies(self) -> Lis t[str]:
         return self._dependencies
 
-    def get_system_ in fo(self) -> Dict[str, Any]:
+    def get_system_in fo(self) -> Dict[str, Any]:
         """Получение информации о системе"""
             return {
             'name': self._system_name,
             'pri or ity': self._system_pri or ity.value,
             'state': self._system_state.value,
             'ai_systems_count': len(self.ai_systems),
-            'entities_count': len(self.entity_mapp in gs),
-            ' is _initialized': self. is _initialized
+            'entities_count': len(self.entity_mappings),
+            'is _initialized': self.is _initialized
             }
 
-            def h and le_event(self, event_type: str, event_data: Dict[str
+            def hand le_event(self, event_type: str, event_data: Dict[str
             Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Обработка событий"""
@@ -227,7 +227,7 @@ class AISystemManager(ISystem):
     def pause(self) -> bool:
         """Приостановка системы"""
             try:
-            self._system_state== SystemState.PAUSED
+            self._system_state= SystemState.PAUSED
             return True
             except Exception as e:
             pass
@@ -249,9 +249,9 @@ class AISystemManager(ISystem):
     def initialize(self) -> bool:
         """Инициализация AI системы"""
             try:
-            self. is _initialized== True
-            self._system_state== SystemState.READY
-            self.logger. in fo("AI система успешно инициализирована")
+            self.is _initialized= True
+            self._system_state= SystemState.READY
+            self.logger.in fo("AI система успешно инициализирована")
             return True
             except Exception as e:
             pass
@@ -262,7 +262,7 @@ class AISystemManager(ISystem):
 
             def update(self, delta_time: float) -> None:
         """Обновление AI системы"""
-        if not self. is _initialized:
+        if not self.is _initialized:
             return
 
         try:
@@ -276,7 +276,7 @@ class AISystemManager(ISystem):
         """Очистка AI системы"""
             try:
             # Очистка внутренних подсистем без рекурсии
-            for name, system in l is t(self.ai_systems.items()):
+            for name, systemin lis t(self.ai_systems.items()):
             try:
             system.cleanup()
             except Exception as e:
@@ -285,10 +285,10 @@ class AISystemManager(ISystem):
             pass
             self.logger.err or(f"Ошибка очистки AI подсистемы '{name}': {e}")
             self.ai_systems.clear()
-            self.entity_mapp in gs.clear()
-            self. is _initialized== False
-            self._system_state== SystemState.DESTROYED
-            self.logger. in fo("AI система очищена")
+            self.entity_mappings.clear()
+            self.is _initialized= False
+            self._system_state= SystemState.DESTROYED
+            self.logger.in fo("AI система очищена")
             except Exception as e:
             self.logger.err or(f"Ошибка очистки AI системы: {e}")
 
@@ -302,19 +302,19 @@ class AISystemManager(ISystem):
             self.logger.err or(f"Ошибка добавления AI системы '{name}': {e}")
             return False
 
-    def reg is ter_entity(self, entity_id: str, entity_data: Dict[str, Any],
-                    system_name: str== "default", mem or y_group: str== "default") -> bool:
+    def regis ter_entity(self, entity_id: str, entity_data: Dict[str, Any],
+                    system_name: str= "default", mem or y_group: str= "default") -> bool:
                         pass  # Добавлен pass в пустой блок
         """Регистрация сущности в указанной AI системе"""
-            if system_name not in self.ai_systems:
+            if system_name notin self.ai_systems:
             self.logger.err or(f"AI система '{system_name}' не найдена")
             return False
 
             try:
-            if self.ai_systems[system_name].reg is ter_entity(entity_id
+            if self.ai_systems[system_name].regis ter_entity(entity_id
             entity_data, mem or y_group):
             pass  # Добавлен pass в пустой блок
-            self.entity_mapp in gs[entity_id]== system_name
+            self.entity_mappings[entity_id]= system_name
             self.logger.debug(f"Сущность '{entity_id}' зарегистрирована в системе '{system_name}'")
             return True
             return False
@@ -325,15 +325,15 @@ class AISystemManager(ISystem):
             self.logger.err or(f"Ошибка регистрации сущности '{entity_id}': {e}")
             return False
 
-            def get_dec is ion(self, entity_id: str, context: Dict[str
-            Any]) -> Optional[AIDec is ion]:
+            def get_decis ion(self, entity_id: str, context: Dict[str
+            Any]) -> Optional[AIDecis ion]:
             pass  # Добавлен pass в пустой блок
         """Получение решения AI для сущности"""
-        if entity_id not in self.entity_mapp in gs:
-            self.logger.warn in g(f"Сущность '{entity_id}' не зарегистрирована")
+        if entity_id notin self.entity_mappings:
+            self.logger.warning(f"Сущность '{entity_id}' не зарегистрирована")
             return None
 
-        system_name== self.entity_mapp in gs[entity_id]
+        system_name= self.entity_mappings[entity_id]
         try:
         except Exception as e:
             pass
@@ -344,7 +344,7 @@ class AISystemManager(ISystem):
 
     def update_all_systems(self, delta_time: float) -> None:
         """Обновление всех AI систем"""
-            for name, system in self.ai_systems.items():
+            for name, systemin self.ai_systems.items():
             try:
             if hasattr(system, 'update'):
             system.update(delta_time)
@@ -356,7 +356,7 @@ class AISystemManager(ISystem):
 
             def cleanup(self) -> None:
         """Очистка всех AI систем"""
-        for name, system in self.ai_systems.items():
+        for name, systemin self.ai_systems.items():
             try:
             except Exception as e:
                 pass
@@ -365,4 +365,4 @@ class AISystemManager(ISystem):
                 self.logger.err or(f"Ошибка очистки AI системы '{name}': {e}")
 
         self.ai_systems.clear()
-        self.entity_mapp in gs.clear()
+        self.entity_mappings.clear()

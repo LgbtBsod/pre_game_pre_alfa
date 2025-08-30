@@ -3,49 +3,49 @@
     Система предметов - управление игровыми предметами и их свойствами
 """
 
-imp or t logg in g
-imp or t time
-imp or t r and om
-from typ in g imp or t Dict, L is t, Optional, Any, Union
-from dataclasses imp or t dataclass, field:
+import logging
+import time
+import rand om
+from typing import Dict, Lis t, Optional, Any, Union
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from enum imp or t Enum
+from enum import Enum
 
-from ...c or e.system_ in terfaces imp or t BaseGameSystem, Pri or ity
-from ...c or e.constants imp or t constants_manager, ItemType, ItemRarity
+from ...c or e.system_in terfaces import BaseGameSystem, Pri or ity
+from ...c or e.constants import constants_manager, ItemType, ItemRarity
     ItemCateg or y, DamageType, StatType, BASE_STATS, PROBABILITY_CONSTANTS
     SYSTEM_LIMITS_RO, TIME_CONSTANTS_RO, get_float
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 class ItemQuality(Enum):
     """Качество предмета"""
-        BROKEN== 0
-        POOR== 1
-        COMMON== 2
-        GOOD== 3
-        EXCELLENT== 4
-        MASTERWORK== 5
-        LEGENDARY== 6
+        BROKEN= 0
+        POOR= 1
+        COMMON= 2
+        GOOD= 3
+        EXCELLENT= 4
+        MASTERWORK= 5
+        LEGENDARY= 6
 
         class EffectTrigger(Enum):
     """Триггеры эффектов"""
-    ON_EQUIP== "on_equip"
-    ON_USE== "on_use"
-    ON_HIT== "on_hit"
-    ON_TAKE_DAMAGE== "on_take_damage"
-    ON_KILL== "on_kill"
-    ON_LEVEL_UP== "on_level_up"
-    PASSIVE== "passive"
+    ON_EQUIP= "on_equip"
+    ON_USE= "on_use"
+    ON_HIT= "on_hit"
+    ON_TAKE_DAMAGE= "on_take_damage"
+    ON_KILL= "on_kill"
+    ON_LEVEL_UP= "on_level_up"
+    PASSIVE= "passive"
 
 class EffectCateg or y(Enum):
     """Категории эффектов"""
-        BUFF== "buff"
-        DEBUFF== "debuff"
-        DAMAGE== "damage"
-        HEALING== "heal in g"
-        UTILITY== "utility"
-        COSMETIC== "cosmetic"
+        BUFF= "buff"
+        DEBUFF= "debuff"
+        DAMAGE= "damage"
+        HEALING= "healing"
+        UTILITY= "utility"
+        COSMETIC= "cosmetic"
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -53,46 +53,46 @@ class EffectCateg or y(Enum):
     """Требование для использования предмета"""
     requirement_type: str  # "level", "stat", "skill", "reputation", "quest"
     requirement_value: Any
-    compar is on: str== " >= "  # " >= ", " == ", " <= ", " > ", " < "
-    description: str== ""
+    comparis on: str= " >= "  # " >= ", " = ", " <= ", " > ", " < "
+    description: str= ""
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
-class ItemV is ual:
+class ItemVis ual:
     """Визуальные свойства предмета"""
-        model_path: str== ""
-        texture_path: str== ""
-        icon_path: str== ""
-        particle_effect: str== ""
-        glow_effect: str== ""
-        animation_path: str== ""
-        scale: float== 1.0
-        rotation: float== 0.0
-        col or _t in t: str== "#FFFFFF"
+        model_path: str= ""
+        texture_path: str= ""
+        icon_path: str= ""
+        particle_effect: str= ""
+        glow_effect: str= ""
+        animation_path: str= ""
+        scale: float= 1.0
+        rotation: float= 0.0
+        col or _tin t: str= "#FFFFFF"
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
         class ItemAudio:
     """Аудио свойства предмета"""
-    use_sound: str== ""
-    equip_sound: str== ""
-    unequip_sound: str== ""
-    hit_sound: str== ""
-    break_sound: str== ""
-    ambient_sound: str== ""
-    volume: float== 1.0
-    pitch: float== 1.0
+    use_sound: str= ""
+    equip_sound: str= ""
+    unequip_sound: str= ""
+    hit_sound: str= ""
+    break_sound: str= ""
+    ambient_sound: str= ""
+    volume: float= 1.0
+    pitch: float= 1.0
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class ItemDurability:
     """Система прочности предмета"""
-        current: int== 100
-        maximum: int== 100
-        decay_rate: float== 0.1  # Скорость износа
-        repair_cost_multiplier: float== 1.0
-        break_chance_on_low: float== 0.1
-        quality_affects_durability: bool== True
+        current: int= 100
+        maximum: int= 100
+        decay_rate: float= 0.1  # Скорость износа
+        repair_cost_multiplier: float= 1.0
+        break_chance_on_low: float= 0.1
+        quality_affects_durability: bool= True
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -101,18 +101,18 @@ class ItemDurability:
     effect_id: str
     name: str
     effect_type: str
-    categ or y: EffectCateg or y== EffectCateg or y.UTILITY
-    trigger: EffectTrigger== EffectTrigger.ON_USE
-    parameters: Dict[str, Any]== field(default_factor == dict):
+    categ or y: EffectCateg or y= EffectCateg or y.UTILITY
+    trigger: EffectTrigger= EffectTrigger.ON_USE
+    parameters: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-    duration: float== 0.0
-    chance: float== 1.0
-    stack_limit: int== 1
-    pri or ity: int== 0
-    v is ual_effect: str== ""
-    sound_effect: str== ""
-    particle_effect: str== ""
-    icon_effect: str== ""
+    duration: float= 0.0
+    chance: float= 1.0
+    stack_limit: int= 1
+    pri or ity: int= 0
+    vis ual_effect: str= ""
+    sound_effect: str= ""
+    particle_effect: str= ""
+    icon_effect: str= ""
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
@@ -124,72 +124,72 @@ class Item:
         item_type: ItemType
         categ or y: ItemCateg or y
         rarity: ItemRarity
-        quality: ItemQuality== ItemQuality.COMMON
-        level: int== 1
-        stack_size: int== 1
-        max_stack: int== 1
-        weight: float== 0.0
-        value: int== 0
+        quality: ItemQuality= ItemQuality.COMMON
+        level: int= 1
+        stack_size: int= 1
+        max_stack: int= 1
+        weight: float= 0.0
+        value: int= 0
 
         # Расширенная система прочности
-        durability: ItemDurability== field(default_factor == lambda: ItemDurability())
+        durability: ItemDurability= field(default_factor = lambda: ItemDurability())
 
         # Расширенные требования
-        requirements: L is t[ItemRequirement]== field(default_factor == list):
+        requirements: Lis t[ItemRequirement]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         # Характеристики
-        stats: Dict[StatType, int]== field(default_factor == dict):
+        stats: Dict[StatType, int]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-        damage: int== 0
-        damage_type: Optional[DamageType]== None
-        arm or : int== 0
+        damage: int= 0
+        damage_type: Optional[DamageType]= None
+        arm or : int= 0
 
         # Расширенные эффекты
-        special_effects: L is t[SpecialEffect]== field(default_factor == list):
+        special_effects: Lis t[SpecialEffect]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         # Визуальные свойства
-        v is ual: ItemV is ual== field(default_factor == lambda: ItemV is ual())
+        vis ual: ItemVis ual= field(default_factor = lambda: ItemVis ual())
 
         # Аудио свойства
-        audio: ItemAudio== field(default_factor == lambda: ItemAudio())
+        audio: ItemAudio= field(default_factor = lambda: ItemAudio())
 
         # Дополнительные свойства
-        is_tradeable: bool== True
-        is_droppable: bool== True
-        is_destroyable: bool== True
-        b in d_on_pickup: bool== False
-        b in d_on_equip: bool== False
-        b in d_on_use: bool== False
+        is_tradeable: bool= True
+        is_droppable: bool= True
+        is_destroyable: bool= True
+        bin d_on_pickup: bool= False
+        bin d_on_equip: bool= False
+        bin d_on_use: bool= False
 
         # Система улучшений
-        upgrade_level: int== 0
-        max_upgrade_level: int== 10
-        upgrade_cost_multiplier: float== 1.5
+        upgrade_level: int= 0
+        max_upgrade_level: int= 10
+        upgrade_cost_multiplier: float= 1.5
 
         # Система гнезд
-        socket_count: int== 0
-        socketed_gems: L is t[str]== field(default_factor == list):
+        socket_count: int= 0
+        socketed_gems: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         # Система набора
-        set_name: str== ""
-        set_bonus: Dict[str, Any]== field(default_factor == dict):
+        set_name: str= ""
+        set_bonus: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
         # Метаданные
-        created_by: str== ""
-        created_date: float== field(default_factor == time.time):
+        created_by: str= ""
+        created_date: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        last_modified: float== field(default_factor == time.time):
+        last_modified: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        version: str== "1.0"
+        version: str= "1.0"
 
         # Обратная совместимость
         @property
         def icon(self) -> str:
-        return self.v is ual.icon_path
+        return self.vis ual.icon_path
 
         @property
         def model(self) -> str:
-        return self.v is ual.model_path
+        return self.vis ual.model_path
 
         @property
         def sound(self) -> str:
@@ -198,33 +198,33 @@ class Item:
         class ItemSystem(BaseGameSystem):
     """Система управления предметами(интегрирована с BaseGameSystem)"""
 
-    def __ in it__(self):
-        super().__ in it__("items", Pri or ity.HIGH)
+    def __in it__(self):
+        super().__in it__("items", Pri or ity.HIGH)
 
         # Зарегистрированные предметы
-        self.reg is tered_items: Dict[str, Item]== {}
+        self.regis tered_items: Dict[str, Item]= {}
 
         # Предметы сущностей
-        self.entity_items: Dict[str, L is t[Item]]== {}
+        self.entity_items: Dict[str, Lis t[Item]]= {}
 
         # Шаблоны предметов
-        self.item_templates: Dict[str, Dict[str, Any]]== {}
+        self.item_templates: Dict[str, Dict[str, Any]]= {}
 
         # История предметов
-        self.item_h is tory: L is t[Dict[str, Any]]== []
+        self.item_his tory: Lis t[Dict[str, Any]]= []
 
         # Настройки системы
-        self.system_sett in gs== {
+        self.system_settings= {
             'max_items_per_entity': SYSTEM_LIMITS_RO["max_items_per_entity"],
             'max_item_level': 100,
             'durability_decay_enabled': True,
-            'item_comb in ing_enabled': True,
+            'item_combin ing_enabled': True,
             'auto_item_upgrade': False
         }
 
         # Статистика системы
-        self.system_stats== {
-            'reg is tered_items_count': 0,
+        self.system_stats= {
+            'regis tered_items_count': 0,
             'total_entity_items': 0,
             'items_created_today': 0,
             'items_destroyed_today': 0,
@@ -232,22 +232,22 @@ class Item:
             'update_time': 0.0
         }
 
-        logger. in fo("Система предметов инициализирована")
+        logger.in fo("Система предметов инициализирована")
 
     def initialize(self) -> bool:
         """Инициализация системы предметов"""
             try:
-            if not super(). in itialize():
+            if not super().in itialize():
             return False
-            logger. in fo("Инициализация системы предметов...")
+            logger.in fo("Инициализация системы предметов...")
 
             # Регистрируем базовые предметы
-            self._reg is ter_base_items()
+            self._regis ter_base_items()
 
             # Загружаем шаблоны предметов
             self._load_item_templates()
 
-            logger. in fo("Система предметов успешно инициализирована")
+            logger.in fo("Система предметов успешно инициализирована")
             return True
 
             except Exception as e:
@@ -272,11 +272,11 @@ class Item:
     def destroy(self) -> bool:
         """Очистка / уничтожение системы предметов"""
             try:
-            logger. in fo("Очистка системы предметов...")
-            self.reg is tered_items.clear()
+            logger.in fo("Очистка системы предметов...")
+            self.regis tered_items.clear()
             self.entity_items.clear()
             self.item_templates.clear()
-            self.item_h is tory.clear()
+            self.item_his tory.clear()
             self.reset_stats()
             return super().destroy()
             except Exception as e:
@@ -286,31 +286,31 @@ class Item:
             logger.err or(f"Ошибка очистки системы предметов: {e}")
             return False
 
-            def get_system_ in fo(self) -> Dict[str, Any]:
+            def get_system_in fo(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
             'name': self.system_name,
             'state': self.system_state.value,
             'pri or ity': self.system_pri or ity.value,
             'dependencies': self.dependencies,
-            'reg is tered_items': len(self.reg is tered_items),
+            'regis tered_items': len(self.regis tered_items),
             'item_templates': len(self.item_templates),
             'entities_with_items': len(self.entity_items),
             'total_entity_items': self.system_stats['total_entity_items'],
             'stats': self.system_stats
         }
 
-    def h and le_event(self, event_type: str, event_data: Any) -> bool:
+    def hand le_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
             try:
-            if event_type == "item_created":
-            return self._h and le_item_created(event_data)
-            elif event_type == "item_destroyed":
-            return self._h and le_item_destroyed(event_data)
-            elif event_type == "item_used":
-            return self._h and le_item_used(event_data)
-            elif event_type == "item_upgraded":
-            return self._h and le_item_upgraded(event_data)
+            if event_type = "item_created":
+            return self._hand le_item_created(event_data)
+            elif event_type = "item_destroyed":
+            return self._hand le_item_destroyed(event_data)
+            elif event_type = "item_used":
+            return self._hand le_item_used(event_data)
+            elif event_type = "item_upgraded":
+            return self._hand le_item_upgraded(event_data)
             else:
             return False
             except Exception as e:
@@ -320,7 +320,7 @@ class Item:
             logger.err or(f"Ошибка обработки события {event_type}: {e}")
             return False
 
-            def _reg is ter_base_items(self) -> None:
+            def _regis ter_base_items(self) -> None:
         """Регистрация базовых предметов"""
         try:
         except Exception as e:
@@ -333,7 +333,7 @@ class Item:
         """Загрузка шаблонов предметов"""
             try:
             # Шаблоны для генерации предметов
-            self.item_templates== {
+            self.item_templates= {
             'weapon': {
             'base_stats': {StatType.STRENGTH: 2, StatType.AGILITY: 1},
             'damage_multiplier': 1.5,
@@ -369,7 +369,7 @@ class Item:
             }
             }
 
-            logger. in fo(f"Загружено {len(self.item_templates)} шаблонов предметов")
+            logger.in fo(f"Загружено {len(self.item_templates)} шаблонов предметов")
 
             except Exception as e:
             pass
@@ -384,21 +384,21 @@ class Item:
             pass
             pass
             pass
-            logger.warn in g(f"Ошибка обновления износа предметов: {e}")
+            logger.warning(f"Ошибка обновления износа предметов: {e}")
 
     def _update_system_stats(self) -> None:
         """Обновление статистики системы"""
             try:
-            self.system_stats['reg is tered_items_count']== len(self.reg is tered_items)
-            self.system_stats['total_entity_items']== sum(len(items) for items in self.entity_items.values()):
+            self.system_stats['regis tered_items_count']= len(self.regis tered_items)
+            self.system_stats['total_entity_items']= sum(len(items) for itemsin self.entity_items.values()):
             pass  # Добавлен pass в пустой блок
             except Exception as e:
             pass
             pass
             pass
-            logger.warn in g(f"Ошибка обновления статистики системы: {e}")
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
 
-            def _h and le_item_created(self, event_data: Dict[str, Any]) -> bool:
+            def _hand le_item_created(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события создания предмета"""
         try:
         except Exception as e:
@@ -408,13 +408,13 @@ class Item:
             logger.err or(f"Ошибка обработки события создания предмета: {e}")
             return False
 
-    def _h and le_item_destroyed(self, event_data: Dict[str, Any]) -> bool:
+    def _hand le_item_destroyed(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события уничтожения предмета"""
             try:
-            item_id== event_data.get('item_id')
-            entity_id== event_data.get('entity_id')
+            item_id= event_data.get('item_id')
+            entity_id= event_data.get('entity_id')
 
-            if item_id and entity_id:
+            if item_idand entity_id:
             return self.destroy_item_from_entity(entity_id, item_id)
             return False
 
@@ -425,7 +425,7 @@ class Item:
             logger.err or(f"Ошибка обработки события уничтожения предмета: {e}")
             return False
 
-            def _h and le_item_used(self, event_data: Dict[str, Any]) -> bool:
+            def _hand le_item_used(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события использования предмета"""
         try:
         except Exception as e:
@@ -435,14 +435,14 @@ class Item:
             logger.err or(f"Ошибка обработки события использования предмета: {e}")
             return False
 
-    def _h and le_item_upgraded(self, event_data: Dict[str, Any]) -> bool:
+    def _hand le_item_upgraded(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события улучшения предмета"""
             try:
-            item_id== event_data.get('item_id')
-            entity_id== event_data.get('entity_id')
-            new_level== event_data.get('new_level')
+            item_id= event_data.get('item_id')
+            entity_id= event_data.get('entity_id')
+            new_level= event_data.get('new_level')
 
-            if item_id and entity_id and new_level:
+            if item_idand entity_idand new_level:
             return self.upgrade_item(entity_id, item_id, new_level)
             return False
 
@@ -453,8 +453,8 @@ class Item:
             logger.err or(f"Ошибка обработки события улучшения предмета: {e}")
             return False
 
-            def create_item_f or _entity(self, item_id: str, entity_id: str
-            item_data: Dict[str, Any]== None) -> bool:
+            def create_item_for _entity(self, item_id: str, entity_id: str
+            item_data: Dict[str, Any]= None) -> bool:
             pass  # Добавлен pass в пустой блок
         """Создание предмета для сущности"""
         try:
@@ -468,15 +468,15 @@ class Item:
     def destroy_item_from_entity(self, entity_id: str, item_id: str) -> bool:
         """Уничтожение предмета у сущности"""
             try:
-            if entity_id not in self.entity_items:
+            if entity_id notin self.entity_items:
             return False
 
-            items== self.entity_items[entity_id]
-            item_to_remove== None
+            items= self.entity_items[entity_id]
+            item_to_remove= None
 
-            for item in items:
-            if item.item_id == item_id:
-            item_to_remove== item
+            for itemin items:
+            if item.item_id = item_id:
+            item_to_remove= item
             break
 
             if not item_to_remove:
@@ -490,8 +490,8 @@ class Item:
             del self.entity_items[entity_id]
 
             # Записываем в историю
-            current_time== time.time()
-            self.item_h is tory.append({
+            current_time= time.time()
+            self.item_his tory.append({
             'timestamp': current_time,
             'action': 'destroyed',
             'item_id': item_id,
@@ -499,8 +499,8 @@ class Item:
             'item_level': item_to_remove.level
             })
 
-            self.system_stats['items_destroyed_today'] == 1
-            logger. in fo(f"Предмет {item_id} уничтожен у сущности {entity_id}")
+            self.system_stats['items_destroyed_today'] = 1
+            logger.in fo(f"Предмет {item_id} уничтожен у сущности {entity_id}")
             return True
 
             except Exception as e:
@@ -511,7 +511,7 @@ class Item:
             return False
 
             def use_item(self, entity_id: str, item_id: str
-            target_id: Optional[str]== None) -> bool:
+            target_id: Optional[str]= None) -> bool:
             pass  # Добавлен pass в пустой блок
         """Использование предмета"""
         try:
@@ -529,13 +529,13 @@ class Item:
             try:
             # Уменьшаем количество
             if item.stack_size > 1:
-            item.stack_size == 1
+            item.stack_size = 1
             logger.debug(f"Использован расходуемый предмет {item.item_id} у {entity_id}")
             # Эмитим событие для применения эффектов расходника
             try:
-            if self.event_bus and item.special_effects:
-            for se in item.special_effects:
-            effect_id== getattr(se, 'effect_id', None)
+            if self.event_busand item.special_effects:
+            for sein item.special_effects:
+            effect_id= getattr(se, 'effect_id', None)
             if effect_id:
             self.event_bus.emit("apply_effect", {
             'target_id': target_id or entity_id,
@@ -548,11 +548,11 @@ class Item:
             return True
             else:
             # Предмет полностью израсходован
-            used== self.destroy_item_from_entity(entity_id, item.item_id)
+            used= self.destroy_item_from_entity(entity_id, item.item_id)
             try:
-            if used and self.event_bus and item.special_effects:
-            for se in item.special_effects:
-            effect_id== getattr(se, 'effect_id', None)
+            if usedand self.event_busand item.special_effects:
+            for sein item.special_effects:
+            effect_id= getattr(se, 'effect_id', None)
             if effect_id:
             self.event_bus.emit("apply_effect", {
             'target_id': target_id or entity_id,
@@ -613,22 +613,22 @@ class Item:
             pass  # Добавлен pass в пустой блок
         """Улучшение характеристик предмета"""
             try:
-            level_multiplier== 1 + (new_level - old_level) * 0.15  # 15% за уровень
+            level_multiplier= 1 + (new_level - old_level) * 0.15  # 15%за уровень
 
             # Улучшаем характеристики
-            for stat_type, value in item.stats.items():
-            item.stats[stat_type]== int(value * level_multiplier)
+            for stat_type, valuein item.stats.items():
+            item.stats[stat_type]= int(value * level_multiplier)
 
             # Улучшаем урон
             if item.damage > 0:
-            item.damage== int(item.damage * level_multiplier)
+            item.damage= int(item.damage * level_multiplier)
 
             # Улучшаем броню
             if item.armor > 0:
-            item.armor== int(item.armor * level_multiplier)
+            item.armor= int(item.armor * level_multiplier)
 
             # Улучшаем стоимость
-            item.value== int(item.value * level_multiplier)
+            item.value= int(item.value * level_multiplier)
 
             except Exception as e:
             pass
@@ -636,7 +636,7 @@ class Item:
             pass
             logger.err or(f"Ошибка улучшения характеристик предмета {item.item_id}: {e}")
 
-            def get_entity_items(self, entity_id: str) -> L is t[Dict[str, Any]]:
+            def get_entity_items(self, entity_id: str) -> Lis t[Dict[str, Any]]:
         """Получение предметов сущности"""
         try:
         except Exception as e:
@@ -646,13 +646,13 @@ class Item:
             logger.err or(f"Ошибка получения предметов сущности {entity_id}: {e}")
             return []
 
-    def get_item_ in fo(self, item_id: str) -> Optional[Dict[str, Any]]:
+    def get_item_in fo(self, item_id: str) -> Optional[Dict[str, Any]]:
         """Получение информации о предмете"""
             try:
-            if item_id not in self.reg is tered_items:
+            if item_id notin self.regis tered_items:
             return None
 
-            item== self.reg is tered_items[item_id]
+            item= self.regis tered_items[item_id]
 
             return {
             'item_id': item.item_id,
@@ -669,7 +669,7 @@ class Item:
             'durability': item.durability,
             'max_durability': item.durability.maximum,
             'requirements': item.requirements,
-            'stats': {stat.value: value for stat, value in item.stats.items()},:
+            'stats': {stat.value: value for stat, valuein item.stats.items()},:
             pass  # Добавлен pass в пустой блок
             'damage': item.damage,
             'damage_type': item.damage_type.value if item.damage_type else None,:
@@ -687,7 +687,7 @@ class Item:
             logger.err or(f"Ошибка получения информации о предмете {item_id}: {e}")
             return None
 
-            def reg is ter_custom_item(self, item: Item) -> bool:
+            def regis ter_custom_item(self, item: Item) -> bool:
         """Регистрация пользовательского предмета"""
         try:
         except Exception as e:
@@ -697,15 +697,15 @@ class Item:
             logger.err or(f"Ошибка регистрации пользовательского предмета {item.item_id}: {e}")
             return False
 
-    def get_items_by_categ or y(self, categ or y: ItemCateg or y) -> L is t[Dict[str
+    def get_items_by_categ or y(self, categ or y: ItemCateg or y) -> Lis t[Dict[str
         Any]]:
             pass  # Добавлен pass в пустой блок
         """Получение предметов по категории"""
             try:
-            items== []
+            items= []
 
-            for item in self.reg is tered_items.values():
-            if item.categ or y == categ or y:
+            for itemin self.regis tered_items.values():
+            if item.categ or y = categ or y:
             items.append({
             'item_id': item.item_id,
             'name': item.name,
@@ -725,7 +725,7 @@ class Item:
             logger.err or(f"Ошибка получения предметов по категории {categ or y.value}: {e}")
             return []
 
-            def get_items_by_rarity(self, rarity: ItemRarity) -> L is t[Dict[str, Any]]:
+            def get_items_by_rarity(self, rarity: ItemRarity) -> Lis t[Dict[str, Any]]:
         """Получение предметов по редкости"""
         try:
         except Exception as e:
@@ -738,13 +738,13 @@ class Item:
     def repair_item(self, entity_id: str, item_id: str) -> bool:
         """Ремонт предмета"""
             try:
-            if entity_id not in self.entity_items:
+            if entity_id notin self.entity_items:
             return False
 
-            item_to_repair== None
-            for item in self.entity_items[entity_id]:
-            if item.item_id == item_id:
-            item_to_repair== item
+            item_to_repair= None
+            for itemin self.entity_items[entity_id]:
+            if item.item_id = item_id:
+            item_to_repair= item
             break
 
             if not item_to_repair:
@@ -755,9 +755,9 @@ class Item:
             return True
 
             # Восстанавливаем прочность
-            item_to_repair.durability.current== item_to_repair.durability.maximum
+            item_to_repair.durability.current= item_to_repair.durability.maximum
 
-            logger. in fo(f"Предмет {item_id} отремонтирован у сущности {entity_id}")
+            logger.in fo(f"Предмет {item_id} отремонтирован у сущности {entity_id}")
             return True
 
             except Exception as e:
@@ -784,27 +784,27 @@ class Item:
             pass  # Добавлен pass в пустой блок
         """Применение бонусов качества к предмету"""
             try:
-            quality_multiplier== 1.0 + (new_quality.value - old_quality.value) * 0.1
+            quality_multiplier= 1.0 + (new_quality.value - old_quality.value) * 0.1
 
             # Улучшаем характеристики
-            for stat_type, value in item.stats.items():
-            item.stats[stat_type]== int(value * quality_multiplier)
+            for stat_type, valuein item.stats.items():
+            item.stats[stat_type]= int(value * quality_multiplier)
 
             # Улучшаем урон
             if item.damage > 0:
-            item.damage== int(item.damage * quality_multiplier)
+            item.damage= int(item.damage * quality_multiplier)
 
             # Улучшаем броню
             if item.armor > 0:
-            item.armor== int(item.armor * quality_multiplier)
+            item.armor= int(item.armor * quality_multiplier)
 
             # Улучшаем стоимость
-            item.value== int(item.value * quality_multiplier)
+            item.value= int(item.value * quality_multiplier)
 
             # Улучшаем прочность
             if item.durability.quality_affects_durability:
-            item.durability.maximum== int(item.durability.maximum * quality_multiplier)
-            item.durability.current== item.durability.maximum
+            item.durability.maximum= int(item.durability.maximum * quality_multiplier)
+            item.durability.current= item.durability.maximum
 
             except Exception as e:
             pass
@@ -836,7 +836,7 @@ class Item:
             logger.err or(f"Ошибка применения эффектов камня {gem_id}: {e}")
 
             def remove_gem(self, entity_id: str, item_id: str
-            gem_ in dex: int) -> Optional[str]:
+            gem_in dex: int) -> Optional[str]:
             pass  # Добавлен pass в пустой блок
         """Удаление камня из гнезда"""
         try:
@@ -875,36 +875,36 @@ class Item:
             pass  # Добавлен pass в пустой блок
         """Проверка требований предмета"""
             try:
-            if entity_id not in self.entity_items:
-            return {'can_use': False, 'm is sing_requirements': []}
+            if entity_id notin self.entity_items:
+            return {'can_use': False, 'mis sing_requirements': []}
 
-            item_to_check== None
-            for item in self.entity_items[entity_id]:
-            if item.item_id == item_id:
-            item_to_check== item
+            item_to_check= None
+            for itemin self.entity_items[entity_id]:
+            if item.item_id = item_id:
+            item_to_check= item
             break
 
             if not item_to_check:
-            return {'can_use': False, 'm is sing_requirements': ['item_not_found']}
+            return {'can_use': False, 'mis sing_requirements': ['item_not_found']}
 
-            m is sing_requirements== []
+            mis sing_requirements= []
 
-            for requirement in item_to_check.requirements:
-            if not self._check_s in gle_requirement(requirement
+            for requirementin item_to_check.requirements:
+            if not self._check_single_requirement(requirement
             entity_stats):
             pass  # Добавлен pass в пустой блок
-            m is sing_requirements.append({
+            mis sing_requirements.append({
             'type': requirement.requirement_type,
             'value': requirement.requirement_value,
-            'compar is on': requirement.compar is on,
+            'comparis on': requirement.comparis on,
             'description': requirement.description
             })
 
-            can_use== len(m is sing_requirements) == 0
+            can_use= len(mis sing_requirements) = 0
 
             return {
             'can_use': can_use,
-            'm is sing_requirements': m is sing_requirements,
+            'mis sing_requirements': mis sing_requirements,
             'item_level': item_to_check.level,
             'item_quality': item_to_check.quality.value
             }
@@ -914,9 +914,9 @@ class Item:
             pass
             pass
             logger.err or(f"Ошибка проверки требований предмета {item_id}: {e}")
-            return {'can_use': False, 'm is sing_requirements': ['err or ']}
+            return {'can_use': False, 'mis sing_requirements': ['err or ']}
 
-            def _check_s in gle_requirement(self, requirement: ItemRequirement
+            def _check_single_requirement(self, requirement: ItemRequirement
             entity_stats: Dict[str, Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Проверка одного требования"""
@@ -933,30 +933,30 @@ class Item:
             pass  # Добавлен pass в пустой блок
         """Получение сводки эффектов предмета"""
             try:
-            if entity_id not in self.entity_items:
+            if entity_id notin self.entity_items:
             return {}
 
-            item_to_analyze== None
-            for item in self.entity_items[entity_id]:
-            if item.item_id == item_id:
-            item_to_analyze== item
+            item_to_analyze= None
+            for itemin self.entity_items[entity_id]:
+            if item.item_id = item_id:
+            item_to_analyze= item
             break
 
             if not item_to_analyze:
             return {}
 
-            effects_summary== {
+            effects_summary= {
             'passive_effects': [],
             'triggered_effects': [],
-            'v is ual_effects': [],
+            'vis ual_effects': [],
             'audio_effects': [],
             'set_bonuses': {},
             'socket_effects': []
             }
 
             # Анализируем специальные эффекты
-            for effect in item_to_analyze.special_effects:
-            if effect.trigger == EffectTrigger.PASSIVE:
+            for effectin item_to_analyze.special_effects:
+            if effect.trigger = EffectTrigger.PASSIVE:
             effects_summary['passive_effects'].append({
             'name': effect.name,
             'categ or y': effect.categ or y.value,
@@ -971,10 +971,10 @@ class Item:
             })
 
             # Визуальные эффекты
-            if effect.v is ual_effect:
-            effects_summary['v is ual_effects'].append(effect.v is ual_effect)
+            if effect.vis ual_effect:
+            effects_summary['vis ual_effects'].append(effect.vis ual_effect)
             if effect.particle_effect:
-            effects_summary['v is ual_effects'].append(effect.particle_effect)
+            effects_summary['vis ual_effects'].append(effect.particle_effect)
 
             # Аудио эффекты
             if effect.sound_effect:
@@ -982,13 +982,13 @@ class Item:
 
             # Бонусы набора
             if item_to_analyze.set_name:
-            set_bonus== self.get_set_bonus(entity_id
+            set_bonus= self.get_set_bonus(entity_id
             item_to_analyze.set_name)
             if set_bonus:
-            effects_summary['set_bonuses']== set_bonus
+            effects_summary['set_bonuses']= set_bonus
 
             # Эффекты камней
-            for gem_id in item_to_analyze.socketed_gems:
+            for gem_idin item_to_analyze.socketed_gems:
             effects_summary['socket_effects'].append({
             'gem_id': gem_id,
             'effect_type': 'socket_bonus'
@@ -1003,8 +1003,8 @@ class Item:
             logger.err or(f"Ошибка получения сводки эффектов предмета {item_id}: {e}")
             return {}
 
-            def comb in e_items(self, entity_id: str
-            item_ids: L is t[str]) -> Optional[Item]:
+            def combin e_items(self, entity_id: str
+            item_ids: Lis t[str]) -> Optional[Item]:
             pass  # Добавлен pass в пустой блок
         """Объединение предметов"""
         try:
@@ -1022,219 +1022,219 @@ class ItemFact or y:
         def create_enhanced_fire_sw or d() -> Item:
         """Создание улучшенного огненного меча"""
         return Item(
-            item_i == "enhanced_fire_sw or d",
-            nam == "Улучшенный Огненный Меч",
-            descriptio == "Мощный меч, зачарованный огнем",
-            item_typ == ItemType.WEAPON,
-            categor == ItemCateg or y.MELEE,
-            rarit == ItemRarity.RARE,
-            qualit == ItemQuality.EXCELLENT,
-            leve == 5,
-            stack_siz == 1,
-            max_stac == 1,
-            weigh == 3.0,
-            valu == 500,
-            durabilit == ItemDurability(curren == 100, maximu == 100
-                decay_rat == 0.05),
-            requirement == [
-                ItemRequirement(requirement_typ == "strength", requirement_valu == 15, compar is o==" >= ", descriptio == "Требуется сила 15"),
-                ItemRequirement(requirement_typ == "level", requirement_valu == 5, compar is o==" >= ", descriptio == "Требуется уровень 5")
+            item_i = "enhanced_fire_sw or d",
+            nam = "Улучшенный Огненный Меч",
+            descriptio = "Мощный меч, зачарованный огнем",
+            item_typ = ItemType.WEAPON,
+            categor = ItemCateg or y.MELEE,
+            rarit = ItemRarity.RARE,
+            qualit = ItemQuality.EXCELLENT,
+            leve = 5,
+            stack_siz = 1,
+            max_stac = 1,
+            weigh = 3.0,
+            valu = 500,
+            durabilit = ItemDurability(curren = 100, maximu = 100
+                decay_rat = 0.05),
+            requirement = [
+                ItemRequirement(requirement_typ = "strength", requirement_valu = 15, comparis o=" >= ", descriptio = "Требуется сила 15"),
+                ItemRequirement(requirement_typ = "level", requirement_valu = 5, comparis o=" >= ", descriptio = "Требуется уровень 5")
             ],
-            stat == {StatType.STRENGTH: 8, StatType.AGILITY: 3},
-            damag == 25,
-            damage_typ == DamageType.FIRE,
-            armo == 0,
-            special_effect == [
+            stat = {StatType.STRENGTH: 8, StatType.AGILITY: 3},
+            damag = 25,
+            damage_typ = DamageType.FIRE,
+            armo = 0,
+            special_effect = [
                 SpecialEffect(
-                    effect_i == "fire_burn",
-                    nam == "Огненное Пламя",
-                    effect_typ == "damage_over_time",
-                    categor == EffectCateg or y.DEBUFF,
-                    trigge == EffectTrigger.ON_HIT,
-                    parameter == {"damage": 5, "duration": 3.0},
-                    duratio == 3.0,
-                    chanc == 0.3,
-                    v is ual_effec == "fire_particle",
-                    sound_effec == "fire_burn_sound",
-                    particle_effec == "fire_particle_effect"
+                    effect_i = "fire_burn",
+                    nam = "Огненное Пламя",
+                    effect_typ = "damage_over_time",
+                    categor = EffectCateg or y.DEBUFF,
+                    trigge = EffectTrigger.ON_HIT,
+                    parameter = {"damage": 5, "duration": 3.0},
+                    duratio = 3.0,
+                    chanc = 0.3,
+                    vis ual_effec = "fire_particle",
+                    sound_effec = "fire_burn_sound",
+                    particle_effec = "fire_particle_effect"
                 )
             ],
-            v is ua == ItemV is ual(
-                icon_pat == "fire_sw or d_icon",
-                model_pat == "fire_sw or d_model",
-                glow_effec == "fire_glow",
-                particle_effec == "fire_trail"
+            vis ua = ItemVis ual(
+                icon_pat = "fire_sw or d_icon",
+                model_pat = "fire_sw or d_model",
+                glow_effec = "fire_glow",
+                particle_effec = "fire_trail"
             ),
-            audi == ItemAudio(
-                use_soun == "fire_sw or d_sound",
-                hit_soun == "fire_hit_sound",
-                ambient_soun == "fire_ambient"
+            audi = ItemAudio(
+                use_soun = "fire_sw or d_sound",
+                hit_soun = "fire_hit_sound",
+                ambient_soun = "fire_ambient"
             ),
-            socket_coun == 2,
-            set_nam == "Огненный Брон",
-            set_bonu == {"fire_damage_multiplier": 1.2},
-            created_b == "GameMaster",
-            versio == "1.1"
+            socket_coun = 2,
+            set_nam = "Огненный Брон",
+            set_bonu = {"fire_damage_multiplier": 1.2},
+            created_b = "GameMaster",
+            versio = "1.1"
         )
 
     @staticmethod
-    def create_lightn in g_r in g() -> Item:
+    def create_lightning_ring() -> Item:
         """Создание кольца молний"""
             return Item(
-            item_i == "lightn in g_r in g",
-            nam == "Кольцо Молний",
-            descriptio == "Кольцо, усиливающее электрические атаки",
-            item_typ == ItemType.ACCESSORY,
-            categor == ItemCateg or y.RING,
-            rarit == ItemRarity.EPIC,
-            qualit == ItemQuality.MASTERWORK,
-            leve == 3,
-            stack_siz == 1,
-            max_stac == 1,
-            weigh == 0.1,
-            valu == 300,
-            durabilit == ItemDurability(curren == 100, maximu == 100
-            decay_rat == 0.02),
-            requirement == [
-            ItemRequirement(requirement_typ == "intelligence", requirement_valu == 12, compar is o==" >= ", descriptio == "Требуется интеллект 12"),
-            ItemRequirement(requirement_typ == "level", requirement_valu == 3, compar is o==" >= ", descriptio == "Требуется уровень 3")
+            item_i = "lightning_ring",
+            nam = "Кольцо Молний",
+            descriptio = "Кольцо, усиливающее электрические атаки",
+            item_typ = ItemType.ACCESSORY,
+            categor = ItemCateg or y.RING,
+            rarit = ItemRarity.EPIC,
+            qualit = ItemQuality.MASTERWORK,
+            leve = 3,
+            stack_siz = 1,
+            max_stac = 1,
+            weigh = 0.1,
+            valu = 300,
+            durabilit = ItemDurability(curren = 100, maximu = 100
+            decay_rat = 0.02),
+            requirement = [
+            ItemRequirement(requirement_typ = "intelligence", requirement_valu = 12, comparis o=" >= ", descriptio = "Требуется интеллект 12"),
+            ItemRequirement(requirement_typ = "level", requirement_valu = 3, comparis o=" >= ", descriptio = "Требуется уровень 3")
             ],
-            stat == {StatType.INTELLIGENCE: 5, StatType.WISDOM: 3},
-            damag == 0,
-            damage_typ == None,
-            armo == 0,
-            special_effect == [
+            stat = {StatType.INTELLIGENCE: 5, StatType.WISDOM: 3},
+            damag = 0,
+            damage_typ = None,
+            armo = 0,
+            special_effect = [
             SpecialEffect(
-            effect_i == "lightn in g_boost",
-            nam == "Усиление Молний",
-            effect_typ == "damage_boost",
-            categor == EffectCateg or y.BUFF,
-            trigge == EffectTrigger.ON_HIT,
-            parameter == {"damage_multiplier": 1.5, "damage_type": "lightn in g"},
-            duratio == 0.0,
-            chanc == 1.0,
-            v is ual_effec == "lightn in g_particle",
-            sound_effec == "lightn in g_boost_sound",
-            particle_effec == "lightn in g_particle_effect"
+            effect_i = "lightning_boost",
+            nam = "Усиление Молний",
+            effect_typ = "damage_boost",
+            categor = EffectCateg or y.BUFF,
+            trigge = EffectTrigger.ON_HIT,
+            parameter = {"damage_multiplier": 1.5, "damage_type": "lightning"},
+            duratio = 0.0,
+            chanc = 1.0,
+            vis ual_effec = "lightning_particle",
+            sound_effec = "lightning_boost_sound",
+            particle_effec = "lightning_particle_effect"
             )
             ],
-            v is ua == ItemV is ual(
-            icon_pat == "lightn in g_r in g_icon",
-            model_pat == "lightn in g_r in g_model",
-            glow_effec == "lightn in g_glow",
-            particle_effec == "lightn in g_sparkle"
+            vis ua = ItemVis ual(
+            icon_pat = "lightning_ring_icon",
+            model_pat = "lightning_ring_model",
+            glow_effec = "lightning_glow",
+            particle_effec = "lightning_sparkle"
             ),
-            audi == ItemAudio(
-            use_soun == "lightn in g_r in g_sound",
-            ambient_soun == "lightn in g_ambient"
+            audi = ItemAudio(
+            use_soun = "lightning_ring_sound",
+            ambient_soun = "lightning_ambient"
             ),
-            socket_coun == 1,
-            set_nam == "Электрический Брон",
-            set_bonu == {"lightn in g_damage_multiplier": 1.1},
-            created_b == "GameMaster",
-            versio == "1.1"
+            socket_coun = 1,
+            set_nam = "Электрический Брон",
+            set_bonu = {"lightning_damage_multiplier": 1.1},
+            created_b = "GameMaster",
+            versio = "1.1"
             )
 
             @staticmethod
             def create_health_potion() -> Item:
         """Создание зелья здоровья"""
         return Item(
-            item_i == "health_potion",
-            nam == "Зелье Здоровья",
-            descriptio == "Восстанавливает здоровье",
-            item_typ == ItemType.CONSUMABLE,
-            categor == ItemCateg or y.POTION,
-            rarit == ItemRarity.COMMON,
-            qualit == ItemQuality.GOOD,
-            leve == 1,
-            stack_siz == 1,
-            max_stac == 10,
-            weigh == 0.5,
-            valu == 50,
-            durabilit == ItemDurability(curren == 100, maximu == 100
-                decay_rat == 0.01),
-            requirement == [],
-            stat == {},
-            damag == 0,
-            damage_typ == None,
-            armo == 0,
-            special_effect == [
+            item_i = "health_potion",
+            nam = "Зелье Здоровья",
+            descriptio = "Восстанавливает здоровье",
+            item_typ = ItemType.CONSUMABLE,
+            categor = ItemCateg or y.POTION,
+            rarit = ItemRarity.COMMON,
+            qualit = ItemQuality.GOOD,
+            leve = 1,
+            stack_siz = 1,
+            max_stac = 10,
+            weigh = 0.5,
+            valu = 50,
+            durabilit = ItemDurability(curren = 100, maximu = 100
+                decay_rat = 0.01),
+            requirement = [],
+            stat = {},
+            damag = 0,
+            damage_typ = None,
+            armo = 0,
+            special_effect = [
                 SpecialEffect(
-                    effect_i == "heal",
-                    nam == "Исцеление",
-                    effect_typ == "heal",
-                    categor == EffectCateg or y.HEALING,
-                    trigge == EffectTrigger.ON_USE,
-                    parameter == {"heal_amount": 50},
-                    duratio == 0.0,
-                    chanc == 1.0,
-                    v is ual_effec == "heal_particle",
-                    sound_effec == "heal_sound",
-                    particle_effec == "heal_particle_effect"
+                    effect_i = "heal",
+                    nam = "Исцеление",
+                    effect_typ = "heal",
+                    categor = EffectCateg or y.HEALING,
+                    trigge = EffectTrigger.ON_USE,
+                    parameter = {"heal_amount": 50},
+                    duratio = 0.0,
+                    chanc = 1.0,
+                    vis ual_effec = "heal_particle",
+                    sound_effec = "heal_sound",
+                    particle_effec = "heal_particle_effect"
                 )
             ],
-            v is ua == ItemV is ual(
-                icon_pat == "health_potion_icon",
-                model_pat == "health_potion_model",
-                glow_effec == "health_glow"
+            vis ua = ItemVis ual(
+                icon_pat = "health_potion_icon",
+                model_pat = "health_potion_model",
+                glow_effec = "health_glow"
             ),
-            audi == ItemAudio(
-                use_soun == "health_potion_sound"
+            audi = ItemAudio(
+                use_soun = "health_potion_sound"
             ),
-            set_nam == "Здоровье",
-            set_bonu == {"health_regeneration": 1.0},
-            created_b == "GameMaster",
-            versio == "1.1"
+            set_nam = "Здоровье",
+            set_bonu = {"health_regeneration": 1.0},
+            created_b = "GameMaster",
+            versio = "1.1"
         )
 
     @staticmethod
     def create_mana_potion() -> Item:
         """Создание зелья маны"""
             return Item(
-            item_i == "mana_potion",
-            nam == "Зелье Маны",
-            descriptio == "Восстанавливает ману",
-            item_typ == ItemType.CONSUMABLE,
-            categor == ItemCateg or y.POTION,
-            rarit == ItemRarity.COMMON,
-            qualit == ItemQuality.GOOD,
-            leve == 1,
-            stack_siz == 1,
-            max_stac == 10,
-            weigh == 0.5,
-            valu == 50,
-            durabilit == ItemDurability(curren == 100, maximu == 100
-            decay_rat == 0.01),
-            requirement == [],
-            stat == {},
-            damag == 0,
-            damage_typ == None,
-            armo == 0,
-            special_effect == [
+            item_i = "mana_potion",
+            nam = "Зелье Маны",
+            descriptio = "Восстанавливает ману",
+            item_typ = ItemType.CONSUMABLE,
+            categor = ItemCateg or y.POTION,
+            rarit = ItemRarity.COMMON,
+            qualit = ItemQuality.GOOD,
+            leve = 1,
+            stack_siz = 1,
+            max_stac = 10,
+            weigh = 0.5,
+            valu = 50,
+            durabilit = ItemDurability(curren = 100, maximu = 100
+            decay_rat = 0.01),
+            requirement = [],
+            stat = {},
+            damag = 0,
+            damage_typ = None,
+            armo = 0,
+            special_effect = [
             SpecialEffect(
-            effect_i == "mana_rest or e",
-            nam == "Восстановление Маны",
-            effect_typ == "mana_rest or e",
-            categor == EffectCateg or y.HEALING,
-            trigge == EffectTrigger.ON_USE,
-            parameter == {"mana_amount": 50},
-            duratio == 0.0,
-            chanc == 1.0,
-            v is ual_effec == "mana_particle",
-            sound_effec == "mana_sound",
-            particle_effec == "mana_particle_effect"
+            effect_i = "mana_rest or e",
+            nam = "Восстановление Маны",
+            effect_typ = "mana_rest or e",
+            categor = EffectCateg or y.HEALING,
+            trigge = EffectTrigger.ON_USE,
+            parameter = {"mana_amount": 50},
+            duratio = 0.0,
+            chanc = 1.0,
+            vis ual_effec = "mana_particle",
+            sound_effec = "mana_sound",
+            particle_effec = "mana_particle_effect"
             )
             ],
-            v is ua == ItemV is ual(
-            icon_pat == "mana_potion_icon",
-            model_pat == "mana_potion_model",
-            glow_effec == "mana_glow"
+            vis ua = ItemVis ual(
+            icon_pat = "mana_potion_icon",
+            model_pat = "mana_potion_model",
+            glow_effec = "mana_glow"
             ),
-            audi == ItemAudio(
-            use_soun == "mana_potion_sound"
+            audi = ItemAudio(
+            use_soun = "mana_potion_sound"
             ),
-            set_nam == "Мана",
-            set_bonu == {"mana_regeneration": 1.0},
-            created_b == "GameMaster",
-            versio == "1.1"
+            set_nam = "Мана",
+            set_bonu = {"mana_regeneration": 1.0},
+            created_b = "GameMaster",
+            versio = "1.1"
             )

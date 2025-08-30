@@ -4,54 +4,54 @@
     Модульная архитектура с принципом единой ответственности
 """
 
-from abc imp or t ABC, abstractmethod
-from enum imp or t Enum
-from typ in g imp or t Dict, L is t, Optional, Any, Type, TypeVar, Generic, Callable
-from dataclasses imp or t dataclass, field:
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Dict, Lis t, Optional, Any, Type, TypeVar, Generic, Callable
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-imp or t logg in g
-imp or t time
-imp or t thread in g
-from contextlib imp or t contextmanager
+import logging
+import time
+import threading
+from contextlib import contextmanager
 
-# ============================================================================
+# ======================================
 # БАЗОВЫЕ ИНТЕРФЕЙСЫ АРХИТЕКТУРЫ
-# ============================================================================
+# ======================================
 
 class ComponentType(Enum):
     """Типы компонентов архитектуры"""
-        SYSTEM== "system"
-        MANAGER== "manager"
-        SERVICE== "service"
-        REPOSITORY== "reposit or y"
-        FACTORY== "fact or y"
-        CONTROLLER== "controller"
-        UTILITY== "utility"
-        ADAPTER== "adapter"
+        SYSTEM= "system"
+        MANAGER= "manager"
+        SERVICE= "service"
+        REPOSITORY= "reposit or y"
+        FACTORY= "fact or y"
+        CONTROLLER= "controller"
+        UTILITY= "utility"
+        ADAPTER= "adapter"
 
         class LifecycleState(Enum):
     """Состояния жизненного цикла компонента"""
-    UNINITIALIZED== "un in itialized"
-    INITIALIZING== " in itializ in g"
-    READY== "ready"
-    RUNNING== "runn in g"
-    PAUSED== "paused"
-    STOPPING== "stopp in g"
-    STOPPED== "stopped"
-    ERROR== "err or "
-    DESTROYED== "destroyed"
+    UNINITIALIZED= "unin itialized"
+    INITIALIZING= "in itializing"
+    READY= "ready"
+    RUNNING= "running"
+    PAUSED= "paused"
+    STOPPING= "stopping"
+    STOPPED= "stopped"
+    ERROR= "err or "
+    DESTROYED= "destroyed"
 
 class Pri or ity(Enum):
     """Приоритеты компонентов"""
-        CRITICAL== 0
-        HIGH== 1
-        NORMAL== 2
-        LOW== 3
-        BACKGROUND== 4
+        CRITICAL= 0
+        HIGH= 1
+        NORMAL= 2
+        LOW= 3
+        BACKGROUND= 4
 
-        # ============================================================================
+        # ======================================
         # БАЗОВЫЕ КЛАССЫ АРХИТЕКТУРЫ
-        # ============================================================================
+        # ======================================
 
         class IComponent(ABC):
     """Базовый интерфейс для всех компонентов архитектуры"""
@@ -100,22 +100,22 @@ class Pri or ity(Enum):
         """Уничтожение компонента"""
         pass
 
-# ============================================================================
+# ======================================
 # БАЗОВЫЕ РЕАЛИЗАЦИИ
-# ============================================================================
+# ======================================
 
 class BaseComponent(IComponent):
     """Базовая реализация компонента"""
 
-        def __ in it__(self, component_id: str, component_type: ComponentType
-        pri or ity: Pri or ity== Pri or ity.NORMAL):
+        def __in it__(self, component_id: str, component_type: ComponentType
+        pri or ity: Pri or ity= Pri or ity.NORMAL):
         pass  # Добавлен pass в пустой блок
-        self._component_id== component_id
-        self._component_type== component_type
-        self._pri or ity== pri or ity
-        self._state== LifecycleState.UNINITIALIZED:
+        self._component_id= component_id
+        self._component_type= component_type
+        self._pri or ity= pri or ity
+        self._state= LifecycleState.UNINITIALIZED:
         pass  # Добавлен pass в пустой блок
-        self._logger== logg in g.getLogger(f"{__name__}.{component_id}")
+        self._logger= logging.getLogger(f"{__name__}.{component_id}")
 
         @property
         def component_id(self) -> str:
@@ -140,7 +140,7 @@ class BaseComponent(IComponent):
             pass
             pass
             pass
-            self._state== LifecycleState.ERROR:
+            self._state= LifecycleState.ERROR:
                 pass  # Добавлен pass в пустой блок
             self._logger.err or(f"Исключение при инициализации {self.component_id}: {e}")
             return False
@@ -148,31 +148,31 @@ class BaseComponent(IComponent):
     def start(self) -> bool:
         """Запуск компонента"""
             if self._state != LifecycleState.READY:
-            self._logger.warn in g(f"Нельзя запустить компонент {self.component_id} в состоянии {self._state}")
+            self._logger.warning(f"Нельзя запустить компонент {self.component_id} в состоянии {self._state}")
             return False
 
             try:
-            self._state== LifecycleState.RUNNING:
+            self._state= LifecycleState.RUNNING:
             pass  # Добавлен pass в пустой блок
             if self._on_start():
-            self._logger. in fo(f"Компонент {self.component_id} запущен")
+            self._logger.in fo(f"Компонент {self.component_id} запущен")
             return True
             else:
-            self._state== LifecycleState.ERROR:
+            self._state= LifecycleState.ERROR:
             pass  # Добавлен pass в пустой блок
             return False
             except Exception as e:
             pass
             pass
             pass
-            self._state== LifecycleState.ERROR:
+            self._state= LifecycleState.ERROR:
             pass  # Добавлен pass в пустой блок
             self._logger.err or(f"Исключение при запуске {self.component_id}: {e}")
             return False
 
             def stop(self) -> bool:
         """Остановка компонента"""
-        if self._state not in [LifecycleState.RUNNING, LifecycleState.PAUSED]:
+        if self._state notin [LifecycleState.RUNNING, LifecycleState.PAUSED]:
             return True
 
         try:
@@ -180,7 +180,7 @@ class BaseComponent(IComponent):
             pass
             pass
             pass
-            self._state== LifecycleState.ERROR:
+            self._state= LifecycleState.ERROR:
                 pass  # Добавлен pass в пустой блок
             self._logger.err or(f"Исключение при остановке {self.component_id}: {e}")
             return False
@@ -188,12 +188,12 @@ class BaseComponent(IComponent):
     def destroy(self) -> bool:
         """Уничтожение компонента"""
             try:
-            self._state== LifecycleState.STOPPING:
+            self._state= LifecycleState.STOPPING:
             pass  # Добавлен pass в пустой блок
             if self._on_destroy():
-            self._state== LifecycleState.DESTROYED:
+            self._state= LifecycleState.DESTROYED:
             pass  # Добавлен pass в пустой блок
-            self._logger. in fo(f"Компонент {self.component_id} уничтожен")
+            self._logger.in fo(f"Компонент {self.component_id} уничтожен")
             return True
             else:
             return False
@@ -223,7 +223,7 @@ class BaseComponent(IComponent):
             return False
 
             try:
-            self._state== LifecycleState.RUNNING:
+            self._state= LifecycleState.RUNNING:
             pass  # Добавлен pass в пустой блок
             self._on_resume()
             return True
@@ -235,7 +235,7 @@ class BaseComponent(IComponent):
             return False
 
             # Методы для переопределения в наследниках
-            def _on_ in itialize(self) -> bool:
+            def _on_in itialize(self) -> bool:
         """Переопределяется в наследниках для специфичной инициализации"""
         return True
 
@@ -259,38 +259,38 @@ class BaseComponent(IComponent):
         """Переопределяется в наследниках для специфичного возобновления"""
             pass
 
-            # ============================================================================
+            # ======================================
             # МЕНЕДЖЕР КОМПОНЕНТОВ
-            # ============================================================================
+            # ======================================
 
             class ComponentManager:
     """Менеджер компонентов архитектуры"""
 
-    def __ in it__(self):
-        self._components: Dict[str, IComponent]== {}
-        self._components_by_type: Dict[ComponentType, L is t[IComponent]]== {}
-        self._components_by_pri or ity: Dict[Pri or ity, L is t[IComponent]]== {}
-        self._logger== logg in g.getLogger(__name__)
+    def __in it__(self):
+        self._components: Dict[str, IComponent]= {}
+        self._components_by_type: Dict[ComponentType, Lis t[IComponent]]= {}
+        self._components_by_pri or ity: Dict[Pri or ity, Lis t[IComponent]]= {}
+        self._logger= logging.getLogger(__name__)
 
         # Инициализация словарей по типам и приоритетам
-        for component_type in ComponentType:
-            self._components_by_type[component_type]== []
-        for pri or ity in Pri or ity:
-            self._components_by_pri or ity[pri or ity]== []
+        for component_typein ComponentType:
+            self._components_by_type[component_type]= []
+        for pri or ityin Pri or ity:
+            self._components_by_pri or ity[pri or ity]= []
 
-    def reg is ter_component(self, component: IComponent) -> bool:
+    def regis ter_component(self, component: IComponent) -> bool:
         """Регистрация компонента"""
             try:
-            if component.component_id in self._components:
-            self._logger.warn in g(f"Компонент {component.component_id} уже зарегистрирован")
+            if component.component_idin self._components:
+            self._logger.warning(f"Компонент {component.component_id} уже зарегистрирован")
             return False
 
             # Регистрируем компонент
-            self._components[component.component_id]== component
+            self._components[component.component_id]= component
             self._components_by_type[component.component_type].append(component)
             self._components_by_pri or ity[component.pri or ity].append(component)
 
-            self._logger. in fo(f"Компонент {component.component_id} зарегистрирован")
+            self._logger.in fo(f"Компонент {component.component_id} зарегистрирован")
             return True
 
             except Exception as e:
@@ -300,7 +300,7 @@ class BaseComponent(IComponent):
             self._logger.err or(f"Ошибка регистрации компонента {component.component_id}: {e}")
             return False
 
-            def unreg is ter_component(self, component_id: str) -> bool:
+            def unregis ter_component(self, component_id: str) -> bool:
         """Отмена регистрации компонента"""
         try:
         except Exception as e:
@@ -315,13 +315,13 @@ class BaseComponent(IComponent):
             return self._components.get(component_id)
 
             def get_components_by_type(self
-            component_type: ComponentType) -> L is t[IComponent]:
+            component_type: ComponentType) -> Lis t[IComponent]:
             pass  # Добавлен pass в пустой блок
         """Получение компонентов по типу"""
         return self._components_by_type.get(component_type, []).copy()
 
     def get_components_by_pri or ity(self
-        pri or ity: Pri or ity) -> L is t[IComponent]:
+        pri or ity: Pri or ity) -> Lis t[IComponent]:
             pass  # Добавлен pass в пустой блок
         """Получение компонентов по приоритету"""
             return self._components_by_pri or ity.get(pri or ity, []).copy()
@@ -339,9 +339,9 @@ class BaseComponent(IComponent):
     def start_all(self) -> bool:
         """Запуск всех компонентов по приоритету"""
             try:
-            for pri or ity in Pri or ity:
-            components== self._components_by_pri or ity[pri or ity]
-            for component in components:
+            for pri or ityin Pri or ity:
+            components= self._components_by_pri or ity[pri or ity]
+            for componentin components:
             if not component.start():
             self._logger.err or(f"Ошибка запуска {component.component_id}")
             return False
@@ -366,9 +366,9 @@ class BaseComponent(IComponent):
     def destroy_all(self) -> bool:
         """Уничтожение всех компонентов"""
             try:
-            for pri or ity in reversed(l is t(Pri or ity)):
-            components== self._components_by_pri or ity[pri or ity]
-            for component in components:
+            for pri or ityin reversed(lis t(Pri or ity)):
+            components= self._components_by_pri or ity[pri or ity]
+            for componentin components:
             if not component.destroy():
             self._logger.err or(f"Ошибка уничтожения {component.component_id}")
             return False
@@ -380,26 +380,26 @@ class BaseComponent(IComponent):
             self._logger.err or(f"Ошибка массового уничтожения: {e}")
             return False
 
-            # ============================================================================
+            # ======================================
             # ШИНА СОБЫТИЙ
-            # ============================================================================
+            # ======================================
 
             class EventBus:
     """Шина событий для межкомпонентного взаимодействия"""
 
-    def __ in it__(self):
-        self._subscribers: Dict[str, L is t[Callable]]== {}
-        self._event_h is tory: L is t[Dict[str, Any]]== []
-        self._max_h is tory== 1000
-        self._logger== logg in g.getLogger(__name__)
+    def __in it__(self):
+        self._subscribers: Dict[str, Lis t[Callable]]= {}
+        self._event_his tory: Lis t[Dict[str, Any]]= []
+        self._max_his tory= 1000
+        self._logger= logging.getLogger(__name__)
 
     def subscribe(self, event_type: str, callback: Callable) -> bool:
         """Подписка на событие"""
             try:
-            if event_type not in self._subscribers:
-            self._subscribers[event_type]== []
+            if event_type notin self._subscribers:
+            self._subscribers[event_type]= []
 
-            if callback not in self._subscribers[event_type]:
+            if callback notin self._subscribers[event_type]:
             self._subscribers[event_type].append(callback)
             self._logger.debug(f"Подписка на {event_type}: {callback}")
             return True
@@ -422,23 +422,23 @@ class BaseComponent(IComponent):
             self._logger.err or(f"Ошибка отписки от {event_type}: {e}")
             return False
 
-    def publ is h(self, event_type: str, data: Any== None) -> bool:
+    def publis h(self, event_type: str, data: Any= None) -> bool:
         """Публикация события"""
             try:
-            event== {
+            event= {
             'type': event_type,
             'data': data,
             'timestamp': time.time()
             }
 
             # Добавляем в историю
-            self._event_h is tory.append(event)
-            if len(self._event_h is tory) > self._max_h is tory:
-            self._event_h is tory.pop(0)
+            self._event_his tory.append(event)
+            if len(self._event_his tory) > self._max_his tory:
+            self._event_his tory.pop(0)
 
             # Уведомляем подписчиков
-            if event_type in self._subscribers:
-            for callback in self._subscribers[event_type]:
+            if event_typein self._subscribers:
+            for callbackin self._subscribers[event_type]:
             try:
             callback(event)
             except Exception as e:
@@ -454,8 +454,8 @@ class BaseComponent(IComponent):
             self._logger.err or(f"Ошибка публикации события {event_type}: {e}")
             return False
 
-            def get_event_h is tory(self, event_type: str== None
-            limit: int== None) -> L is t[Dict[str, Any]]:
+            def get_event_his tory(self, event_type: str= None
+            limit: int= None) -> Lis t[Dict[str, Any]]:
             pass  # Добавлен pass в пустой блок
         """Получение истории событий"""
         try:
@@ -466,56 +466,56 @@ class BaseComponent(IComponent):
             self._logger.err or(f"Ошибка получения истории событий: {e}")
             return []
 
-# ============================================================================
+# ======================================
 # СИСТЕМА СОБЫТИЙ
-# ============================================================================
+# ======================================
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class Event:
     """Базовый класс для событий"""
         event_type: str
-        data: Any== None
-        timestamp: float== field(default_factor == time.time):
+        data: Any= None
+        timestamp: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-        source: Optional[str]== None
-        target: Optional[str]== None
-        pri or ity: Pri or ity== Pri or ity.NORMAL
+        source: Optional[str]= None
+        target: Optional[str]= None
+        pri or ity: Pri or ity= Pri or ity.NORMAL
 
-        def __post_ in it__(self):
-        if self.timestamp is None:
-        self.timestamp== time.time()
+        def __post_in it__(self):
+        if self.timestampis None:
+        self.timestamp= time.time()
 
-        def create_event(event_type: str, data: Any== None, source: str== None,
-        target: str== None
-        pri or ity: Pri or ity== Pri or ity.NORMAL) -> Event:
+        def create_event(event_type: str, data: Any= None, source: str= None,
+        target: str= None
+        pri or ity: Pri or ity= Pri or ity.NORMAL) -> Event:
         pass  # Добавлен pass в пустой блок
     """Создание события"""
     return Event(
-        event_typ == event_type,
-        dat == data,
-        sourc == source,
-        targe == target,
-        pri or it == pri or ity
+        event_typ = event_type,
+        dat = data,
+        sourc = source,
+        targe = target,
+        pri or it = pri or ity
     )
 
-# ============================================================================
+# ======================================
 # УТИЛИТЫ
-# ============================================================================
+# ======================================
 
 @contextmanager
 def component_lifecycle(component: IComponent):
     """Контекстный менеджер для жизненного цикла компонента"""
         try:
-        if not component. in itialize():
-        ra is e RuntimeErr or(f"Ошибка инициализации {component.component_id}")
+        if not component.in itialize():
+        rais e RuntimeErr or(f"Ошибка инициализации {component.component_id}")
 
         if not component.start():
-        ra is e RuntimeErr or(f"Ошибка запуска {component.component_id}")
+        rais e RuntimeErr or(f"Ошибка запуска {component.component_id}")
 
         yield component
 
-        f in ally:
+        fin ally:
         component.stop()
         component.destroy()
 

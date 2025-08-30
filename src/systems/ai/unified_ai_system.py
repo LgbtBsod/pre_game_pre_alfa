@@ -5,32 +5,32 @@
     Консолидирует все AI системы в единую архитектуру без потери функциональности
 """
 
-imp or t logg in g
-imp or t time
-imp or t r and om
-from typ in g imp or t Dict, L is t, Optional, Any, Union
-from dataclasses imp or t dataclass, field:
+import logging
+import time
+import rand om
+from typing import Dict, Lis t, Optional, Any, Union
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from ...c or e.architecture imp or t BaseComponent, ComponentType, Pri or ity
+from ...c or e.architecture import BaseComponent, ComponentType, Pri or ity
     LifecycleState:
         pass  # Добавлен pass в пустой блок
-from ...c or e.constants imp or t constants_manager, AIState, AIBehavior
+from ...c or e.constants import constants_manager, AIState, AIBehavior
     AIDifficulty:
         pass  # Добавлен pass в пустой блок
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class AISystemAdapter:
     """Адаптер для AI подсистемы"""
         system_name: str
-        system_ in stance: Any
+        system_in stance: Any
         pri or ity: int
-        is_active: bool== True
-        last_update: float== 0.0
-        update_count: int== 0
-        err or _count: int== 0
-        capabilities: L is t[str]== field(default_factor == list):
+        is_active: bool= True
+        last_update: float= 0.0
+        update_count: int= 0
+        err or _count: int= 0
+        capabilities: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -43,65 +43,65 @@ class AISystemAdapter:
         pass  # Добавлен pass в пустой блок
     current_state: AIState
     position: tuple
-    target: Optional[str]== None
-    mem or y: Dict[str, Any]== field(default_factor == dict):
+    target: Optional[str]= None
+    mem or y: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-    skills: L is t[str]== field(default_factor == list):
+    skills: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    stats: Dict[str, float]== field(default_factor == dict):
+    stats: Dict[str, float]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
-    last_dec is ion: float== 0.0
-    dec is ion_cooldown: float== 0.0
+    last_decis ion: float= 0.0
+    decis ion_cooldown: float= 0.0
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
-class AIDec is ion:
+class AIDecis ion:
     """Решение AI"""
         entity_id: str
-        dec is ion_type: str
+        decis ion_type: str
         target_id: Optional[str]
         action_data: Dict[str, Any]
         pri or ity: float
         confidence: float
         timestamp: float
-        executed: bool== False
+        executed: bool= False
 
         class UnifiedAISystem(BaseComponent):
     """Объединенная система искусственного интеллекта с консолидированной архитектурой"""
 
-    def __ in it__(self):
-        super().__ in it__("unified_ai", ComponentType.SYSTEM, Pri or ity.HIGH):
+    def __in it__(self):
+        super().__in it__("unified_ai", ComponentType.SYSTEM, Pri or ity.HIGH):
             pass  # Добавлен pass в пустой блок
         # Адаптеры для AI подсистем
-        self.ai_adapters: Dict[str, AISystemAdapter]== {}
+        self.ai_adapters: Dict[str, AISystemAdapter]= {}
 
         # AI сущности
-        self.ai_entities: Dict[str, AIEntityData]== {}
+        self.ai_entities: Dict[str, AIEntityData]= {}
 
         # Решения AI
-        self.ai_dec is ions: Dict[str, L is t[AIDec is ion]]== {}
+        self.ai_decis ions: Dict[str, Lis t[AIDecis ion]]= {}
 
         # Группы AI
-        self.ai_groups: Dict[str, L is t[str]]== {}
+        self.ai_groups: Dict[str, Lis t[str]]= {}
 
         # Память и опыт
-        self.global_mem or y: Dict[str, Any]== {}
-        self.experience_pool: Dict[str, float]== {}
+        self.global_mem or y: Dict[str, Any]= {}
+        self.experience_pool: Dict[str, float]= {}
 
         # Конфигурация
-        self.max_ai_entities== 1000
-        self.update_frequency== 0.1  # 10 раз в секунду
-        self.dec is ion_timeout== 1.0
-        self.mem or y_cleanup_ in terval== 60.0
+        self.max_ai_entities= 1000
+        self.update_frequency= 0.1  # 10 раз в секунду
+        self.decis ion_timeout= 1.0
+        self.mem or y_cleanup_in terval= 60.0
 
         # Состояние системы
-        self.last_update== 0.0
-        self.update_count== 0
-        self.err or _count== 0
+        self.last_update= 0.0
+        self.update_count= 0
+        self.err or _count= 0
 
-        logger. in fo("Unified AI System инициализирован"):
+        logger.in fo("Unified AI System инициализирован"):
             pass  # Добавлен pass в пустой блок
-    def _on_ in itialize(self) -> bool:
+    def _on_in itialize(self) -> bool:
         """Инициализация системы"""
             try:
             # Создаем адаптеры для существующих AI систем
@@ -109,13 +109,13 @@ class AIDec is ion:
 
             # Проверяем доступность систем
             if not self._validate_systems():
-            logger.warn in g("Некоторые AI системы недоступны")
+            logger.warning("Некоторые AI системы недоступны")
             self._setup_fallback_system()
 
             # Инициализируем глобальную память
-            self._ in itialize_global_mem or y()
+            self._in itialize_global_mem or y()
 
-            logger. in fo("Unified AI System готов к работе"):
+            logger.in fo("Unified AI System готов к работе"):
             pass  # Добавлен pass в пустой блок
             return True
 
@@ -140,10 +140,10 @@ class AIDec is ion:
         """Остановка системы"""
             try:
             # Останавливаем все адаптеры
-            for adapter in self.ai_adapters.values():
+            for adapterin self.ai_adapters.values():
             self._stop_system_adapter(adapter)
 
-            logger. in fo("Unified AI System остановлен"):
+            logger.in fo("Unified AI System остановлен"):
             pass  # Добавлен pass в пустой блок
             return True
 
@@ -169,82 +169,82 @@ class AIDec is ion:
             try:
             # Адаптер для AISystem(основная система)
             try:
-            from .ai_system imp or t AISystem
-            ai_system== AISystem()
-            self.ai_adapters["ai_system"]== AISystemAdapter(
-            system_nam == "ai_system",
-            system_ in stanc == ai_system,
-            pri or it == 1,
-            capabilitie == ["behavi or _trees", "rule_based", "basic_learn in g"]
+            from .ai_system import AISystem
+            ai_system= AISystem()
+            self.ai_adapters["ai_system"]= AISystemAdapter(
+            system_nam = "ai_system",
+            system_in stanc = ai_system,
+            pri or it = 1,
+            capabilitie = ["behavi or _trees", "rule_based", "basic_learning"]
             )
-            logger. in fo("Адаптер для AISystem создан")
+            logger.in fo("Адаптер для AISystem создан")
             except Imp or tError as e:
             pass
             pass
             pass
-            logger.warn in g(f"AISystem недоступен: {e}")
+            logger.warning(f"AISystem недоступен: {e}")
 
             # Адаптер для PyT or chAISystem(нейронные сети)
             try:
-            from .pyt or ch_ai_system imp or t PyT or chAISystem
-            pyt or ch_system== PyT or chAISystem()
-            self.ai_adapters["pyt or ch"]== AISystemAdapter(
-            system_nam == "pyt or ch",
-            system_ in stanc == pyt or ch_system,
-            pri or it == 2,
-            capabilitie == ["neural_netw or ks", "deep_learn in g", "re in forcement_learn in g"]:
+            from .pyt or ch_ai_system import PyT or chAISystem
+            pyt or ch_system= PyT or chAISystem()
+            self.ai_adapters["pyt or ch"]= AISystemAdapter(
+            system_nam = "pyt or ch",
+            system_in stanc = pyt or ch_system,
+            pri or it = 2,
+            capabilitie = ["neural_netw or ks", "deep_learning", "rein forcement_learning"]:
             pass  # Добавлен pass в пустой блок
             )
-            logger. in fo("Адаптер для PyT or chAISystem создан")
+            logger.in fo("Адаптер для PyT or chAISystem создан")
             except Imp or tError as e:
             pass
             pass
             pass
-            logger.warn in g(f"PyT or chAISystem недоступен: {e}")
+            logger.warning(f"PyT or chAISystem недоступен: {e}")
 
             # Адаптер для AIIntegrationSystem(если доступен)
             try:
-            from .ai_ in tegration_system imp or t AIIntegrationSystem
-            integration_system== AIIntegrationSystem()
-            self.ai_adapters[" in tegration"]== AISystemAdapter(
-            system_nam == "integration",
-            system_ in stanc == integration_system,
-            pri or it == 3,
-            capabilitie == [" in tegration", "fallback", "co or dination"]
+            from .ai_in tegration_system import AIIntegrationSystem
+            integration_system= AIIntegrationSystem()
+            self.ai_adapters["in tegration"]= AISystemAdapter(
+            system_nam = "integration",
+            system_in stanc = integration_system,
+            pri or it = 3,
+            capabilitie = ["in tegration", "fallback", "co or dination"]
             )
-            logger. in fo("Адаптер для AIIntegrationSystem создан")
+            logger.in fo("Адаптер для AIIntegrationSystem создан")
             except Imp or tError as e:
             pass
             pass
             pass
-            logger.warn in g(f"AIIntegrationSystem недоступен: {e}")
+            logger.warning(f"AIIntegrationSystem недоступен: {e}")
 
             except Exception as e:
             logger.err or(f"Ошибка создания адаптеров: {e}")
 
             def _validate_systems(self) -> bool:
         """Проверка доступности AI систем"""
-        available_systems== 0
+        available_systems= 0
 
-        for adapter in self.ai_adapters.values():
+        for adapterin self.ai_adapters.values():
             try:
             except Exception as e:
                 pass
                 pass
                 pass
-                adapter. is _active== False
+                adapter.is _active= False
                 logger.err or(f"Ошибка валидации {adapter.system_name}: {e}")
 
-        logger. in fo(f"Доступно AI систем: {available_systems}")
+        logger.in fo(f"Доступно AI систем: {available_systems}")
         return available_systems > 0
 
     def _setup_fallback_system(self):
         """Настройка резервной AI системы"""
             try:
             # Создаем простую резервную систему
-            self.fallback_system== FallbackAISystem()
-            if self.fallback_system. in itialize():
-            logger. in fo("Резервная AI система настроена")
+            self.fallback_system= FallbackAISystem()
+            if self.fallback_system.in itialize():
+            logger.in fo("Резервная AI система настроена")
             else:
             logger.err or("Не удалось настроить резервную AI систему")
             except Exception as e:
@@ -253,7 +253,7 @@ class AIDec is ion:
             pass
             logger.err or(f"Ошибка настройки резервной системы: {e}")
 
-            def _ in itialize_global_mem or y(self):
+            def _in itialize_global_mem or y(self):
         """Инициализация глобальной памяти"""
         try:
         except Exception as e:
@@ -265,21 +265,21 @@ class AIDec is ion:
     def _start_system_adapter(self, adapter: AISystemAdapter):
         """Запуск адаптера системы"""
             try:
-            if hasattr(adapter.system_ in stance, 'start'):
-            if adapter.system_ in stance.start():
-            adapter. is _active== True
-            logger. in fo(f"Адаптер {adapter.system_name} запущен")
+            if hasattr(adapter.system_in stance, 'start'):
+            if adapter.system_in stance.start():
+            adapter.is _active= True
+            logger.in fo(f"Адаптер {adapter.system_name} запущен")
             else:
-            adapter. is _active== False
+            adapter.is _active= False
             logger.err or(f"Не удалось запустить {adapter.system_name}")
             else:
-            adapter. is _active== True
-            logger. in fo(f"Адаптер {adapter.system_name} активирован(без start)")
+            adapter.is _active= True
+            logger.in fo(f"Адаптер {adapter.system_name} активирован(без start)")
             except Exception as e:
             pass
             pass
             pass
-            adapter. is _active== False
+            adapter.is _active= False
             logger.err or(f"Ошибка запуска {adapter.system_name}: {e}")
 
             def _stop_system_adapter(self, adapter: AISystemAdapter):
@@ -290,35 +290,35 @@ class AIDec is ion:
             pass
             pass
             logger.err or(f"Ошибка остановки {adapter.system_name}: {e}")
-        f in ally:
-            adapter. is _active== False
+        fin ally:
+            adapter.is _active= False
 
-    def get_ai_system(self, system_name: str== None
-        capability: str== None) -> Optional[Any]:
+    def get_ai_system(self, system_name: str= None
+        capability: str= None) -> Optional[Any]:
             pass  # Добавлен pass в пустой блок
         """Получение AI системы по имени или возможностям"""
-            if system_name and system_name in self.ai_adapters:
-            adapter== self.ai_adapters[system_name]
-            if adapter. is _active:
-            return adapter.system_ in stance
+            if system_nameand system_namein self.ai_adapters:
+            adapter= self.ai_adapters[system_name]
+            if adapter.is _active:
+            return adapter.system_in stance
 
             # Возвращаем систему с нужными возможностями
             if capability:
-            for adapter in self.ai_adapters.values():
-            if adapter. is _active and capability in adapter.capabilities:
-            return adapter.system_ in stance
+            for adapterin self.ai_adapters.values():
+            if adapter.is _activeand capabilityin adapter.capabilities:
+            return adapter.system_in stance
 
             # Возвращаем систему с наивысшим приоритетом
-            active_adapters== [a for a in self.ai_adapters.values() if a. is _active]:
+            active_adapters= [a for ain self.ai_adapters.values() if a.is _active]:
             pass  # Добавлен pass в пустой блок
             if active_adapters:
             return m in(active_adapters
-            ke == lambda x: x.pri or ity).system_ in stance
+            ke = lambda x: x.pri or ity).system_in stance
 
             # Возвращаем резервную систему
             return getattr(self, 'fallback_system', None)
 
-            def reg is ter_ai_entity(self, entity_id: str, entity_data: Dict[str
+            def regis ter_ai_entity(self, entity_id: str, entity_data: Dict[str
             Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Регистрация AI сущности во всех доступных системах"""
@@ -332,14 +332,14 @@ class AIDec is ion:
             pass  # Добавлен pass в пустой блок
         """Обновление AI сущности"""
             try:
-            success_count== 0
+            success_count= 0
 
             # Обновляем в основной системе
-            primary_system== self.get_ai_system()
-            if primary_system and hasattr(primary_system, 'update_entity'):
+            primary_system= self.get_ai_system()
+            if primary_systemand hasattr(primary_system, 'update_entity'):
             try:
             if primary_system.update_entity(entity_id, update_data):
-            success_count == 1
+            success_count = 1
             except Exception as e:
             pass
             pass
@@ -347,14 +347,14 @@ class AIDec is ion:
             logger.err or(f"Ошибка обновления в основной системе: {e}")
 
             # Обновляем в специализированных системах
-            for adapter in self.ai_adapters.values():
-            if adapter. is _active and adapter.system_name != "ai_system":
-            if hasattr(adapter.system_ in stance, 'update_entity'):
+            for adapterin self.ai_adapters.values():
+            if adapter.is _activeand adapter.system_name != "ai_system":
+            if hasattr(adapter.system_in stance, 'update_entity'):
             try:
-            if adapter.system_ in stance.update_entity(entity_id
+            if adapter.system_in stance.update_entity(entity_id
             update_data):
             pass  # Добавлен pass в пустой блок
-            success_count == 1
+            success_count = 1
             except Exception as e:
             pass
             pass
@@ -362,9 +362,9 @@ class AIDec is ion:
             logger.err or(f"Ошибка обновления в {adapter.system_name}: {e}")
 
             # Обновляем локальные данные
-            if entity_id in self.ai_entities:
-            entity== self.ai_entities[entity_id]
-            for key, value in update_data.items():
+            if entity_idin self.ai_entities:
+            entity= self.ai_entities[entity_id]
+            for key, valuein update_data.items():
             if hasattr(entity, key):
             setattr(entity, key, value)
 
@@ -385,10 +385,10 @@ class AIDec is ion:
         """Получение состояния AI сущности"""
             try:
             # Пытаемся получить состояние из основной системы
-            primary_system== self.get_ai_system()
-            if primary_system and hasattr(primary_system, 'get_entity_state'):
+            primary_system= self.get_ai_system()
+            if primary_systemand hasattr(primary_system, 'get_entity_state'):
             try:
-            state== primary_system.get_entity_state(entity_id)
+            state= primary_system.get_entity_state(entity_id)
             if state:
             return state
             except Exception as e:
@@ -398,8 +398,8 @@ class AIDec is ion:
             logger.err or(f"Ошибка получения состояния из основной системы: {e}")
 
             # Возвращаем локальные данные
-            if entity_id in self.ai_entities:
-            entity== self.ai_entities[entity_id]
+            if entity_idin self.ai_entities:
+            entity= self.ai_entities[entity_id]
             return {
             'entity_id': entity.entity_id,
             'entity_type': entity.entity_type,
@@ -421,7 +421,7 @@ class AIDec is ion:
             return None
 
             def add_experience(self, experience_type: str, amount: float
-            source: str== None):
+            source: str= None):
             pass  # Добавлен pass в пустой блок
         """Добавление опыта в глобальный пул"""
         try:
@@ -432,29 +432,29 @@ class AIDec is ion:
             logger.err or(f"Ошибка добавления опыта: {e}")
 
     def _update_global_mem or y(self, experience_type: str, amount: float
-        source: str== None):
+        source: str= None):
             pass  # Добавлен pass в пустой блок
         """Обновление глобальной памяти на основе опыта"""
             try:
-            if experience_type == "combat":
+            if experience_type = "combat":
             # Обновляем тактики боя
-            if "combat_tactics" not in self.global_mem or y:
-            self.global_mem or y["combat_tactics"]== {}
+            if "combat_tactics" notin self.global_mem or y:
+            self.global_mem or y["combat_tactics"]= {}
 
             if source:
-            if source not in self.global_mem or y["combat_tactics"]:
-            self.global_mem or y["combat_tactics"][source]== 0.0
-            self.global_mem or y["combat_tactics"][source] == amount
+            if source notin self.global_mem or y["combat_tactics"]:
+            self.global_mem or y["combat_tactics"][source]= 0.0
+            self.global_mem or y["combat_tactics"][source] = amount
 
-            elif experience_type == "expl or ation":
+            elif experience_type = "expl or ation":
             # Обновляем знания об окружении
-            if "environment_knowledge" not in self.global_mem or y:
-            self.global_mem or y["environment_knowledge"]== {}
+            if "environment_knowledge" notin self.global_mem or y:
+            self.global_mem or y["environment_knowledge"]= {}
 
-            elif experience_type == "social":
+            elif experience_type = "social":
             # Обновляем отношения с NPC
-            if "npc_relationships" not in self.global_mem or y:
-            self.global_mem or y["npc_relationships"]== {}
+            if "npc_relationships" notin self.global_mem or y:
+            self.global_mem or y["npc_relationships"]= {}
 
             except Exception as e:
             pass
@@ -462,11 +462,11 @@ class AIDec is ion:
             pass
             logger.err or(f"Ошибка обновления глобальной памяти: {e}")
 
-            def get_perf or mance_metrics(self) -> Dict[str, Any]:
+            def get_perfor mance_metrics(self) -> Dict[str, Any]:
         """Получение метрик производительности"""
-        metrics== {
+        metrics= {
             'total_ai_entities': len(self.ai_entities),
-            'available_systems': len([a for a in self.ai_adapters.values() if a. is _active]),:
+            'available_systems': len([a for ain self.ai_adapters.values() if a.is _active]),:
                 pass  # Добавлен pass в пустой блок
             'last_update': self.last_update,
             'update_count': self.update_count,
@@ -474,10 +474,10 @@ class AIDec is ion:
         }
 
         # Метрики по системам
-        system_metrics== {}
-        for adapter in self.ai_adapters.values():
-            if adapter. is _active:
-                system_metrics[adapter.system_name]== {
+        system_metrics= {}
+        for adapterin self.ai_adapters.values():
+            if adapter.is _active:
+                system_metrics[adapter.system_name]= {
                     'pri or ity': adapter.pri or ity,
                     'update_count': adapter.update_count,
                     'err or _count': adapter.err or _count,
@@ -485,23 +485,23 @@ class AIDec is ion:
                     'capabilities': adapter.capabilities
                 }
 
-        metrics['system_metrics']== system_metrics
-        metrics['global_mem or y_size']== len(self.global_mem or y)
-        metrics['experience_pool']== self.experience_pool.copy()
+        metrics['system_metrics']= system_metrics
+        metrics['global_mem or y_size']= len(self.global_mem or y)
+        metrics['experience_pool']= self.experience_pool.copy()
 
         return metrics
 
-# ============================================================================
+# ======================================
 # РЕЗЕРВНАЯ AI СИСТЕМА
-# ============================================================================
+# ======================================
 
 class FallbackAISystem:
     """Простая резервная AI система для случаев недоступности основных систем"""
 
-        def __ in it__(self):
-        self.entities== {}
-        self. in itialized== False
-        self.logger== logg in g.getLogger(__name__)
+        def __in it__(self):
+        self.entities= {}
+        self.in itialized= False
+        self.logger= logging.getLogger(__name__)
 
         def initialize(self) -> bool:
         """Инициализация резервной системы"""
@@ -513,12 +513,12 @@ class FallbackAISystem:
             self.logger.err or(f"Ошибка инициализации резервной AI системы: {e}")
             return False
 
-    def reg is ter_entity(self, entity_id: str, entity_data: Dict[str
+    def regis ter_entity(self, entity_id: str, entity_data: Dict[str
         Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Регистрация сущности"""
             try:
-            self.entities[entity_id]== {
+            self.entities[entity_id]= {
             'data': entity_data,
             'state': 'idle',
             'last_update': time.time()
@@ -546,7 +546,7 @@ class FallbackAISystem:
     def remove_entity(self, entity_id: str) -> bool:
         """Удаление сущности"""
             try:
-            if entity_id in self.entities:
+            if entity_idin self.entities:
             del self.entities[entity_id]
             return True
             return False

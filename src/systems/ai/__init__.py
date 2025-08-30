@@ -5,11 +5,11 @@
 """
 
 
-__all__== [
+__all__= [
     'AISystem',
     'AIConfig',
     'AIMem or y',
-    'AIDec is ion',
+    'AIDecis ion',
     'PyT or chAISystem',
     'NeuralNetw or k',
     'EmotionalNetw or k'

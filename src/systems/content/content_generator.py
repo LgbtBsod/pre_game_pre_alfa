@@ -3,15 +3,15 @@
     Система генерации контента - процедурная генерация игрового контента
 """
 
-imp or t logg in g
-imp or t r and om
-imp or t time
-imp or t uuid
-from typ in g imp or t Dict, L is t, Optional, Any, Union
-from dataclasses imp or t dataclass, field:
+import logging
+import rand om
+import time
+import uuid
+from typing import Dict, Lis t, Optional, Any, Union
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from ...c or e. in terfaces imp or t ISystem, SystemPri or ity, SystemState
-from ...c or e.constants imp or t constants_manager, ItemType, ItemRarity
+from ...c or e.in terfaces import ISystem, SystemPri or ity, SystemState
+from ...c or e.constants import constants_manager, ItemType, ItemRarity
     WeaponType, Arm or Type, Access or yType, ConsumableType, DamageType, StatType
     SkillType, SkillCateg or y, GeneType, GeneRarity, EffectCateg or y, EnemyType
     BossType, ContentType, ContentRarity, BASE_STATS, ITEM_STATS
@@ -19,22 +19,22 @@ from ...c or e.constants imp or t constants_manager, ItemType, ItemRarity
     TIME_CONSTANTS, SYSTEM_LIMITS, SKILL_GENERATION_TEMPLATES
     SKILL_POWER_MULTIPLIERS
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class GenerationConfig:
     """Конфигурация генерации контента"""
-        weapon_count: int== 5
-        arm or _count: int== 3
-        access or y_count: int== 2
-        consumable_count: int== 4
-        gene_count: int== 8
-        skill_count: int== 6
-        effect_count: int== 4
-        material_count: int== 10
-        enemy_count: int== 15
-        boss_count: int== 3
+        weapon_count: int= 5
+        arm or _count: int= 3
+        access or y_count: int= 2
+        consumable_count: int= 4
+        gene_count: int= 8
+        skill_count: int= 6
+        effect_count: int= 4
+        material_count: int= 10
+        enemy_count: int= 15
+        boss_count: int= 3
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -45,12 +45,12 @@ class GenerationConfig:
     description: str
     content_type: ContentType
     rarity: ContentRarity
-    uuid: str== field(default_factor == lambda: str(uuid.uuid4()))
-    level_requirement: int== 1
-    session_id: str== ""
-    generation_time: float== field(default_factor == time.time):
+    uuid: str= field(default_factor = lambda: str(uuid.uuid4()))
+    level_requirement: int= 1
+    session_id: str= ""
+    generation_time: float= field(default_factor = time.time):
         pass  # Добавлен pass в пустой блок
-    properties: Dict[str, Any]== field(default_factor == dict):
+    properties: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
 @dataclass:
     pass  # Добавлен pass в пустой блок
@@ -59,15 +59,15 @@ class EnemyData:
         enemy_id: str
         name: str
         enemy_type: EnemyType
-        level: int== 1
-        health: int== 100
-        attack: int== 20
-        defense: int== 10
-        speed: float== 1.0
-        experience: int== 50
-        loot_table: L is t[str]== field(default_factor == list):
+        level: int= 1
+        health: int= 100
+        attack: int= 20
+        defense: int= 10
+        speed: float= 1.0
+        experience: int= 50
+        loot_table: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        abilities: L is t[str]== field(default_factor == list):
+        abilities: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -76,48 +76,48 @@ class EnemyData:
     boss_id: str
     name: str
     boss_type: BossType
-    level: int== 10
-    health: int== 1000
-    attack: int== 100
-    defense: int== 50
-    speed: float== 1.5
-    experience: int== 500
-    phases: L is t[Dict[str, Any]]== field(default_factor == list):
+    level: int= 10
+    health: int= 1000
+    attack: int= 100
+    defense: int= 50
+    speed: float= 1.5
+    experience: int= 500
+    phases: Lis t[Dict[str, Any]]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    special_abilities: L is t[str]== field(default_factor == list):
+    special_abilities: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    loot_table: L is t[str]== field(default_factor == list):
+    loot_table: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
 class ContentGenerat or(ISystem):
     """Система генерации процедурного контента с использованием централизованных констант"""
 
-        def __ in it__(self, content_databas == None, seed: int== None):
-        self._system_name== "content_generat or "
-        self._system_pri or ity== SystemPri or ity.NORMAL
-        self._system_state== SystemState.UNINITIALIZED
-        self._dependencies== ["content_database"]
+        def __in it__(self, content_databas = None, seed: int= None):
+        self._system_name= "content_generat or "
+        self._system_pri or ity= SystemPri or ity.NORMAL
+        self._system_state= SystemState.UNINITIALIZED
+        self._dependencies= ["content_database"]
 
-        self.content_db== content_database
-        self.r and om_generator== r and om.R and om(seed) if seed is not None else r and om:
+        self.content_db= content_database
+        self.rand om_generator= rand om.Rand om(seed) if seedis not None else rand om:
         pass  # Добавлен pass в пустой блок
         # Шаблоны для генерации
-        self.weapon_templates== self._load_weapon_templates()
-        self.arm or _templates== self._load_arm or _templates()
-        self.access or y_templates== self._load_access or y_templates()
-        self.gene_templates== self._load_gene_templates()
-        self.skill_templates== self._load_skill_templates()
-        self.effect_templates== self._load_effect_templates()
+        self.weapon_templates= self._load_weapon_templates()
+        self.arm or _templates= self._load_arm or _templates()
+        self.access or y_templates= self._load_access or y_templates()
+        self.gene_templates= self._load_gene_templates()
+        self.skill_templates= self._load_skill_templates()
+        self.effect_templates= self._load_effect_templates()
 
         # Шаблоны предметов(перенесены из constants.py)
-        self.item_templates== self._load_item_templates()
+        self.item_templates= self._load_item_templates()
 
         # Расширенные шаблоны для уникальной генерации
-        self.skill_generation_templates== self._load_skill_generation_templates()
-        self.item_generation_templates== self._load_item_generation_templates()
-        self.unique_effect_templates== self._load_unique_effect_templates()
+        self.skill_generation_templates= self._load_skill_generation_templates()
+        self.item_generation_templates= self._load_item_generation_templates()
+        self.unique_effect_templates= self._load_unique_effect_templates()
 
         # Статистика системы
-        self.system_stats== {
+        self.system_stats= {
         'weapons_generated': 0,
         'arm or s_generated': 0,
         'access or ies_generated': 0,
@@ -133,7 +133,7 @@ class ContentGenerat or(ISystem):
         'update_time': 0.0
         }
 
-        logger. in fo("Система генерации контента инициализирована")
+        logger.in fo("Система генерации контента инициализирована")
 
         @property
         def system_name(self) -> str:
@@ -148,7 +148,7 @@ class ContentGenerat or(ISystem):
         return self._system_state
 
         @property
-        def dependencies(self) -> L is t[str]:
+        def dependencies(self) -> Lis t[str]:
         return self._dependencies
 
         def initialize(self) -> bool:
@@ -159,7 +159,7 @@ class ContentGenerat or(ISystem):
             pass
             pass
             logger.err or(f"Ошибка инициализации системы генерации контента: {e}")
-            self._system_state== SystemState.ERROR
+            self._system_state= SystemState.ERROR
             return False
 
     def update(self, delta_time: float) -> bool:
@@ -168,12 +168,12 @@ class ContentGenerat or(ISystem):
             if self._system_state != SystemState.READY:
             return False
 
-            start_time== time.time()
+            start_time= time.time()
 
             # Обновляем статистику системы
             self._update_system_stats()
 
-            self.system_stats['update_time']== time.time() - start_time
+            self.system_stats['update_time']= time.time() - start_time
 
             return True
 
@@ -197,9 +197,9 @@ class ContentGenerat or(ISystem):
     def resume(self) -> bool:
         """Возобновление системы генерации контента"""
             try:
-            if self._system_state == SystemState.PAUSED:
-            self._system_state== SystemState.READY
-            logger. in fo("Система генерации контента возобновлена")
+            if self._system_state = SystemState.PAUSED:
+            self._system_state= SystemState.READY
+            logger.in fo("Система генерации контента возобновлена")
             return True
             return False
             except Exception as e:
@@ -219,7 +219,7 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка очистки системы генерации контента: {e}")
             return False
 
-    def get_system_ in fo(self) -> Dict[str, Any]:
+    def get_system_in fo(self) -> Dict[str, Any]:
         """Получение информации о системе"""
             return {
             'name': self.system_name,
@@ -237,7 +237,7 @@ class ContentGenerat or(ISystem):
             'stats': self.system_stats
             }
 
-            def h and le_event(self, event_type: str, event_data: Any) -> bool:
+            def hand le_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий"""
         try:
         except Exception as e:
@@ -256,7 +256,7 @@ class ContentGenerat or(ISystem):
             pass
             pass
             pass
-            logger.warn in g(f"Не удалось настроить систему генерации контента: {e}")
+            logger.warning(f"Не удалось настроить систему генерации контента: {e}")
 
             def _load_all_templates(self) -> None:
         """Загрузка всех шаблонов"""
@@ -270,30 +270,30 @@ class ContentGenerat or(ISystem):
     def _load_weapon_templates(self) -> Dict[str, Any]:
         """Загрузка шаблонов оружия"""
             try:
-            templates== {
+            templates= {
             'sw or d': {
             'base_damage': BASE_STATS['attack'],
             'damage_type': DamageType.PHYSICAL,
             'requirements': {'level': 1, 'strength': 5},
-            'scal in g': {'strength': 1.5, 'agility': 0.5}
+            'scaling': {'strength': 1.5, 'agility': 0.5}
             },
             'axe': {
             'base_damage': int(BASE_STATS['attack'] * 1.2),
             'damage_type': DamageType.PHYSICAL,
             'requirements': {'level': 1, 'strength': 8},
-            'scal in g': {'strength': 2.0, 'agility': 0.3}
+            'scaling': {'strength': 2.0, 'agility': 0.3}
             },
             'bow': {
             'base_damage': int(BASE_STATS['attack'] * 0.8),
             'damage_type': DamageType.PHYSICAL,
             'requirements': {'level': 1, 'agility': 6},
-            'scal in g': {'agility': 1.8, 'strength': 0.2}
+            'scaling': {'agility': 1.8, 'strength': 0.2}
             },
             'staff': {
             'base_damage': int(BASE_STATS['attack'] * 0.7),
             'damage_type': DamageType.ARCANE,
-            'requirements': {'level': 1, ' in telligence': 7},
-            'scal in g': {' in telligence': 2.2, 'w is dom': 0.8}
+            'requirements': {'level': 1, 'in telligence': 7},
+            'scaling': {'in telligence': 2.2, 'wis dom': 0.8}
             }
             }
 
@@ -320,21 +320,21 @@ class ContentGenerat or(ISystem):
     def _load_access or y_templates(self) -> Dict[str, Any]:
         """Загрузка шаблонов аксессуаров"""
             try:
-            templates== {
-            'r in g': {
+            templates= {
+            'ring': {
             'base_stats': {'mana': 20, 'health': 15},
             'requirements': {'level': 1},
-            'scal in g': {' in telligence': 0.5, 'vitality': 0.5}
+            'scaling': {'in telligence': 0.5, 'vitality': 0.5}
             },
             'amulet': {
             'base_stats': {'mana': 30, 'health': 25},
             'requirements': {'level': 1},
-            'scal in g': {'w is dom': 0.8, 'vitality': 0.7}
+            'scaling': {'wis dom': 0.8, 'vitality': 0.7}
             },
             'belt': {
-            'base_stats': {'stam in a': 25, 'defense': 5},
+            'base_stats': {'stamin a': 25, 'defense': 5},
             'requirements': {'level': 1, 'strength': 3},
-            'scal in g': {'strength': 0.6, 'vitality': 0.8}
+            'scaling': {'strength': 0.6, 'vitality': 0.8}
             }
             }
 
@@ -361,29 +361,29 @@ class ContentGenerat or(ISystem):
     def _load_skill_templates(self) -> Dict[str, Any]:
         """Загрузка шаблонов навыков"""
             try:
-            templates== {
+            templates= {
             'basic_attack': {
             'skill_type': SkillType.ATTACK,
             'categ or y': SkillCateg or y.COMBAT,
             'base_damage': 25,
             'damage_type': DamageType.PHYSICAL,
             'requirements': {'level': 1},
-            'scal in g': {'strength': 1.0, 'agility': 0.5}
+            'scaling': {'strength': 1.0, 'agility': 0.5}
             },
             'fireball': {
             'skill_type': SkillType.ATTACK,
             'categ or y': SkillCateg or y.MAGIC,
             'base_damage': 30,
             'damage_type': DamageType.FIRE,
-            'requirements': {'level': 3, ' in telligence': 8},
-            'scal in g': {' in telligence': 1.5, 'w is dom': 0.8}
+            'requirements': {'level': 3, 'in telligence': 8},
+            'scaling': {'in telligence': 1.5, 'wis dom': 0.8}
             },
             'heal': {
             'skill_type': SkillType.SUPPORT,
             'categ or y': SkillCateg or y.HEALING,
-            'base_heal in g': 40,
-            'requirements': {'level': 2, 'w is dom': 6},
-            'scal in g': {'w is dom': 1.8, ' in telligence': 0.7}
+            'base_healing': 40,
+            'requirements': {'level': 2, 'wis dom': 6},
+            'scaling': {'wis dom': 1.8, 'in telligence': 0.7}
             }
             }
 
@@ -410,24 +410,24 @@ class ContentGenerat or(ISystem):
     def _load_skill_generation_templates(self) -> Dict[str, Any]:
         """Загрузка шаблонов генерации навыков"""
             try:
-            templates== {
+            templates= {
             'combat_skill': {
             'skill_type': SkillType.ATTACK,
             'categ or y': SkillCateg or y.COMBAT,
             'damage_types': [DamageType.PHYSICAL, DamageType.FIRE, DamageType.ICE],
-            'scal in g_stats': ['strength', 'agility', ' in telligence']
+            'scaling_stats': ['strength', 'agility', 'in telligence']
             },
             'magic_skill': {
             'skill_type': SkillType.ATTACK,
             'categ or y': SkillCateg or y.MAGIC,
             'damage_types': [DamageType.FIRE, DamageType.ICE, DamageType.LIGHTNING, DamageType.ARCANE],
-            'scal in g_stats': [' in telligence', 'w is dom']
+            'scaling_stats': ['in telligence', 'wis dom']
             },
             'supp or t_skill': {
             'skill_type': SkillType.SUPPORT,
             'categ or y': SkillCateg or y.HEALING,
-            'effect_types': ['heal in g', 'buff', 'debuff'],
-            'scal in g_stats': ['w is dom', ' in telligence']
+            'effect_types': ['healing', 'buff', 'debuff'],
+            'scaling_stats': ['wis dom', 'in telligence']
             }
             }
 
@@ -454,12 +454,12 @@ class ContentGenerat or(ISystem):
     def _load_unique_effect_templates(self) -> Dict[str, Any]:
         """Загрузка шаблонов уникальных эффектов"""
             try:
-            templates== {
+            templates= {
             'elemental_mastery': {
             'effect_categ or y': EffectCateg or y.BUFF,
             'damage_boost': 0.3,
             'affected_types': [DamageType.FIRE, DamageType.ICE, DamageType.LIGHTNING],
-            'requirements': {'level': 10, ' in telligence': 15}
+            'requirements': {'level': 10, 'in telligence': 15}
             },
             'battle_fury': {
             'effect_categ or y': EffectCateg or y.BUFF,
@@ -499,7 +499,7 @@ class ContentGenerat or(ISystem):
         """Обновление статистики системы"""
             try:
             # Обновляем общее количество сгенерированных элементов
-            self.system_stats['total_generated']== (
+            self.system_stats['total_generated']= (
             self.system_stats['weapons_generated'] +
             self.system_stats['arm or s_generated'] +
             self.system_stats['access or ies_generated'] +
@@ -516,9 +516,9 @@ class ContentGenerat or(ISystem):
             pass
             pass
             pass
-            logger.warn in g(f"Ошибка обновления статистики системы: {e}")
+            logger.warning(f"Ошибка обновления статистики системы: {e}")
 
-            def _h and le_content_generation_requested(self, event_data: Dict[str
+            def _hand le_content_generation_requested(self, event_data: Dict[str
             Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Обработка события запроса генерации контента"""
@@ -530,21 +530,21 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка обработки события запроса генерации контента: {e}")
             return False
 
-    def _h and le_template_updated(self, event_data: Dict[str, Any]) -> bool:
+    def _hand le_template_updated(self, event_data: Dict[str, Any]) -> bool:
         """Обработка события обновления шаблона"""
             try:
-            template_type== event_data.get('template_type')
-            template_id== event_data.get('template_id')
-            template_data== event_data.get('template_data')
+            template_type= event_data.get('template_type')
+            template_id= event_data.get('template_id')
+            template_data= event_data.get('template_data')
 
-            if template_type and template_id and template_data:
+            if template_typeand template_idand template_data:
             # Обновляем соответствующий шаблон
-            if template_type == 'weapon':
-            self.weapon_templates[template_id]== template_data
-            elif template_type == 'arm or ':
-            self.arm or _templates[template_id]== template_data
-            elif template_type == 'skill':
-            self.skill_templates[template_id]== template_data
+            if template_type = 'weapon':
+            self.weapon_templates[template_id]= template_data
+            elif template_type = 'arm or ':
+            self.arm or _templates[template_id]= template_data
+            elif template_type = 'skill':
+            self.skill_templates[template_id]= template_data
             # ... другие типы
 
             logger.debug(f"Обновлен шаблон {template_id} типа {template_type}")
@@ -558,7 +558,7 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка обработки события обновления шаблона: {e}")
             return False
 
-            def _h and le_generation_config_changed(self, event_data: Dict[str
+            def _hand le_generation_config_changed(self, event_data: Dict[str
             Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Обработка события изменения конфигурации генерации"""
@@ -570,33 +570,33 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка обработки события изменения конфигурации генерации: {e}")
             return False
 
-    def generate_content(self, content_type: str, count: int== 1
-        level: int== 1) -> L is t[ContentItem]:
+    def generate_content(self, content_type: str, count: int= 1
+        level: int= 1) -> Lis t[ContentItem]:
             pass  # Добавлен pass в пустой блок
         """Генерация контента указанного типа"""
             try:
-            generated_items== []
+            generated_items= []
 
-            for i in range(count):
-            if content_type == 'weapon':
-            item== self._generate_weapon(level)
-            elif content_type == 'arm or ':
-            item== self._generate_arm or(level)
-            elif content_type == 'access or y':
-            item== self._generate_access or y(level)
-            elif content_type == 'gene':
-            item== self._generate_gene(level)
-            elif content_type == 'skill':
-            item== self._generate_skill(level)
-            elif content_type == 'effect':
-            item== self._generate_effect(level)
-            elif content_type == 'enemy':
-            item== self._generate_enemy(level)
-            elif content_type == 'boss':
-            item== self._generate_boss(level)
+            for iin range(count):
+            if content_type = 'weapon':
+            item= self._generate_weapon(level)
+            elif content_type = 'arm or ':
+            item= self._generate_arm or(level)
+            elif content_type = 'access or y':
+            item= self._generate_access or y(level)
+            elif content_type = 'gene':
+            item= self._generate_gene(level)
+            elif content_type = 'skill':
+            item= self._generate_skill(level)
+            elif content_type = 'effect':
+            item= self._generate_effect(level)
+            elif content_type = 'enemy':
+            item= self._generate_enemy(level)
+            elif content_type = 'boss':
+            item= self._generate_boss(level)
             else:
-            logger.warn in g(f"Неизвестный тип контента: {content_type}")
-            cont in ue
+            logger.warning(f"Неизвестный тип контента: {content_type}")
+            contin ue
 
             if item:
             generated_items.append(item)
@@ -625,69 +625,69 @@ class ContentGenerat or(ISystem):
 
     def _generate_skill_name(self, skill_type: str, level: int) -> str:
         """Генерация уникального имени для скилла"""
-            prefixes== {
+            prefixes= {
             "physical": ["Мощный", "Быстрый", "Смертоносный", "Точный", "Разрушительный"],
             "magical": ["Мистический", "Древний", "Запрещенный", "Священный", "Темный"],
             "free": ["Уникальный", "Редкий", "Легендарный", "Божественный", "Загадочный"]
             }
 
-            suffixes== {
+            suffixes= {
             "physical": ["Удар", "Атака", "Техника", "Прием", "Комбо"],
             "magical": ["Заклинание", "Ритуал", "Проклятие", "Благословение", "Чары"],
             "free": ["Дар", "Сила", "Способность", "Талант", "Мастерство"]
             }
 
-            prefix== self.r and om_generat or .choice(prefixes.get(skill_type, ["Мощный"]))
-            suffix== self.r and om_generat or .choice(suffixes.get(skill_type, ["Удар"]))
+            prefix= self.rand om_generat or .choice(prefixes.get(skill_type, ["Мощный"]))
+            suffix= self.rand om_generat or .choice(suffixes.get(skill_type, ["Удар"]))
 
             return f"{prefix} {suffix} +{level}"
 
             def _generate_unique_name(self, base_name: str, level: int) -> str:
         """Генерация уникального имени"""
-        prefixes== ['Ancient', 'Mystic', 'Shadow', 'Light', 'Dark', 'Elemental', 'Crystal', 'Obsidian']
-        suffixes== ['Blade', 'Sw or d', 'Axe', 'Hammer', 'Staff', 'W and ', 'Bow', 'Crossbow']
+        prefixes= ['Ancient', 'Mystic', 'Shadow', 'Light', 'Dark', 'Elemental', 'Crystal', 'Obsidian']
+        suffixes= ['Blade', 'Sw or d', 'Axe', 'Hammer', 'Staff', 'Wand ', 'Bow', 'Crossbow']
 
-        prefix== self.r and om_generat or .choice(prefixes)
-        suffix== self.r and om_generat or .choice(suffixes)
+        prefix= self.rand om_generat or .choice(prefixes)
+        suffix= self.rand om_generat or .choice(suffixes)
 
         return f"{prefix} {base_name.title()} {suffix} +{level}"
 
     def _generate_unique_description(self, base_name: str, level: int
-        effects: l is t) -> str:
+        effects: lis t) -> str:
             pass  # Добавлен pass в пустой блок
         """Генерация уникального описания"""
-            descriptions== [
+            descriptions= [
             f"Легендарное оружие, созданное древними мастерами. Уровень {level}.",
             f"Мистический артефакт, излучающий мощную энергию. Уровень {level}.",
             f"Оружие, закаленное в боях тысячелетий. Уровень {level}.",
             f"Священный клинок, благословленный богами. Уровень {level}."
             ]
 
-            base_desc== self.r and om_generat or .choice(descriptions)
-            effects_desc== ""
+            base_desc= self.rand om_generat or .choice(descriptions)
+            effects_desc= ""
 
             if effects:
-            effects_desc== f" Особые свойства: {', '.jo in(effects)}."
+            effects_desc= f" Особые свойства: {', '.jo in(effects)}."
 
             return base_desc + effects_desc
 
-            def _generate_unique_effects(self, level: int) -> l is t:
+            def _generate_unique_effects(self, level: int) -> lis t:
         """Генерация уникальных эффектов"""
-        effects== []
-        effect_pool== [
-            'Critical Strike', 'Life Steal', 'Mana Steal', 'Po is on Damage',:
+        effects= []
+        effect_pool= [
+            'Critical Strike', 'Life Steal', 'Mana Steal', 'Pois on Damage',:
                 pass  # Добавлен pass в пустой блок
-            'Fire Damage', 'Ice Damage', 'Lightn in g Damage', 'Holy Damage',
+            'Fire Damage', 'Ice Damage', 'Lightning Damage', 'Holy Damage',
             'Shadow Damage', 'Armor Penetration', 'Magic Penetration'
         ]
 
         # Количество эффектов зависит от уровня
-        num_effects== m in(level // 5 + 1, 3)
+        num_effects= m in(level // 5 + 1, 3)
 
-        for _ in range(num_effects):
-            if self.r and om_generat or .r and om() < 0.3:  # 30% шанс эффекта
-                effect== self.r and om_generat or .choice(effect_pool)
-                if effect not in effects:
+        for _in range(num_effects):
+            if self.rand om_generat or .rand om() < 0.3:  # 30%шанс эффекта
+                effect= self.rand om_generat or .choice(effect_pool)
+                if effect notin effects:
                     effects.append(effect)
 
         return effects
@@ -696,49 +696,49 @@ class ContentGenerat or(ISystem):
         """Генерация брони"""
             try:
             # Выбираем случайный шаблон
-            template_name== self.r and om_generat or .choice(l is t(self.arm or _templates.keys()))
-            template== self.arm or _templates[template_name]
+            template_name= self.rand om_generat or .choice(lis t(self.arm or _templates.keys()))
+            template= self.arm or _templates[template_name]
 
             # Генерируем уникальный ID
-            arm or _id== f"arm or _{uuid.uuid4().hex[:8]}"
+            arm or _id= f"arm or _{uuid.uuid4().hex[:8]}"
 
             # Генерируем характеристики стойкости
-            base_defense== template['base_defense'] + (level - 1) * 3:
+            base_defense= template['base_defense'] + (level - 1) * 3:
             pass  # Добавлен pass в пустой блок
-            toughness_res is tance== m in(0.5, 0.1 + (level - 1) * 0.05)
-            stun_res is tance== m in(0.3, 0.05 + (level - 1) * 0.03)
+            toughness_resis tance= m in(0.5, 0.1 + (level - 1) * 0.05)
+            stun_resis tance= m in(0.3, 0.05 + (level - 1) * 0.03)
 
             # Создаем предмет с полными характеристиками
-            armor== ContentItem(
-            item_i == arm or _id,
-            nam == f"{template_name.title()} Level {level}",
-            descriptio == f"Сгенерированная броня типа {template_name}",
-            content_typ == ContentType.ARMOR,
-            rarit == self._generate_rarity(),
-            level_requiremen == level,
-            propertie == {
+            armor= ContentItem(
+            item_i = arm or _id,
+            nam = f"{template_name.title()} Level {level}",
+            descriptio = f"Сгенерированная броня типа {template_name}",
+            content_typ = ContentType.ARMOR,
+            rarit = self._generate_rarity(),
+            level_requiremen = level,
+            propertie = {
             'base_defense': base_defense,:
             pass  # Добавлен pass в пустой блок
             'requirements': template['requirements'],
-            'scal in g': template['scal in g'],
+            'scaling': template['scaling'],
             # Новые характеристики стойкости
             'defense': base_defense,:
             pass  # Добавлен pass в пустой блок
             'health': 20 + (level - 1) * 5,
             'mana': 10 + (level - 1) * 3,
-            'stam in a': 15 + (level - 1) * 4,
-            'toughness_res is tance': toughness_res is tance,
-            'stun_res is tance': stun_res is tance,
-            'res is tance': {
+            'stamin a': 15 + (level - 1) * 4,
+            'toughness_resis tance': toughness_resis tance,
+            'stun_resis tance': stun_resis tance,
+            'resis tance': {
             'physical': m in(0.3, 0.1 + (level - 1) * 0.02),
             'fire': m in(0.25, 0.05 + (level - 1) * 0.02),
             'ice': m in(0.25, 0.05 + (level - 1) * 0.02),
-            'lightn in g': m in(0.25, 0.05 + (level - 1) * 0.02)
+            'lightning': m in(0.25, 0.05 + (level - 1) * 0.02)
             }
             }
             )
 
-            self.system_stats['arm or s_generated'] == 1
+            self.system_stats['arm or s_generated'] = 1
             return armor
 
             except Exception as e:
@@ -758,22 +758,22 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка генерации аксессуара: {e}")
             return None
 
-    def _generate_access or y_effects(self, level: int) -> l is t:
+    def _generate_access or y_effects(self, level: int) -> lis t:
         """Генерация эффектов для аксессуаров"""
-            effects== []
-            effect_pool== [
-            'Health Regeneration', 'Mana Regeneration', 'Stam in a Regeneration',
+            effects= []
+            effect_pool= [
+            'Health Regeneration', 'Mana Regeneration', 'Stamin a Regeneration',
             'Experience Boost', 'Gold Boost', 'Drop Rate Boost',
             'Movement Speed', 'Attack Speed', 'Cast Speed'
             ]
 
             # Количество эффектов зависит от уровня
-            num_effects== m in(level // 3 + 1, 2)
+            num_effects= m in(level // 3 + 1, 2)
 
-            for _ in range(num_effects):
-            if self.r and om_generat or .r and om() < 0.4:  # 40% шанс эффекта
-            effect== self.r and om_generat or .choice(effect_pool)
-            if effect not in effects:
+            for _in range(num_effects):
+            if self.rand om_generat or .rand om() < 0.4:  # 40%шанс эффекта
+            effect= self.rand om_generat or .choice(effect_pool)
+            if effect notin effects:
             effects.append(effect)
 
             return effects
@@ -792,53 +792,53 @@ class ContentGenerat or(ISystem):
         """Генерация навыка с использованием новых шаблонов"""
             try:
             # Выбираем случайный тип скилла
-            skill_type== self.r and om_generat or .choice(l is t(SKILL_GENERATION_TEMPLATES.keys()))
-            template== SKILL_GENERATION_TEMPLATES[skill_type]
+            skill_type= self.rand om_generat or .choice(lis t(SKILL_GENERATION_TEMPLATES.keys()))
+            template= SKILL_GENERATION_TEMPLATES[skill_type]
 
             # Генерируем уникальный ID
-            skill_id== f"skill_{uuid.uuid4().hex[:8]}"
+            skill_id= f"skill_{uuid.uuid4().hex[:8]}"
 
             # Определяем источники затрат
-            if skill_type == "physical":
-            cost_sources== ["stam in a"]
-            base_cost== template["base_cost"]
-            elif skill_type == "magical":
+            if skill_type = "physical":
+            cost_sources= ["stamin a"]
+            base_cost= template["base_cost"]
+            elif skill_type = "magical":
             # Магические скиллы могут тратить несколько ресурсов
-            cost_sources== self.r and om_generat or .sample(template["cost_sources"],
-            self.r and om_generat or .r and int(1, len(template["cost_sources"])))
-            base_cost== template["base_cost"]
+            cost_sources= self.rand om_generat or .sample(template["cost_sources"],
+            self.rand om_generat or .rand int(1, len(template["cost_sources"])))
+            base_cost= template["base_cost"]
             else:  # free
-            cost_sources== []
-            base_cost== 0
+            cost_sources= []
+            base_cost= 0
 
             # Рассчитываем мощность скилла на основе источников затрат
-            power_multiplier== 1.0
+            power_multiplier= 1.0
             if cost_sources:
-            if len(cost_sources) == 1:
-            power_multiplier== SKILL_POWER_MULTIPLIERS["s in gle_cost"]
-            elif len(cost_sources) == 2:
-            power_multiplier== SKILL_POWER_MULTIPLIERS["dual_cost"]
+            if len(cost_sources) = 1:
+            power_multiplier= SKILL_POWER_MULTIPLIERS["single_cost"]
+            elif len(cost_sources) = 2:
+            power_multiplier= SKILL_POWER_MULTIPLIERS["dual_cost"]
             elif len(cost_sources) >= 3:
-            power_multiplier== SKILL_POWER_MULTIPLIERS["triple_cost"]
+            power_multiplier= SKILL_POWER_MULTIPLIERS["triple_cost"]
             else:
-            power_multiplier== SKILL_POWER_MULTIPLIERS["no_cost"]
+            power_multiplier= SKILL_POWER_MULTIPLIERS["no_cost"]
 
             # Генерируем характеристики скилла
-            base_damage== int(template["base_cost"] * power_multiplier * level * 0.5)
-            damage_type== self.r and om_generat or .choice(template["damage_types"])
+            base_damage= int(template["base_cost"] * power_multiplier * level * 0.5)
+            damage_type= self.rand om_generat or .choice(template["damage_types"])
 
             # Генерируем уникальное имя
-            skill_name== self._generate_skill_name(skill_type, level)
+            skill_name= self._generate_skill_name(skill_type, level)
 
             # Создаем предмет
-            skill== ContentItem(
-            item_i == skill_id,
-            nam == skill_name,
-            descriptio == f"Сгенерированный {skill_type} навык уровня {level}",
-            content_typ == ContentType.SKILL,
-            rarit == self._generate_rarity(),
-            level_requiremen == level,
-            propertie == {
+            skill= ContentItem(
+            item_i = skill_id,
+            nam = skill_name,
+            descriptio = f"Сгенерированный {skill_type} навык уровня {level}",
+            content_typ = ContentType.SKILL,
+            rarit = self._generate_rarity(),
+            level_requiremen = level,
+            propertie = {
             'skill_type': skill_type,
             'cost_sources': cost_sources,
             'base_cost': base_cost,
@@ -850,7 +850,7 @@ class ContentGenerat or(ISystem):
             }
             )
 
-            self.system_stats['skills_generated'] == 1
+            self.system_stats['skills_generated'] = 1
             return skill
 
             except Exception as e:
@@ -874,17 +874,17 @@ class ContentGenerat or(ISystem):
         """Генерация врага"""
             try:
             # Генерируем уникальный ID
-            enemy_id== f"enemy_{uuid.uuid4().hex[:8]}"
+            enemy_id= f"enemy_{uuid.uuid4().hex[:8]}"
 
             # Создаем предмет
-            enemy== ContentItem(
-            item_i == enemy_id,
-            nam == f"Enemy Level {level}",
-            descriptio == f"Сгенерированный враг уровня {level}",
-            content_typ == ContentType.ENEMY,
-            rarit == self._generate_rarity(),
-            level_requiremen == level,
-            propertie == {
+            enemy= ContentItem(
+            item_i = enemy_id,
+            nam = f"Enemy Level {level}",
+            descriptio = f"Сгенерированный враг уровня {level}",
+            content_typ = ContentType.ENEMY,
+            rarit = self._generate_rarity(),
+            level_requiremen = level,
+            propertie = {
             'enemy_type': EnemyType.NORMAL.value,
             'health': BASE_STATS['health'] + (level - 1) * 20,
             'attack': BASE_STATS['attack'] + (level - 1) * 5,
@@ -894,7 +894,7 @@ class ContentGenerat or(ISystem):
             }
             )
 
-            self.system_stats['enemies_generated'] == 1
+            self.system_stats['enemies_generated'] = 1
             return enemy
 
             except Exception as e:
@@ -918,7 +918,7 @@ class ContentGenerat or(ISystem):
         """Генерация редкости"""
             try:
             # Используем веса для разных редкостей
-            rarity_weights== {
+            rarity_weights= {
             ContentRarity.COMMON: 0.6,
             ContentRarity.UNCOMMON: 0.25,
             ContentRarity.RARE: 0.1,
@@ -927,13 +927,13 @@ class ContentGenerat or(ISystem):
             }
 
             # Генерируем случайное число
-            r and _value== self.r and om_generat or .r and om()
+            rand _value= self.rand om_generat or .rand om()
 
             # Определяем редкость на основе весов
-            cumulative_weight== 0.0
-            for rarity, weight in rarity_weights.items():
-            cumulative_weight == weight
-            if r and _value <= cumulative_weight:
+            cumulative_weight= 0.0
+            for rarity, weightin rarity_weights.items():
+            cumulative_weight = weight
+            if rand _value <= cumulative_weight:
             return rarity
 
             # По умолчанию возвращаем обычную редкость
@@ -953,7 +953,7 @@ class ContentGenerat or(ISystem):
             pass
             pass
             pass
-            logger.warn in g(f"Ошибка обновления статистики генерации: {e}")
+            logger.warning(f"Ошибка обновления статистики генерации: {e}")
 
     def get_generation_stats(self) -> Dict[str, Any]:
         """Получение статистики генерации"""
@@ -966,108 +966,108 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка получения статистики генерации: {e}")
             return {}
 
-            def apply_item_template(self, item_type: str, template_name: str, level: int== 1, rarity: str== "common") -> dict:
+            def apply_item_template(self, item_type: str, template_name: str, level: int= 1, rarity: str= "common") -> dict:
         """Применение шаблона предмета к базовым характеристикам"""
-        if item_type not in self.item_templates or template_name not in self.item_templates[item_type]:
+        if item_type notin self.item_templates or template_name notin self.item_templates[item_type]:
             return ITEM_STATS[item_type].copy()
 
-        template== self.item_templates[item_type][template_name]
-        item_stats== ITEM_STATS[item_type].copy()
+        template= self.item_templates[item_type][template_name]
+        item_stats= ITEM_STATS[item_type].copy()
 
         # Применяем множители из шаблона
-        for stat, multiplier in template["base_multipliers"].items():
-            if stat in item_stats:
-                if is in stance(item_stats[stat], ( in t, float)):
-                    item_stats[stat]== int(item_stats[stat] * multiplier * level)
+        for stat, multiplierin template["base_multipliers"].items():
+            if statin item_stats:
+                if isin stance(item_stats[stat], (in t, float)):
+                    item_stats[stat]= int(item_stats[stat] * multiplier * level)
 
         # Добавляем информацию о шаблоне
-        item_stats["template_name"]== template_name
-        item_stats["template_d is play_name"]== template["name"]
-        item_stats["preferred_damage_types"]== template.get("preferred_damage_types", [])
-        item_stats["preferred_res is tances"]== template.get("preferred_res is tances", [])
-        item_stats["skill_requirements"]== template.get("skill_requirements", [])
-        item_stats["socket_count"]== template.get("socket_count", 0)
-        item_stats["set_bonus"]== template.get("set_bonus")
+        item_stats["template_name"]= template_name
+        item_stats["template_dis play_name"]= template["name"]
+        item_stats["preferred_damage_types"]= template.get("preferred_damage_types", [])
+        item_stats["preferred_resis tances"]= template.get("preferred_resis tances", [])
+        item_stats["skill_requirements"]= template.get("skill_requirements", [])
+        item_stats["socket_count"]= template.get("socket_count", 0)
+        item_stats["set_bonus"]= template.get("set_bonus")
 
         # Применяем множитель редкости
-        rarity_multipliers== {
+        rarity_multipliers= {
             "common": 1.0,
             "uncommon": 1.2,
             "rare": 1.5,
             "epic": 2.0,
             "legendary": 3.0,
             "mythic": 4.0,
-            "div in e": 5.0
+            "divin e": 5.0
         }
 
-        rarity_mult== rarity_multipliers.get(rarity, 1.0)
-        for stat in ["attack", "defense", "health", "mana", "stam in a"]:
-            if stat in item_stats and is in stance(item_stats[stat], ( in t
+        rarity_mult= rarity_multipliers.get(rarity, 1.0)
+        for statin ["attack", "defense", "health", "mana", "stamin a"]:
+            if statin item_statsand isin stance(item_stats[stat], (in t
                 float)):
                     pass  # Добавлен pass в пустой блок
-                item_stats[stat]== int(item_stats[stat] * rarity_mult)
+                item_stats[stat]= int(item_stats[stat] * rarity_mult)
 
         return item_stats
 
     def generate_session_content(self, session_id: str
-        config: GenerationConfig== None) -> Dict[str, L is t[ContentItem]]:
+        config: GenerationConfig= None) -> Dict[str, Lis t[ContentItem]]:
             pass  # Добавлен pass в пустой блок
         """Генерация контента для сессии(до 100 объектов каждого типа)"""
             try:
-            if config is None:
-            config== GenerationConfig()
+            if configis None:
+            config= GenerationConfig()
 
             # Ограничиваем количество объектов согласно лимитам сессии
-            session_limits== SYSTEM_LIMITS["session_content_limits"]
+            session_limits= SYSTEM_LIMITS["session_content_limits"]
 
-            session_content== {}
+            session_content= {}
 
             # Генерируем оружие
-            weapon_count== m in(config.weapon_count, session_limits["weapons"])
-            session_content["weapons"]== self.generate_content("weapon", weapon_count, 1)
+            weapon_count= m in(config.weapon_count, session_limits["weapons"])
+            session_content["weapons"]= self.generate_content("weapon", weapon_count, 1)
 
             # Генерируем броню
-            arm or _count== m in(config.arm or _count, session_limits["arm or s"])
-            session_content["arm or s"]== self.generate_content("arm or ", arm or _count, 1)
+            arm or _count= m in(config.arm or _count, session_limits["arm or s"])
+            session_content["arm or s"]= self.generate_content("arm or ", arm or _count, 1)
 
             # Генерируем аксессуары
-            access or y_count== m in(config.access or y_count, session_limits["access or ies"])
-            session_content["access or ies"]== self.generate_content("access or y", access or y_count, 1)
+            access or y_count= m in(config.access or y_count, session_limits["access or ies"])
+            session_content["access or ies"]= self.generate_content("access or y", access or y_count, 1)
 
             # Генерируем расходники
-            consumable_count== m in(config.consumable_count, session_limits["consumables"])
-            session_content["consumables"]== self.generate_content("consumable", consumable_count, 1)
+            consumable_count= m in(config.consumable_count, session_limits["consumables"])
+            session_content["consumables"]= self.generate_content("consumable", consumable_count, 1)
 
             # Генерируем гены
-            gene_count== m in(config.gene_count, session_limits["genes"])
-            session_content["genes"]== self.generate_content("gene", gene_count, 1)
+            gene_count= m in(config.gene_count, session_limits["genes"])
+            session_content["genes"]= self.generate_content("gene", gene_count, 1)
 
             # Генерируем скиллы
-            skill_count== m in(config.skill_count, session_limits["skills"])
-            session_content["skills"]== self.generate_content("skill", skill_count, 1)
+            skill_count= m in(config.skill_count, session_limits["skills"])
+            session_content["skills"]= self.generate_content("skill", skill_count, 1)
 
             # Генерируем эффекты
-            effect_count== m in(config.effect_count, session_limits["effects"])
-            session_content["effects"]== self.generate_content("effect", effect_count, 1)
+            effect_count= m in(config.effect_count, session_limits["effects"])
+            session_content["effects"]= self.generate_content("effect", effect_count, 1)
 
             # Генерируем материалы
-            material_count== m in(config.material_count, session_limits["materials"])
-            session_content["materials"]== self.generate_content("material", material_count, 1)
+            material_count= m in(config.material_count, session_limits["materials"])
+            session_content["materials"]= self.generate_content("material", material_count, 1)
 
             # Генерируем врагов
-            enemy_count== m in(config.enemy_count, session_limits["enemies"])
-            session_content["enemies"]== self.generate_content("enemy", enemy_count, 1)
+            enemy_count= m in(config.enemy_count, session_limits["enemies"])
+            session_content["enemies"]= self.generate_content("enemy", enemy_count, 1)
 
             # Генерируем боссов
-            boss_count== m in(config.boss_count, session_limits["bosses"])
-            session_content["bosses"]== self.generate_content("boss", boss_count, 1)
+            boss_count= m in(config.boss_count, session_limits["bosses"])
+            session_content["bosses"]= self.generate_content("boss", boss_count, 1)
 
             # Добавляем session_id ко всем элементам
-            for content_type, items in session_content.items():
-            for item in items:
-            item.session_id== session_id
+            for content_type, itemsin session_content.items():
+            for itemin items:
+            item.session_id= session_id
 
-            logger. in fo(f"Сгенерирован контент для сессии {session_id}: {sum(len(items) for items in session_content.values())} объектов"):
+            logger.in fo(f"Сгенерирован контент для сессии {session_id}: {sum(len(items) for itemsin session_content.values())} объектов"):
             pass  # Добавлен pass в пустой блок
             return session_content
 
@@ -1078,7 +1078,7 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка генерации контента для сессии {session_id}: {e}")
             return {}
 
-            def get_template_ in fo(self, template_type: str) -> Dict[str, Any]:
+            def get_template_in fo(self, template_type: str) -> Dict[str, Any]:
         """Получение информации о шаблонах"""
         try:
         except Exception as e:
@@ -1088,51 +1088,51 @@ class ContentGenerat or(ISystem):
             logger.err or(f"Ошибка получения информации о шаблонах типа {template_type}: {e}")
             return {'count': 0, 'templates': []}
 
-    def generate_effect_comb in ations(self, session_id: str
-        count: int== 10) -> L is t[ContentItem]:
+    def generate_effect_combin ations(self, session_id: str
+        count: int= 10) -> Lis t[ContentItem]:
             pass  # Добавлен pass в пустой блок
         """Генерация комбинаций эффектов для сессии"""
             try:
-            comb in ations== []
+            combin ations= []
 
             # Базовые эффекты для комбинирования
-            base_effects== [
+            base_effects= [
             {'name': 'Огненный урон', 'type': 'fire', 'magnitude': 15, 'duration': 5.0},
             {'name': 'Ледяной урон', 'type': 'cold', 'magnitude': 12, 'duration': 6.0},
-            {'name': 'Электрический урон', 'type': 'lightn in g', 'magnitude': 18, 'duration': 4.0},
+            {'name': 'Электрический урон', 'type': 'lightning', 'magnitude': 18, 'duration': 4.0},
             {'name': 'Кислотный урон', 'type': 'acid', 'magnitude': 10, 'duration': 8.0},
-            {'name': 'Ядовитый урон', 'type': 'po is on', 'magnitude': 8, 'duration': 10.0},
+            {'name': 'Ядовитый урон', 'type': 'pois on', 'magnitude': 8, 'duration': 10.0},
             {'name': 'Психический урон', 'type': 'psychic', 'magnitude': 20, 'duration': 3.0},
             {'name': 'Генетический урон', 'type': 'genetic', 'magnitude': 25, 'duration': 7.0},
             {'name': 'Эмоциональный урон', 'type': 'emotional', 'magnitude': 22, 'duration': 4.0}
             ]
 
-            for i in range(count):
+            for iin range(count):
             # Выбираем два случайных базовых эффекта
-            effect1== self.r and om_generat or .choice(base_effects)
-            effect2== self.r and om_generat or .choice(base_effects)
+            effect1= self.rand om_generat or .choice(base_effects)
+            effect2= self.rand om_generat or .choice(base_effects)
 
-            if effect1 == effect2:
-            cont in ue
+            if effect1 = effect2:
+            contin ue
 
             # Создаем комбинированный эффект
-            combo_name== f"Комбинация: {effect1['name']} + {effect2['name']}"
-            combo_description== f"Синергия эффектов {effect1['name']} и {effect2['name']}"
+            combo_name= f"Комбинация: {effect1['name']} + {effect2['name']}"
+            combo_description= f"Синергия эффектов {effect1['name']} и {effect2['name']}"
 
             # Рассчитываем параметры комбинации
-            combo_magnitude== (effect1['magnitude'] + effect2['magnitude']) * 0.8
-            combo_duration== max(effect1['duration'], effect2['duration'])
+            combo_magnitude= (effect1['magnitude'] + effect2['magnitude']) * 0.8
+            combo_duration= max(effect1['duration'], effect2['duration'])
 
             # Создаем элемент контента
-            combo_item== ContentItem(
-            item_i == f"effect_combo_{uuid.uuid4().hex[:8]}",
-            nam == combo_name,
-            descriptio == combo_description,
-            content_typ == ContentType.DAMAGE_COMBINATION,
-            rarit == self._generate_rarity(),
-            level_requiremen == 1,
-            session_i == session_id,
-            propertie == {
+            combo_item= ContentItem(
+            item_i = f"effect_combo_{uuid.uuid4().hex[:8]}",
+            nam = combo_name,
+            descriptio = combo_description,
+            content_typ = ContentType.DAMAGE_COMBINATION,
+            rarit = self._generate_rarity(),
+            level_requiremen = 1,
+            session_i = session_id,
+            propertie = {
             'effect1': effect1,
             'effect2': effect2,
             'combo_magnitude': combo_magnitude,
@@ -1141,11 +1141,11 @@ class ContentGenerat or(ISystem):
             }
             )
 
-            comb in ations.append(combo_item)
-            self.system_stats['effects_generated'] == 1
+            combin ations.append(combo_item)
+            self.system_stats['effects_generated'] = 1
 
-            logger. in fo(f"Сгенерировано {len(comb in ations)} комбинаций эффектов для сессии {session_id}")
-            return comb in ations
+            logger.in fo(f"Сгенерировано {len(combin ations)} комбинаций эффектов для сессии {session_id}")
+            return combin ations
 
             except Exception as e:
             pass

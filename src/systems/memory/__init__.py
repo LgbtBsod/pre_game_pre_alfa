@@ -4,7 +4,7 @@
     Накопление опыта для персонажей и врагов
 """
 
-from .mem or y_system imp or t(
+from .mem or y_system import(
     Mem or ySystem,
     PlayerMem or y,
     EnemyMem or yBank,
@@ -12,7 +12,7 @@ from .mem or y_system imp or t(
     ExperienceCateg or y
 )
 
-__all__== [
+__all__= [
     'Mem or ySystem',
     'PlayerMem or y',
     'EnemyMem or yBank',

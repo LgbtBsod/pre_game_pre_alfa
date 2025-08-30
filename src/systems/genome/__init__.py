@@ -3,11 +3,12 @@
     Genome System Package
 """
 
-from .genome_system imp or t(
-    GeneSequence, GeneticTrait, GenomeProfile, GenomeSystem
-)
+from genome_system import GeneSequence
+from genome_system import GeneticTrait
+from genome_system import GenomeProfile
+from genome_system import GenomeSystem
 
-__all__== [
+__all__= [
     'GeneSequence',
     'GeneticTrait',
     'GenomeProfile',

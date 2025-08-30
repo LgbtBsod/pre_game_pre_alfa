@@ -4,58 +4,58 @@
     Ортографическая проекция с управлением
 """
 
-imp or t logg in g
-imp or t math
-from typ in g imp or t Optional, Tuple, Dict, Any
-from dataclasses imp or t dataclass:
+import logging
+import math
+from typing import Optional, Tuple, Dict, Any
+from dataclasses import dataclass:
     pass  # Добавлен pass в пустой блок
-from p and a3d.c or e imp or t(
-    OrthographicLens, Camera, NodePath, Vec3, Po in t3,
-    W in dowProperties, GraphicsPipe, GraphicsEng in e,
+from pand a3d.c or e import(
+    OrthographicLens, Camera, NodePath, Vec3, Poin t3,
+    Win dowProperties, GraphicsPipe, GraphicsEngin e,
     FrameBufferProperties, GraphicsOutput
 )
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
-class CameraSett in gs:
+class CameraSettings:
     """Настройки камеры"""
-        film_size_x: float== 20.0
-        film_size_y: float== 15.0
-        near_plane: float== 0.1
-        far_plane: float== 1000.0
-        position: Tuple[float, float, float]== (15, -15, 15)
-        look_at: Tuple[float, float, float]== (0, 0, 0)
-        follow_speed: float== 0.1
-        zoom_speed: float== 0.1
-        rotation_speed: float== 0.05
+        film_size_x: float= 20.0
+        film_size_y: float= 15.0
+        near_plane: float= 0.1
+        far_plane: float= 1000.0
+        position: Tuple[float, float, float]= (15, -15, 15)
+        look_at: Tuple[float, float, float]= (0, 0, 0)
+        follow_speed: float= 0.1
+        zoom_speed: float= 0.1
+        rotation_speed: float= 0.05
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
         class CameraState:
     """Состояние камеры"""
-    is_follow in g: bool== False
-    is_centered: bool== False
-    current_zoom: float== 1.0
-    current_rotation: float== 0.0
-    target_position: Optional[Tuple[float, float, float]]== None
-    last_update_time: float== 0.0
+    is_following: bool= False
+    is_centered: bool= False
+    current_zoom: float= 1.0
+    current_rotation: float= 0.0
+    target_position: Optional[Tuple[float, float, float]]= None
+    last_update_time: float= 0.0
 
 class IsometricCamera:
     """Класс изометрической камеры"""
 
-        def __ in it__(self, showbase, camera_sett in gs: CameraSett in gs== None):
-        self.showbase== showbase
-        self.camera== showbase.camera
-        self.sett in gs== camera_sett in gs or CameraSett in gs()
-        self.state== CameraState()
+        def __in it__(self, showbase, camera_settings: CameraSettings= None):
+        self.showbase= showbase
+        self.camera= showbase.camera
+        self.settings= camera_settings or CameraSettings()
+        self.state= CameraState()
 
         # Цель для следования
-        self.target== None
+        self.target= None
 
         # Настройка изометрической проекции
-        self._setup_ is ometric_projection()
+        self._setup_is ometric_projection()
 
         # Позиционирование камеры
         self._setup_camera_position()
@@ -63,9 +63,9 @@ class IsometricCamera:
         # Управление камерой
         self._setup_camera_controls()
 
-        logger. in fo("Изометрическая камера инициализирована")
+        logger.in fo("Изометрическая камера инициализирована")
 
-        def _setup_ is ometric_projection(self) -> None:
+        def _setup_is ometric_projection(self) -> None:
         """Настройка изометрической проекции"""
         try:
         except Exception as e:
@@ -78,10 +78,10 @@ class IsometricCamera:
         """Настройка позиции камеры"""
             try:
             # Устанавливаем начальную позицию
-            self.camera.setPos( * self.sett in gs.position)
+            self.camera.setPos( * self.settings.position)
 
             # Направляем камеру на цель
-            self.camera.lookAt( * self.sett in gs.look_at)
+            self.camera.lookAt( * self.settings.look_at)
 
             logger.debug("Настроена позиция камеры")
 
@@ -103,8 +103,8 @@ class IsometricCamera:
     def set_target(self, target: NodePath) -> None:
         """Установка цели для следования"""
             try:
-            self.target== target
-            logger. in fo(f"Установлена цель камеры: {target}")
+            self.target= target
+            logger.in fo(f"Установлена цель камеры: {target}")
 
             except Exception as e:
             pass
@@ -124,12 +124,12 @@ class IsometricCamera:
     def toggle_follow(self) -> None:
         """Переключение режима следования"""
             try:
-            self.state. is _follow in g== not self.state. is _follow in g
+            self.state.is _following= not self.state.is _following
 
-            if self.state. is _follow in g:
-            logger. in fo("Включен режим следования камеры")
+            if self.state.is _following:
+            logger.in fo("Включен режим следования камеры")
             else:
-            logger. in fo("Выключен режим следования камеры")
+            logger.in fo("Выключен режим следования камеры")
 
             except Exception as e:
             pass
@@ -149,7 +149,7 @@ class IsometricCamera:
     def zoom_ in(self) -> None:
         """Приближение камеры"""
             try:
-            new_zoom== self.state.current_zoom + self.sett in gs.zoom_speed
+            new_zoom= self.state.current_zoom + self.settings.zoom_speed
             self._apply_zoom(new_zoom)
             logger.debug(f"Приближение камеры: {new_zoom}")
 
@@ -172,14 +172,14 @@ class IsometricCamera:
         """Применение масштабирования"""
             try:
             # Ограничиваем масштабирование
-            zoom_level== max(0.1, m in(5.0, zoom_level))
+            zoom_level= max(0.1, m in(5.0, zoom_level))
 
             # Обновляем размер пленки
-            new_film_x== self.sett in gs.film_size_x / zoom_level
-            new_film_y== self.sett in gs.film_size_y / zoom_level
+            new_film_x= self.settings.film_size_x / zoom_level
+            new_film_y= self.settings.film_size_y / zoom_level
 
             self.lens.setFilmSize(new_film_x, new_film_y)
-            self.state.current_zoom== zoom_level
+            self.state.current_zoom= zoom_level
 
             except Exception as e:
             pass
@@ -199,7 +199,7 @@ class IsometricCamera:
     def rotate_right(self) -> None:
         """Поворот камеры вправо"""
             try:
-            new_rotation== self.state.current_rotation - self.sett in gs.rotation_speed
+            new_rotation= self.state.current_rotation - self.settings.rotation_speed
             self._apply_rotation(new_rotation)
             logger.debug(f"Поворот камеры вправо: {new_rotation}")
 
@@ -244,7 +244,7 @@ class IsometricCamera:
     def get_camera_position(self) -> Tuple[float, float, float]:
         """Получение позиции камеры"""
             try:
-            pos== self.camera.getPos()
+            pos= self.camera.getPos()
             return(pos.x, pos.y, pos.z)
 
             except Exception as e:
@@ -289,11 +289,11 @@ class IsometricCamera:
         """Обновление камеры"""
             try:
             # Обновляем следование за целью
-            if self.state. is _follow in g and self.target:
-            self._update_follow in g(delta_time)
+            if self.state.is _followingand self.target:
+            self._update_following(delta_time)
 
             # Обновляем состояние
-            self.state.last_update_time == delta_time
+            self.state.last_update_time = delta_time
 
             except Exception as e:
             pass
@@ -301,7 +301,7 @@ class IsometricCamera:
             pass
             logger.err or(f"Ошибка обновления камеры: {e}")
 
-            def _update_follow in g(self, delta_time: float) -> None:
+            def _update_following(self, delta_time: float) -> None:
         """Обновление следования за целью"""
         try:
         except Exception as e:
@@ -310,15 +310,15 @@ class IsometricCamera:
             pass
             logger.err or(f"Ошибка обновления следования: {e}")
 
-    def get_camera_ in fo(self) -> Dict[str, Any]:
+    def get_camera_in fo(self) -> Dict[str, Any]:
         """Получение информации о камере"""
             try:
             return {
             "position": self.get_camera_position(),
             "rotation": self.get_camera_rotation(),
             "zoom": self.get_camera_zoom(),
-            " is _follow in g": self.state. is _follow in g,
-            " is _centered": self.state. is _centered,
+            "is _following": self.state.is _following,
+            "is _centered": self.state.is _centered,
             "target": str(self.target) if self.target else None,:
             pass  # Добавлен pass в пустой блок
             "film_size": (self.lens.getFilmSize()[0], self.lens.getFilmSize()[1]),
@@ -333,7 +333,7 @@ class IsometricCamera:
             logger.err or(f"Ошибка получения информации о камере: {e}")
             return {}
 
-            def set_camera_sett in gs(self, sett in gs: CameraSett in gs) -> None:
+            def set_camera_settings(self, settings: CameraSettings) -> None:
         """Обновление настроек камеры"""
         try:
         except Exception as e:
@@ -347,14 +347,14 @@ class IsometricCamera:
             pass  # Добавлен pass в пустой блок
         """Создание эффекта камеры"""
             try:
-            if effect_type == "shake":
+            if effect_type = "shake":
             self._create_shake_effect(duration, * * kwargs)
-            elif effect_type == "zoom":
+            elif effect_type = "zoom":
             self._create_zoom_effect(duration, * * kwargs)
-            elif effect_type == "rotation":
+            elif effect_type = "rotation":
             self._create_rotation_effect(duration, * * kwargs)
             else:
-            logger.warn in g(f"Неизвестный тип эффекта камеры: {effect_type}")
+            logger.warning(f"Неизвестный тип эффекта камеры: {effect_type}")
 
             except Exception as e:
             pass
@@ -363,7 +363,7 @@ class IsometricCamera:
             logger.err or(f"Ошибка создания эффекта камеры: {e}")
 
             def _create_shake_effect(self, duration: float
-            intensity: float== 0.1) -> None:
+            intensity: float= 0.1) -> None:
             pass  # Добавлен pass в пустой блок
         """Создание эффекта тряски камеры"""
         try:
@@ -374,7 +374,7 @@ class IsometricCamera:
             logger.err or(f"Ошибка создания эффекта тряски: {e}")
 
     def _create_zoom_effect(self, duration: float
-        target_zoom: float== 1.5) -> None:
+        target_zoom: float= 1.5) -> None:
             pass  # Добавлен pass в пустой блок
         """Создание эффекта масштабирования"""
             try:
@@ -388,7 +388,7 @@ class IsometricCamera:
             logger.err or(f"Ошибка создания эффекта масштабирования: {e}")
 
             def _create_rotation_effect(self, duration: float
-            target_rotation: float== 0.0) -> None:
+            target_rotation: float= 0.0) -> None:
             pass  # Добавлен pass в пустой блок
         """Создание эффекта поворота"""
         try:

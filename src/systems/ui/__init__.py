@@ -4,12 +4,12 @@
     Системы пользовательского интерфейса
 """
 
-from .ui_system imp or t(
+from .ui_system import(
     UISystem, UIElementType, UIElement,
     W or ldObjectTemplate, Creat or Mode
 )
 
-__all__== [
+__all__= [
     'UISystem', 'UIElementType', 'UIElement',
     'W or ldObjectTemplate', 'Creat or Mode'
 ]

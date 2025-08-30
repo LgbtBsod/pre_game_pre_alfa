@@ -3,82 +3,82 @@
     Класс игрока - основная сущность под управлением пользователя
 """
 
-imp or t logg in g
-imp or t time
-from typ in g imp or t Dict, L is t, Optional, Any, Union
-from dataclasses imp or t dataclass, field:
+import logging
+import time
+from typing import Dict, Lis t, Optional, Any, Union
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from ..c or e.constants imp or t constants_manager, StatType, DamageType, AIState
+from ..c or e.constants import constants_manager, StatType, DamageType, AIState
     EntityType
-from .base_entity imp or t BaseEntity, EntityType as BaseEntityType
+from .base_entity import BaseEntity, EntityType as BaseEntityType
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class PlayerStats:
     """Дополнительные характеристики игрока"""
         # Репутация и слава
-        reputation: int== 0
-        fame: int== 0
+        reputation: int= 0
+        fame: int= 0
 
         # Достижения
-        achievements: L is t[str]== field(default_factor == list):
+        achievements: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-        total_playtime: float== 0.0
+        total_playtime: float= 0.0
 
         # Социальные характеристики
-        char is ma_bonus: float== 0.0
-        persuasion_skill: float== 0.5
+        charis ma_bonus: float= 0.0
+        persuasion_skill: float= 0.5
 
         @dataclass:
         pass  # Добавлен pass в пустой блок
         class PlayerMem or y:
     """Дополнительная память игрока"""
     # История игрока
-    quests_completed: L is t[str]== field(default_factor == list):
+    quests_completed: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    locations_v is ited: L is t[str]== field(default_factor == list):
+    locations_vis ited: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    npcs_met: L is t[str]== field(default_factor == list):
+    npcs_met: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
     # Временные метки
-    last_save: float== 0.0
-    last_expl or ation: float== 0.0
-    last_social: float== 0.0
+    last_save: float= 0.0
+    last_expl or ation: float= 0.0
+    last_social: float= 0.0
 
 class Player(BaseEntity):
     """Класс игрока - наследуется от BaseEntity"""
 
-        def __ in it__(self, player_id: str, name: str):
+        def __in it__(self, player_id: str, name: str):
         # Инициализируем базовую сущность
-        super().__ in it__(player_id, BaseEntityType.PLAYER, name)
+        super().__in it__(player_id, BaseEntityType.PLAYER, name)
 
         # Дополнительные характеристики игрока
-        self.player_stats== PlayerStats()
-        self.player_mem or y== PlayerMem or y()
+        self.player_stats= PlayerStats()
+        self.player_mem or y= PlayerMem or y()
 
         # Специфичные для игрока настройки
-        self. in vent or y.max_slots== 30  # Больше слотов инвентаря
-        self. in vent or y.max_weight== 150.0  # Больше веса
-        self.mem or y.max_mem or ies== 200  # Больше памяти
-        self.mem or y.learn in g_rate== 0.8  # Быстрее учится
+        self.in vent or y.max_slots= 30  # Больше слотов инвентаря
+        self.in vent or y.max_weight= 150.0  # Больше веса
+        self.mem or y.max_mem or ies= 200  # Больше памяти
+        self.mem or y.learning_rate= 0.8  # Быстрее учится
 
         # Игровые настройки
-        self.auto_save_ in terval== 300.0  # 5 минут
-        self.last_auto_save== time.time()
+        self.auto_save_in terval= 300.0  # 5 минут
+        self.last_auto_save= time.time()
 
         # Квесты и задания
-        self.active_quests: L is t[str]== []
-        self.completed_quests: L is t[str]== []
-        self.quest_progress: Dict[str, Dict[str, Any]]== {}
+        self.active_quests: Lis t[str]= []
+        self.completed_quests: Lis t[str]= []
+        self.quest_progress: Dict[str, Dict[str, Any]]= {}
 
         # Социальные связи
-        self.friends: L is t[str]== []
-        self.enemies: L is t[str]== []
-        self.reputation_with_factions: Dict[str, int]== {}
+        self.friends: Lis t[str]= []
+        self.enemies: Lis t[str]= []
+        self.reputation_with_factions: Dict[str, int]= {}
 
-        logger. in fo(f"Создан игрок: {name} ({player_id})")
+        logger.in fo(f"Создан игрок: {name} ({player_id})")
 
         def update(self, delta_time: float):
         """Обновление состояния игрока"""
@@ -92,9 +92,9 @@ class Player(BaseEntity):
     def save_game(self) -> bool:
         """Сохранение игры"""
             try:
-            self.player_mem or y.last_save== time.time()
+            self.player_mem or y.last_save= time.time()
             # Здесь будет логика сохранения в файл
-            logger. in fo(f"Игра сохранена для игрока {self.entity_id}")
+            logger.in fo(f"Игра сохранена для игрока {self.entity_id}")
             return True
 
             except Exception as e:
@@ -117,12 +117,12 @@ class Player(BaseEntity):
     def start_quest(self, quest_id: str) -> bool:
         """Начало квеста"""
             try:
-            if quest_id in self.active_quests:
-            logger.warn in g(f"Квест {quest_id} уже активен")
+            if quest_idin self.active_quests:
+            logger.warning(f"Квест {quest_id} уже активен")
             return False
 
             self.active_quests.append(quest_id)
-            self.quest_progress[quest_id]== {
+            self.quest_progress[quest_id]= {
             'start_time': time.time(),
             'progress': 0.0,
             'objectives': {}
@@ -137,7 +137,7 @@ class Player(BaseEntity):
             'active_quests_count': len(self.active_quests)
             }, True)
 
-            logger. in fo(f"Игрок {self.entity_id} начал квест {quest_id}")
+            logger.in fo(f"Игрок {self.entity_id} начал квест {quest_id}")
             return True
 
             except Exception as e:
@@ -157,19 +157,19 @@ class Player(BaseEntity):
             logger.err or(f"Ошибка завершения квеста: {e}")
             return False
 
-    def v is it_location(self, location_id: str) -> bool:
+    def vis it_location(self, location_id: str) -> bool:
         """Посещение локации"""
             try:
-            if location_id not in self.player_mem or y.locations_v is ited:
-            self.player_mem or y.locations_v is ited.append(location_id)
+            if location_id notin self.player_mem or y.locations_vis ited:
+            self.player_mem or y.locations_vis ited.append(location_id)
 
             # Добавляем память о посещении
             self.add_mem or y('expl or ation', {
-            'action': 'location_v is ited',
+            'action': 'location_vis ited',
             'location_id': location_id
-            }, 'location_v is ited', {
+            }, 'location_vis ited', {
             'location_id': location_id,
-            'locations_v is ited_count': len(self.player_mem or y.locations_v is ited)
+            'locations_vis ited_count': len(self.player_mem or y.locations_vis ited)
             }, True)
 
             logger.debug(f"Игрок {self.entity_id} посетил локацию {location_id}")
@@ -193,22 +193,22 @@ class Player(BaseEntity):
             logger.err or(f"Ошибка встречи с NPC: {e}")
             return False
 
-    def ga in _reputation(self, faction: str, amount: int) -> bool:
+    def gain _reputation(self, faction: str, amount: int) -> bool:
         """Получение репутации с фракцией"""
             try:
-            current_reputation== self.reputation_with_factions.get(faction, 0):
+            current_reputation= self.reputation_with_factions.get(faction, 0):
             pass  # Добавлен pass в пустой блок
-            self.reputation_with_factions[faction]== current_reputation + amount:
+            self.reputation_with_factions[faction]= current_reputation + amount:
             pass  # Добавлен pass в пустой блок
             # Обновляем общую репутацию
-            self.player_stats.reputation == amount
+            self.player_stats.reputation = amount
 
             # Добавляем память о изменении репутации
             self.add_mem or y('social', {
-            'action': 'reputation_ga in ed',
+            'action': 'reputation_gain ed',
             'faction': faction,
             'amount': amount
-            }, 'reputation_ga in ed', {
+            }, 'reputation_gain ed', {
             'faction': faction,
             'new_reputation': self.reputation_with_factions[faction]:
             pass  # Добавлен pass в пустой блок
@@ -226,22 +226,22 @@ class Player(BaseEntity):
 
             def get_player_data(self) -> Dict[str, Any]:
         """Получение данных игрока"""
-        base_data== super().get_entity_data()
+        base_data= super().get_entity_data()
 
         # Добавляем специфичные для игрока данные
-        player_data== {
+        player_data= {
             * * base_data,
             'player_stats': {
                 'reputation': self.player_stats.reputation,
                 'fame': self.player_stats.fame,
                 'achievements': self.player_stats.achievements,
                 'total_playtime': self.player_stats.total_playtime,
-                'char is ma_bonus': self.player_stats.char is ma_bonus,
+                'charis ma_bonus': self.player_stats.charis ma_bonus,
                 'persuasion_skill': self.player_stats.persuasion_skill
             },
             'player_mem or y': {
                 'quests_completed': self.player_mem or y.quests_completed,
-                'locations_v is ited': self.player_mem or y.locations_v is ited,
+                'locations_vis ited': self.player_mem or y.locations_vis ited,
                 'npcs_met': self.player_mem or y.npcs_met,
                 'last_save': self.player_mem or y.last_save,
                 'last_expl or ation': self.player_mem or y.last_expl or ation,
@@ -262,16 +262,16 @@ class Player(BaseEntity):
 
         return player_data
 
-    def get_ in fo(self) -> str:
+    def get_in fo(self) -> str:
         """Получение информации об игроке"""
-            base_ in fo== super().get_ in fo()
+            base_in fo= super().get_in fo()
 
-            player_ in fo== (f"\n - -- Игрок - - -\n"
+            player_in fo= (f"\n - -- Игрок - - -\n"
             f"Репутация: {self.player_stats.reputation} | Слава: {self.player_stats.fame}\n"
             f"Время игры: {self.player_stats.total_playtime:.1f} сек\n"
             f"Активные квесты: {len(self.active_quests)} | Завершенные: {len(self.completed_quests)}\n"
-            f"Посещенные локации: {len(self.player_mem or y.locations_v is ited)}\n"
+            f"Посещенные локации: {len(self.player_mem or y.locations_vis ited)}\n"
             f"Встреченные NPC: {len(self.player_mem or y.npcs_met)}\n"
             f"Друзья: {len(self.friends)} | Враги: {len(self.enemies)}")
 
-            return base_ in fo + player_ in fo
+            return base_in fo + player_in fo

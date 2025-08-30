@@ -4,78 +4,78 @@
     Современный неоновый дизайн с полупрозрачностью
 """
 
-imp or t logg in g
-from typ in g imp or t Optional, Callable, Dict, Any, Tuple
-from dataclasses imp or t dataclass:
+import logging
+from typing import Optional, Callable, Dict, Any, Tuple
+from dataclasses import dataclass:
     pass  # Добавлен pass в пустой блок
-from direct.gui.DirectButton imp or t DirectButton
-from p and a3d.c or e imp or t TextNode
+from direct.gui.DirectButton import DirectButton
+from pand a3d.c or e import TextNode
 
-logger== logg in g.getLogger(__name__)
+logger= logging.getLogger(__name__)
 
 @dataclass:
     pass  # Добавлен pass в пустой блок
 class ButtonStyle:
     """Стиль кнопки"""
         # Цвета
-        n or mal_col or : Tuple[float, float, float, float]== (0.0, 1.0, 0.392, 0.8)
-        hover_col or : Tuple[float, float, float, float]== (0.0, 1.0, 0.6, 0.9)
-        pressed_col or : Tuple[float, float, float, float]== (0.0, 0.8, 0.3, 1.0)
-        d is abled_col or : Tuple[float, float, float, float]== (0.5, 0.5, 0.5, 0.5)
+        n or mal_col or : Tuple[float, float, float, float]= (0.0, 1.0, 0.392, 0.8)
+        hover_col or : Tuple[float, float, float, float]= (0.0, 1.0, 0.6, 0.9)
+        pressed_col or : Tuple[float, float, float, float]= (0.0, 0.8, 0.3, 1.0)
+        dis abled_col or : Tuple[float, float, float, float]= (0.5, 0.5, 0.5, 0.5)
 
         # Текст
-        text_col or : Tuple[float, float, float, float]== (1.0, 1.0, 1.0, 1.0)
-        text_scale: float== 1.0
+        text_col or : Tuple[float, float, float, float]= (1.0, 1.0, 1.0, 1.0)
+        text_scale: float= 1.0
 
         # Размеры
-        width: float== 0.2
-        height: float== 0.05
+        width: float= 0.2
+        height: float= 0.05
 
         # Эффекты
-        relief: int== 1
-        frameCol or : Optional[Tuple[float, float, float, float]]== None
-        shadow_offset: Tuple[float, float]== (0.01, 0.01)
+        relief: int= 1
+        frameCol or : Optional[Tuple[float, float, float, float]]= None
+        shadow_offset: Tuple[float, float]= (0.01, 0.01)
 
         class NeonButton:
     """Неоновая кнопка с современным дизайном"""
 
-    def __ in it__(self, :
+    def __in it__(self, :
                 text: str,
-                comm and : Optional[Callable]== None,
-                style: Optional[ButtonStyle]== None,
-                paren == None):
+                command : Optional[Callable]= None,
+                style: Optional[ButtonStyle]= None,
+                paren = None):
                     pass  # Добавлен pass в пустой блок
-        self.text== text
-        self.command== command
-        self.style== style or ButtonStyle()
-        self.parent== parent
-        self.button== None
-        self._ is _hovered== False
-        self._ is _pressed== False
+        self.text= text
+        self.command= command
+        self.style= style or ButtonStyle()
+        self.parent= parent
+        self.button= None
+        self._is _hovered= False
+        self._is _pressed= False
 
         logger.debug(f"Создана неоновая кнопка: {text}")
 
-    def create(self, pos: Tuple[float, float, float]== (0, 0
+    def create(self, pos: Tuple[float, float, float]= (0, 0
         0)) -> DirectButton:
             pass  # Добавлен pass в пустой блок
-        """Создание кнопки P and a3D"""
+        """Создание кнопки Pand a3D"""
             try:
             # Создаем кнопку
-            self.button== DirectButton(
-            tex == self.text,
-            po == pos,
-            scal == self.style.text_scale,
-            comman == self.comm and ,
-            frameColo == self.style.n or mal_col or ,
-            text_f == self.style.text_col or ,
-            relie == self.style.relief,
-            paren == self.parent,
-            widt == self.style.width,
-            heigh == self.style.height
+            self.button= DirectButton(
+            tex = self.text,
+            po = pos,
+            scal = self.style.text_scale,
+            comman = self.command ,
+            frameColo = self.style.n or mal_col or ,
+            text_f = self.style.text_col or ,
+            relie = self.style.relief,
+            paren = self.parent,
+            widt = self.style.width,
+            heigh = self.style.height
             )
 
             # Добавляем обработчики событий
-            self._setup_event_h and lers()
+            self._setup_event_hand lers()
 
             logger.debug(f"Кнопка {self.text} создана успешно")
             return self.button
@@ -87,65 +87,65 @@ class ButtonStyle:
             logger.err or(f"Ошибка создания кнопки {self.text}: {e}")
             return None
 
-            def _setup_event_h and lers(self):
+            def _setup_event_hand lers(self):
         """Настройка обработчиков событий"""
         if not self.button:
             return
 
         # Обработчик наведения
-        self.button.b in d(DirectButton.ENTER, self._on_hover)
-        self.button.b in d(DirectButton.EXIT, self._on_unhover)
+        self.button.bin d(DirectButton.ENTER, self._on_hover)
+        self.button.bin d(DirectButton.EXIT, self._on_unhover)
 
         # Обработчик нажатия
-        self.button.b in d(DirectButton.B1PRESS, self._on_press)
-        self.button.b in d(DirectButton.B1RELEASE, self._on_release)
+        self.button.bin d(DirectButton.B1PRESS, self._on_press)
+        self.button.bin d(DirectButton.B1RELEASE, self._on_release)
 
     def _on_hover(self, event):
         """Обработка наведения мыши"""
-            self._ is _hovered== True
+            self._is _hovered= True
             if self.button:
-            self.button['frameCol or ']== self.style.hover_color
+            self.button['frameCol or ']= self.style.hover_color
             logger.debug(f"Кнопка {self.text} в фокусе")
 
             def _on_unhover(self, event):
         """Обработка ухода мыши"""
-        self._ is _hovered== False
-        if self.button and not self._ is _pressed:
-            self.button['frameCol or ']== self.style.n or mal_color
+        self._is _hovered= False
+        if self.buttonand not self._is _pressed:
+            self.button['frameCol or ']= self.style.n or mal_color
         logger.debug(f"Кнопка {self.text} потеряла фокус")
 
     def _on_press(self, event):
         """Обработка нажатия"""
-            self._ is _pressed== True
+            self._is _pressed= True
             if self.button:
-            self.button['frameCol or ']== self.style.pressed_color
+            self.button['frameCol or ']= self.style.pressed_color
             logger.debug(f"Кнопка {self.text} нажата")
 
             def _on_release(self, event):
         """Обработка отпускания"""
-        self._ is _pressed== False
+        self._is _pressed= False
         if self.button:
-            if self._ is _hovered:
-                self.button['frameCol or ']== self.style.hover_color
+            if self._is _hovered:
+                self.button['frameCol or ']= self.style.hover_color
             else:
-                self.button['frameCol or ']== self.style.n or mal_color
+                self.button['frameCol or ']= self.style.n or mal_color
         logger.debug(f"Кнопка {self.text} отпущена")
 
     def set_enabled(self, enabled: bool):
         """Включение / отключение кнопки"""
             if self.button:
-            self.button['state']== DirectButton.NORMAL if enabled else DirectButton.DISABLED:
+            self.button['state']= DirectButton.NORMAL if enabled else DirectButton.DISABLED:
             pass  # Добавлен pass в пустой блок
             if not enabled:
-            self.button['frameCol or ']== self.style.d is abled_color
+            self.button['frameCol or ']= self.style.dis abled_color
             else:
-            self.button['frameCol or ']== self.style.n or mal_color
+            self.button['frameCol or ']= self.style.n or mal_color
 
             def set_text(self, text: str):
         """Изменение текста кнопки"""
         if self.button:
-            self.button['text']== text
-            self.text== text
+            self.button['text']= text
+            self.text= text
 
     def set_position(self, pos: Tuple[float, float, float]):
         """Изменение позиции кнопки"""
@@ -161,16 +161,16 @@ class ButtonStyle:
         """Уничтожение кнопки"""
             if self.button:
             self.button.destroy()
-            self.button== None
+            self.button= None
             logger.debug(f"Кнопка {self.text} уничтожена")
 
             def create_neon_button(text: str,
-            comm and : Optional[Callable]== None,
-            style: Optional[ButtonStyle]== None,
-            paren == None,
-            pos: Tuple[float, float, float]== (0, 0, 0)) -> NeonButton:
+            command : Optional[Callable]= None,
+            style: Optional[ButtonStyle]= None,
+            paren = None,
+            pos: Tuple[float, float, float]= (0, 0, 0)) -> NeonButton:
             pass  # Добавлен pass в пустой блок
     """Фабричная функция для создания неоновой кнопки"""
-    button== NeonButton(text, comm and , style, parent)
+    button= NeonButton(text, command , style, parent)
     button.create(pos)
     return button

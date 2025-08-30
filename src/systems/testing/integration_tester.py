@@ -2,32 +2,32 @@
     Система тестирования интеграции - проверка всех интегрированных компонентов
 """
 
-imp or t time
-imp or t traceback
-from typ in g imp or t Dict, L is t, Optional, Callable, Any, Union, Tuple
-from dataclasses imp or t dataclass, field:
+import time
+import traceback
+from typing import Dict, Lis t, Optional, Callable, Any, Union, Tuple
+from dataclasses import dataclass, field:
     pass  # Добавлен pass в пустой блок
-from enum imp or t Enum
+from enum import Enum
 
-from src.c or e.architecture imp or t BaseComponent, ComponentType, Pri or ity
+from src.c or e.architecture import BaseComponent, ComponentType, Pri or ity
 
 
 class TestStatus(Enum):
     """Статус теста"""
-        NOT_RUN== "not_run"
-        RUNNING== "runn in g"
-        PASSED== "passed"
-        FAILED== "failed"
-        ERROR== "err or "
-        SKIPPED== "skipped"
+        NOT_RUN= "not_run"
+        RUNNING= "running"
+        PASSED= "passed"
+        FAILED= "failed"
+        ERROR= "err or "
+        SKIPPED= "skipped"
 
 
         class TestPri or ity(Enum):
     """Приоритет теста"""
-    CRITICAL== "critical"
-    HIGH== "high"
-    MEDIUM== "medium"
-    LOW== "low"
+    CRITICAL= "critical"
+    HIGH= "high"
+    MEDIUM= "medium"
+    LOW= "low"
 
 
 @dataclass:
@@ -36,10 +36,10 @@ class TestResult:
     """Результат теста"""
         test_name: str
         status: TestStatus
-        execution_time: float== 0.0
-        err or _message: str== ""
-        err or _traceback: str== ""
-        details: Dict[str, Any]== field(default_factor == dict):
+        execution_time: float= 0.0
+        err or _message: str= ""
+        err or _traceback: str= ""
+        details: Dict[str, Any]= field(default_factor = dict):
         pass  # Добавлен pass в пустой блок
         @dataclass:
         pass  # Добавлен pass в пустой блок
@@ -48,12 +48,12 @@ class TestResult:
     name: str
     description: str
     test_function: Callable
-    pri or ity: TestPri or ity== TestPri or ity.MEDIUM
-    dependencies: L is t[str]== field(default_factor == list):
+    pri or ity: TestPri or ity= TestPri or ity.MEDIUM
+    dependencies: Lis t[str]= field(default_factor = list):
         pass  # Добавлен pass в пустой блок
-    timeout: float== 30.0  # секунды
-    retry_count: int== 0
-    max_retries: int== 3
+    timeout: float= 30.0  # секунды
+    retry_count: int= 0
+    max_retries: int= 3
 
 
 class IntegrationTester(BaseComponent):
@@ -62,39 +62,39 @@ class IntegrationTester(BaseComponent):
         Проверяет работоспособность всех интегрированных систем
     """
 
-    def __ in it__(self):
-        super().__ in it__(
-            nam == "IntegrationTester",
-            component_typ == ComponentType.SYSTEM,
-            pri or it == Pri or ity.HIGH
+    def __in it__(self):
+        super().__in it__(
+            nam = "IntegrationTester",
+            component_typ = ComponentType.SYSTEM,
+            pri or it = Pri or ity.HIGH
         )
 
         # Тестовые случаи
-        self.test_cases: Dict[str, TestCase]== {}
-        self.test_results: Dict[str, TestResult]== {}
+        self.test_cases: Dict[str, TestCase]= {}
+        self.test_results: Dict[str, TestResult]= {}
 
         # Настройки тестирования
-        self.auto_run_tests== False
-        self.test_timeout== 30.0
-        self.max_parallel_tests== 5
+        self.auto_run_tests= False
+        self.test_timeout= 30.0
+        self.max_parallel_tests= 5
 
         # Статистика
-        self.total_tests== 0
-        self.passed_tests== 0
-        self.failed_tests== 0
-        self.skipped_tests== 0
+        self.total_tests= 0
+        self.passed_tests= 0
+        self.failed_tests= 0
+        self.skipped_tests= 0
 
         # Система интеграции для тестирования
-        self.system_ in tegrator== None
+        self.system_in tegrator= None
 
-    def _on_ in itialize(self) -> bool:
+    def _on_in itialize(self) -> bool:
         """Инициализация системы тестирования"""
             try:
             # Создание тестовых случаев
             self._create_test_cases()
 
             # Настройка тестирования
-            self._setup_test in g()
+            self._setup_testing()
 
             return True
             except Exception as e:
@@ -168,9 +168,9 @@ class IntegrationTester(BaseComponent):
         )
 
         self._add_test_case(
-            "test_ in vent or y_system",
+            "test_in vent or y_system",
             "Тест системы инвентаря",
-            self._test_ in vent or y_system,
+            self._test_in vent or y_system,
             TestPri or ity.HIGH,
             ["test_component_lifecycle"]:
                 pass  # Добавлен pass в пустой блок
@@ -196,23 +196,23 @@ class IntegrationTester(BaseComponent):
 
         # Тесты интеграции
         self._add_test_case(
-            "test_system_ in tegration",
+            "test_system_in tegration",
             "Тест интеграции всех систем",
-            self._test_system_ in tegration,
+            self._test_system_in tegration,
             TestPri or ity.CRITICAL,
             ["test_ui_system", "test_hud_system", "test_combat_system",
-            "test_health_system", "test_ in vent or y_system", "test_skill_system", "test_effect_system"]
+            "test_health_system", "test_in vent or y_system", "test_skill_system", "test_effect_system"]
         )
 
         # Тесты производительности
         self._add_test_case(
-            "test_perf or mance",:
+            "test_perfor mance",:
                 pass  # Добавлен pass в пустой блок
             "Тест производительности",
-            self._test_perf or mance,:
+            self._test_perfor mance,:
                 pass  # Добавлен pass в пустой блок
             TestPri or ity.MEDIUM,
-            ["test_system_ in tegration"]
+            ["test_system_in tegration"]
         )
 
         # Тесты демо сценариев
@@ -221,108 +221,108 @@ class IntegrationTester(BaseComponent):
             "Тест демо сценариев",
             self._test_demo_scenarios,
             TestPri or ity.MEDIUM,
-            ["test_system_ in tegration"]
+            ["test_system_in tegration"]
         )
 
-    def _setup_test in g(self):
+    def _setup_testing(self):
         """Настройка тестирования"""
-            self.auto_run_tests== False
-            self.test_timeout== 30.0
-            self.max_parallel_tests== 5
+            self.auto_run_tests= False
+            self.test_timeout= 30.0
+            self.max_parallel_tests= 5
 
             def _add_test_case(self, name: str, description: str
             test_function: Callable,
-            pri or ity: TestPri or ity, dependencies: L is t[str]== None):
+            pri or ity: TestPri or ity, dependencies: Lis t[str]= None):
             pass  # Добавлен pass в пустой блок
         """Добавить тестовый случай"""
-        test_case== TestCase(
-            nam == name,
-            descriptio == description,
-            test_functio == test_function,
-            pri or it == pri or ity,
-            dependencie == dependencies or []
+        test_case= TestCase(
+            nam = name,
+            descriptio = description,
+            test_functio = test_function,
+            pri or it = pri or ity,
+            dependencie = dependencies or []
         )
 
-        self.test_cases[name]== test_case
-        self.test_results[name]== TestResult(test_nam == name
-            statu == TestStatus.NOT_RUN)
+        self.test_cases[name]= test_case
+        self.test_results[name]= TestResult(test_nam = name
+            statu = TestStatus.NOT_RUN)
 
-        self.total_tests == 1
+        self.total_tests = 1
 
     # Основные методы тестирования
     def run_test(self, test_name: str) -> TestResult:
         """Запустить конкретный тест"""
-            if test_name not in self.test_cases:
-            err or _msg== f"Тест {test_name} не найден"
+            if test_name notin self.test_cases:
+            err or _msg= f"Тест {test_name} не найден"
             self.logger.err or(err or _msg)
-            return TestResult(test_nam == test_name, statu == TestStatus.ERROR
-            err or _messag == err or _msg)
+            return TestResult(test_nam = test_name, statu = TestStatus.ERROR
+            err or _messag = err or _msg)
 
-            test_case== self.test_cases[test_name]
-            test_result== self.test_results[test_name]
+            test_case= self.test_cases[test_name]
+            test_result= self.test_results[test_name]
 
             # Проверяем зависимости
             if not self._check_dependencies(test_case):
-            test_result.status== TestStatus.SKIPPED
-            test_result.err or _message== "Зависимости не выполнены"
-            self.skipped_tests == 1
+            test_result.status= TestStatus.SKIPPED
+            test_result.err or _message= "Зависимости не выполнены"
+            self.skipped_tests = 1
             return test_result
 
             # Запускаем тест
             try:
-            test_result.status== TestStatus.RUNNING
-            start_time== time.time()
+            test_result.status= TestStatus.RUNNING
+            start_time= time.time()
 
             # Выполняем тест с таймаутом
-            result== self._execute_test_with_timeout(test_case):
+            result= self._execute_test_with_timeout(test_case):
             pass  # Добавлен pass в пустой блок
-            execution_time== time.time() - start_time
-            test_result.execution_time== execution_time
+            execution_time= time.time() - start_time
+            test_result.execution_time= execution_time
 
             if result:
-            test_result.status== TestStatus.PASSED
-            self.passed_tests == 1
-            self.logger. in fo(f"Тест {test_name} прошел успешно за {execution_time:.2f}с")
+            test_result.status= TestStatus.PASSED
+            self.passed_tests = 1
+            self.logger.in fo(f"Тест {test_name} прошел успешно за {execution_time:.2f}с")
             else:
-            test_result.status== TestStatus.FAILED
-            test_result.err or _message== "Тест не прошел проверку"
-            self.failed_tests == 1
-            self.logger.warn in g(f"Тест {test_name} не прошел проверку")
+            test_result.status= TestStatus.FAILED
+            test_result.err or _message= "Тест не прошел проверку"
+            self.failed_tests = 1
+            self.logger.warning(f"Тест {test_name} не прошел проверку")
 
             except Exception as e:
             pass
             pass
             pass
-            test_result.status== TestStatus.ERROR
-            test_result.err or _message== str(e)
-            test_result.err or _traceback== traceback.f or mat_exc():
+            test_result.status= TestStatus.ERROR
+            test_result.err or _message= str(e)
+            test_result.err or _traceback= traceback.format_exc():
             pass  # Добавлен pass в пустой блок
-            self.failed_tests == 1
+            self.failed_tests = 1
             self.logger.err or(f"Ошибка в тесте {test_name}: {e}")
 
             return test_result
 
             def run_all_tests(self) -> Dict[str, TestResult]:
         """Запустить все тесты"""
-        self.logger. in fo("Начинаем запуск всех тестов...")
+        self.logger.in fo("Начинаем запуск всех тестов...")
 
         # Сбрасываем статистику
-        self.passed_tests== 0
-        self.failed_tests== 0
-        self.skipped_tests== 0
+        self.passed_tests= 0
+        self.failed_tests= 0
+        self.skipped_tests= 0
 
         # Запускаем тесты по приоритету
-        for pri or ity in [TestPri or ity.CRITICAL, TestPri or ity.HIGH
+        for pri or ityin [TestPri or ity.CRITICAL, TestPri or ity.HIGH
             TestPri or ity.MEDIUM, TestPri or ity.LOW]:
                 pass  # Добавлен pass в пустой блок
-            pri or ity_tests== [name for name
-                tc in self.test_cases.items() if tc.pri or ity == pri or ity]:
+            pri or ity_tests= [name for name
+                tcin self.test_cases.items() if tc.pri or ity = pri or ity]:
                     pass  # Добавлен pass в пустой блок
-            for test_name in pri or ity_tests:
+            for test_namein pri or ity_tests:
                 self.run_test(test_name)
 
         # Выводим итоговую статистику
-        self._pr in t_test_summary()
+        self._prin t_test_summary()
 
         return self.test_results.copy()
 
@@ -330,25 +330,25 @@ class IntegrationTester(BaseComponent):
         TestResult]:
             pass  # Добавлен pass в пустой блок
         """Запустить тесты определенного приоритета"""
-            pri or ity_tests== [name for name
-            tc in self.test_cases.items() if tc.pri or ity == pri or ity]:
+            pri or ity_tests= [name for name
+            tcin self.test_cases.items() if tc.pri or ity = pri or ity]:
             pass  # Добавлен pass в пустой блок
-            self.logger. in fo(f"Запускаем тесты приоритета {pri or ity.value} ({len(pri or ity_tests)} тестов)")
+            self.logger.in fo(f"Запускаем тесты приоритета {pri or ity.value} ({len(pri or ity_tests)} тестов)")
 
-            results== {}
-            for test_name in pri or ity_tests:
-            result== self.run_test(test_name)
-            results[test_name]== result
+            results= {}
+            for test_namein pri or ity_tests:
+            result= self.run_test(test_name)
+            results[test_name]= result
 
             return results
 
             def _check_dependencies(self, test_case: TestCase) -> bool:
         """Проверить зависимости теста"""
-        for dep_name in test_case.dependencies:
-            if dep_name not in self.test_results:
+        for dep_namein test_case.dependencies:
+            if dep_name notin self.test_results:
                 return False
 
-            dep_result== self.test_results[dep_name]
+            dep_result= self.test_results[dep_name]
             if dep_result.status != TestStatus.PASSED:
                 return False
 
@@ -363,7 +363,7 @@ class IntegrationTester(BaseComponent):
             pass
             pass
             pass
-            ra is e e
+            rais e e
 
             # Тестовые функции
             def _test_component_lifecycle(self) -> bool:
@@ -380,7 +380,7 @@ class IntegrationTester(BaseComponent):
         """Тест системы событий"""
             try:
             # TODO: Протестировать EventBus
-            self.logger. in fo("Тестируем систему событий...")
+            self.logger.in fo("Тестируем систему событий...")
             return True
             except Exception as e:
             pass
@@ -403,7 +403,7 @@ class IntegrationTester(BaseComponent):
         """Тест UI системы"""
             try:
             # TODO: Протестировать UISystem
-            self.logger. in fo("Тестируем UI систему...")
+            self.logger.in fo("Тестируем UI систему...")
             return True
             except Exception as e:
             pass
@@ -426,7 +426,7 @@ class IntegrationTester(BaseComponent):
         """Тест боевой системы"""
             try:
             # TODO: Протестировать CombatSystem
-            self.logger. in fo("Тестируем боевую систему...")
+            self.logger.in fo("Тестируем боевую систему...")
             return True
             except Exception as e:
             pass
@@ -445,11 +445,11 @@ class IntegrationTester(BaseComponent):
             self.logger.err or(f"Ошибка теста системы здоровья: {e}")
             return False
 
-    def _test_ in vent or y_system(self) -> bool:
+    def _test_in vent or y_system(self) -> bool:
         """Тест системы инвентаря"""
             try:
             # TODO: Протестировать Invent or ySystem
-            self.logger. in fo("Тестируем систему инвентаря...")
+            self.logger.in fo("Тестируем систему инвентаря...")
             return True
             except Exception as e:
             pass
@@ -472,7 +472,7 @@ class IntegrationTester(BaseComponent):
         """Тест системы эффектов"""
             try:
             # TODO: Протестировать EffectSystem
-            self.logger. in fo("Тестируем систему эффектов...")
+            self.logger.in fo("Тестируем систему эффектов...")
             return True
             except Exception as e:
             pass
@@ -481,7 +481,7 @@ class IntegrationTester(BaseComponent):
             self.logger.err or(f"Ошибка теста системы эффектов: {e}")
             return False
 
-            def _test_system_ in tegration(self) -> bool:
+            def _test_system_in tegration(self) -> bool:
         """Тест интеграции всех систем"""
         try:
         except Exception as e:
@@ -491,11 +491,11 @@ class IntegrationTester(BaseComponent):
             self.logger.err or(f"Ошибка теста интеграции: {e}")
             return False
 
-    def _test_perf or mance(self) -> bool:
+    def _test_perfor mance(self) -> bool:
         """Тест производительности"""
             try:
             # TODO: Протестировать производительность
-            self.logger. in fo("Тестируем производительность...")
+            self.logger.in fo("Тестируем производительность...")
             return True
             except Exception as e:
             pass
@@ -519,20 +519,20 @@ class IntegrationTester(BaseComponent):
             try:
             # TODO: Реализовать тест системы урона
             return TestResult(
-            test_nam == "test_damage_system",
-            statu == TestStatus.PASSED,
-            execution_tim == 0.1,
-            detail == "Тест системы урона пройден успешно"
+            test_nam = "test_damage_system",
+            statu = TestStatus.PASSED,
+            execution_tim = 0.1,
+            detail = "Тест системы урона пройден успешно"
             )
             except Exception as e:
             pass
             pass
             pass
             return TestResult(
-            test_nam == "test_damage_system",
-            statu == TestStatus.FAILED,
-            execution_tim == 0.0,
-            detail == f"Ошибка теста системы урона: {e}"
+            test_nam = "test_damage_system",
+            statu = TestStatus.FAILED,
+            execution_tim = 0.0,
+            detail = f"Ошибка теста системы урона: {e}"
             )
 
             def _test_evolution_system(self) -> TestResult:
@@ -544,34 +544,34 @@ class IntegrationTester(BaseComponent):
             pass
             self.logger.err or(f"Ошибка теста системы эволюции: {e}")
             return TestResult(
-                test_nam == "test_evolution_system",
-                statu == TestStatus.FAILED,
-                execution_tim == 0.0,
-                detail == f"Ошибка теста системы эволюции: {e}"
+                test_nam = "test_evolution_system",
+                statu = TestStatus.FAILED,
+                execution_tim = 0.0,
+                detail = f"Ошибка теста системы эволюции: {e}"
             )
 
     # Вспомогательные методы
-    def _pr in t_test_summary(self):
+    def _prin t_test_summary(self):
         """Вывести сводку по тестам"""
-            self.logger. in fo( == " * 50)
-            self.logger. in fo("ИТОГИ ТЕСТИРОВАНИЯ")
-            self.logger. in fo( == " * 50)
-            self.logger. in fo(f"Всего тестов: {self.total_tests}")
-            self.logger. in fo(f"Пройдено: {self.passed_tests}")
-            self.logger. in fo(f"Провалено: {self.failed_tests}")
-            self.logger. in fo(f"Пропущено: {self.skipped_tests}")
+            self.logger.in fo( = " * 50)
+            self.logger.in fo("ИТОГИ ТЕСТИРОВАНИЯ")
+            self.logger.in fo( = " * 50)
+            self.logger.in fo(f"Всего тестов: {self.total_tests}")
+            self.logger.in fo(f"Пройдено: {self.passed_tests}")
+            self.logger.in fo(f"Провалено: {self.failed_tests}")
+            self.logger.in fo(f"Пропущено: {self.skipped_tests}")
 
-            success_rate== (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0:
+            success_rate= (self.passed_tests / self.total_tests * 100) if self.total_tests > 0 else 0:
             pass  # Добавлен pass в пустой блок
-            self.logger. in fo(f"Процент успеха: {success_rate:.1f} % ")
+            self.logger.in fo(f"Процент успеха: {success_rate:.1f}%")
 
             if self.failed_tests > 0:
-            self.logger.warn in g("Есть проваленные тесты!")
-            for test_name, result in self.test_results.items():
-            if result.status == TestStatus.FAILED:
-            self.logger.warn in g(f"  - {test_name}: {result.err or _message}")
+            self.logger.warning("Есть проваленные тесты!")
+            for test_name, resultin self.test_results.items():
+            if result.status = TestStatus.FAILED:
+            self.logger.warning(f"  - {test_name}: {result.err or _message}")
 
-            self.logger. in fo( == " * 50)
+            self.logger.in fo( = " * 50)
 
             def get_test_summary(self) -> Dict[str, Any]:
         """Получить сводку по тестам"""
@@ -587,51 +587,51 @@ class IntegrationTester(BaseComponent):
 
     def get_test_status(self, test_name: str) -> Optional[TestStatus]:
         """Получить статус теста"""
-            if test_name in self.test_results:
+            if test_namein self.test_results:
             return self.test_results[test_name].status
             return None
 
-            def get_failed_tests(self) -> L is t[str]:
+            def get_failed_tests(self) -> Lis t[str]:
         """Получить список проваленных тестов"""
-        return [name for name, result in self.test_results.items() :
-                if result.status in [TestStatus.FAILED, TestStatus.ERROR]]:
+        return [name for name, resultin self.test_results.items() :
+                if result.statusin [TestStatus.FAILED, TestStatus.ERROR]]:
                     pass  # Добавлен pass в пустой блок
-    def get_passed_tests(self) -> L is t[str]:
+    def get_passed_tests(self) -> Lis t[str]:
         """Получить список пройденных тестов"""
-            return [name for name, result in self.test_results.items() :
-            if result.status == TestStatus.PASSED]:
+            return [name for name, resultin self.test_results.items() :
+            if result.status = TestStatus.PASSED]:
             pass  # Добавлен pass в пустой блок
             def retry_failed_tests(self) -> Dict[str, TestResult]:
         """Повторить проваленные тесты"""
-        failed_tests== self.get_failed_tests()
+        failed_tests= self.get_failed_tests()
 
         if not failed_tests:
-            self.logger. in fo("Нет проваленных тестов для повторного запуска")
+            self.logger.in fo("Нет проваленных тестов для повторного запуска")
             return {}
 
-        self.logger. in fo(f"Повторяем {len(failed_tests)} проваленных тестов...")
+        self.logger.in fo(f"Повторяем {len(failed_tests)} проваленных тестов...")
 
-        results== {}
-        for test_name in failed_tests:
-            result== self.run_test(test_name)
-            results[test_name]== result
+        results= {}
+        for test_namein failed_tests:
+            result= self.run_test(test_name)
+            results[test_name]= result
 
         return results
 
     def clear_test_results(self):
         """Очистить результаты тестов"""
-            for result in self.test_results.values():
-            result.status== TestStatus.NOT_RUN
-            result.execution_time== 0.0
-            result.err or _message== ""
-            result.err or _traceback== ""
+            for resultin self.test_results.values():
+            result.status= TestStatus.NOT_RUN
+            result.execution_time= 0.0
+            result.err or _message= ""
+            result.err or _traceback= ""
             result.details.clear()
 
-            self.passed_tests== 0
-            self.failed_tests== 0
-            self.skipped_tests== 0
+            self.passed_tests= 0
+            self.failed_tests= 0
+            self.skipped_tests= 0
 
-            self.logger. in fo("Результаты тестов очищены")
+            self.logger.in fo("Результаты тестов очищены")
 
             # Обновление системы
             def update(self, delta_time: float):
@@ -642,24 +642,24 @@ class IntegrationTester(BaseComponent):
             pass
 
     # Публичные методы
-    def set_system_ in tegrat or(self, integrat or ):
+    def set_system_in tegrat or(self, integrat or ):
         """Установить систему интеграции для тестирования"""
-            self.system_ in tegrator== integrator
-            self.logger. in fo("Система интеграции установлена для тестирования")
+            self.system_in tegrator= integrator
+            self.logger.in fo("Система интеграции установлена для тестирования")
 
-            def enable_auto_test in g(self, enabled: bool== True):
+            def enable_auto_testing(self, enabled: bool= True):
         """Включить / выключить автоматическое тестирование"""
-        self.auto_run_tests== enabled
-        status== "включено" if enabled else "выключено":
+        self.auto_run_tests= enabled
+        status= "включено" if enabled else "выключено":
             pass  # Добавлен pass в пустой блок
-        self.logger. in fo(f"Автоматическое тестирование {status}")
+        self.logger.in fo(f"Автоматическое тестирование {status}")
 
     def set_test_timeout(self, timeout: float):
         """Установить таймаут для тестов"""
-            self.test_timeout== timeout
-            self.logger. in fo(f"Таймаут тестов установлен: {timeout}с")
+            self.test_timeout= timeout
+            self.logger.in fo(f"Таймаут тестов установлен: {timeout}с")
 
             def set_max_parallel_tests(self, max_count: int):
         """Установить максимальное количество параллельных тестов"""
-        self.max_parallel_tests== max_count
-        self.logger. in fo(f"Максимум параллельных тестов: {max_count}")
+        self.max_parallel_tests= max_count
+        self.logger.in fo(f"Максимум параллельных тестов: {max_count}")

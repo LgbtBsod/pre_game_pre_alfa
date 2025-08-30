@@ -4,4 +4,4 @@
 """
 
 
-__all__== ['EffectSystem']
+__all__= ['EffectSystem']

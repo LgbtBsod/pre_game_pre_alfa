@@ -3,13 +3,13 @@
     Основные интерфейсы для системы AI - EVOLVE
 """
 
-from abc imp or t ABC, abstractmethod
-from typ in g imp or t Dict, L is t, Any, Optional
+from abc import ABC, abstractmethod
+from typing import Dict, Lis t, Any, Optional
 SystemPri or ity, SystemState
 
-# ============================================================================
+# ======================================
 # БАЗОВЫЙ ИНТЕРФЕЙС СИСТЕМЫ
-# ============================================================================
+# ======================================
 
 class ISystem(ABC):
     """Базовый интерфейс для всех игровых систем.
@@ -42,7 +42,7 @@ class ISystem(ABC):
 
             @property
             @abstractmethod
-            def dependencies(self) -> L is t[str]:
+            def dependencies(self) -> Lis t[str]:
         """Список зависимостей от других систем"""
         pass
 
@@ -75,18 +75,18 @@ class ISystem(ABC):
             pass
 
             @abstractmethod
-            def get_system_ in fo(self) -> Dict[str, Any]:
+            def get_system_in fo(self) -> Dict[str, Any]:
         """Получение диагностической информации о системе."""
         pass
 
     @abstractmethod
-    def h and le_event(self, event_type: str, event_data: Any) -> bool:
+    def hand le_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка событий. Возвращает True, если событие обработано."""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ УПРАВЛЕНИЯ РЕСУРСАМИ
-            # ============================================================================
+            # ======================================
 
             class IResourceManager(ABC):
     """Интерфейс для управления ресурсами"""
@@ -102,7 +102,7 @@ class ISystem(ABC):
         pass
 
     @abstractmethod
-    def get_resource_ in fo(self, resource_id: str) -> Optional[Dict[str, Any]]:
+    def get_resource_in fo(self, resource_id: str) -> Optional[Dict[str, Any]]:
         """Получение информации о ресурсе"""
             pass
 
@@ -110,7 +110,7 @@ class ISystem(ABC):
     """Интерфейс для управления конфигурацией"""
 
     @abstractmethod
-    def get_config(self, key: str, default: Any== None) -> Any:
+    def get_config(self, key: str, default: Any= None) -> Any:
         """Получение значения конфигурации"""
             pass
 
@@ -129,7 +129,7 @@ class ISystem(ABC):
         """Сохранение конфигурации в файл"""
         pass
 
-class IPerf or manceMonit or(ABC):
+class IPerfor manceMonit or(ABC):
     """Интерфейс для мониторинга производительности"""
 
         @abstractmethod
@@ -143,13 +143,13 @@ class IPerf or manceMonit or(ABC):
             pass
 
             @abstractmethod
-            def get_perf or mance_stats(self) -> Dict[str, Any]:
+            def get_perfor mance_stats(self) -> Dict[str, Any]:
         """Получение статистики производительности"""
         pass
 
-# ============================================================================
+# ======================================
 # ИНТЕРФЕЙСЫ УПРАВЛЕНИЯ СЦЕНОЙ
-# ============================================================================
+# ======================================
 
 class ISceneManager(ABC):
     """Интерфейс для управления сценами"""
@@ -174,7 +174,7 @@ class ISceneManager(ABC):
         """Получение активной сцены"""
             pass
 
-            class IGameEng in e(ABC):
+            class IGameEngin e(ABC):
     """Интерфейс для игрового движка"""
 
     @abstractmethod
@@ -188,7 +188,7 @@ class ISceneManager(ABC):
         pass
 
     @abstractmethod
-    def is_runn in g(self) -> bool:
+    def is_running(self) -> bool:
         """Проверка, запущен ли движок"""
             pass
 
@@ -196,12 +196,12 @@ class ISceneManager(ABC):
     """Интерфейс для управления системами"""
 
     @abstractmethod
-    def reg is ter_system(self, system: ISystem) -> bool:
+    def regis ter_system(self, system: ISystem) -> bool:
         """Регистрация системы"""
             pass
 
             @abstractmethod
-            def unreg is ter_system(self, system_name: str) -> bool:
+            def unregis ter_system(self, system_name: str) -> bool:
         """Отмена регистрации системы"""
         pass
 
@@ -211,13 +211,13 @@ class ISceneManager(ABC):
             pass
 
             @abstractmethod
-            def get_all_systems(self) -> L is t[ISystem]:
+            def get_all_systems(self) -> Lis t[ISystem]:
         """Получение всех систем"""
         pass
 
-# ============================================================================
+# ======================================
 # ИНТЕРФЕЙСЫ ГЕНЕРАЦИИ КОНТЕНТА
-# ============================================================================
+# ======================================
 
 class IContentGenerat or(ABC):
     """Интерфейс для генерации контента"""
@@ -236,7 +236,7 @@ class IContentGenerat or(ABC):
     """Интерфейс для AI сущности"""
 
     @abstractmethod
-    def make_dec is ion(self, context: Dict[str, Any]) -> Dict[str, Any]:
+    def make_decis ion(self, context: Dict[str, Any]) -> Dict[str, Any]:
         """Принятие решения"""
             pass
 
@@ -250,15 +250,15 @@ class IContentGenerat or(ABC):
         """Получение состояния AI"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ БОЕВОЙ СИСТЕМЫ
-            # ============================================================================
+            # ======================================
 
             class ICombatSystem(ABC):
     """Интерфейс для боевой системы"""
 
     @abstractmethod
-    def start_combat(self, participants: L is t[str]) -> str:
+    def start_combat(self, participants: Lis t[str]) -> str:
         """Начало боя"""
             pass
 
@@ -268,26 +268,26 @@ class IContentGenerat or(ABC):
         pass
 
     @abstractmethod
-    def perf or m_attack(self, attacker_id: str, target_id: str
+    def perfor m_attack(self, attacker_id: str, target_id: str
         attack_data: Dict[str, Any]) -> Dict[str, Any]:
             pass  # Добавлен pass в пустой блок
         """Выполнение атаки"""
             pass
 
             @abstractmethod
-            def get_combat_ in fo(self, combat_id: str) -> Optional[Dict[str, Any]]:
+            def get_combat_in fo(self, combat_id: str) -> Optional[Dict[str, Any]]:
         """Получение информации о бое"""
         pass
 
-# ============================================================================
+# ======================================
 # ИНТЕРФЕЙСЫ ИНВЕНТАРЯ
-# ============================================================================
+# ======================================
 
 class IInvent or ySystem(ABC):
     """Интерфейс для системы инвентаря"""
 
         @abstractmethod
-        def create_ in vent or y(self, owner_id: str, max_slots: int) -> bool:
+        def create_in vent or y(self, owner_id: str, max_slots: int) -> bool:
         """Создание инвентаря"""
         pass
 
@@ -302,15 +302,15 @@ class IInvent or ySystem(ABC):
         pass
 
     @abstractmethod
-    def get_ in vent or y_contents(self, owner_id: str) -> L is t[Dict[str, Any]]:
+    def get_in vent or y_contents(self, owner_id: str) -> Lis t[Dict[str, Any]]:
         """Получение содержимого инвентаря"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ КРАФТИНГА
-            # ============================================================================
+            # ======================================
 
-            class ICraft in gSystem(ABC):
+            class ICraftingSystem(ABC):
     """Интерфейс для системы крафтинга"""
 
     @abstractmethod
@@ -319,18 +319,18 @@ class IInvent or ySystem(ABC):
             pass
 
             @abstractmethod
-            def start_craft in g(self, crafter_id: str, recipe_id: str) -> str:
+            def start_crafting(self, crafter_id: str, recipe_id: str) -> str:
         """Начало крафтинга"""
         pass
 
     @abstractmethod
-    def get_craft in g_progress(self, craft_id: str) -> Optional[Dict[str, Any]]:
+    def get_crafting_progress(self, craft_id: str) -> Optional[Dict[str, Any]]:
         """Получение прогресса крафтинга"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ ЭВОЛЮЦИИ
-            # ============================================================================
+            # ======================================
 
             class IEvolutionSystem(ABC):
     """Интерфейс для системы эволюции"""
@@ -366,13 +366,13 @@ class IInvent or ySystem(ABC):
         pass
 
     @abstractmethod
-    def get_genetic_traits(self, entity_id: str) -> L is t[Dict[str, Any]]:
+    def get_genetic_traits(self, entity_id: str) -> Lis t[Dict[str, Any]]:
         """Получение генетических черт"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ ЭМОЦИЙ
-            # ============================================================================
+            # ======================================
 
             class IEmotionSystem(ABC):
     """Интерфейс для системы эмоций"""
@@ -394,9 +394,9 @@ class IInvent or ySystem(ABC):
         """Обновление эмоций"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ НАВЫКОВ
-            # ============================================================================
+            # ======================================
 
             class ISkillSystem(ABC):
     """Интерфейс для системы навыков"""
@@ -408,7 +408,7 @@ class IInvent or ySystem(ABC):
 
             @abstractmethod
             def use_skill(self, entity_id: str, skill_id: str
-            target: Any== None) -> bool:
+            target: Any= None) -> bool:
             pass  # Добавлен pass в пустой блок
         """Использование навыка"""
         pass
@@ -418,9 +418,9 @@ class IInvent or ySystem(ABC):
         """Получение дерева навыков"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ ЭФФЕКТОВ
-            # ============================================================================
+            # ======================================
 
             class IEffectSystem(ABC):
     """Интерфейс для системы эффектов"""
@@ -438,13 +438,13 @@ class IInvent or ySystem(ABC):
         pass
 
     @abstractmethod
-    def get_active_effects(self, target_id: str) -> L is t[Dict[str, Any]]:
+    def get_active_effects(self, target_id: str) -> Lis t[Dict[str, Any]]:
         """Получение активных эффектов"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ ПРЕДМЕТОВ
-            # ============================================================================
+            # ======================================
 
             class IItemSystem(ABC):
     """Интерфейс для системы предметов"""
@@ -460,13 +460,13 @@ class IInvent or ySystem(ABC):
         pass
 
     @abstractmethod
-    def get_item_ in fo(self, item_id: str) -> Optional[Dict[str, Any]]:
+    def get_item_in fo(self, item_id: str) -> Optional[Dict[str, Any]]:
         """Получение информации о предмете"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ РЕНДЕРИНГА
-            # ============================================================================
+            # ======================================
 
             class IRenderSystem(ABC):
     """Интерфейс для системы рендеринга"""
@@ -482,7 +482,7 @@ class IInvent or ySystem(ABC):
         pass
 
     @abstractmethod
-    def update_render_object(self, object_id: str, transf or m: Dict[str
+    def update_render_object(self, object_id: str, transfor m: Dict[str
         Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Обновление объекта рендеринга"""
@@ -493,9 +493,9 @@ class IInvent or ySystem(ABC):
         """Уничтожение объекта рендеринга"""
         pass
 
-# ============================================================================
+# ======================================
 # ИНТЕРФЕЙСЫ UI
-# ============================================================================
+# ======================================
 
 class IUISystem(ABC):
     """Интерфейс для системы UI"""
@@ -516,43 +516,43 @@ class IUISystem(ABC):
         pass
 
     @abstractmethod
-    def h and le_ui_event(self, event_type: str, event_data: Any) -> bool:
+    def hand le_ui_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка UI событий"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ AI
-            # ============================================================================
+            # ======================================
 
             class IAISystem(ABC):
     """Интерфейс для системы AI"""
 
     @abstractmethod
-    def reg is ter_ai_entity(self, entity_id: str, ai_config: Dict[str
+    def regis ter_ai_entity(self, entity_id: str, ai_config: Dict[str
         Any]) -> bool:
             pass  # Добавлен pass в пустой блок
         """Регистрация AI сущности"""
             pass
 
             @abstractmethod
-            def unreg is ter_ai_entity(self, entity_id: str) -> bool:
+            def unregis ter_ai_entity(self, entity_id: str) -> bool:
         """Отмена регистрации AI сущности"""
         pass
 
     @abstractmethod
-    def get_ai_entity_ in fo(self, entity_id: str) -> Optional[Dict[str, Any]]:
+    def get_ai_entity_in fo(self, entity_id: str) -> Optional[Dict[str, Any]]:
         """Получение информации об AI сущности"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ БАЗЫ ДАННЫХ
-            # ============================================================================
+            # ======================================
 
             class IContentDatabase(ABC):
     """Интерфейс для базы данных контента"""
 
     @abstractmethod
-    def create_session(self, session_id: str== None) -> str:
+    def create_session(self, session_id: str= None) -> str:
         """Создание сессии"""
             pass
 
@@ -563,14 +563,14 @@ class IUISystem(ABC):
 
     @abstractmethod
     def get_content_by_session(self, session_id: str
-        content_type: str== None) -> L is t[Any]:
+        content_type: str= None) -> Lis t[Any]:
             pass  # Добавлен pass в пустой блок
         """Получение контента по сессии"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ ХАРАКТЕРИСТИК
-            # ============================================================================
+            # ======================================
 
             class IEntityStatsSystem(ABC):
     """Интерфейс для системы характеристик сущностей"""
@@ -584,7 +584,7 @@ class IUISystem(ABC):
 
             @abstractmethod
             def modify_entity_stats(self, entity_id: str, stat_type: str, value: float
-            duration: float== 0.0) -> bool:
+            duration: float= 0.0) -> bool:
             pass  # Добавлен pass в пустой блок
         """Модификация характеристик сущности"""
         pass
@@ -594,15 +594,15 @@ class IUISystem(ABC):
         """Получение характеристик сущности"""
             pass
 
-            # ============================================================================
+            # ======================================
             # ИНТЕРФЕЙСЫ СОБЫТИЙ
-            # ============================================================================
+            # ======================================
 
             class IEventSubscriber(ABC):
     """Интерфейс для подписчика событий"""
 
     @abstractmethod
-    def h and le_event(self, event_type: str, event_data: Any) -> bool:
+    def hand le_event(self, event_type: str, event_data: Any) -> bool:
         """Обработка события"""
             pass
 
@@ -616,7 +616,7 @@ class IUISystem(ABC):
 
             @abstractmethod
             def subscribe(self, event_type: str, callback: callable,
-            subscriber_id: str== "unknown") -> bool:
+            subscriber_id: str= "unknown") -> bool:
             pass  # Добавлен pass в пустой блок
         """Подписка на событие"""
         pass
