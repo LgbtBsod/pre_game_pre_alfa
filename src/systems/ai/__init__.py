@@ -1,18 +1,36 @@
 #!/usr/bin/env python3
-"""AI системы для AI-EVOLVE"""
+"""AI системы - Единая система искусственного интеллекта с машинным обучением"""
 
-from .ai_system import AISystem, AIType, AIState, AIPriority, AIEntity, AIBehavior, AIDecision
-from .ai_interface import AISystemInterface, AISystemFactory, AISystemManager
+from .ai_system import (
+    AISystem,
+    AIType,
+    AIState,
+    AIPriority,
+    MemoryType,
+    LearningType,
+    AIEntity,
+    AIBehavior,
+    AIDecision,
+    MemoryEntry,
+    GenerationMemory,
+    LearningExperience,
+    AISettings,
+    AINeuralNetwork
+)
 
 __all__ = [
     'AISystem',
     'AIType', 
     'AIState',
     'AIPriority',
+    'MemoryType',
+    'LearningType',
     'AIEntity',
     'AIBehavior',
     'AIDecision',
-    'AISystemInterface',
-    'AISystemFactory',
-    'AISystemManager'
+    'MemoryEntry',
+    'GenerationMemory',
+    'LearningExperience',
+    'AISettings',
+    'AINeuralNetwork'
 ]

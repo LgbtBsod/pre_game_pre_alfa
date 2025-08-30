@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from src.core.architecture import BaseComponent, ComponentType, Priority
 
 # Импорты всех основных систем
-from src.systems.ai.ai_system import AISystem
+from src.systems.ai import AISystem
 from src.systems.evolution.evolution_system import EvolutionSystem
 from src.systems.world.world_integrator import WorldIntegrator
 from src.entities.mutants import Mutant

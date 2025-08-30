@@ -45,10 +45,10 @@ class MutantPhase(Enum):
 class Mutation:
     """Мутация мутанта"""
     mutation_id: str
-    name: str
-    description: str
-    mutation_type: MutationType
-    level: MutationLevel
+name: str
+description: str
+mutation_type: MutationType
+level: MutationLevel
     effects: Dict[str, float]
     visual_effects: List[str]
     sound_effects: List[str]
@@ -73,11 +73,11 @@ class VisualMutation:
 class MutantAbility:
     """Способность мутанта"""
     ability_id: str
-    name: str
-    description: str
+name: str
+description: str
     ability_type: str
-    cooldown: float
-    range: float
+cooldown: float
+range: float
     damage: float
     effects: Dict[str, float]
     visual_effects: List[str]
@@ -91,11 +91,11 @@ class Mutant(BaseEntity):
     """Класс мутанта - процедурно генерируемый противник"""
     
     def __init__(self, mutant_id: str, name: str, mutation_level: int,
-                 position: Tuple[float, float, float]):
-        # Инициализируем базовую сущность
+position: Tuple[float, float, float]):
+# Инициализируем базовую сущность
         super().__init__(mutant_id, BaseEntityType.MUTANT, name)
         
-        # Специфичные для мутанта параметры
+# Специфичные для мутанта параметры
         self.mutation_level = mutation_level
         self.position = position
         self.setPos(*position)
