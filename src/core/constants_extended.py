@@ -7,9 +7,9 @@
 from .constants import constants_manager, DamageType, ItemType, ItemRarity
     SkillType, StatType
 
-# ==========
+# =====
 # ДОПОЛНИТЕЛЬНЫЕ ТИПЫ
-# ==========
+# =====
 
 class EffectCateg or y(Enum):
     """Категории эффектов"""
@@ -554,9 +554,9 @@ class ItemCateg or y(Enum):
     ACCESSORY_2= "access or y_2"
     ACCESSORY_3= "access or y_3"
 
-# ==========
+# =====
 # ДОПОЛНИТЕЛЬНЫЕ КОНСТАНТЫ
-# ==========
+# =====
 
 # Шаблоны генерации навыков
 SKILL_GENERATION_TEMPLATES= {

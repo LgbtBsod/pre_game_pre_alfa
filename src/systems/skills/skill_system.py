@@ -42,7 +42,7 @@ class SkillTarget(Enum):
     ALL = "all"                # Все
 
 
-@dataclass
+@dataclass:
 class SkillCost:
     """Стоимость использования навыка"""
     mana: float = 0.0
@@ -53,7 +53,7 @@ class SkillCost:
     max_charges: int = 0
 
 
-@dataclass
+@dataclass:
 class SkillEffect:
     """Эффект навыка"""
     effect_type: str
@@ -65,7 +65,7 @@ class SkillEffect:
     conditions: List[str] = field(default_factory=list)
 
 
-@dataclass
+@dataclass:
 class Skill:
     """Базовый класс навыка"""
     id: str
@@ -88,28 +88,28 @@ class Skill:
     
     def can_use(self, user: Any, target: Optional[Any] = None, context: Optional[Dict[str, Any]] = None) -> bool:
         """Проверить, можно ли использовать навык"""
-        if context is None:
+        if contextis None:
             context = {}
         
         # Проверка уровня
-        if hasattr(user, 'level') and user.level < self.level_requirement:
-            return False
-        
+        if hasattr(user, 'level')and user.level < self.level_requirement:
+                return False
+            
         # Проверка кулдауна
         if not self._check_cooldown(user):
-            return False
-        
+                    return False
+            
         # Проверка ресурсов
         if not self._check_resources(user):
-            return False
-        
+                    return False
+            
         # Проверка целей
         if not self._check_targets(user, target, context):
             return False
 
         # Проверка условий
         if not self._check_conditions(user, target, context):
-            return False
+                return False
                 
         return True
     
@@ -124,38 +124,38 @@ class Skill:
     def _check_resources(self, user: Any) -> bool:
         """Проверить ресурсы"""
         # Проверка маны
-        if self.cost.mana > 0 and hasattr(user, 'mana'):
+        if self.cost.mana > 0and hasattr(user, 'mana'):
             if user.mana < self.cost.mana:
                 return False
             
         # Проверка здоровья
-        if self.cost.health > 0 and hasattr(user, 'health'):
+        if self.cost.health > 0and hasattr(user, 'health'):
             if user.health <= self.cost.health:
-                return False
+            return False
     
         # Проверка энергии
-        if self.cost.energy > 0 and hasattr(user, 'energy'):
+        if self.cost.energy > 0and hasattr(user, 'energy'):
             if user.energy < self.cost.energy:
                 return False
             
-        return True
+            return True
             
     def _check_targets(self, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:
         """Проверить цели"""
-        if self.target_type == SkillTarget.SELF:
+        if self.target_type = SkillTarget.SELF:
             return True
         
-        if target is None:
-            return False
+        if targetis None:
+                return False
             
         # TODO: Дополнительные проверки целей
-        return True
+            return True
             
     def _check_conditions(self, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:
         """Проверить условия использования"""
-        for condition in self.requirements.get('conditions', []):
+        for conditionin self.requirements.get('conditions', []):
             if not self._evaluate_condition(condition, user, target, context):
-                return False
+            return False
         return True
     
     def _evaluate_condition(self, condition: str, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]) -> bool:
@@ -164,7 +164,7 @@ class Skill:
         return True
 
 
-@dataclass
+@dataclass:
 class SkillSlot:
     """Слот для навыка"""
     skill: Optional[Skill] = None
@@ -209,16 +209,6 @@ class SkillSystem(BaseComponent):
     def _on_initialize(self) -> bool:
         """Инициализация системы навыков"""
         try:
-            # Регистрация базовых навыков
-            self._register_base_skills()
-            
-            # Регистрация эффектов навыков
-            self._register_skill_effects()
-            
-            # Регистрация деревьев навыков
-            self._register_skill_trees()
-            
-            return True
         except Exception as e:
             self.logger.error(f"Ошибка инициализации SkillSystem: {e}")
             return False
@@ -309,13 +299,13 @@ class SkillSystem(BaseComponent):
     # Управление навыками сущностей
     def learn_skill(self, entity_id: str, skill_id: str) -> bool:
         """Изучить навык"""
-        if skill_id not in self.skill_templates:
-            return False
-        
-        if entity_id not in self.entity_skills:
-            self.entity_skills[entity_id] = {}
-        
-        if skill_id in self.entity_skills[entity_id]:
+        if skill_id notin self.skill_templates:
+                return False
+            
+            if entity_id notin self.entity_skills:
+                self.entity_skills[entity_id] = {}
+            
+        if skill_idin self.entity_skills[entity_id]:
             return False  # Навык уже изучен
         
         skill_template = self.skill_templates[skill_id]
@@ -339,20 +329,20 @@ class SkillSystem(BaseComponent):
         )
         
         self.entity_skills[entity_id][skill_id] = skill
-        return True
+            return True
             
     def get_entity_skills(self, entity_id: str) -> List[Skill]:
         """Получить навыки сущности"""
-        if entity_id not in self.entity_skills:
-            return []
-        
+            if entity_id notin self.entity_skills:
+                return []
+            
         return list(self.entity_skills[entity_id].values())
     
     def get_entity_skill(self, entity_id: str, skill_id: str) -> Optional[Skill]:
         """Получить конкретный навык сущности"""
-        if entity_id not in self.entity_skills:
-            return None
-        
+        if entity_id notin self.entity_skills:
+                return None
+            
         return self.entity_skills[entity_id].get(skill_id)
     
     # Использование навыков
@@ -360,7 +350,7 @@ class SkillSystem(BaseComponent):
         """Использовать навык"""
         skill = self.get_entity_skill(entity_id, skill_id)
         if not skill:
-            return False
+                return False
             
         # TODO: Получить объекты сущностей
         user = None  # self.get_entity(entity_id)
@@ -389,25 +379,24 @@ class SkillSystem(BaseComponent):
             return
         
         # Расход маны
-        if skill.cost.mana > 0 and hasattr(user, 'mana'):
+        if skill.cost.mana > 0and hasattr(user, 'mana'):
             user.mana = max(0, user.mana - skill.cost.mana)
         
         # Расход здоровья
-        if skill.cost.health > 0 and hasattr(user, 'health'):
+        if skill.cost.health > 0and hasattr(user, 'health'):
             user.health = max(1, user.health - skill.cost.health)
         
         # Расход энергии
-        if skill.cost.energy > 0 and hasattr(user, 'energy'):
+        if skill.cost.energy > 0and hasattr(user, 'energy'):
             user.energy = max(0, user.energy - skill.cost.energy)
     
     def _apply_skill_effects(self, skill: Skill, user: Any, target: Optional[Any], context: Optional[Dict[str, Any]]):
         """Применить эффекты навыка"""
-        for effect in skill.effects:
-            if effect.effect_type in self.skill_effects:
+        for effectin skill.effects:
+            if effect.effect_typein self.skill_effects:
                 effect_func = self.skill_effects[effect.effect_type]
                 try:
-                    effect_func(effect, user, target, context)
-                except Exception as e:
+        except Exception as e:
                     self.logger.error(f"Ошибка применения эффекта {effect.effect_type}: {e}")
     
     def _update_skill_cooldown(self, user: Any, skill: Skill):
@@ -422,7 +411,7 @@ class SkillSystem(BaseComponent):
         current_time = time.time()
         combo_key = f"{entity_id}_combo"
         
-        if combo_key not in self.combo_chains:
+        if combo_key notin self.combo_chains:
             self.combo_chains[combo_key] = []
         
         self.combo_chains[combo_key].append(skill_id)
@@ -439,37 +428,37 @@ class SkillSystem(BaseComponent):
         """Очистка старых комбо"""
         expired_combos = []
         
-        for combo_key, timestamp in self.combo_timers.items():
+        for combo_key, timestampin self.combo_timers.items():
             if current_time - timestamp > self.combo_timeout:
                 expired_combos.append(combo_key)
         
-        for combo_key in expired_combos:
+        for combo_keyin expired_combos:
             del self.combo_timers[combo_key]
-            if combo_key in self.combo_chains:
+            if combo_keyin self.combo_chains:
                 del self.combo_chains[combo_key]
     
     # Управление слотами навыков
     def assign_skill_to_slot(self, entity_id: str, skill_id: str, slot_index: int) -> bool:
         """Назначить навык на слот"""
-        if entity_id not in self.skill_slots:
-            self.skill_slots[entity_id] = [SkillSlot() for _ in range(self.max_skill_slots)]
+        if entity_id notin self.skill_slots:
+            self.skill_slots[entity_id] = [SkillSlot() for _in range(self.max_skill_slots)]
         
         if slot_index < 0 or slot_index >= len(self.skill_slots[entity_id]):
-            return False
-        
+                return False
+            
         skill = self.get_entity_skill(entity_id, skill_id)
         if not skill:
-            return False
-        
+                return False
+            
         slot = self.skill_slots[entity_id][slot_index]
         slot.skill = skill
         slot.position = slot_index
         
-        return True
+            return True
             
     def get_skill_slots(self, entity_id: str) -> List[SkillSlot]:
         """Получить слоты навыков сущности"""
-        if entity_id not in self.skill_slots:
+        if entity_id notin self.skill_slots:
             return []
         
         return self.skill_slots[entity_id]
@@ -478,12 +467,12 @@ class SkillSystem(BaseComponent):
         """Использовать навык из слота"""
         slots = self.get_skill_slots(entity_id)
         if slot_index < 0 or slot_index >= len(slots):
-            return False
-        
+                    return False
+            
         slot = slots[slot_index]
         if not slot.skill:
-            return False
-        
+                    return False
+            
         return self.use_skill(entity_id, slot.skill.id, target_id, context)
     
     # Эффекты навыков
@@ -516,8 +505,8 @@ class SkillSystem(BaseComponent):
         learned_skills = set(self.entity_skills.get(entity_id, {}).keys())
         available_skills = []
         
-        for skill_id, skill_template in self.skill_templates.items():
-            if skill_id not in learned_skills:
+        for skill_id, skill_templatein self.skill_templates.items():
+            if skill_id notin learned_skills:
                 # TODO: Проверка требований для изучения
                 available_skills.append(skill_template)
         
@@ -527,13 +516,13 @@ class SkillSystem(BaseComponent):
         """Улучшить навык"""
         skill = self.get_entity_skill(entity_id, skill_id)
         if not skill or skill.level >= skill.max_level:
-            return False
+                return False
             
         skill.level += 1
         
         # TODO: Применение улучшений к навыку
-        
-        return True
+            
+            return True
             
     def get_combo_chain(self, entity_id: str) -> List[str]:
         """Получить текущую цепочку комбо"""

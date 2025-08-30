@@ -5,6 +5,225 @@ import tokenize
 import io
 from collections import defaultdict
 from typing import List, Tuple
+import shutil
+import tempfile
+
+def fix_corrupted_files(content):
+    """Исправляет сильно поврежденные файлы с критическими ошибками."""
+    # Удаляем невидимые символы и мусор
+    content = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', '', content)
+    
+    # Исправляем разорванные строки
+    content = re.sub(r'\\\s*\n\s*', ' ', content)
+    
+    # Удаляем лишние пробелы в начале строк
+    content = re.sub(r'^\s+', '', content, flags=re.MULTILINE)
+    
+    # Исправляем разорванные комментарии
+    content = re.sub(r'#\s*\n\s*', '# ', content)
+    
+    # Удаляем пустые строки в начале файла
+    content = re.sub(r'^\n+', '', content)
+    
+    # Исправляем разорванные строки с кавычками
+    content = re.sub(r'["\']\s*\n\s*["\']', '""', content)
+    
+    return content
+
+def fix_broken_imports(content):
+    """Исправляет поврежденные импорты и создает недостающие."""
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    # Собираем все импорты
+    imports = []
+    other_lines = []
+    
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith(('import ', 'from ')) and 'import' in stripped:
+            imports.append(line)
+        else:
+            other_lines.append(line)
+    
+    # Исправляем поврежденные импорты
+    fixed_imports = []
+    for imp in imports:
+        # Убираем лишние пробелы
+        imp = re.sub(r'\s+', ' ', imp.strip())
+        
+        # Исправляем разорванные импорты
+        if imp.count('import') > 1:
+            # Разбиваем на отдельные импорты
+            parts = imp.split('import')
+            for i, part in enumerate(parts[1:], 1):
+                if part.strip():
+                    fixed_imports.append(f"import{part.strip()}")
+        else:
+            fixed_imports.append(imp)
+    
+    # Добавляем базовые импорты если их нет
+    basic_imports = [
+        'import os',
+        'import sys',
+        'import re',
+        'import time',
+        'import logging',
+        'from typing import *',
+        'from dataclasses import dataclass, field',
+        'from enum import Enum',
+        'from pathlib import Path'
+    ]
+    
+    existing_imports = set()
+    for imp in fixed_imports:
+        for basic in basic_imports:
+            if basic.split()[1] in imp:
+                existing_imports.add(basic.split()[1])
+    
+    for basic in basic_imports:
+        if basic.split()[1] not in existing_imports:
+            fixed_imports.append(basic)
+    
+    # Сортируем импорты
+    fixed_imports.sort()
+    
+    # Собираем результат
+    fixed_lines.extend(fixed_imports)
+    fixed_lines.append('')  # Пустая строка после импортов
+    fixed_lines.extend(other_lines)
+    
+    return '\n'.join(fixed_lines)
+
+def fix_broken_classes_and_functions(content):
+    """Исправляет поврежденные классы и функции."""
+    lines = content.splitlines()
+    fixed_lines = []
+    i = 0
+    n = len(lines)
+    
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+        
+        # Проверяем начало класса или функции
+        if re.match(r'^(class|def)\s+\w+', stripped):
+            indent = len(line) - len(line.lstrip())
+            fixed_lines.append(line)
+            i += 1
+            
+            # Собираем содержимое
+            content_lines = []
+            while i < n:
+                next_line = lines[i]
+                next_indent = len(next_line) - len(next_line.lstrip())
+                
+                # Если встретили строку с тем же или меньшим отступом и она не пустая
+                if next_indent <= indent and next_line.strip() != '':
+                    # Проверяем, не является ли это новым классом/функцией
+                    if re.match(r'^(class|def)\s+\w+', next_line.strip()):
+                        break
+                    # Проверяем, не является ли это декоратором
+                    if next_line.strip().startswith('@'):
+                        break
+                
+                content_lines.append(next_line)
+                i += 1
+            
+            # Проверяем, есть ли содержимое
+            non_empty = [l for l in content_lines if l.strip() and not l.strip().startswith('#')]
+            if not non_empty:
+                fixed_lines.append(' ' * (indent + 4) + 'pass')
+            else:
+                fixed_lines.extend(content_lines)
+        else:
+            fixed_lines.append(line)
+            i += 1
+    
+    return '\n'.join(fixed_lines)
+
+def fix_broken_dataclasses(content):
+    """Исправляет поврежденные dataclass определения."""
+    # Исправляем разорванные dataclass
+    content = re.sub(r'@dataclass\s*\n\s*class', '@dataclass\nclass', content)
+    
+    # Исправляем разорванные field()
+    content = re.sub(r'field\s*\(\s*\n\s*\)', 'field()', content)
+    
+    # Исправляем разорванные типы
+    content = re.sub(r'(\w+)\s*:\s*\n\s*(\w+)', r'\1: \2', content)
+    
+    # Исправляем разорванные значения по умолчанию
+    content = re.sub(r'=\s*\n\s*([^,\n]+)', r'= \1', content)
+    
+    return content
+
+def fix_broken_enums(content):
+    """Исправляет поврежденные enum определения."""
+    # Исправляем разорванные enum
+    content = re.sub(r'class\s+(\w+)\s*\(\s*\n\s*Enum\s*\)', r'class \1(Enum)', content)
+    
+    # Исправляем разорванные значения enum
+    content = re.sub(r'(\w+)\s*=\s*\n\s*([^,\n]+)', r'\1 = \2', content)
+    
+    return content
+
+def fix_broken_strings(content):
+    """Исправляет разорванные строки."""
+    # Исправляем разорванные многострочные строки
+    content = re.sub(r'"""\s*\n\s*([^"]*)\s*\n\s*"""', r'"""\1"""', content)
+    content = re.sub(r"'''\s*\n\s*([^']*)\s*\n\s*'''", r"'''\1'''", content)
+    
+    # Исправляем разорванные обычные строки
+    content = re.sub(r'(["\'])\s*\n\s*([^"\']*)\s*\n\s*\1', r'\1\2\1', content)
+    
+    return content
+
+def fix_broken_brackets(content):
+    """Исправляет поврежденные скобки и структуры."""
+    lines = content.splitlines()
+    fixed_lines = []
+    
+    for line in lines:
+        # Исправляем разорванные скобки
+        line = re.sub(r'\(\s*\n\s*', '(', line)
+        line = re.sub(r'\s*\n\s*\)', ')', line)
+        line = re.sub(r'\[\s*\n\s*', '[', line)
+        line = re.sub(r'\s*\n\s*\]', ']', line)
+        line = re.sub(r'{\s*\n\s*', '{', line)
+        line = re.sub(r'\s*\n\s*}', '}', line)
+        
+        fixed_lines.append(line)
+    
+    return '\n'.join(fixed_lines)
+
+def create_backup_with_timestamp(filepath):
+    """Создает резервную копию файла с временной меткой."""
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = f"{filepath}.backup_{timestamp}"
+    
+    try:
+        shutil.copy2(filepath, backup_path)
+        return backup_path
+    except Exception as e:
+        print(f"    Ошибка создания резервной копии: {e}")
+        return None
+
+def emergency_repair(content):
+    """Экстренный ремонт сильно поврежденного файла."""
+    print("    🚨 Применяю экстренный ремонт...")
+    
+    # Применяем все исправления в правильном порядке
+    content = fix_corrupted_files(content)
+    content = fix_broken_strings(content)
+    content = fix_broken_brackets(content)
+    content = fix_broken_dataclasses(content)
+    content = fix_broken_enums(content)
+    content = fix_broken_imports(content)
+    content = fix_broken_classes_and_functions(content)
+    
+    return content
 
 def fix_indentation(content):
     """Заменяет табы на 4 пробела и нормализует отступы."""
@@ -285,34 +504,47 @@ def create_backup(filepath):
 
 def process_file(filepath):
     """Обрабатывает один Python-файл."""
-вреы и    print(f"Обрабатываю файл: {filepath}")
+    print(f"Обрабатываю файл: {filepath}")
     
     # Проверяем, не является ли файл самим скриптом
     if os.path.abspath(filepath) == os.path.abspath(__file__):
         print(f"Пропуск самого себя: {filepath}")
         return
         
-    # Создаем резервную копию
-    if not create_backup(filepath):
-        print(f"Не удалось создать резервную копию: {filepath}")
+    # Создаем резервную копию с временной меткой
+    backup_path = create_backup_with_timestamp(filepath)
+    if not backup_path:
+        print(f"  ❌ Не удалось создать резервную копию: {filepath}")
         return
         
     try:
         with open(filepath, 'r', encoding='utf-8') as f:
             content = f.read()
     except Exception as e:
-        print(f"Ошибка чтения файла {filepath}: {e}")
+        print(f"  ❌ Ошибка чтения файла {filepath}: {e}")
         return
 
     original_content = content
-    print(f"  Размер файла: {len(content)} символов")
+    print(f"  📄 Размер файла: {len(content)} символов")
 
     # Проверяем исходный синтаксис
     original_valid = validate_python_syntax(content)
-    print(f"  Исходный синтаксис: {'валиден' if original_valid else 'НЕ ВАЛИДЕН'}")
+    print(f"  🔍 Исходный синтаксис: {'✅ валиден' if original_valid else '❌ НЕ ВАЛИДЕН'}")
     
-    # Последовательное применение исправлений
-    print("  Применяю исправления...")
+    # Если файл сильно поврежден, применяем экстренный ремонт
+    if not original_valid:
+        print("  🚨 Файл сильно поврежден, применяю экстренный ремонт...")
+        content = emergency_repair(content)
+        
+        # Проверяем результат экстренного ремонта
+        emergency_valid = validate_python_syntax(content)
+        if emergency_valid:
+            print("  ✅ Экстренный ремонт успешен!")
+        else:
+            print("  ⚠️ Экстренный ремонт не помог, применяю стандартные исправления...")
+    
+    # Последовательное применение стандартных исправлений
+    print("  🔧 Применяю стандартные исправления...")
     content = fix_indentation(content)
     content = fix_syntax_errors(content)
     content = fix_try_except(content)
@@ -322,36 +554,33 @@ def process_file(filepath):
 
     # Проверяем итоговый синтаксис
     final_valid = validate_python_syntax(content)
-    print(f"  Итоговый синтаксис: {'валиден' if final_valid else 'НЕ ВАЛИДЕН'}")
+    print(f"  🔍 Итоговый синтаксис: {'✅ валиден' if final_valid else '❌ НЕ ВАЛИДЕН'}")
     
     if not final_valid and original_valid:
-        print(f"  ВНИМАНИЕ: Исправления сломали синтаксис: {filepath}. Восстанавливаем из резервной копии.")
+        print(f"  ⚠️ ВНИМАНИЕ: Исправления сломали синтаксис: {filepath}. Восстанавливаем из резервной копии.")
         # Восстанавливаем из резервной копии
         try:
-            with open(filepath + '.bak', 'r', encoding='utf-8') as f:
+            with open(backup_path, 'r', encoding='utf-8') as f:
                 backup_content = f.read()
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(backup_content)
+            print(f"  ✅ Файл восстановлен из резервной копии")
         except Exception as e:
-            print(f"  Ошибка восстановления из резервной копии: {filepath}: {e}")
+            print(f"  ❌ Ошибка восстановления из резервной копии: {filepath}: {e}")
         return
 
     if content != original_content:
         try:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
-            print(f"  ✓ Исправлен: {filepath}")
+            print(f"  ✅ Исправлен: {filepath}")
         except Exception as e:
-            print(f"  ✗ Ошибка записи в файл {filepath}: {e}")
+            print(f"  ❌ Ошибка записи в файл {filepath}: {e}")
     else:
-        print(f"  - Без изменений: {filepath}")
+        print(f"  ➖ Без изменений: {filepath}")
         
-    # Удаляем резервную копию, если она больше не нужна
-    try:
-        if os.path.exists(filepath + '.bak'):
-            os.remove(filepath + '.bak')
-    except Exception:
-        pass
+    # Сохраняем резервную копию для безопасности
+    print(f"  💾 Резервная копия сохранена: {backup_path}")
 
 def main():
     """Основная функция для обхода директорий."""

@@ -17,9 +17,9 @@ from ...c or e.architecture import BaseComponent, ComponentType, Pri or ity
         pass  # Добавлен pass в пустой блок
 logger= logging.getLogger(__name__)
 
-# ==========
+# =====
 # БАЗОВЫЕ ТИПЫ И КОНСТАНТЫ
-# ==========
+# =====
 
 class EffectCateg or y(Enum):
     """Категории эффектов"""
@@ -69,9 +69,9 @@ class EffectBalance:
         level_scaling: float= 0.1
         max_stacks: int= 1
 
-        # ==========
+        # =====
         # БАЗОВЫЕ КЛАССЫ ЭФФЕКТОВ
-        # ==========
+        # =====
 
         class Effect:
     """Базовый класс для всех эффектов"""
@@ -308,9 +308,9 @@ class EffectBalance:
             pass
             logger.err or(f"Ошибка воспроизведения визуальных эффектов {self.name}: {e}")
 
-# ==========
+# =====
 # СПЕЦИАЛЬНЫЕ ЭФФЕКТЫ
-# ==========
+# =====
 
 class SpecialEffect:
     """Специальный эффект с дополнительной логикой"""
@@ -435,9 +435,9 @@ class SpecialEffect:
             pass
             logger.err or(f"Ошибка планирования цепных эффектов: {e}")
 
-            # ==========
+            # =====
             # СИСТЕМА УПРАВЛЕНИЯ ЭФФЕКТАМИ
-            # ==========
+            # =====
 
             class EffectSystem(BaseComponent):
     """Система управления эффектами"""

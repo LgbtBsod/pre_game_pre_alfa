@@ -18,9 +18,9 @@ from .reposit or y import Reposit or yManager, DataType, St or ageType
 
 logger= logging.getLogger(__name__)
 
-# ==========
+# =====
 # БАЗОВЫЕ ИНТЕРФЕЙСЫ СИСТЕМ
-# ==========
+# =====
 
 class IGameSystem(ABC):
     """Базовый интерфейс для игровых систем"""
@@ -299,9 +299,9 @@ class IGameSystem(ABC):
         """Специфичное обновление системы"""
             return True
 
-            # ==========
+            # =====
             # СПЕЦИАЛИЗИРОВАННЫЕ ИНТЕРФЕЙСЫ
-            # ==========
+            # =====
 
             class ICombatSystem(IGameSystem):
     """Интерфейс боевой системы"""
@@ -442,9 +442,9 @@ class ISkillSystem(IGameSystem):
             Any]= None) -> bool: ...
             def update(self, delta_time: float) -> None: ...
 
-            # ==========
+            # =====
             # УТИЛИТЫ ДЛЯ РАБОТЫ С СИСТЕМАМИ
-            # ==========
+            # =====
 
             def create_system_state_group(state_manager: StateManager, system_name: str,
             states: Dict[str, Any]) -> bool:
