@@ -13,6 +13,9 @@ import time
 import random
 
 from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import DamageType, constants_manager, PROBABILITY_CONSTANTS, ToughnessType
+from src.core.state_manager import StateManager, StateType
+from src.systems.attributes.attribute_system import AttributeSystem, AttributeSet, AttributeModifier, StatModifier, BaseAttribute, DerivedStat
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +38,6 @@ class AttackType(Enum):
 class DefenseType(Enum):
     """Типы защиты"""
     ARMOR = "armor"                # Броня
-    SHIELD = "shield"              # Щит
-    DODGE = "dodge"                # Уклонение
     BLOCK = "block"                # Блок
     RESISTANCE = "resistance"      # Сопротивление
 
@@ -44,91 +45,81 @@ class DefenseType(Enum):
 
 @dataclass
 class CombatStats:
-    """Боевые характеристики"""
-    attack_power: float = 10.0
+    """Боевые характеристики (теперь получаются из системы атрибутов)"""
+    # Основные характеристики из атрибутов
+    physical_damage: float = 10.0
+    magical_damage: float = 5.0
     defense: float = 5.0
-    critical_chance: float = 0.05
-    critical_multiplier: float = 2.0
-    accuracy: float = 0.8
-    dodge_chance: float = 0.1
-    block_chance: float = 0.05
-    initiative: float = 10.0
     attack_speed: float = 1.0
+    critical_chance: float = 0.05
+    critical_damage: float = 1.5
+    dodge_chance: float = 0.05
+    block_chance: float = 0.05
+    magic_resistance: float = 0.0
+    
+    # Дополнительные боевые характеристики
+    accuracy: float = 0.8
+    initiative: float = 10.0
     range: float = 2.0
+    
+    # Модификаторы от экипировки и эффектов
+    damage_modifier: float = 1.0
+    defense_modifier: float = 1.0
+    speed_modifier: float = 1.0
 
 @dataclass
 class DamageInfo:
     """Информация об уроне"""
-    base_damage: float
-    damage_type: str
-    source: str
-    target: str
+    damage: float
+    damage_type: DamageType
+    attack_type: AttackType
     is_critical: bool = False
     is_blocked: bool = False
     is_dodged: bool = False
-    final_damage: float = 0.0
-    resistances_applied: Dict[str, float] = field(default_factory=dict)
-    modifiers_applied: List[str] = field(default_factory=list)
-
-@dataclass
-class CombatAction:
-    """Боевое действие"""
-    action_id: str
-    actor_id: str
-    target_id: Optional[str] = None
-    action_type: str  # attack, skill, item, defend
-    skill_id: Optional[str] = None
-    item_id: Optional[str] = None
-    priority: int = 0
-    initiative_cost: float = 0.0
-    created_at: float = field(default_factory=time.time)
-
-@dataclass
-class CombatTurn:
-    """Ход в бою"""
-    turn_number: int
-    actor_id: str
-    actions: List[CombatAction] = field(default_factory=list)
-    start_time: float = field(default_factory=time.time)
-    end_time: Optional[float] = None
-    is_completed: bool = False
+    toughness_damage: float = 0.0
+    toughness_type: ToughnessType = ToughnessType.PHYSICAL
+    source: str = ""
+    target: str = ""
 
 @dataclass
 class CombatSession:
     """Сессия боя"""
     session_id: str
-    participants: List[str] = field(default_factory=list)
-    turn_order: List[str] = field(default_factory=list)
-    current_turn: Optional[CombatTurn] = None
-    turn_number: int = 1
-    combat_type: CombatType = CombatType.TURN_BASED
-    is_active: bool = True
+    participants: List[str]
+    combat_type: CombatType
     start_time: float = field(default_factory=time.time)
-    end_time: Optional[float] = None
-    winner: Optional[str] = None
+    end_time: float = 0.0
+    current_turn: int = 0
+    turn_order: List[str] = field(default_factory=list)
+    active_effects: Dict[str, List[str]] = field(default_factory=dict)
+    combat_log: List[str] = field(default_factory=list)
+    is_active: bool = True
 
 @dataclass
 class CombatResult:
     """Результат боя"""
-    session_id: str
     winner: str
-    participants: List[str]
     duration: float
-    total_damage_dealt: Dict[str, float]
-    total_damage_taken: Dict[str, float]
-    critical_hits: Dict[str, int]
+    total_damage_dealt: float
+    total_damage_taken: float
+    critical_hits: int
+    blocks: int
+    dodges: int
     skills_used: Dict[str, int]
-    effects_applied: Dict[str, int]
 
 class CombatSystem(BaseComponent):
     """Система боя"""
     
     def __init__(self):
         super().__init__(
-            component_id="combat_system",
-            component_type=ComponentType.SYSTEM,
-            priority=Priority.HIGH
+            system_name="combat_system",
+            system_priority=Priority.HIGH,
+            system_type=ComponentType.SYSTEM
         )
+        
+        # Архитектурные компоненты
+        self.state_manager: Optional[StateManager] = None
+        self.attribute_system: Optional[AttributeSystem] = None
         
         # Активные сессии боя
         self.active_sessions: Dict[str, CombatSession] = {}
@@ -140,10 +131,28 @@ class CombatSystem(BaseComponent):
         self.evolution_system = None
         self.ai_system = None
         
+        # Настройки системы
+        self.system_settings = {
+            'auto_calculate_stats_from_attributes': True,
+            'use_toughness_system': True,
+            'enable_critical_hits': True,
+            'enable_dodge_block': True,
+            'combat_log_enabled': True,
+            'max_combat_duration': 300.0  # 5 минут
+        }
+        
         # Статистика
-        self.total_combats: int = 0
-        self.total_damage_dealt: float = 0.0
-        self.combat_statistics: Dict[str, int] = {}
+        self.system_stats = {
+            'total_combats': 0,
+            'total_damage_dealt': 0.0,
+            'total_damage_taken': 0.0,
+            'critical_hits': 0,
+            'blocks': 0,
+            'dodges': 0,
+            'toughness_breaks': 0,
+            'combat_sessions_active': 0,
+            'update_time': 0.0
+        }
         
         # Callbacks
         self.on_combat_start: Optional[Callable] = None
@@ -155,342 +164,330 @@ class CombatSystem(BaseComponent):
         
         logger.info("Система боя инициализирована")
     
+    def set_architecture_components(self, state_manager: StateManager, attribute_system: AttributeSystem):
+        """Установка архитектурных компонентов"""
+        self.state_manager = state_manager
+        self.attribute_system = attribute_system
+        logger.info("Архитектурные компоненты установлены в CombatSystem")
+    
+    def _register_system_states(self):
+        """Регистрация состояний системы"""
+        if self.state_manager:
+            self.state_manager.set_state(
+                f"{self.system_name}_settings",
+                self.system_settings,
+                StateType.SETTINGS
+            )
+            
+            self.state_manager.set_state(
+                f"{self.system_name}_stats",
+                self.system_stats,
+                StateType.STATISTICS
+            )
+            
+            self.state_manager.set_state(
+                f"{self.system_name}_state",
+                self.system_state,
+                StateType.SYSTEM_STATE
+            )
+    
     def initialize(self) -> bool:
         """Инициализация системы боя"""
         try:
-            logger.info("Инициализация системы боя...")
+            logger.info("Инициализация CombatSystem...")
             
-            # Создание базовых боевых характеристик
-            if not self._create_base_combat_stats():
+            self._register_system_states()
+            
+            self.system_state = LifecycleState.READY
+            logger.info("CombatSystem инициализирован успешно")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации CombatSystem: {e}")
+            self.system_state = LifecycleState.ERROR
+            return False
+    
+    def start(self) -> bool:
+        """Запуск системы боя"""
+        try:
+            logger.info("Запуск CombatSystem...")
+            
+            if self.system_state != LifecycleState.READY:
+                logger.error("CombatSystem не готов к запуску")
                 return False
             
-            self.state = LifecycleState.READY
-            logger.info("Система боя успешно инициализирована")
+            self.system_state = LifecycleState.RUNNING
+            logger.info("CombatSystem запущен успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации системы боя: {e}")
-            self.state = LifecycleState.ERROR
+            logger.error(f"Ошибка запуска CombatSystem: {e}")
+            self.system_state = LifecycleState.ERROR
             return False
     
-    def _create_base_combat_stats(self) -> bool:
-        """Создание базовых боевых характеристик"""
+    def update(self, delta_time: float):
+        """Обновление системы боя"""
+        if self.system_state != LifecycleState.RUNNING:
+            return
+        
         try:
-            # Базовые характеристики для разных типов сущностей
-            base_stats = {
-                "player": CombatStats(
-                    attack_power=15.0,
-                    defense=8.0,
-                    critical_chance=0.08,
-                    critical_multiplier=2.2,
-                    accuracy=0.85,
-                    dodge_chance=0.12,
-                    block_chance=0.08,
-                    initiative=12.0,
-                    attack_speed=1.2,
-                    range=3.0
-                ),
-                "enemy": CombatStats(
-                    attack_power=12.0,
-                    defense=6.0,
-                    critical_chance=0.05,
-                    critical_multiplier=2.0,
-                    accuracy=0.75,
-                    dodge_chance=0.08,
-                    block_chance=0.05,
-                    initiative=10.0,
-                    attack_speed=1.0,
-                    range=2.0
-                ),
-                "boss": CombatStats(
-                    attack_power=25.0,
-                    defense=15.0,
-                    critical_chance=0.12,
-                    critical_multiplier=2.5,
-                    accuracy=0.9,
-                    dodge_chance=0.15,
-                    block_chance=0.12,
-                    initiative=15.0,
-                    attack_speed=0.8,
-                    range=4.0
-                ),
-                "mutant": CombatStats(
-                    attack_power=18.0,
-                    defense=10.0,
-                    critical_chance=0.1,
-                    critical_multiplier=2.3,
-                    accuracy=0.8,
-                    dodge_chance=0.1,
-                    block_chance=0.06,
-                    initiative=11.0,
-                    attack_speed=1.1,
-                    range=2.5
+            start_time = time.time()
+            
+            # Обновление активных сессий боя
+            self._update_combat_sessions(delta_time)
+            
+            # Очистка завершенных сессий
+            self._cleanup_finished_sessions()
+            
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            # Обновляем состояние в менеджере состояний
+            if self.state_manager:
+                self.state_manager.set_state(
+                    f"{self.system_name}_stats",
+                    self.system_stats,
+                    StateType.STATISTICS
                 )
-            }
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления CombatSystem: {e}")
+    
+    def stop(self) -> bool:
+        """Остановка системы боя"""
+        try:
+            logger.info("Остановка CombatSystem...")
             
-            for entity_type, stats in base_stats.items():
-                self.combat_stats[entity_type] = stats
-            
-            logger.info(f"Создано {len(self.combat_stats)} базовых боевых характеристик")
+            self.system_state = LifecycleState.STOPPED
+            logger.info("CombatSystem остановлен успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка создания базовых боевых характеристик: {e}")
+            logger.error(f"Ошибка остановки CombatSystem: {e}")
             return False
     
-    def set_system_integrations(self, effect_system=None, skill_system=None, 
-                               evolution_system=None, ai_system=None):
-        """Установка интеграций с другими системами"""
+    def destroy(self) -> bool:
+        """Уничтожение системы боя"""
         try:
-            self.effect_system = effect_system
-            self.skill_system = skill_system
-            self.evolution_system = evolution_system
-            self.ai_system = ai_system
+            logger.info("Уничтожение CombatSystem...")
             
-            logger.info("Интеграции с другими системами установлены")
+            # Завершаем все активные сессии
+            for session in self.active_sessions.values():
+                self._end_combat_session(session.session_id)
+            
+            self.active_sessions.clear()
+            self.combat_stats.clear()
+            
+            self.system_state = LifecycleState.DESTROYED
+            logger.info("CombatSystem уничтожен успешно")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка установки интеграций: {e}")
+            logger.error(f"Ошибка уничтожения CombatSystem: {e}")
+            return False
     
-    def start_combat(self, participants: List[str], combat_type: CombatType = CombatType.TURN_BASED) -> str:
-        """Начало боя"""
+    def _update_combat_sessions(self, delta_time: float):
+        """Обновление активных сессий боя"""
+        for session in list(self.active_sessions.values()):
+            if not session.is_active:
+                continue
+            
+            # Проверяем максимальную длительность боя
+            if time.time() - session.start_time > self.system_settings['max_combat_duration']:
+                self._end_combat_session(session.session_id, reason="timeout")
+                continue
+            
+            # Обновляем сессию в зависимости от типа боя
+            if session.combat_type == CombatType.TURN_BASED:
+                self._update_turn_based_combat(session, delta_time)
+            elif session.combat_type == CombatType.REAL_TIME:
+                self._update_real_time_combat(session, delta_time)
+            elif session.combat_type == CombatType.HYBRID:
+                self._update_hybrid_combat(session, delta_time)
+    
+    def _cleanup_finished_sessions(self):
+        """Очистка завершенных сессий"""
+        finished_sessions = [
+            session_id for session_id, session in self.active_sessions.items()
+            if not session.is_active
+        ]
+        
+        for session_id in finished_sessions:
+            del self.active_sessions[session_id]
+            if session_id in self.combat_stats:
+                del self.combat_stats[session_id]
+    
+    def _update_turn_based_combat(self, session: CombatSession, delta_time: float):
+        """Обновление пошагового боя"""
+        # Логика пошагового боя
+        pass
+    
+    def _update_real_time_combat(self, session: CombatSession, delta_time: float):
+        """Обновление боя в реальном времени"""
+        # Логика боя в реальном времени
+        pass
+    
+    def _update_hybrid_combat(self, session: CombatSession, delta_time: float):
+        """Обновление гибридного боя"""
+        # Логика гибридного боя
+        pass
+    
+    def get_combat_stats_for_entity(self, entity_id: str, base_attributes: AttributeSet,
+                                  attribute_modifiers: List[AttributeModifier] = None,
+                                  stat_modifiers: List[StatModifier] = None) -> CombatStats:
+        """Получение боевых характеристик для сущности из системы атрибутов"""
         try:
-            if len(participants) < 2:
-                logger.error("Для боя нужно минимум 2 участника")
-                return ""
+            if not self.attribute_system or not self.system_settings['auto_calculate_stats_from_attributes']:
+                return CombatStats()
             
-            session_id = f"combat_{int(time.time())}_{random.randint(1000, 9999)}"
-            
-            # Создание сессии боя
-            session = CombatSession(
-                session_id=session_id,
-                participants=participants.copy(),
-                combat_type=combat_type
+            # Получаем характеристики из системы атрибутов
+            calculated_stats = self.attribute_system.calculate_stats_for_entity(
+                entity_id=entity_id,
+                base_attributes=base_attributes,
+                attribute_modifiers=attribute_modifiers,
+                stat_modifiers=stat_modifiers
             )
             
-            # Определение порядка ходов
-            session.turn_order = self._calculate_turn_order(participants)
+            # Создаем боевые характеристики
+            combat_stats = CombatStats(
+                physical_damage=calculated_stats.get('physical_damage', 10.0),
+                magical_damage=calculated_stats.get('magical_damage', 5.0),
+                defense=calculated_stats.get('defense', 5.0),
+                attack_speed=calculated_stats.get('attack_speed', 1.0),
+                critical_chance=calculated_stats.get('critical_chance', 0.05),
+                critical_damage=calculated_stats.get('critical_damage', 1.5),
+                dodge_chance=calculated_stats.get('dodge_chance', 0.05),
+                block_chance=calculated_stats.get('block_chance', 0.05),
+                magic_resistance=calculated_stats.get('magic_resistance', 0.0),
+                accuracy=0.8,  # Базовая точность
+                initiative=calculated_stats.get('agility', 10.0),  # Инициатива от ловкости
+                range=2.0  # Базовая дистанция атаки
+            )
             
-            # Создание первого хода
-            if session.turn_order:
-                session.current_turn = CombatTurn(
-                    turn_number=1,
-                    actor_id=session.turn_order[0]
-                )
-            
-            self.active_sessions[session_id] = session
-            
-            # Обновление статистики
-            self.total_combats += 1
-            
-            # Вызов callback
-            if self.on_combat_start:
-                self.on_combat_start(session_id, participants)
-            
-            logger.info(f"Бой {session_id} начат с участниками: {participants}")
-            return session_id
+            return combat_stats
             
         except Exception as e:
-            logger.error(f"Ошибка начала боя: {e}")
-            return ""
-    
-    def _calculate_turn_order(self, participants: List[str]) -> List[str]:
-        """Расчет порядка ходов на основе инициативы"""
-        try:
-            # Получение инициативы участников
-            initiative_data = []
-            for participant in participants:
-                stats = self.get_combat_stats(participant)
-                initiative = stats.initiative + random.uniform(-2, 2)  # Небольшая случайность
-                initiative_data.append((participant, initiative))
-            
-            # Сортировка по инициативе (высокая инициатива ходит первой)
-            initiative_data.sort(key=lambda x: x[1], reverse=True)
-            
-            return [participant for participant, _ in initiative_data]
-            
-        except Exception as e:
-            logger.error(f"Ошибка расчета порядка ходов: {e}")
-            return participants.copy()
-    
-    def get_combat_stats(self, entity_id: str) -> CombatStats:
-        """Получение боевых характеристик сущности"""
-        try:
-            # Определение типа сущности
-            entity_type = self._get_entity_type(entity_id)
-            
-            if entity_type in self.combat_stats:
-                base_stats = self.combat_stats[entity_type]
-                
-                # Применение модификаторов от эффектов
-                if self.effect_system:
-                    modifiers = self.effect_system.get_effect_modifiers(entity_id, "combat")
-                    # Здесь должна быть логика применения модификаторов
-                
-                # Применение модификаторов от эволюции
-                if self.evolution_system:
-                    evolution_bonus = self.evolution_system.get_combat_bonus(entity_id)
-                    # Здесь должна быть логика применения бонусов эволюции
-                
-                return base_stats
-            
-            # Возврат базовых характеристик если тип не определен
-            return CombatStats()
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения боевых характеристик: {e}")
+            logger.error(f"Ошибка получения боевых характеристик для сущности {entity_id}: {e}")
             return CombatStats()
     
-    def _get_entity_type(self, entity_id: str) -> str:
-        """Определение типа сущности"""
+    def perform_attack(self, attacker_id: str, target_id: str, attack_type: AttackType,
+                      base_attributes: AttributeSet, attribute_modifiers: List[AttributeModifier] = None,
+                      stat_modifiers: List[StatModifier] = None) -> DamageInfo:
+        """Выполнение атаки с использованием характеристик из атрибутов"""
         try:
-            # Здесь должна быть логика определения типа сущности
-            # Пока возвращаем базовый тип
-            if "player" in entity_id.lower():
-                return "player"
-            elif "boss" in entity_id.lower():
-                return "boss"
-            elif "mutant" in entity_id.lower():
-                return "mutant"
-            else:
-                return "enemy"
-                
-        except Exception as e:
-            logger.error(f"Ошибка определения типа сущности: {e}")
-            return "enemy"
-    
-    def perform_attack(self, session_id: str, attacker_id: str, target_id: str, 
-                      attack_type: AttackType = AttackType.MELEE) -> Optional[DamageInfo]:
-        """Выполнение атаки"""
-        try:
-            if session_id not in self.active_sessions:
-                logger.error(f"Сессия боя {session_id} не найдена")
-                return None
+            # Получаем боевые характеристики атакующего
+            attacker_stats = self.get_combat_stats_for_entity(
+                attacker_id, base_attributes, attribute_modifiers, stat_modifiers
+            )
             
-            session = self.active_sessions[session_id]
+            # Получаем боевые характеристики цели
+            target_stats = self.get_combat_stats_for_entity(
+                target_id, base_attributes, attribute_modifiers, stat_modifiers
+            )
             
-            if not session.is_active:
-                logger.error(f"Бой {session_id} уже завершен")
-                return None
-            
-            # Получение боевых характеристик
-            attacker_stats = self.get_combat_stats(attacker_id)
-            target_stats = self.get_combat_stats(target_id)
-            
-            # Проверка точности
-            if not self._check_accuracy(attacker_stats, target_stats):
-                logger.info(f"Атака {attacker_id} промахнулась по {target_id}")
+            # Проверяем уклонение
+            is_dodged = self._check_dodge(target_stats)
+            if is_dodged:
                 return DamageInfo(
-                    base_damage=0,
-                    damage_type="miss",
-                    source=attacker_id,
-                    target=target_id,
-                    final_damage=0
-                )
-            
-            # Проверка уклонения
-            if self._check_dodge(target_stats):
-                logger.info(f"Цель {target_id} уклонилась от атаки {attacker_id}")
-                return DamageInfo(
-                    base_damage=0,
-                    damage_type="dodge",
-                    source=attacker_id,
-                    target=target_id,
+                    damage=0.0,
+                    damage_type=DamageType.PHYSICAL,
+                    attack_type=attack_type,
                     is_dodged=True,
-                    final_damage=0
+                    source=attacker_id,
+                    target=target_id
                 )
             
-            # Проверка блока
+            # Проверяем блок
             is_blocked = self._check_block(target_stats)
             
-            # Расчет базового урона
+            # Рассчитываем базовый урон
             base_damage = self._calculate_base_damage(attacker_stats, attack_type)
             
-            # Проверка критического удара
+            # Проверяем критический удар
             is_critical = self._check_critical_hit(attacker_stats)
             if is_critical:
-                base_damage *= attacker_stats.critical_multiplier
+                base_damage *= attacker_stats.critical_damage
+                self.system_stats['critical_hits'] += 1
             
-            # Применение защиты
+            # Применяем защиту
             final_damage = self._apply_defense(base_damage, target_stats, is_blocked)
             
-            # Создание информации об уроне
+            # Рассчитываем урон по стойкости
+            toughness_damage = 0.0
+            toughness_type = ToughnessType.PHYSICAL
+            
+            if self.system_settings['use_toughness_system']:
+                toughness_damage = self._calculate_toughness_damage(attacker_stats, attack_type)
+                toughness_type = self._get_toughness_type_for_attack(attack_type)
+            
+            # Создаем информацию об уроне
             damage_info = DamageInfo(
-                base_damage=base_damage,
-                damage_type=attack_type.value,
-                source=attacker_id,
-                target=target_id,
+                damage=final_damage,
+                damage_type=DamageType.PHYSICAL,
+                attack_type=attack_type,
                 is_critical=is_critical,
                 is_blocked=is_blocked,
-                final_damage=final_damage
+                is_dodged=False,
+                toughness_damage=toughness_damage,
+                toughness_type=toughness_type,
+                source=attacker_id,
+                target=target_id
             )
             
-            # Применение урона к цели
-            self._apply_damage(target_id, damage_info)
+            # Обновляем статистику
+            self.system_stats['total_damage_dealt'] += final_damage
+            if is_blocked:
+                self.system_stats['blocks'] += 1
+            if is_dodged:
+                self.system_stats['dodges'] += 1
             
-            # Применение эффектов атаки
-            self._apply_attack_effects(attacker_id, target_id, damage_info)
-            
-            # Обновление статистики
-            self.total_damage_dealt += final_damage
-            self.combat_statistics["attacks"] = self.combat_statistics.get("attacks", 0) + 1
-            
-            # Вызов callback
+            # Вызываем callback
             if self.on_damage_dealt:
-                self.on_damage_dealt(attacker_id, target_id, damage_info)
+                self.on_damage_dealt(damage_info)
             
-            logger.info(f"Атака {attacker_id} -> {target_id}: {final_damage} урона")
             return damage_info
             
         except Exception as e:
-            logger.error(f"Ошибка выполнения атаки: {e}")
-            return None
-    
-    def _check_accuracy(self, attacker_stats: CombatStats, target_stats: CombatStats) -> bool:
-        """Проверка точности атаки"""
-        try:
-            accuracy = attacker_stats.accuracy
-            dodge = target_stats.dodge_chance
-            
-            # Базовая проверка точности
-            hit_chance = accuracy - dodge
-            return random.random() < hit_chance
-            
-        except Exception as e:
-            logger.error(f"Ошибка проверки точности: {e}")
-            return True
+            logger.error(f"Ошибка выполнения атаки {attacker_id} -> {target_id}: {e}")
+            return DamageInfo(
+                damage=0.0,
+                damage_type=DamageType.PHYSICAL,
+                attack_type=attack_type,
+                source=attacker_id,
+                target=target_id
+            )
     
     def _check_dodge(self, target_stats: CombatStats) -> bool:
         """Проверка уклонения"""
-        try:
-            return random.random() < target_stats.dodge_chance
-            
-        except Exception as e:
-            logger.error(f"Ошибка проверки уклонения: {e}")
+        if not self.system_settings['enable_dodge_block']:
             return False
+        
+        dodge_chance = target_stats.dodge_chance
+        return random.random() < dodge_chance
     
     def _check_block(self, target_stats: CombatStats) -> bool:
         """Проверка блока"""
-        try:
-            return random.random() < target_stats.block_chance
-            
-        except Exception as e:
-            logger.error(f"Ошибка проверки блока: {e}")
+        if not self.system_settings['enable_dodge_block']:
             return False
+        
+        block_chance = target_stats.block_chance
+        return random.random() < block_chance
     
     def _check_critical_hit(self, attacker_stats: CombatStats) -> bool:
         """Проверка критического удара"""
-        try:
-            return random.random() < attacker_stats.critical_chance
-            
-        except Exception as e:
-            logger.error(f"Ошибка проверки критического удара: {e}")
+        if not self.system_settings['enable_critical_hits']:
             return False
+        
+        critical_chance = attacker_stats.critical_chance
+        return random.random() < critical_chance
     
     def _calculate_base_damage(self, attacker_stats: CombatStats, attack_type: AttackType) -> float:
-        """Расчет базового урона"""
+        """Расчет базового урона на основе характеристик из атрибутов"""
         try:
-            base_damage = attacker_stats.attack_power
+            # Выбираем тип урона в зависимости от типа атаки
+            if attack_type == AttackType.MAGIC:
+                base_damage = attacker_stats.magical_damage
+            else:
+                base_damage = attacker_stats.physical_damage
             
             # Модификаторы по типу атаки
             type_modifiers = {
@@ -503,6 +500,9 @@ class CombatSystem(BaseComponent):
             
             base_damage *= type_modifiers.get(attack_type, 1.0)
             
+            # Применяем модификаторы от экипировки
+            base_damage *= attacker_stats.damage_modifier
+            
             # Добавление случайности
             variation = random.uniform(0.8, 1.2)
             base_damage *= variation
@@ -514,17 +514,24 @@ class CombatSystem(BaseComponent):
             return 10.0
     
     def _apply_defense(self, damage: float, target_stats: CombatStats, is_blocked: bool) -> float:
-        """Применение защиты"""
+        """Применение защиты на основе характеристик из атрибутов"""
         try:
             final_damage = damage
             
-            # Применение брони
+            # Применение брони (защита из атрибутов)
             armor_reduction = target_stats.defense * 0.1  # 1 защита = 10% снижение урона
             final_damage *= (1 - armor_reduction)
+            
+            # Применение сопротивления магии
+            magic_resistance = target_stats.magic_resistance
+            final_damage *= (1 - magic_resistance)
             
             # Применение блока
             if is_blocked:
                 final_damage *= 0.5  # Блок снижает урон на 50%
+            
+            # Применяем модификаторы защиты от экипировки
+            final_damage *= target_stats.defense_modifier
             
             return max(1, final_damage)
             
@@ -532,231 +539,118 @@ class CombatSystem(BaseComponent):
             logger.error(f"Ошибка применения защиты: {e}")
             return damage
     
-    def _apply_damage(self, target_id: str, damage_info: DamageInfo):
-        """Применение урона к цели"""
+    def _calculate_toughness_damage(self, attacker_stats: CombatStats, attack_type: AttackType) -> float:
+        """Расчет урона по стойкости"""
         try:
-            # Здесь должна быть интеграция с системой здоровья сущности
-            # Например: target.take_damage(damage_info.final_damage)
+            # Базовый урон по стойкости зависит от типа атаки
+            base_toughness_damage = {
+                AttackType.MELEE: 10.0,
+                AttackType.RANGED: 5.0,
+                AttackType.MAGIC: 15.0,
+                AttackType.AREA: 8.0,
+                AttackType.SPECIAL: 20.0
+            }
             
-            # Проверка поражения
-            if self._is_entity_defeated(target_id):
-                self._handle_entity_defeat(target_id, damage_info.source)
+            toughness_damage = base_toughness_damage.get(attack_type, 10.0)
+            
+            # Модифицируем урон по стойкости в зависимости от характеристик
+            if attack_type == AttackType.MAGIC:
+                toughness_damage *= (1.0 + attacker_stats.magical_damage * 0.01)
+            else:
+                toughness_damage *= (1.0 + attacker_stats.physical_damage * 0.01)
+            
+            return max(1, toughness_damage)
             
         except Exception as e:
-            logger.error(f"Ошибка применения урона: {e}")
+            logger.error(f"Ошибка расчета урона по стойкости: {e}")
+            return 10.0
     
-    def _apply_attack_effects(self, attacker_id: str, target_id: str, damage_info: DamageInfo):
-        """Применение эффектов атаки"""
-        try:
-            # Применение эффектов от навыков
-            if self.skill_system:
-                # Здесь должна быть логика применения эффектов навыков
-                pass
-            
-            # Применение эффектов от эволюции
-            if self.evolution_system:
-                evolution_effects = self.evolution_system.get_attack_effects(attacker_id)
-                # Здесь должна быть логика применения эффектов эволюции
-                pass
-            
-        except Exception as e:
-            logger.error(f"Ошибка применения эффектов атаки: {e}")
+    def _get_toughness_type_for_attack(self, attack_type: AttackType) -> ToughnessType:
+        """Определение типа стойкости для атаки"""
+        toughness_mapping = {
+            AttackType.MELEE: ToughnessType.PHYSICAL,
+            AttackType.RANGED: ToughnessType.PHYSICAL,
+            AttackType.MAGIC: ToughnessType.QUANTUM,  # Магические атаки пробивают квантовую стойкость
+            AttackType.AREA: ToughnessType.UNIVERSAL,  # Областные атаки пробивают любую стойкость
+            AttackType.SPECIAL: ToughnessType.UNIVERSAL  # Специальные атаки пробивают любую стойкость
+        }
+        
+        return toughness_mapping.get(attack_type, ToughnessType.PHYSICAL)
     
-    def _is_entity_defeated(self, entity_id: str) -> bool:
-        """Проверка поражения сущности"""
+    def start_combat_session(self, session_id: str, participants: List[str], 
+                           combat_type: CombatType = CombatType.REAL_TIME) -> bool:
+        """Начало сессии боя"""
         try:
-            # Здесь должна быть проверка здоровья сущности
-            # Пока возвращаем False
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка проверки поражения: {e}")
-            return False
-    
-    def _handle_entity_defeat(self, defeated_id: str, killer_id: str):
-        """Обработка поражения сущности"""
-        try:
-            # Обновление статистики
-            self.combat_statistics["defeats"] = self.combat_statistics.get("defeats", 0) + 1
-            
-            # Вызов callback
-            if self.on_entity_defeated:
-                self.on_entity_defeated(defeated_id, killer_id)
-            
-            logger.info(f"Сущность {defeated_id} поражена {killer_id}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки поражения: {e}")
-    
-    def use_skill_in_combat(self, session_id: str, user_id: str, skill_id: str, 
-                           target_id: Optional[str] = None) -> bool:
-        """Использование навыка в бою"""
-        try:
-            if not self.skill_system:
-                logger.error("Система навыков не интегрирована")
+            if session_id in self.active_sessions:
+                logger.warning(f"Сессия боя {session_id} уже существует")
                 return False
             
-            if not self.skill_system.has_skill(user_id, skill_id):
-                logger.error(f"Сущность {user_id} не знает навык {skill_id}")
-                return False
+            session = CombatSession(
+                session_id=session_id,
+                participants=participants,
+                combat_type=combat_type
+            )
             
-            # Использование навыка
-            success = self.skill_system.use_skill(user_id, skill_id, target_id)
+            self.active_sessions[session_id] = session
+            self.system_stats['combat_sessions_active'] += 1
             
-            if success:
-                # Обновление статистики
-                self.combat_statistics["skills_used"] = self.combat_statistics.get("skills_used", 0) + 1
-                
-                logger.info(f"Навык {skill_id} использован в бою {session_id}")
+            if self.on_combat_start:
+                self.on_combat_start(session)
             
-            return success
-            
-        except Exception as e:
-            logger.error(f"Ошибка использования навыка в бою: {e}")
-            return False
-    
-    def end_turn(self, session_id: str) -> bool:
-        """Завершение хода"""
-        try:
-            if session_id not in self.active_sessions:
-                return False
-            
-            session = self.active_sessions[session_id]
-            
-            if not session.current_turn:
-                return False
-            
-            # Завершение текущего хода
-            session.current_turn.end_time = time.time()
-            session.current_turn.is_completed = True
-            
-            # Вызов callback
-            if self.on_turn_end:
-                self.on_turn_end(session_id, session.current_turn)
-            
-            # Переход к следующему ходу
-            self._next_turn(session)
-            
+            logger.info(f"Начата сессия боя {session_id} с {len(participants)} участниками")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка завершения хода: {e}")
+            logger.error(f"Ошибка начала сессии боя {session_id}: {e}")
             return False
     
-    def _next_turn(self, session: CombatSession):
-        """Переход к следующему ходу"""
-        try:
-            # Поиск следующего участника
-            current_index = session.turn_order.index(session.current_turn.actor_id)
-            next_index = (current_index + 1) % len(session.turn_order)
-            next_actor = session.turn_order[next_index]
-            
-            # Проверка завершения раунда
-            if next_index == 0:
-                session.turn_number += 1
-            
-            # Создание нового хода
-            session.current_turn = CombatTurn(
-                turn_number=session.turn_number,
-                actor_id=next_actor
-            )
-            
-            # Вызов callback
-            if self.on_turn_start:
-                self.on_turn_start(session.session_id, session.current_turn)
-            
-            logger.debug(f"Переход к ходу {session.turn_number}, актор: {next_actor}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка перехода к следующему ходу: {e}")
-    
-    def end_combat(self, session_id: str, winner: Optional[str] = None) -> Optional[CombatResult]:
-        """Завершение боя"""
+    def _end_combat_session(self, session_id: str, reason: str = "normal"):
+        """Завершение сессии боя"""
         try:
             if session_id not in self.active_sessions:
-                return None
+                return
             
             session = self.active_sessions[session_id]
-            
-            if not session.is_active:
-                return None
-            
-            # Завершение сессии
             session.is_active = False
             session.end_time = time.time()
-            session.winner = winner
             
-            # Создание результата боя
-            result = CombatResult(
-                session_id=session_id,
-                winner=winner or "unknown",
-                participants=session.participants.copy(),
-                duration=session.end_time - session.start_time,
-                total_damage_dealt={},  # Здесь должна быть статистика урона
-                total_damage_taken={},  # Здесь должна быть статистика полученного урона
-                critical_hits={},       # Здесь должна быть статистика критических ударов
-                skills_used={},         # Здесь должна быть статистика использованных навыков
-                effects_applied={}      # Здесь должна быть статистика примененных эффектов
-            )
+            self.system_stats['combat_sessions_active'] -= 1
             
-            # Вызов callback
             if self.on_combat_end:
-                self.on_combat_end(session_id, result)
+                self.on_combat_end(session, reason)
             
-            # Удаление сессии
-            del self.active_sessions[session_id]
-            
-            logger.info(f"Бой {session_id} завершен, победитель: {winner}")
-            return result
+            logger.info(f"Завершена сессия боя {session_id} по причине: {reason}")
             
         except Exception as e:
-            logger.error(f"Ошибка завершения боя: {e}")
-            return None
+            logger.error(f"Ошибка завершения сессии боя {session_id}: {e}")
     
-    def get_active_combats(self) -> List[str]:
-        """Получение списка активных боев"""
-        try:
-            return list(self.active_sessions.keys())
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения активных боев: {e}")
-            return []
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'active_sessions': len(self.active_sessions),
+            'total_combats': self.system_stats['total_combats'],
+            'total_damage_dealt': self.system_stats['total_damage_dealt'],
+            'total_damage_taken': self.system_stats['total_damage_taken'],
+            'critical_hits': self.system_stats['critical_hits'],
+            'blocks': self.system_stats['blocks'],
+            'dodges': self.system_stats['dodges'],
+            'toughness_breaks': self.system_stats['toughness_breaks'],
+            'update_time': self.system_stats['update_time']
+        }
     
-    def get_combat_session(self, session_id: str) -> Optional[CombatSession]:
-        """Получение сессии боя"""
-        try:
-            return self.active_sessions.get(session_id)
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения сессии боя: {e}")
-            return None
-    
-    def get_combat_statistics(self) -> Dict[str, Any]:
-        """Получение статистики боев"""
-        try:
-            return {
-                "total_combats": self.total_combats,
-                "total_damage_dealt": self.total_damage_dealt,
-                "active_combats": len(self.active_sessions),
-                "combat_statistics": self.combat_statistics.copy()
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения статистики боев: {e}")
-            return {}
-    
-    def cleanup(self):
-        """Очистка системы боя"""
-        try:
-            # Завершение всех активных боев
-            for session_id in list(self.active_sessions.keys()):
-                self.end_combat(session_id, "system_cleanup")
-            
-            # Очистка данных
-            self.combat_stats.clear()
-            self.combat_statistics.clear()
-            
-            logger.info("Система боя очищена")
-            
-        except Exception as e:
-            logger.error(f"Ошибка очистки системы боя: {e}")
+    def reset_stats(self):
+        """Сброс статистики"""
+        self.system_stats = {
+            'total_combats': 0,
+            'total_damage_dealt': 0.0,
+            'total_damage_taken': 0.0,
+            'critical_hits': 0,
+            'blocks': 0,
+            'dodges': 0,
+            'toughness_breaks': 0,
+            'combat_sessions_active': len(self.active_sessions),
+            'update_time': 0.0
+        }

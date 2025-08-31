@@ -36,6 +36,7 @@ except ImportError:
     logging.warning("Scikit-learn недоступен")
 
 from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.constants import AIState, AIBehavior, constants_manager, TIME_CONSTANTS
 
 # = ТИПЫ AI
 class AIType(Enum):
@@ -46,19 +47,6 @@ class AIType(Enum):
     REINFORCEMENT_LEARNING = "reinforcement_learning"
     EVOLUTIONARY = "evolutionary"
     HYBRID = "hybrid"
-
-class AIState(Enum):
-    """Состояния AI"""
-    IDLE = "idle"
-    PATROLLING = "patrolling"
-    CHASING = "chasing"
-    ATTACKING = "attacking"
-    FLEEING = "fleeing"
-    SEARCHING = "searching"
-    RESTING = "resting"
-    INTERACTING = "interacting"
-    LEARNING = "learning"
-    ADAPTING = "adapting"
 
 class AIPriority(Enum):
     """Приоритеты AI"""

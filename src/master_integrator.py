@@ -25,6 +25,8 @@ from src.systems.dialogue.dialogue_system import DialogueSystem
 from src.systems.crafting.crafting_system import CraftingSystem
 from src.systems.trading.trading_system import TradingSystem
 from src.systems.social.social_system import SocialSystem
+from src.systems.content.content_system import ContentSystem
+from src.systems.visualization.isometric_visualization_system import IsometricVisualizationSystem
 
 logger = logging.getLogger(__name__)
 
@@ -159,7 +161,9 @@ class MasterIntegrator(BaseComponent):
                 ("dialogue_system", DialogueSystem, ComponentType.SYSTEM, Priority.NORMAL),
                 ("crafting_system", CraftingSystem, ComponentType.SYSTEM, Priority.NORMAL),
                 ("trading_system", TradingSystem, ComponentType.SYSTEM, Priority.NORMAL),
-                ("social_system", SocialSystem, ComponentType.SYSTEM, Priority.NORMAL)
+                ("social_system", SocialSystem, ComponentType.SYSTEM, Priority.NORMAL),
+                ("content_system", ContentSystem, ComponentType.SYSTEM, Priority.HIGH),
+                ("isometric_visualization_system", IsometricVisualizationSystem, ComponentType.SYSTEM, Priority.HIGH)
             ]
             
             for system_id, system_class, system_type, priority in systems_to_create:
@@ -198,6 +202,8 @@ class MasterIntegrator(BaseComponent):
             dependencies = {
                 "ai_system": ["evolution_system"],
                 "evolution_system": [],
+                "content_system": ["world_manager"],
+                "isometric_visualization_system": ["world_manager"],
                 "world_manager": [],
                 "quest_system": ["world_manager", "ai_system"],
                 "dialogue_system": ["ai_system", "social_system"],

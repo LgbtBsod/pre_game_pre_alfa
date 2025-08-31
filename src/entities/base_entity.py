@@ -1,578 +1,651 @@
-from dataclasses import dataclass, field
-from enum import Enum
-from pathlib import Path
-from typing import *
-from typing import Dict, List, Optional, Any, Union, Tuple
-import logging
-import os
-import re
-import sys
-import time
-
 #!/usr/bin/env python3
-"""Base Entity - Базовая сущность для всех игровых объектов
-Объединяет системы: характеристики, инвентарь, эмоции, гены, память, навыки"""
+"""Базовая сущность игры"""
+
+import logging
+import time
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass, field
+
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import constants_manager, EntityType, EntityState, ToughnessType, StanceState
+from src.core.state_manager import StateManager, StateType
+from src.systems.attributes.attribute_system import AttributeSystem, AttributeSet, AttributeModifier, StatModifier, BaseAttribute, DerivedStat
 
 logger = logging.getLogger(__name__)
 
-# = ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
-
-class EntityType(Enum):
-    """Типы сущностей"""
-    PLAYER = "player"
-    NPC = "npc"
-    ENEMY = "enemy"
-    BOSS = "boss"
-    MUTANT = "mutant"
-    ANIMAL = "animal"
-    CREATURE = "creature"
-    OBJECT = "object"
-
-class DamageType(Enum):
-    """Типы урона"""
-    PHYSICAL = "physical"
-    MAGICAL = "magical"
-    FIRE = "fire"
-    ICE = "ice"
-    LIGHTNING = "lightning"
-    POISON = "poison"
-    PSYCHIC = "psychic"
-    TRUE = "true"
-
-class EmotionType(Enum):
-    """Типы эмоций"""
-    HAPPY = "happy"
-    SAD = "sad"
-    ANGRY = "angry"
-    FEAR = "fear"
-    SURPRISE = "surprise"
-    DISGUST = "disgust"
-    NEUTRAL = "neutral"
-    EXCITED = "excited"
-    CONFUSED = "confused"
-    SUSPICIOUS = "suspicious"
-
-class ItemType(Enum):
-    """Типы предметов"""
-    WEAPON = "weapon"
-    ARMOR = "armor"
-    CONSUMABLE = "consumable"
-    MATERIAL = "material"
-    TOOL = "tool"
-    CURRENCY = "currency"
-    QUEST = "quest"
-    SPECIAL = "special"
-
-class ItemSlot(Enum):
-    """Слоты экипировки"""
-    MAIN_HAND = "main_hand"
-    OFF_HAND = "off_hand"
-    HEAD = "head"
-    CHEST = "chest"
-    LEGS = "legs"
-    FEET = "feet"
-    HANDS = "hands"
-    WAIST = "waist"
-    NECK = "neck"
-    RING_1 = "ring_1"
-    RING_2 = "ring_2"
-    TRINKET_1 = "trinket_1"
-    TRINKET_2 = "trinket_2"
-
-# = БАЗОВЫЕ КОНСТАНТЫ
-
-BASE_STATS = {
-    "health": 100,
-    "mana": 50,
-    "stamina": 100,
-    "attack": 10,
-    "defense": 5,
-    "speed": 1.0,
-    "range": 1.0,
-    "strength": 10,
-    "agility": 10,
-    "intelligence": 10,
-    "constitution": 10,
-    "wisdom": 10,
-    "charisma": 10
-}
-
-PROBABILITY_CONSTANTS = {
-    "base_luck": 0.05,
-    "base_critical_chance": 0.05,
-    "base_dodge_chance": 0.05,
-    "base_block_chance": 0.05
-}
-
-# = СТРУКТУРЫ ДАННЫХ
-
 @dataclass
 class EntityStats:
-    """Базовые характеристики сущности"""
-    # Основные характеристики
-    health: int = BASE_STATS["health"]
-    max_health: int = BASE_STATS["health"]
-    mana: int = BASE_STATS["mana"]
-    max_mana: int = BASE_STATS["mana"]
-    stamina: int = BASE_STATS["stamina"]
-    max_stamina: int = BASE_STATS["stamina"]
+    """Статистика сущности"""
+    # Базовые атрибуты
+    strength: float = 10.0
+    agility: float = 10.0
+    intelligence: float = 10.0
+    vitality: float = 10.0
+    wisdom: float = 10.0
+    charisma: float = 10.0
+    luck: float = 10.0
+    endurance: float = 10.0
     
-    # Боевые характеристики
-    attack: int = BASE_STATS["attack"]
-    defense: int = BASE_STATS["defense"]
-    speed: float = BASE_STATS["speed"]
+    # Производные характеристики (рассчитываются автоматически)
+    health: float = 100.0
+    mana: float = 50.0
+    stamina: float = 100.0
+    physical_damage: float = 10.0
+    magical_damage: float = 5.0
+    defense: float = 5.0
     attack_speed: float = 1.0
-    range: float = BASE_STATS["range"]
+    skill_recovery_speed: float = 1.0
+    health_regen: float = 1.0
+    mana_regen: float = 2.0
+    stamina_regen: float = 3.0
+    critical_chance: float = 0.05
+    critical_damage: float = 1.5
+    dodge_chance: float = 0.05
+    block_chance: float = 0.05
+    magic_resistance: float = 0.0
+    max_weight: float = 50.0
+    movement_speed: float = 1.0
     
-    # Атрибуты
-    strength: int = BASE_STATS["strength"]
-    agility: int = BASE_STATS["agility"]
-    intelligence: int = BASE_STATS["intelligence"]
-    constitution: int = BASE_STATS["constitution"]
-    wisdom: int = BASE_STATS["wisdom"]
-    charisma: int = BASE_STATS["charisma"]
-    luck: float = PROBABILITY_CONSTANTS["base_luck"]
-    
-    # Сопротивления
-    resistances: Dict[DamageType, float] = field(default_factory=dict)
-    
-    # Опыт и уровень
-    level: int = 1
-    experience: int = 0
-    experience_to_next: int = 100
+    # Стойкость
+    toughness: float = 100.0
+    max_toughness: float = 100.0
+    toughness_recovery: float = 10.0
+    toughness_type: ToughnessType = ToughnessType.PHYSICAL
 
 @dataclass
-class EntityMemory:
-    """Память сущности"""
-    entity_id: str
-    memories: List[Dict[str, Any]] = field(default_factory=list)
-    max_memories: int = 100
-    learning_rate: float = 0.5
-    last_memory_update: float = field(default_factory=time.time)
+class ToughnessData:
+    """Данные стойкости"""
+    current_toughness: float = 100.0
+    stance_state: StanceState = StanceState.NORMAL
+    recovery_rate: float = 10.0
+    stun_end_time: float = 0.0
+    last_break_time: float = 0.0
+    break_count: int = 0
 
 @dataclass
-class EntityInventory:
-    """Инвентарь сущности"""
-    entity_id: str
-    items: List[Any] = field(default_factory=list)
-    max_items: int = 50
-    max_weight: float = 100.0
-    current_weight: float = 0.0
-    equipped_items: Dict[ItemSlot, str] = field(default_factory=dict)
+class EntityComponent:
+    """Компонент сущности"""
+    component_type: str
+    data: Dict[str, Any] = field(default_factory=dict)
+    active: bool = True
 
-@dataclass
-class EntityEmotion:
-    """Эмоциональное состояние сущности"""
-    entity_id: str
-    current_emotion: EmotionType = EmotionType.NEUTRAL
-    emotion_intensity: float = 0.5  # 0.0 - 1.0
-    mood: float = 0.0  # -1.0 до 1.0
-    stress_level: float = 0.0  # 0.0 - 1.0
-    emotional_stability: float = 0.5  # 0.0 - 1.0
-    emotion_history: List[Dict[str, Any]] = field(default_factory=list)
-    emotion_triggers: Dict[str, float] = field(default_factory=dict)
-
-@dataclass
-class EntitySkills:
-    """Навыки сущности"""
-    entity_id: str
-    skills: Dict[str, int] = field(default_factory=dict)  # skill_id: level
-    skill_points: int = 0
-    max_skill_level: int = 100
-    skill_experience: Dict[str, int] = field(default_factory=dict)
-    skill_cooldowns: Dict[str, float] = field(default_factory=dict)
-
-@dataclass
-class EntityEffects:
-    """Эффекты сущности"""
-    entity_id: str
-    active_effects: List[Dict[str, Any]] = field(default_factory=list)
-    passive_effects: List[Dict[str, Any]] = field(default_factory=list)
-    temporary_effects: List[Dict[str, Any]] = field(default_factory=list)
-    effect_duration: Dict[str, float] = field(default_factory=dict)
-
-class BaseEntity:
-    """Базовая сущность для всех игровых объектов"""
+class BaseEntity(BaseComponent):
+    """Базовая сущность игры"""
     
     def __init__(self, entity_id: str, entity_type: EntityType, name: str = ""):
+        super().__init__(
+            system_name=f"entity_{entity_id}",
+            system_priority=Priority.MEDIUM,
+            system_type=ComponentType.ENTITY
+        )
+        
+        # Основные свойства
         self.entity_id = entity_id
         self.entity_type = entity_type
         self.name = name or f"{entity_type.value}_{entity_id}"
         
-        # Основные компоненты
-        self.stats = EntityStats()
-        self.memory = EntityMemory(entity_id=entity_id)
-        self.inventory = EntityInventory(entity_id=entity_id)
-        self.emotion = EntityEmotion(entity_id=entity_id)
-        self.skills = EntitySkills(entity_id=entity_id)
-        self.effects = EntityEffects(entity_id=entity_id)
+        # Архитектурные компоненты
+        self.state_manager: Optional[StateManager] = None
+        self.attribute_system: Optional[AttributeSystem] = None
         
-        # Позиция и состояние
-        self.position: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.rotation: Tuple[float, float, float] = (0.0, 0.0, 0.0)
-        self.is_active: bool = True
-        self.is_alive: bool = True
-        self.is_visible: bool = True
+        # Состояние сущности
+        self.entity_state = EntityState.ALIVE
+        self.position = (0.0, 0.0, 0.0)
+        self.rotation = (0.0, 0.0, 0.0)
+        self.scale = (1.0, 1.0, 1.0)
         
-        # Время создания
-        self.created_at: float = time.time()
-        self.last_update: float = time.time()
+        # Статистика и характеристики
+        self.entity_stats = EntityStats()
+        self.toughness_data = ToughnessData()
         
-        # События
-        self.on_damage: Optional[Callable] = None
-        self.on_heal: Optional[Callable] = None
-        self.on_death: Optional[Callable] = None
-        self.on_level_up: Optional[Callable] = None
+        # Модификаторы
+        self.attribute_modifiers: List[AttributeModifier] = []
+        self.stat_modifiers: List[StatModifier] = []
         
-        logger.info(f"Создана сущность {self.name} (ID: {entity_id})")
+        # Компоненты
+        self.components: Dict[str, EntityComponent] = {}
+        
+        # Настройки сущности
+        self.entity_settings = {
+            'toughness_enabled': True,
+            'auto_regen_enabled': True,
+            'component_system_enabled': True,
+            'attribute_system_enabled': True
+        }
+        
+        # Статистика сущности
+        self.entity_stats_tracking = {
+            'damage_dealt': 0.0,
+            'damage_taken': 0.0,
+            'healing_received': 0.0,
+            'critical_hits': 0,
+            'dodges': 0,
+            'blocks': 0,
+            'toughness_damage_dealt': 0.0,
+            'toughness_breaks_caused': 0,
+            'toughness_damage_taken': 0.0,
+            'toughness_breaks_suffered': 0,
+            'total_stun_time': 0.0,
+            'creation_time': time.time(),
+            'last_update_time': time.time()
+        }
     
-    def take_damage(self, damage: int, damage_type: DamageType = DamageType.PHYSICAL, 
-                   source: Optional[str] = None) -> int:
-        """Получение урона"""
-        try:
-            # Применение сопротивлений
-            resistance = self.stats.resistances.get(damage_type, 0.0)
-            actual_damage = int(damage * (1.0 - resistance))
-            
-            # Применение урона
-            old_health = self.stats.health
-            self.stats.health = max(0, self.stats.health - actual_damage)
-            
-            # Проверка смерти
-            if self.stats.health <= 0 and self.is_alive:
-                self.die()
-            
-            # Вызов callback
-            if self.on_damage:
-                self.on_damage(self, actual_damage, damage_type, source)
-            
-            logger.debug(f"{self.name} получил {actual_damage} урона (тип: {damage_type.value})")
-            return actual_damage
-            
-        except Exception as e:
-            logger.error(f"Ошибка применения урона к {self.name}: {e}")
-            return 0
+    def set_architecture_components(self, state_manager: StateManager, attribute_system: AttributeSystem):
+        """Установка архитектурных компонентов"""
+        self.state_manager = state_manager
+        self.attribute_system = attribute_system
+        logger.info(f"Архитектурные компоненты установлены в {self.name}")
     
-    def heal(self, amount: int, source: Optional[str] = None) -> int:
-        """Восстановление здоровья"""
-        try:
-            old_health = self.stats.health
-            self.stats.health = min(self.stats.max_health, self.stats.health + amount)
-            actual_heal = self.stats.health - old_health
+    def _register_entity_states(self):
+        """Регистрация состояний сущности"""
+        if self.state_manager:
+            self.state_manager.set_state(
+                f"{self.system_name}_stats",
+                self.entity_stats.__dict__,
+                StateType.ENTITY_STATS
+            )
             
-            # Вызов callback
-            if self.on_heal:
-                self.on_heal(self, actual_heal, source)
+            self.state_manager.set_state(
+                f"{self.system_name}_toughness",
+                self.toughness_data.__dict__,
+                StateType.ENTITY_STATE
+            )
             
-            logger.debug(f"{self.name} восстановил {actual_heal} здоровья")
-            return actual_heal
-            
-        except Exception as e:
-            logger.error(f"Ошибка восстановления здоровья {self.name}: {e}")
-            return 0
+            self.state_manager.set_state(
+                f"{self.system_name}_tracking",
+                self.entity_stats_tracking,
+                StateType.STATISTICS
+            )
     
-    def die(self):
-        """Смерть сущности"""
+    def initialize(self) -> bool:
+        """Инициализация сущности"""
         try:
-            if not self.is_alive:
-                return
+            logger.info(f"Инициализация сущности {self.name}...")
             
-            self.is_alive = False
-            self.is_active = False
+            # Инициализация стойкости
+            self._initialize_toughness()
             
-            # Вызов callback
-            if self.on_death:
-                self.on_death(self)
+            # Создание компонентов
+            self._create_default_components()
             
-            logger.info(f"{self.name} умер")
+            # Регистрация состояний
+            self._register_entity_states()
             
-        except Exception as e:
-            logger.error(f"Ошибка обработки смерти {self.name}: {e}")
-    
-    def gain_experience(self, amount: int) -> bool:
-        """Получение опыта"""
-        try:
-            self.stats.experience += amount
+            # Расчет начальных характеристик
+            self._recalculate_stats()
             
-            # Проверка повышения уровня
-            while self.stats.experience >= self.stats.experience_to_next:
-                self.level_up()
-            
+            self.system_state = LifecycleState.READY
+            logger.info(f"Сущность {self.name} инициализирована успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка получения опыта {self.name}: {e}")
+            logger.error(f"Ошибка инициализации сущности {self.name}: {e}")
+            self.system_state = LifecycleState.ERROR
             return False
     
-    def level_up(self):
-        """Повышение уровня"""
+    def start(self) -> bool:
+        """Запуск сущности"""
         try:
-            self.stats.level += 1
-            self.stats.experience -= self.stats.experience_to_next
-            self.stats.experience_to_next = int(self.stats.experience_to_next * 1.5)
+            logger.info(f"Запуск сущности {self.name}...")
             
-            # Увеличение характеристик
-            self.stats.max_health += 10
-            self.stats.max_mana += 5
-            self.stats.max_stamina += 10
-            self.stats.attack += 2
-            self.stats.defense += 1
-            
-            # Восстановление здоровья и маны
-            self.stats.health = self.stats.max_health
-            self.stats.mana = self.stats.max_mana
-            self.stats.stamina = self.stats.max_stamina
-            
-            # Вызов callback
-            if self.on_level_up:
-                self.on_level_up(self)
-            
-            logger.info(f"{self.name} достиг уровня {self.stats.level}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка повышения уровня {self.name}: {e}")
-    
-    def add_memory(self, memory_data: Dict[str, Any]):
-        """Добавление памяти"""
-        try:
-            memory = {
-                "timestamp": time.time(),
-                "data": memory_data
-            }
-            
-            self.memory.memories.append(memory)
-            
-            # Ограничение количества воспоминаний
-            if len(self.memory.memories) > self.memory.max_memories:
-                self.memory.memories.pop(0)
-            
-            self.memory.last_memory_update = time.time()
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления памяти {self.name}: {e}")
-    
-    def add_item(self, item: Any) -> bool:
-        """Добавление предмета в инвентарь"""
-        try:
-            if len(self.inventory.items) >= self.inventory.max_items:
-                logger.warning(f"Инвентарь {self.name} переполнен")
+            if self.system_state != LifecycleState.READY:
+                logger.error(f"Сущность {self.name} не готова к запуску")
                 return False
             
-            self.inventory.items.append(item)
-            # Здесь должна быть логика расчета веса
-            logger.debug(f"Предмет добавлен в инвентарь {self.name}")
+            self.system_state = LifecycleState.RUNNING
+            logger.info(f"Сущность {self.name} запущена успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка добавления предмета {self.name}: {e}")
-            return False
-    
-    def remove_item(self, item_id: str) -> Optional[Any]:
-        """Удаление предмета из инвентаря"""
-        try:
-            for i, item in enumerate(self.inventory.items):
-                if hasattr(item, 'item_id') and item.item_id == item_id:
-                    return self.inventory.items.pop(i)
-            return None
-            
-        except Exception as e:
-            logger.error(f"Ошибка удаления предмета {self.name}: {e}")
-            return None
-    
-    def equip_item(self, item_id: str, slot: ItemSlot) -> bool:
-        """Экипировка предмета"""
-        try:
-            item = self.remove_item(item_id)
-            if item is None:
-                return False
-            
-            # Снимаем предыдущий предмет
-            if slot in self.inventory.equipped_items:
-                old_item_id = self.inventory.equipped_items[slot]
-                # Здесь должна быть логика возврата предмета в инвентарь
-            
-            self.inventory.equipped_items[slot] = item_id
-            logger.debug(f"Предмет {item_id} экипирован в слот {slot.value}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка экипировки предмета {self.name}: {e}")
-            return False
-    
-    def unequip_item(self, slot: ItemSlot) -> Optional[str]:
-        """Снятие предмета"""
-        try:
-            if slot not in self.inventory.equipped_items:
-                return None
-            
-            item_id = self.inventory.equipped_items.pop(slot)
-            logger.debug(f"Предмет {item_id} снят со слота {slot.value}")
-            return item_id
-            
-        except Exception as e:
-            logger.error(f"Ошибка снятия предмета {self.name}: {e}")
-            return None
-    
-    def set_emotion(self, emotion: EmotionType, intensity: float = 0.5):
-        """Установка эмоции"""
-        try:
-            self.emotion.current_emotion = emotion
-            self.emotion.emotion_intensity = max(0.0, min(1.0, intensity))
-            
-            # Запись в историю
-            emotion_record = {
-                "emotion": emotion.value,
-                "intensity": intensity,
-                "timestamp": time.time()
-            }
-            self.emotion.emotion_history.append(emotion_record)
-            
-            logger.debug(f"{self.name} испытывает эмоцию {emotion.value} (интенсивность: {intensity})")
-            
-        except Exception as e:
-            logger.error(f"Ошибка установки эмоции {self.name}: {e}")
-    
-    def learn_skill(self, skill_id: str, level: int = 1) -> bool:
-        """Изучение навыка"""
-        try:
-            if skill_id in self.skills.skills:
-                # Повышение уровня существующего навыка
-                self.skills.skills[skill_id] = min(self.skills.max_skill_level, 
-                                                 self.skills.skills[skill_id] + level)
-            else:
-                # Изучение нового навыка
-                self.skills.skills[skill_id] = level
-            
-            logger.debug(f"{self.name} изучил навык {skill_id} (уровень: {self.skills.skills[skill_id]})")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка изучения навыка {self.name}: {e}")
-            return False
-    
-    def add_effect(self, effect_data: Dict[str, Any], duration: float = -1.0):
-        """Добавление эффекта"""
-        try:
-            effect = {
-                "data": effect_data,
-                "start_time": time.time(),
-                "duration": duration
-            }
-            
-            if duration > 0:
-                self.effects.temporary_effects.append(effect)
-                self.effects.effect_duration[effect_data.get("effect_id", "unknown")] = duration
-            else:
-                self.effects.passive_effects.append(effect)
-            
-            logger.debug(f"Эффект добавлен к {self.name}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка добавления эффекта {self.name}: {e}")
-    
-    def remove_effect(self, effect_id: str) -> bool:
-        """Удаление эффекта"""
-        try:
-            # Удаление из временных эффектов
-            for i, effect in enumerate(self.effects.temporary_effects):
-                if effect["data"].get("effect_id") == effect_id:
-                    self.effects.temporary_effects.pop(i)
-                    return True
-            
-            # Удаление из пассивных эффектов
-            for i, effect in enumerate(self.effects.passive_effects):
-                if effect["data"].get("effect_id") == effect_id:
-                    self.effects.passive_effects.pop(i)
-                    return True
-            
-            return False
-            
-        except Exception as e:
-            logger.error(f"Ошибка удаления эффекта {self.name}: {e}")
+            logger.error(f"Ошибка запуска сущности {self.name}: {e}")
+            self.system_state = LifecycleState.ERROR
             return False
     
     def update(self, delta_time: float):
         """Обновление сущности"""
+        if self.system_state != LifecycleState.RUNNING:
+            return
+        
         try:
-            current_time = time.time()
+            start_time = time.time()
             
-            # Обновление эффектов
-            self._update_effects(delta_time)
+            # Обновление стойкости
+            self._update_toughness(delta_time)
             
-            # Обновление эмоций
-            self._update_emotions(delta_time)
+            # Обновление регенерации
+            if self.entity_settings['auto_regen_enabled']:
+                self._update_regeneration(delta_time)
             
-            # Обновление времени
-            self.last_update = current_time
+            # Обновление компонентов
+            if self.entity_settings['component_system_enabled']:
+                self._update_components(delta_time)
+            
+            # Обновление статистики
+            self._update_stats(delta_time)
+            
+            # Обновление состояний в менеджере состояний
+            if self.state_manager:
+                self.state_manager.set_state(
+                    f"{self.system_name}_stats",
+                    self.entity_stats.__dict__,
+                    StateType.ENTITY_STATS
+                )
+                
+                self.state_manager.set_state(
+                    f"{self.system_name}_toughness",
+                    self.toughness_data.__dict__,
+                    StateType.ENTITY_STATE
+                )
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления сущности {self.name}: {e}")
+    
+    def stop(self) -> bool:
+        """Остановка сущности"""
+        try:
+            logger.info(f"Остановка сущности {self.name}...")
+            
+            self.system_state = LifecycleState.STOPPED
+            logger.info(f"Сущность {self.name} остановлена успешно")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка обновления {self.name}: {e}")
+            logger.error(f"Ошибка остановки сущности {self.name}: {e}")
+            return False
     
-    def _update_effects(self, delta_time: float):
-        """Обновление эффектов"""
+    def destroy(self) -> bool:
+        """Уничтожение сущности"""
         try:
-            current_time = time.time()
+            logger.info(f"Уничтожение сущности {self.name}...")
             
-            # Обновление временных эффектов
-            expired_effects = []
-            for i, effect in enumerate(self.effects.temporary_effects):
-                if effect["duration"] > 0:
-                    elapsed = current_time - effect["start_time"]
-                    if elapsed >= effect["duration"]:
-                        expired_effects.append(i)
+            # Очистка компонентов
+            self.components.clear()
             
-            # Удаление истекших эффектов
-            for i in reversed(expired_effects):
-                self.effects.temporary_effects.pop(i)
+            # Очистка модификаторов
+            self.attribute_modifiers.clear()
+            self.stat_modifiers.clear()
+            
+            self.system_state = LifecycleState.DESTROYED
+            logger.info(f"Сущность {self.name} уничтожена успешно")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка обновления эффектов {self.name}: {e}")
+            logger.error(f"Ошибка уничтожения сущности {self.name}: {e}")
+            return False
     
-    def _update_emotions(self, delta_time: float):
-        """Обновление эмоций"""
-        try:
-            # Постепенное возвращение к нейтральному состоянию
-            if self.emotion.emotion_intensity > 0.1:
-                self.emotion.emotion_intensity *= 0.95
-            else:
-                self.emotion.current_emotion = EmotionType.NEUTRAL
-                self.emotion.emotion_intensity = 0.0
-            
-        except Exception as e:
-            logger.error(f"Ошибка обновления эмоций {self.name}: {e}")
+    def _initialize_toughness(self):
+        """Инициализация стойкости"""
+        if not self.entity_settings['toughness_enabled']:
+            return
+        
+        toughness_constants = constants_manager.get_toughness_constants()
+        base_toughness = toughness_constants['base_toughness'].get(self.entity_type.value, 100)
+        
+        # Устанавливаем базовую стойкость
+        self.toughness_data.current_toughness = base_toughness
+        self.entity_stats.max_toughness = base_toughness
+        self.entity_stats.toughness = base_toughness
+        
+        # Определяем тип стойкости на основе типа сущности
+        if self.entity_type == EntityType.BOSS:
+            self.entity_stats.toughness_type = ToughnessType.UNIVERSAL
+        elif self.entity_type == EntityType.ENEMY:
+            # Случайный тип стойкости для врагов
+            import random
+            toughness_types = list(ToughnessType)
+            self.entity_stats.toughness_type = random.choice(toughness_types)
+        else:
+            self.entity_stats.toughness_type = ToughnessType.PHYSICAL
     
-    def get_info(self) -> Dict[str, Any]:
+    def _update_toughness(self, delta_time: float):
+        """Обновление стойкости"""
+        if not self.entity_settings['toughness_enabled']:
+            return
+        
+        # Восстановление стойкости
+        self._recover_toughness(delta_time)
+        
+        # Проверка окончания стана
+        if self.toughness_data.stun_end_time > 0 and time.time() >= self.toughness_data.stun_end_time:
+            self._end_stun()
+    
+    def _recover_toughness(self, delta_time: float):
+        """Восстановление стойкости"""
+        if self.toughness_data.current_toughness >= self.entity_stats.max_toughness:
+            return
+        
+        toughness_constants = constants_manager.get_toughness_constants()
+        recovery_multiplier = toughness_constants['recovery_multipliers'].get(
+            self.toughness_data.stance_state.value, 1.0
+        )
+        
+        recovery_amount = self.entity_stats.toughness_recovery * recovery_multiplier * delta_time
+        self.toughness_data.current_toughness = min(
+            self.entity_stats.max_toughness,
+            self.toughness_data.current_toughness + recovery_amount
+        )
+        
+        # Обновляем стойкость в статистике
+        self.entity_stats.toughness = self.toughness_data.current_toughness
+    
+    def _create_default_components(self):
+        """Создание компонентов по умолчанию"""
+        if not self.entity_settings['component_system_enabled']:
+            return
+        
+        # Компонент стойкости
+        self.components["toughness"] = EntityComponent(
+            component_type="toughness",
+            data={
+                "enabled": self.entity_settings['toughness_enabled'],
+                "type": self.entity_stats.toughness_type.value,
+                "stance_state": self.toughness_data.stance_state.value
+            }
+        )
+        
+        # Компонент атрибутов
+        self.components["attributes"] = EntityComponent(
+            component_type="attributes",
+            data={
+                "enabled": self.entity_settings['attribute_system_enabled'],
+                "base_stats": self.entity_stats.__dict__
+            }
+        )
+    
+    def _update_components(self, delta_time: float):
+        """Обновление компонентов"""
+        for component in self.components.values():
+            if component.active:
+                # Здесь можно добавить логику обновления компонентов
+                pass
+    
+    def _update_regeneration(self, delta_time: float):
+        """Обновление регенерации"""
+        # Регенерация здоровья
+        if self.entity_stats.health < self._get_max_health():
+            self.entity_stats.health = min(
+                self._get_max_health(),
+                self.entity_stats.health + self.entity_stats.health_regen * delta_time
+            )
+        
+        # Регенерация маны
+        if self.entity_stats.mana < self._get_max_mana():
+            self.entity_stats.mana = min(
+                self._get_max_mana(),
+                self.entity_stats.mana + self.entity_stats.mana_regen * delta_time
+            )
+        
+        # Регенерация стамины
+        if self.entity_stats.stamina < self._get_max_stamina():
+            self.entity_stats.stamina = min(
+                self._get_max_stamina(),
+                self.entity_stats.stamina + self.entity_stats.stamina_regen * delta_time
+            )
+    
+    def _update_stats(self, delta_time: float):
+        """Обновление статистики"""
+        current_time = time.time()
+        self.entity_stats_tracking['last_update_time'] = current_time
+        
+        # Обновляем время в стане
+        if self.entity_state == EntityState.STUNNED:
+            self.entity_stats_tracking['total_stun_time'] += delta_time
+    
+    def _recalculate_stats(self):
+        """Пересчет характеристик"""
+        if not self.attribute_system or not self.entity_settings['attribute_system_enabled']:
+            return
+        
+        # Создаем набор базовых атрибутов
+        base_attributes = AttributeSet(
+            strength=self.entity_stats.strength,
+            agility=self.entity_stats.agility,
+            intelligence=self.entity_stats.intelligence,
+            vitality=self.entity_stats.vitality,
+            wisdom=self.entity_stats.wisdom,
+            charisma=self.entity_stats.charisma,
+            luck=self.entity_stats.luck,
+            endurance=self.entity_stats.endurance
+        )
+        
+        # Рассчитываем характеристики
+        calculated_stats = self.attribute_system.calculate_stats_for_entity(
+            entity_id=self.entity_id,
+            base_attributes=base_attributes,
+            attribute_modifiers=self.attribute_modifiers,
+            stat_modifiers=self.stat_modifiers
+        )
+        
+        # Обновляем характеристики
+        for stat_name, value in calculated_stats.items():
+            if hasattr(self.entity_stats, stat_name):
+                setattr(self.entity_stats, stat_name, value)
+    
+    def _get_max_health(self) -> float:
+        """Получение максимального здоровья"""
+        return self.attribute_system.calculate_stats_for_entity(
+            entity_id=self.entity_id,
+            base_attributes=AttributeSet(
+                strength=self.entity_stats.strength,
+                agility=self.entity_stats.agility,
+                intelligence=self.entity_stats.intelligence,
+                vitality=self.entity_stats.vitality,
+                wisdom=self.entity_stats.wisdom,
+                charisma=self.entity_stats.charisma,
+                luck=self.entity_stats.luck,
+                endurance=self.entity_stats.endurance
+            ),
+            attribute_modifiers=self.attribute_modifiers,
+            stat_modifiers=self.stat_modifiers
+        ).get('health', 100.0)
+    
+    def _get_max_mana(self) -> float:
+        """Получение максимальной маны"""
+        return self.attribute_system.calculate_stats_for_entity(
+            entity_id=self.entity_id,
+            base_attributes=AttributeSet(
+                strength=self.entity_stats.strength,
+                agility=self.entity_stats.agility,
+                intelligence=self.entity_stats.intelligence,
+                vitality=self.entity_stats.vitality,
+                wisdom=self.entity_stats.wisdom,
+                charisma=self.entity_stats.charisma,
+                luck=self.entity_stats.luck,
+                endurance=self.entity_stats.endurance
+            ),
+            attribute_modifiers=self.attribute_modifiers,
+            stat_modifiers=self.stat_modifiers
+        ).get('mana', 50.0)
+    
+    def _get_max_stamina(self) -> float:
+        """Получение максимальной стамины"""
+        return self.attribute_system.calculate_stats_for_entity(
+            entity_id=self.entity_id,
+            base_attributes=AttributeSet(
+                strength=self.entity_stats.strength,
+                agility=self.entity_stats.agility,
+                intelligence=self.entity_stats.intelligence,
+                vitality=self.entity_stats.vitality,
+                wisdom=self.entity_stats.wisdom,
+                charisma=self.entity_stats.charisma,
+                luck=self.entity_stats.luck,
+                endurance=self.entity_stats.endurance
+            ),
+            attribute_modifiers=self.attribute_modifiers,
+            stat_modifiers=self.stat_modifiers
+        ).get('stamina', 100.0)
+    
+    # = ПУБЛИЧНЫЕ МЕТОДЫ ДЛЯ СТОЙКОСТИ
+    
+    def get_toughness(self) -> float:
+        """Получение текущей стойкости"""
+        return self.toughness_data.current_toughness
+    
+    def get_max_toughness(self) -> float:
+        """Получение максимальной стойкости"""
+        return self.entity_stats.max_toughness
+    
+    def get_toughness_type(self) -> ToughnessType:
+        """Получение типа стойкости"""
+        return self.entity_stats.toughness_type
+    
+    def get_stance_state(self) -> StanceState:
+        """Получение состояния стойкости"""
+        return self.toughness_data.stance_state
+    
+    def is_stunned(self) -> bool:
+        """Проверка, находится ли сущность в стане"""
+        return self.entity_state == EntityState.STUNNED
+    
+    def get_break_damage_multiplier(self) -> float:
+        """Получение множителя урона при пробитии"""
+        return constants_manager.get_break_damage_multiplier(self.toughness_data.stance_state)
+    
+    def take_toughness_damage(self, damage: float, damage_type: ToughnessType) -> bool:
+        """Получение урона по стойкости"""
+        if not self.entity_settings['toughness_enabled']:
+            return False
+        
+        # Рассчитываем эффективность урона
+        effectiveness = constants_manager.get_toughness_effectiveness(
+            damage_type, self.entity_stats.toughness_type
+        )
+        
+        effective_damage = damage * effectiveness
+        
+        # Применяем урон
+        self.toughness_data.current_toughness = max(0, self.toughness_data.current_toughness - effective_damage)
+        self.entity_stats.toughness = self.toughness_data.current_toughness
+        
+        # Обновляем статистику
+        self.entity_stats_tracking['toughness_damage_taken'] += effective_damage
+        
+        # Проверяем пробитие стойкости
+        if self.toughness_data.current_toughness <= 0:
+            self._break_toughness()
+            return True
+        
+        return False
+    
+    def _break_toughness(self):
+        """Пробитие стойкости"""
+        self.toughness_data.break_count += 1
+        self.entity_stats_tracking['toughness_breaks_suffered'] += 1
+        
+        # Изменяем состояние стойкости
+        if self.toughness_data.stance_state == StanceState.NORMAL:
+            self._change_stance_state(StanceState.WEAKENED)
+        elif self.toughness_data.stance_state == StanceState.WEAKENED:
+            self._change_stance_state(StanceState.BROKEN)
+        else:
+            self._change_stance_state(StanceState.BROKEN)
+        
+        # Применяем стан
+        stun_duration = constants_manager.get_break_stun_duration(self.toughness_data.stance_state)
+        if stun_duration > 0:
+            self.toughness_data.stun_end_time = time.time() + stun_duration
+            self.entity_state = EntityState.STUNNED
+        
+        # Обновляем компонент стойкости
+        if "toughness" in self.components:
+            self.components["toughness"].data["stance_state"] = self.toughness_data.stance_state.value
+    
+    def _change_stance_state(self, new_state: StanceState):
+        """Изменение состояния стойкости"""
+        self.toughness_data.stance_state = new_state
+        logger.debug(f"Сущность {self.name} изменила состояние стойкости на {new_state.value}")
+    
+    def _end_stun(self):
+        """Окончание стана"""
+        self.toughness_data.stun_end_time = 0.0
+        self.entity_state = EntityState.ALIVE
+        logger.debug(f"Сущность {self.name} вышла из стана")
+    
+    # = МЕТОДЫ ДЛЯ МОДИФИКАТОРОВ
+    
+    def add_attribute_modifier(self, modifier: AttributeModifier):
+        """Добавление модификатора атрибута"""
+        self.attribute_modifiers.append(modifier)
+        self._recalculate_stats()
+        logger.debug(f"Добавлен модификатор атрибута {modifier.attribute.value} к {self.name}")
+    
+    def remove_attribute_modifier(self, modifier_id: str):
+        """Удаление модификатора атрибута"""
+        self.attribute_modifiers = [m for m in self.attribute_modifiers if m.modifier_id != modifier_id]
+        self._recalculate_stats()
+        logger.debug(f"Удален модификатор атрибута {modifier_id} из {self.name}")
+    
+    def add_stat_modifier(self, modifier: StatModifier):
+        """Добавление модификатора характеристики"""
+        self.stat_modifiers.append(modifier)
+        self._recalculate_stats()
+        logger.debug(f"Добавлен модификатор характеристики {modifier.stat.value} к {self.name}")
+    
+    def remove_stat_modifier(self, modifier_id: str):
+        """Удаление модификатора характеристики"""
+        self.stat_modifiers = [m for m in self.stat_modifiers if m.modifier_id != modifier_id]
+        self._recalculate_stats()
+        logger.debug(f"Удален модификатор характеристики {modifier_id} из {self.name}")
+    
+    # = МЕТОДЫ ДЛЯ КОМПОНЕНТОВ
+    
+    def add_component(self, component: EntityComponent):
+        """Добавление компонента"""
+        self.components[component.component_type] = component
+        logger.debug(f"Добавлен компонент {component.component_type} к {self.name}")
+    
+    def remove_component(self, component_type: str):
+        """Удаление компонента"""
+        if component_type in self.components:
+            del self.components[component_type]
+            logger.debug(f"Удален компонент {component_type} из {self.name}")
+    
+    def get_component(self, component_type: str) -> Optional[EntityComponent]:
+        """Получение компонента"""
+        return self.components.get(component_type)
+    
+    def has_component(self, component_type: str) -> bool:
+        """Проверка наличия компонента"""
+        return component_type in self.components
+    
+    # = ИНФОРМАЦИОННЫЕ МЕТОДЫ
+    
+    def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о сущности"""
         return {
-            "entity_id": self.entity_id,
-            "name": self.name,
-            "type": self.entity_type.value,
-            "level": self.stats.level,
-            "health": f"{self.stats.health}/{self.stats.max_health}",
-            "mana": f"{self.stats.mana}/{self.stats.max_mana}",
-            "experience": f"{self.stats.experience}/{self.stats.experience_to_next}",
-            "position": self.position,
-            "is_alive": self.is_alive,
-            "is_active": self.is_active
+            'name': self.name,
+            'entity_id': self.entity_id,
+            'entity_type': self.entity_type.value,
+            'state': self.system_state.value,
+            'entity_state': self.entity_state.value,
+            'position': self.position,
+            'components_count': len(self.components),
+            'attribute_modifiers_count': len(self.attribute_modifiers),
+            'stat_modifiers_count': len(self.stat_modifiers),
+            'toughness_data': {
+                'current_toughness': self.toughness_data.current_toughness,
+                'max_toughness': self.entity_stats.max_toughness,
+                'stance_state': self.toughness_data.stance_state.value,
+                'toughness_type': self.entity_stats.toughness_type.value,
+                'is_stunned': self.is_stunned()
+            },
+            'stats_tracking': self.entity_stats_tracking
         }
     
-    def cleanup(self):
-        """Очистка сущности"""
-        try:
-            self.is_active = False
-            self.is_alive = False
-            
-            # Очистка данных
-            self.memory.memories.clear()
-            self.inventory.items.clear()
-            self.inventory.equipped_items.clear()
-            self.emotion.emotion_history.clear()
-            self.skills.skills.clear()
-            self.effects.active_effects.clear()
-            self.effects.passive_effects.clear()
-            self.effects.temporary_effects.clear()
-            
-            logger.info(f"Сущность {self.name} очищена")
-            
-        except Exception as e:
-            logger.error(f"Ошибка очистки {self.name}: {e}")
+    def reset_stats(self):
+        """Сброс статистики"""
+        self.entity_stats_tracking = {
+            'damage_dealt': 0.0,
+            'damage_taken': 0.0,
+            'healing_received': 0.0,
+            'critical_hits': 0,
+            'dodges': 0,
+            'blocks': 0,
+            'toughness_damage_dealt': 0.0,
+            'toughness_breaks_caused': 0,
+            'toughness_damage_taken': 0.0,
+            'toughness_breaks_suffered': 0,
+            'total_stun_time': 0.0,
+            'creation_time': self.entity_stats_tracking['creation_time'],
+            'last_update_time': time.time()
+        }

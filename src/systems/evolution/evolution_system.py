@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
 from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.constants import GeneType, EvolutionType, constants_manager, PROBABILITY_CONSTANTS
 from typing import *
 from typing import Dict, List, Optional, Any, Tuple, Callable
 import logging
@@ -18,14 +19,6 @@ import time
 from abc import ABC, abstractmethod
 
 # = ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
-class GeneType(Enum):
-    """Типы генов"""
-    PHYSICAL = "physical"      # Физические характеристики
-    MENTAL = "mental"          # Умственные способности
-    SOCIAL = "social"          # Социальные навыки
-    SPECIAL = "special"        # Специальные способности
-    COMBAT = "combat"          # Боевые навыки
-    MAGIC = "magic"            # Магические способности
 
 class MutationType(Enum):
     """Типы мутаций"""

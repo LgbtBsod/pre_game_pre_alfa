@@ -1,635 +1,546 @@
+#!/usr/bin/env python3
+"""Расширенный модуль констант - дополнительные типы и константы
+Расширяет базовый модуль констант"""
+
 from dataclasses import dataclass, field
-
 from enum import Enum
-
-from pathlib import Path
-
-from typing import *
-
+from typing import Dict, Any, List, Optional, Tuple
+import json
 import logging
-
 import os
-
-import re
-
-import sys
-
 import time
 
-#!/usr / bin / env python3
-"""Расширенные константы для AI - EVOLVE
-Дополнительные константы для обратной совместимости"""from .constants import constants_manager, DamageType, ItemType, ItemRarity
+from .constants import (
+    DamageType, ItemType, ItemRarity, SkillType, StatType,
+    EmotionType, GeneType, EvolutionType, constants_manager
+)
 
-SkillType, StatType
-# = # ДОПОЛНИТЕЛЬНЫЕ ТИПЫ
-# = class EffectCateg or y(Enum):"""Категории эффектов"""
-INSTANT= "in stant"
-OVER_TIME= "over_time"
-BUFF= "buff"
-DEBUFF= "debuff"
-DOT= "dot"
-HOT= "hot"
-AURA= "aura"
-TRIGGER= "trigger"
-COMBINED= "combin ed"class TriggerType(Enum):"""Типы триггеров для эффектов"""
-ON_HIT= "on_hit"
-ON_CRIT= "on_crit"
-ON_KILL= "on_kill"
-ON_TAKE_DAMAGE= "on_take_damage"
-ON_HEAL= "on_heal"
-ON_SPELL_CAST= "on_spell_cast"
-ON_ITEM_USE= "on_item_use"
-ON_LEVEL_UP= "on_level_up"
-ON_RESIST= "on_resis t"
-ON_EVOLUTION= "on_evolution"
-ON_DEATH= "on_death"
-ON_RESPAWN= "on_respawn"
-ON_ENTER_COMBAT= "on_enter_combat"
-ON_EXIT_COMBAT= "on_exit_combat"
-ON_COMBINE= "on_combin e"class WeaponType(Enum):"""Типы оружия"""
-SWORD= "sw or d"
-AXE= "axe"
-BOW= "bow"
-STAFF= "staff"
-DAGGER= "dagger"
-MACE= "mace"
-SPEAR= "spear"
-HAMMER= "hammer"
-CROSSBOW= "crossbow"
-WAND= "wand "
-GUN= "gun"
-LASER= "laser"
-PLASMA= "plasma"
-QUANTUM= "quantum"class Arm or Type(Enum):"""Типы брони"""
-HELMET= "helmet"
-CHESTPLATE= "chestplate"
-GREAVES= "greaves"
-BOOTS= "boots"
-SHIELD= "shield"
-GLOVES= "gloves"
-PAULDRONS= "pauldrons"
-BELT= "belt"
-CLOAK= "cloak"
-ROBE= "robe"
-PLATE= "plate"
-LEATHER= "leather"
-CHAIN= "chain "
-CLOTH= "cloth"class Access or yType(Enum):"""Типы аксессуаров"""
-RING= "ring"
-NECKLACE= "necklace"
-EARRING= "earring"
-BRACELET= "bracelet"
-AMULET= "amulet"
-TALISMAN= "talis man"
-MEDALLION= "medallion"
-CRYSTAL= "crystal"
-ORB= " or b"
-SCROLL= "scroll"
-POTION= "potion"
-ELIXIR= "elixir"
-BELT= "belt"class ConsumableType(Enum):"""Типы расходников"""
-HEALTH_POTION= "health_potion"
-MANA_POTION= "mana_potion"
-STAMINA_POTION= "stamin a_potion"
-ANTIDOTE= "antidote"
-CURE_POISON= "cure_pois on"
-CURE_DISEASE= "cure_dis ease"
-CURE_CURSE= "cure_curse"
-RESURRECTION= "resurrection"
-TELEPORT= "telep or t"
-INVISIBILITY= "in visibility"
-SPEED_BOOST= "speed_boost"
-STRENGTH_BOOST= "strength_boost"
-INTELLIGENCE_BOOST= "in telligence_boost"
-AGILITY_BOOST= "agility_boost"class SkillCateg or y(Enum):"""Категории навыков"""
-MELEE= "melee"
-RANGED= "ranged"
-MAGIC= "magic"
-HEALING= "healing"
-BUFF= "buff"
-DEBUFF= "debuff"
-MOVEMENT= "movement"
-DEFENSE= "defense":
-pass  # Добавлен pass в пустой блок
-UTILITY= "utility"
-COMBAT= "combat"class GeneType(Enum):"""Типы генов"""
-STRENGTH= "strength"
-AGILITY= "agility"
-INTELLIGENCE= "in telligence"
-CONSTITUTION= "constitution"
-WISDOM= "wis dom"
-CHARISMA= "charis ma"
-LUCK= "luck"
-VITALITY= "vitality"
-RESISTANCE= "resis tance"
-ADAPTATION= "adaptation"
-MUTATION= "mutation"
-EVOLUTION= "evolution"
-FIRE_AFFINITY= "fire_affin ity"
-ICE_AFFINITY= "ice_affin ity"
-LIGHTNING_AFFINITY= "lightning_affin ity"
-EARTH_AFFINITY= "earth_affin ity"
-WIND_AFFINITY= "win d_affin ity"
-WATER_AFFINITY= "water_affin ity"
-LIGHT_AFFINITY= "light_affin ity"
-DARK_AFFINITY= "dark_affin ity"
-TELEPATHY= "telepathy"
-TELEKINESIS= "telekin esis "
-SHAPESHIFTING= "shapeshifting":
-pass  # Добавлен pass в пустой блок
-REGENERATION= "regeneration"
-IMMORTALITY= "imm or tality"
-PHASING= "phasing"
-TIME_MANIPULATION= "time_manipulation"
-SPACE_MANIPULATION= "space_manipulation"
-EMOTIONAL_STABILITY= "emotional_stability"
-EMPATHY= "empathy"
-COURAGE= "courage"
-CALMNESS= "calmness"
-AGGRESSION= "aggression"
-FEAR_RESISTANCE= "fear_resis tance"
-MEMORY_ENHANCEMENT= "mem or y_enhancement"
-LEARNING_SPEED= "learning_speed"
-CREATIVITY= "creativity"
-LOGICAL_THINKING= "logical_thin king"
-INTUITION= "in tuition"
-FOCUS= "focus"
-WINGS= "wings"
-SCALES= "scales"
-FUR= "fur"
-CLAWS= "claws"
-FANGS= "fangs"
-HORNS= "h or ns"
-TAIL= "tail"
-EXTRA_LIMBS= "extra_limbs"
-FAST_METABOLISM= "fast_metabolis m"
-SLOW_METABOLISM= "slow_metabolis m"
-TOXIN_RESISTANCE= "toxin _resis tance"
-DISEASE_RESISTANCE= "dis ease_resis tance"
-HEALING_FACTOR= "healing_fact or "
-AGING_RESISTANCE= "aging_resis tance"
-LEADERSHIP= "leadership"
-DIPLOMACY= "diplomacy"
-INTIMIDATION= "in timidation"
-PERSUASION= "persuasion"
-TEAMWORK= "teamw or k"
-SOLITARY= "solitary"
-CRAFTING_MASTERY= "crafting_mastery"
-COMBAT_MASTERY= "combat_mastery"
-MAGIC_MASTERY= "magic_mastery"
-STEALTH_MASTERY= "stealth_mastery"
-SURVIVAL_MASTERY= "survival_mastery"
-EXPLORATION_MASTERY= "expl or ation_mastery"class GeneRarity(Enum):"""Редкость генов"""
-COMMON= "common"
-UNCOMMON= "uncommon"
-RARE= "rare"
-EPIC= "epic"
-LEGENDARY= "legendary"
-MYTHIC= "mythic"
-DIVINE= "divin e"class EvolutionStage(Enum):"""Стадии эволюции"""
-BASIC= "basic"
-INTERMEDIATE= "in termediate"
-ADVANCED= "advanced"
-ELITE= "elite"
-MASTER= "master"
-LEGENDARY= "legendary"
-MYTHIC= "mythic"
-DIVINE= "divin e"def __lt__(self, other):
-if isin stance(other, EvolutionStage):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-order= {
-EvolutionStage.BASIC: 0,
-EvolutionStage.INTERMEDIATE: 1,
-EvolutionStage.ADVANCED: 2,
-EvolutionStage.ELITE: 3,
-EvolutionStage.MASTER: 4,
-EvolutionStage.LEGENDARY: 5,
-EvolutionStage.MYTHIC: 6,
-EvolutionStage.DIVINE: 7
+logger = logging.getLogger(__name__)
+
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ
+
+class BiomeType(Enum):
+    """Типы биомов"""
+    FOREST = "forest"
+    DESERT = "desert"
+    MOUNTAIN = "mountain"
+    OCEAN = "ocean"
+    TUNDRA = "tundra"
+    SWAMP = "swamp"
+    VOLCANO = "volcano"
+    CRYSTAL = "crystal"
+    EVOLUTIONARY = "evolutionary"
+    MEMORY = "memory"
+
+class StructureType(Enum):
+    """Типы структур"""
+    DUNGEON = "dungeon"
+    SETTLEMENT = "settlement"
+    TOWER = "tower"
+    TEMPLE = "temple"
+    LABORATORY = "laboratory"
+    EVOLUTION_CHAMBER = "evolution_chamber"
+    MEMORY_VAULT = "memory_vault"
+    PORTAL = "portal"
+
+class EnemyType(Enum):
+    """Типы врагов"""
+    WILD_ANIMAL = "wild_animal"
+    MUTANT = "mutant"
+    EVOLVED = "evolved"
+    BOSS = "boss"
+    ELITE = "elite"
+    MINION = "minion"
+    GUARDIAN = "guardian"
+    EVOLUTIONARY = "evolutionary"
+
+class BossPhase(Enum):
+    """Фазы боссов"""
+    NORMAL = "normal"
+    ENRAGED = "enraged"
+    EVOLVED = "evolved"
+    FINAL = "final"
+    TRANSCENDENT = "transcendent"
+
+class QuestType(Enum):
+    """Типы квестов"""
+    MAIN = "main"
+    SIDE = "side"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    EVOLUTION = "evolution"
+    MEMORY = "memory"
+    SOCIAL = "social"
+    EXPLORATION = "exploration"
+
+class QuestStatus(Enum):
+    """Статусы квестов"""
+    AVAILABLE = "available"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    EVOLVED = "evolved"
+
+class DialogueType(Enum):
+    """Типы диалогов"""
+    GREETING = "greeting"
+    QUEST = "quest"
+    TRADE = "trade"
+    SOCIAL = "social"
+    EVOLUTION = "evolution"
+    MEMORY = "memory"
+    EMOTIONAL = "emotional"
+
+class TradeType(Enum):
+    """Типы торговли"""
+    BUY = "buy"
+    SELL = "sell"
+    EXCHANGE = "exchange"
+    CRAFT = "craft"
+    EVOLUTION = "evolution"
+    MEMORY = "memory"
+
+class CraftingType(Enum):
+    """Типы крафтинга"""
+    WEAPON = "weapon"
+    ARMOR = "armor"
+    ACCESSORY = "accessory"
+    CONSUMABLE = "consumable"
+    TOOL = "tool"
+    EVOLUTION = "evolution"
+    MEMORY = "memory"
+
+class MemoryType(Enum):
+    """Типы памяти"""
+    SHORT_TERM = "short_term"
+    LONG_TERM = "long_term"
+    EPISODIC = "episodic"
+    SEMANTIC = "semantic"
+    PROCEDURAL = "procedural"
+    EMOTIONAL = "emotional"
+    GENETIC = "genetic"
+    EVOLUTIONARY = "evolutionary"
+
+class MemoryImportance(Enum):
+    """Важность памяти"""
+    TRIVIAL = 1
+    MINOR = 2
+    MODERATE = 3
+    IMPORTANT = 4
+    CRITICAL = 5
+    EVOLUTIONARY = 6
+
+class WorldEventType(Enum):
+    """Типы мировых событий"""
+    NATURAL_DISASTER = "natural_disaster"
+    EVOLUTION_WAVE = "evolution_wave"
+    MEMORY_STORM = "memory_storm"
+    BOSS_SPAWN = "boss_spawn"
+    PORTAL_OPENING = "portal_opening"
+    MUTATION_OUTBREAK = "mutation_outbreak"
+
+class WeatherType(Enum):
+    """Типы погоды"""
+    CLEAR = "clear"
+    CLOUDY = "cloudy"
+    RAIN = "rain"
+    STORM = "storm"
+    SNOW = "snow"
+    FOG = "fog"
+    EVOLUTIONARY = "evolutionary"
+    MEMORY = "memory"
+
+class TimeOfDay(Enum):
+    """Время суток"""
+    DAWN = "dawn"
+    MORNING = "morning"
+    NOON = "noon"
+    AFTERNOON = "afternoon"
+    DUSK = "dusk"
+    NIGHT = "night"
+    MIDNIGHT = "midnight"
+
+class SeasonType(Enum):
+    """Типы сезонов"""
+    SPRING = "spring"
+    SUMMER = "summer"
+    AUTUMN = "autumn"
+    WINTER = "winter"
+    EVOLUTIONARY = "evolutionary"
+
+class CameraMode(Enum):
+    """Режимы камеры"""
+    ISOMETRIC = "isometric"
+    THIRD_PERSON = "third_person"
+    FIRST_PERSON = "first_person"
+    TOP_DOWN = "top_down"
+    FREE = "free"
+
+class InputType(Enum):
+    """Типы ввода"""
+    KEYBOARD = "keyboard"
+    MOUSE = "mouse"
+    GAMEPAD = "gamepad"
+    TOUCH = "touch"
+    VOICE = "voice"
+
+class AudioType(Enum):
+    """Типы аудио"""
+    MUSIC = "music"
+    SFX = "sfx"
+    VOICE = "voice"
+    AMBIENT = "ambient"
+    EVOLUTIONARY = "evolutionary"
+
+class ParticleType(Enum):
+    """Типы частиц"""
+    FIRE = "fire"
+    WATER = "water"
+    LIGHTNING = "lightning"
+    SMOKE = "smoke"
+    SPARKLE = "sparkle"
+    EVOLUTION = "evolution"
+    MEMORY = "memory"
+
+class AnimationType(Enum):
+    """Типы анимации"""
+    IDLE = "idle"
+    WALK = "walk"
+    RUN = "run"
+    ATTACK = "attack"
+    DEFEND = "defend"
+    EVOLVE = "evolve"
+    EMOTE = "emote"
+
+# = ДОПОЛНИТЕЛЬНЫЕ СТРУКТУРЫ
+
+@dataclass
+class BiomeData:
+    """Данные биома"""
+    name: str
+    type: BiomeType
+    temperature: float
+    humidity: float
+    elevation: float
+    vegetation_density: float
+    enemy_spawn_rate: float
+    resource_abundance: float
+    evolution_influence: float
+    memory_influence: float
+
+@dataclass
+class StructureData:
+    """Данные структуры"""
+    name: str
+    type: StructureType
+    size: Tuple[int, int, int]
+    complexity: int
+    difficulty: int
+    rewards: Dict[str, Any]
+    evolution_requirements: List[str]
+    memory_requirements: List[str]
+
+@dataclass
+class EnemyData:
+    """Данные врага"""
+    name: str
+    type: EnemyType
+    level: int
+    health: int
+    damage: int
+    skills: List[str]
+    evolution_stage: int
+    memory_capacity: int
+    behavior: str
+    rewards: Dict[str, Any]
+
+@dataclass
+class BossData:
+    """Данные босса"""
+    name: str
+    phases: List[BossPhase]
+    health_per_phase: List[int]
+    damage_per_phase: List[int]
+    skills_per_phase: List[List[str]]
+    evolution_requirements: List[str]
+    memory_requirements: List[str]
+    rewards: Dict[str, Any]
+
+@dataclass
+class QuestData:
+    """Данные квеста"""
+    name: str
+    type: QuestType
+    description: str
+    objectives: List[str]
+    rewards: Dict[str, Any]
+    evolution_requirements: List[str]
+    memory_requirements: List[str]
+    time_limit: Optional[float]
+
+@dataclass
+class DialogueData:
+    """Данные диалога"""
+    id: str
+    type: DialogueType
+    speaker: str
+    text: str
+    responses: List[str]
+    emotion_influence: Dict[EmotionType, float]
+    memory_influence: Dict[MemoryType, float]
+    evolution_influence: float
+
+@dataclass
+class MemoryData:
+    """Данные памяти"""
+    id: str
+    type: MemoryType
+    content: str
+    importance: MemoryImportance
+    emotion: EmotionType
+    intensity: float
+    creation_time: float
+    decay_rate: float
+    evolution_influence: float
+
+# = ДОПОЛНИТЕЛЬНЫЕ КОНСТАНТЫ
+
+# Константы для биомов
+BIOME_CONSTANTS = {
+    "forest": {
+        "temperature": 0.6,
+        "humidity": 0.8,
+        "elevation": 0.3,
+        "vegetation_density": 0.9,
+        "enemy_spawn_rate": 0.1,
+        "resource_abundance": 0.7,
+        "evolution_influence": 0.3,
+        "memory_influence": 0.4
+    },
+    "desert": {
+        "temperature": 0.9,
+        "humidity": 0.1,
+        "elevation": 0.2,
+        "vegetation_density": 0.1,
+        "enemy_spawn_rate": 0.15,
+        "resource_abundance": 0.3,
+        "evolution_influence": 0.6,
+        "memory_influence": 0.2
+    },
+    "mountain": {
+        "temperature": 0.3,
+        "humidity": 0.5,
+        "elevation": 0.9,
+        "vegetation_density": 0.4,
+        "enemy_spawn_rate": 0.2,
+        "resource_abundance": 0.6,
+        "evolution_influence": 0.7,
+        "memory_influence": 0.5
+    },
+    "evolutionary": {
+        "temperature": 0.7,
+        "humidity": 0.6,
+        "elevation": 0.5,
+        "vegetation_density": 0.8,
+        "enemy_spawn_rate": 0.25,
+        "resource_abundance": 0.9,
+        "evolution_influence": 1.0,
+        "memory_influence": 0.8
+    }
 }
-return order[self] < order[other]
-return NotImplemented
-class EvolutionType(Enum):"""Типы эволюции"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-NATURAL= "natural"
-FORCED= "for ced":
-pass  # Добавлен pass в пустой блок
-MUTATION= "mutation"
-FUSION= "fusion"
-ABSORPTION= "abs or ption"
-TRANSFORMATION= "transformation":
-pass  # Добавлен pass в пустой блок
-FIRE_EVOLUTION= "fire_evolution"
-ICE_EVOLUTION= "ice_evolution"
-LIGHTNING_EVOLUTION= "lightning_evolution"
-EARTH_EVOLUTION= "earth_evolution"
-WIND_EVOLUTION= "win d_evolution"
-WATER_EVOLUTION= "water_evolution"
-LIGHT_EVOLUTION= "light_evolution"
-DARK_EVOLUTION= "dark_evolution"
-PSYCHIC_EVOLUTION= "psychic_evolution"
-TECHNOLOGICAL_EVOLUTION= "technological_evolution"
-SPIRITUAL_EVOLUTION= "spiritual_evolution"
-CHAOS_EVOLUTION= "chaos_evolution"
-ORDER_EVOLUTION= " or der_evolution"
-VOID_EVOLUTION= "void_evolution"
-HYBRID_EVOLUTION= "hybrid_evolution"
-CHIMERA_EVOLUTION= "chimera_evolution"
-SYMBIOTIC_EVOLUTION= "symbiotic_evolution"
-PARASITIC_EVOLUTION= "parasitic_evolution"
-COSMIC_EVOLUTION= "cosmic_evolution"
-DIMENSIONAL_EVOLUTION= "dimensional_evolution"
-TEMPORAL_EVOLUTION= "temp or al_evolution"
-QUANTUM_EVOLUTION= "quantum_evolution"class EmotionType(Enum):"""Типы эмоций"""
-JOY= "joy"
-SADNESS= "sadness"
-ANGER= "anger"
-FEAR= "fear"
-SURPRISE= "surpris e"
-DISGUST= "dis gust"
-TRUST= "trust"
-ANTICIPATION= "anticipation"
-LOVE= "love"
-HATE= "hate"
-CONFUSION= "confusion"
-EXCITEMENT= "excitement"
-CALMNESS= "calmness"
-ANXIETY= "anxiety"
-EUPHORIA= "euph or ia"
-CONTENTMENT= "contentment"
-GRATITUDE= "gratitude"
-HOPE= "hope"
-INSPIRATION= "in spiration"
-PRIDE= "pride"
-SATISFACTION= "satis faction"
-WONDER= "wonder"
-AMUSEMENT= "amusement"
-ADMIRATION= "admiration"
-DESPAIR= "despair"
-RAGE= "rage"
-TERROR= "terr or "
-SHAME= "shame"
-GUILT= "guilt"
-ENVY= "envy"
-JEALOUSY= "jealousy"
-DISAPPOINTMENT= "dis appoin tment"
-FRUSTRATION= "frustration"
-LONELINESS= "lonelin ess"
-EMPATHY= "empathy"
-COMPASSION= "compassion"
-CONTEMPT= "contempt"
-INDIGNATION= "in dignation"
-SYMPATHY= "sympathy"
-PITY= "pity"
-RESPECT= "respect"
-DISRESPECT= "dis respect"
-LOYALTY= "loyalty"
-CURIOSITY= "curiosity"
-INTEREST= "in terest"
-BOREDOM= "b or edom"
-FASCINATION= "fascin ation"
-PERPLEXITY= "perplexity"
-CERTAINTY= "certain ty"
-DOUBT= "doubt"
-AWE= "awe"
-BEAUTY= "beauty"
-SUBLIME= "sublime"
-UGLINESS= "uglin ess"
-HARMONY= "harmony"
-DISCORD= "dis cord"
-RIGHTEOUSNESS= "righteousness"
-REMORSE= "rem or se"
-INNOCENCE= "in nocence"
-CORRUPTION= "c or ruption"
-HONOR= "hon or "
-DISHONOR= "dis hon or "
-MEANINGFULNESS= "meaningfulness"
-MEANINGLESSNESS= "meaninglessness"
-TRANSCENDENCE= "transcendence"
-ISOLATION= "is olation"
-CONNECTION= "connection"
-DISCONNECTION= "dis connection"class EmotionIntensity(Enum):"""Интенсивность эмоций"""
-MINIMAL= "min imal"
-WEAK= "weak"
-LOW= "low"
-MODERATE= "moderate"
-MEDIUM= "medium"
-STRONG= "strong"
-HIGH= "high"
-INTENSE= "in tense"
-EXTREME= "extreme"
-OVERWHELMING= "overwhelming"class EnemyType(Enum):"""Типы врагов"""
-MELEE= "melee"
-RANGED= "ranged"
-MAGIC= "magic"
-FLYING= "flying"
-UNDEAD= "undead"
-BEAST= "beast"
-HUMAN= "human"
-DEMON= "demon"
-DRAGON= "dragon"
-ELEMENTAL= "elemental"
-CONSTRUCT= "construct"
-ABERRATION= "aberration"class BossType(Enum):"""Типы боссов"""
-MINI_BOSS= "min i_boss"
-AREA_BOSS= "area_boss"
-DUNGEON_BOSS= "dungeon_boss"
-WORLD_BOSS= "w or ld_boss"
-FINAL_BOSS= "fin al_boss"
-RAID_BOSS= "raid_boss"
-EVENT_BOSS= "event_boss"class AttackType(Enum):"""Типы атак"""
-MELEE= "melee"
-RANGED= "ranged"
-MAGIC= "magic"
-SPECIAL= "special"
-CRITICAL= "critical"
-COUNTER= "counter"
-AREA= "area"
-CHAIN= "chain "
-PIERCING= "piercing"class StatCateg or y(Enum):"""Категории характеристик"""
-PRIMARY= "primary"
-SECONDARY= "secondary"
-COMBAT= "combat"
-DEFENSIVE= "defensive":
-pass  # Добавлен pass в пустой блок
-UTILITY= "utility"
-HIDDEN= "hidden"class ContentType(Enum):"""Типы контента"""
-WEAPON= "weapon"
-ARMOR= "arm or "
-ACCESSORY= "access or y"
-CONSUMABLE= "consumable"
-GENE= "gene"
-SKILL= "skill"
-EFFECT= "effect"
-MATERIAL= "material"
-ENEMY= "enemy"
-BOSS= "boss"
-NPC= "npc"
-QUEST= "quest"
-LOCATION= "location"
-DAMAGE_COMBINATION= "damage_combin ation"class ContentRarity(Enum):"""Редкость контента"""
-COMMON= "common"
-UNCOMMON= "uncommon"
-RARE= "rare"
-EPIC= "epic"
-LEGENDARY= "legendary"
-MYTHIC= "mythic"
-DIVINE= "divin e"class UIElementType(Enum):"""Типы UI элементов"""
-BUTTON= "button"
-LABEL= "label"
-INPUT= "in put"
-SLIDER= "slider"
-CHECKBOX= "checkbox"
-RADIO= "radio"
-DROPDOWN= "dropdown"
-LIST= "lis t"
-GRID= "grid"
-PANEL= "panel"
-WINDOW= "win dow"
-TOOLTIP= "tooltip"
-PROGRESS_BAR= "progress_bar"
-INVENTORY_SLOT= "in vent or y_slot"
-SKILL_SLOT= "skill_slot"
-STAT_DISPLAY= "stat_dis play"
-HEALTH_BAR= "health_bar"
-MANA_BAR= "mana_bar"
-EXPERIENCE_BAR= "experience_bar"class UIState(Enum):"""Состояния UI элементов"""
-NORMAL= "n or mal"
-HOVERED= "hovered"
-PRESSED= "pressed"
-DISABLED= "dis abled"
-ACTIVE= "active"
-INACTIVE= "in active"
-FOCUSED= "focused"
-SELECTED= "selected"class RenderQuality(Enum):"""Качество рендеринга"""
-LOW= "low"
-MEDIUM= "medium"
-HIGH= "high"
-ULTRA= "ultra"
-CUSTOM= "custom"class RenderLayer(Enum):"""Слои рендеринга"""
-BACKGROUND= "background"
-TERRAIN= "terrain "
-OBJECTS= "objects"
-ENTITIES= "entities"
-EFFECTS= "effects"
-UI= "ui"
-OVERLAY= "overlay"class W or ldObjectType(Enum):"""Типы объектов мира"""
-OBSTACLE= "obstacle"
-TRAP= "trap"
-CHEST= "chest"
-ENEMY= "enemy"
-GEO_OBSTACLE= "geo_obstacle"
-DECORATION= "dec or ation"class ObjectCateg or y(Enum):"""Категории объектов"""
-COMBAT= "combat"
-EXPLORATION= "expl or ation"
-ENVIRONMENT= "environment"
-REWARDS= "rewards"class ObjectState(Enum):"""Состояния объектов"""
-ACTIVE= "active"
-INACTIVE= "in active"
-DESTROYED= "destroyed"
-TRIGGERED= "triggered"
-LOCKED= "locked"class Creat or Mode(Enum):"""Режимы создания"""
-PLACEMENT= "placement"
-EDIT= "edit"
-PREVIEW= "preview"
-CLEAR= "clear"class ToolType(Enum):"""Типы инструментов"""
-SELECT= "select"
-PLACE= "place"
-MOVE= "move"
-ROTATE= "rotate"
-SCALE= "scale"
-DELETE= "delete"
-COPY= "copy"
-PASTE= "paste"class SystemPri or ity(Enum):"""Приоритеты систем"""
-CRITICAL= "critical"
-HIGH= "high"
-NORMAL= "n or mal"
-LOW= "low"
-BACKGROUND= "background"class SystemState(Enum):"""Состояния систем"""
-UNINITIALIZED= "unin itialized"
-INITIALIZING= "in itializing"
-READY= "ready"
-PAUSED= "paused"
-ERROR= "err or "
-DESTROYED= "destroyed"class ItemCateg or y(Enum):"""Категории предметов(для совместимости)"""
-WEAPON= "weapon"
-ARMOR= "arm or "
-ACCESSORY= "access or y"
-CONSUMABLE= "consumable"
-MATERIAL= "material"
-TOOL= "tool"
-GEM= "gem"
-SCROLL= "scroll"
-BOOK= "book"
-KEY= "key"
-CURRENCY= "currency"class ItemSlot(Enum):"""Слоты экипировки"""
-WEAPON= "weapon"
-ARMOR_HEAD= "arm or _head"
-ARMOR_CHEST= "arm or _chest"
-ARMOR_LEGS= "arm or _legs"
-ARMOR_FEET= "arm or _feet"
-ACCESSORY_1= "access or y_1"
-ACCESSORY_2= "access or y_2"
-ACCESSORY_3= "access or y_3"# = # ДОПОЛНИТЕЛЬНЫЕ КОНСТАНТЫ
-# = # Шаблоны генерации навыков
-SKILL_GENERATION_TEMPLATES= {"attack": {
-"name_patterns": ["Slash", "Strike", "Thrust", "Cleave", "Smash"],
-"base_damage": 20,
-"mana_cost": 10,
-"cooldown": 3.0,
-"range": 1.5,
-"effects": ["damage"],
-"requirements": ["strength"],
-"animation": "attack"},"magic": {
-"name_patterns": ["Fireball", "Ice Bolt", "Lightning", "Arcane Blast", "Shadow Bolt"],
-"base_damage": 25,
-"mana_cost": 20,
-"cooldown": 5.0,
-"range": 5.0,
-"effects": ["damage", "elemental"],
-"requirements": ["in telligence"],
-"animation": "cast"},"healing": {
-"name_patterns": ["Heal", "Cure", "Rest or e", "Regenerate", "Revitalize"],
-"base_healing": 30,
-"mana_cost": 25,
-"cooldown": 8.0,
-"range": 3.0,
-"effects": ["healing"],
-"requirements": ["wis dom"],
-"animation": "heal"}
+
+# Константы для структур
+STRUCTURE_CONSTANTS = {
+    "dungeon": {
+        "size_range": ((10, 10, 5), (50, 50, 20)),
+        "complexity_range": (3, 8),
+        "difficulty_range": (1, 10),
+        "evolution_requirements": ["level_5", "memory_100"],
+        "memory_requirements": ["exploration_skill_3"]
+    },
+    "evolution_chamber": {
+        "size_range": ((20, 20, 10), (30, 30, 15)),
+        "complexity_range": (7, 10),
+        "difficulty_range": (8, 10),
+        "evolution_requirements": ["level_10", "evolution_points_50"],
+        "memory_requirements": ["evolution_memory_100"]
+    },
+    "memory_vault": {
+        "size_range": ((15, 15, 8), (25, 25, 12)),
+        "complexity_range": (5, 9),
+        "difficulty_range": (6, 9),
+        "evolution_requirements": ["level_7", "memory_capacity_200"],
+        "memory_requirements": ["memory_skill_5"]
+    }
 }
-# Множители силы навыков
-SKILL_POWER_MULTIPLIERS= {"common": 1.0,
-"uncommon": 1.2,
-"rare": 1.5,
-"epic": 2.0,
-"legendary": 3.0,
-"mythic": 4.0,
-"divin e": 5.0
+
+# Константы для врагов
+ENEMY_CONSTANTS = {
+    "wild_animal": {
+        "health_multiplier": 1.0,
+        "damage_multiplier": 1.0,
+        "skill_count_range": (1, 3),
+        "evolution_chance": 0.01,
+        "memory_capacity": 50
+    },
+    "mutant": {
+        "health_multiplier": 1.5,
+        "damage_multiplier": 1.3,
+        "skill_count_range": (2, 4),
+        "evolution_chance": 0.05,
+        "memory_capacity": 100
+    },
+    "boss": {
+        "health_multiplier": 5.0,
+        "damage_multiplier": 2.0,
+        "skill_count_range": (5, 8),
+        "evolution_chance": 0.2,
+        "memory_capacity": 500
+    },
+    "evolutionary": {
+        "health_multiplier": 3.0,
+        "damage_multiplier": 1.8,
+        "skill_count_range": (4, 7),
+        "evolution_chance": 0.15,
+        "memory_capacity": 300
+    }
 }
-# Формулы расчета характеристик
-STAT_CALCULATION_FORMULAS= {
-"health": lambda base, level, bonus: int(base * (1 + level * 0.1) + bonus),
-"mana": lambda base, level, bonus: int(base * (1 + level * 0.15) + bonus),
-"stamin a": lambda base, level, bonus: int(base * (1 + level * 0.12) + bonus),
-"attack": lambda base, level, bonus: int(base * (1 + level * 0.08) + bonus),
-"defense": lambda base, level, bonus: int(base * (1 + level * 0.06) + bonus),
-"speed": lambda base, level, bonus: base * (1 + level * 0.02) + bonus,
-"critical_chance": lambda base, level, bonus: m in(0.95, base + level * 0.01 + bonus),
-"critical_multiplier": lambda base, level, bonus: base + level * 0.05 + bonus
+
+# Константы для квестов
+QUEST_CONSTANTS = {
+    "main": {
+        "reward_multiplier": 2.0,
+        "experience_multiplier": 1.5,
+        "evolution_points": 10,
+        "memory_points": 50
+    },
+    "side": {
+        "reward_multiplier": 1.0,
+        "experience_multiplier": 1.0,
+        "evolution_points": 5,
+        "memory_points": 25
+    },
+    "evolution": {
+        "reward_multiplier": 1.5,
+        "experience_multiplier": 1.2,
+        "evolution_points": 20,
+        "memory_points": 75
+    },
+    "memory": {
+        "reward_multiplier": 1.3,
+        "experience_multiplier": 1.1,
+        "evolution_points": 8,
+        "memory_points": 100
+    }
 }
-# Настройки мира
-WORLD_SETTINGS= {
-"max_objects": 1000,
-"w or ld_bounds": ( - 50, 50, -50, 50),
-"collis ion_enabled": True,
-"physics_enabled": True,
-"grid_snap": True,
-"grid_size": 1.0,
-"weather_enabled": False,
-"show_preview": True,
-"auto_save": True,
-"auto_save_in terval": 300.0
+
+# Константы для диалогов
+DIALOGUE_CONSTANTS = {
+    "greeting": {
+        "emotion_influence": 0.1,
+        "memory_influence": 0.05,
+        "evolution_influence": 0.0
+    },
+    "quest": {
+        "emotion_influence": 0.3,
+        "memory_influence": 0.2,
+        "evolution_influence": 0.1
+    },
+    "evolution": {
+        "emotion_influence": 0.5,
+        "memory_influence": 0.4,
+        "evolution_influence": 0.8
+    },
+    "memory": {
+        "emotion_influence": 0.4,
+        "memory_influence": 0.6,
+        "evolution_influence": 0.2
+    }
 }
-# Настройки камеры
-CAMERA_SETTINGS= {
-"default_zoom": 1.0,
-"min _zoom": 0.1,
-"max_zoom": 5.0,
-"zoom_speed": 0.1,
-"pan_speed": 1.0,
-"rotation_speed": 1.0,
-" or thographic": True,
-"film_size": (40, 30),
-"near_far": ( - 100, 100)
+
+# Константы для памяти
+MEMORY_CONSTANTS = {
+    "short_term": {
+        "decay_rate": 0.1,
+        "capacity": 100,
+        "importance_range": (1, 3)
+    },
+    "long_term": {
+        "decay_rate": 0.01,
+        "capacity": 1000,
+        "importance_range": (2, 5)
+    },
+    "episodic": {
+        "decay_rate": 0.05,
+        "capacity": 500,
+        "importance_range": (3, 6)
+    },
+    "evolutionary": {
+        "decay_rate": 0.001,
+        "capacity": 2000,
+        "importance_range": (4, 6)
+    }
 }
-# Настройки UI
-UI_SETTINGS= {
-"theme": "dark",
-"font_size": 14,
-"button_size": (100, 30),
-"panel_opacity": 0.8,
-"animation_enabled": True,
-"auto_layout_enabled": True,
-"theme_switching_enabled": True,
-"event_bubbling_enabled": True
+
+# Константы для процедурной генерации контента
+CONTENT_GENERATION_CONSTANTS = {
+    "boss_skills_variation": 0.3,  # 30% вариация навыков боссов
+    "weapon_stats_variation": 0.25,  # 25% вариация статов оружия
+    "jewelry_stats_variation": 0.2,  # 20% вариация статов украшений
+    "skill_stats_variation": 0.35,  # 35% вариация статов навыков
+    "session_uniqueness_factor": 0.8,  # Фактор уникальности сессии
+    "level_progression_factor": 1.2,  # Фактор прогрессии уровня
+    "evolution_influence_factor": 1.5,  # Фактор влияния эволюции
+    "memory_influence_factor": 1.3   # Фактор влияния памяти
 }
-# Цвета для UI
-UI_COLORS= {
-"primary": (51, 122, 183, 255),
-"secondary": (92, 184, 92, 255),
-"success": (92, 184, 92, 255),
-"warning": (240, 173, 78, 255),
-"danger": (217, 83, 79, 255),
-"in fo": (91, 192, 222, 255),
-"light": (248, 249, 250, 255),
-"dark": (52, 58, 64, 255),
-"white": (255, 255, 255, 255),
-"black": (0, 0, 0, 255),
-"transparent": (0, 0, 0, 0),
-"grid": (0.3, 0.3, 0.3, 0.5),
-"selection": (0, 255, 255, 0.5),
-"preview": (255, 255, 0, 0.3)
+
+# Константы для сессий
+SESSION_GENERATION_CONSTANTS = {
+    "content_generation_timeout": 30.0,  # Таймаут генерации контента
+    "max_content_items_per_session": 1000,  # Максимум предметов контента на сессию
+    "content_cache_size": 100,  # Размер кэша контента
+    "session_data_compression": True,  # Сжатие данных сессии
+    "backup_frequency": 300,  # Частота резервного копирования (5 минут)
+    "session_cleanup_interval": 3600,  # Интервал очистки сессий (1 час)
+    "max_session_age": 86400  # Максимальный возраст сессии (24 часа)
 }
-# Шаблоны объектов
-DEFAULT_OBJECT_TEMPLATES= {
-"wall": {
-"name": "Стена",
-"type": W or ldObjectType.OBSTACLE,
-"categ or y": ObjectCateg or y.ENVIRONMENT,
-"description": "Непроходимое препятствие",
-"icon": "🧱",
-"cost": 10,
-"unlock_level": 1,
-"properties": {
-"width": 2.0,
-"height": 3.0,
-"depth": 0.5,
-"col or ": (0.5, 0.5, 0.5, 1.0),
-"collis ion": True,
-"destructible": False
+
+# Константы для визуализации эмоций
+EMOTION_VISUALIZATION_CONSTANTS = {
+    "disc_radius": 0.5,
+    "disc_height": 2.0,
+    "color_intensity_range": (0.3, 1.0),
+    "pulse_frequency": 2.0,  # Гц
+    "rotation_speed": 1.0,  # Радиан/сек
+    "fade_duration": 0.5,  # Секунды
+    "max_emotion_discs": 10  # Максимум дисков эмоций на экране
 }
-},
-"spikes": {
-"name": "Шипы",
-"type": W or ldObjectType.TRAP,
-"categ or y": ObjectCateg or y.COMBAT,
-"description": "Ловушка, наносящая урон",
-"icon": "🗡️",
-"cost": 25,
-"unlock_level": 2,
-"properties": {
-"width": 1.0,
-"height": 0.5,
-"depth": 1.0,
-"col or ": (0.8, 0.2, 0.2, 1.0),
-"damage": 20,
-"trigger_type": "step",
-"hidden": True
+
+# Константы для геометрических фигур
+GEOMETRIC_SHAPE_CONSTANTS = {
+    "sphere": {
+        "radius": 0.5,
+        "segments": 16,
+        "color": (0.8, 0.8, 0.8, 1.0)
+    },
+    "cube": {
+        "size": 1.0,
+        "color": (0.6, 0.6, 0.6, 1.0)
+    },
+    "cylinder": {
+        "radius": 0.5,
+        "height": 1.0,
+        "segments": 12,
+        "color": (0.7, 0.7, 0.7, 1.0)
+    },
+    "dodecahedron": {
+        "radius": 0.5,
+        "color": (0.9, 0.3, 0.3, 1.0)
+    },
+    "octahedron": {
+        "radius": 0.5,
+        "color": (0.3, 0.9, 0.3, 1.0)
+    }
 }
-}
-}
-# Экспортируем все для обратной совместимости
-__all__= [
-'EffectCateg or y', 'TriggerType', 'WeaponType', 'Arm or Type', 'Access or yType',
-'ConsumableType', 'SkillCateg or y', 'GeneType', 'GeneRarity', 'EvolutionStage',
-'EvolutionType', 'EmotionType', 'EmotionIntensity', 'EnemyType', 'BossType',
-'AttackType', 'StatCateg or y', 'ContentType', 'ContentRarity', 'UIElementType',
-'UIState', 'RenderQuality', 'RenderLayer', 'W or ldObjectType', 'ObjectCateg or y',
-'ObjectState', 'Creat or Mode', 'ToolType', 'SystemPri or ity', 'SystemState',
-'ItemCateg or y', 'ItemSlot', 'SKILL_GENERATION_TEMPLATES', 'SKILL_POWER_MULTIPLIERS',
-'STAT_CALCULATION_FORMULAS', 'WORLD_SETTINGS', 'CAMERA_SETTINGS', 'UI_SETTINGS',
-'UI_COLORS', 'DEFAULT_OBJECT_TEMPLATES'
-]
+
+logger.info("Расширенный модуль констант загружен")

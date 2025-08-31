@@ -1,391 +1,327 @@
-from dataclasses import dataclass, field
+#!/usr/bin/env python3
+"""Тесты для EvolutionSystem - проверка интеграции с новой архитектурой"""
 
-from enum import Enum
-
-from pathlib import Path
-
-from src.c or e.architecture import Pri or ity, LifecycleState: pass # Добавлен pass в пустой блок
-
-from src.c or e.constants import constants_manager, EvolutionStage, GeneType
-
-from src.c or e.reposit or y import Reposit or yManager, DataType, St or ageType
-
-from src.c or e.state_manager import StateManager, StateType
-
-from src.systems.evolution.evolution_system import EvolutionSystem
-
-from typing import *
-
-from unittest.mock import Mock, MagicMock
+# Добавляем путь к исходному коду
+import os
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 import logging
-
-import os
-
-import sys
-
 import time
-
 import unittest
+from typing import *
+from unittest.mock import Mock, MagicMock
 
-#!/usr / bin / env python3
-"""Тесты для EvolutionSystem - проверка интеграции с новой архитектуре"""# Добавляем путь к исходному коду
-sys.path.insert(0, os.path.jo in(os.path.dirname(__file__), '..'))
-EvolutionProgress, Gene, EvolutionTrigger
-GeneRarity
+from src.core.architecture import Priority, LifecycleState
+from src.core.state_manager import StateManager, StateType
+from src.systems.evolution.evolution_system import EvolutionSystem
+
+logger = logging.getLogger(__name__)
+
 class TestEvolutionSystem(unittest.TestCase):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass"""Тесты для системы эволюции"""def setUp(self):"""Настройка перед каждым тестом"""self.evolution_system= EvolutionSystem()
-# Создаем моки для архитектурных компонентов
-self.state_manager= Mock(spe = StateManager)
-self.reposit or y_manager= Mock(spe = Reposit or yManager)
-# Настраиваем моки
-self.state_manager.update_state= Mock(return_valu = True)
-self.reposit or y_manager.regis ter_reposit or y= Mock(return_valu = True)
-# Устанавливаем компоненты архитектуры
-self.evolution_system.set_architecture_components(
-self.state_manager,
-self.reposit or y_manager
-)
-def test_in itialization(self):"""Тест инициализации системы"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Проверяем начальное состояние
-self.assertEqual(self.evolution_system.system_name, "evolution")
-self.assertEqual(self.evolution_system.system_pri or ity, Pri or ity.HIGH)
-self.assertEqual(self.evolution_system.system_state
-LifecycleState.UNINITIALIZED):
-pass  # Добавлен pass в пустой блок
-# Проверяем, что компоненты архитектуры установлены
-self.assertIsNotNone(self.evolution_system.state_manager)
-self.assertIsNotNone(self.evolution_system.reposit or y_manager)
-def test_regis ter_system_states(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Тест регистрации состояний системы"""# Вызываем регистрацию состояний
-self.evolution_system._regis ter_system_states()
-# Проверяем, что состояния зарегистрированы через BaseGameSystem
-# Метод regis ter_system_state должен вызывать state_manager.regis ter_state
-self.assertTrue(len(self.evolution_system.system_states) > 0)
-# Проверяем, что зарегистрированы все необходимые состояния
-self.assertIn('system_settings', self.evolution_system.system_states)
-self.assertIn('system_stats', self.evolution_system.system_states)
-self.assertIn('system_state', self.evolution_system.system_states)
-def test_regis ter_system_reposit or ies(self):"""Тест регистрации репозиториев системы"""# Вызываем регистрацию репозиториев
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.evolution_system._regis ter_system_reposit or ies()
-# Проверяем, что репозитории зарегистрированы через BaseGameSystem
-# Метод regis ter_system_reposit or y должен вызывать reposit or y_manager.create_reposit or y
-self.assertTrue(len(self.evolution_system.system_reposit or ies) > 0)
-# Проверяем, что зарегистрированы все необходимые репозитории
-self.assertIn('evolution_progress', self.evolution_system.system_reposit or ies)
-self.assertIn('entity_genes', self.evolution_system.system_reposit or ies)
-self.assertIn('evolution_triggers', self.evolution_system.system_reposit or ies)
-self.assertIn('evolution_his tory', self.evolution_system.system_reposit or ies)
-def test_lifecycle_management(self):"""Тест управления жизненным циклом"""# Тестируем инициализацию
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-result= self.evolution_system.in itialize()
-self.assertTrue(result)
-self.assertEqual(self.evolution_system.system_state
-LifecycleState.READY):
-pass  # Добавлен pass в пустой блок
-# Тестируем запуск
-result= self.evolution_system.start()
-self.assertTrue(result)
-self.assertEqual(self.evolution_system.system_state
-LifecycleState.RUNNING):
-pass  # Добавлен pass в пустой блок
-# Тестируем остановку
-result= self.evolution_system.stop()
-self.assertTrue(result)
-self.assertEqual(self.evolution_system.system_state
-LifecycleState.STOPPED):
-pass  # Добавлен pass в пустой блок
-# Тестируем уничтожение
-result= self.evolution_system.destroy()
-self.assertTrue(result)
-self.assertEqual(self.evolution_system.system_state
-LifecycleState.DESTROYED):
-pass  # Добавлен pass в пустой блок
-def test_entity_creation_and _destruction(self):"""Тест создания и уничтожения сущностей"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Создаем тестовую сущность
-entity_id= "test_entity_1"result= self.evolution_system.create_evolution_entity(entity_id)
-self.assertTrue(result)
-# Проверяем, что сущность создана
-self.assertIn(entity_id, self.evolution_system.evolution_progress)
-self.assertIn(entity_id, self.evolution_system.entity_genes)
-# Проверяем прогресс эволюции
-progress= self.evolution_system.evolution_progress[entity_id]
-self.assertEqual(progress.current_stage, EvolutionStage.BASIC)
-self.assertEqual(progress.evolution_poin ts, 0)
-# Уничтожаем сущность
-result= self.evolution_system.destroy_evolution_entity(entity_id)
-self.assertTrue(result)
-# Проверяем, что сущность удалена
-self.assertNotIn(entity_id, self.evolution_system.evolution_progress)
-self.assertNotIn(entity_id, self.evolution_system.entity_genes)
-def test_evolution_poin ts_management(self):"""Тест управления очками эволюции"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Создаем тестовую сущность
-entity_id= "test_entity_2"self.evolution_system.create_evolution_entity(entity_id)
-# Добавляем очки эволюции
-poin ts_to_add= 150
-result= self.evolution_system.add_evolution_poin ts(entity_id
-poin ts_to_add)
-self.assertTrue(result)
-# Проверяем, что эволюция произошла(150 очков > 100 требуемых)
-progress= self.evolution_system.evolution_progress[entity_id]
-self.assertGreater(progress.current_stage, EvolutionStage.BASIC)
-# Проверяем, что очки сброшены после эволюции
-self.assertEqual(progress.evolution_poin ts, 0)
-def test_gene_management(self):"""Тест управления генами"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Создаем тестовую сущность
-entity_id= "test_entity_3"
-self.evolution_system.create_evolution_entity(entity_id)
-# Получаем гены сущности
-genes_in fo= self.evolution_system.get_entity_genes(entity_id)
-self.assertGreater(len(genes_in fo), 0)
-# Проверяем структуру информации о генах
-for gene_in foingenes_in fo: self.assertIn('gene_id', gene_in fo)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.assertIn('gene_type', gene_in fo)
-self.assertIn('rarity', gene_in fo)
-self.assertIn('strength', gene_in fo)
-self.assertIn('active', gene_in fo)
-# Тестируем активацию / деактивацию генов
-if genes_in fo: first_gene_id= genes_in fo[0]['gene_id']
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Деактивируем ген
-result= self.evolution_system.deactivate_gene(entity_id
-first_gene_id)
-self.assertTrue(result)
-# Проверяем, что ген деактивирован
-updated_genes_in fo= self.evolution_system.get_entity_genes(entity_id)
-for gene_in foin updated_genes_in fo: if gene_in fo['gene_id'] = first_gene_id: self.assertFalse(gene_in fo['active'])
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-break
-# Активируем ген обратно
-result= self.evolution_system.activate_gene(entity_id
-first_gene_id)
-self.assertTrue(result)
-def test_evolution_progress_retrieval(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Тест получения прогресса эволюции"""
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Создаем тестовую сущность
-entity_id= "test_entity_4"
-self.evolution_system.create_evolution_entity(entity_id)
-# Получаем прогресс эволюции
-progress_in fo= self.evolution_system.get_evolution_progress(entity_id)
-self.assertIsNotNone(progress_in fo)
-# Проверяем структуру информации о прогрессе
-self.assertIn('entity_id', progress_in fo)
-self.assertIn('current_stage', progress_in fo)
-self.assertIn('evolution_poin ts', progress_in fo)
-self.assertIn('required_poin ts', progress_in fo)
-self.assertIn('evolution_his tory', progress_in fo)
-# Проверяем значения
-self.assertEqual(progress_in fo['entity_id'], entity_id)
-self.assertEqual(progress_in fo['current_stage'], EvolutionStage.BASIC.value)
-self.assertEqual(progress_in fo['evolution_poin ts'], 0)
-self.assertEqual(progress_in fo['required_poin ts'], 100)
-def test_system_in fo_retrieval(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Тест получения информации о системе"""
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Получаем информацию о системе
-system_in fo= self.evolution_system.get_system_in fo()
-# Проверяем структуру информации
-self.assertIn('name', system_in fo)
-self.assertIn('state', system_in fo)
-self.assertIn('pri or ity', system_in fo)
-self.assertIn('entities_evolving', system_in fo)
-self.assertIn('total_genes', system_in fo)
-self.assertIn('evolution_triggers', system_in fo)
-self.assertIn('stats', system_in fo)
-# Проверяем значения
-self.assertEqual(system_in fo['name'], "evolution")
-self.assertEqual(system_in fo['pri or ity'], Pri or ity.HIGH.value)
-self.assertEqual(system_in fo['entities_evolving'], 0)
-self.assertEqual(system_in fo['total_genes'], 0)
-# Базовые триггеры создаются при инициализации
-self.assertGreaterEqual(system_in fo['evolution_triggers'], 0)
-def test_event_hand ling(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Тест обработки событий"""
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Тестируем обработку события создания сущности
-event_data= {
-'entity_id': 'event_entity_1',
-'in itial_genes': []
-}
-result= self.evolution_system.hand le_event("entity_created", event_data)
-self.assertTrue(result)
-# Проверяем, что сущность создана
-self.assertIn('event_entity_1', self.evolution_system.evolution_progress)
-# Тестируем обработку события получения опыта
-event_data= {
-'entity_id': 'event_entity_1',
-'experience_amount': 100
-}
-result= self.evolution_system.hand le_event("experience_gain ed", event_data)
-self.assertTrue(result)
-# Проверяем, что очки эволюции добавлены(100 опыта= 10 очков эволюции)
-progress= self.evolution_system.evolution_progress['event_entity_1']
-self.assertEqual(progress.evolution_poin ts, 10)
-def test_err or _hand ling(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Тест обработки ошибок"""
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Тестируем создание сущности с некорректным ID
-result= self.evolution_system.create_evolution_entity("")
-self.assertFalse(result)
-# Тестируем добавление очков несуществующей сущности
-result= self.evolution_system.add_evolution_poin ts("nonexis tent", 50)
-self.assertFalse(result)
-# Тестируем получение прогресса несуществующей сущности
-progress= self.evolution_system.get_evolution_progress("nonexis tent")
-self.assertIsNone(progress)
-# Тестируем получение генов несуществующей сущности
-genes= self.evolution_system.get_entity_genes("nonexis tent")
-self.assertEqual(genes, [])
-def test_reset_stats(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Тест сброса статистики"""
-# Инициализируем систему
-self.evolution_system.in itialize()
-# Создаем несколько сущностей для накопления статистики
-for iin range(3):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.evolution_system.create_evolution_entity(f"test_entity_{i}")
-# Проверяем, что статистика изменилась
-self.assertEqual(self.evolution_system.system_stats['entities_evolving'], 3)
-# Сбрасываем статистику
-self.evolution_system.reset_stats()
-# Проверяем, что статистика сброшена
-self.assertEqual(self.evolution_system.system_stats['entities_evolving'], 0)
-self.assertEqual(self.evolution_system.system_stats['total_evolutions'], 0)
-self.assertEqual(self.evolution_system.system_stats['mutations_occurred'], 0)
-self.assertEqual(self.evolution_system.system_stats['adaptations_occurred'], 0)
-self.assertEqual(self.evolution_system.system_stats['genes_activated'], 0)
-self.assertEqual(self.evolution_system.system_stats['update_time'], 0.0)
-if __name__ = '__main __':
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-unittest.ma in()
+    """Тесты для системы эволюции"""
+    
+    def setUp(self):
+        """Настройка перед каждым тестом"""
+        self.evolution_system = EvolutionSystem()
+        
+        # Создаем моки для архитектурных компонентов
+        self.state_manager = Mock(spec=StateManager)
+        
+        # Настраиваем моки
+        self.state_manager.set_state = Mock(return_value=True)
+        self.state_manager.get_state = Mock(return_value=None)
+        
+        # Устанавливаем компоненты архитектуры
+        self.evolution_system.state_manager = self.state_manager
+    
+    def test_initialization(self):
+        """Тест инициализации системы"""
+        # Проверяем начальное состояние
+        self.assertEqual(self.evolution_system.component_id, "evolution_system")
+        self.assertEqual(self.evolution_system.priority, Priority.HIGH)
+        self.assertEqual(self.evolution_system.state, LifecycleState.UNINITIALIZED)
+        
+        # Проверяем, что компоненты архитектуры установлены
+        self.assertIsNotNone(self.evolution_system.state_manager)
+    
+    def test_lifecycle_management(self):
+        """Тест управления жизненным циклом"""
+        # Тестируем инициализацию
+        self.assertTrue(self.evolution_system.initialize())
+        self.assertEqual(self.evolution_system.state, LifecycleState.READY)
+        
+        # Тестируем запуск
+        self.assertTrue(self.evolution_system.start())
+        self.assertEqual(self.evolution_system.state, LifecycleState.RUNNING)
+        
+        # Тестируем приостановку
+        self.assertTrue(self.evolution_system.pause())
+        self.assertEqual(self.evolution_system.state, LifecycleState.PAUSED)
+        
+        # Тестируем возобновление
+        self.assertTrue(self.evolution_system.resume())
+        self.assertEqual(self.evolution_system.state, LifecycleState.RUNNING)
+        
+        # Тестируем остановку
+        self.assertTrue(self.evolution_system.stop())
+        self.assertEqual(self.evolution_system.state, LifecycleState.READY)
+    
+    def test_gene_creation(self):
+        """Тест создания генов"""
+        # Создаем тестовый ген
+        gene_data = {
+            "gene_id": "test_gene",
+            "gene_type": "PHYSICAL",
+            "name": "Test Gene",
+            "description": "Test gene for testing",
+            "base_value": 10.0,
+            "max_value": 100.0,
+            "mutation_chance": 0.1
+        }
+        
+        gene = self.evolution_system.create_gene(**gene_data)
+        
+        # Проверяем создание гена
+        self.assertIsNotNone(gene)
+        self.assertEqual(gene.gene_id, "test_gene")
+        self.assertEqual(gene.gene_type.value, "PHYSICAL")
+        self.assertEqual(gene.base_value, 10.0)
+    
+    def test_mutation_creation(self):
+        """Тест создания мутаций"""
+        # Создаем тестовую мутацию
+        mutation_data = {
+            "mutation_id": "test_mutation",
+            "gene_id": "test_gene",
+            "name": "Test Mutation",
+            "description": "Test mutation for testing",
+            "mutation_type": "SPONTANEOUS",
+            "level": "MINOR",
+            "value_change": 5.0
+        }
+        
+        mutation = self.evolution_system.create_mutation(**mutation_data)
+        
+        # Проверяем создание мутации
+        self.assertIsNotNone(mutation)
+        self.assertEqual(mutation.mutation_id, "test_mutation")
+        self.assertEqual(mutation.gene_id, "test_gene")
+        self.assertEqual(mutation.value_change, 5.0)
+    
+    def test_evolution_tree_creation(self):
+        """Тест создания дерева эволюции"""
+        # Создаем тестовое дерево эволюции
+        tree_data = {
+            "tree_id": "test_tree",
+            "name": "Test Evolution Tree",
+            "description": "Test evolution tree for testing",
+            "max_level": 5,
+            "requirements": []
+        }
+        
+        tree = self.evolution_system.create_evolution_tree(**tree_data)
+        
+        # Проверяем создание дерева
+        self.assertIsNotNone(tree)
+        self.assertEqual(tree.tree_id, "test_tree")
+        self.assertEqual(tree.max_level, 5)
+    
+    def test_entity_evolution(self):
+        """Тест эволюции сущности"""
+        # Создаем тестовую сущность
+        entity_id = "test_entity"
+        
+        # Инициализируем эволюцию для сущности
+        self.evolution_system.initialize_entity_evolution(entity_id)
+        
+        # Проверяем, что эволюция инициализирована
+        self.assertTrue(self.evolution_system.has_entity_evolution(entity_id))
+        
+        # Получаем прогресс эволюции
+        progress = self.evolution_system.get_entity_evolution_progress(entity_id)
+        self.assertIsNotNone(progress)
+        self.assertEqual(progress.entity_id, entity_id)
+    
+    def test_gene_mutation(self):
+        """Тест мутации генов"""
+        # Создаем тестовый ген
+        gene_data = {
+            "gene_id": "test_gene",
+            "gene_type": "PHYSICAL",
+            "name": "Test Gene",
+            "description": "Test gene for testing",
+            "base_value": 10.0,
+            "max_value": 100.0,
+            "mutation_chance": 0.5  # Высокая вероятность мутации для теста
+        }
+        
+        gene = self.evolution_system.create_gene(**gene_data)
+        
+        # Применяем мутацию
+        mutation_result = self.evolution_system.apply_gene_mutation(gene, "test_source")
+        
+        # Проверяем результат мутации
+        self.assertIsNotNone(mutation_result)
+        self.assertGreaterEqual(mutation_result.value_change, 0)
+    
+    def test_evolution_trigger(self):
+        """Тест триггеров эволюции"""
+        # Создаем тестовый триггер
+        trigger_data = {
+            "trigger_id": "test_trigger",
+            "name": "Test Trigger",
+            "description": "Test trigger for testing",
+            "trigger_type": "LEVEL_UP",
+            "conditions": {"level": 5},
+            "effects": {"evolution_points": 10}
+        }
+        
+        trigger = self.evolution_system.create_evolution_trigger(**trigger_data)
+        
+        # Проверяем создание триггера
+        self.assertIsNotNone(trigger)
+        self.assertEqual(trigger.trigger_id, "test_trigger")
+        self.assertEqual(trigger.trigger_type.value, "LEVEL_UP")
+    
+    def test_evolution_calculation(self):
+        """Тест расчета эволюции"""
+        # Создаем тестовую сущность с генами
+        entity_id = "test_entity"
+        
+        # Создаем несколько генов
+        genes = []
+        for i in range(3):
+            gene_data = {
+                "gene_id": f"gene_{i}",
+                "gene_type": "PHYSICAL",
+                "name": f"Gene {i}",
+                "description": f"Test gene {i}",
+                "base_value": 10.0 + i * 5,
+                "max_value": 100.0,
+                "mutation_chance": 0.1
+            }
+            gene = self.evolution_system.create_gene(**gene_data)
+            genes.append(gene)
+        
+        # Инициализируем эволюцию
+        self.evolution_system.initialize_entity_evolution(entity_id)
+        
+        # Добавляем гены к сущности
+        for gene in genes:
+            self.evolution_system.add_gene_to_entity(entity_id, gene)
+        
+        # Рассчитываем эволюцию
+        evolution_result = self.evolution_system.calculate_entity_evolution(entity_id)
+        
+        # Проверяем результат расчета
+        self.assertIsNotNone(evolution_result)
+        self.assertGreaterEqual(evolution_result.total_evolution_points, 0)
+    
+    def test_evolution_history(self):
+        """Тест истории эволюции"""
+        # Создаем тестовую сущность
+        entity_id = "test_entity"
+        
+        # Инициализируем эволюцию
+        self.evolution_system.initialize_entity_evolution(entity_id)
+        
+        # Создаем несколько событий эволюции
+        for i in range(3):
+            event_data = {
+                "event_id": f"event_{i}",
+                "entity_id": entity_id,
+                "event_type": "GENE_MUTATION",
+                "description": f"Test evolution event {i}",
+                "timestamp": time.time() + i
+            }
+            self.evolution_system.record_evolution_event(**event_data)
+        
+        # Получаем историю эволюции
+        history = self.evolution_system.get_entity_evolution_history(entity_id)
+        
+        # Проверяем историю
+        self.assertIsNotNone(history)
+        self.assertEqual(len(history), 3)
+    
+    def test_cleanup(self):
+        """Тест очистки системы"""
+        # Создаем тестовые данные
+        entity_id = "test_entity"
+        self.evolution_system.initialize_entity_evolution(entity_id)
+        
+        # Проверяем, что данные созданы
+        self.assertTrue(self.evolution_system.has_entity_evolution(entity_id))
+        
+        # Очищаем систему
+        self.evolution_system.cleanup()
+        
+        # Проверяем, что система очищена
+        self.assertEqual(self.evolution_system.state, LifecycleState.DESTROYED)
+    
+    def test_error_handling(self):
+        """Тест обработки ошибок"""
+        # Тестируем обработку несуществующей сущности
+        non_existent_entity = "non_existent_entity"
+        
+        # Попытка получить эволюцию несуществующей сущности
+        progress = self.evolution_system.get_entity_evolution_progress(non_existent_entity)
+        self.assertIsNone(progress)
+        
+        # Попытка добавить ген к несуществующей сущности
+        gene_data = {
+            "gene_id": "test_gene",
+            "gene_type": "PHYSICAL",
+            "name": "Test Gene",
+            "description": "Test gene",
+            "base_value": 10.0,
+            "max_value": 100.0,
+            "mutation_chance": 0.1
+        }
+        gene = self.evolution_system.create_gene(**gene_data)
+        
+        result = self.evolution_system.add_gene_to_entity(non_existent_entity, gene)
+        self.assertFalse(result)
+    
+    def test_performance(self):
+        """Тест производительности"""
+        # Создаем множество сущностей для тестирования производительности
+        num_entities = 100
+        
+        start_time = time.time()
+        
+        for i in range(num_entities):
+            entity_id = f"entity_{i}"
+            self.evolution_system.initialize_entity_evolution(entity_id)
+            
+            # Добавляем несколько генов к каждой сущности
+            for j in range(5):
+                gene_data = {
+                    "gene_id": f"gene_{i}_{j}",
+                    "gene_type": "PHYSICAL",
+                    "name": f"Gene {i}_{j}",
+                    "description": f"Test gene {i}_{j}",
+                    "base_value": 10.0 + j,
+                    "max_value": 100.0,
+                    "mutation_chance": 0.1
+                }
+                gene = self.evolution_system.create_gene(**gene_data)
+                self.evolution_system.add_gene_to_entity(entity_id, gene)
+        
+        end_time = time.time()
+        execution_time = end_time - start_time
+        
+        # Проверяем, что время выполнения приемлемо (менее 1 секунды)
+        self.assertLess(execution_time, 1.0)
+        
+        # Проверяем, что все сущности созданы
+        for i in range(num_entities):
+            entity_id = f"entity_{i}"
+            self.assertTrue(self.evolution_system.has_entity_evolution(entity_id))
+
+if __name__ == '__main__':
+    # Настройка логирования для тестов
+    logging.basicConfig(level=logging.INFO)
+    
+    # Запуск тестов
+    unittest.main(verbosity=2)

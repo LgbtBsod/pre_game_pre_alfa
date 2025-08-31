@@ -13,6 +13,9 @@ import time
 import random
 
 from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import DamageType, constants_manager
+from src.core.state_manager import StateManager, StateType
+from src.systems.attributes.attribute_system import AttributeSystem, AttributeSet, AttributeModifier, StatModifier, BaseAttribute, DerivedStat
 
 logger = logging.getLogger(__name__)
 
@@ -36,37 +39,51 @@ class SkillCategory(Enum):
 
 class SkillTier(Enum):
     """Уровни навыков"""
-    BASIC = "basic"            # Базовый
-    INTERMEDIATE = "intermediate"  # Промежуточный
-    ADVANCED = "advanced"      # Продвинутый
-    MASTER = "master"          # Мастерский
-    LEGENDARY = "legendary"    # Легендарный
+    BASIC = "basic"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    MASTER = "master"
+    LEGENDARY = "legendary"
+
+class SkillTarget(Enum):
+    """Цели навыков"""
+    SELF = "self"
+    SINGLE_ENEMY = "single_enemy"
+    SINGLE_ALLY = "single_ally"
+    AREA_ENEMIES = "area_enemies"
+    AREA_ALLIES = "area_allies"
+    ALL_ENEMIES = "all_enemies"
+    ALL_ALLIES = "all_allies"
 
 # = СТРУКТУРЫ ДАННЫХ
 
 @dataclass
 class SkillRequirement:
     """Требование для навыка"""
-    requirement_type: str  # level, skill, item, quest
-    target: str
-    value: Any
+    requirement_type: str  # skill, level, attribute, item
+    requirement_id: str
+    value: int
     description: str
 
 @dataclass
 class SkillEffect:
     """Эффект навыка"""
-    effect_type: str
+    effect_type: str  # damage, heal, buff, debuff, movement
     value: float
+    target: str
     duration: float = 0.0
+    radius: float = 0.0
+    angle: float = 360.0
     condition: Optional[str] = None
-    target: str = "self"  # self, target, area
 
 @dataclass
 class SkillModifier:
-    """Модификатор навыка"""
-    stat_type: str
+    """Модификатор навыка (интеграция с системой атрибутов)"""
+    modifier_type: str  # attribute, stat, temporary
+    target: str  # attribute_name или stat_name
     value: float
-    modifier_type: str = "additive"  # additive, multiplicative
+    duration: float = -1.0  # -1 для постоянных модификаторов
+    is_percentage: bool = False
     condition: Optional[str] = None
 
 @dataclass
@@ -90,6 +107,12 @@ class SkillNode:
     cast_time: float = 0.0
     range: float = 0.0
     area_radius: float = 0.0
+    
+    # Интеграция с системой атрибутов
+    attribute_requirements: Dict[str, int] = field(default_factory=dict)  # attribute_name -> min_value
+    stat_requirements: Dict[str, int] = field(default_factory=dict)  # stat_name -> min_value
+    attribute_scaling: Dict[str, float] = field(default_factory=dict)  # attribute_name -> scaling_factor
+    stat_scaling: Dict[str, float] = field(default_factory=dict)  # stat_name -> scaling_factor
 
 @dataclass
 class SkillTree:
@@ -97,8 +120,7 @@ class SkillTree:
     tree_id: str
     name: str
     description: str
-    root_skills: List[str] = field(default_factory=list)
-    nodes: Dict[str, SkillNode] = field(default_factory=dict)
+    skill_points: int = 0
     max_skill_points: int = 100
     specialization_count: int = 3
 
@@ -115,6 +137,10 @@ class EntitySkill:
     last_used: float = 0.0
     total_uses: int = 0
     learned_at: float = field(default_factory=time.time)
+    
+    # Интеграция с системой атрибутов
+    active_modifiers: List[AttributeModifier] = field(default_factory=list)
+    active_stat_modifiers: List[StatModifier] = field(default_factory=list)
 
 @dataclass
 class SkillCombo:
@@ -122,7 +148,7 @@ class SkillCombo:
     combo_id: str
     name: str
     description: str
-    skills: List[str]  # skill_ids в порядке использования
+    skill_sequence: List[str]  # skill_ids в правильном порядке
     time_window: float = 5.0  # Время для выполнения комбо
     bonus_effects: List[SkillEffect] = field(default_factory=list)
     bonus_modifiers: List[SkillModifier] = field(default_factory=list)
@@ -132,10 +158,14 @@ class SkillSystem(BaseComponent):
     
     def __init__(self):
         super().__init__(
-            component_id="skill_system",
-            component_type=ComponentType.SYSTEM,
-            priority=Priority.NORMAL
+            system_name="skill_system",
+            system_priority=Priority.NORMAL,
+            system_type=ComponentType.SYSTEM
         )
+        
+        # Архитектурные компоненты
+        self.state_manager: Optional[StateManager] = None
+        self.attribute_system: Optional[AttributeSystem] = None
         
         # Деревья навыков
         self.skill_trees: Dict[str, SkillTree] = {}
@@ -145,10 +175,24 @@ class SkillSystem(BaseComponent):
         self.skill_combos: Dict[str, SkillCombo] = {}
         self.active_combos: Dict[str, List[str]] = {}  # entity_id -> combo_progress
         
+        # Настройки системы
+        self.system_settings = {
+            'auto_calculate_skill_power_from_attributes': True,
+            'enable_skill_modifiers': True,
+            'enable_skill_combos': True,
+            'skill_experience_enabled': True,
+            'max_active_modifiers_per_skill': 10
+        }
+        
         # Статистика
-        self.total_skills_learned: int = 0
-        self.total_skill_uses: int = 0
-        self.skill_statistics: Dict[str, int] = {}
+        self.system_stats = {
+            'total_skills_learned': 0,
+            'total_skill_uses': 0,
+            'total_skill_levels': 0,
+            'active_modifiers': 0,
+            'combo_completions': 0,
+            'update_time': 0.0
+        }
         
         # Callbacks
         self.on_skill_learned: Optional[Callable] = None
@@ -158,30 +202,182 @@ class SkillSystem(BaseComponent):
         
         logger.info("Система навыков инициализирована")
     
+    def set_architecture_components(self, state_manager: StateManager, attribute_system: AttributeSystem):
+        """Установка архитектурных компонентов"""
+        self.state_manager = state_manager
+        self.attribute_system = attribute_system
+        logger.info("Архитектурные компоненты установлены в SkillSystem")
+    
+    def _register_system_states(self):
+        """Регистрация состояний системы"""
+        if self.state_manager:
+            self.state_manager.set_state(
+                f"{self.system_name}_settings",
+                self.system_settings,
+                StateType.SETTINGS
+            )
+            
+            self.state_manager.set_state(
+                f"{self.system_name}_stats",
+                self.system_stats,
+                StateType.STATISTICS
+            )
+            
+            self.state_manager.set_state(
+                f"{self.system_name}_state",
+                self.system_state,
+                StateType.SYSTEM_STATE
+            )
+    
     def initialize(self) -> bool:
         """Инициализация системы навыков"""
         try:
-            logger.info("Инициализация системы навыков...")
+            logger.info("Инициализация SkillSystem...")
             
-            # Создание деревьев навыков
-            if not self._create_skill_trees():
-                return False
+            self._register_system_states()
             
-            # Создание комбо
-            if not self._create_skill_combos():
-                return False
+            # Создание базовых деревьев навыков
+            self._create_skill_trees()
             
-            self.state = LifecycleState.READY
-            logger.info("Система навыков успешно инициализирована")
+            self.system_state = LifecycleState.READY
+            logger.info("SkillSystem инициализирован успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации системы навыков: {e}")
-            self.state = LifecycleState.ERROR
+            logger.error(f"Ошибка инициализации SkillSystem: {e}")
+            self.system_state = LifecycleState.ERROR
             return False
     
-    def _create_skill_trees(self) -> bool:
-        """Создание деревьев навыков"""
+    def start(self) -> bool:
+        """Запуск системы навыков"""
+        try:
+            logger.info("Запуск SkillSystem...")
+            
+            if self.system_state != LifecycleState.READY:
+                logger.error("SkillSystem не готов к запуску")
+                return False
+            
+            self.system_state = LifecycleState.RUNNING
+            logger.info("SkillSystem запущен успешно")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска SkillSystem: {e}")
+            self.system_state = LifecycleState.ERROR
+            return False
+    
+    def update(self, delta_time: float):
+        """Обновление системы навыков"""
+        if self.system_state != LifecycleState.RUNNING:
+            return
+        
+        try:
+            start_time = time.time()
+            
+            # Обновление активных модификаторов навыков
+            self._update_skill_modifiers(delta_time)
+            
+            # Обновление комбо
+            if self.system_settings['enable_skill_combos']:
+                self._update_skill_combos(delta_time)
+            
+            self.system_stats['update_time'] = time.time() - start_time
+            
+            # Обновляем состояние в менеджере состояний
+            if self.state_manager:
+                self.state_manager.set_state(
+                    f"{self.system_name}_stats",
+                    self.system_stats,
+                    StateType.STATISTICS
+                )
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления SkillSystem: {e}")
+    
+    def stop(self) -> bool:
+        """Остановка системы навыков"""
+        try:
+            logger.info("Остановка SkillSystem...")
+            
+            self.system_state = LifecycleState.STOPPED
+            logger.info("SkillSystem остановлен успешно")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка остановки SkillSystem: {e}")
+            return False
+    
+    def destroy(self) -> bool:
+        """Уничтожение системы навыков"""
+        try:
+            logger.info("Уничтожение SkillSystem...")
+            
+            # Очистка всех модификаторов навыков
+            self._clear_all_skill_modifiers()
+            
+            self.skill_trees.clear()
+            self.entity_skills.clear()
+            self.skill_combos.clear()
+            self.active_combos.clear()
+            
+            self.system_state = LifecycleState.DESTROYED
+            logger.info("SkillSystem уничтожен успешно")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка уничтожения SkillSystem: {e}")
+            return False
+    
+    def _update_skill_modifiers(self, delta_time: float):
+        """Обновление модификаторов навыков"""
+        current_time = time.time()
+        
+        for entity_id, skills in self.entity_skills.items():
+            for skill_id, skill in skills.items():
+                # Очищаем истекшие модификаторы
+                skill.active_modifiers = [
+                    mod for mod in skill.active_modifiers
+                    if mod.duration == -1.0 or current_time - mod.start_time < mod.duration
+                ]
+                
+                skill.active_stat_modifiers = [
+                    mod for mod in skill.active_stat_modifiers
+                    if mod.duration == -1.0 or current_time - mod.start_time < mod.duration
+                ]
+        
+        # Обновляем статистику
+        total_modifiers = sum(
+            len(skill.active_modifiers) + len(skill.active_stat_modifiers)
+            for skills in self.entity_skills.values()
+            for skill in skills.values()
+        )
+        self.system_stats['active_modifiers'] = total_modifiers
+    
+    def _update_skill_combos(self, delta_time: float):
+        """Обновление комбо навыков"""
+        current_time = time.time()
+        
+        expired_combos = []
+        for entity_id, combo_progress in self.active_combos.items():
+            # Проверяем истечение времени комбо
+            if len(combo_progress) > 0:
+                first_skill_time = combo_progress[0].get('time', 0)
+                if current_time - first_skill_time > 5.0:  # 5 секунд на комбо
+                    expired_combos.append(entity_id)
+        
+        # Очищаем истекшие комбо
+        for entity_id in expired_combos:
+            del self.active_combos[entity_id]
+    
+    def _clear_all_skill_modifiers(self):
+        """Очистка всех модификаторов навыков"""
+        for entity_id, skills in self.entity_skills.items():
+            for skill_id, skill in skills.items():
+                skill.active_modifiers.clear()
+                skill.active_stat_modifiers.clear()
+    
+    def _create_skill_trees(self):
+        """Создание базовых деревьев навыков"""
         try:
             # Дерево боевых навыков
             combat_tree = SkillTree(
@@ -192,7 +388,7 @@ class SkillSystem(BaseComponent):
                 specialization_count=2
             )
             
-            # Базовые боевые навыки
+            # Базовые боевые навыки с интеграцией атрибутов
             basic_attack = SkillNode(
                 skill_id="basic_attack",
                 name="Базовая атака",
@@ -204,10 +400,15 @@ class SkillSystem(BaseComponent):
                 effects=[
                     SkillEffect("damage", 10.0, target="target")
                 ],
+                modifiers=[
+                    SkillModifier("stat", "physical_damage", 5.0, duration=5.0, is_percentage=True)
+                ],
                 cost={"skill_points": 0},
                 cooldown=1.0,
                 cast_time=0.5,
-                range=2.0
+                range=2.0,
+                attribute_scaling={"strength": 0.5, "agility": 0.3},
+                stat_scaling={"physical_damage": 1.0}
             )
             
             power_strike = SkillNode(
@@ -219,48 +420,24 @@ class SkillSystem(BaseComponent):
                 tier=SkillTier.INTERMEDIATE,
                 max_level=3,
                 requirements=[
-                    SkillRequirement("skill", "basic_attack", 3, "Базовая атака 3 уровня")
+                    SkillRequirement("skill", "basic_attack", 3, "Базовая атака 3 уровня"),
+                    SkillRequirement("attribute", "strength", 15, "Сила 15")
                 ],
                 effects=[
                     SkillEffect("damage", 25.0, target="target")
                 ],
+                modifiers=[
+                    SkillModifier("attribute", "strength", 10.0, duration=10.0),
+                    SkillModifier("stat", "critical_chance", 0.1, duration=5.0, is_percentage=True)
+                ],
                 cost={"skill_points": 5},
                 cooldown=3.0,
                 cast_time=1.0,
-                range=2.0
+                range=2.0,
+                attribute_requirements={"strength": 15},
+                attribute_scaling={"strength": 1.0, "agility": 0.2},
+                stat_scaling={"physical_damage": 1.5, "critical_damage": 0.5}
             )
-            
-            whirlwind = SkillNode(
-                skill_id="whirlwind",
-                name="Вихрь",
-                description="Атака по области вокруг себя",
-                skill_type=SkillType.COMBAT,
-                category=SkillCategory.ACTIVE,
-                tier=SkillTier.ADVANCED,
-                max_level=2,
-                requirements=[
-                    SkillRequirement("skill", "power_strike", 2, "Мощный удар 2 уровня")
-                ],
-                effects=[
-                    SkillEffect("damage", 15.0, target="area")
-                ],
-                cost={"skill_points": 10},
-                cooldown=8.0,
-                cast_time=1.5,
-                area_radius=3.0
-            )
-            
-            # Добавление навыков в дерево
-            combat_tree.nodes[basic_attack.skill_id] = basic_attack
-            combat_tree.nodes[power_strike.skill_id] = power_strike
-            combat_tree.nodes[whirlwind.skill_id] = whirlwind
-            
-            # Установка связей
-            combat_tree.root_skills = [basic_attack.skill_id]
-            basic_attack.children = [power_strike.skill_id]
-            power_strike.prerequisites = [basic_attack.skill_id]
-            power_strike.children = [whirlwind.skill_id]
-            whirlwind.prerequisites = [power_strike.skill_id]
             
             # Дерево магических навыков
             magic_tree = SkillTree(
@@ -280,496 +457,344 @@ class SkillSystem(BaseComponent):
                 tier=SkillTier.BASIC,
                 max_level=5,
                 effects=[
-                    SkillEffect("magic_damage", 20.0, target="target"),
-                    SkillEffect("burn", 5.0, duration=3.0, target="target")
+                    SkillEffect("damage", 15.0, target="target", radius=2.0)
                 ],
-                cost={"skill_points": 0, "mana": 15},
+                modifiers=[
+                    SkillModifier("stat", "magical_damage", 10.0, duration=8.0),
+                    SkillModifier("stat", "mana_regen", 2.0, duration=5.0)
+                ],
+                cost={"skill_points": 3, "mana": 20},
                 cooldown=2.0,
                 cast_time=1.0,
-                range=10.0
+                range=8.0,
+                area_radius=2.0,
+                attribute_requirements={"intelligence": 12},
+                attribute_scaling={"intelligence": 0.8, "wisdom": 0.4},
+                stat_scaling={"magical_damage": 1.2}
             )
             
-            lightning_bolt = SkillNode(
-                skill_id="lightning_bolt",
-                name="Молния",
-                description="Быстрая электрическая атака",
-                skill_type=SkillType.MAGIC,
-                category=SkillCategory.ACTIVE,
-                tier=SkillTier.INTERMEDIATE,
-                max_level=3,
-                requirements=[
-                    SkillRequirement("skill", "fireball", 3, "Огненный шар 3 уровня")
-                ],
-                effects=[
-                    SkillEffect("magic_damage", 30.0, target="target"),
-                    SkillEffect("stun", 1.0, duration=1.0, target="target")
-                ],
-                cost={"skill_points": 5, "mana": 25},
-                cooldown=4.0,
-                cast_time=0.5,
-                range=12.0
-            )
+            # Добавляем деревья в систему
+            self.skill_trees["combat_tree"] = combat_tree
+            self.skill_trees["magic_tree"] = magic_tree
             
-            # Добавление навыков в дерево
-            magic_tree.nodes[fireball.skill_id] = fireball
-            magic_tree.nodes[lightning_bolt.skill_id] = lightning_bolt
+            # Добавляем навыки в деревья
+            combat_tree.skills = {
+                "basic_attack": basic_attack,
+                "power_strike": power_strike
+            }
             
-            # Установка связей
-            magic_tree.root_skills = [fireball.skill_id]
-            fireball.children = [lightning_bolt.skill_id]
-            lightning_bolt.prerequisites = [fireball.skill_id]
-            
-            # Сохранение деревьев
-            self.skill_trees[combat_tree.tree_id] = combat_tree
-            self.skill_trees[magic_tree.tree_id] = magic_tree
+            magic_tree.skills = {
+                "fireball": fireball
+            }
             
             logger.info(f"Создано {len(self.skill_trees)} деревьев навыков")
-            return True
             
         except Exception as e:
             logger.error(f"Ошибка создания деревьев навыков: {e}")
-            return False
     
-    def _create_skill_combos(self) -> bool:
-        """Создание комбо навыков"""
+    def learn_skill(self, entity_id: str, skill_id: str, base_attributes: AttributeSet,
+                   attribute_modifiers: List[AttributeModifier] = None,
+                   stat_modifiers: List[StatModifier] = None) -> bool:
+        """Изучение навыка с проверкой требований атрибутов"""
         try:
-            # Комбо: Базовая атака + Мощный удар
-            basic_combo = SkillCombo(
-                combo_id="basic_combo",
-                name="Комбо атака",
-                description="Базовая атака с последующим мощным ударом",
-                skills=["basic_attack", "power_strike"],
-                time_window=3.0,
-                bonus_effects=[
-                    SkillEffect("damage", 10.0, target="target")
-                ]
-            )
-            
-            # Комбо: Огненный шар + Молния
-            magic_combo = SkillCombo(
-                combo_id="magic_combo",
-                name="Магическое комбо",
-                description="Огненный шар с последующей молнией",
-                skills=["fireball", "lightning_bolt"],
-                time_window=4.0,
-                bonus_effects=[
-                    SkillEffect("magic_damage", 15.0, target="target"),
-                    SkillEffect("burn", 3.0, duration=2.0, target="target")
-                ]
-            )
-            
-            self.skill_combos[basic_combo.combo_id] = basic_combo
-            self.skill_combos[magic_combo.combo_id] = magic_combo
-            
-            logger.info(f"Создано {len(self.skill_combos)} комбо навыков")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка создания комбо навыков: {e}")
-            return False
-    
-    def learn_skill(self, entity_id: str, skill_id: str, tree_id: str) -> bool:
-        """Изучение навыка"""
-        try:
-            if tree_id not in self.skill_trees:
-                logger.error(f"Дерево навыков {tree_id} не найдено")
+            # Находим навык
+            skill_node = self._find_skill_node(skill_id)
+            if not skill_node:
+                logger.warning(f"Навык {skill_id} не найден")
                 return False
             
-            tree = self.skill_trees[tree_id]
-            
-            if skill_id not in tree.nodes:
-                logger.error(f"Навык {skill_id} не найден в дереве {tree_id}")
+            # Проверяем требования атрибутов
+            if not self._check_attribute_requirements(skill_node, base_attributes, attribute_modifiers, stat_modifiers):
+                logger.warning(f"Сущность {entity_id} не соответствует требованиям атрибутов для навыка {skill_id}")
                 return False
             
-            skill_node = tree.nodes[skill_id]
-            
-            # Проверка требований
+            # Проверяем требования навыков
             if not self._check_skill_requirements(entity_id, skill_node):
-                logger.warning(f"Требования для навыка {skill_id} не выполнены")
+                logger.warning(f"Сущность {entity_id} не соответствует требованиям навыков для {skill_id}")
                 return False
             
-            # Проверка доступности навыка
-            if not self._is_skill_available(entity_id, skill_id, tree):
-                logger.warning(f"Навык {skill_id} недоступен для изучения")
-                return False
-            
-            # Создание навыка сущности
-            if entity_id not in self.entity_skills:
-                self.entity_skills[entity_id] = {}
-            
+            # Создаем навык сущности
             entity_skill = EntitySkill(
                 skill_id=skill_id,
                 entity_id=entity_id,
                 is_unlocked=True
             )
             
+            # Добавляем в систему
+            if entity_id not in self.entity_skills:
+                self.entity_skills[entity_id] = {}
+            
             self.entity_skills[entity_id][skill_id] = entity_skill
             
-            # Обновление статистики
-            self.total_skills_learned += 1
-            self.skill_statistics[skill_id] = self.skill_statistics.get(skill_id, 0) + 1
+            # Обновляем статистику
+            self.system_stats['total_skills_learned'] += 1
             
-            # Вызов callback
+            # Вызываем callback
             if self.on_skill_learned:
-                self.on_skill_learned(entity_id, skill_id)
+                self.on_skill_learned(entity_id, skill_id, skill_node)
             
-            logger.info(f"Навык {skill_id} изучен сущностью {entity_id}")
+            logger.info(f"Сущность {entity_id} изучила навык {skill_id}")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка изучения навыка: {e}")
+            logger.error(f"Ошибка изучения навыка {skill_id} сущностью {entity_id}: {e}")
+            return False
+    
+    def use_skill(self, entity_id: str, skill_id: str, target_id: str = None,
+                  base_attributes: AttributeSet = None,
+                  attribute_modifiers: List[AttributeModifier] = None,
+                  stat_modifiers: List[StatModifier] = None) -> bool:
+        """Использование навыка с интеграцией атрибутов"""
+        try:
+            # Проверяем наличие навыка
+            if entity_id not in self.entity_skills or skill_id not in self.entity_skills[entity_id]:
+                logger.warning(f"Сущность {entity_id} не знает навык {skill_id}")
+                return False
+            
+            entity_skill = self.entity_skills[entity_id][skill_id]
+            skill_node = self._find_skill_node(skill_id)
+            
+            if not skill_node:
+                logger.warning(f"Навык {skill_id} не найден")
+                return False
+            
+            # Проверяем возможность использования
+            if not self._can_use_skill(entity_skill, skill_node):
+                logger.warning(f"Навык {skill_id} не может быть использован")
+                return False
+            
+            # Рассчитываем силу навыка на основе атрибутов
+            skill_power = self._calculate_skill_power(skill_node, entity_skill.level, 
+                                                    base_attributes, attribute_modifiers, stat_modifiers)
+            
+            # Применяем эффекты навыка
+            self._apply_skill_effects(skill_node, entity_id, target_id, skill_power)
+            
+            # Применяем модификаторы навыка
+            if self.system_settings['enable_skill_modifiers']:
+                self._apply_skill_modifiers(skill_node, entity_id, entity_skill)
+            
+            # Обновляем статистику навыка
+            entity_skill.last_used = time.time()
+            entity_skill.total_uses += 1
+            
+            # Обновляем статистику системы
+            self.system_stats['total_skill_uses'] += 1
+            
+            # Вызываем callback
+            if self.on_skill_used:
+                self.on_skill_used(entity_id, skill_id, target_id, skill_power)
+            
+            logger.info(f"Сущность {entity_id} использовала навык {skill_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка использования навыка {skill_id} сущностью {entity_id}: {e}")
+            return False
+    
+    def _find_skill_node(self, skill_id: str) -> Optional[SkillNode]:
+        """Поиск узла навыка"""
+        for tree in self.skill_trees.values():
+            if hasattr(tree, 'skills') and skill_id in tree.skills:
+                return tree.skills[skill_id]
+        return None
+    
+    def _check_attribute_requirements(self, skill_node: SkillNode, base_attributes: AttributeSet,
+                                    attribute_modifiers: List[AttributeModifier] = None,
+                                    stat_modifiers: List[StatModifier] = None) -> bool:
+        """Проверка требований атрибутов"""
+        try:
+            if not base_attributes:
+                return True
+            
+            # Получаем финальные атрибуты с модификаторами
+            if self.attribute_system:
+                calculated_stats = self.attribute_system.calculate_stats_for_entity(
+                    entity_id="temp_check",
+                    base_attributes=base_attributes,
+                    attribute_modifiers=attribute_modifiers,
+                    stat_modifiers=stat_modifiers
+                )
+                
+                # Проверяем требования атрибутов
+                for attr_name, min_value in skill_node.attribute_requirements.items():
+                    attr_value = getattr(base_attributes, attr_name, 0)
+                    if attr_value < min_value:
+                        return False
+                
+                # Проверяем требования характеристик
+                for stat_name, min_value in skill_node.stat_requirements.items():
+                    stat_value = calculated_stats.get(stat_name, 0)
+                    if stat_value < min_value:
+                        return False
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка проверки требований атрибутов: {e}")
             return False
     
     def _check_skill_requirements(self, entity_id: str, skill_node: SkillNode) -> bool:
-        """Проверка требований для навыка"""
+        """Проверка требований навыков"""
         try:
             for requirement in skill_node.requirements:
                 if requirement.requirement_type == "skill":
-                    if not self.has_skill(entity_id, requirement.target):
+                    if not self._has_skill_at_level(entity_id, requirement.requirement_id, requirement.value):
                         return False
-                    
-                    entity_skill = self.get_entity_skill(entity_id, requirement.target)
-                    if entity_skill.level < requirement.value:
-                        return False
-                
-                elif requirement.requirement_type == "level":
-                    # Здесь должна быть проверка уровня сущности
-                    pass
-                
-                elif requirement.requirement_type == "quest":
-                    # Здесь должна быть проверка выполнения квеста
-                    pass
             
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка проверки требований навыка: {e}")
+            logger.error(f"Ошибка проверки требований навыков: {e}")
             return False
     
-    def _is_skill_available(self, entity_id: str, skill_id: str, tree: SkillTree) -> bool:
-        """Проверка доступности навыка для изучения"""
+    def _has_skill_at_level(self, entity_id: str, skill_id: str, min_level: int) -> bool:
+        """Проверка наличия навыка на определенном уровне"""
+        if entity_id in self.entity_skills and skill_id in self.entity_skills[entity_id]:
+            return self.entity_skills[entity_id][skill_id].level >= min_level
+        return False
+    
+    def _can_use_skill(self, entity_skill: EntitySkill, skill_node: SkillNode) -> bool:
+        """Проверка возможности использования навыка"""
+        current_time = time.time()
+        
+        # Проверяем кулдаун
+        if current_time - entity_skill.last_used < skill_node.cooldown:
+            return False
+        
+        # Проверяем разблокировку
+        if not entity_skill.is_unlocked:
+            return False
+        
+        return True
+    
+    def _calculate_skill_power(self, skill_node: SkillNode, skill_level: int,
+                              base_attributes: AttributeSet = None,
+                              attribute_modifiers: List[AttributeModifier] = None,
+                              stat_modifiers: List[StatModifier] = None) -> float:
+        """Расчет силы навыка на основе атрибутов"""
         try:
-            skill_node = tree.nodes[skill_id]
+            if not self.system_settings['auto_calculate_skill_power_from_attributes']:
+                return 1.0
             
-            # Проверка предварительных навыков
-            for prereq_id in skill_node.prerequisites:
-                if not self.has_skill(entity_id, prereq_id):
-                    return False
+            base_power = 1.0
             
-            return True
+            if base_attributes and self.attribute_system:
+                # Получаем характеристики из системы атрибутов
+                calculated_stats = self.attribute_system.calculate_stats_for_entity(
+                    entity_id="temp_calc",
+                    base_attributes=base_attributes,
+                    attribute_modifiers=attribute_modifiers,
+                    stat_modifiers=stat_modifiers
+                )
+                
+                # Применяем масштабирование атрибутов
+                for attr_name, scaling in skill_node.attribute_scaling.items():
+                    attr_value = getattr(base_attributes, attr_name, 0)
+                    base_power += attr_value * scaling
+                
+                # Применяем масштабирование характеристик
+                for stat_name, scaling in skill_node.stat_scaling.items():
+                    stat_value = calculated_stats.get(stat_name, 0)
+                    base_power += stat_value * scaling
             
-        except Exception as e:
-            logger.error(f"Ошибка проверки доступности навыка: {e}")
-            return False
-    
-    def use_skill(self, entity_id: str, skill_id: str, target_id: Optional[str] = None) -> bool:
-        """Использование навыка"""
-        try:
-            if not self.has_skill(entity_id, skill_id):
-                logger.error(f"Сущность {entity_id} не знает навык {skill_id}")
-                return False
+            # Множитель уровня навыка
+            level_multiplier = 1.0 + (skill_level - 1) * 0.2
             
-            entity_skill = self.get_entity_skill(entity_id, skill_id)
-            
-            # Поиск узла навыка
-            skill_node = None
-            for tree in self.skill_trees.values():
-                if skill_id in tree.nodes:
-                    skill_node = tree.nodes[skill_id]
-                    break
-            
-            if not skill_node:
-                logger.error(f"Узел навыка {skill_id} не найден")
-                return False
-            
-            # Проверка кулдауна
-            current_time = time.time()
-            if current_time - entity_skill.last_used < skill_node.cooldown:
-                logger.warning(f"Навык {skill_id} на кулдауне")
-                return False
-            
-            # Проверка времени произнесения
-            if skill_node.cast_time > 0:
-                # Здесь должна быть логика произнесения заклинания
-                pass
-            
-            # Применение эффектов навыка
-            self._apply_skill_effects(entity_id, skill_node, target_id)
-            
-            # Обновление статистики
-            entity_skill.last_used = current_time
-            entity_skill.total_uses += 1
-            self.total_skill_uses += 1
-            
-            # Обработка комбо
-            self._process_skill_combo(entity_id, skill_id)
-            
-            # Вызов callback
-            if self.on_skill_used:
-                self.on_skill_used(entity_id, skill_id, target_id)
-            
-            logger.info(f"Навык {skill_id} использован сущностью {entity_id}")
-            return True
+            return base_power * level_multiplier
             
         except Exception as e:
-            logger.error(f"Ошибка использования навыка: {e}")
-            return False
+            logger.error(f"Ошибка расчета силы навыка: {e}")
+            return 1.0
     
-    def _apply_skill_effects(self, entity_id: str, skill_node: SkillNode, target_id: Optional[str]):
+    def _apply_skill_effects(self, skill_node: SkillNode, caster_id: str, target_id: str, skill_power: float):
         """Применение эффектов навыка"""
         try:
-            entity_skill = self.get_entity_skill(entity_id, skill_node.skill_id)
-            
             for effect in skill_node.effects:
-                # Применение эффекта в зависимости от уровня навыка
-                effect_value = effect.value * entity_skill.level
+                # Здесь должна быть логика применения эффектов
+                # Например, нанесение урона, лечение, баффы и т.д.
+                logger.debug(f"Применен эффект {effect.effect_type} от навыка {skill_node.skill_id}")
                 
-                if effect.target == "self":
-                    # Применение к себе
-                    self._apply_effect_to_entity(entity_id, effect, effect_value)
-                
-                elif effect.target == "target" and target_id:
-                    # Применение к цели
-                    self._apply_effect_to_entity(target_id, effect, effect_value)
-                
-                elif effect.target == "area":
-                    # Применение к области
-                    self._apply_area_effect(entity_id, effect, effect_value, skill_node.area_radius)
-            
         except Exception as e:
             logger.error(f"Ошибка применения эффектов навыка: {e}")
     
-    def _apply_effect_to_entity(self, entity_id: str, effect: SkillEffect, value: float):
-        """Применение эффекта к сущности"""
-        try:
-            # Здесь должна быть интеграция с другими системами
-            # Например, система урона, система эффектов и т.д.
-            logger.debug(f"Эффект {effect.effect_type} применен к {entity_id}: {value}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка применения эффекта к сущности: {e}")
-    
-    def _apply_area_effect(self, caster_id: str, effect: SkillEffect, value: float, radius: float):
-        """Применение эффекта к области"""
-        try:
-            # Здесь должна быть логика поиска сущностей в радиусе
-            # и применения эффекта к ним
-            logger.debug(f"Областной эффект {effect.effect_type} применен от {caster_id}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка применения областного эффекта: {e}")
-    
-    def _process_skill_combo(self, entity_id: str, skill_id: str):
-        """Обработка комбо навыков"""
+    def _apply_skill_modifiers(self, skill_node: SkillNode, entity_id: str, entity_skill: EntitySkill):
+        """Применение модификаторов навыка"""
         try:
             current_time = time.time()
             
-            if entity_id not in self.active_combos:
-                self.active_combos[entity_id] = []
-            
-            # Проверка существующих комбо
-            for combo_id in list(self.active_combos[entity_id]):
-                combo = self.skill_combos[combo_id]
+            # Применяем модификаторы атрибутов
+            for modifier in skill_node.modifiers:
+                if modifier.modifier_type == "attribute":
+                    attr_modifier = AttributeModifier(
+                        modifier_id=f"skill_{skill_node.skill_id}_{modifier.target}",
+                        attribute=BaseAttribute(modifier.target),
+                        value=modifier.value,
+                        source=f"skill_{skill_node.skill_id}",
+                        duration=modifier.duration,
+                        start_time=current_time,
+                        is_percentage=modifier.is_percentage
+                    )
+                    entity_skill.active_modifiers.append(attr_modifier)
                 
-                # Проверка времени выполнения комбо
-                if current_time - combo.last_used > combo.time_window:
-                    self.active_combos[entity_id].remove(combo_id)
-                    continue
-                
-                # Проверка следующего навыка в комбо
-                current_progress = len(self.active_combos[entity_id])
-                if current_progress < len(combo.skills):
-                    if combo.skills[current_progress] == skill_id:
-                        # Добавление навыка к комбо
-                        self.active_combos[entity_id].append(skill_id)
-                        
-                        # Проверка завершения комбо
-                        if len(self.active_combos[entity_id]) == len(combo.skills):
-                            self._complete_combo(entity_id, combo_id)
-                        break
+                elif modifier.modifier_type == "stat":
+                    stat_modifier = StatModifier(
+                        modifier_id=f"skill_{skill_node.skill_id}_{modifier.target}",
+                        stat=DerivedStat(modifier.target),
+                        value=modifier.value,
+                        source=f"skill_{skill_node.skill_id}",
+                        duration=modifier.duration,
+                        start_time=current_time,
+                        is_percentage=modifier.is_percentage
+                    )
+                    entity_skill.active_stat_modifiers.append(stat_modifier)
             
-            # Проверка новых комбо
-            for combo_id, combo in self.skill_combos.items():
-                if combo.skills[0] == skill_id:
-                    self.active_combos[entity_id] = [skill_id]
-                    combo.last_used = current_time
-                    break
+            logger.debug(f"Применены модификаторы навыка {skill_node.skill_id}")
             
         except Exception as e:
-            logger.error(f"Ошибка обработки комбо навыков: {e}")
+            logger.error(f"Ошибка применения модификаторов навыка: {e}")
     
-    def _complete_combo(self, entity_id: str, combo_id: str):
-        """Завершение комбо"""
-        try:
-            combo = self.skill_combos[combo_id]
-            
-            # Применение бонусных эффектов
-            for effect in combo.bonus_effects:
-                self._apply_effect_to_entity(entity_id, effect, effect.value)
-            
-            # Очистка комбо
-            if entity_id in self.active_combos:
-                self.active_combos[entity_id] = []
-            
-            # Вызов callback
-            if self.on_combo_completed:
-                self.on_combo_completed(entity_id, combo_id)
-            
-            logger.info(f"Комбо {combo_id} завершено сущностью {entity_id}")
-            
-        except Exception as e:
-            logger.error(f"Ошибка завершения комбо: {e}")
-    
-    def gain_skill_experience(self, entity_id: str, skill_id: str, experience: int) -> bool:
-        """Получение опыта навыка"""
-        try:
-            if not self.has_skill(entity_id, skill_id):
-                return False
-            
-            entity_skill = self.get_entity_skill(entity_id, skill_id)
-            entity_skill.experience += experience
-            
-            # Проверка повышения уровня
-            while entity_skill.experience >= entity_skill.experience_to_next:
-                if entity_skill.level >= self._get_max_skill_level(skill_id):
-                    break
-                
-                entity_skill.experience -= entity_skill.experience_to_next
-                entity_skill.level += 1
-                entity_skill.experience_to_next = self._calculate_next_level_exp(entity_skill.level)
-                
-                # Вызов callback
-                if self.on_skill_leveled:
-                    self.on_skill_leveled(entity_id, skill_id, entity_skill.level)
-                
-                logger.info(f"Навык {skill_id} повышен до уровня {entity_skill.level}")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения опыта навыка: {e}")
-            return False
-    
-    def _get_max_skill_level(self, skill_id: str) -> int:
-        """Получение максимального уровня навыка"""
-        try:
-            for tree in self.skill_trees.values():
-                if skill_id in tree.nodes:
-                    return tree.nodes[skill_id].max_level
-            return 1
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения максимального уровня навыка: {e}")
-            return 1
-    
-    def _calculate_next_level_exp(self, current_level: int) -> int:
-        """Расчет опыта для следующего уровня"""
-        try:
-            # Простая формула: базовый опыт * уровень^1.5
-            base_exp = 100
-            return int(base_exp * (current_level ** 1.5))
-            
-        except Exception as e:
-            logger.error(f"Ошибка расчета опыта для следующего уровня: {e}")
-            return 100
-    
-    def has_skill(self, entity_id: str, skill_id: str) -> bool:
-        """Проверка наличия навыка у сущности"""
+    def get_skill_modifiers_for_entity(self, entity_id: str) -> Tuple[List[AttributeModifier], List[StatModifier]]:
+        """Получение всех активных модификаторов навыков для сущности"""
         try:
             if entity_id not in self.entity_skills:
-                return False
+                return [], []
             
-            return skill_id in self.entity_skills[entity_id]
+            all_attribute_modifiers = []
+            all_stat_modifiers = []
+            
+            for skill in self.entity_skills[entity_id].values():
+                all_attribute_modifiers.extend(skill.active_modifiers)
+                all_stat_modifiers.extend(skill.active_stat_modifiers)
+            
+            return all_attribute_modifiers, all_stat_modifiers
             
         except Exception as e:
-            logger.error(f"Ошибка проверки наличия навыка: {e}")
-            return False
+            logger.error(f"Ошибка получения модификаторов навыков для сущности {entity_id}: {e}")
+            return [], []
     
-    def get_entity_skill(self, entity_id: str, skill_id: str) -> Optional[EntitySkill]:
-        """Получение навыка сущности"""
-        try:
-            if not self.has_skill(entity_id, skill_id):
-                return None
-            
-            return self.entity_skills[entity_id][skill_id]
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения навыка сущности: {e}")
-            return None
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.system_name,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'skill_trees_count': len(self.skill_trees),
+            'entities_with_skills': len(self.entity_skills),
+            'total_skills_learned': self.system_stats['total_skills_learned'],
+            'total_skill_uses': self.system_stats['total_skill_uses'],
+            'active_modifiers': self.system_stats['active_modifiers'],
+            'combo_completions': self.system_stats['combo_completions'],
+            'update_time': self.system_stats['update_time']
+        }
     
-    def get_entity_skills(self, entity_id: str, skill_type: Optional[SkillType] = None) -> List[EntitySkill]:
-        """Получение всех навыков сущности"""
-        try:
-            if entity_id not in self.entity_skills:
-                return []
-            
-            skills = list(self.entity_skills[entity_id].values())
-            
-            if skill_type is None:
-                return skills
-            
-            # Фильтрация по типу
-            filtered_skills = []
-            for skill in skills:
-                for tree in self.skill_trees.values():
-                    if skill.skill_id in tree.nodes:
-                        if tree.nodes[skill.skill_id].skill_type == skill_type:
-                            filtered_skills.append(skill)
-                        break
-            
-            return filtered_skills
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения навыков сущности: {e}")
-            return []
-    
-    def get_available_skills(self, entity_id: str, tree_id: str) -> List[SkillNode]:
-        """Получение доступных для изучения навыков"""
-        try:
-            if tree_id not in self.skill_trees:
-                return []
-            
-            tree = self.skill_trees[tree_id]
-            available_skills = []
-            
-            for skill_node in tree.nodes.values():
-                if not self.has_skill(entity_id, skill_node.skill_id):
-                    if self._is_skill_available(entity_id, skill_node.skill_id, tree):
-                        if self._check_skill_requirements(entity_id, skill_node):
-                            available_skills.append(skill_node)
-            
-            return available_skills
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения доступных навыков: {e}")
-            return []
-    
-    def get_skill_statistics(self) -> Dict[str, Any]:
-        """Получение статистики навыков"""
-        try:
-            return {
-                "total_skills_learned": self.total_skills_learned,
-                "total_skill_uses": self.total_skill_uses,
-                "skill_trees_count": len(self.skill_trees),
-                "skill_combos_count": len(self.skill_combos),
-                "skill_statistics": self.skill_statistics.copy()
-            }
-            
-        except Exception as e:
-            logger.error(f"Ошибка получения статистики навыков: {e}")
-            return {}
-    
-    def cleanup(self):
-        """Очистка системы навыков"""
-        try:
-            # Очистка данных
-            self.skill_trees.clear()
-            self.entity_skills.clear()
-            self.skill_combos.clear()
-            self.active_combos.clear()
-            self.skill_statistics.clear()
-            
-            logger.info("Система навыков очищена")
-            
-        except Exception as e:
-            logger.error(f"Ошибка очистки системы навыков: {e}")
+    def reset_stats(self):
+        """Сброс статистики"""
+        self.system_stats = {
+            'total_skills_learned': 0,
+            'total_skill_uses': 0,
+            'total_skill_levels': 0,
+            'active_modifiers': 0,
+            'combo_completions': 0,
+            'update_time': 0.0
+        }
