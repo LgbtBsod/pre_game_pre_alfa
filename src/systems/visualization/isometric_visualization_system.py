@@ -23,7 +23,7 @@ from ...core.constants import EmotionType, constants_manager
 from ...core.constants_extended import (
     GEOMETRIC_SHAPE_CONSTANTS, EMOTION_VISUALIZATION_CONSTANTS
 )
-from ...core.base_component import BaseComponent
+from ...core.architecture import BaseComponent
 
 logger = logging.getLogger(__name__)
 

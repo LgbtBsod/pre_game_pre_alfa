@@ -1,4 +1,0 @@
-2025-08-31 15:41:25 - src.core.state_manager - INFO - StateManager загружен
-2025-08-31 15:41:27 - torch._subclasses.fake_tensor - INFO - FakeTensor cache stats:
-2025-08-31 15:41:27 - torch._subclasses.fake_tensor - INFO -   cache_hits: 0
-2025-08-31 15:41:27 - torch._subclasses.fake_tensor - INFO -   cache_misses: 0

@@ -100,7 +100,7 @@ class TestEmotionSystem(unittest.TestCase):
         
         # Тестируем установку состояния
         result = self.state_manager.set_state("test_emotion", EmotionType.JOY)
-        self.assertTrue(result)
+self.assertTrue(result)
         
         # Проверяем, что метод был вызван
         self.state_manager.set_state.assert_called_with("test_emotion", EmotionType.JOY)
@@ -123,7 +123,7 @@ class TestEmotionSystem(unittest.TestCase):
     
     def test_emotion_serialization(self):
         """Тест сериализации эмоций"""
-        # Создаем тестовую эмоцию
+# Создаем тестовую эмоцию
         emotion_data = {
             "emotion_type": EmotionType.JOY.value,
             "intensity": EmotionIntensity.MEDIUM.value,
@@ -279,7 +279,7 @@ class TestEmotionSystem(unittest.TestCase):
     
     def test_error_handling(self):
         """Тест обработки ошибок"""
-        # Тестируем обработку некорректных данных
+# Тестируем обработку некорректных данных
         try:
             # Попытка создать эмоцию с некорректным типом
             invalid_emotion_type = "invalid_emotion"

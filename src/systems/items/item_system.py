@@ -151,7 +151,7 @@ class ItemInstance:
     active_attribute_modifiers: List[AttributeModifier] = field(default_factory=list)
     active_stat_modifiers: List[StatModifier] = field(default_factory=list)
     
-    # Дополнительные свойства
+# Дополнительные свойства
     custom_properties: Dict[str, Any] = field(default_factory=dict)
     enchantments: List[str] = field(default_factory=list)
 
@@ -763,7 +763,7 @@ class ItemSystem(BaseComponent):
         try:
             # Здесь должна быть проверка требований атрибутов и характеристик
             # через систему атрибутов
-            return True
+                return True
             
         except Exception as e:
             logger.error(f"Ошибка проверки требований предмета: {e}")
@@ -870,7 +870,7 @@ class ItemSystem(BaseComponent):
                         if (item_instance.template_id == piece_id and 
                             item_instance.is_equipped):
                             equipped_pieces += 1
-                            break
+                        break
                 
                 # Если все предметы набора экипированы, применяем бонусы
                 if equipped_pieces == len(equipment_set.pieces):
@@ -910,19 +910,19 @@ class ItemSystem(BaseComponent):
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
-            'item_templates_count': len(self.item_templates),
-            'equipment_sets_count': len(self.equipment_sets),
-            'inventories_count': len(self.inventories),
-            'total_items_created': self.system_stats['total_items_created'],
-            'total_items_destroyed': self.system_stats['total_items_destroyed'],
-            'total_items_equipped': self.system_stats['total_items_equipped'],
-            'total_items_unequipped': self.system_stats['total_items_unequipped'],
-            'active_modifiers': self.system_stats['active_modifiers'],
-            'update_time': self.system_stats['update_time']
-        }
+                    'name': self.system_name,
+                    'state': self.system_state.value,
+                    'priority': self.system_priority.value,
+                    'item_templates_count': len(self.item_templates),
+                    'equipment_sets_count': len(self.equipment_sets),
+                    'inventories_count': len(self.inventories),
+                    'total_items_created': self.system_stats['total_items_created'],
+                    'total_items_destroyed': self.system_stats['total_items_destroyed'],
+                    'total_items_equipped': self.system_stats['total_items_equipped'],
+                    'total_items_unequipped': self.system_stats['total_items_unequipped'],
+                    'active_modifiers': self.system_stats['active_modifiers'],
+                    'update_time': self.system_stats['update_time']
+                }
     
     def reset_stats(self):
         """Сброс статистики"""

@@ -85,9 +85,9 @@ class MasterIntegrator(BaseComponent):
     
     def __init__(self):
         super().__init__(
-            system_name="master_integrator",
-            system_priority=Priority.CRITICAL,
-            system_type=ComponentType.SYSTEM
+            component_id="master_integrator",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.CRITICAL
         )
         
         # Архитектурные компоненты
@@ -141,20 +141,20 @@ class MasterIntegrator(BaseComponent):
         """Регистрация состояний системы"""
         if self.state_manager:
             self.state_manager.set_state(
-                f"{self.system_name}_config",
+                f"{self.component_id}_config",
                 self.integration_config.__dict__,
                 StateType.SETTINGS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_stats",
+                f"{self.component_id}_stats",
                 self.system_stats,
                 StateType.STATISTICS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_state",
-                self.system_state,
+                f"{self.component_id}_state",
+                self.state,
                 StateType.SYSTEM_STATE
             )
     
@@ -240,7 +240,7 @@ class MasterIntegrator(BaseComponent):
             # Обновляем состояние в менеджере состояний
             if self.state_manager:
                 self.state_manager.set_state(
-                    f"{self.system_name}_stats",
+                    f"{self.component_id}_stats",
                     self.system_stats,
                     StateType.STATISTICS
                 )
@@ -687,9 +687,9 @@ class MasterIntegrator(BaseComponent):
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
+            'name': self.component_id,
+            'state': self.state.value,
+            'priority': self.priority.value,
             'total_systems': self.system_stats['total_systems'],
             'active_systems': self.system_stats['active_systems'],
             'integrated_systems': self.system_stats['integrated_systems'],

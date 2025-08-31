@@ -115,7 +115,7 @@ class WorldManager(BaseComponent):
         self.auto_save_enabled = True
     
     def _on_initialize(self) -> bool:
-"""Инициализация менеджера мира"""
+        """Инициализация менеджера мира"""
         try:
             # Инициализируем подсистемы
             self.height_generator = HeightMapGenerator()
@@ -204,7 +204,7 @@ class WorldManager(BaseComponent):
         """Генерация содержимого чанка"""
         try:
             if chunk_id not in self.chunks:
-return False
+                return False
             
             chunk = self.chunks[chunk_id]
             start_time = time.time()
@@ -233,16 +233,16 @@ return False
                 chunk.state = ChunkState.LOADED
                 chunk.last_accessed = time.time()
             
-# Обновляем статистику
+            # Обновляем статистику
             self.world_stats.total_structures += len(structures)
             self.world_stats.generation_time += chunk.generation_time
             
             self._logger.debug(f"Чанк {chunk_id} сгенерирован за {chunk.generation_time:.3f}с")
-return True
+            return True
             
         except Exception as e:
             self._logger.error(f"Ошибка генерации содержимого чанка {chunk_id}: {e}")
-return False
+            return False
     
     def _on_chunk_generated(self, chunk_id: str, future):
         """Обработка завершения генерации чанка"""
@@ -274,7 +274,7 @@ return False
             chunk_id = f"{chunk_x}_{chunk_y}"
             
             if chunk_id not in self.chunks:
-return False
+                return False
             
             chunk = self.chunks[chunk_id]
             
@@ -291,13 +291,13 @@ return False
                 elif chunk.state == ChunkState.ACTIVE:
                     self.world_stats.active_chunks -= 1
                 
-return True
+                return True
             
-return False
+            return False
             
         except Exception as e:
             self._logger.error(f"Ошибка выгрузки чанка {chunk_x}, {chunk_y}: {e}")
-return False
+            return False
     
     def _unload_oldest_chunks(self):
         """Выгрузка самых старых чанков"""
@@ -331,7 +331,7 @@ return False
             
         except Exception as e:
             self._logger.error(f"Ошибка получения чанка по позиции ({world_x}, {world_y}): {e}")
-return None
+            return None
     
     def get_chunks_in_area(self, center: Tuple[float, float], radius: float) -> List[WorldChunk]:
         """Получение чанков в заданной области"""
@@ -463,11 +463,11 @@ return None
             # TODO: Реализовать сохранение состояния мира
             self.last_save_time = time.time()
             self._logger.info("Состояние мира сохранено")
-return True
+            return True
             
         except Exception as e:
             self._logger.error(f"Ошибка сохранения состояния мира: {e}")
-return False
+            return False
     
     def _on_update(self, delta_time: float) -> bool:
         """Обновление менеджера мира"""
@@ -539,4 +539,4 @@ return False
             
         except Exception as e:
             self._logger.error(f"Ошибка уничтожения менеджера мира: {e}")
-return False
+            return False

@@ -1,0 +1,4 @@
+2025-08-31 17:02:32 - root - WARNING - Scikit-learn недоступен
+2025-08-31 17:02:33 - src.core.constants_extended - INFO - Расширенный модуль констант загружен
+2025-08-31 17:02:33 - src.systems.content.content_system - INFO - Система контента загружена
+2025-08-31 17:02:33 - root - ERROR - Ошибка инициализации: No module named 'src.core.base_component'

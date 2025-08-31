@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-"""Система управления состоянием - централизованное управление игровым состоянием
-Улучшенная версия с поддержкой групп, валидации и производительности"""
+"""Централизованный менеджер состояний
+Управляет всеми состояниями игры с версионированием и валидацией"""
 
-from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 from typing import *
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Callable
-import copy
+from typing import Dict, List, Optional, Any, Callable, Generic, TypeVar
 import logging
-import os
-import sys
-import threading
 import time
-import weakref
+import threading
+import hashlib
+import json
+from abc import ABC, abstractmethod
 
-from .architecture import BaseComponent, ComponentType, Priority
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
 
 logger = logging.getLogger(__name__)
 
@@ -24,30 +21,28 @@ logger = logging.getLogger(__name__)
 
 class StateType(Enum):
     """Типы состояний"""
-    GLOBAL = "global"
-    ENTITY = "entity"
-    SYSTEM = "system"
-    UI = "ui"
-    TEMPORARY = "temporary"
-    CONFIGURATION = "configuration"
-    STATISTICS = "statistics"
-    DATA = "data"
+    GAME_STATE = "game_state"           # Игровые состояния
+    UI_STATE = "ui_state"               # Состояния интерфейса
+    SYSTEM_STATE = "system_state"       # Системные состояния
+    ENTITY_STATE = "entity_state"       # Состояния сущностей
+    WORLD_STATE = "world_state"         # Состояния мира
+    SETTINGS = "settings"               # Настройки
+    STATISTICS = "statistics"           # Статистика
 
 class StateScope(Enum):
     """Области видимости состояний"""
-    PRIVATE = "private"
-    PROTECTED = "protected"
-    PUBLIC = "public"
+    PUBLIC = "public"                   # Публичное состояние
+    PROTECTED = "protected"             # Защищенное состояние
+    PRIVATE = "private"                 # Приватное состояние
 
 class StateValidation(Enum):
     """Типы валидации состояний"""
-    NONE = "none"
-    TYPE = "type"
-    RANGE = "range"
-    ENUM = "enum"
-    CUSTOM = "custom"
+    NONE = "none"                       # Без валидации
+    TYPE_CHECK = "type_check"           # Проверка типа
+    RANGE_CHECK = "range_check"         # Проверка диапазона
+    CUSTOM = "custom"                   # Пользовательская валидация
 
-# = БАЗОВЫЕ КЛАССЫ СОСТОЯНИЙ
+# = СТРУКТУРЫ ДАННЫХ
 
 @dataclass
 class StateChange:
@@ -388,24 +383,10 @@ class StateManager(BaseComponent):
                 if callback not in self._global_subscribers:
                     self._global_subscribers.append(callback)
                     logger.debug("Подписка на все изменения состояний")
-                return True
+                    return True
                 
         except Exception as e:
             logger.error(f"Ошибка подписки на все состояния: {e}")
-            return False
-    
-    def unsubscribe_from_all_states(self, callback: Callable) -> bool:
-        """Отписка от всех изменений состояний"""
-        try:
-            with self._lock:
-                if callback in self._global_subscribers:
-                    self._global_subscribers.remove(callback)
-                    logger.debug("Отписка от всех изменений состояний")
-                    return True
-                return False
-                
-        except Exception as e:
-            logger.error(f"Ошибка отписки от всех состояний: {e}")
             return False
     
     def _validate_state(self, state_id: str, value: Any) -> bool:
@@ -418,33 +399,28 @@ class StateManager(BaseComponent):
             
             if rule.validation_type == StateValidation.NONE:
                 return True
-            elif rule.validation_type == StateValidation.TYPE:
+            
+            elif rule.validation_type == StateValidation.TYPE_CHECK:
                 expected_type = rule.rule_data.get("type")
                 if expected_type and not isinstance(value, expected_type):
-                    logger.warning(f"Валидация типа не пройдена для {state_id}: ожидается {expected_type}, получено {type(value)}")
-                    self._validation_failures += 1
+                    logger.warning(f"Неверный тип для {state_id}: ожидается {expected_type}, получен {type(value)}")
                     return False
-            elif rule.validation_type == StateValidation.RANGE:
+            
+            elif rule.validation_type == StateValidation.RANGE_CHECK:
                 min_val = rule.rule_data.get("min")
                 max_val = rule.rule_data.get("max")
+                
                 if min_val is not None and value < min_val:
-                    logger.warning(f"Валидация диапазона не пройдена для {state_id}: значение {value} меньше минимума {min_val}")
-                    self._validation_failures += 1
+                    logger.warning(f"Значение {state_id} меньше минимального: {value} < {min_val}")
                     return False
+                
                 if max_val is not None and value > max_val:
-                    logger.warning(f"Валидация диапазона не пройдена для {state_id}: значение {value} больше максимума {max_val}")
-                    self._validation_failures += 1
+                    logger.warning(f"Значение {state_id} больше максимального: {value} > {max_val}")
                     return False
-            elif rule.validation_type == StateValidation.ENUM:
-                allowed_values = rule.rule_data.get("values", [])
-                if value not in allowed_values:
-                    logger.warning(f"Валидация enum не пройдена для {state_id}: значение {value} не в списке {allowed_values}")
-                    self._validation_failures += 1
-                    return False
+            
             elif rule.validation_type == StateValidation.CUSTOM:
                 if rule.custom_validator and not rule.custom_validator(value):
                     logger.warning(f"Пользовательская валидация не пройдена для {state_id}")
-                    self._validation_failures += 1
                     return False
             
             return True
@@ -469,7 +445,7 @@ class StateManager(BaseComponent):
             
             self._state_history[state_id].append(change)
             
-            # Ограничение размера истории
+            # Ограничиваем размер истории
             if len(self._state_history[state_id]) > 100:
                 self._state_history[state_id] = self._state_history[state_id][-50:]
                 
@@ -479,221 +455,33 @@ class StateManager(BaseComponent):
     def _notify_subscribers(self, state_id: str, old_value: Any, new_value: Any, source: str):
         """Уведомление подписчиков об изменении состояния"""
         try:
-            # Уведомление подписчиков конкретного состояния
+            # Уведомляем подписчиков конкретного состояния
             if state_id in self._subscribers:
                 for callback in self._subscribers[state_id]:
                     try:
                         callback(state_id, old_value, new_value, source)
                     except Exception as e:
-                        logger.error(f"Ошибка в обработчике состояния {state_id}: {e}")
+                        logger.error(f"Ошибка в callback для {state_id}: {e}")
             
-            # Уведомление глобальных подписчиков
+            # Уведомляем глобальных подписчиков
             for callback in self._global_subscribers:
                 try:
                     callback(state_id, old_value, new_value, source)
                 except Exception as e:
-                    logger.error(f"Ошибка в глобальном обработчике состояний: {e}")
+                    logger.error(f"Ошибка в глобальном callback: {e}")
                     
         except Exception as e:
-            logger.error(f"Ошибка уведомления подписчиков для состояния {state_id}: {e}")
+            logger.error(f"Ошибка уведомления подписчиков для {state_id}: {e}")
     
-    def create_snapshot(self, state_id: str = None) -> str:
-        """Создание снимка состояния или всех состояний"""
-        try:
-            with self._lock:
-                snapshot_id = f"snapshot_{int(time.time())}"
-                
-                if state_id:
-                    # Снимок конкретного состояния
-                    if state_id in self._states:
-                        snapshot = StateSnapshot(
-                            state_id=state_id,
-                            value=self._states[state_id],
-                            timestamp=time.time(),
-                            version=len(self._state_snapshots.get(state_id, [])) + 1,
-                            metadata=self._state_metadata.get(state_id, {}).copy()
-                        )
-                        
-                        if state_id not in self._state_snapshots:
-                            self._state_snapshots[state_id] = []
-                        
-                        self._state_snapshots[state_id].append(snapshot)
-                        logger.debug(f"Создан снимок состояния {state_id}")
-                else:
-                    # Снимок всех состояний
-                    for sid in self._states:
-                        snapshot = StateSnapshot(
-                            state_id=sid,
-                            value=self._states[sid],
-                            timestamp=time.time(),
-                            version=len(self._state_snapshots.get(sid, [])) + 1,
-                            metadata=self._state_metadata.get(sid, {}).copy()
-                        )
-                        
-                        if sid not in self._state_snapshots:
-                            self._state_snapshots[sid] = []
-                        
-                        self._state_snapshots[sid].append(snapshot)
-                    
-                    logger.debug("Создан снимок всех состояний")
-                
-                return snapshot_id
-                
-        except Exception as e:
-            logger.error(f"Ошибка создания снимка: {e}")
-            return ""
-    
-    def restore_snapshot(self, state_id: str, version: int = None) -> bool:
-        """Восстановление состояния из снимка"""
-        try:
-            with self._lock:
-                if state_id not in self._state_snapshots:
-                    logger.error(f"Снимки для состояния {state_id} не найдены")
-                    return False
-                
-                snapshots = self._state_snapshots[state_id]
-                if not snapshots:
-                    logger.error(f"Снимки для состояния {state_id} пусты")
-                    return False
-                
-                # Выбор снимка
-                if version is None:
-                    # Последний снимок
-                    snapshot = snapshots[-1]
-                else:
-                    # Конкретная версия
-                    snapshot = next((s for s in snapshots if s.version == version), None)
-                    if not snapshot:
-                        logger.error(f"Снимок версии {version} для состояния {state_id} не найден")
-                        return False
-                
-                # Восстановление состояния
-                old_value = self._states.get(state_id)
-                self._states[state_id] = snapshot.value
-                
-                # Восстановление метаданных
-                if snapshot.metadata:
-                    self._state_metadata[state_id] = snapshot.metadata.copy()
-                
-                # Запись в историю
-                self._record_state_change(state_id, old_value, snapshot.value, "snapshot_restore")
-                
-                # Уведомление подписчиков
-                self._notify_subscribers(state_id, old_value, snapshot.value, "snapshot_restore")
-                
-                logger.debug(f"Восстановлено состояние {state_id} из снимка версии {snapshot.version}")
-                return True
-                
-        except Exception as e:
-            logger.error(f"Ошибка восстановления снимка для состояния {state_id}: {e}")
-            return False
-    
-    def _on_update(self, delta_time: float) -> bool:
-        """Обновление менеджера состояний"""
-        try:
-            # Периодическая очистка
-            current_time = time.time()
-            if current_time - self._last_cleanup > self._cleanup_interval:
-                self._cleanup_old_data()
-                self._last_cleanup = current_time
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Ошибка обновления StateManager: {e}")
-            return False
-    
-    def _cleanup_old_data(self):
-        """Очистка старых данных"""
-        try:
-            with self._lock:
-                # Очистка временных состояний
-                temp_states = [state_id for state_id, metadata in self._state_metadata.items()
-                             if metadata.get("auto_cleanup", False)]
-                
-                for state_id in temp_states:
-                    if state_id in self._states:
-                        del self._states[state_id]
-                        logger.debug(f"Очищено временное состояние {state_id}")
-                
-                # Очистка старых снимков
-                for state_id in list(self._state_snapshots.keys()):
-                    snapshots = self._state_snapshots[state_id]
-                    if len(snapshots) > 10:  # Оставляем только 10 последних снимков
-                        self._state_snapshots[state_id] = snapshots[-10:]
-                
-                logger.debug("Выполнена очистка старых данных")
-                
-        except Exception as e:
-            logger.error(f"Ошибка очистки старых данных: {e}")
-    
-    def get_stats(self) -> Dict[str, Any]:
-        """Получение статистики менеджера состояний"""
-        try:
-            with self._lock:
-                return {
-                    "total_states": len(self._states),
-                    "total_groups": len(self._state_groups),
-                    "total_subscribers": sum(len(subscribers) for subscribers in self._subscribers.values()),
-                    "global_subscribers": len(self._global_subscribers),
-                    "change_count": self._change_count,
-                    "validation_failures": self._validation_failures,
-                    "total_snapshots": sum(len(snapshots) for snapshots in self._state_snapshots.values()),
-                    "state_history_size": sum(len(history) for history in self._state_history.values())
-                }
-        except Exception as e:
-            logger.error(f"Ошибка получения статистики StateManager: {e}")
-            return {}
-    
-    def cleanup(self):
-        """Очистка менеджера состояний"""
-        try:
-            with self._lock:
-                self._states.clear()
-                self._state_metadata.clear()
-                self._state_history.clear()
-                self._state_snapshots.clear()
-                self._validation_rules.clear()
-                self._state_groups.clear()
-                self._group_metadata.clear()
-                self._subscribers.clear()
-                self._global_subscribers.clear()
-                
-                logger.info("StateManager очищен")
-                
-        except Exception as e:
-            logger.error(f"Ошибка очистки StateManager: {e}")
-
-# = УТИЛИТЫ ДЛЯ РАБОТЫ С СОСТОЯНИЯМИ
-
-def create_state_group(state_manager: StateManager, group_name: str, 
-                      description: str = "", scope: StateScope = StateScope.PUBLIC,
-                      auto_cleanup: bool = False) -> bool:
-    """Утилита для создания группы состояний"""
-    metadata = {
-        "description": description,
-        "scope": scope,
-        "auto_cleanup": auto_cleanup,
-        "created_at": time.time()
-    }
-    return state_manager.create_state_group(group_name, metadata)
-
-def add_state_validation(state_manager: StateManager, state_id: str,
-                        validation_type: StateValidation, rule_data: Dict[str, Any],
-                        error_message: str = "Валидация не пройдена",
-                        custom_validator: Callable[[Any], bool] = None) -> bool:
-    """Утилита для добавления валидации состояния"""
-    try:
-        rule = StateValidationRule(
-            validation_type=validation_type,
-            rule_data=rule_data,
-            error_message=error_message,
-            custom_validator=custom_validator
-        )
-        state_manager._validation_rules[state_id] = rule
-        return True
-    except Exception as e:
-        logger.error(f"Ошибка добавления валидации для состояния {state_id}: {e}")
-        return False
-
-logger.info("StateManager загружен")
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение информации о системе"""
+        return {
+            'name': self.component_id,
+            'state': self.system_state.value,
+            'priority': self.system_priority.value,
+            'total_states': len(self._states),
+            'total_groups': len(self._state_groups),
+            'total_subscribers': len(self._subscribers),
+            'change_count': self._change_count,
+            'validation_failures': self._validation_failures
+        }

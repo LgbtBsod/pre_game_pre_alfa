@@ -1,3 +1,0 @@
-2025-08-31 15:43:00 - src.core.state_manager - INFO - StateManager загружен
-2025-08-31 15:43:03 - root - WARNING - Scikit-learn недоступен
-2025-08-31 15:43:03 - root - ERROR - Ошибка инициализации: No module named 'src.systems.quest.quest_system'

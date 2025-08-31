@@ -11,7 +11,7 @@ import os
 import time
 
 from .constants import (
-    DamageType, ItemType, ItemRarity, SkillType, StatType,
+    DamageType,
     EmotionType, GeneType, EvolutionType, constants_manager
 )
 

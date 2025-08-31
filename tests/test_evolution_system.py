@@ -28,22 +28,22 @@ class TestEvolutionSystem(unittest.TestCase):
         # Создаем моки для архитектурных компонентов
         self.state_manager = Mock(spec=StateManager)
         
-        # Настраиваем моки
+# Настраиваем моки
         self.state_manager.set_state = Mock(return_value=True)
         self.state_manager.get_state = Mock(return_value=None)
         
-        # Устанавливаем компоненты архитектуры
+# Устанавливаем компоненты архитектуры
         self.evolution_system.state_manager = self.state_manager
     
     def test_initialization(self):
         """Тест инициализации системы"""
-        # Проверяем начальное состояние
+# Проверяем начальное состояние
         self.assertEqual(self.evolution_system.component_id, "evolution_system")
         self.assertEqual(self.evolution_system.priority, Priority.HIGH)
         self.assertEqual(self.evolution_system.state, LifecycleState.UNINITIALIZED)
         
-        # Проверяем, что компоненты архитектуры установлены
-        self.assertIsNotNone(self.evolution_system.state_manager)
+# Проверяем, что компоненты архитектуры установлены
+self.assertIsNotNone(self.evolution_system.state_manager)
     
     def test_lifecycle_management(self):
         """Тест управления жизненным циклом"""
@@ -51,7 +51,7 @@ class TestEvolutionSystem(unittest.TestCase):
         self.assertTrue(self.evolution_system.initialize())
         self.assertEqual(self.evolution_system.state, LifecycleState.READY)
         
-        # Тестируем запуск
+# Тестируем запуск
         self.assertTrue(self.evolution_system.start())
         self.assertEqual(self.evolution_system.state, LifecycleState.RUNNING)
         
@@ -63,7 +63,7 @@ class TestEvolutionSystem(unittest.TestCase):
         self.assertTrue(self.evolution_system.resume())
         self.assertEqual(self.evolution_system.state, LifecycleState.RUNNING)
         
-        # Тестируем остановку
+# Тестируем остановку
         self.assertTrue(self.evolution_system.stop())
         self.assertEqual(self.evolution_system.state, LifecycleState.READY)
     
@@ -129,7 +129,7 @@ class TestEvolutionSystem(unittest.TestCase):
     
     def test_entity_evolution(self):
         """Тест эволюции сущности"""
-        # Создаем тестовую сущность
+# Создаем тестовую сущность
         entity_id = "test_entity"
         
         # Инициализируем эволюцию для сущности
@@ -138,7 +138,7 @@ class TestEvolutionSystem(unittest.TestCase):
         # Проверяем, что эволюция инициализирована
         self.assertTrue(self.evolution_system.has_entity_evolution(entity_id))
         
-        # Получаем прогресс эволюции
+# Получаем прогресс эволюции
         progress = self.evolution_system.get_entity_evolution_progress(entity_id)
         self.assertIsNotNone(progress)
         self.assertEqual(progress.entity_id, entity_id)
@@ -260,7 +260,7 @@ class TestEvolutionSystem(unittest.TestCase):
         self.assertEqual(self.evolution_system.state, LifecycleState.DESTROYED)
     
     def test_error_handling(self):
-        """Тест обработки ошибок"""
+"""Тест обработки ошибок"""
         # Тестируем обработку несуществующей сущности
         non_existent_entity = "non_existent_entity"
         
@@ -281,7 +281,7 @@ class TestEvolutionSystem(unittest.TestCase):
         gene = self.evolution_system.create_gene(**gene_data)
         
         result = self.evolution_system.add_gene_to_entity(non_existent_entity, gene)
-        self.assertFalse(result)
+self.assertFalse(result)
     
     def test_performance(self):
         """Тест производительности"""

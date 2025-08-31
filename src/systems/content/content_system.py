@@ -15,14 +15,16 @@ from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime
 
 from ...core.constants import (
-    DamageType, ItemType, ItemRarity, SkillType, StatType,
+    DamageType,
     EmotionType, GeneType, EvolutionType, constants_manager
 )
+from ..items.item_system import ItemType, ItemRarity
+from ..skills.skill_system import SkillType
 from ...core.constants_extended import (
     BiomeType, StructureType, EnemyType, BossPhase, QuestType,
     CONTENT_GENERATION_CONSTANTS, SESSION_GENERATION_CONSTANTS
 )
-from ...core.base_component import BaseComponent
+from ...core.architecture import BaseComponent
 
 logger = logging.getLogger(__name__)
 

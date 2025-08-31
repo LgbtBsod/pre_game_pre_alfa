@@ -1,3 +1,0 @@
-2025-08-31 15:45:36 - src.core.state_manager - INFO - StateManager загружен
-2025-08-31 15:45:39 - root - WARNING - Scikit-learn недоступен
-2025-08-31 15:45:39 - root - ERROR - Ошибка инициализации: No module named 'src.systems.world.world_evolution_system'
