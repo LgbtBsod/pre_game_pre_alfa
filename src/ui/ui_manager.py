@@ -211,7 +211,9 @@ class UIManager(BaseComponent):
         try:
             logger.info("Инициализация UIManager...")
             
-            self._register_system_states()
+            # Вызываем базовую инициализацию для установки состояния
+            if not super().initialize():
+                return False
             
             # Создание тем UI
             self._create_ui_themes()
@@ -219,13 +221,11 @@ class UIManager(BaseComponent):
             # Создание базовых UI элементов
             self._create_base_ui_elements()
             
-            self.state = LifecycleState.READY
             logger.info("UIManager инициализирован успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации UIManager: {e}")
-            self.state = LifecycleState.ERROR
             return False
     
     def start(self) -> bool:
@@ -237,13 +237,11 @@ class UIManager(BaseComponent):
                 logger.error("UIManager не готов к запуску")
                 return False
             
-            self.state = LifecycleState.RUNNING
             logger.info("UIManager запущен успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка запуска UIManager: {e}")
-            self.state = LifecycleState.ERROR
             return False
     
     def update(self, delta_time: float):
@@ -282,7 +280,6 @@ class UIManager(BaseComponent):
         try:
             logger.info("Остановка UIManager...")
             
-            self.state = LifecycleState.STOPPED
             logger.info("UIManager остановлен успешно")
             return True
             
@@ -305,7 +302,6 @@ class UIManager(BaseComponent):
             self.modifier_displays.clear()
             self.theme_styles.clear()
             
-            self.state = LifecycleState.DESTROYED
             logger.info("UIManager уничтожен успешно")
             return True
             

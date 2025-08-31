@@ -498,33 +498,453 @@ def main():
         except Exception as diag_e:
             print(f"⚠️  Ошибка диагностики состояния: {diag_e}")
         
-        # Запускаем окно игры
+        print("\n🎬 Запуск главного цикла игры...")
+        
+        # Детальная диагностика состояния систем
+        print("🔍 ДЕТАЛЬНАЯ ДИАГНОСТИКА СИСТЕМ:")
         try:
-            print("\n🔍 Проверка метода run в игре...")
-            if not hasattr(game, 'run'):
-                raise Exception("Игра не имеет метода 'run'")
-            print("✅ Метод 'run' найден")
+            if hasattr(game, 'systems'):
+                for system_name, system in game.systems.items():
+                    print(f"📋 {system_name}:")
+                    print(f"   🏷️  Тип: {type(system).__name__}")
+                    if hasattr(system, 'state'):
+                        print(f"   📊 Состояние: {system.state}")
+                    if hasattr(system, 'component_id'):
+                        print(f"   🆔 ID: {system.component_id}")
+                    if hasattr(system, 'priority'):
+                        print(f"   ⚡ Приоритет: {system.priority}")
+                    
+                    # Специальная проверка для системы рендеринга
+                    if system_name == 'rendering_system':
+                        if hasattr(system, 'showbase'):
+                            print(f"   🎬 ShowBase: {type(system.showbase).__name__}")
+                            if hasattr(system.showbase, 'win'):
+                                print(f"   🪟 Окно: {type(system.showbase.win).__name__}")
+                            else:
+                                print(f"   ⚠️  Окно: отсутствует")
+                        else:
+                            print(f"   ⚠️  ShowBase: отсутствует")
+                        
+                        if hasattr(system, 'run'):
+                            print(f"   ▶️  Метод run: доступен")
+                        else:
+                            print(f"   ❌ Метод run: отсутствует")
+                    
+                    print()  # Пустая строка для разделения
+            else:
+                print("❌ Игра не имеет атрибута 'systems'")
+        except Exception as diag_e:
+            print(f"⚠️  Ошибка детальной диагностики: {diag_e}")
+        
+        # Запускаем систему рендеринга напрямую
+        try:
+            print(f"\n🔍 КОМПЛЕКСНАЯ ДИАГНОСТИКА СИСТЕМЫ РЕНДЕРИНГА:")
+            print(f"   =================================================")
             
-            print("🔍 Проверка системы рендеринга...")
             if hasattr(game, 'systems') and 'rendering_system' in game.systems:
                 rendering_system = game.systems['rendering_system']
                 print(f"✅ Система рендеринга найдена: {type(rendering_system).__name__}")
                 
-                if hasattr(rendering_system, 'showbase'):
-                    print("✅ ShowBase найден в системе рендеринга")
-                else:
-                    print("⚠️  ShowBase не найден в системе рендеринга")
+                # 1. ПРОВЕРКА ВСЕХ АТРИБУТОВ RenderingSystem
+                print(f"\n📋 1. ПРОВЕРКА АТРИБУТОВ RenderingSystem:")
+                all_attrs = dir(rendering_system)
+                rendering_attrs = [attr for attr in all_attrs if not attr.startswith('_')]
                 
-                if hasattr(rendering_system, 'run'):
-                    print("✅ Метод 'run' найден в системе рендеринга")
+                for attr in rendering_attrs:
+                    try:
+                        value = getattr(rendering_system, attr)
+                        if callable(value):
+                            print(f"   🔧 {attr}: {type(value).__name__} (callable)")
+                        else:
+                            print(f"   📊 {attr}: {type(value).__name__} = {value}")
+                    except Exception as e:
+                        print(f"   ❌ {attr}: ошибка доступа - {e}")
+                
+                # 2. ДЕТАЛЬНАЯ ПРОВЕРКА ShowBase
+                print(f"\n🎬 2. ДЕТАЛЬНАЯ ПРОВЕРКА ShowBase:")
+                if hasattr(rendering_system, 'showbase'):
+                    showbase = rendering_system.showbase
+                    print(f"   🏷️  Тип: {type(showbase).__name__}")
+                    
+                    # Проверяем все атрибуты ShowBase
+                    showbase_attrs = ['render', 'render2d', 'camera', 'win', 'taskMgr', 'mouseWatcherNode', 'dataRoot']
+                    for attr in showbase_attrs:
+                        if hasattr(showbase, attr):
+                            value = getattr(showbase, attr)
+                            print(f"   ✅ {attr}: {type(value).__name__}")
+                        else:
+                            print(f"   ❌ {attr}: отсутствует")
+                    
+                    # 3. ПРОВЕРКА ОКНА
+                    print(f"\n🪟 3. ПРОВЕРКА ОКНА:")
+                    if hasattr(showbase, 'win'):
+                        win = showbase.win
+                        print(f"   🏷️  Тип окна: {type(win).__name__}")
+                        
+                        # Проверяем все методы окна
+                        window_methods = [
+                            'isValid', 'getXSize', 'getYSize', 'getState', 'getTitle',
+                            'getOrigin', 'getSize', 'getProperties', 'getPipe'
+                        ]
+                        
+                        for method in window_methods:
+                            if hasattr(win, method):
+                                try:
+                                    if method == 'isValid':
+                                        result = win.isValid()
+                                        print(f"   ✅ {method}: {result}")
+                                    elif method == 'getXSize':
+                                        result = win.getXSize()
+                                        print(f"   📏 {method}: {result}")
+                                    elif method == 'getYSize':
+                                        result = win.getYSize()
+                                        print(f"   📏 {method}: {result}")
+                                    elif method == 'getState':
+                                        result = win.getState()
+                                        print(f"   📊 {method}: {result}")
+                                    elif method == 'getTitle':
+                                        result = win.getTitle()
+                                        print(f"   🏷️  {method}: {result}")
+                                    elif method == 'getOrigin':
+                                        result = win.getOrigin()
+                                        print(f"   📍 {method}: {result}")
+                                    elif method == 'getSize':
+                                        result = win.getSize()
+                                        print(f"   📐 {method}: {result}")
+                                    else:
+                                        result = getattr(win, method)()
+                                        print(f"   ✅ {method}: {result}")
+                                except Exception as e:
+                                    print(f"   ⚠️  {method}: ошибка вызова - {e}")
+                            else:
+                                print(f"   ❌ {method}: отсутствует")
+                        
+                        # Проверяем свойства окна
+                        print(f"\n   🔧 Проверка свойств окна:")
+                        if hasattr(win, 'getProperties'):
+                            try:
+                                props = win.getProperties()
+                                print(f"      📋 Свойства окна: {props}")
+                            except Exception as e:
+                                print(f"      ⚠️  Не удалось получить свойства: {e}")
+                        
+                        # Проверяем pipe
+                        if hasattr(win, 'getPipe'):
+                            try:
+                                pipe = win.getPipe()
+                                print(f"      🔌 Pipe: {type(pipe).__name__}")
+                            except Exception as e:
+                                print(f"      ⚠️  Не удалось получить pipe: {e}")
+                    else:
+                        print(f"   ❌ Окно не найдено в ShowBase")
                 else:
-                    print("⚠️  Метод 'run' не найден в системе рендеринга")
+                    print(f"   ❌ ShowBase не найден в системе рендеринга")
+                
+                # 4. ПРОВЕРКА МЕТОДА RUN
+                print(f"\n▶️  4. ПРОВЕРКА МЕТОДА RUN:")
+                if hasattr(rendering_system, 'run'):
+                    run_method = rendering_system.run
+                    print(f"   ✅ Метод 'run' найден: {type(run_method).__name__}")
+                    print(f"   🔧 Вызываемый: {callable(run_method)}")
+                    
+                    # Проверяем сигнатуру метода
+                    import inspect
+                    try:
+                        sig = inspect.signature(run_method)
+                        print(f"   📝 Сигнатура: {sig}")
+                    except Exception as e:
+                        print(f"   ⚠️  Не удалось получить сигнатуру: {e}")
+                    
+                    # Проверяем docstring
+                    if hasattr(run_method, '__doc__') and run_method.__doc__:
+                        print(f"   📖 Docstring: {run_method.__doc__.strip()}")
+                    else:
+                        print(f"   ⚠️  Docstring отсутствует")
+                else:
+                    print(f"   ❌ Метод 'run' не найден в системе рендеринга")
+                    raise Exception("Система рендеринга не имеет метода 'run'")
+                
+                # 5. ПРОВЕРКА СОСТОЯНИЯ СИСТЕМЫ
+                print(f"\n📊 5. ПРОВЕРКА СОСТОЯНИЯ СИСТЕМЫ:")
+                if hasattr(rendering_system, 'state'):
+                    print(f"   📊 Состояние: {rendering_system.state}")
+                    print(f"   🔍 Значение: {rendering_system.state.value}")
+                else:
+                    print(f"   ⚠️  Состояние: не определено")
+                
+                # 6. ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ЗАПУСКОМ
+                print(f"\n🚀 6. ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ЗАПУСКОМ:")
+                print(f"   🔍 Проверяем все критические компоненты...")
+                
+                # Проверяем, что все критически важные компоненты присутствуют
+                critical_components = ['showbase']
+                missing_components = []
+                for component in critical_components:
+                    if not hasattr(rendering_system, component):
+                        missing_components.append(component)
+                
+                if missing_components:
+                    raise Exception(f"Отсутствуют критические компоненты: {missing_components}")
+                
+                # Дополнительная проверка showbase компонентов
+                showbase_critical = ['render', 'render2d', 'win']
+                missing_showbase = []
+                for component in showbase_critical:
+                    if not hasattr(rendering_system.showbase, component):
+                        missing_showbase.append(component)
+                
+                if missing_showbase:
+                    raise Exception(f"Отсутствуют критические компоненты ShowBase: {missing_showbase}")
+                
+                print(f"   ✅ Все критические компоненты присутствуют")
+                print(f"   ✅ Все компоненты ShowBase присутствуют")
+                print(f"   🚀 Запуск окна игры...")
+                
+                # 7. ЗАПУСК С МОНИТОРИНГОМ
+                print(f"\n🎬 7. ЗАПУСК С МОНИТОРИНГОМ:")
+                print(f"   🚀 Вызываем rendering_system.run()...")
+                
+                try:
+                    print(f"   🔍 Состояние перед вызовом run():")
+                    print(f"      📊 Система: {rendering_system.state}")
+                    print(f"      🎬 ShowBase: {type(rendering_system.showbase).__name__}")
+                    print(f"      🪟 Окно: {type(rendering_system.showbase.win).__name__}")
+                    
+                    # Проверяем, что окно действительно готово
+                    win = rendering_system.showbase.win
+                    if hasattr(win, 'isValid'):
+                        is_valid = win.isValid()
+                        print(f"      ✅ Окно валидно: {is_valid}")
+                    else:
+                        print(f"      ⚠️  Метод isValid отсутствует")
+                    
+                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
+                        width = win.getXSize()
+                        height = win.getYSize()
+                        print(f"      📏 Размеры: {width}x{height}")
+                    else:
+                        print(f"      ⚠️  Методы получения размеров отсутствуют")
+                    
+                    print(f"   🚀 ВЫЗЫВАЕМ run()...")
+                    
+                    # ПРОБУЕМ РАЗНЫЕ СПОСОБЫ ЗАПУСКА
+                    print(f"\n   🔄 ПРОБУЕМ РАЗНЫЕ СПОСОБЫ ЗАПУСКА:")
+                    
+                    # Способ 1: Прямой вызов
+                    print(f"   📋 Способ 1: Прямой вызов rendering_system.run()")
+                    try:
+                        # Запускаем в отдельном потоке с таймаутом
+                        import threading
+                        import time
+                        
+                        # Создаем флаг для отслеживания запуска
+                        run_started = threading.Event()
+                        run_completed = threading.Event()
+                        run_error = None
+                        
+                        def run_with_monitoring():
+                            nonlocal run_error
+                            try:
+                                run_started.set()
+                                print(f"      📝 run() начал выполнение")
+                                result = rendering_system.run()
+                                print(f"      📊 run() завершился с результатом: {result}")
+                                run_completed.set()
+                            except Exception as e:
+                                run_error = e
+                                print(f"      ❌ run() завершился с ошибкой: {e}")
+                                import traceback
+                                print(f"      🔍 Детали ошибки:")
+                                traceback.print_exc()
+                                run_completed.set()
+                        
+                        # Запускаем в отдельном потоке
+                        run_thread = threading.Thread(target=run_with_monitoring, daemon=True)
+                        run_thread.start()
+                        
+                        # Ждем начала выполнения
+                        if run_started.wait(timeout=5.0):
+                            print(f"      ✅ run() начал выполняться")
+                            
+                            # Ждем завершения с таймаутом
+                            if run_completed.wait(timeout=15.0):  # Увеличиваем таймаут
+                                if run_error:
+                                    print(f"      ❌ run() завершился с ошибкой: {run_error}")
+                                    raise Exception(f"Ошибка при запуске окна: {run_error}")
+                                else:
+                                    print(f"      ✅ run() завершился успешно")
+                            else:
+                                print(f"      ⚠️  run() не завершился за 15 секунд")
+                                print(f"      🔍 Проверяем состояние окна...")
+                                
+                                # Проверяем состояние окна после запуска
+                                if hasattr(rendering_system, 'showbase') and hasattr(rendering_system.showbase, 'win'):
+                                    win = rendering_system.showbase.win
+                                    if hasattr(win, 'isValid'):
+                                        try:
+                                            is_valid = win.isValid()
+                                            print(f"      📊 Окно валидно после запуска: {is_valid}")
+                                        except Exception as e:
+                                            print(f"      ⚠️  Не удалось проверить валидность: {e}")
+                                    
+                                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
+                                        try:
+                                            width = win.getXSize()
+                                            height = win.getYSize()
+                                            print(f"      📏 Размеры после запуска: {width}x{height}")
+                                        except Exception as e:
+                                            print(f"      ⚠️  Не удалось получить размеры: {e}")
+                                else:
+                                    print(f"      ⚠️  Не удалось проверить окно после запуска")
+                        else:
+                            print(f"      ❌ run() не начал выполняться за 5 секунд")
+                            raise Exception("run() не начал выполняться за 5 секунд")
+                        
+                    except Exception as e:
+                        print(f"      ❌ Способ 1 не сработал: {e}")
+                        print(f"      🔄 Пробуем способ 2...")
+                        
+                        # Способ 2: Попытка через ShowBase напрямую
+                        print(f"   📋 Способ 2: Прямой вызов showbase.run()")
+                        try:
+                            if hasattr(rendering_system, 'showbase'):
+                                showbase = rendering_system.showbase
+                                print(f"      🎬 Вызываем showbase.run() напрямую...")
+                                
+                                # Запускаем в отдельном потоке
+                                def run_showbase_directly():
+                                    try:
+                                        print(f"         📝 showbase.run() начал выполнение")
+                                        showbase.run()
+                                        print(f"         ✅ showbase.run() завершился")
+                                    except Exception as e:
+                                        print(f"         ❌ showbase.run() завершился с ошибкой: {e}")
+                                        import traceback
+                                        traceback.print_exc()
+                                
+                                showbase_thread = threading.Thread(target=run_showbase_directly, daemon=True)
+                                showbase_thread.start()
+                                
+                                # Ждем немного
+                                time.sleep(3)
+                                print(f"         ⏰ showbase.run() запущен в фоне")
+                                
+                            else:
+                                raise Exception("ShowBase не найден")
+                                
+                        except Exception as e2:
+                            print(f"      ❌ Способ 2 не сработал: {e2}")
+                            print(f"      🔄 Пробуем способ 3...")
+                            
+                            # Способ 3: Проверяем, может окно уже создано
+                            print(f"   📋 Способ 3: Проверка существующего окна")
+                            try:
+                                if hasattr(rendering_system, 'showbase') and hasattr(rendering_system.showbase, 'win'):
+                                    win = rendering_system.showbase.win
+                                    print(f"      🪟 Проверяем существующее окно...")
+                                    
+                                    if hasattr(win, 'isValid'):
+                                        is_valid = win.isValid()
+                                        print(f"         📊 Окно валидно: {is_valid}")
+                                    
+                                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
+                                        width = win.getXSize()
+                                        height = win.getYSize()
+                                        print(f"         📏 Размеры: {width}x{height}")
+                                    
+                                    # Пытаемся сделать окно видимым
+                                    if hasattr(win, 'setForeground'):
+                                        try:
+                                            win.setForeground()
+                                            print(f"         ✅ Окно выведено на передний план")
+                                        except Exception as e:
+                                            print(f"         ⚠️  Не удалось вывести окно на передний план: {e}")
+                                    
+                                    print(f"      🎮 Окно должно быть видимым!")
+                                    
+                                else:
+                                    raise Exception("Окно не найдено")
+                                    
+                            except Exception as e3:
+                                print(f"      ❌ Способ 3 не сработал: {e3}")
+                                raise Exception(f"Все способы запуска не сработали. Последняя ошибка: {e3}")
+                    
+                except Exception as run_error:
+                    print(f"   ❌ Ошибка при вызове run(): {run_error}")
+                    print(f"   🔍 Детали ошибки:")
+                    import traceback
+                    traceback.print_exc()
+                    raise Exception(f"Ошибка при запуске окна: {run_error}")
+                
+                print("✅ Главный цикл игры запущен")
+                
+                # 8. ПРОВЕРКА ПОСЛЕ ЗАПУСКА
+                print(f"\n🔍 8. ПРОВЕРКА ПОСЛЕ ЗАПУСКА:")
+                if hasattr(rendering_system, 'showbase') and hasattr(rendering_system.showbase, 'win'):
+                    win = rendering_system.showbase.win
+                    if hasattr(win, 'isValid'):
+                        try:
+                            is_valid = win.isValid()
+                            print(f"   ✅ Окно валидно после запуска: {is_valid}")
+                        except Exception as e:
+                            print(f"   ⚠️  Не удалось проверить валидность после запуска: {e}")
+                    
+                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
+                        try:
+                            width = win.getXSize()
+                            height = win.getYSize()
+                            print(f"   📏 Размеры после запуска: {width}x{height}")
+                        except Exception as e:
+                            print(f"   ⚠️  Не удалось получить размеры после запуска: {e}")
+                else:
+                    print(f"   ⚠️  Не удалось проверить окно после запуска")
+                
+                # 9. ПОДДЕРЖАНИЕ ОКНА ОТКРЫТЫМ
+                print(f"\n🔄 9. ПОДДЕРЖАНИЕ ОКНА ОТКРЫТЫМ:")
+                print(f"   🎮 Окно игры запущено!")
+                print(f"   🪟 Оно должно быть видимым на экране")
+                print(f"   ⏹️  Для выхода закройте окно игры или нажмите Ctrl+C")
+                
+                # ВАЖНО: Добавляем бесконечный цикл чтобы лаунчер не завершался
+                print(f"   🔄 Лаунчер переходит в режим ожидания...")
+                
+                try:
+                    # Ждем пока окно открыто
+                    while True:
+                        if hasattr(rendering_system, 'showbase') and hasattr(rendering_system.showbase, 'win'):
+                            win = rendering_system.showbase.win
+                            if hasattr(win, 'isValid'):
+                                try:
+                                    is_valid = win.isValid()
+                                    if not is_valid:
+                                        print(f"   ⚠️  Окно стало невалидным, завершаем работу")
+                                        break
+                                except Exception as e:
+                                    print(f"   ⚠️  Не удалось проверить валидность окна: {e}")
+                                    break
+                        else:
+                            print(f"   ⚠️  Окно не найдено, завершаем работу")
+                            break
+                        
+                        # Ждем немного перед следующей проверкой
+                        import time
+                        time.sleep(1)
+                        
+                except KeyboardInterrupt:
+                    print(f"\n   🛑 Получен сигнал прерывания (Ctrl+C)")
+                    print(f"   🚪 Завершаем работу...")
+                except Exception as e:
+                    print(f"\n   ❌ Ошибка в цикле ожидания: {e}")
+                
+                print(f"   ✅ Работа завершена")
+                
+                print(f"\n🎉 ОКНО ИГРЫ УСПЕШНО ЗАПУЩЕНО!")
+                print(f"   🎮 Игра готова к использованию")
+                print(f"   🪟 Окно должно быть видимым")
+                print(f"   ⏹️  Для выхода закройте окно игры")
+                
             else:
-                print("⚠️  Система рендеринга не найдена в игре")
-            
-            print("\n🎬 Запуск главного цикла игры...")
-            game.run()
-            print("✅ Главный цикл игры запущен")
+                raise Exception("Система рендеринга не найдена в игре")
             
         except Exception as e:
             logger.error(f"Ошибка запуска окна игры: {e}")

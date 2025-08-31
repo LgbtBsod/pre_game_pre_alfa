@@ -702,97 +702,177 @@ class RenderSystem(BaseComponent):
     def show_start_menu(self, ui_manager=None):
         """Отображение стартового меню"""
         try:
+            logger.info("=" * 50)
+            logger.info("🎮 СОЗДАНИЕ СТАРТОВОГО МЕНЮ")
+            logger.info("=" * 50)
+            
             if ui_manager:
+                logger.info("🔍 Попытка создания стартового меню через UIManager...")
                 # Создаем стартовое меню через UIManager
                 start_menu = ui_manager.create_start_menu()
                 if start_menu:
-                    logger.info("Стартовое меню отображено")
+                    logger.info("✅ Стартовое меню отображено через UIManager")
                     return True
                 else:
-                    logger.warning("Не удалось создать стартовое меню")
+                    logger.warning("⚠️  Не удалось создать стартовое меню через UIManager")
                     return False
             else:
+                logger.info("🔍 UIManager не предоставлен, создаем простое меню...")
                 # Создаем простое стартовое меню напрямую
-                self._create_simple_start_menu()
-                return True
+                result = self._create_simple_start_menu()
+                if result:
+                    logger.info("✅ Простое стартовое меню создано успешно")
+                    return True
+                else:
+                    logger.warning("⚠️  Не удалось создать простое стартовое меню")
+                    return False
                 
         except Exception as e:
+            logger.error("=" * 50)
+            logger.error("❌ ОШИБКА СОЗДАНИЯ СТАРТОВОГО МЕНЮ")
+            logger.error("=" * 50)
             logger.error(f"Ошибка отображения стартового меню: {e}")
+            import traceback
+            logger.error(f"Детали ошибки: {traceback.format_exc()}")
             return False
     
     def _create_simple_start_menu(self):
         """Создание простого стартового меню"""
         try:
-            from direct.gui.DirectFrame import DirectFrame
-            from direct.gui.DirectButton import DirectButton
-            from direct.gui.DirectLabel import DirectLabel
+            logger.info("=" * 50)
+            logger.info("🎮 СОЗДАНИЕ ПРОСТОГО СТАРТОВОГО МЕНЮ")
+            logger.info("=" * 50)
             
-            # Основная панель меню
-            menu_frame = DirectFrame(
-                frameColor=(0.0, 0.0, 0.0, 0.8),
-                frameSize=(-0.4, 0.4, -0.6, 0.6),
-                pos=(0, 0, 0)
-            )
-            menu_frame.reparentTo(self.render2d)
+            logger.info("Начинаем создание простого стартового меню...")
             
-            # Заголовок
-            title_label = DirectLabel(
-                text="AI-EVOLVE ENHANCED EDITION",
-                text_fg=(0.0, 1.0, 1.0, 1.0),
-                text_scale=0.08,
-                pos=(0, 0, 0.4),
-                parent=menu_frame
-            )
+            # Импортируем необходимые компоненты
+            try:
+                from direct.gui.DirectFrame import DirectFrame
+                from direct.gui.DirectButton import DirectButton
+                from direct.gui.DirectLabel import DirectLabel
+                logger.info("✅ Импорт DirectGUI компонентов успешен")
+            except ImportError as e:
+                logger.error(f"❌ Ошибка импорта DirectGUI: {e}")
+                return False
             
-            # Кнопка "Начать игру"
-            start_button = DirectButton(
-                text="START GAME",
-                text_fg=(1.0, 1.0, 1.0, 1.0),
-                text_scale=0.06,
-                frameColor=(0.2, 0.2, 0.2, 0.9),
-                frameSize=(-0.3, 0.3, -0.05, 0.05),
-                pos=(0, 0, 0.2),
-                parent=menu_frame,
-                command=self._on_start_game
-            )
+            if not hasattr(self, 'showbase') or not hasattr(self.showbase, 'render2d'):
+                logger.error("❌ showbase.render2d недоступен")
+                return False
             
-            # Кнопка "Настройки"
-            settings_button = DirectButton(
-                text="SETTINGS",
-                text_fg=(1.0, 1.0, 1.0, 1.0),
-                text_scale=0.06,
-                frameColor=(0.2, 0.2, 0.2, 0.9),
-                frameSize=(-0.3, 0.3, -0.05, 0.05),
-                pos=(0, 0, 0.1),
-                parent=menu_frame,
-                command=self._on_settings
-            )
+            logger.info("✅ showbase.render2d доступен")
             
-            # Кнопка "Выход"
-            quit_button = DirectButton(
-                text="QUIT GAME",
-                text_fg=(1.0, 1.0, 1.0, 1.0),
-                text_scale=0.06,
-                frameColor=(0.2, 0.2, 0.2, 0.9),
-                frameSize=(-0.3, 0.3, -0.05, 0.05),
-                pos=(0, 0, -0.1),
-                parent=menu_frame,
-                command=self._on_quit_game
-            )
+            # Создаем основную панель меню
+            try:
+                menu_frame = DirectFrame(
+                    frameColor=(0.2, 0.2, 0.2, 0.8),
+                    frameSize=(-0.3, 0.3, -0.4, 0.4),
+                    pos=(0, 0, 0)
+                )
+                logger.info("✅ Панель меню создана")
+            except Exception as e:
+                logger.error(f"❌ Ошибка создания панели меню: {e}")
+                return False
             
-            # Сохраняем ссылки на элементы меню
-            self.start_menu_elements = {
-                'frame': menu_frame,
-                'title': title_label,
-                'start_button': start_button,
-                'settings_button': settings_button,
-                'quit_button': quit_button
-            }
+            # Привязываем к render2d
+            try:
+                menu_frame.reparentTo(self.showbase.render2d)
+                logger.info("✅ Панель меню привязана к render2d")
+            except Exception as e:
+                logger.error(f"❌ Ошибка привязки панели к render2d: {e}")
+                return False
             
-            logger.info("Простое стартовое меню создано")
+            # Создаем заголовок
+            try:
+                title_label = DirectLabel(
+                    parent=menu_frame,
+                    text="AI EVOLVE",
+                    scale=0.05,
+                    pos=(0, 0, 0.25),
+                    text_fg=(1, 1, 1, 1),
+                    text_shadow=(0, 0, 0, 1)
+                )
+                logger.info("✅ Заголовок создан")
+            except Exception as e:
+                logger.error(f"❌ Ошибка создания заголовка: {e}")
+                return False
+            
+            # Создаем кнопки
+            try:
+                # Кнопка START GAME
+                start_button = DirectButton(
+                    parent=menu_frame,
+                    text="START GAME",
+                    scale=0.04,
+                    pos=(0, 0, 0.1),
+                    frameColor=(0.3, 0.6, 0.3, 1),
+                    text_fg=(1, 1, 1, 1),
+                    command=self._on_start_game
+                )
+                logger.info("✅ Кнопка START GAME создана")
+                
+                # Кнопка SETTINGS
+                settings_button = DirectButton(
+                    parent=menu_frame,
+                    text="SETTINGS",
+                    scale=0.04,
+                    pos=(0, 0, 0),
+                    frameColor=(0.3, 0.3, 0.6, 1),
+                    text_fg=(1, 1, 1, 1),
+                    command=self._on_settings
+                )
+                logger.info("✅ Кнопка SETTINGS создана")
+                
+                # Кнопка QUIT GAME
+                quit_button = DirectButton(
+                    parent=menu_frame,
+                    text="QUIT GAME",
+                    scale=0.04,
+                    pos=(0, 0, -0.1),
+                    frameColor=(0.6, 0.3, 0.3, 1),
+                    text_fg=(1, 1, 1, 1),
+                    command=self._on_quit_game
+                )
+                logger.info("✅ Кнопка QUIT GAME создана")
+                
+            except Exception as e:
+                logger.error(f"❌ Ошибка создания кнопок: {e}")
+                return False
+            
+            # Дополнительная проверка - убеждаемся что меню видимо
+            logger.info("🔍 Проверка видимости меню...")
+            try:
+                if hasattr(menu_frame, 'isVisible'):
+                    is_visible = menu_frame.isVisible()
+                    logger.info(f"   📊 Меню видимо: {is_visible}")
+                else:
+                    logger.info("   ⚠️  Метод isVisible недоступен")
+                
+                if hasattr(menu_frame, 'getPos'):
+                    pos = menu_frame.getPos()
+                    logger.info(f"   📍 Позиция меню: {pos}")
+                else:
+                    logger.info("   ⚠️  Метод getPos недоступен")
+                
+                if hasattr(menu_frame, 'getScale'):
+                    scale = menu_frame.getScale()
+                    logger.info(f"   📐 Масштаб меню: {scale}")
+                else:
+                    logger.info("   ⚠️  Метод getScale недоступен")
+                    
+            except Exception as e:
+                logger.warning(f"   ⚠️  Не удалось проверить свойства меню: {e}")
+            
+            logger.info("✅ Простое стартовое меню создано успешно")
+            return True
             
         except Exception as e:
-            logger.error(f"Ошибка создания простого стартового меню: {e}")
+            logger.error("=" * 50)
+            logger.error("❌ ОШИБКА СОЗДАНИЯ СТАРТОВОГО МЕНЮ")
+            logger.error("=" * 50)
+            logger.error(f"Ошибка создания стартового меню: {e}")
+            import traceback
+            logger.error(f"Детали ошибки: {traceback.format_exc()}")
+            return False
     
     def _on_start_game(self):
         """Обработчик нажатия кнопки 'Начать игру'"""
@@ -833,19 +913,224 @@ class RenderSystem(BaseComponent):
     def run(self):
         """Запуск главного цикла Panda3D"""
         try:
+            logger.info("=" * 60)
+            logger.info("🚀 ЗАПУСК ГЛАВНОГО ЦИКЛА PANDA3D")
+            logger.info("=" * 60)
+            
             if hasattr(self, 'showbase'):
-                logger.info("Запуск главного цикла Panda3D...")
+                logger.info("✅ ShowBase найден")
                 
-                # Показываем стартовое меню
-                self.show_start_menu()
+                # 1. ПРОВЕРКА ВСЕХ АТРИБУТОВ ПЕРЕД ЗАПУСКОМ
+                logger.info("🔍 1. ПРОВЕРКА АТРИБУТОВ ПЕРЕД ЗАПУСКОМ:")
+                all_attrs = dir(self)
+                rendering_attrs = [attr for attr in all_attrs if not attr.startswith('_')]
+                
+                for attr in rendering_attrs:
+                    try:
+                        value = getattr(self, attr)
+                        if callable(value):
+                            logger.info(f"   🔧 {attr}: {type(value).__name__} (callable)")
+                        else:
+                            logger.info(f"   📊 {attr}: {type(value).__name__} = {value}")
+                    except Exception as e:
+                        logger.warning(f"   ❌ {attr}: ошибка доступа - {e}")
+                
+                # 2. ДЕТАЛЬНАЯ ПРОВЕРКА ShowBase
+                logger.info("🔍 2. ДЕТАЛЬНАЯ ПРОВЕРКА ShowBase:")
+                showbase = self.showbase
+                logger.info(f"   🏷️  Тип: {type(showbase).__name__}")
+                
+                # Проверяем все атрибуты ShowBase
+                showbase_attrs = ['render', 'render2d', 'camera', 'win', 'taskMgr', 'mouseWatcherNode', 'dataRoot']
+                for attr in showbase_attrs:
+                    if hasattr(showbase, attr):
+                        value = getattr(showbase, attr)
+                        logger.info(f"   ✅ {attr}: {type(value).__name__}")
+                    else:
+                        logger.warning(f"   ❌ {attr}: отсутствует")
+                
+                # 3. ПРОВЕРКА ОКНА
+                logger.info("🔍 3. ПРОВЕРКА ОКНА:")
+                if hasattr(showbase, 'win'):
+                    win = showbase.win
+                    logger.info(f"   🏷️  Тип окна: {type(win).__name__}")
+                    
+                    # Проверяем все методы окна
+                    window_methods = [
+                        'isValid', 'getXSize', 'getYSize', 'getState', 'getTitle',
+                        'getOrigin', 'getSize', 'getProperties', 'getPipe'
+                    ]
+                    
+                    for method in window_methods:
+                        if hasattr(win, method):
+                            try:
+                                if method == 'isValid':
+                                    result = win.isValid()
+                                    logger.info(f"   ✅ {method}: {result}")
+                                elif method == 'getXSize':
+                                    result = win.getXSize()
+                                    logger.info(f"   📏 {method}: {result}")
+                                elif method == 'getYSize':
+                                    result = win.getYSize()
+                                    logger.info(f"   📏 {method}: {result}")
+                                elif method == 'getState':
+                                    result = win.getState()
+                                    logger.info(f"   📊 {method}: {result}")
+                                elif method == 'getTitle':
+                                    result = win.getTitle()
+                                    logger.info(f"   🏷️  {method}: {result}")
+                                elif method == 'getOrigin':
+                                    result = win.getOrigin()
+                                    logger.info(f"   📍 {method}: {result}")
+                                elif method == 'getSize':
+                                    result = win.getSize()
+                                    logger.info(f"   📐 {method}: {result}")
+                                else:
+                                    result = getattr(win, method)()
+                                    logger.info(f"   ✅ {method}: {result}")
+                            except Exception as e:
+                                logger.warning(f"   ⚠️  {method}: ошибка вызова - {e}")
+                        else:
+                            logger.warning(f"   ❌ {method}: отсутствует")
+                    
+                    # Проверяем свойства окна
+                    logger.info("🔧 Проверка свойств окна:")
+                    if hasattr(win, 'getProperties'):
+                        try:
+                            props = win.getProperties()
+                            logger.info(f"   📋 Свойства окна: {props}")
+                        except Exception as e:
+                            logger.warning(f"   ⚠️  Не удалось получить свойства: {e}")
+                    
+                    # Проверяем pipe
+                    if hasattr(win, 'getPipe'):
+                        try:
+                            pipe = win.getPipe()
+                            logger.info(f"   🔌 Pipe: {type(pipe).__name__}")
+                        except Exception as e:
+                            logger.warning(f"   ⚠️  Не удалось получить pipe: {e}")
+                else:
+                    logger.error("❌ Окно не найдено в ShowBase")
+                    raise Exception("Окно не найдено в ShowBase")
+                
+                # 4. ПРОВЕРКА СТАРТОВОГО МЕНЮ
+                logger.info("🔍 4. ПРОВЕРКА СТАРТОВОГО МЕНЮ:")
+                logger.info("Попытка отображения стартового меню...")
+                menu_result = self.show_start_menu()
+                if menu_result:
+                    logger.info("✅ Стартовое меню успешно отображено")
+                else:
+                    logger.warning("⚠️  Не удалось отобразить стартовое меню")
+                
+                # 5. ПРОВЕРКА СОСТОЯНИЯ ОКНА ПЕРЕД ЗАПУСКОМ
+                logger.info("🔍 5. ПРОВЕРКА СОСТОЯНИЯ ОКНА ПЕРЕД ЗАПУСКОМ:")
+                if hasattr(self.showbase, 'win'):
+                    win = self.showbase.win
+                    logger.info(f"Окно найдено: {type(win).__name__}")
+                    if hasattr(win, 'isValid'):
+                        try:
+                            is_valid = win.isValid()
+                            logger.info(f"Окно валидно: {is_valid}")
+                        except Exception as e:
+                            logger.warning(f"Не удалось проверить валидность окна: {e}")
+                else:
+                    logger.warning("Окно не найдено в ShowBase")
+                
+                # 6. ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА - УБЕЖДАЕМСЯ, ЧТО ОКНО ВИДИМО
+                logger.info("🔍 6. ПРОВЕРКА ВИДИМОСТИ ОКНА:")
+                if hasattr(self.showbase, 'win'):
+                    win = self.showbase.win
+                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
+                        try:
+                            width = win.getXSize()
+                            height = win.getYSize()
+                            logger.info(f"Размеры окна: {width}x{height}")
+                        except Exception as e:
+                            logger.warning(f"Не удалось получить размеры окна: {e}")
+                    
+                    # Проверяем, что окно не минимизировано
+                    if hasattr(win, 'getState'):
+                        try:
+                            state = win.getState()
+                            logger.info(f"Состояние окна: {state}")
+                        except Exception as e:
+                            logger.warning(f"Не удалось получить состояние окна: {e}")
+                
+                # 7. ЗАПУСК ГЛАВНОГО ЦИКЛА
+                logger.info("🔍 7. ЗАПУСК ГЛАВНОГО ЦИКЛА:")
+                logger.info("Запуск showbase.run()...")
+                
+                # Добавляем обработчик для отслеживания событий окна
+                try:
+                    from direct.task import Task
+                    
+                    def monitor_window(task):
+                        if hasattr(self, 'showbase') and hasattr(self.showbase, 'win'):
+                            win = self.showbase.win
+                            if hasattr(win, 'isValid'):
+                                try:
+                                    is_valid = win.isValid()
+                                    if not is_valid:
+                                        logger.warning("Окно стало невалидным!")
+                                        return Task.done
+                                except Exception as e:
+                                    logger.warning(f"Ошибка проверки валидности окна: {e}")
+                        return Task.cont
+                    
+                    # Добавляем задачу мониторинга
+                    self.showbase.taskMgr.add(monitor_window, "window_monitor")
+                    logger.info("✅ Мониторинг окна добавлен")
+                    
+                except Exception as e:
+                    logger.warning(f"⚠️  Не удалось добавить мониторинг окна: {e}")
+                
+                # 8. ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ЗАПУСКОМ
+                logger.info("🔍 8. ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ЗАПУСКОМ:")
+                logger.info("Все проверки пройдены, запускаем showbase.run()...")
+                
+                # ВАЖНО: Добавляем бесконечный цикл чтобы окно не закрывалось
+                logger.info("🔄 Добавляем бесконечный цикл для предотвращения закрытия окна...")
+                
+                try:
+                    # Добавляем задачу для поддержания окна открытым
+                    def keep_window_open(task):
+                        # Проверяем, что окно все еще валидно
+                        if hasattr(self, 'showbase') and hasattr(self.showbase, 'win'):
+                            win = self.showbase.win
+                            if hasattr(win, 'isValid'):
+                                try:
+                                    is_valid = win.isValid()
+                                    if not is_valid:
+                                        logger.warning("Окно стало невалидным, завершаем задачу")
+                                        return Task.done
+                                except Exception as e:
+                                    logger.warning(f"Ошибка проверки валидности окна: {e}")
+                        return Task.cont
+                    
+                    # Добавляем задачу поддержания окна
+                    self.showbase.taskMgr.add(keep_window_open, "keep_window_open", sort=0)
+                    logger.info("✅ Задача поддержания окна добавлена")
+                    
+                except Exception as e:
+                    logger.warning(f"⚠️  Не удалось добавить задачу поддержания окна: {e}")
                 
                 # Запускаем главный цикл
+                logger.info("🚀 ЗАПУСКАЕМ ГЛАВНЫЙ ЦИКЛ...")
                 self.showbase.run()
+                logger.info("✅ showbase.run() завершен")
+                
             else:
-                logger.error("Panda3D не инициализирован")
+                logger.error("❌ Panda3D не инициализирован")
+                raise Exception("Panda3D не инициализирован")
                 
         except Exception as e:
+            logger.error("=" * 60)
+            logger.error("❌ ОШИБКА ЗАПУСКА ГЛАВНОГО ЦИКЛА")
+            logger.error("=" * 60)
             logger.error(f"Ошибка запуска главного цикла: {e}")
+            import traceback
+            logger.error(f"Детали ошибки: {traceback.format_exc()}")
+            raise
     
     def switch_camera(self, camera_id: str) -> bool:
         """Переключение камеры"""
