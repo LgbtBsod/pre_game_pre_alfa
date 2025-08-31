@@ -1,0 +1,134 @@
+2025-08-31 23:33:12 - src.core.constants_extended - INFO - Расширенный модуль констант загружен
+2025-08-31 23:33:12 - src.systems.content.content_system - INFO - Система контента загружена
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Система изометрической визуализации загружена
+2025-08-31 23:33:12 - src.core.state_manager - INFO - StateManager инициализирован
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Master Integrator инициализирован
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Архитектурные компоненты установлены в MasterIntegrator
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Инициализация MasterIntegrator...
+2025-08-31 23:33:12 - src.systems.content.content_system - INFO - База данных контента инициализирована: content.db
+2025-08-31 23:33:12 - src.systems.content.content_system - INFO - Генератор контента инициализирован
+2025-08-31 23:33:12 - src.systems.content.content_system - INFO - Система контента инициализирована
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Генератор изометрических фигур инициализирован
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Визуализатор изометрических эмоций инициализирован
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Изометрическая камера инициализирована
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Система изометрической визуализации инициализирована
+2025-08-31 23:33:12 - src.systems.rendering.render_system - INFO - Система рендеринга инициализирована
+2025-08-31 23:33:12 - src.systems.combat.combat_system - INFO - Система боя инициализирована
+2025-08-31 23:33:12 - src.systems.skills.skill_system - INFO - Система навыков инициализирована
+2025-08-31 23:33:12 - src.ui.ui_manager - INFO - UI менеджер инициализирован
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: attribute_system
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: content_system
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: isometric_visualization_system
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: rendering_system
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: combat_system
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: skill_system
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Создана система: ui_manager
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Зависимости систем определены
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Порядок инициализации: ['attribute_system', 'content_system', 'combat_system', 'isometric_visualization_system', 'skill_system', 'rendering_system', 'ui_manager']
+2025-08-31 23:33:12 - src.systems.attributes.attribute_system - INFO - Инициализация AttributeSystem...
+2025-08-31 23:33:12 - src.systems.attributes.attribute_system - INFO - AttributeSystem инициализирован успешно
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Система attribute_system инициализирована
+2025-08-31 23:33:12 - src.core.architecture.content_system - INFO - Инициализация компонента content_system
+2025-08-31 23:33:12 - src.systems.content.content_system - INFO - Загружено 0 сессий
+2025-08-31 23:33:12 - src.core.architecture.content_system - INFO - Компонент content_system успешно инициализирован
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Система content_system инициализирована
+2025-08-31 23:33:12 - src.systems.combat.combat_system - INFO - Архитектурные компоненты установлены в CombatSystem
+2025-08-31 23:33:12 - src.systems.combat.combat_system - INFO - Инициализация CombatSystem...
+2025-08-31 23:33:12 - src.systems.combat.combat_system - INFO - CombatSystem инициализирован успешно
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Система combat_system инициализирована
+2025-08-31 23:33:12 - src.core.architecture.isometric_visualization_system - INFO - Инициализация компонента isometric_visualization_system
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Изометрическая камера настроена
+2025-08-31 23:33:12 - src.systems.visualization.isometric_visualization_system - INFO - Система изометрической визуализации инициализирована
+2025-08-31 23:33:12 - src.core.architecture.isometric_visualization_system - INFO - Компонент isometric_visualization_system успешно инициализирован
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Система isometric_visualization_system инициализирована
+2025-08-31 23:33:12 - src.systems.skills.skill_system - INFO - Архитектурные компоненты установлены в SkillSystem
+2025-08-31 23:33:12 - src.systems.skills.skill_system - INFO - Инициализация SkillSystem...
+2025-08-31 23:33:12 - src.core.architecture.skill_system - INFO - Инициализация компонента skill_system
+2025-08-31 23:33:12 - src.core.architecture.skill_system - INFO - Компонент skill_system успешно инициализирован
+2025-08-31 23:33:12 - src.systems.skills.skill_system - INFO - Создано 2 деревьев навыков
+2025-08-31 23:33:12 - src.systems.skills.skill_system - INFO - SkillSystem инициализирован успешно
+2025-08-31 23:33:12 - src.core.master_integrator - INFO - Система skill_system инициализирована
+2025-08-31 23:33:12 - src.systems.rendering.render_system - INFO - Инициализация RenderSystem...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - WARNING - setVerticalSync не поддерживается в данной версии Panda3D
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Окно Panda3D создано успешно
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Создано 3 камер
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Настроено 2 источников света
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Загружено 4 материалов
+2025-08-31 23:33:13 - src.systems.rendering.render_system - WARNING - LODManager недоступен в данной версии Panda3D - оптимизация отключена
+2025-08-31 23:33:13 - src.systems.rendering.render_system - WARNING - setAntialias не поддерживается в данной версии Panda3D
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Применены настройки качества: medium
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Демонстрационная сцена создана
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - RenderSystem инициализирован успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система rendering_system инициализирована
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - Архитектурные компоненты установлены в UIManager
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - Инициализация UIManager...
+2025-08-31 23:33:13 - src.core.architecture.ui_manager - INFO - Инициализация компонента ui_manager
+2025-08-31 23:33:13 - src.core.architecture.ui_manager - INFO - Компонент ui_manager успешно инициализирован
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - Создано 2 тем UI
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - Создано 2 базовых UI элементов
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - UIManager инициализирован успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система ui_manager инициализирована
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Интегрировано 3 систем с AttributeSystem
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - MasterIntegrator инициализирован успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Запуск MasterIntegrator...
+2025-08-31 23:33:13 - src.systems.attributes.attribute_system - INFO - Запуск AttributeSystem...
+2025-08-31 23:33:13 - src.systems.attributes.attribute_system - INFO - AttributeSystem запущен успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система attribute_system запущена
+2025-08-31 23:33:13 - src.core.architecture.content_system - INFO - Запуск компонента content_system
+2025-08-31 23:33:13 - src.systems.content.content_system - INFO - Система контента запущена
+2025-08-31 23:33:13 - src.core.architecture.content_system - INFO - Компонент content_system успешно запущен
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система content_system запущена
+2025-08-31 23:33:13 - src.core.architecture.isometric_visualization_system - INFO - Запуск компонента isometric_visualization_system
+2025-08-31 23:33:13 - src.systems.visualization.isometric_visualization_system - INFO - Система изометрической визуализации запущена
+2025-08-31 23:33:13 - src.core.architecture.isometric_visualization_system - INFO - Компонент isometric_visualization_system успешно запущен
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система isometric_visualization_system запущена
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Запуск RenderSystem...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Цикл рендеринга запущен
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - RenderSystem запущен успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система rendering_system запущена
+2025-08-31 23:33:13 - src.systems.combat.combat_system - INFO - Запуск CombatSystem...
+2025-08-31 23:33:13 - src.systems.combat.combat_system - INFO - CombatSystem запущен успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система combat_system запущена
+2025-08-31 23:33:13 - src.systems.skills.skill_system - INFO - Запуск SkillSystem...
+2025-08-31 23:33:13 - src.systems.skills.skill_system - INFO - SkillSystem запущен успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система skill_system запущена
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - Запуск UIManager...
+2025-08-31 23:33:13 - src.ui.ui_manager - INFO - UIManager запущен успешно
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - Система ui_manager запущена
+2025-08-31 23:33:13 - src.core.master_integrator - INFO - MasterIntegrator запущен успешно
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ============================================================
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🚀 ЗАПУСК ГЛАВНОГО ЦИКЛА PANDA3D
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ============================================================
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ ShowBase найден
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🎮 Отображение стартового меню...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ==================================================
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🎮 СОЗДАНИЕ СТАРТОВОГО МЕНЮ
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ==================================================
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🔍 UIManager не предоставлен, создаем простое меню...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ==================================================
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🎮 СОЗДАНИЕ ПРОСТОГО СТАРТОВОГО МЕНЮ
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ==================================================
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Начинаем создание простого стартового меню...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Импорт DirectGUI компонентов успешен
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ showbase.render2d доступен
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Панель меню создана
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Панель меню привязана к render2d
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Заголовок создан
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Кнопка START GAME создана
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Кнопка SETTINGS создана
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Кнопка QUIT GAME создана
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🔍 Проверка видимости меню...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO -    ⚠️  Метод isVisible недоступен
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO -    📍 Позиция меню: LPoint3f(0, 0, 0)
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO -    📐 Масштаб меню: LVecBase3f(1, 1, 1)
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Простое стартовое меню создано успешно
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Простое стартовое меню создано успешно
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ✅ Стартовое меню успешно отображено
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🔍 Проверка состояния окна перед запуском...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Окно найдено: GraphicsWindow
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Окно валидно: True
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🔍 Проверка видимости окна...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - Размеры окна: 800x600
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - 🚀 ЗАПУСКАЕМ ГЛАВНЫЙ ЦИКЛ...
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO - ⚠️  ВНИМАНИЕ: Окно должно остаться открытым!
+2025-08-31 23:33:13 - src.systems.rendering.render_system - INFO -    Для выхода закройте окно игры

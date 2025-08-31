@@ -736,6 +736,104 @@ class RenderSystem(BaseComponent):
             logger.error(f"Детали ошибки: {traceback.format_exc()}")
             return False
     
+    def _on_start_game(self):
+        """Обработчик нажатия кнопки START GAME"""
+        try:
+            logger.info("🎮 Кнопка START GAME нажата!")
+            
+            # Скрываем стартовое меню
+            if hasattr(self, 'start_menu_elements'):
+                for element in self.start_menu_elements.values():
+                    if hasattr(element, 'hide'):
+                        element.hide()
+                        logger.info("✅ Стартовое меню скрыто")
+            
+            # Здесь можно добавить логику запуска игры
+            logger.info("🚀 Запуск игрового процесса...")
+            
+            # Создаем простую игровую сцену
+            self._create_game_scene()
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка при нажатии START GAME: {e}")
+    
+    def _on_settings(self):
+        """Обработчик нажатия кнопки SETTINGS"""
+        try:
+            logger.info("⚙️  Кнопка SETTINGS нажата!")
+            
+            # Здесь можно добавить логику настроек
+            logger.info("🔧 Открытие настроек...")
+            
+            # Пока что просто выводим сообщение
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'render2d'):
+                from direct.gui.DirectLabel import DirectLabel
+                
+                settings_label = DirectLabel(
+                    parent=self.showbase.render2d,
+                    text="Настройки пока не реализованы",
+                    scale=0.03,
+                    pos=(0, 0, 0),
+                    text_fg=(1, 1, 1, 1),
+                    text_shadow=(0, 0, 0, 1)
+                )
+                
+                # Убираем через 3 секунды
+                from direct.task import Task
+                def remove_settings_label(task):
+                    settings_label.destroy()
+                    return Task.done
+                
+                self.showbase.taskMgr.doMethodLater(3.0, remove_settings_label, "remove_settings")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка при нажатии SETTINGS: {e}")
+    
+    def _on_quit_game(self):
+        """Обработчик нажатия кнопки QUIT GAME"""
+        try:
+            logger.info("🚪 Кнопка QUIT GAME нажата!")
+            
+            # Завершаем игру
+            logger.info("🛑 Завершение игры...")
+            
+            if hasattr(self, 'showbase'):
+                self.showbase.userExit()
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка при нажатии QUIT GAME: {e}")
+    
+    def _create_game_scene(self):
+        """Создание игровой сцены после нажатия START GAME"""
+        try:
+            logger.info("🎨 Создание игровой сцены...")
+            
+            if hasattr(self, 'showbase'):
+                # Создаем простую 3D сцену
+                from panda3d.core import GeomNode, NodePath
+                
+                # Создаем тестовый куб
+                test_node = GeomNode("game_cube")
+                test_np = self.showbase.render.attachNewNode(test_node)
+                test_np.setPos(0, 5, 0)
+                
+                # Добавляем текст "ИГРА ЗАПУЩЕНА"
+                from direct.gui.DirectLabel import DirectLabel
+                
+                game_label = DirectLabel(
+                    parent=self.showbase.render2d,
+                    text="ИГРА ЗАПУЩЕНА!",
+                    scale=0.05,
+                    pos=(0, 0, 0.3),
+                    text_fg=(0, 1, 0, 1),
+                    text_shadow=(0, 0, 0, 1)
+                )
+                
+                logger.info("✅ Игровая сцена создана")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка создания игровой сцены: {e}")
+    
     def _create_simple_start_menu(self):
         """Создание простого стартового меню"""
         try:
@@ -796,9 +894,16 @@ class RenderSystem(BaseComponent):
                 logger.error(f"❌ Ошибка создания заголовка: {e}")
                 return False
             
-            # Создаем кнопки
+            # СОЗДАЕМ МАКСИМАЛЬНО ПРОСТЫЕ КНОПКИ
+            logger.info("🔧 Создание максимально простых кнопок...")
+            
             try:
-                # Кнопка START GAME
+                # Простая функция для тестирования
+                def simple_test_click():
+                    logger.info("🎯 ПРОСТАЯ КНОПКА НАЖАТА!")
+                    print("🎯 КНОПКА РАБОТАЕТ!")
+                
+                # Кнопка START GAME - максимально простая
                 start_button = DirectButton(
                     parent=menu_frame,
                     text="START GAME",
@@ -806,11 +911,12 @@ class RenderSystem(BaseComponent):
                     pos=(0, 0, 0.1),
                     frameColor=(0.3, 0.6, 0.3, 1),
                     text_fg=(1, 1, 1, 1),
-                    command=self._on_start_game
+                    command=simple_test_click,  # Используем простую функцию
+                    relief=1
                 )
                 logger.info("✅ Кнопка START GAME создана")
                 
-                # Кнопка SETTINGS
+                # Кнопка SETTINGS - максимально простая
                 settings_button = DirectButton(
                     parent=menu_frame,
                     text="SETTINGS",
@@ -818,11 +924,12 @@ class RenderSystem(BaseComponent):
                     pos=(0, 0, 0),
                     frameColor=(0.3, 0.3, 0.6, 1),
                     text_fg=(1, 1, 1, 1),
-                    command=self._on_settings
+                    command=simple_test_click,  # Используем простую функцию
+                    relief=1
                 )
                 logger.info("✅ Кнопка SETTINGS создана")
                 
-                # Кнопка QUIT GAME
+                # Кнопка QUIT GAME - максимально простая
                 quit_button = DirectButton(
                     parent=menu_frame,
                     text="QUIT GAME",
@@ -830,9 +937,80 @@ class RenderSystem(BaseComponent):
                     pos=(0, 0, -0.1),
                     frameColor=(0.6, 0.3, 0.3, 1),
                     text_fg=(1, 1, 1, 1),
-                    command=self._on_quit_game
+                    command=simple_test_click,  # Используем простую функцию
+                    relief=1
                 )
                 logger.info("✅ Кнопка QUIT GAME создана")
+                
+                # Сохраняем ссылки на элементы меню
+                self.start_menu_elements = {
+                    'frame': menu_frame,
+                    'title': title_label,
+                    'start_button': start_button,
+                    'settings_button': settings_button,
+                    'quit_button': quit_button
+                }
+                
+                # ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА КНОПОК
+                logger.info("🔍 Проверка функциональности кнопок...")
+                
+                # Проверяем, что кнопки действительно имеют обработчики
+                if hasattr(start_button, 'command'):
+                    logger.info("   ✅ START GAME кнопка имеет обработчик")
+                    # Проверяем, что обработчик действительно функция
+                    if callable(start_button.command):
+                        logger.info("   ✅ Обработчик START GAME вызываемый")
+                    else:
+                        logger.warning("   ⚠️  Обработчик START GAME не вызываемый")
+                else:
+                    logger.warning("   ⚠️  START GAME кнопка не имеет обработчика")
+                
+                if hasattr(settings_button, 'command'):
+                    logger.info("   ✅ SETTINGS кнопка имеет обработчик")
+                    if callable(settings_button.command):
+                        logger.info("   ✅ Обработчик SETTINGS вызываемый")
+                    else:
+                        logger.warning("   ⚠️  Обработчик SETTINGS не вызываемый")
+                else:
+                    logger.warning("   ⚠️  SETTINGS кнопка не имеет обработчика")
+                
+                if hasattr(quit_button, 'command'):
+                    logger.info("   ✅ QUIT GAME кнопка имеет обработчик")
+                    if callable(quit_button.command):
+                        logger.info("   ✅ Обработчик QUIT GAME вызываемый")
+                    else:
+                        logger.warning("   ⚠️  Обработчик QUIT GAME не вызываемый")
+                else:
+                    logger.warning("   ⚠️  QUIT GAME кнопка не имеет обработчика")
+                
+                # Проверяем состояние кнопок
+                if hasattr(start_button, 'state'):
+                    logger.info(f"   📊 Состояние START GAME кнопки: {start_button.state()}")
+                if hasattr(settings_button, 'state'):
+                    logger.info(f"   📊 Состояние SETTINGS кнопки: {settings_button.state()}")
+                if hasattr(quit_button, 'state'):
+                    logger.info(f"   📊 Состояние QUIT GAME кнопки: {quit_button.state()}")
+                
+                # Проверяем, что кнопки привязаны к правильному родителю
+                logger.info(f"   🔗 Родитель START GAME кнопки: {start_button.getParent()}")
+                logger.info(f"   🔗 Родитель SETTINGS кнопки: {settings_button.getParent()}")
+                logger.info(f"   🔗 Родитель QUIT GAME кнопки: {quit_button.getParent()}")
+                
+                # Проверяем, что кнопки действительно в render2d
+                if start_button.getParent() == self.showbase.render2d:
+                    logger.info("   ✅ START GAME кнопка в render2d")
+                else:
+                    logger.warning("   ⚠️  START GAME кнопка НЕ в render2d")
+                
+                if settings_button.getParent() == self.showbase.render2d:
+                    logger.info("   ✅ SETTINGS кнопка в render2d")
+                else:
+                    logger.warning("   ⚠️  SETTINGS кнопка НЕ в render2d")
+                
+                if quit_button.getParent() == self.showbase.render2d:
+                    logger.info("   ✅ QUIT GAME кнопка в render2d")
+                else:
+                    logger.warning("   ⚠️  QUIT GAME кнопка НЕ в render2d")
                 
             except Exception as e:
                 logger.error(f"❌ Ошибка создания кнопок: {e}")
@@ -862,6 +1040,20 @@ class RenderSystem(BaseComponent):
             except Exception as e:
                 logger.warning(f"   ⚠️  Не удалось проверить свойства меню: {e}")
             
+            # Проверяем, что mouseWatcherNode доступен
+            logger.info("🔍 Проверка mouseWatcherNode...")
+            if hasattr(self.showbase, 'mouseWatcherNode'):
+                mouse_watcher = self.showbase.mouseWatcherNode
+                if mouse_watcher:
+                    logger.info("   ✅ mouseWatcherNode доступен")
+                    if hasattr(mouse_watcher, 'hasMouse'):
+                        has_mouse = mouse_watcher.hasMouse()
+                        logger.info(f"   📊 Мышь в окне: {has_mouse}")
+                else:
+                    logger.warning("   ⚠️  mouseWatcherNode не инициализирован")
+            else:
+                logger.warning("   ⚠️  mouseWatcherNode не найден")
+            
             logger.info("✅ Простое стартовое меню создано успешно")
             return True
             
@@ -874,42 +1066,6 @@ class RenderSystem(BaseComponent):
             logger.error(f"Детали ошибки: {traceback.format_exc()}")
             return False
     
-    def _on_start_game(self):
-        """Обработчик нажатия кнопки 'Начать игру'"""
-        try:
-            logger.info("Нажата кнопка 'Начать игру'")
-            # Скрываем стартовое меню
-            if hasattr(self, 'start_menu_elements'):
-                for element in self.start_menu_elements.values():
-                    if element:
-                        element.hide()
-                logger.info("Стартовое меню скрыто")
-            
-            # Здесь можно добавить логику перехода к игре
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки кнопки 'Начать игру': {e}")
-    
-    def _on_settings(self):
-        """Обработчик нажатия кнопки 'Настройки'"""
-        try:
-            logger.info("Нажата кнопка 'Настройки'")
-            # Здесь можно добавить логику открытия настроек
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки кнопки 'Настройки': {e}")
-    
-    def _on_quit_game(self):
-        """Обработчик нажатия кнопки 'Выход'"""
-        try:
-            logger.info("Нажата кнопка 'Выход'")
-            # Выход из игры
-            import sys
-            sys.exit(0)
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки кнопки 'Выход': {e}")
-    
     def run(self):
         """Запуск главного цикла Panda3D"""
         try:
@@ -920,110 +1076,16 @@ class RenderSystem(BaseComponent):
             if hasattr(self, 'showbase'):
                 logger.info("✅ ShowBase найден")
                 
-                # 1. ПРОВЕРКА ВСЕХ АТРИБУТОВ ПЕРЕД ЗАПУСКОМ
-                logger.info("🔍 1. ПРОВЕРКА АТРИБУТОВ ПЕРЕД ЗАПУСКОМ:")
-                all_attrs = dir(self)
-                rendering_attrs = [attr for attr in all_attrs if not attr.startswith('_')]
-                
-                for attr in rendering_attrs:
-                    try:
-                        value = getattr(self, attr)
-                        if callable(value):
-                            logger.info(f"   🔧 {attr}: {type(value).__name__} (callable)")
-                        else:
-                            logger.info(f"   📊 {attr}: {type(value).__name__} = {value}")
-                    except Exception as e:
-                        logger.warning(f"   ❌ {attr}: ошибка доступа - {e}")
-                
-                # 2. ДЕТАЛЬНАЯ ПРОВЕРКА ShowBase
-                logger.info("🔍 2. ДЕТАЛЬНАЯ ПРОВЕРКА ShowBase:")
-                showbase = self.showbase
-                logger.info(f"   🏷️  Тип: {type(showbase).__name__}")
-                
-                # Проверяем все атрибуты ShowBase
-                showbase_attrs = ['render', 'render2d', 'camera', 'win', 'taskMgr', 'mouseWatcherNode', 'dataRoot']
-                for attr in showbase_attrs:
-                    if hasattr(showbase, attr):
-                        value = getattr(showbase, attr)
-                        logger.info(f"   ✅ {attr}: {type(value).__name__}")
-                    else:
-                        logger.warning(f"   ❌ {attr}: отсутствует")
-                
-                # 3. ПРОВЕРКА ОКНА
-                logger.info("🔍 3. ПРОВЕРКА ОКНА:")
-                if hasattr(showbase, 'win'):
-                    win = showbase.win
-                    logger.info(f"   🏷️  Тип окна: {type(win).__name__}")
-                    
-                    # Проверяем все методы окна
-                    window_methods = [
-                        'isValid', 'getXSize', 'getYSize', 'getState', 'getTitle',
-                        'getOrigin', 'getSize', 'getProperties', 'getPipe'
-                    ]
-                    
-                    for method in window_methods:
-                        if hasattr(win, method):
-                            try:
-                                if method == 'isValid':
-                                    result = win.isValid()
-                                    logger.info(f"   ✅ {method}: {result}")
-                                elif method == 'getXSize':
-                                    result = win.getXSize()
-                                    logger.info(f"   📏 {method}: {result}")
-                                elif method == 'getYSize':
-                                    result = win.getYSize()
-                                    logger.info(f"   📏 {method}: {result}")
-                                elif method == 'getState':
-                                    result = win.getState()
-                                    logger.info(f"   📊 {method}: {result}")
-                                elif method == 'getTitle':
-                                    result = win.getTitle()
-                                    logger.info(f"   🏷️  {method}: {result}")
-                                elif method == 'getOrigin':
-                                    result = win.getOrigin()
-                                    logger.info(f"   📍 {method}: {result}")
-                                elif method == 'getSize':
-                                    result = win.getSize()
-                                    logger.info(f"   📐 {method}: {result}")
-                                else:
-                                    result = getattr(win, method)()
-                                    logger.info(f"   ✅ {method}: {result}")
-                            except Exception as e:
-                                logger.warning(f"   ⚠️  {method}: ошибка вызова - {e}")
-                        else:
-                            logger.warning(f"   ❌ {method}: отсутствует")
-                    
-                    # Проверяем свойства окна
-                    logger.info("🔧 Проверка свойств окна:")
-                    if hasattr(win, 'getProperties'):
-                        try:
-                            props = win.getProperties()
-                            logger.info(f"   📋 Свойства окна: {props}")
-                        except Exception as e:
-                            logger.warning(f"   ⚠️  Не удалось получить свойства: {e}")
-                    
-                    # Проверяем pipe
-                    if hasattr(win, 'getPipe'):
-                        try:
-                            pipe = win.getPipe()
-                            logger.info(f"   🔌 Pipe: {type(pipe).__name__}")
-                        except Exception as e:
-                            logger.warning(f"   ⚠️  Не удалось получить pipe: {e}")
-                else:
-                    logger.error("❌ Окно не найдено в ShowBase")
-                    raise Exception("Окно не найдено в ShowBase")
-                
-                # 4. ПРОВЕРКА СТАРТОВОГО МЕНЮ
-                logger.info("🔍 4. ПРОВЕРКА СТАРТОВОГО МЕНЮ:")
-                logger.info("Попытка отображения стартового меню...")
+                # Показываем стартовое меню
+                logger.info("🎮 Отображение стартового меню...")
                 menu_result = self.show_start_menu()
                 if menu_result:
                     logger.info("✅ Стартовое меню успешно отображено")
                 else:
                     logger.warning("⚠️  Не удалось отобразить стартовое меню")
                 
-                # 5. ПРОВЕРКА СОСТОЯНИЯ ОКНА ПЕРЕД ЗАПУСКОМ
-                logger.info("🔍 5. ПРОВЕРКА СОСТОЯНИЯ ОКНА ПЕРЕД ЗАПУСКОМ:")
+                # Проверяем состояние окна перед запуском
+                logger.info("🔍 Проверка состояния окна перед запуском...")
                 if hasattr(self.showbase, 'win'):
                     win = self.showbase.win
                     logger.info(f"Окно найдено: {type(win).__name__}")
@@ -1036,8 +1098,8 @@ class RenderSystem(BaseComponent):
                 else:
                     logger.warning("Окно не найдено в ShowBase")
                 
-                # 6. ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА - УБЕЖДАЕМСЯ, ЧТО ОКНО ВИДИМО
-                logger.info("🔍 6. ПРОВЕРКА ВИДИМОСТИ ОКНА:")
+                # Дополнительная проверка - убеждаемся, что окно видимо
+                logger.info("🔍 Проверка видимости окна...")
                 if hasattr(self.showbase, 'win'):
                     win = self.showbase.win
                     if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
@@ -1056,66 +1118,12 @@ class RenderSystem(BaseComponent):
                         except Exception as e:
                             logger.warning(f"Не удалось получить состояние окна: {e}")
                 
-                # 7. ЗАПУСК ГЛАВНОГО ЦИКЛА
-                logger.info("🔍 7. ЗАПУСК ГЛАВНОГО ЦИКЛА:")
-                logger.info("Запуск showbase.run()...")
-                
-                # Добавляем обработчик для отслеживания событий окна
-                try:
-                    from direct.task import Task
-                    
-                    def monitor_window(task):
-                        if hasattr(self, 'showbase') and hasattr(self.showbase, 'win'):
-                            win = self.showbase.win
-                            if hasattr(win, 'isValid'):
-                                try:
-                                    is_valid = win.isValid()
-                                    if not is_valid:
-                                        logger.warning("Окно стало невалидным!")
-                                        return Task.done
-                                except Exception as e:
-                                    logger.warning(f"Ошибка проверки валидности окна: {e}")
-                        return Task.cont
-                    
-                    # Добавляем задачу мониторинга
-                    self.showbase.taskMgr.add(monitor_window, "window_monitor")
-                    logger.info("✅ Мониторинг окна добавлен")
-                    
-                except Exception as e:
-                    logger.warning(f"⚠️  Не удалось добавить мониторинг окна: {e}")
-                
-                # 8. ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ЗАПУСКОМ
-                logger.info("🔍 8. ФИНАЛЬНАЯ ПРОВЕРКА ПЕРЕД ЗАПУСКОМ:")
-                logger.info("Все проверки пройдены, запускаем showbase.run()...")
-                
-                # ВАЖНО: Добавляем бесконечный цикл чтобы окно не закрывалось
-                logger.info("🔄 Добавляем бесконечный цикл для предотвращения закрытия окна...")
-                
-                try:
-                    # Добавляем задачу для поддержания окна открытым
-                    def keep_window_open(task):
-                        # Проверяем, что окно все еще валидно
-                        if hasattr(self, 'showbase') and hasattr(self.showbase, 'win'):
-                            win = self.showbase.win
-                            if hasattr(win, 'isValid'):
-                                try:
-                                    is_valid = win.isValid()
-                                    if not is_valid:
-                                        logger.warning("Окно стало невалидным, завершаем задачу")
-                                        return Task.done
-                                except Exception as e:
-                                    logger.warning(f"Ошибка проверки валидности окна: {e}")
-                        return Task.cont
-                    
-                    # Добавляем задачу поддержания окна
-                    self.showbase.taskMgr.add(keep_window_open, "keep_window_open", sort=0)
-                    logger.info("✅ Задача поддержания окна добавлена")
-                    
-                except Exception as e:
-                    logger.warning(f"⚠️  Не удалось добавить задачу поддержания окна: {e}")
-                
                 # Запускаем главный цикл
                 logger.info("🚀 ЗАПУСКАЕМ ГЛАВНЫЙ ЦИКЛ...")
+                logger.info("⚠️  ВНИМАНИЕ: Окно должно остаться открытым!")
+                logger.info("   Для выхода закройте окно игры")
+                
+                # ВАЖНО: Используем тот же подход что сработал в простом тесте
                 self.showbase.run()
                 logger.info("✅ showbase.run() завершен")
                 

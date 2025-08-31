@@ -727,147 +727,50 @@ def main():
                     
                     print(f"   🚀 ВЫЗЫВАЕМ run()...")
                     
-                    # ПРОБУЕМ РАЗНЫЕ СПОСОБЫ ЗАПУСКА
-                    print(f"\n   🔄 ПРОБУЕМ РАЗНЫЕ СПОСОБЫ ЗАПУСКА:")
+                    # ПРОСТОЙ ЗАПУСК - как в работающем тесте
+                    print(f"   📋 Запускаем rendering_system.run() напрямую...")
                     
-                    # Способ 1: Прямой вызов
-                    print(f"   📋 Способ 1: Прямой вызов rendering_system.run()")
                     try:
-                        # Запускаем в отдельном потоке с таймаутом
+                        # ВАЖНО: Запускаем в главном потоке, а не в отдельном!
+                        # Panda3D требует главный поток для обработки сигналов
+                        print(f"      📝 Запуск run() в главном потоке...")
+                        
+                        # Запускаем в фоновом режиме с возможностью прерывания
                         import threading
                         import time
                         
-                        # Создаем флаг для отслеживания запуска
+                        # Флаг для отслеживания запуска
                         run_started = threading.Event()
-                        run_completed = threading.Event()
                         run_error = None
                         
-                        def run_with_monitoring():
+                        def run_in_main_thread():
                             nonlocal run_error
                             try:
                                 run_started.set()
-                                print(f"      📝 run() начал выполнение")
-                                result = rendering_system.run()
-                                print(f"      📊 run() завершился с результатом: {result}")
-                                run_completed.set()
+                                print(f"      ✅ run() начал выполняться")
+                                # Запускаем в главном потоке
+                                rendering_system.run()
+                                print(f"      ✅ run() завершился успешно")
                             except Exception as e:
                                 run_error = e
                                 print(f"      ❌ run() завершился с ошибкой: {e}")
                                 import traceback
                                 print(f"      🔍 Детали ошибки:")
                                 traceback.print_exc()
-                                run_completed.set()
                         
-                        # Запускаем в отдельном потоке
-                        run_thread = threading.Thread(target=run_with_monitoring, daemon=True)
-                        run_thread.start()
+                        # Запускаем в главном потоке
+                        print(f"      🚀 Запускаем rendering_system.run()...")
+                        run_in_main_thread()
                         
-                        # Ждем начала выполнения
-                        if run_started.wait(timeout=5.0):
-                            print(f"      ✅ run() начал выполняться")
-                            
-                            # Ждем завершения с таймаутом
-                            if run_completed.wait(timeout=15.0):  # Увеличиваем таймаут
-                                if run_error:
-                                    print(f"      ❌ run() завершился с ошибкой: {run_error}")
-                                    raise Exception(f"Ошибка при запуске окна: {run_error}")
-                                else:
-                                    print(f"      ✅ run() завершился успешно")
-                            else:
-                                print(f"      ⚠️  run() не завершился за 15 секунд")
-                                print(f"      🔍 Проверяем состояние окна...")
-                                
-                                # Проверяем состояние окна после запуска
-                                if hasattr(rendering_system, 'showbase') and hasattr(rendering_system.showbase, 'win'):
-                                    win = rendering_system.showbase.win
-                                    if hasattr(win, 'isValid'):
-                                        try:
-                                            is_valid = win.isValid()
-                                            print(f"      📊 Окно валидно после запуска: {is_valid}")
-                                        except Exception as e:
-                                            print(f"      ⚠️  Не удалось проверить валидность: {e}")
-                                    
-                                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
-                                        try:
-                                            width = win.getXSize()
-                                            height = win.getYSize()
-                                            print(f"      📏 Размеры после запуска: {width}x{height}")
-                                        except Exception as e:
-                                            print(f"      ⚠️  Не удалось получить размеры: {e}")
-                                else:
-                                    print(f"      ⚠️  Не удалось проверить окно после запуска")
+                        # Если мы дошли сюда, значит run() завершился
+                        if run_error:
+                            raise Exception(f"Ошибка при запуске окна: {run_error}")
                         else:
-                            print(f"      ❌ run() не начал выполняться за 5 секунд")
-                            raise Exception("run() не начал выполняться за 5 секунд")
+                            print(f"      ✅ run() завершился успешно")
                         
                     except Exception as e:
-                        print(f"      ❌ Способ 1 не сработал: {e}")
-                        print(f"      🔄 Пробуем способ 2...")
-                        
-                        # Способ 2: Попытка через ShowBase напрямую
-                        print(f"   📋 Способ 2: Прямой вызов showbase.run()")
-                        try:
-                            if hasattr(rendering_system, 'showbase'):
-                                showbase = rendering_system.showbase
-                                print(f"      🎬 Вызываем showbase.run() напрямую...")
-                                
-                                # Запускаем в отдельном потоке
-                                def run_showbase_directly():
-                                    try:
-                                        print(f"         📝 showbase.run() начал выполнение")
-                                        showbase.run()
-                                        print(f"         ✅ showbase.run() завершился")
-                                    except Exception as e:
-                                        print(f"         ❌ showbase.run() завершился с ошибкой: {e}")
-                                        import traceback
-                                        traceback.print_exc()
-                                
-                                showbase_thread = threading.Thread(target=run_showbase_directly, daemon=True)
-                                showbase_thread.start()
-                                
-                                # Ждем немного
-                                time.sleep(3)
-                                print(f"         ⏰ showbase.run() запущен в фоне")
-                                
-                            else:
-                                raise Exception("ShowBase не найден")
-                                
-                        except Exception as e2:
-                            print(f"      ❌ Способ 2 не сработал: {e2}")
-                            print(f"      🔄 Пробуем способ 3...")
-                            
-                            # Способ 3: Проверяем, может окно уже создано
-                            print(f"   📋 Способ 3: Проверка существующего окна")
-                            try:
-                                if hasattr(rendering_system, 'showbase') and hasattr(rendering_system.showbase, 'win'):
-                                    win = rendering_system.showbase.win
-                                    print(f"      🪟 Проверяем существующее окно...")
-                                    
-                                    if hasattr(win, 'isValid'):
-                                        is_valid = win.isValid()
-                                        print(f"         📊 Окно валидно: {is_valid}")
-                                    
-                                    if hasattr(win, 'getXSize') and hasattr(win, 'getYSize'):
-                                        width = win.getXSize()
-                                        height = win.getYSize()
-                                        print(f"         📏 Размеры: {width}x{height}")
-                                    
-                                    # Пытаемся сделать окно видимым
-                                    if hasattr(win, 'setForeground'):
-                                        try:
-                                            win.setForeground()
-                                            print(f"         ✅ Окно выведено на передний план")
-                                        except Exception as e:
-                                            print(f"         ⚠️  Не удалось вывести окно на передний план: {e}")
-                                    
-                                    print(f"      🎮 Окно должно быть видимым!")
-                                    
-                                else:
-                                    raise Exception("Окно не найдено")
-                                    
-                            except Exception as e3:
-                                print(f"      ❌ Способ 3 не сработал: {e3}")
-                                raise Exception(f"Все способы запуска не сработали. Последняя ошибка: {e3}")
+                        print(f"      ❌ Ошибка при запуске: {e}")
+                        raise Exception(f"Ошибка при запуске окна: {e}")
                     
                 except Exception as run_error:
                     print(f"   ❌ Ошибка при вызове run(): {run_error}")
