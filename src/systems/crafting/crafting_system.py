@@ -1,1120 +1,431 @@
-from ...c or e.constants import constants_manager, ItemType, ItemRarity
-
-from ...c or e.in terfaces import ISystem, SystemPri or ity, SystemState
-
-from ...c or e.reposit or y import Reposit or yManager, DataType, St or ageType
-
-from ...c or e.state_manager import StateManager
-
-from dataclasses import dataclass, field: pass # Добавлен pass в пустой блок
-
+from dataclasses import dataclass, field
 from enum import Enum
-
 from pathlib import Path
-
+from src.core.architecture import BaseComponent, ComponentType, Priority
 from typing import *
-
-from typing import Dict, Lis t, Optional, Any, Union
-
+from typing import Dict, List, Optional, Any, Union
 import logging
-
 import os
-
-import rand om
-
+import random
 import sys
-
 import time
 
-#!/usr / bin / env python3
-"""Система крафтинга - создание предметов из материалов"""import logging
+#!/usr/bin/env python3
+"""Система крафтинга - создание предметов из материалов"""
 
-ItemCateg or y, StatType, BASE_STATS, PROBABILITY_CONSTANTS, TIME_CONSTANTS
-SYSTEM_LIMITS
-logger= logging.getLogger(__name__)
-@dataclass: pass  # Добавлен pass в пустой блок
-class Recipe:"""Рецепт крафтинга"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-recipe_id: str
-name: str
-description: str
-categ or y: str
-difficulty: int= 1  # 1 - 10
-required_level: int= 1
-crafting_time: float= 1.0  # секунды
-experience_gain : int= 10
-success_chance: float= 1.0
-materials: Dict[str, int]= field(default_factor = dict)  # item_id: count
-tools: Lis t[str]= field(default_factor = list)  # required tools: pass  # Добавлен pass в пустой блок
-result_item: str= ""result_count: int= 1
-result_quality: float= 1.0
-unlock_conditions: Dict[str, Any]= field(default_factor = dict):
-pass  # Добавлен pass в пустой блок
-is_dis covered: bool= False
-dis covery_chance: float= 0.1
-@dataclass: pass  # Добавлен pass в пустой блок
-class CraftingSession:"""Сессия крафтинга"""session_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-entity_id: str
-recipe_id: str
-start_time: float= field(default_factor = time.time):
-pass  # Добавлен pass в пустой блок
-progress: float= 0.0  # 0.0 - 1.0
-is_completed: bool= False
-is_failed: bool= False
-result_items: Lis t[str]= field(default_factor = list):
-pass  # Добавлен pass в пустой блок
-experience_gain ed: int= 0
-materials_used: Dict[str, int]= field(default_factor = dict):
-pass  # Добавлен pass в пустой блок
-@dataclass: pass  # Добавлен pass в пустой блок
-class CraftingResult:"""Результат крафтинга"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-success: bool
-item_id: str= ""
-item_count: int= 0
-quality: float= 1.0
-experience_gain ed: int= 0
-materials_consumed: Dict[str, int]= field(default_factor = dict):
-pass  # Добавлен pass в пустой блок
-err or _message: str= ""crafting_time: float= 0.0
-class CraftingSystem(ISystem):"""Система крафтинга"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self._system_name= "crafting"
-self._system_pri or ity= SystemPri or ity.NORMAL
-self._system_state= SystemState.UNINITIALIZED
-self._dependencies= []
-# Интеграция с архитектурой(опционально)
-self.state_manager: Optional[StateManager]= None
-self.reposit or y_manager: Optional[Reposit or yManager]= None
-self.event_bus= None
-# Рецепты
-self.recipes: Dict[str, Recipe]= {}
-# Активные сессии крафтинга
-self.crafting_sessions: Dict[str, CraftingSession]= {}
-# История крафтинга
-self.crafting_his tory: Lis t[Dict[str, Any]]= []
-# Настройки системы
-self.system_settings= {
-'max_crafting_sessions': SYSTEM_LIMITS["max_crafting_sessions"],
-'base_success_chance': PROBABILITY_CONSTANTS["base_crafting_success"],
-'quality_variance': 0.2,
-'experience_multiplier': 1.0,
-'auto_dis covery_enabled': True
-}
-# Статистика системы
-self.system_stats= {
-'total_recipes': 0,
-'active_sessions': 0,
-'completed_crafts': 0,
-'failed_crafts': 0,
-'total_experience_gain ed': 0,
-'update_time': 0.0
-}
-logger.in fo("Система крафтинга инициализирована")
-@property
-def system_name(self) -> str: return self._system_name
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-def system_pri or ity(self) -> SystemPri or ity: return self._system_pri or ity
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-def system_state(self) -> SystemState: return self._system_state
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-def dependencies(self) -> Lis t[str]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._dependencies
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация системы крафтинга"""
-try: logger.in fo("Инициализация системы крафтинга...")
-# Настраиваем систему
-self._setup_crafting_system()
-# Создаем базовые рецепты
-self._create_base_recipes()
-# Регистрация состояний / репозиториев при наличии менеджеров
-self._regis ter_system_states()
-self._regis ter_system_reposit or ies()
-self._system_state= SystemState.READY
-logger.in fo("Система крафтинга успешно инициализирована")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации системы крафтинга: {e}")
-self._system_state= SystemState.ERROR
-return False
-def update(self, delta_time: float) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление системы крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления системы крафтинга: {e}")
-return False
-def pause(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Приостановка системы крафтинга"""
-try: if self._system_state = SystemState.READY: self._system_state= SystemState.PAUSED
-logger.in fo("Система крафтинга приостановлена")
-return True
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка приостановки системы крафтинга: {e}")
-return False
-def resume(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Возобновление системы крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка возобновления системы крафтинга: {e}")
-return False
-def cleanup(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Очистка системы крафтинга"""
-try: logger.in fo("Очистка системы крафтинга...")
-# Очищаем все данные
-self.recipes.clear()
-self.crafting_sessions.clear()
-self.crafting_his tory.clear()
-# Сбрасываем статистику
-self.system_stats= {
-'total_recipes': 0,
-'active_sessions': 0,
-'completed_crafts': 0,
-'failed_crafts': 0,
-'total_experience_gain ed': 0,
-'update_time': 0.0
-}
-self._system_state= SystemState.DESTROYED
-logger.in fo("Система крафтинга очищена")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка очистки системы крафтинга: {e}")
-return False
-def get_system_in fo(self) -> Dict[str, Any]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение информации о системе"""info= {
-'name': self.system_name,
-'state': self.system_state.value,
-'pri or ity': self.system_pri or ity.value,
-'dependencies': self.dependencies,
-'total_recipes': len(self.recipes),
-'active_sessions': len(self.crafting_sessions),
-'stats': self.system_stats
-}
-# Вывод некоторых агрегатов наверх для удобства UI / тестов
-info['completed_crafts']= self.system_stats.get('completed_crafts', 0)
-info['failed_crafts']= self.system_stats.get('failed_crafts', 0)
-return info
-def _regis ter_system_states(self) -> None:"""Регистрация состояний системы(mock - friendly)."""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if not self.state_manager: return
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try:
-# Предпочитаем update_state(для mock в тестах)
-self.state_manager.update_state("crafting_system_settings", self.system_settings)
-self.state_manager.update_state("crafting_system_stats", self.system_stats)
-self.state_manager.update_state("crafting_active_sessions", lis t(self.crafting_sessions.keys()))
-except Exception: pass
-pass
-pass
-# Fallback на реальную реализацию
-try: from ...c or e.state_manager import StateType, StateScope
+logger = logging.getLogger(__name__)
 
-self.state_manager.regis ter_state("crafting_system_settings", self.system_settings, StateType.CONFIGURATION, StateScope.SYSTEM)
-self.state_manager.regis ter_state("crafting_system_stats", self.system_stats, StateType.STATISTICS, StateScope.SYSTEM)
-self.state_manager.regis ter_state("crafting_active_sessions", lis t(self.crafting_sessions.keys()), StateType.DYNAMIC_DATA, StateScope.SYSTEM)
-except Exception: pass
-pass  # Добавлен pass в пустой блок
-def _regis ter_system_reposit or ies(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Регистрация репозиториев системы(mock - friendly)."""if not self.reposit or y_manager: return
-try: except Exception: pass
-pass  # Добавлен pass в пустой блок
-def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обработка событий"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: if event_type = "entity_created":
-return self._hand le_entity_created(event_data)
-elif event_type = "entity_destroyed":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_entity_destroyed(event_data)
-elif event_type = "item_acquired":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_item_acquired(event_data)
-elif event_type = "skill_learned":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return self._hand le_skill_learned(event_data)
-else: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события {event_type}: {e}")
-return False
-def _setup_crafting_system(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Настройка системы крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Не удалось настроить систему крафтинга: {e}")
-def _create_base_recipes(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Создание базовых рецептов"""
-try:
-# Простые рецепты
-simple_recipes= [
-Recipe(
-recipe_i = "wooden_stick",
-nam = "Деревянная палка",
-descriptio = "Простая деревянная палка",
-categor = "woodw or king",
-difficult = 1,:
-pass  # Добавлен pass в пустой блок
-required_leve = 1,
-crafting_tim = 2.0,
-experience_gai = 5,
-material = {"wood": 1},
-result_ite = "wooden_stick",
-result_coun = 1,
-is_dis covere = True
-),
-Recipe(
-recipe_i = "stone_tool",
-nam = "Каменный инструмент",
-descriptio = "Примитивный каменный инструмент",
-categor = "stonew or king",
-difficult = 2,:
-pass  # Добавлен pass в пустой блок
-required_leve = 2,
-crafting_tim = 5.0,
-experience_gai = 15,
-material = {"stone": 2, "wooden_stick": 1},
-tool = ["hammer"],
-result_ite = "stone_tool",
-result_coun = 1,
-is_dis covere = True
-),
-Recipe(
-recipe_i = "leather_arm or ",
-nam = "Кожаная броня",
-descriptio = "Легкая кожаная броня",
-categor = "leatherw or king",
-difficult = 3,:
-pass  # Добавлен pass в пустой блок
-required_leve = 3,
-crafting_tim = 10.0,
-experience_gai = 25,
-material = {"leather": 3, "thread": 2},
-tool = ["needle"],
-result_ite = "leather_arm or ",
-result_coun = 1,
-is_dis covere = True
-)
-]
-# Средние рецепты
-medium_recipes= [
-Recipe(
-recipe_i = "iron_sw or d",
-nam = "Железный меч",
-descriptio = "Надежный железный меч",
-categor = "blacksmithing",
-difficult = 5,:
-pass  # Добавлен pass в пустой блок
-required_leve = 5,
-crafting_tim = 20.0,
-experience_gai = 50,
-material = {"iron_ingot": 2, "wooden_stick": 1},
-tool = ["anvil", "hammer"],
-result_ite = "iron_sw or d",
-result_coun = 1,
-is_dis covere = False,
-dis covery_chanc = 0.3
-),
-Recipe(
-recipe_i = "healing_potion",
-nam = "Зелье лечения",
-descriptio = "Восстанавливает здоровье",
-categor = "alchemy",
-difficult = 4,:
-pass  # Добавлен pass в пустой блок
-required_leve = 4,
-crafting_tim = 15.0,
-experience_gai = 40,
-material = {"herb": 2, "water": 1, "bottle": 1},
-tool = ["cauldron"],
-result_ite = "healing_potion",
-result_coun = 1,
-is_dis covere = False,
-dis covery_chanc = 0.4
-)
-]
-# Сложные рецепты
-complex_recipes= [
-Recipe(
-recipe_i = "magic_staff",
-nam = "Магический посох",
-descriptio = "Мощный магический посох",
-categor = "enchanting",
-difficult = 8,:
-pass  # Добавлен pass в пустой блок
-required_leve = 8,
-crafting_tim = 60.0,
-experience_gai = 100,
-material = {"rare_wood": 1, "magic_crystal": 2, "gold_ingot": 1},
-tool = ["enchanting_table"],
-result_ite = "magic_staff",
-result_coun = 1,
-is_dis covere = False,
-dis covery_chanc = 0.1
-),
-Recipe(
-recipe_i = "dragon_arm or ",
-nam = "Драконья броня",
-descriptio = "Легендарная броня из чешуи дракона",
-categor = "arm or smithing",
-difficult = 10,:
-pass  # Добавлен pass в пустой блок
-required_leve = 10,
-crafting_tim = 120.0,
-experience_gai = 200,
-material = {"dragon_scale": 5, "mythril_ingot": 3, "enchanted_thread": 2},
-tool = ["master_anvil", "magic_hammer"],
-result_ite = "dragon_arm or ",
-result_coun = 1,
-is_dis covere = False,
-dis covery_chanc = 0.05
-)
-]
-# Добавляем все рецепты
-all_recipes= simple_recipes + medium_recipes + complex_recipes
-for recipein all_recipes: self.recipes[recipe.recipe_id]= recipe
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo(f"Создано {len(all_recipes)} базовых рецептов")
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка создания базовых рецептов: {e}")
-def _update_crafting_sessions(self, delta_time: float) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление активных сессий крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка обновления сессий крафтинга: {e}")
-def _check_completed_sessions(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Проверка завершенных сессий"""
-try:
-# Удаляем завершенные сессии
-completed_sessions= [
-session_id for session_id
-sessionin self.crafting_sessions.items():
-pass  # Добавлен pass в пустой блок
-if session.is _completed or session.is _failed: pass  # Добавлен pass в пустой блок
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-]
-for session_idin completed_sessions: del self.crafting_sessions[session_id]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки завершенных сессий: {e}")
-def _update_system_stats(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление статистики системы"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка обновления статистики системы: {e}")
-def _hand le_entity_created(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события создания сущности"""
-try: entity_id= event_data.get('entity_id')
-crafting_skills= event_data.get('crafting_skills', [])
-if entity_id: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Здесь можно добавить логику для новых сущностей
-logger.debug(f"Обработано событие создания сущности {entity_id}")
-return True
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события создания сущности: {e}")
-return False
-def _hand le_entity_destroyed(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события уничтожения сущности"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события уничтожения сущности: {e}")
-return False
-def _hand le_item_acquired(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события получения предмета"""
-try: entity_id= event_data.get('entity_id')
-item_id= event_data.get('item_id')
-item_type= event_data.get('item_type')
-if entity_idand item_idand item_type: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Проверяем, не разблокирует ли предмет новые рецепты
-self._check_recipe_unlocks(entity_id, item_id, item_type)
-return True
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события получения предмета: {e}")
-return False
-def _hand le_skill_learned(self, event_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка события изучения навыка"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки события изучения навыка: {e}")
-return False
-def start_crafting(self, entity_id: str, recipe_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-materials: Dict[str, int]= None) -> Optional[str]:
-pass  # Добавлен pass в пустой блок
-"""Начало крафтинга"""
-try: if entity_id notin self.recipes: logger.warning(f"Рецепт {recipe_id} не найден")
-return None
-recipe= self.recipes[recipe_id]
-# Проверяем требования
-if not self._check_recipe_requirements(entity_id, recipe):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.warning(f"Не выполнены требования рецепта {recipe_id}")
-return None
-# Проверяем лимит сессий
-if len(self.crafting_sessions) >= self.system_settings['max_crafting_sessions']:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.warning("Достигнут лимит активных сессий крафтинга")
-return None
-# Создаем сессию крафтинга
-session_id= f"craft_{entity_id}_{in t(time.time() * 1000)}"
-session= CraftingSession(
-session_i = session_id,
-entity_i = entity_id,
-recipe_i = recipe_id
-)
-# Добавляем в систему
-self.crafting_sessions[session_id]= session
-# Записываем в историю
-current_time= time.time()
-self.crafting_his tory.append({
-'timestamp': current_time,
-'action': 'crafting_started',
-'session_id': session_id,
-'entity_id': entity_id,
-'recipe_id': recipe_id
-})
-logger.in fo(f"Начата сессия крафтинга {session_id} для {entity_id}")
-return session_id
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка начала крафтинга {recipe_id} для {entity_id}: {e}")
-return None
-def _check_recipe_requirements(self, entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-recipe: Recipe) -> bool: pass  # Добавлен pass в пустой блок
-"""Проверка требований рецепта"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки требований рецепта: {e}")
-return False
-def _check_crafting_success(self, recipe: Recipe
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-session: CraftingSession) -> bool: pass  # Добавлен pass в пустой блок
-"""Проверка успеха крафтинга"""
-try:
-# Базовая вероятность успеха
-base_chance= recipe.success_chance
-# Применяем случайность
-if rand om.rand om() <= base_chance: return True
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-else: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки успеха крафтинга: {e}")
-return False
-def _complete_crafting_session(self, session: CraftingSession
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-success: bool) -> None: pass  # Добавлен pass в пустой блок
-"""Завершение сессии крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка завершения сессии крафтинга: {e}")
-def _cancel_entity_crafting_sessions(self, entity_id: str) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Отмена всех сессий крафтинга сущности"""
-try: sessions_to_cancel= [
-session_id for session_id
-sessionin self.crafting_sessions.items():
-pass  # Добавлен pass в пустой блок
-if session.entity_id = entity_id: pass  # Добавлен pass в пустой блок
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-]
-for session_idin sessions_to_cancel: session= self.crafting_sessions[session_id]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-session.is _failed= True
-# Записываем в историю
-current_time= time.time()
-self.crafting_his tory.append({
-'timestamp': current_time,
-'action': 'crafting_cancelled',
-'session_id': session_id,
-'entity_id': entity_id,
-'recipe_id': session.recipe_id
-})
-logger.debug(f"Отменена сессия крафтинга {session_id}")
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка отмены сессий крафтинга для {entity_id}: {e}")
-def _check_recipe_unlocks(self, entity_id: str, item_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-item_type: str) -> None: pass  # Добавлен pass в пустой блок
-"""Проверка разблокировки рецептов при получении предмета"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки разблокировки рецептов: {e}")
-def _check_item_recipe_unlock(self, recipe: Recipe, item_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-item_type: str) -> bool: pass  # Добавлен pass в пустой блок
-"""Проверка разблокировки рецепта предметом"""
-try:
-# Здесь должна быть логика проверки разблокировки
-# Пока просто возвращаем False для демонстрации
-return False
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки разблокировки рецепта предметом: {e}")
-return False
-def _check_skill_recipe_unlocks(self, entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-skill_name: str) -> None: pass  # Добавлен pass в пустой блок
-"""Проверка разблокировки рецептов при изучении навыка"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки разблокировки рецептов навыком: {e}")
-def _check_skill_recipe_unlock(self, recipe: Recipe
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-skill_name: str) -> bool: pass  # Добавлен pass в пустой блок
-"""Проверка разблокировки рецепта навыком"""
-try:
-# Здесь должна быть логика проверки разблокировки
-# Пока просто возвращаем False для демонстрации
-return False
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Ошибка проверки разблокировки рецепта навыком: {e}")
-return False
-def get_recipe_in fo(self, recipe_id: str) -> Optional[Dict[str, Any]]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение информации о рецепте"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка получения информации о рецепте {recipe_id}: {e}")
-return None
-def get_available_recipes(self, entity_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-categ or y: str= None) -> Lis t[Dict[str, Any]]:
-pass  # Добавлен pass в пустой блок
-"""Получение доступных рецептов"""
-try: available_recipes= []
-for recipein self.recipes.values():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if not recipe.is _dis covered: contin ue
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if categ or yand recipe.categ or y != categ or y: contin ue
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Проверяем доступность
-if self._check_recipe_requirements(entity_id, recipe):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-recipe_in fo= self.get_recipe_in fo(recipe.recipe_id)
-if recipe_in fo: available_recipes.append(recipe_in fo)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return available_recipes
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка получения доступных рецептов для {entity_id}: {e}")
-return []
-def get_crafting_session_in fo(self, session_id: str) -> Optional[Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]]:
-pass  # Добавлен pass в пустой блок
-"""Получение информации о сессии крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка получения информации о сессии крафтинга {session_id}: {e}")
-return None
-def cancel_crafting(self, session_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Отмена крафтинга"""
-try: if session_id notin self.crafting_sessions: return False
-session= self.crafting_sessions[session_id]
-session.is _failed= True
-# Записываем в историю
-current_time= time.time()
-self.crafting_his tory.append({
-'timestamp': current_time,
-'action': 'crafting_cancelled',
-'session_id': session_id,
-'entity_id': session.entity_id,
-'recipe_id': session.recipe_id
-})
-logger.in fo(f"Отменен крафтинг {session_id}")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка отмены крафтинга {session_id}: {e}")
-return False
-def get_crafting_his tory(self, entity_id: str= None
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-limit: int= 50) -> Lis t[Dict[str, Any]]:
-pass  # Добавлен pass в пустой блок
-"""Получение истории крафтинга"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка получения истории крафтинга: {e}")
-return []
-def add_custom_recipe(self, recipe_data: Dict[str, Any]) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Добавление пользовательского рецепта"""
-try: recipe_id= recipe_data.get('recipe_id')
-if not recipe_id or recipe_idin self.recipes: return False
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Создаем новый рецепт
-recipe= Recipe(
-recipe_i = recipe_id,
-nam = recipe_data.get('name', ''),
-descriptio = recipe_data.get('description', ''),
-categor = recipe_data.get('categ or y', 'custom'),
-difficult = recipe_data.get('difficulty', 1),:
-pass  # Добавлен pass в пустой блок
-required_leve = recipe_data.get('required_level', 1),
-crafting_tim = recipe_data.get('crafting_time', 1.0),
-experience_gai = recipe_data.get('experience_gain ', 10),
-success_chanc = recipe_data.get('success_chance', 1.0),
-material = recipe_data.get('materials', {}),
-tool = recipe_data.get('tools', []),
-result_ite = recipe_data.get('result_item', ''),
-result_coun = recipe_data.get('result_count', 1),
-result_qualit = recipe_data.get('result_quality', 1.0),
-unlock_condition = recipe_data.get('unlock_conditions', {}),
-is_dis covere = recipe_data.get('is _dis covered', True),
-dis covery_chanc = recipe_data.get('dis covery_chance', 0.0)
-)
-# Добавляем в систему
-self.recipes[recipe_id]= recipe
-logger.in fo(f"Добавлен пользовательский рецепт {recipe_id}")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка добавления пользовательского рецепта: {e}")
-return False
-def remove_recipe(self, recipe_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Удаление рецепта"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка удаления рецепта {recipe_id}: {e}")
-return False
+# = ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
+
+class CraftingType(Enum):
+    """Типы крафтинга"""
+    WEAPON = "weapon"
+    ARMOR = "armor"
+    TOOL = "tool"
+    CONSUMABLE = "consumable"
+    MATERIAL = "material"
+    SPECIAL = "special"
+
+class CraftingDifficulty(Enum):
+    """Сложность крафтинга"""
+    TRIVIAL = "trivial"
+    EASY = "easy"
+    NORMAL = "normal"
+    HARD = "hard"
+    EXPERT = "expert"
+    MASTER = "master"
+    LEGENDARY = "legendary"
+
+class CraftingStatus(Enum):
+    """Статус крафтинга"""
+    IDLE = "idle"
+    CRAFTING = "crafting"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+
+# = СТРУКТУРЫ ДАННЫХ
+
+@dataclass
+class Recipe:
+    """Рецепт крафтинга"""
+    recipe_id: str
+    name: str
+    description: str
+    category: str
+    difficulty: int = 1  # 1 - 10
+    required_level: int = 1
+    crafting_time: float = 1.0  # секунды
+    experience_gain: int = 10
+    success_chance: float = 1.0
+    materials: Dict[str, int] = field(default_factory=dict)  # item_id: count
+    tools: List[str] = field(default_factory=list)  # required tools
+    result_item: str = ""
+    result_count: int = 1
+    result_quality: float = 1.0
+    unlock_conditions: Dict[str, Any] = field(default_factory=dict)
+    is_discovered: bool = False
+    discovery_chance: float = 0.1
+
+@dataclass
+class CraftingSession:
+    """Сессия крафтинга"""
+    session_id: str
+    entity_id: str
+    recipe_id: str
+    start_time: float = field(default_factory=time.time)
+    progress: float = 0.0  # 0.0 - 1.0
+    is_completed: bool = False
+    is_failed: bool = False
+    result_items: List[str] = field(default_factory=list)
+    experience_gained: int = 0
+    materials_used: Dict[str, int] = field(default_factory=dict)
+
+@dataclass
+class CraftingResult:
+    """Результат крафтинга"""
+    success: bool
+    item_id: str = ""
+    item_count: int = 0
+    quality: float = 1.0
+    experience_gained: int = 0
+    materials_consumed: Dict[str, int] = field(default_factory=dict)
+    error_message: str = ""
+    crafting_time: float = 0.0
+
+@dataclass
+class CraftingStation:
+    """Станция крафтинга"""
+    station_id: str
+    name: str
+    description: str
+    station_type: CraftingType
+    location: Tuple[float, float, float]
+    available_recipes: List[str] = field(default_factory=list)
+    efficiency_bonus: float = 1.0
+    quality_bonus: float = 1.0
+    is_active: bool = True
+
+class CraftingSystem(BaseComponent):
+    """Система крафтинга"""
+    
+    def __init__(self):
+        super().__init__(
+            component_id="crafting_system",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.NORMAL
+        )
+        
+        # Данные системы
+        self.recipes: Dict[str, Recipe] = {}
+        self.active_sessions: Dict[str, CraftingSession] = {}
+        self.crafting_stations: Dict[str, CraftingStation] = {}
+        self.crafting_history: List[CraftingResult] = []
+        
+        # Статистика
+        self.total_crafts: int = 0
+        self.successful_crafts: int = 0
+        self.failed_crafts: int = 0
+        self.total_experience_gained: int = 0
+        
+        # Callbacks
+        self.on_craft_start: Optional[Callable] = None
+        self.on_craft_complete: Optional[Callable] = None
+        self.on_craft_fail: Optional[Callable] = None
+        
+        logger.info("Система крафтинга инициализирована")
+    
+    def initialize(self) -> bool:
+        """Инициализация системы крафтинга"""
+        try:
+            logger.info("Инициализация системы крафтинга...")
+            
+            # Загрузка рецептов
+            self._load_recipes()
+            
+            # Создание станций крафтинга
+            self._create_crafting_stations()
+            
+            self.state = LifecycleState.READY
+            logger.info("Система крафтинга успешно инициализирована")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка инициализации системы крафтинга: {e}")
+            self.state = LifecycleState.ERROR
+            return False
+    
+    def _load_recipes(self):
+        """Загрузка рецептов крафтинга"""
+        # Базовые рецепты
+        basic_recipes = [
+            Recipe(
+                recipe_id="basic_sword",
+                name="Базовый меч",
+                description="Простой железный меч",
+                category="weapon",
+                difficulty=2,
+                materials={"iron_ingot": 2, "wood": 1},
+                tools=["forge"],
+                result_item="basic_sword",
+                result_count=1
+            ),
+            Recipe(
+                recipe_id="basic_armor",
+                name="Базовая броня",
+                description="Простая кожаная броня",
+                category="armor",
+                difficulty=3,
+                materials={"leather": 3, "thread": 1},
+                tools=["workbench"],
+                result_item="basic_armor",
+                result_count=1
+            ),
+            Recipe(
+                recipe_id="health_potion",
+                name="Зелье здоровья",
+                description="Восстанавливает здоровье",
+                category="consumable",
+                difficulty=1,
+                materials={"herb": 2, "water": 1},
+                tools=["alchemy_station"],
+                result_item="health_potion",
+                result_count=1
+            )
+        ]
+        
+        for recipe in basic_recipes:
+            self.recipes[recipe.recipe_id] = recipe
+        
+        logger.info(f"Загружено {len(self.recipes)} рецептов")
+    
+    def _create_crafting_stations(self):
+        """Создание станций крафтинга"""
+        stations = [
+            CraftingStation(
+                station_id="forge",
+                name="Кузница",
+                description="Кузница для создания оружия",
+                station_type=CraftingType.WEAPON,
+                location=(0, 0, 0),
+                available_recipes=["basic_sword"]
+            ),
+            CraftingStation(
+                station_id="workbench",
+                name="Верстак",
+                description="Верстак для создания брони",
+                station_type=CraftingType.ARMOR,
+                location=(5, 0, 0),
+                available_recipes=["basic_armor"]
+            ),
+            CraftingStation(
+                station_id="alchemy_station",
+                name="Алхимическая станция",
+                description="Станция для создания зелий",
+                station_type=CraftingType.CONSUMABLE,
+                location=(0, 5, 0),
+                available_recipes=["health_potion"]
+            )
+        ]
+        
+        for station in stations:
+            self.crafting_stations[station.station_id] = station
+        
+        logger.info(f"Создано {len(self.crafting_stations)} станций крафтинга")
+    
+    def start_crafting(self, entity_id: str, recipe_id: str, station_id: str) -> Optional[str]:
+        """Начать крафтинг"""
+        try:
+            if recipe_id not in self.recipes:
+                logger.error(f"Рецепт {recipe_id} не найден")
+                return None
+            
+            if station_id not in self.crafting_stations:
+                logger.error(f"Станция {station_id} не найдена")
+                return None
+            
+            recipe = self.recipes[recipe_id]
+            station = self.crafting_stations[station_id]
+            
+            # Проверка доступности рецепта на станции
+            if recipe_id not in station.available_recipes:
+                logger.error(f"Рецепт {recipe_id} недоступен на станции {station_id}")
+                return None
+            
+            # Создание сессии крафтинга
+            session_id = f"craft_{entity_id}_{int(time.time())}"
+            session = CraftingSession(
+                session_id=session_id,
+                entity_id=entity_id,
+                recipe_id=recipe_id
+            )
+            
+            self.active_sessions[session_id] = session
+            
+            # Вызов callback
+            if self.on_craft_start:
+                self.on_craft_start(session)
+            
+            logger.info(f"Начат крафтинг {recipe_id} для {entity_id}")
+            return session_id
+            
+        except Exception as e:
+            logger.error(f"Ошибка начала крафтинга: {e}")
+            return None
+    
+    def update_crafting(self, session_id: str, delta_time: float) -> bool:
+        """Обновление прогресса крафтинга"""
+        try:
+            if session_id not in self.active_sessions:
+                return False
+            
+            session = self.active_sessions[session_id]
+            recipe = self.recipes[session.recipe_id]
+            
+            # Обновление прогресса
+            progress_increment = delta_time / recipe.crafting_time
+            session.progress += progress_increment
+            
+            # Проверка завершения
+            if session.progress >= 1.0:
+                return self._complete_crafting(session_id)
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка обновления крафтинга: {e}")
+            return False
+    
+    def _complete_crafting(self, session_id: str) -> bool:
+        """Завершение крафтинга"""
+        try:
+            session = self.active_sessions[session_id]
+            recipe = self.recipes[session.recipe_id]
+            
+            # Расчет успеха
+            success = random.random() <= recipe.success_chance
+            
+            if success:
+                # Успешный крафтинг
+                result = CraftingResult(
+                    success=True,
+                    item_id=recipe.result_item,
+                    item_count=recipe.result_count,
+                    quality=recipe.result_quality,
+                    experience_gained=recipe.experience_gain,
+                    crafting_time=recipe.crafting_time
+                )
+                
+                session.is_completed = True
+                session.result_items.append(recipe.result_item)
+                session.experience_gained = recipe.experience_gain
+                
+                self.successful_crafts += 1
+                self.total_experience_gained += recipe.experience_gain
+                
+                # Вызов callback
+                if self.on_craft_complete:
+                    self.on_craft_complete(session, result)
+                
+                logger.info(f"Крафтинг {session.recipe_id} завершен успешно")
+                
+            else:
+                # Неудачный крафтинг
+                result = CraftingResult(
+                    success=False,
+                    error_message="Крафтинг не удался",
+                    crafting_time=recipe.crafting_time
+                )
+                
+                session.is_failed = True
+                self.failed_crafts += 1
+                
+                # Вызов callback
+                if self.on_craft_fail:
+                    self.on_craft_fail(session, result)
+                
+                logger.info(f"Крафтинг {session.recipe_id} не удался")
+            
+            # Сохранение результата
+            self.crafting_history.append(result)
+            self.total_crafts += 1
+            
+            # Удаление сессии
+            del self.active_sessions[session_id]
+            
+            return success
+            
+        except Exception as e:
+            logger.error(f"Ошибка завершения крафтинга: {e}")
+            return False
+    
+    def cancel_crafting(self, session_id: str) -> bool:
+        """Отмена крафтинга"""
+        try:
+            if session_id not in self.active_sessions:
+                return False
+            
+            session = self.active_sessions[session_id]
+            session.is_failed = True
+            
+            del self.active_sessions[session_id]
+            
+            logger.info(f"Крафтинг {session.recipe_id} отменен")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка отмены крафтинга: {e}")
+            return False
+    
+    def get_recipe(self, recipe_id: str) -> Optional[Recipe]:
+        """Получить рецепт"""
+        return self.recipes.get(recipe_id)
+    
+    def get_available_recipes(self, station_id: str) -> List[Recipe]:
+        """Получить доступные рецепты для станции"""
+        if station_id not in self.crafting_stations:
+            return []
+        
+        station = self.crafting_stations[station_id]
+        return [self.recipes[recipe_id] for recipe_id in station.available_recipes 
+                if recipe_id in self.recipes]
+    
+    def get_crafting_statistics(self) -> Dict[str, Any]:
+        """Получить статистику крафтинга"""
+        return {
+            "total_crafts": self.total_crafts,
+            "successful_crafts": self.successful_crafts,
+            "failed_crafts": self.failed_crafts,
+            "success_rate": self.successful_crafts / max(self.total_crafts, 1),
+            "total_experience_gained": self.total_experience_gained,
+            "active_sessions": len(self.active_sessions)
+        }
+    
+    def update(self, delta_time: float):
+        """Обновление системы крафтинга"""
+        try:
+            # Обновление активных сессий
+            completed_sessions = []
+            for session_id, session in self.active_sessions.items():
+                if not self.update_crafting(session_id, delta_time):
+                    completed_sessions.append(session_id)
+            
+            # Удаление завершенных сессий
+            for session_id in completed_sessions:
+                if session_id in self.active_sessions:
+                    del self.active_sessions[session_id]
+                    
+        except Exception as e:
+            logger.error(f"Ошибка обновления системы крафтинга: {e}")
+    
+    def cleanup(self):
+        """Очистка системы крафтинга"""
+        try:
+            # Отмена всех активных сессий
+            for session_id in list(self.active_sessions.keys()):
+                self.cancel_crafting(session_id)
+            
+            logger.info("Система крафтинга очищена")
+            
+        except Exception as e:
+            logger.error(f"Ошибка очистки системы крафтинга: {e}")
