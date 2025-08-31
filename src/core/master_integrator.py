@@ -25,11 +25,20 @@ from src.ui.ui_manager import UIManager
 from src.systems.ai.ai_system import AISystem
 from src.systems.evolution.evolution_system import EvolutionSystem
 from src.systems.dialogue.dialogue_system import DialogueSystem
-from src.systems.quests.quest_system import QuestSystem
-from src.systems.world.world_evolution_system import WorldEvolutionSystem
-from src.systems.rendering.rendering_system import RenderingSystem
+from src.systems.quest.dynamic_quest_system import DynamicQuestSystem as QuestSystem
+from src.systems.rendering.render_system import RenderSystem as RenderingSystem
 from src.systems.content.content_system import ContentSystem
 from src.systems.memory.memory_system import MemorySystem
+from src.systems.crafting.crafting_system import CraftingSystem
+from src.systems.trading.trading_system import TradingSystem
+from src.systems.social.social_system import SocialSystem
+from src.systems.world.world_manager import WorldManager
+from src.systems.world.navigation_system import NavigationSystem
+from src.systems.world.weather_system import WeatherSystem
+from src.systems.world.day_night_cycle import DayNightCycle
+from src.systems.world.season_system import SeasonSystem
+from src.systems.world.environmental_effects import EnvironmentalEffects
+from src.systems.visualization.isometric_visualization_system import IsometricVisualizationSystem
 
 logger = logging.getLogger(__name__)
 
@@ -295,10 +304,19 @@ class MasterIntegrator(BaseComponent):
                 'evolution_system': EvolutionSystem(),
                 'dialogue_system': DialogueSystem(),
                 'quest_system': QuestSystem(),
-                'world_evolution_system': WorldEvolutionSystem(),
                 'rendering_system': RenderingSystem(),
                 'content_system': ContentSystem(),
-                'memory_system': MemorySystem()
+                'memory_system': MemorySystem(),
+                'crafting_system': CraftingSystem(),
+                'trading_system': TradingSystem(),
+                'social_system': SocialSystem(),
+                'world_manager': WorldManager(),
+                'navigation_system': NavigationSystem(),
+                'weather_system': WeatherSystem(),
+                'day_night_cycle': DayNightCycle(),
+                'season_system': SeasonSystem(),
+                'environmental_effects': EnvironmentalEffects(),
+                'isometric_visualization_system': IsometricVisualizationSystem()
             }
             
             for system_name, system in systems_to_create.items():
@@ -325,10 +343,19 @@ class MasterIntegrator(BaseComponent):
                 'evolution_system': ['attribute_system'],
                 'dialogue_system': ['ai_system'],
                 'quest_system': ['dialogue_system'],
-                'world_evolution_system': ['evolution_system'],
                 'rendering_system': ['ui_manager'],
                 'content_system': ['attribute_system'],
-                'memory_system': ['attribute_system']
+                'memory_system': ['attribute_system'],
+                'crafting_system': ['item_system'],
+                'trading_system': ['item_system', 'social_system'],
+                'social_system': ['ai_system'],
+                'world_manager': ['content_system'],
+                'navigation_system': ['world_manager'],
+                'weather_system': ['world_manager'],
+                'day_night_cycle': ['world_manager'],
+                'season_system': ['world_manager'],
+                'environmental_effects': ['weather_system', 'day_night_cycle', 'season_system'],
+                'isometric_visualization_system': ['rendering_system']
             }
             
             logger.info("Зависимости систем определены")
@@ -450,6 +477,34 @@ class MasterIntegrator(BaseComponent):
                 self.attribute_integrations['ai_system'] = {
                     'type': 'direct',
                     'description': 'AISystem учитывает атрибуты при принятии решений'
+                }
+            
+            # Интеграция CraftingSystem с AttributeSystem
+            if 'crafting_system' in self.systems and 'attribute_system' in self.systems:
+                self.attribute_integrations['crafting_system'] = {
+                    'type': 'direct',
+                    'description': 'CraftingSystem использует атрибуты для требований крафтинга'
+                }
+            
+            # Интеграция TradingSystem с AttributeSystem
+            if 'trading_system' in self.systems and 'attribute_system' in self.systems:
+                self.attribute_integrations['trading_system'] = {
+                    'type': 'direct',
+                    'description': 'TradingSystem учитывает атрибуты для торговых отношений'
+                }
+            
+            # Интеграция SocialSystem с AttributeSystem
+            if 'social_system' in self.systems and 'attribute_system' in self.systems:
+                self.attribute_integrations['social_system'] = {
+                    'type': 'direct',
+                    'description': 'SocialSystem использует атрибуты для социальных взаимодействий'
+                }
+            
+            # Интеграция WorldManager с AttributeSystem
+            if 'world_manager' in self.systems and 'attribute_system' in self.systems:
+                self.attribute_integrations['world_manager'] = {
+                    'type': 'direct',
+                    'description': 'WorldManager учитывает атрибуты для генерации мира'
                 }
             
             # Обновляем статистику

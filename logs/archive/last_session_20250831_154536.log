@@ -1,0 +1,3 @@
+2025-08-31 15:44:14 - src.core.state_manager - INFO - StateManager загружен
+2025-08-31 15:44:17 - root - WARNING - Scikit-learn недоступен
+2025-08-31 15:44:17 - root - ERROR - Ошибка инициализации: cannot import name 'QuestSystem' from 'src.systems.quest.dynamic_quest_system' (C:\Users\lgbtb\Desktop\AI-EVOLVE\src\systems\quest\dynamic_quest_system.py)

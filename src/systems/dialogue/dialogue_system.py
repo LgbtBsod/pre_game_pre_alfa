@@ -110,10 +110,10 @@ class CharacterPersonality:
 class DialogueContext:
     """Контекст диалога"""
     current_topic: str
-    previous_topics: List[str] = field(default_factory=list)
     emotional_state: EmotionType
     relationship_level: RelationshipType
     trust_level: float
+    previous_topics: List[str] = field(default_factory=list)
     recent_memories: List[DialogueMemory] = field(default_factory=list)
     conversation_history: List[str] = field(default_factory=list)
     key_phrases: Set[str] = field(default_factory=set)
