@@ -212,20 +212,20 @@ class SkillSystem(BaseComponent):
         """Регистрация состояний системы"""
         if self.state_manager:
             self.state_manager.set_state(
-                f"{self.system_name}_settings",
+                f"{self.component_id}_settings",
                 self.system_settings,
                 StateType.SETTINGS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_stats",
+                f"{self.component_id}_stats",
                 self.system_stats,
                 StateType.STATISTICS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_state",
-                self.system_state,
+                f"{self.component_id}_state",
+                self.state,
                 StateType.SYSTEM_STATE
             )
     
@@ -234,18 +234,20 @@ class SkillSystem(BaseComponent):
         try:
             logger.info("Инициализация SkillSystem...")
             
+            # Вызываем базовую инициализацию для установки состояния
+            if not super().initialize():
+                return False
+            
             self._register_system_states()
             
             # Создание базовых деревьев навыков
             self._create_skill_trees()
             
-            self.system_state = LifecycleState.READY
             logger.info("SkillSystem инициализирован успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации SkillSystem: {e}")
-            self.system_state = LifecycleState.ERROR
             return False
     
     def start(self) -> bool:
@@ -253,22 +255,20 @@ class SkillSystem(BaseComponent):
         try:
             logger.info("Запуск SkillSystem...")
             
-            if self.system_state != LifecycleState.READY:
+            if self.state != LifecycleState.READY:
                 logger.error("SkillSystem не готов к запуску")
                 return False
             
-            self.system_state = LifecycleState.RUNNING
             logger.info("SkillSystem запущен успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка запуска SkillSystem: {e}")
-            self.system_state = LifecycleState.ERROR
             return False
     
     def update(self, delta_time: float):
         """Обновление системы навыков"""
-        if self.system_state != LifecycleState.RUNNING:
+        if self.state != LifecycleState.RUNNING:
             return
         
         try:
@@ -286,7 +286,7 @@ class SkillSystem(BaseComponent):
             # Обновляем состояние в менеджере состояний
             if self.state_manager:
                 self.state_manager.set_state(
-                    f"{self.system_name}_stats",
+                    f"{self.component_id}_stats",
                     self.system_stats,
                     StateType.STATISTICS
                 )
@@ -299,7 +299,6 @@ class SkillSystem(BaseComponent):
         try:
             logger.info("Остановка SkillSystem...")
             
-            self.system_state = LifecycleState.STOPPED
             logger.info("SkillSystem остановлен успешно")
             return True
             
@@ -320,7 +319,6 @@ class SkillSystem(BaseComponent):
             self.skill_combos.clear()
             self.active_combos.clear()
             
-            self.system_state = LifecycleState.DESTROYED
             logger.info("SkillSystem уничтожен успешно")
             return True
             
@@ -776,9 +774,9 @@ class SkillSystem(BaseComponent):
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
+            'name': self.component_id,
+            'state': self.state.value,
+            'priority': self.priority.value,
             'skill_trees_count': len(self.skill_trees),
             'entities_with_skills': len(self.entity_skills),
             'total_skills_learned': self.system_stats['total_skills_learned'],

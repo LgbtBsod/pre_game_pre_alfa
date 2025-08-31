@@ -337,20 +337,20 @@ class AttributeSystem(BaseComponent):
         """Регистрация состояний системы"""
         if self.state_manager:
             self.state_manager.set_state(
-                f"{self.system_name}_settings",
+                f"{self.component_id}_settings",
                 self.system_settings,
                 StateType.SETTINGS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_stats",
+                f"{self.component_id}_stats",
                 self.system_stats,
                 StateType.STATISTICS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_state",
-                self.system_state,
+                f"{self.component_id}_state",
+                self.state,
                 StateType.SYSTEM_STATE
             )
     
@@ -404,7 +404,7 @@ class AttributeSystem(BaseComponent):
             # Обновляем состояние в менеджере состояний
             if self.state_manager:
                 self.state_manager.set_state(
-                    f"{self.system_name}_stats",
+                    f"{self.component_id}_stats",
                     self.system_stats,
                     StateType.STATISTICS
                 )

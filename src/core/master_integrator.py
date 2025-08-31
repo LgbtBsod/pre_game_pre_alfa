@@ -297,7 +297,11 @@ class MasterIntegrator(BaseComponent):
             systems_to_create = {
                 'attribute_system': AttributeSystem(),
                 'content_system': ContentSystem(),
-                'isometric_visualization_system': IsometricVisualizationSystem()
+                'isometric_visualization_system': IsometricVisualizationSystem(),
+                'rendering_system': RenderingSystem(),
+                'combat_system': CombatSystem(),
+                'skill_system': SkillSystem(),
+                'ui_manager': UIManager()
             }
             
             for system_name, system in systems_to_create.items():
@@ -317,7 +321,11 @@ class MasterIntegrator(BaseComponent):
             self.system_dependencies = {
                 'attribute_system': [],  # Базовая система, не зависит от других
                 'content_system': ['attribute_system'],
-                'isometric_visualization_system': ['content_system']
+                'isometric_visualization_system': ['content_system'],
+                'rendering_system': ['isometric_visualization_system'],
+                'combat_system': ['attribute_system'],  # Зависит от системы атрибутов
+                'skill_system': ['attribute_system', 'combat_system'],  # Зависит от атрибутов и боя
+                'ui_manager': ['attribute_system', 'rendering_system']  # Зависит от атрибутов и рендеринга
             }
             
             logger.info("Зависимости систем определены")

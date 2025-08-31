@@ -188,21 +188,71 @@ def check_python_version() -> bool:
         return False
     return True
 
-def check_dependencies() -> bool:
+def check_dependencies():
     """Проверка зависимостей"""
-    required_packages = ['panda3d', 'numpy']
-    optional_packages = ['psutil', 'PIL']
+    print("\n📦 ПРОВЕРКА ЗАВИСИМОСТЕЙ")
+    print("=" * 50)
+    
+    # Обязательные пакеты
+    required_packages = [
+        "panda3d",
+        "numpy"
+    ]
+    
+    # Опциональные пакеты
+    optional_packages = [
+        "PIL",
+        "cv2",
+        "matplotlib"
+    ]
     
     missing_required = []
     missing_optional = []
     
     for package in required_packages:
         try:
-            __import__(package)
-            print(f"✅ {package} - установлен")
-        except ImportError:
+            if package == "panda3d":
+                # Специальная проверка Panda3D
+                import panda3d
+                print(f"✅ {package} - установлен (версия: {panda3d.__version__})")
+                
+                # Проверяем возможность создания окна с разными импортами
+                try:
+                    print("🔍 Тестирование создания окна Panda3D...")
+                    
+                    # Пробуем разные способы импорта ShowBase
+                    try:
+                        from panda3d.core import ShowBase, WindowProperties
+                        print("✅ Импорт из panda3d.core успешен")
+                    except ImportError:
+                        try:
+                            from direct.showbase.ShowBase import ShowBase
+                            print("✅ Импорт из direct.showbase.ShowBase успешен")
+                        except ImportError:
+                            try:
+                                from direct.showbase import ShowBase
+                                print("✅ Импорт из direct.showbase успешен")
+                            except ImportError:
+                                raise ImportError("Не удалось импортировать ShowBase ни одним способом")
+                    
+                    # Тестируем создание окна
+                    test_base = ShowBase()
+                    test_base.destroy()
+                    print("✅ Panda3D окно создается успешно")
+                    
+                except Exception as window_e:
+                    print(f"⚠️  Panda3D окно не создается: {window_e}")
+                    # Не прерываем запуск, так как Panda3D может работать в headless режиме
+                    
+            else:
+                __import__(package)
+                print(f"✅ {package} - установлен")
+        except ImportError as e:
             missing_required.append(package)
-            print(f"❌ {package} - отсутствует")
+            print(f"❌ {package} - отсутствует: {e}")
+        except Exception as e:
+            missing_required.append(package)
+            print(f"❌ {package} - ошибка: {e}")
     
     for package in optional_packages:
         try:
@@ -223,6 +273,7 @@ def check_dependencies() -> bool:
         print("Некоторые функции могут работать медленнее")
         print(f"pip install {' '.join(missing_optional)}")
     
+    print("\n✅ Все необходимые зависимости установлены")
     return True
 
 def create_directories():
@@ -248,41 +299,98 @@ def create_directories():
 def initialize_game():
     """Инициализация игры"""
     try:
-        # Импортируем основные компоненты
-        from src.core.state_manager import StateManager
-        from src.systems.attributes.attribute_system import AttributeSystem
-        from src.core.master_integrator import MasterIntegrator
+        print("\n🔧 ДЕТАЛЬНАЯ ИНИЦИАЛИЗАЦИЯ СИСТЕМ")
+        print("=" * 50)
         
-        print("🔧 Инициализация основных систем...")
+        # Импортируем основные компоненты
+        print("📦 Импорт основных компонентов...")
+        try:
+            from src.core.state_manager import StateManager
+            print("✅ StateManager импортирован")
+        except Exception as e:
+            print(f"❌ Ошибка импорта StateManager: {e}")
+            raise
+        
+        try:
+            from src.systems.attributes.attribute_system import AttributeSystem
+            print("✅ AttributeSystem импортирован")
+        except Exception as e:
+            print(f"❌ Ошибка импорта AttributeSystem: {e}")
+            raise
+        
+        try:
+            from src.core.master_integrator import MasterIntegrator
+            print("✅ MasterIntegrator импортирован")
+        except Exception as e:
+            print(f"❌ Ошибка импорта MasterIntegrator: {e}")
+            raise
+        
+        print("\n🏗️  Создание экземпляров систем...")
         
         # Создаем менеджер состояний
-        state_manager = StateManager()
-        print("✅ StateManager инициализирован")
+        try:
+            state_manager = StateManager()
+            print("✅ StateManager создан")
+        except Exception as e:
+            print(f"❌ Ошибка создания StateManager: {e}")
+            raise
         
         # Создаем систему атрибутов
-        attribute_system = AttributeSystem()
-        print("✅ AttributeSystem инициализирована")
+        try:
+            attribute_system = AttributeSystem()
+            print("✅ AttributeSystem создана")
+        except Exception as e:
+            print(f"❌ Ошибка создания AttributeSystem: {e}")
+            raise
         
         # Создаем главный интегратор
-        master_integrator = MasterIntegrator()
-        master_integrator.set_architecture_components(state_manager, attribute_system)
-        print("✅ MasterIntegrator инициализирован")
+        try:
+            master_integrator = MasterIntegrator()
+            print("✅ MasterIntegrator создан")
+        except Exception as e:
+            print(f"❌ Ошибка создания MasterIntegrator: {e}")
+            raise
         
-        # Инициализируем все системы
-        if not master_integrator.initialize():
-            raise Exception("Ошибка инициализации MasterIntegrator")
-        print("✅ Все системы инициализированы")
+        print("\n🔗 Настройка архитектуры...")
+        try:
+            master_integrator.set_architecture_components(state_manager, attribute_system)
+            print("✅ Архитектурные компоненты настроены")
+        except Exception as e:
+            print(f"❌ Ошибка настройки архитектуры: {e}")
+            raise
         
-        # Запускаем все системы
-        if not master_integrator.start():
-            raise Exception("Ошибка запуска MasterIntegrator")
-        print("✅ Все системы запущены")
+        print("\n🚀 Инициализация всех систем...")
+        try:
+            if not master_integrator.initialize():
+                raise Exception("Ошибка инициализации MasterIntegrator")
+            print("✅ Все системы инициализированы")
+        except Exception as e:
+            print(f"❌ Ошибка инициализации систем: {e}")
+            raise
+        
+        print("\n▶️  Запуск всех систем...")
+        try:
+            if not master_integrator.start():
+                raise Exception("Ошибка запуска MasterIntegrator")
+            print("✅ Все системы запущены")
+        except Exception as e:
+            print(f"❌ Ошибка запуска систем: {e}")
+            raise
+        
+        print("\n📊 Проверка состояния систем...")
+        try:
+            system_info = master_integrator.get_system_info()
+            print(f"✅ Получена информация о {len(system_info)} системах")
+            for key, value in system_info.items():
+                print(f"   📋 {key}: {value}")
+        except Exception as e:
+            print(f"⚠️  Не удалось получить информацию о системах: {e}")
         
         return master_integrator
         
     except Exception as e:
-        print(f"❌ Ошибка инициализации: {e}")
-        logging.error(f"Ошибка инициализации: {e}")
+        print(f"\n❌ КРИТИЧЕСКАЯ ОШИБКА ИНИЦИАЛИЗАЦИИ: {e}")
+        print("🔍 Детали ошибки:")
         traceback.print_exc()
         return None
 
@@ -349,14 +457,101 @@ def main():
             print(f"   {key}: {value}")
         
         print("\n🎮 Игра готова к использованию!")
-        print("🚀 Запуск окна игры...")
+        print("🚀 ЗАПУСК ОКНА ИГРЫ")
+        print("=" * 50)
+        
+        # Дополнительная диагностика состояния игры
+        print("🔍 ДИАГНОСТИКА СОСТОЯНИЯ ИГРЫ:")
+        try:
+            if hasattr(game, 'systems'):
+                print(f"📋 Количество систем: {len(game.systems)}")
+                print(f"📋 Доступные системы: {list(game.systems.keys())}")
+                
+                # Проверяем ключевые системы
+                key_systems = ['rendering_system', 'attribute_system', 'content_system']
+                for system_name in key_systems:
+                    if system_name in game.systems:
+                        system = game.systems[system_name]
+                        print(f"✅ {system_name}: {type(system).__name__}")
+                        
+                        # Специальная проверка системы рендеринга
+                        if system_name == 'rendering_system':
+                            if hasattr(system, 'showbase'):
+                                print(f"   🎬 ShowBase: {type(system.showbase).__name__}")
+                            else:
+                                print(f"   ⚠️  ShowBase: отсутствует")
+                            
+                            if hasattr(system, 'run'):
+                                print(f"   ▶️  Метод run: доступен")
+                            else:
+                                print(f"   ❌ Метод run: отсутствует")
+                    else:
+                        print(f"❌ {system_name}: отсутствует")
+            else:
+                print("❌ Игра не имеет атрибута 'systems'")
+                
+            if hasattr(game, 'state'):
+                print(f"📊 Состояние игры: {game.state}")
+            else:
+                print("⚠️  Игра не имеет атрибута 'state'")
+                
+        except Exception as diag_e:
+            print(f"⚠️  Ошибка диагностики состояния: {diag_e}")
         
         # Запускаем окно игры
         try:
+            print("\n🔍 Проверка метода run в игре...")
+            if not hasattr(game, 'run'):
+                raise Exception("Игра не имеет метода 'run'")
+            print("✅ Метод 'run' найден")
+            
+            print("🔍 Проверка системы рендеринга...")
+            if hasattr(game, 'systems') and 'rendering_system' in game.systems:
+                rendering_system = game.systems['rendering_system']
+                print(f"✅ Система рендеринга найдена: {type(rendering_system).__name__}")
+                
+                if hasattr(rendering_system, 'showbase'):
+                    print("✅ ShowBase найден в системе рендеринга")
+                else:
+                    print("⚠️  ShowBase не найден в системе рендеринга")
+                
+                if hasattr(rendering_system, 'run'):
+                    print("✅ Метод 'run' найден в системе рендеринга")
+                else:
+                    print("⚠️  Метод 'run' не найден в системе рендеринга")
+            else:
+                print("⚠️  Система рендеринга не найдена в игре")
+            
+            print("\n🎬 Запуск главного цикла игры...")
             game.run()
+            print("✅ Главный цикл игры запущен")
+            
         except Exception as e:
             logger.error(f"Ошибка запуска окна игры: {e}")
-            print(f"⚠️  Ошибка запуска окна игры: {e}")
+            print(f"\n❌ ОШИБКА ЗАПУСКА ОКНА ИГРЫ: {e}")
+            print("🔍 Детали ошибки:")
+            traceback.print_exc()
+            
+            # Дополнительная диагностика
+            print("\n🔍 ДОПОЛНИТЕЛЬНАЯ ДИАГНОСТИКА:")
+            try:
+                if hasattr(game, 'systems'):
+                    print(f"📋 Доступные системы: {list(game.systems.keys())}")
+                else:
+                    print("❌ Игра не имеет атрибута 'systems'")
+                
+                if hasattr(game, 'get_system_info'):
+                    try:
+                        info = game.get_system_info()
+                        print(f"📊 Информация о системах: {info}")
+                    except Exception as info_e:
+                        print(f"⚠️  Не удалось получить информацию о системах: {info_e}")
+                else:
+                    print("❌ Игра не имеет метода 'get_system_info'")
+                    
+            except Exception as diag_e:
+                print(f"⚠️  Ошибка дополнительной диагностики: {diag_e}")
+            
             return 1
         
         return 0

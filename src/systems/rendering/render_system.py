@@ -12,10 +12,23 @@ import math
 import time
 import threading
 
-from panda3d.core import *
-from panda3d.core import NodePath
-from direct.showbase.ShowBase import ShowBase
-from direct.task import Task
+# Пробуем разные способы импорта Panda3D
+try:
+    from panda3d.core import *
+    from panda3d.core import NodePath
+except ImportError:
+    try:
+        from direct.showbase.ShowBase import ShowBase
+    except ImportError:
+        try:
+            from direct.showbase import ShowBase
+        except ImportError:
+            raise ImportError("Не удалось импортировать Panda3D ни одним способом")
+
+try:
+    from direct.task import Task
+except ImportError:
+    Task = None
 
 from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
 
@@ -201,7 +214,13 @@ class RenderSystem(BaseComponent):
             
             # Настройка вертикальной синхронизации
             if self.render_settings.vsync:
-                self.showbase.win.setVerticalSync(True)
+                try:
+                    if hasattr(self.showbase.win, 'setVerticalSync'):
+                        self.showbase.win.setVerticalSync(True)
+                    else:
+                        logger.warning("setVerticalSync не поддерживается в данной версии Panda3D")
+                except Exception as vsync_e:
+                    logger.warning(f"Не удалось установить вертикальную синхронизацию: {vsync_e}")
             
             # Получаем основные компоненты
             self.render = self.showbase.render
@@ -218,11 +237,12 @@ class RenderSystem(BaseComponent):
         """Создание демонстрационной сцены"""
         try:
             # Создаем простой куб для демонстрации
-            cube = self._create_simple_cube()
-            if cube:
+            cube_geom = self._create_simple_cube()
+            if cube_geom:
+                # Оборачиваем GeomNode в NodePath для доступа к методам позиционирования
+                cube = self.render.attachNewNode(cube_geom)
                 cube.setPos(0, 0, 0)
                 cube.setScale(1)
-                cube.reparentTo(self.render)
                 
                 # Применяем материал
                 if 'default' in self.material_cache:
@@ -233,7 +253,16 @@ class RenderSystem(BaseComponent):
             text = TextNode("title")
             text.setText("AI-EVOLVE Enhanced Edition")
             text.setAlign(TextNode.ACenter)
-            text.setColor(1, 1, 1, 1)
+            try:
+                # Пробуем использовать setTextColor для новых версий Panda3D
+                if hasattr(text, 'setTextColor'):
+                    text.setTextColor(1, 1, 1, 1)
+                elif hasattr(text, 'setColor'):
+                    text.setColor(1, 1, 1, 1)
+                else:
+                    logger.warning("setColor не поддерживается для TextNode в данной версии Panda3D")
+            except Exception as e:
+                logger.warning(f"Не удалось установить цвет текста: {e}")
             
             text_np = self.render.attachNewNode(text)
             text_np.setPos(0, 0, 3)
@@ -520,18 +549,20 @@ class RenderSystem(BaseComponent):
     def _setup_optimization(self) -> bool:
         """Настройка оптимизации рендеринга"""
         try:
-            from panda3d.core import LODManager, OcclusionCuller
-            
-            # Настройка LOD
-            self.lod_manager = LODManager()
-            
-            # Настройка окклюзии
-            self.occlusion_culler = OcclusionCuller()
+            # Импорт оптимизации рендеринга
+            try:
+                from panda3d.core import LODManager, OcclusionCuller
+                self.lod_manager = LODManager()
+                self.occlusion_culler = OcclusionCuller()
+                logger.info("Оптимизация рендеринга настроена")
+            except ImportError:
+                logger.warning("LODManager недоступен в данной версии Panda3D - оптимизация отключена")
+                self.lod_manager = None
+                self.occlusion_culler = None
             
             # Настройка качества рендеринга
             self._apply_quality_settings()
             
-            logger.info("Оптимизация рендеринга настроена")
             return True
             
         except Exception as e:
@@ -545,23 +576,51 @@ class RenderSystem(BaseComponent):
             
             if quality == RenderQuality.LOW:
                 # Низкое качество
-                self.showbase.win.setAntialias(False)
+                try:
+                    if hasattr(self.showbase.win, 'setAntialias'):
+                        self.showbase.win.setAntialias(False)
+                    else:
+                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                except Exception as e:
+                    logger.warning(f"Не удалось отключить сглаживание: {e}")
+                    
                 self.render.setShaderAuto(False)
                 
             elif quality == RenderQuality.MEDIUM:
                 # Среднее качество
-                self.showbase.win.setAntialias(True)
+                try:
+                    if hasattr(self.showbase.win, 'setAntialias'):
+                        self.showbase.win.setAntialias(True)
+                    else:
+                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                except Exception as e:
+                    logger.warning(f"Не удалось включить сглаживание: {e}")
+                    
                 self.render.setShaderAuto(True)
                 
             elif quality == RenderQuality.HIGH:
                 # Высокое качество
-                self.showbase.win.setAntialias(True)
+                try:
+                    if hasattr(self.showbase.win, 'setAntialias'):
+                        self.showbase.win.setAntialias(True)
+                    else:
+                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                except Exception as e:
+                    logger.warning(f"Не удалось включить сглаживание: {e}")
+                    
                 self.render.setShaderAuto(True)
                 self.render.setTwoSidedLighting(True)
                 
             elif quality == RenderQuality.ULTRA:
                 # Ультра качество
-                self.showbase.win.setAntialias(True)
+                try:
+                    if hasattr(self.showbase.win, 'setAntialias'):
+                        self.showbase.win.setAntialias(True)
+                    else:
+                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                except Exception as e:
+                    logger.warning(f"Не удалось включить сглаживание: {e}")
+                    
                 self.render.setShaderAuto(True)
                 self.render.setTwoSidedLighting(True)
                 self.render.setDepthTest(True)
@@ -640,11 +699,147 @@ class RenderSystem(BaseComponent):
         except Exception as e:
             logger.error(f"Ошибка обновления RenderSystem: {e}")
     
+    def show_start_menu(self, ui_manager=None):
+        """Отображение стартового меню"""
+        try:
+            if ui_manager:
+                # Создаем стартовое меню через UIManager
+                start_menu = ui_manager.create_start_menu()
+                if start_menu:
+                    logger.info("Стартовое меню отображено")
+                    return True
+                else:
+                    logger.warning("Не удалось создать стартовое меню")
+                    return False
+            else:
+                # Создаем простое стартовое меню напрямую
+                self._create_simple_start_menu()
+                return True
+                
+        except Exception as e:
+            logger.error(f"Ошибка отображения стартового меню: {e}")
+            return False
+    
+    def _create_simple_start_menu(self):
+        """Создание простого стартового меню"""
+        try:
+            from direct.gui.DirectFrame import DirectFrame
+            from direct.gui.DirectButton import DirectButton
+            from direct.gui.DirectLabel import DirectLabel
+            
+            # Основная панель меню
+            menu_frame = DirectFrame(
+                frameColor=(0.0, 0.0, 0.0, 0.8),
+                frameSize=(-0.4, 0.4, -0.6, 0.6),
+                pos=(0, 0, 0)
+            )
+            menu_frame.reparentTo(self.render2d)
+            
+            # Заголовок
+            title_label = DirectLabel(
+                text="AI-EVOLVE ENHANCED EDITION",
+                text_fg=(0.0, 1.0, 1.0, 1.0),
+                text_scale=0.08,
+                pos=(0, 0, 0.4),
+                parent=menu_frame
+            )
+            
+            # Кнопка "Начать игру"
+            start_button = DirectButton(
+                text="START GAME",
+                text_fg=(1.0, 1.0, 1.0, 1.0),
+                text_scale=0.06,
+                frameColor=(0.2, 0.2, 0.2, 0.9),
+                frameSize=(-0.3, 0.3, -0.05, 0.05),
+                pos=(0, 0, 0.2),
+                parent=menu_frame,
+                command=self._on_start_game
+            )
+            
+            # Кнопка "Настройки"
+            settings_button = DirectButton(
+                text="SETTINGS",
+                text_fg=(1.0, 1.0, 1.0, 1.0),
+                text_scale=0.06,
+                frameColor=(0.2, 0.2, 0.2, 0.9),
+                frameSize=(-0.3, 0.3, -0.05, 0.05),
+                pos=(0, 0, 0.1),
+                parent=menu_frame,
+                command=self._on_settings
+            )
+            
+            # Кнопка "Выход"
+            quit_button = DirectButton(
+                text="QUIT GAME",
+                text_fg=(1.0, 1.0, 1.0, 1.0),
+                text_scale=0.06,
+                frameColor=(0.2, 0.2, 0.2, 0.9),
+                frameSize=(-0.3, 0.3, -0.05, 0.05),
+                pos=(0, 0, -0.1),
+                parent=menu_frame,
+                command=self._on_quit_game
+            )
+            
+            # Сохраняем ссылки на элементы меню
+            self.start_menu_elements = {
+                'frame': menu_frame,
+                'title': title_label,
+                'start_button': start_button,
+                'settings_button': settings_button,
+                'quit_button': quit_button
+            }
+            
+            logger.info("Простое стартовое меню создано")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания простого стартового меню: {e}")
+    
+    def _on_start_game(self):
+        """Обработчик нажатия кнопки 'Начать игру'"""
+        try:
+            logger.info("Нажата кнопка 'Начать игру'")
+            # Скрываем стартовое меню
+            if hasattr(self, 'start_menu_elements'):
+                for element in self.start_menu_elements.values():
+                    if element:
+                        element.hide()
+                logger.info("Стартовое меню скрыто")
+            
+            # Здесь можно добавить логику перехода к игре
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки кнопки 'Начать игру': {e}")
+    
+    def _on_settings(self):
+        """Обработчик нажатия кнопки 'Настройки'"""
+        try:
+            logger.info("Нажата кнопка 'Настройки'")
+            # Здесь можно добавить логику открытия настроек
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки кнопки 'Настройки': {e}")
+    
+    def _on_quit_game(self):
+        """Обработчик нажатия кнопки 'Выход'"""
+        try:
+            logger.info("Нажата кнопка 'Выход'")
+            # Выход из игры
+            import sys
+            sys.exit(0)
+            
+        except Exception as e:
+            logger.error(f"Ошибка обработки кнопки 'Выход': {e}")
+    
     def run(self):
         """Запуск главного цикла Panda3D"""
         try:
             if hasattr(self, 'showbase'):
                 logger.info("Запуск главного цикла Panda3D...")
+                
+                # Показываем стартовое меню
+                self.show_start_menu()
+                
+                # Запускаем главный цикл
                 self.showbase.run()
             else:
                 logger.error("Panda3D не инициализирован")

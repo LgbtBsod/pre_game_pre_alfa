@@ -33,7 +33,7 @@ try:
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
-    logging.warning("Scikit-learn недоступен")
+    logging.info("Scikit-learn не установлен - некоторые AI функции будут недоступны")
 
 from src.core.architecture import BaseComponent, ComponentType, Priority
 from src.core.constants import AIState, AIBehavior, constants_manager, TIME_CONSTANTS

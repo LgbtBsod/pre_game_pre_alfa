@@ -23,7 +23,7 @@ from ...core.constants import EmotionType, constants_manager
 from ...core.constants_extended import (
     GEOMETRIC_SHAPE_CONSTANTS, EMOTION_VISUALIZATION_CONSTANTS
 )
-from ...core.architecture import BaseComponent
+from ...core.architecture import BaseComponent, ComponentType, Priority
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +56,9 @@ class IsometricCamera:
             # Позиционирование камеры для изометрии
             self._update_camera_position()
             
-            # Настройка камеры как активной
-            scene_root.setCamera(self.camera_np)
+            # Примечание: setCamera должен вызываться на уровне сцены, а не на NodePath
+            # Здесь мы просто создаем камеру и позиционируем её
+            # Активация камеры будет происходить на уровне рендеринга
             
             logger.info("Изометрическая камера настроена")
             return self.camera_np
@@ -347,7 +348,11 @@ class IsometricVisualizationSystem(BaseComponent):
     """Система изометрической визуализации"""
     
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            component_id="isometric_visualization_system",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.NORMAL
+        )
         self.shape_generator = IsometricShapeGenerator()
         self.emotion_visualizer = IsometricEmotionVisualizer()
         self.camera = IsometricCamera()
@@ -357,8 +362,8 @@ class IsometricVisualizationSystem(BaseComponent):
         
         logger.info("Система изометрической визуализации инициализирована")
     
-    def initialize(self):
-        """Инициализация системы"""
+    def _on_initialize(self) -> bool:
+        """Внутренняя инициализация системы изометрической визуализации"""
         try:
             # Создание корневого узла сцены
             self.scene_root = NodePath("isometric_scene")
@@ -374,6 +379,15 @@ class IsometricVisualizationSystem(BaseComponent):
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы изометрической визуализации: {e}")
+            return False
+    
+    def _on_start(self) -> bool:
+        """Внутренний запуск системы изометрической визуализации"""
+        try:
+            logger.info("Система изометрической визуализации запущена")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы изометрической визуализации: {e}")
             return False
     
     def _setup_isometric_lighting(self):

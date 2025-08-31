@@ -202,7 +202,7 @@ class UIManager(BaseComponent):
             
             self.state_manager.set_state(
                 f"{self.component_id}_state",
-                self.system_state,
+                self.state,
                 StateType.SYSTEM_STATE
             )
     
@@ -219,13 +219,13 @@ class UIManager(BaseComponent):
             # Создание базовых UI элементов
             self._create_base_ui_elements()
             
-            self.system_state = LifecycleState.READY
+            self.state = LifecycleState.READY
             logger.info("UIManager инициализирован успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации UIManager: {e}")
-            self.system_state = LifecycleState.ERROR
+            self.state = LifecycleState.ERROR
             return False
     
     def start(self) -> bool:
@@ -233,22 +233,22 @@ class UIManager(BaseComponent):
         try:
             logger.info("Запуск UIManager...")
             
-            if self.system_state != LifecycleState.READY:
+            if self.state != LifecycleState.READY:
                 logger.error("UIManager не готов к запуску")
                 return False
             
-            self.system_state = LifecycleState.RUNNING
+            self.state = LifecycleState.RUNNING
             logger.info("UIManager запущен успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка запуска UIManager: {e}")
-            self.system_state = LifecycleState.ERROR
+            self.state = LifecycleState.ERROR
             return False
     
     def update(self, delta_time: float):
         """Обновление UI менеджера"""
-        if self.system_state != LifecycleState.RUNNING:
+        if self.state != LifecycleState.RUNNING:
             return
         
         try:
@@ -269,7 +269,7 @@ class UIManager(BaseComponent):
             # Обновляем состояние в менеджере состояний
             if self.state_manager:
                 self.state_manager.set_state(
-                    f"{self.system_name}_stats",
+                    f"{self.component_id}_stats",
                     self.system_stats,
                     StateType.STATISTICS
                 )
@@ -282,7 +282,7 @@ class UIManager(BaseComponent):
         try:
             logger.info("Остановка UIManager...")
             
-            self.system_state = LifecycleState.STOPPED
+            self.state = LifecycleState.STOPPED
             logger.info("UIManager остановлен успешно")
             return True
             
@@ -305,7 +305,7 @@ class UIManager(BaseComponent):
             self.modifier_displays.clear()
             self.theme_styles.clear()
             
-            self.system_state = LifecycleState.DESTROYED
+            self.state = LifecycleState.DESTROYED
             logger.info("UIManager уничтожен успешно")
             return True
             
@@ -708,9 +708,9 @@ class UIManager(BaseComponent):
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
-            'name': self.system_name,
-            'state': self.system_state.value,
-            'priority': self.system_priority.value,
+            'name': self.component_id,
+            'state': self.state.value,
+            'priority': self.priority.value,
             'current_theme': self.current_theme.value,
             'total_ui_elements': self.system_stats['total_ui_elements'],
             'active_windows': self.system_stats['active_windows'],

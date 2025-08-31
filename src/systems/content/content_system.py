@@ -24,8 +24,7 @@ from ...core.constants_extended import (
     BiomeType, StructureType, EnemyType, BossPhase, QuestType,
     CONTENT_GENERATION_CONSTANTS, SESSION_GENERATION_CONSTANTS
 )
-from ...core.architecture import BaseComponent
-from ...core.component_manager import ComponentType, Priority
+from ...core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
 
 logger = logging.getLogger(__name__)
 
@@ -741,7 +740,7 @@ class ContentSystem(BaseComponent):
         super().__init__(
             component_id="content_system",
             component_type=ComponentType.SYSTEM,
-            priority=Priority.MEDIUM
+            priority=Priority.NORMAL
         )
         self.database = ContentDatabase()
         self.generator = ContentGenerator()
@@ -750,8 +749,8 @@ class ContentSystem(BaseComponent):
         
         logger.info("Система контента инициализирована")
     
-    def initialize(self):
-        """Инициализация системы"""
+    def _on_initialize(self) -> bool:
+        """Внутренняя инициализация системы контента"""
         try:
             # Загрузка существующих сессий в кэш
             sessions = self.database.get_all_sessions()
@@ -763,6 +762,15 @@ class ContentSystem(BaseComponent):
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы контента: {e}")
+            return False
+    
+    def _on_start(self) -> bool:
+        """Внутренний запуск системы контента"""
+        try:
+            logger.info("Система контента запущена")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка запуска системы контента: {e}")
             return False
     
     def create_session(self, name: str, player_level: int = 1) -> Optional[str]:

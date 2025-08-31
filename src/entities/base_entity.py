@@ -74,9 +74,9 @@ class BaseEntity(BaseComponent):
     
     def __init__(self, entity_id: str, entity_type: EntityType, name: str = ""):
         super().__init__(
-            component_id=f"entity_{entity_id}",
-            component_type=ComponentType.ENTITY,
-            priority=Priority.MEDIUM
+            component_id=entity_id,
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.NORMAL
         )
         
         # Основные свойства

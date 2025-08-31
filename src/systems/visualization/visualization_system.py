@@ -22,8 +22,7 @@ from ...core.constants import EmotionType, constants_manager
 from ...core.constants_extended import (
     GEOMETRIC_SHAPE_CONSTANTS, EMOTION_VISUALIZATION_CONSTANTS
 )
-from ...core.base_component import BaseComponent
-from ...core.component_type import ComponentType, Priority
+from ...core.architecture import BaseComponent, ComponentType, Priority
 
 logger = logging.getLogger(__name__)
 
@@ -662,7 +661,7 @@ class VisualizationSystem(BaseComponent):
         super().__init__(
             component_id="visualization_system",
             component_type=ComponentType.SYSTEM,
-            priority=Priority.MEDIUM
+            priority=Priority.NORMAL
         )
         self.shape_generator = GeometricShapeGenerator()
         self.emotion_visualizer = EmotionVisualizer()
