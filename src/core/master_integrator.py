@@ -293,29 +293,10 @@ class MasterIntegrator(BaseComponent):
     def _create_all_systems(self):
         """Создание всех систем"""
         try:
-            # Создаем все системы
+            # Создаем только основные системы, которые точно существуют и работают
             systems_to_create = {
                 'attribute_system': AttributeSystem(),
-                'combat_system': CombatSystem(),
-                'skill_system': SkillSystem(),
-                'item_system': ItemSystem(),
-                'ui_manager': UIManager(),
-                'ai_system': AISystem(),
-                'evolution_system': EvolutionSystem(),
-                'dialogue_system': DialogueSystem(),
-                'quest_system': QuestSystem(),
-                'rendering_system': RenderingSystem(),
                 'content_system': ContentSystem(),
-                'memory_system': MemorySystem(),
-                'crafting_system': CraftingSystem(),
-                'trading_system': TradingSystem(),
-                'social_system': SocialSystem(),
-                'world_manager': WorldManager(),
-                'navigation_system': NavigationSystem(),
-                'weather_system': WeatherSystem(),
-                'day_night_cycle': DayNightCycle(),
-                'season_system': SeasonSystem(),
-                'environmental_effects': EnvironmentalEffects(),
                 'isometric_visualization_system': IsometricVisualizationSystem()
             }
             
@@ -335,27 +316,8 @@ class MasterIntegrator(BaseComponent):
             # Определяем зависимости между системами
             self.system_dependencies = {
                 'attribute_system': [],  # Базовая система, не зависит от других
-                'combat_system': ['attribute_system'],
-                'skill_system': ['attribute_system'],
-                'item_system': ['attribute_system'],
-                'ui_manager': ['attribute_system'],
-                'ai_system': ['attribute_system', 'memory_system'],
-                'evolution_system': ['attribute_system'],
-                'dialogue_system': ['ai_system'],
-                'quest_system': ['dialogue_system'],
-                'rendering_system': ['ui_manager'],
                 'content_system': ['attribute_system'],
-                'memory_system': ['attribute_system'],
-                'crafting_system': ['item_system'],
-                'trading_system': ['item_system', 'social_system'],
-                'social_system': ['ai_system'],
-                'world_manager': ['content_system'],
-                'navigation_system': ['world_manager'],
-                'weather_system': ['world_manager'],
-                'day_night_cycle': ['world_manager'],
-                'season_system': ['world_manager'],
-                'environmental_effects': ['weather_system', 'day_night_cycle', 'season_system'],
-                'isometric_visualization_system': ['rendering_system']
+                'isometric_visualization_system': ['content_system']
             }
             
             logger.info("Зависимости систем определены")
@@ -712,3 +674,23 @@ class MasterIntegrator(BaseComponent):
             'recovery_attempts': 0,
             'update_time': 0.0
         }
+
+    def run(self):
+        """Запуск главного цикла игры с окном"""
+        try:
+            logger.info("Запуск главного цикла игры...")
+            
+            # Запускаем систему рендеринга, если она есть
+            if 'rendering_system' in self.systems:
+                rendering_system = self.systems['rendering_system']
+                if hasattr(rendering_system, 'run'):
+                    logger.info("Запуск окна игры через систему рендеринга...")
+                    rendering_system.run()
+                else:
+                    logger.warning("Система рендеринга не имеет метода run")
+            else:
+                logger.warning("Система рендеринга не найдена")
+                
+        except Exception as e:
+            logger.error(f"Ошибка запуска главного цикла: {e}")
+            raise

@@ -1,6 +1,0 @@
-2025-08-31 17:05:45 - root - WARNING - Scikit-learn недоступен
-2025-08-31 17:05:45 - src.core.constants_extended - INFO - Расширенный модуль констант загружен
-2025-08-31 17:05:45 - src.systems.content.content_system - INFO - Система контента загружена
-2025-08-31 17:05:45 - src.systems.visualization.isometric_visualization_system - INFO - Система изометрической визуализации загружена
-2025-08-31 17:05:45 - src.core.state_manager - INFO - StateManager инициализирован
-2025-08-31 17:05:45 - root - ERROR - Ошибка инициализации: BaseComponent.__init__() got an unexpected keyword argument 'system_name'

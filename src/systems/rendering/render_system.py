@@ -13,7 +13,9 @@ import time
 import threading
 
 from panda3d.core import *
+from panda3d.core import NodePath
 from direct.showbase.ShowBase import ShowBase
+from direct.task import Task
 
 from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
 
@@ -110,7 +112,7 @@ class RenderSystem(BaseComponent):
         )
         
         # Panda3D компоненты
-        self.base: Optional[ShowBase] = None
+        self.showbase: Optional[ShowBase] = None
         self.render: Optional[NodePath] = None
         self.cam: Optional[NodePath] = None
         
@@ -143,10 +145,10 @@ class RenderSystem(BaseComponent):
     def initialize(self) -> bool:
         """Инициализация системы рендеринга"""
         try:
-            logger.info("Инициализация системы рендеринга...")
+            logger.info("Инициализация RenderSystem...")
             
-            # Инициализация Panda3D
-            if not self._initialize_panda3d():
+            # Создаем окно Panda3D
+            if not self._create_panda3d_window():
                 return False
             
             # Создание базовых камер
@@ -165,45 +167,150 @@ class RenderSystem(BaseComponent):
             if not self._setup_optimization():
                 return False
             
-            self.state = LifecycleState.READY
-            logger.info("Система рендеринга успешно инициализирована")
+            # Создаем базовую сцену для демонстрации
+            self._create_demo_scene()
+            
+            self.system_state = LifecycleState.READY
+            logger.info("RenderSystem инициализирован успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации системы рендеринга: {e}")
-            self.state = LifecycleState.ERROR
+            logger.error(f"Ошибка инициализации RenderSystem: {e}")
+            self.system_state = LifecycleState.ERROR
             return False
     
-    def _initialize_panda3d(self) -> bool:
-        """Инициализация Panda3D"""
+    def _create_panda3d_window(self) -> bool:
+        """Создание окна Panda3D"""
         try:
-            # Создание базового приложения
-            self.base = ShowBase()
+            # Импортируем Panda3D
+            from panda3d.core import WindowProperties, GraphicsPipe
+            from direct.showbase.ShowBase import ShowBase
             
-            # Получение основных компонентов
-            self.render = self.base.render
-            self.cam = self.base.cam
+            # Создаем базовое окно
+            self.showbase = ShowBase()
             
-            # Настройка окна
+            # Настраиваем свойства окна
             props = WindowProperties()
-            props.setTitle("AI-EVOLVE: Эволюционная Адаптация")
+            props.setTitle("AI-EVOLVE Enhanced Edition")
             props.setSize(*self.render_settings.resolution)
             props.setFullscreen(self.render_settings.fullscreen)
             props.setCursorHidden(False)
             
-            # Применение настроек окна
-            self.base.win.requestProperties(props)
+            # Применяем свойства
+            self.showbase.win.requestProperties(props)
             
             # Настройка вертикальной синхронизации
             if self.render_settings.vsync:
-                self.base.win.setVerticalSync(True)
+                self.showbase.win.setVerticalSync(True)
             
-            logger.info("Panda3D инициализирован")
+            # Получаем основные компоненты
+            self.render = self.showbase.render
+            self.cam = self.showbase.cam
+            
+            logger.info("Окно Panda3D создано успешно")
             return True
             
         except Exception as e:
-            logger.error(f"Ошибка инициализации Panda3D: {e}")
+            logger.error(f"Ошибка создания окна Panda3D: {e}")
             return False
+    
+    def _create_demo_scene(self):
+        """Создание демонстрационной сцены"""
+        try:
+            # Создаем простой куб для демонстрации
+            cube = self._create_simple_cube()
+            if cube:
+                cube.setPos(0, 0, 0)
+                cube.setScale(1)
+                cube.reparentTo(self.render)
+                
+                # Применяем материал
+                if 'default' in self.material_cache:
+                    cube.setMaterial(self.material_cache['default'])
+            
+            # Добавляем текст
+            from panda3d.core import TextNode
+            text = TextNode("title")
+            text.setText("AI-EVOLVE Enhanced Edition")
+            text.setAlign(TextNode.ACenter)
+            text.setColor(1, 1, 1, 1)
+            
+            text_np = self.render.attachNewNode(text)
+            text_np.setPos(0, 0, 3)
+            text_np.setScale(0.5)
+            
+            logger.info("Демонстрационная сцена создана")
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания демонстрационной сцены: {e}")
+    
+    def _create_simple_cube(self):
+        """Создание простого куба"""
+        try:
+            from panda3d.core import GeomVertexFormat, GeomVertexData, GeomVertexWriter
+            from panda3d.core import GeomTriangles, Geom, GeomNode
+            
+            # Создаем геометрию куба
+            format = GeomVertexFormat.getV3n3c4()
+            vdata = GeomVertexData("cube", format, Geom.UHStatic)
+            
+            # Вершины куба
+            vertex = GeomVertexWriter(vdata, "vertex")
+            normal = GeomVertexWriter(vdata, "normal")
+            color = GeomVertexWriter(vdata, "color")
+            
+            # 8 вершин куба
+            vertex.addData3(-1, -1, -1)
+            vertex.addData3(1, -1, -1)
+            vertex.addData3(1, 1, -1)
+            vertex.addData3(-1, 1, -1)
+            vertex.addData3(-1, -1, 1)
+            vertex.addData3(1, -1, 1)
+            vertex.addData3(1, 1, 1)
+            vertex.addData3(-1, 1, 1)
+            
+            # Нормали и цвета
+            for i in range(8):
+                normal.addData3(0, 0, 1)
+                color.addData4(0.8, 0.8, 0.8, 1)
+            
+            # Индексы для граней
+            tris = GeomTriangles(Geom.UHStatic)
+            
+            # Нижняя грань
+            tris.addVertices(0, 1, 2)
+            tris.addVertices(0, 2, 3)
+            # Верхняя грань
+            tris.addVertices(4, 7, 6)
+            tris.addVertices(4, 6, 5)
+            # Передняя грань
+            tris.addVertices(0, 4, 5)
+            tris.addVertices(0, 5, 1)
+            # Задняя грань
+            tris.addVertices(2, 6, 7)
+            tris.addVertices(2, 7, 3)
+            # Левая грань
+            tris.addVertices(0, 3, 7)
+            tris.addVertices(0, 7, 4)
+            # Правая грань
+            tris.addVertices(1, 5, 6)
+            tris.addVertices(1, 6, 2)
+            
+            tris.closePrimitive()
+            
+            # Создаем геометрию
+            geom = Geom(vdata)
+            geom.addPrimitive(tris)
+            
+            # Создаем узел
+            node = GeomNode("cube")
+            node.addGeom(geom)
+            
+            return node
+            
+        except Exception as e:
+            logger.error(f"Ошибка создания куба: {e}")
+            return None
     
     def _create_default_cameras(self) -> bool:
         """Создание базовых камер"""
@@ -250,6 +357,8 @@ class RenderSystem(BaseComponent):
     def _create_orbital_camera(self) -> NodePath:
         """Создание орбитальной камеры"""
         try:
+            from panda3d.core import Camera
+            
             # Создание камеры
             camera = Camera("orbital_camera")
             camera_np = self.render.attachNewNode(camera)
@@ -267,6 +376,8 @@ class RenderSystem(BaseComponent):
     def _create_isometric_camera(self) -> NodePath:
         """Создание изометрической камеры"""
         try:
+            from panda3d.core import Camera
+            
             # Создание камеры
             camera = Camera("isometric_camera")
             camera_np = self.render.attachNewNode(camera)
@@ -284,6 +395,8 @@ class RenderSystem(BaseComponent):
     def _setup_lighting(self) -> bool:
         """Настройка освещения"""
         try:
+            from panda3d.core import AmbientLight, DirectionalLight
+            
             # Окружающее освещение
             ambient_light = AmbientLight("ambient_light")
             ambient_light.setColor((0.3, 0.3, 0.3, 1))
@@ -324,6 +437,8 @@ class RenderSystem(BaseComponent):
     def _load_materials(self) -> bool:
         """Загрузка материалов"""
         try:
+            from panda3d.core import Material, VBase4
+            
             # Базовые материалы
             materials = [
                 MaterialSettings(
@@ -366,6 +481,8 @@ class RenderSystem(BaseComponent):
     def _create_material(self, material_settings: MaterialSettings):
         """Создание материала"""
         try:
+            from panda3d.core import Material, VBase4
+            
             material = Material()
             
             # Настройка цветов
@@ -389,9 +506,10 @@ class RenderSystem(BaseComponent):
         except Exception as e:
             logger.error(f"Ошибка создания материала {material_settings.material_id}: {e}")
     
-    def _load_texture(self, texture_path: str) -> Optional[Texture]:
+    def _load_texture(self, texture_path: str):
         """Загрузка текстуры"""
         try:
+            from panda3d.core import Texture
             texture = Texture(texture_path)
             texture.read(texture_path)
             return texture
@@ -402,6 +520,8 @@ class RenderSystem(BaseComponent):
     def _setup_optimization(self) -> bool:
         """Настройка оптимизации рендеринга"""
         try:
+            from panda3d.core import LODManager, OcclusionCuller
+            
             # Настройка LOD
             self.lod_manager = LODManager()
             
@@ -425,32 +545,112 @@ class RenderSystem(BaseComponent):
             
             if quality == RenderQuality.LOW:
                 # Низкое качество
-                self.base.win.setAntialias(False)
-                self.base.render.setShaderAuto(False)
+                self.showbase.win.setAntialias(False)
+                self.render.setShaderAuto(False)
                 
             elif quality == RenderQuality.MEDIUM:
                 # Среднее качество
-                self.base.win.setAntialias(True)
-                self.base.render.setShaderAuto(True)
+                self.showbase.win.setAntialias(True)
+                self.render.setShaderAuto(True)
                 
             elif quality == RenderQuality.HIGH:
                 # Высокое качество
-                self.base.win.setAntialias(True)
-                self.base.render.setShaderAuto(True)
-                self.base.render.setTwoSidedLighting(True)
+                self.showbase.win.setAntialias(True)
+                self.render.setShaderAuto(True)
+                self.render.setTwoSidedLighting(True)
                 
             elif quality == RenderQuality.ULTRA:
                 # Ультра качество
-                self.base.win.setAntialias(True)
-                self.base.render.setShaderAuto(True)
-                self.base.render.setTwoSidedLighting(True)
-                self.base.render.setDepthTest(True)
-                self.base.render.setDepthWrite(True)
+                self.showbase.win.setAntialias(True)
+                self.render.setShaderAuto(True)
+                self.render.setTwoSidedLighting(True)
+                self.render.setDepthTest(True)
+                self.render.setDepthWrite(True)
             
             logger.info(f"Применены настройки качества: {quality.value}")
             
         except Exception as e:
             logger.error(f"Ошибка применения настроек качества: {e}")
+    
+    def start(self) -> bool:
+        """Запуск системы рендеринга"""
+        try:
+            logger.info("Запуск RenderSystem...")
+            
+            if self.system_state != LifecycleState.READY:
+                logger.error("RenderSystem не готов к запуску")
+                return False
+            
+            # Запускаем главный цикл Panda3D
+            self._start_render_loop()
+            
+            self.system_state = LifecycleState.RUNNING
+            logger.info("RenderSystem запущен успешно")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска RenderSystem: {e}")
+            self.system_state = LifecycleState.ERROR
+            return False
+    
+    def _start_render_loop(self):
+        """Запуск цикла рендеринга"""
+        try:
+            # Добавляем задачу обновления
+            from direct.task import Task
+            
+            def update_task(task):
+                # Вращение куба
+                cube = self.render.find("cube")
+                if cube:
+                    cube.setH(cube.getH() + 1)
+                return Task.cont
+            
+            self.showbase.taskMgr.add(update_task, "render_update")
+            
+            logger.info("Цикл рендеринга запущен")
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска цикла рендеринга: {e}")
+    
+    def update(self, delta_time: float):
+        """Обновление системы рендеринга"""
+        if self.system_state != LifecycleState.RUNNING:
+            return
+        
+        try:
+            # Обновляем статистику
+            self.system_stats['update_count'] += 1
+            self.system_stats['total_update_time'] += delta_time
+            self.system_stats['last_update_time'] = time.time()
+            
+            # Обновляем орбитальные камеры
+            for camera_id, settings in self.camera_settings.items():
+                if settings.camera_type == CameraType.ORBITAL:
+                    # Автоматическое вращение
+                    current_time = time.time()
+                    angle_x = current_time * settings.orbit_speed * 0.1
+                    angle_y = math.pi / 4  # Фиксированный угол
+                    self.orbit_camera(camera_id, angle_x, angle_y)
+            
+            # Обновляем Panda3D
+            if hasattr(self, 'showbase'):
+                self.showbase.graphicsEngine.renderFrame()
+                
+        except Exception as e:
+            logger.error(f"Ошибка обновления RenderSystem: {e}")
+    
+    def run(self):
+        """Запуск главного цикла Panda3D"""
+        try:
+            if hasattr(self, 'showbase'):
+                logger.info("Запуск главного цикла Panda3D...")
+                self.showbase.run()
+            else:
+                logger.error("Panda3D не инициализирован")
+                
+        except Exception as e:
+            logger.error(f"Ошибка запуска главного цикла: {e}")
     
     def switch_camera(self, camera_id: str) -> bool:
         """Переключение камеры"""
@@ -522,15 +722,14 @@ class RenderSystem(BaseComponent):
             camera_np.setPos(x, y, z)
             camera_np.lookAt(*settings.target)
             
-            return True
-            
         except Exception as e:
             logger.error(f"Ошибка орбитального движения камеры: {e}")
-            return False
     
     def add_light(self, light_id: str, settings: LightingSettings) -> bool:
         """Добавление источника света"""
         try:
+            from panda3d.core import AmbientLight, DirectionalLight, PointLight, Spotlight, VBase4
+            
             if settings.lighting_type == LightingType.AMBIENT:
                 light = AmbientLight(light_id)
             elif settings.lighting_type == LightingType.DIRECTIONAL:
@@ -567,7 +766,7 @@ class RenderSystem(BaseComponent):
             logger.error(f"Ошибка добавления источника света: {e}")
             return False
     
-    def apply_material(self, node_path: NodePath, material_id: str) -> bool:
+    def apply_material(self, node_path, material_id: str) -> bool:
         """Применение материала к объекту"""
         try:
             if material_id not in self.material_cache:
@@ -600,7 +799,7 @@ class RenderSystem(BaseComponent):
             logger.error(f"Ошибка установки качества рендеринга: {e}")
             return False
     
-    def get_camera_info(self, camera_id: str) -> Optional[Dict[str, Any]]:
+    def get_camera_info(self, camera_id: str):
         """Получение информации о камере"""
         try:
             if camera_id not in self.cameras:
@@ -631,27 +830,12 @@ class RenderSystem(BaseComponent):
                 "total_materials": len(self.materials),
                 "render_quality": self.render_settings.quality.value,
                 "resolution": self.render_settings.resolution,
-                "fps": self.base.getAverageFrameRate() if self.base else 0
+                "fps": self.showbase.getAverageFrameRate() if hasattr(self, 'showbase') else 0
             }
             
         except Exception as e:
             logger.error(f"Ошибка получения статистики рендеринга: {e}")
             return {}
-    
-    def update(self, delta_time: float):
-        """Обновление системы рендеринга"""
-        try:
-            # Обновление орбитальных камер
-            for camera_id, settings in self.camera_settings.items():
-                if settings.camera_type == CameraType.ORBITAL:
-                    # Автоматическое вращение
-                    current_time = time.time()
-                    angle_x = current_time * settings.orbit_speed * 0.1
-                    angle_y = math.pi / 4  # Фиксированный угол
-                    self.orbit_camera(camera_id, angle_x, angle_y)
-            
-        except Exception as e:
-            logger.error(f"Ошибка обновления системы рендеринга: {e}")
     
     def cleanup(self):
         """Очистка системы рендеринга"""

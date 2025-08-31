@@ -25,6 +25,7 @@ from ...core.constants_extended import (
     CONTENT_GENERATION_CONSTANTS, SESSION_GENERATION_CONSTANTS
 )
 from ...core.architecture import BaseComponent
+from ...core.component_manager import ComponentType, Priority
 
 logger = logging.getLogger(__name__)
 
@@ -737,7 +738,11 @@ class ContentSystem(BaseComponent):
     """Система контента"""
     
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            component_id="content_system",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.MEDIUM
+        )
         self.database = ContentDatabase()
         self.generator = ContentGenerator()
         self.current_session_id: Optional[str] = None

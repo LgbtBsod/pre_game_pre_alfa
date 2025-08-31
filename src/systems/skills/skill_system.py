@@ -158,9 +158,9 @@ class SkillSystem(BaseComponent):
     
     def __init__(self):
         super().__init__(
-            system_name="skill_system",
-            system_priority=Priority.NORMAL,
-            system_type=ComponentType.SYSTEM
+            component_id="skill_system",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.NORMAL
         )
         
         # Архитектурные компоненты

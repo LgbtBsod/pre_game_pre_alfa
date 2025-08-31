@@ -112,9 +112,9 @@ class CombatSystem(BaseComponent):
     
     def __init__(self):
         super().__init__(
-            system_name="combat_system",
-            system_priority=Priority.HIGH,
-            system_type=ComponentType.SYSTEM
+            component_id="combat_system",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.HIGH
         )
         
         # Архитектурные компоненты

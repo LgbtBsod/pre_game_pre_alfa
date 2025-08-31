@@ -74,9 +74,9 @@ class BaseEntity(BaseComponent):
     
     def __init__(self, entity_id: str, entity_type: EntityType, name: str = ""):
         super().__init__(
-            system_name=f"entity_{entity_id}",
-            system_priority=Priority.MEDIUM,
-            system_type=ComponentType.ENTITY
+            component_id=f"entity_{entity_id}",
+            component_type=ComponentType.ENTITY,
+            priority=Priority.MEDIUM
         )
         
         # Основные свойства
@@ -140,19 +140,19 @@ class BaseEntity(BaseComponent):
         """Регистрация состояний сущности"""
         if self.state_manager:
             self.state_manager.set_state(
-                f"{self.system_name}_stats",
+                f"{self.component_id}_stats",
                 self.entity_stats.__dict__,
                 StateType.ENTITY_STATS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_toughness",
+                f"{self.component_id}_toughness",
                 self.toughness_data.__dict__,
                 StateType.ENTITY_STATE
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_tracking",
+                f"{self.component_id}_tracking",
                 self.entity_stats_tracking,
                 StateType.STATISTICS
             )

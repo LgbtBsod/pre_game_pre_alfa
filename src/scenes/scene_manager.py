@@ -62,9 +62,9 @@ class SceneManager(BaseComponent):
     
     def __init__(self):
         super().__init__(
-            system_name="scene_manager",
-            system_priority=Priority.HIGH,
-            system_type=ComponentType.SYSTEM
+            component_id="scene_manager",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.HIGH
         )
         
         # Архитектурные компоненты
@@ -110,19 +110,19 @@ class SceneManager(BaseComponent):
         if self.state_manager:
             # Регистрируем состояния сцен
             self.state_manager.set_state(
-                f"{self.system_name}_settings",
+                f"{self.component_id}_settings",
                 self.scene_settings,
                 StateType.SETTINGS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_stats",
+                f"{self.component_id}_stats",
                 self.scene_stats,
                 StateType.STATISTICS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_state",
+                f"{self.component_id}_state",
                 self.system_state,
                 StateType.SYSTEM_STATE
             )

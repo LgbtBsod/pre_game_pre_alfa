@@ -180,9 +180,9 @@ class ItemSystem(BaseComponent):
     
     def __init__(self):
         super().__init__(
-            system_name="item_system",
-            system_priority=Priority.NORMAL,
-            system_type=ComponentType.SYSTEM
+            component_id="item_system",
+            component_type=ComponentType.SYSTEM,
+            priority=Priority.NORMAL
         )
         
         # Архитектурные компоненты
