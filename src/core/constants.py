@@ -19,6 +19,24 @@ class DamageType(Enum):
     POISON = "poison"
     PSYCHIC = "psychic"
     TRUE = "true"
+    NECROMANCY = "necromancy"
+    DARK = "dark"
+    LIGHT = "light"
+    AIR = "air"
+    EARTH = "earth"
+    WATER = "water"
+    ENERGY = "energy"
+    CHAOS = "chaos"
+    ORDER = "order"
+    LIFE = "life"
+    DEATH = "death"
+    TIME = "time"
+    SPACE = "space"
+    MIND = "mind"
+    BODY = "body"
+    SOUL = "soul"
+    SPIRIT = "spirit"
+
 
 class ToughnessType(Enum):
     """Типы стойкости (стихии)"""
@@ -30,6 +48,18 @@ class ToughnessType(Enum):
     QUANTUM = "quantum"
     IMAGINARY = "imaginary"
     UNIVERSAL = "universal"  # Пробивает любую стойкость
+    ENERGY = "energy"
+    CHAOS = "chaos"
+    ORDER = "order"
+    LIFE = "life"
+    DEATH = "death"
+    TIME = "time"
+    SPACE = "space"
+    MIND = "mind"
+    BODY = "body"
+    SOUL = "soul"
+    SPIRIT = "spirit"
+    
 
 class StanceState(Enum):
     """Состояния стойкости"""
@@ -98,6 +128,157 @@ class EvolutionType(Enum):
     FORCED = "forced"
     MUTATION = "mutation"
     ADAPTIVE = "adaptive"
+
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ (ЦЕНТРАЛИЗОВАННЫЕ)
+
+class TradeType(Enum):
+    """Типы торговли (централизованные)"""
+    BUY = "buy"
+    SELL = "sell"
+    EXCHANGE = "exchange"
+    AUCTION = "auction"
+    BARTER = "barter"
+    GIFT = "gift"
+    QUEST_REWARD = "quest_reward"
+    LOOT = "loot"
+
+class TradeStatus(Enum):
+    """Статусы торговли (централизованные)"""
+    PENDING = "pending"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+    REJECTED = "rejected"
+
+class TradeCategory(Enum):
+    """Категории торговли (централизованные)"""
+    WEAPONS = "weapons"
+    ARMOR = "armor"
+    CONSUMABLES = "consumables"
+    MATERIALS = "materials"
+    ARTIFACTS = "artifacts"
+    CURRENCY = "currency"
+    SERVICES = "services"
+    INFORMATION = "information"
+
+class WeatherType(Enum):
+    """Типы погоды (централизованные)"""
+    CLEAR = "clear"
+    CLOUDY = "cloudy"
+    RAIN = "rain"
+    STORM = "storm"
+    SNOW = "snow"
+    BLIZZARD = "blizzard"
+    FOG = "fog"
+    SANDSTORM = "sandstorm"
+    TOXIC_RAIN = "toxic_rain"
+    RADIATION_STORM = "radiation_storm"
+
+class MemoryType(Enum):
+    """Типы памяти (централизованные)"""
+    COMBAT = "combat"
+    EXPLORATION = "exploration"
+    DIALOGUE = "dialogue"
+    QUEST = "quest"
+    DEATH = "death"
+    ACHIEVEMENT = "achievement"
+    LEARNING = "learning"
+    EVOLUTION = "evolution"
+    SOCIAL = "social"
+    EMOTIONAL = "emotional"
+
+class DialogueType(Enum):
+    """Типы диалогов (централизованные)"""
+    CONVERSATION = "conversation"
+    TRADE = "trade"
+    QUEST = "quest"
+    INFORMATION = "information"
+    COMBAT_TAUNT = "combat_taunt"
+    GREETING = "greeting"
+    FAREWELL = "farewell"
+    EMOTIONAL = "emotional"
+
+class QuestType(Enum):
+    """Типы квестов (централизованные)"""
+    MAIN = "main"
+    SIDE = "side"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+    EXPLORATION = "exploration"
+    COMBAT = "combat"
+    COLLECTION = "collection"
+    DELIVERY = "delivery"
+    ESCORT = "escort"
+    SURVIVAL = "survival"
+
+class QuestStatus(Enum):
+    """Статусы квестов (централизованные)"""
+    AVAILABLE = "available"
+    ACTIVE = "active"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    ABANDONED = "abandoned"
+    LOCKED = "locked"
+
+class CraftingType(Enum):
+    """Типы крафтинга (централизованные)"""
+    WEAPON_CRAFTING = "weapon_crafting"
+    ARMOR_CRAFTING = "armor_crafting"
+    CONSUMABLE_CRAFTING = "consumable_crafting"
+    TOOL_CRAFTING = "tool_crafting"
+    BUILDING_CRAFTING = "building_crafting"
+    ENCHANTING = "enchanting"
+    ALCHEMY = "alchemy"
+    ENGINEERING = "engineering"
+
+class BuildingType(Enum):
+    """Типы зданий (централизованные)"""
+    HOUSE = "house"
+    SHOP = "shop"
+    TAVERN = "tavern"
+    TEMPLE = "temple"
+    GUILD = "guild"
+    WAREHOUSE = "warehouse"
+    WORKSHOP = "workshop"
+    TOWER = "tower"
+    FORTRESS = "fortress"
+    RUINS = "ruins"
+
+class StructureType(Enum):
+    """Типы структур (централизованные)"""
+    BUILDING = "building"
+    BRIDGE = "bridge"
+    WALL = "wall"
+    GATE = "gate"
+    MONUMENT = "monument"
+    PORTAL = "portal"
+    DUNGEON_ENTRANCE = "dungeon_entrance"
+    RESOURCE_NODE = "resource_node"
+    LANDMARK = "landmark"
+    RUINS = "ruins"
+
+class EffectType(Enum):
+    """Типы эффектов (централизованные)"""
+    BUFF = "buff"
+    DEBUFF = "debuff"
+    ENVIRONMENTAL = "environmental"
+    MAGICAL = "magical"
+    VISUAL = "visual"
+    SOUND = "sound"
+    PASSIVE = "passive"
+    ACTIVE = "active"
+
+class EffectCategory(Enum):
+    """Категории эффектов (централизованные)"""
+    STAT_MODIFIER = "stat_modifier"
+    DAMAGE_OVER_TIME = "damage_over_time"
+    HEAL_OVER_TIME = "heal_over_time"
+    MOVEMENT = "movement"
+    COMBAT = "combat"
+    UTILITY = "utility"
+    EMOTIONAL = "emotional"
+    GENETIC = "genetic"
     REVERSIVE = "reversive"
 
 class EntityType(Enum):
@@ -182,9 +363,9 @@ TOUGHNESS_CONSTANTS = {
     "base_toughness": {
         "player": 100,
         "npc": 50,
-        "enemy": 80,
-        "boss": 200,
-        "elite": 150
+        "enemy": 800,
+        "boss": 2000,
+        "elite": 1500
     },
     
     # Множители восстановления стойкости

@@ -13,28 +13,12 @@ import time
 import random
 
 from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import EffectType, EffectCategory
+from src.core.state_manager import StateManager, StateType
 
 logger = logging.getLogger(__name__)
 
-# = ТИПЫ ЭФФЕКТОВ
-
-class EffectType(Enum):
-    """Типы эффектов"""
-    BUFF = "buff"              # Усиливающий эффект
-    DEBUFF = "debuff"          # Ослабляющий эффект
-    ENVIRONMENTAL = "environmental"  # Эффект окружения
-    MAGICAL = "magical"        # Магический эффект
-    VISUAL = "visual"          # Визуальный эффект
-    SOUND = "sound"            # Звуковой эффект
-
-class EffectCategory(Enum):
-    """Категории эффектов"""
-    STAT_MODIFIER = "stat_modifier"  # Модификатор характеристик
-    DAMAGE_OVER_TIME = "damage_over_time"  # Урон по времени
-    HEAL_OVER_TIME = "heal_over_time"  # Лечение по времени
-    MOVEMENT = "movement"      # Эффекты движения
-    COMBAT = "combat"          # Боевые эффекты
-    UTILITY = "utility"        # Утилитарные эффекты
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ ЭФФЕКТОВ
 
 class EffectStackType(Enum):
     """Типы стаков эффектов"""

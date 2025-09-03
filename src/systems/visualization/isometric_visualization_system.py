@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Система изометрической визуализации
-Специализированная система для изометрической проекции игры"""
+Специализированная система для изометрической проекции игры
+
+LEGACY MODULE: Этот модуль устарел. Используйте UnifiedVisualizationSystem
+(`src/systems/visualization/unified_visualization_system.py`).
+"""
 
 import logging
 import math

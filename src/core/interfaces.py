@@ -1,881 +1,424 @@
+#!/usr/bin/env python3
+"""Интерфейсы для архитектуры системы"""
+
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Dict, List, Optional, Any, Type, TypeVar, Generic, Callable
 from dataclasses import dataclass, field
 
-from enum import Enum
+# = БАЗОВЫЕ ТИПЫ
 
-from pathlib import Path
+class SystemPriority(Enum):
+    """Приоритеты систем"""
+    CRITICAL = 0
+    HIGH = 1
+    NORMAL = 2
+    LOW = 3
+    BACKGROUND = 4
 
-from typing import *
+class SystemState(Enum):
+    """Состояния систем"""
+    UNINITIALIZED = "uninitialized"
+    INITIALIZING = "initializing"
+    READY = "ready"
+    RUNNING = "running"
+    PAUSED = "paused"
+    STOPPING = "stopping"
+    STOPPED = "stopped"
+    ERROR = "error"
+    DESTROYED = "destroyed"
 
-from typing import Dict, Lis t, Any, Optional
+class ComponentType(Enum):
+    """Типы компонентов"""
+    SYSTEM = "system"
+    MANAGER = "manager"
+    SERVICE = "service"
+    REPOSITORY = "repository"
+    FACTORY = "factory"
+    CONTROLLER = "controller"
+    UTILITY = "utility"
+    ADAPTER = "adapter"
 
-import logging
+# = БАЗОВЫЕ ИНТЕРФЕЙСЫ
 
-import os
+class ISystem(ABC):
+    """Базовый интерфейс для всех систем"""
+    
+    @property
+    @abstractmethod
+    def system_id(self) -> str:
+        """Уникальный идентификатор системы"""
+        pass
+    
+    @property
+    @abstractmethod
+    def system_name(self) -> str:
+        """Название системы"""
+        pass
+    
+    @property
+    @abstractmethod
+    def system_priority(self) -> SystemPriority:
+        """Приоритет системы"""
+        pass
+    
+    @property
+    @abstractmethod
+    def system_state(self) -> SystemState:
+        """Текущее состояние системы"""
+        pass
+    
+    @abstractmethod
+    def initialize(self) -> bool:
+        """Инициализация системы"""
+        pass
+    
+    @abstractmethod
+    def start(self) -> bool:
+        """Запуск системы"""
+        pass
+    
+    @abstractmethod
+    def pause(self) -> bool:
+        """Приостановка системы"""
+        pass
+    
+    @abstractmethod
+    def resume(self) -> bool:
+        """Возобновление системы"""
+        pass
+    
+    @abstractmethod
+    def stop(self) -> bool:
+        """Остановка системы"""
+        pass
+    
+    @abstractmethod
+    def destroy(self) -> bool:
+        """Уничтожение системы"""
+        pass
+    
+    @abstractmethod
+    def update(self, delta_time: float) -> None:
+        """Обновление системы"""
+        pass
+    
+    @abstractmethod
+    def get_system_info(self) -> Dict[str, Any]:
+        """Получение диагностической информации о системе."""
+        pass
 
-import re
+class IManager(ABC):
+    """Базовый интерфейс для всех менеджеров"""
+    
+    @property
+    @abstractmethod
+    def manager_id(self) -> str:
+        """Уникальный идентификатор менеджера"""
+        pass
+    
+    @property
+    @abstractmethod
+    def managed_components(self) -> List[str]:
+        """Список управляемых компонентов"""
+        pass
+    
+    @abstractmethod
+    def register_component(self, component_id: str, component: Any) -> bool:
+        """Регистрация компонента"""
+        pass
+    
+    @abstractmethod
+    def unregister_component(self, component_id: str) -> bool:
+        """Отмена регистрации компонента"""
+        pass
+    
+    @abstractmethod
+    def get_component(self, component_id: str) -> Optional[Any]:
+        """Получение компонента"""
+        pass
 
-import sys
+class IService(ABC):
+    """Базовый интерфейс для всех сервисов"""
+    
+    @property
+    @abstractmethod
+    def service_id(self) -> str:
+        """Уникальный идентификатор сервиса"""
+        pass
+    
+    @property
+    @abstractmethod
+    def service_type(self) -> str:
+        """Тип сервиса"""
+        pass
+    
+    @abstractmethod
+    def is_available(self) -> bool:
+        """Проверка доступности сервиса"""
+        pass
+    
+    @abstractmethod
+    def get_service_info(self) -> Dict[str, Any]:
+        """Получение информации о сервисе"""
+        pass
 
-import time
+class IRepository(ABC):
+    """Базовый интерфейс для всех репозиториев"""
+    
+    @property
+    @abstractmethod
+    def repository_id(self) -> str:
+        """Уникальный идентификатор репозитория"""
+        pass
+    
+    @property
+    @abstractmethod
+    def data_type(self) -> str:
+        """Тип данных"""
+        pass
+    
+    @abstractmethod
+    def store(self, key: str, data: Any) -> bool:
+        """Сохранение данных"""
+        pass
+    
+    @abstractmethod
+    def retrieve(self, key: str) -> Optional[Any]:
+        """Получение данных"""
+        pass
+    
+    @abstractmethod
+    def delete(self, key: str) -> bool:
+        """Удаление данных"""
+        pass
+    
+    @abstractmethod
+    def exists(self, key: str) -> bool:
+        """Проверка существования данных"""
+        pass
+    
+    @abstractmethod
+    def clear(self) -> bool:
+        """Очистка репозитория"""
+        pass
 
-#!/usr / bin / env python3
-"""Основные интерфейсы для системы AI - EVOLVE"""from abc import ABC, abstractmethod
+class IFactory(ABC):
+    """Базовый интерфейс для всех фабрик"""
+    
+    @property
+    @abstractmethod
+    def factory_id(self) -> str:
+        """Уникальный идентификатор фабрики"""
+        pass
+    
+    @property
+    @abstractmethod
+    def product_type(self) -> str:
+        """Тип производимого продукта"""
+        pass
+    
+    @abstractmethod
+    def create(self, **kwargs) -> Any:
+        """Создание продукта"""
+        pass
+    
+    @abstractmethod
+    def can_create(self, **kwargs) -> bool:
+        """Проверка возможности создания"""
+        pass
 
-SystemPri or ity, SystemState
-# = # БАЗОВЫЙ ИНТЕРФЕЙС СИСТЕМЫ
-# = class ISystem(ABC):"""Базовый интерфейс для всех игровых систем.
-Контракт: pass  # Добавлен pass в пустой блок
-- initialize() переводит систему в готовое состояние и возвращает bool
-- update(delta_time) может быть вызван каждый кадр; должен быть идемпотентным и без бросков исключений наружу
-- pause() / resume() управляют временной остановкой
-- cleanup() освобождает ресурсы и допускает повторную инициализацию
-"""@property
-@abstractmethod
-def system_name(self) -> str:"""Имя системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-@abstractmethod
-def system_pri or ity(self) -> SystemPri or ity:"""Приоритет системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-@abstractmethod
-def system_state(self) -> SystemState:"""Текущее состояние системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@property
-@abstractmethod
-def dependencies(self) -> Lis t[str]:"""Список зависимостей от других систем"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def initialize(self) -> bool:"""Инициализация системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def update(self, delta_time: float) -> bool:"""Обновление системы.
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-delta_time: Время, прошедшее с прошлого обновления в секундах.
-Возвращает True при успешном обновлении.
-"""pass
-@abstractmethod
-def pause(self) -> bool:"""Приостановка системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def resume(self) -> bool:"""Возобновление системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def cleanup(self) -> bool:"""Очистка системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_system_in fo(self) -> Dict[str, Any]:"""Получение диагностической информации о системе."""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обработка событий. Возвращает True, если событие обработано."""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def load_resource(self, resource_id: str) -> Any:"""Загрузка ресурса"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def unload_resource(self, resource_id: str) -> bool:"""Выгрузка ресурса"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_resource_in fo(self, resource_id: str) -> Optional[Dict[str, Any]]:"""Получение информации о ресурсе"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-class IConfigManager(ABC):"""Интерфейс для управления конфигурацией"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def get_config(self, key: str, default: Any= None) -> Any:"""Получение значения конфигурации"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def set_config(self, key: str, value: Any) -> bool:"""Установка значения конфигурации"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def load_config(self, config_path: str) -> bool:"""Загрузка конфигурации из файла"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def save_config(self, config_path: str) -> bool:"""Сохранение конфигурации в файл"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-class IPerfor manceMonit or(ABC):"""Интерфейс для мониторинга производительности"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def start_timer(self, timer_name: str) -> None:"""Запуск таймера"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def stop_timer(self, timer_name: str) -> float:"""Остановка таймера и получение времени"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_perfor mance_stats(self) -> Dict[str, Any]:"""Получение статистики производительности"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def create_scene(self, scene_id: str) -> bool:"""Создание сцены"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def destroy_scene(self, scene_id: str) -> bool:"""Уничтожение сцены"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def set_active_scene(self, scene_id: str) -> bool:"""Установка активной сцены"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_active_scene(self) -> Optional[str]:"""Получение активной сцены"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-class IGameEngin e(ABC):"""Интерфейс для игрового движка"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def start(self) -> bool:"""Запуск движка"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def stop(self) -> bool:"""Остановка движка"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def is_running(self) -> bool:"""Проверка, запущен ли движок"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-class ISystemManager(ABC):"""Интерфейс для управления системами"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def regis ter_system(self, system: ISystem) -> bool:"""Регистрация системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def unregis ter_system(self, system_name: str) -> bool:"""Отмена регистрации системы"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_system(self, system_name: str) -> Optional[ISystem]:"""Получение системы по имени"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_all_systems(self) -> Lis t[ISystem]:"""Получение всех систем"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def generate_content(self, content_type: str, * * kwargs) -> Any:"""Генерация контента"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_generation_stats(self) -> Dict[str, Any]:"""Получение статистики генерации"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-class IAIEntity(ABC):"""Интерфейс для AI сущности"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def make_decis ion(self, context: Dict[str, Any]) -> Dict[str, Any]:"""Принятие решения"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def update_behavi or(self, delta_time: float) -> None:"""Обновление поведения"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_ai_state(self) -> str:"""Получение состояния AI"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def start_combat(self, participants: Lis t[str]) -> str:"""Начало боя"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def end_combat(self, combat_id: str) -> bool:"""Завершение боя"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def perfor m_attack(self, attacker_id: str, target_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-attack_data: Dict[str, Any]) -> Dict[str, Any]:
-pass  # Добавлен pass в пустой блок"""Выполнение атаки"""pass
-@abstractmethod
-def get_combat_in fo(self, combat_id: str) -> Optional[Dict[str, Any]]:"""Получение информации о бое"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def create_in vent or y(self, owner_id: str, max_slots: int) -> bool:"""Создание инвентаря"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def add_item(self, owner_id: str, item_id: str, quantity: int) -> bool:"""Добавление предмета"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def remove_item(self, owner_id: str, item_id: str, quantity: int) -> bool:"""Удаление предмета"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_in vent or y_contents(self, owner_id: str) -> Lis t[Dict[str, Any]]:"""Получение содержимого инвентаря"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def can_craft(self, crafter_id: str, recipe_id: str) -> bool:"""Проверка возможности крафтинга"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def start_crafting(self, crafter_id: str, recipe_id: str) -> str:"""Начало крафтинга"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_crafting_progress(self, craft_id: str) -> Optional[Dict[str, Any]]:"""Получение прогресса крафтинга"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def can_evolve(self, entity_id: str) -> bool:"""Проверка возможности эволюции"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def trigger_evolution(self, entity_id: str) -> bool:"""Запуск эволюции"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_evolution_progress(self, entity_id: str) -> Optional[Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]]:
-pass  # Добавлен pass в пустой блок"""Получение прогресса эволюции"""pass
-class IGenomeSystem(ABC):"""Интерфейс для системы генов"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def get_genome(self, entity_id: str) -> Optional[Dict[str, Any]]:"""Получение генома"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def mutate_genome(self, entity_id: str, mutation_type: str) -> bool:"""Мутация генома"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_genetic_traits(self, entity_id: str) -> Lis t[Dict[str, Any]]:"""Получение генетических черт"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def add_emotion(self, entity_id: str, emotion_type: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-intensity: float) -> bool: pass  # Добавлен pass в пустой блок"""Добавление эмоции"""pass
-@abstractmethod
-def get_emotional_state(self, entity_id: str) -> Dict[str, Any]:"""Получение эмоционального состояния"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def update_emotions(self, delta_time: float) -> None:"""Обновление эмоций"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def learn_skill(self, entity_id: str, skill_id: str) -> bool:"""Изучение навыка"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def use_skill(self, entity_id: str, skill_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-target: Any= None) -> bool: pass  # Добавлен pass в пустой блок"""Использование навыка"""pass
-@abstractmethod
-def get_skill_tree(self, entity_id: str) -> Dict[str, Any]:"""Получение дерева навыков"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def apply_effect(self, target_id: str, effect_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-duration: float) -> bool: pass  # Добавлен pass в пустой блок"""Применение эффекта"""pass
-@abstractmethod
-def remove_effect(self, target_id: str, effect_id: str) -> bool:"""Удаление эффекта"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_active_effects(self, target_id: str) -> Lis t[Dict[str, Any]]:"""Получение активных эффектов"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def create_item(self, item_template: str, * * kwargs) -> Optional[Any]:"""Создание предмета"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def destroy_item(self, item_id: str) -> bool:"""Уничтожение предмета"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_item_in fo(self, item_id: str) -> Optional[Dict[str, Any]]:"""Получение информации о предмете"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def render_scene(self, scene_id: str) -> bool:"""Рендеринг сцены"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def create_render_object(self, object_data: Dict[str, Any]) -> str:"""Создание объекта рендеринга"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def update_render_object(self, object_id: str, transfor m: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]) -> bool: pass  # Добавлен pass в пустой блок"""Обновление объекта рендеринга"""pass
-@abstractmethod
-def destroy_render_object(self, object_id: str) -> bool:"""Уничтожение объекта рендеринга"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def create_ui_element(self, element_type: str, * * kwargs) -> str:"""Создание UI элемента"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def update_ui_element(self, element_id: str, * * kwargs) -> bool:"""Обновление UI элемента"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def destroy_ui_element(self, element_id: str) -> bool:"""Уничтожение UI элемента"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def hand le_ui_event(self, event_type: str, event_data: Any) -> bool:"""Обработка UI событий"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def regis ter_ai_entity(self, entity_id: str, ai_config: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Any]) -> bool: pass  # Добавлен pass в пустой блок"""Регистрация AI сущности"""pass
-@abstractmethod
-def unregis ter_ai_entity(self, entity_id: str) -> bool:"""Отмена регистрации AI сущности"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_ai_entity_in fo(self, entity_id: str) -> Optional[Dict[str, Any]]:"""Получение информации об AI сущности"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def create_session(self, session_id: str= None) -> str:"""Создание сессии"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def add_content_item(self, content_item: Any) -> bool:"""Добавление элемента контента"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def get_content_by_session(self, session_id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-content_type: str= None) -> Lis t[Any]:
-pass  # Добавлен pass в пустой блок"""Получение контента по сессии"""pass
-# = # ИНТЕРФЕЙСЫ ХАРАКТЕРИСТИК
-# = class IEntityStatsSystem(ABC):"""Интерфейс для системы характеристик сущностей"""@abstractmethod
-def create_entity_stats(self, entity_id: str, base_stats: Dict[str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-float]) -> bool: pass  # Добавлен pass в пустой блок"""Создание характеристик сущности"""pass
-@abstractmethod
-def modify_entity_stats(self, entity_id: str, stat_type: str, value: float
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-duration: float= 0.0) -> bool: pass  # Добавлен pass в пустой блок"""Модификация характеристик сущности"""pass
-@abstractmethod
-def get_entity_stats(self, entity_id: str) -> Optional[Dict[str, Any]]:"""Получение характеристик сущности"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def hand le_event(self, event_type: str, event_data: Any) -> bool:"""Обработка события"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-class IEventSystem(ABC):"""Интерфейс для системы событий"""@abstractmethod
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def emit(self, event_type: str, event_data: Any) -> bool:"""Отправка события"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def subscribe(self, event_type: str, callback: callable,
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-subscriber_id: str= "unknown") -> bool: pass  # Добавлен pass в пустой блок
-"""Подписка на событие"""pass
-@abstractmethod
-def unsubscribe(self, event_type: str, subscriber_id: str) -> bool:"""Отписка от события"""pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-@abstractmethod
-def process_events(self) -> bool:"""Обработка событий"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
+class IController(ABC):
+    """Базовый интерфейс для всех контроллеров"""
+    
+    @property
+    @abstractmethod
+    def controller_id(self) -> str:
+        """Уникальный идентификатор контроллера"""
+        pass
+    
+    @property
+    @abstractmethod
+    def controlled_systems(self) -> List[str]:
+        """Список управляемых систем"""
+        pass
+    
+    @abstractmethod
+    def control_system(self, system_id: str, command: str, **kwargs) -> bool:
+        """Управление системой"""
+        pass
+    
+    @abstractmethod
+    def get_control_status(self, system_id: str) -> Dict[str, Any]:
+        """Получение статуса управления"""
+        pass
+
+class IUtility(ABC):
+    """Базовый интерфейс для всех утилит"""
+    
+    @property
+    @abstractmethod
+    def utility_id(self) -> str:
+        """Уникальный идентификатор утилиты"""
+        pass
+    
+    @property
+    @abstractmethod
+    def utility_type(self) -> str:
+        """Тип утилиты"""
+        pass
+    
+    @abstractmethod
+    def execute(self, **kwargs) -> Any:
+        """Выполнение утилиты"""
+        pass
+    
+    @abstractmethod
+    def is_available(self) -> bool:
+        """Проверка доступности утилиты"""
+        pass
+
+class IAdapter(ABC):
+    """Базовый интерфейс для всех адаптеров"""
+    
+    @property
+    @abstractmethod
+    def adapter_id(self) -> str:
+        """Уникальный идентификатор адаптера"""
+        pass
+    
+    @property
+    @abstractmethod
+    def source_type(self) -> str:
+        """Тип источника"""
+        pass
+    
+    @property
+    @abstractmethod
+    def target_type(self) -> str:
+        """Тип цели"""
+        pass
+    
+    @abstractmethod
+    def adapt(self, source: Any) -> Any:
+        """Адаптация данных"""
+        pass
+    
+    @abstractmethod
+    def can_adapt(self, source: Any) -> bool:
+        """Проверка возможности адаптации"""
+        pass
+
+# = СПЕЦИАЛИЗИРОВАННЫЕ ИНТЕРФЕЙСЫ
+
+class IGameSystem(ISystem):
+    """Интерфейс для игровых систем"""
+    
+    @abstractmethod
+    def get_game_data(self) -> Dict[str, Any]:
+        """Получение игровых данных"""
+        pass
+    
+    @abstractmethod
+    def set_game_data(self, data: Dict[str, Any]) -> bool:
+        """Установка игровых данных"""
+        pass
+
+class IAudioSystem(ISystem):
+    """Интерфейс для аудио систем"""
+    
+    @abstractmethod
+    def play_sound(self, sound_id: str, volume: float = 1.0) -> bool:
+        """Воспроизведение звука"""
+        pass
+    
+    @abstractmethod
+    def stop_sound(self, sound_id: str) -> bool:
+        """Остановка звука"""
+        pass
+    
+    @abstractmethod
+    def set_volume(self, volume: float) -> bool:
+        """Установка громкости"""
+        pass
+
+class IVisualSystem(ISystem):
+    """Интерфейс для визуальных систем"""
+    
+    @abstractmethod
+    def render(self, scene_data: Dict[str, Any]) -> bool:
+        """Рендеринг сцены"""
+        pass
+    
+    @abstractmethod
+    def update_camera(self, camera_data: Dict[str, Any]) -> bool:
+        """Обновление камеры"""
+        pass
+    
+    @abstractmethod
+    def add_visual_effect(self, effect_data: Dict[str, Any]) -> bool:
+        """Добавление визуального эффекта"""
+        pass
+
+class IInputSystem(ISystem):
+    """Интерфейс для систем ввода"""
+    
+    @abstractmethod
+    def get_input_state(self) -> Dict[str, Any]:
+        """Получение состояния ввода"""
+        pass
+    
+    @abstractmethod
+    def register_input_handler(self, input_type: str, handler: Callable) -> bool:
+        """Регистрация обработчика ввода"""
+        pass
+    
+    @abstractmethod
+    def unregister_input_handler(self, input_type: str) -> bool:
+        """Отмена регистрации обработчика ввода"""
+        pass
+
+class INetworkSystem(ISystem):
+    """Интерфейс для сетевых систем"""
+    
+    @abstractmethod
+    def connect(self, address: str, port: int) -> bool:
+        """Подключение к серверу"""
+        pass
+    
+    @abstractmethod
+    def disconnect(self) -> bool:
+        """Отключение от сервера"""
+        pass
+    
+    @abstractmethod
+    def send_data(self, data: Any) -> bool:
+        """Отправка данных"""
+        pass
+    
+    @abstractmethod
+    def receive_data(self) -> Optional[Any]:
+        """Получение данных"""
+        pass
+
+# = ДЕКОРАТОРЫ И УТИЛИТЫ
+
+def implements_interface(interface_class):
+    """Декоратор для проверки реализации интерфейса"""
+    def decorator(cls):
+        if not issubclass(cls, interface_class):
+            raise TypeError(f"Класс {cls.__name__} должен реализовывать интерфейс {interface_class.__name__}")
+        return cls
+    return decorator
+
+def validate_interface_implementation(obj: Any, interface_class: Type) -> bool:
+    """Проверка реализации интерфейса объектом"""
+    if not isinstance(obj, interface_class):
+        return False
+    
+    # Проверяем наличие всех абстрактных методов
+    for method_name in interface_class.__abstractmethods__:
+        if not hasattr(obj, method_name):
+            return False
+    
+    return True

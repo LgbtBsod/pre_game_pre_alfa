@@ -1,138 +1,66 @@
 from __future__ import annotations
 
-from dataclasses import dataclass: pass # Добавлен pass в пустой блок
-
+from dataclasses import dataclass
 from enum import Enum
+from typing import Protocol, Dict, Any, Optional, List, Callable, runtime_checkable
 
-from pathlib import Path
-
-from typing import *
-
-from typing import Protocol, Dict, Any, Optional, Lis t, runtime_checkable
-
-import logging
-
-import os
-
-import sys
-
-#!/usr / bin / env python3
 """Плагинная система: интерфейсы и типы метаданных"""
-Callable
-class Plugin LoadType(Enum):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-EAGER= "eager"
-LAZY= "lazy"
-class Plugin Scope(Enum):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-GLOBAL= "global"
-SYSTEM= "system"
-SCENE= "scene"
-@dataclass(froze = True):
-pass  # Добавлен pass в пустой блок
-class Plugin Metadata: plugin _id: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-name: str
-version: str
-auth or : str= ""
-description: str= ""load_type: Plugin LoadType= Plugin LoadType.EAGER
-scope: Plugin Scope= Plugin Scope.GLOBAL
-depends_on: Optional[Lis t[str]]= None
-engin e_version: Optional[str]= None
-requires_systems: Optional[Dict[str
-str]]= None  # {system_name: min _version}
+
+
+class PluginLoadType(Enum):
+    EAGER = "eager"
+    LAZY = "lazy"
+
+
+class PluginScope(Enum):
+    GLOBAL = "global"
+    SYSTEM = "system"
+    SCENE = "scene"
+
+
+@dataclass(frozen=True)
+class PluginMetadata:
+    plugin_id: str
+    name: str
+    version: str
+    author: str = ""
+    description: str = ""
+    load_type: PluginLoadType = PluginLoadType.EAGER
+    scope: PluginScope = PluginScope.GLOBAL
+    depends_on: Optional[List[str]] = None
+    engine_version: Optional[str] = None
+    requires_systems: Optional[Dict[str, str]] = None  # {system_name: min_version}
+
+
 @runtime_checkable
-class IPlug in(Protocol):"""Базовый протокол плагина"""metadata: Plugin Metadata
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def initialize(self, context: Dict[str, Any]) -> bool: ...
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def start(self) -> bool: ...
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def stop(self) -> bool: ...
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def destroy(self) -> bool: ...
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
+class IPlugin(Protocol):
+    """Базовый протокол плагина"""
+
+    metadata: PluginMetadata
+
+    def initialize(self, context: Dict[str, Any]) -> bool: ...
+
+    def start(self) -> bool: ...
+
+    def stop(self) -> bool: ...
+
+    def destroy(self) -> bool: ...
+
+
 @runtime_checkable
-class IEventAwarePlug in(IPlugin , Protocol):"""Плагин, умеющий подписываться на события"""def regis ter_event_hand lers(self, subscribe: Callable[[str, Callable]
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-None]) -> None: ...
+class IEventAwarePlugin(IPlugin, Protocol):
+    """Плагин, умеющий подписываться на события"""
+
+    def register_event_handlers(self, subscribe: Callable[[str, Callable], None]) -> None: ...
+
+
 @runtime_checkable
-class ISystemExtension(Protocol):"""Расширение для конкретной системы по id"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-target_system: str
-def attach(self, system: Any) -> None: ...
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def detach(self, system: Any) -> None: ...
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
+class ISystemExtension(Protocol):
+    """Расширение для конкретной системы по id"""
+
+    target_system: str
+
+    def attach(self, system: Any) -> None: ...
+
+    def detach(self, system: Any) -> None: ...
+

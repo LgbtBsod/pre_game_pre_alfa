@@ -12,21 +12,11 @@ import json
 import math
 from pathlib import Path
 
-from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import QuestType, QuestStatus
+from src.core.state_manager import StateManager, StateType
 
-# = ТИПЫ КВЕСТОВ
-class QuestType(Enum):
-    """Типы квестов"""
-    GATHERING = "gathering"           # Сбор предметов
-    ELIMINATION = "elimination"       # Уничтожение врагов
-    EXPLORATION = "exploration"       # Исследование
-    ESCORT = "escort"                # Сопровождение
-    DELIVERY = "delivery"            # Доставка
-    INVESTIGATION = "investigation"  # Расследование
-    CRAFTING = "crafting"            # Крафтинг
-    SOCIAL = "social"                # Социальные взаимодействия
-    SURVIVAL = "survival"            # Выживание
-    STORY = "story"                  # Сюжетные квесты
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ КВЕСТОВ
 
 class QuestDifficulty(Enum):
     """Сложность квестов"""
@@ -37,14 +27,6 @@ class QuestDifficulty(Enum):
     EXPERT = "expert"
     MASTER = "master"
     LEGENDARY = "legendary"
-
-class QuestStatus(Enum):
-    """Статусы квестов"""
-    AVAILABLE = "available"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    EXPIRED = "expired"
 
 class QuestRewardType(Enum):
     """Типы наград"""

@@ -10,21 +10,11 @@ import random
 import time
 import math
 
-from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import WeatherType
+from src.core.state_manager import StateManager, StateType
 
-# = ТИПЫ ПОГОДЫ
-class WeatherType(Enum):
-    """Типы погоды"""
-    CLEAR = "clear"           # Ясно
-    CLOUDY = "cloudy"         # Облачно
-    RAIN = "rain"             # Дождь
-    STORM = "storm"           # Буря
-    SNOW = "snow"             # Снег
-    HAIL = "hail"             # Град
-    FOG = "fog"               # Туман
-    WINDY = "windy"           # Ветрено
-    DROUGHT = "drought"       # Засуха
-    EXTREME = "extreme"       # Экстремальная погода
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ ПОГОДЫ
 
 # = ТИПЫ ОСАДКОВ
 class PrecipitationType(Enum):

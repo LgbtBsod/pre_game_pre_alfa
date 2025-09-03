@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import TradeType, TradeStatus, TradeCategory
+from src.core.state_manager import StateManager, StateType
 from typing import *
 from typing import Dict, List, Optional, Callable, Any, Union, Tuple
 import logging
@@ -15,23 +17,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-# = ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
-
-class TradeType(Enum):
-    """Типы торговли"""
-    BUY = "buy"              # Покупка
-    SELL = "sell"            # Продажа
-    EXCHANGE = "exchange"    # Обмен
-    AUCTION = "auction"      # Аукцион
-    CONTRACT = "contract"    # Контракт
-
-class TradeStatus(Enum):
-    """Статус торговли"""
-    PENDING = "pending"
-    ACTIVE = "active"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    EXPIRED = "expired"
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ (НЕ ЦЕНТРАЛИЗОВАННЫЕ)
 
 class CurrencyType(Enum):
     """Типы валют"""
@@ -40,15 +26,6 @@ class CurrencyType(Enum):
     COPPER = "copper"
     CREDITS = "credits"
     REPUTATION = "reputation"
-
-class TradeCategory(Enum):
-    """Категории товаров"""
-    WEAPONS = "weapons"
-    ARMOR = "armor"
-    CONSUMABLES = "consumables"
-    MATERIALS = "materials"
-    CURRENCY = "currency"
-    SPECIAL = "special"
 
 # = СТРУКТУРЫ ДАННЫХ
 

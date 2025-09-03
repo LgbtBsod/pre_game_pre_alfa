@@ -1,455 +1,316 @@
-from .in terfaces import IEventSystem
-
-from collections import defaultdict, deque: pass # Добавлен pass в пустой блок
-
-from dataclasses import dataclass: pass # Добавлен pass в пустой блок
-
-from enum import Enum
-
-from pathlib import Path
-
-from typing import *
-
-from typing import Dict, Lis t, Any, Callable, Optional
+#!/usr/bin/env python3
+"""Система событий - централизованное управление событиями игры"""
 
 import logging
-
-import os
-
-import re
-
-import sys
-
 import time
+from dataclasses import dataclass, field
+from enum import Enum
+from typing import Dict, List, Optional, Any, Callable, Union
+from collections import defaultdict, deque
+import threading
 
-#!/usr / bin / env python3
-"""Event System - Система событий для улучшения модульности
-Реализует паттерн Observer для снижения связанности между системами"""import logging
+logger = logging.getLogger(__name__)
 
-logger= logging.getLogger(__name__)
-class EventPri or ity(Enum):"""Приоритеты событий"""LOW= 0
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-NORMAL= 1
-HIGH= 2
-CRITICAL= 3
-@dataclass: pass  # Добавлен pass в пустой блок
-class Event:"""Событие"""event_type: str
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-data: Any
-timestamp: float
-source: str
-pri or ity: EventPri or ity= EventPri or ity.NORMAL
-@dataclass: pass  # Добавлен pass в пустой блок
-class EventSubscription:"""Подписка на событие"""callback: Callable
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pri or ity: EventPri or ity
-subscriber_id: str
-class EventSystem(IEventSystem):"""Центральная система событий
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-Обеспечивает связь между различными системами игры"""
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.subscriptions: Dict[str
-Lis t[EventSubscription]]= defaultdict(lis t):
-pass  # Добавлен pass в пустой блок
-self.event_queue: deque= deque(maxle = 1000)
-self.is _initialized= False
-# Статистика
-self.events_processed= 0
-self.events_emitted= 0
-logger.in fo("Система событий инициализирована")
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация системы событий"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации системы событий: {e}")
-return False
-def emit(self, event_type: str, event_data: Any, source: str= "unknown",
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
-"""Эмиссия события"""
-if not self.is _initialized: logger.warning("Система событий не инициализирована")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return False
-try: event= Event(
-event_typ = event_type,
-dat = event_data,
-timestam = time.time(),
-sourc = source,
-pri or it = pri or ity
-)
-# Добавляем событие в очередь
-self.event_queue.append(event)
-self.events_emitted = 1
-logger.debug(f"Событие {event_type} добавлено в очередь от {source}")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка эмиссии события {event_type}: {e}")
-return False
-# Совместимость: alias для вызовов emit_event(..)
-def emit_event(self, event_type: str, event_data: Any, source: str= "unknown",
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
-return self.emit(event_type, event_data, source, pri or ity)
-# - - - Aliases to unify with EventBus API - - -:
-pass  # Добавлен pass в пустой блок
-def on(self, event_type: str, hand ler: Callable
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
-"""Alias compatible with EventBus.on(event_type, hand ler, pri or ity).""":
-pass  # Добавлен pass в пустой блок
-try: subscriber_id= getattr(hand ler, '__name__', 'subscriber')
-return self.subscribe(event_type, hand ler, subscriber_id, pri or ity)
-except Exception: pass
-pass
-pass
-return False
-def subscribe(self, event_type: str, callback: Callable,
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-subscriber_id: str= "unknown",
-pri or ity: EventPri or ity= EventPri or ity.NORMAL) -> bool: pass  # Добавлен pass в пустой блок
-"""Подписка на событие"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка подписки на событие {event_type}: {e}")
-return False
-def subscribe_simple(self, event_type: str, hand ler):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: except Exception: pass
-pass
-pass
-try: return self.subscribe(event_type, hand ler)
-except Exception: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-return False
-def unsubscribe(self, event_type: str, subscriber_id: str) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Отписка от события"""
-try: if event_type notin self.subscriptions: return False
-origin al_length= len(self.subscriptions[event_type])
-self.subscriptions[event_type]= [
-sub for subin self.subscriptions[event_type]:
-pass  # Добавлен pass в пустой блок
-if sub.subscriber_id != subscriber_id: pass  # Добавлен pass в пустой блок
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-]
-removed_count= origin al_length - len(self.subscriptions[event_type])
-# Удаляем пустой список подписок
-if not self.subscriptions[event_type]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-del self.subscriptions[event_type]
-if removed_count > 0: logger.debug(f"Отписано {removed_count} подписок от {event_type} для {subscriber_id}")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-return True
-return False
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка отписки от {event_type}: {e}")
-return False
-def unsubscribe_all(self, subscriber_id: str) -> int: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Отписка от всех событий для конкретного подписчика"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка массовой отписки для {subscriber_id}: {e}")
-return 0
-def process_events(self) -> int: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка всех событий в очереди"""
-if not self.is _initialized: return 0
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-try: processed_count= 0
-# Метрики: периодическая сводка по очереди событий раз в ~5 секунд
-try: now= time.time()
-if not hasattr(self, '_last_metrics_log'):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self._last_metrics_log= 0.0
-# Читаем флаг из конфигурации, если доступен через глобальный менеджер
-enable_metrics= True
-try: from .config_manager import ConfigManager  # локально
+# = ТИПЫ СОБЫТИЙ
 
-# Если конфиг загружен глобально, можно внедрить через init в будущем
-except Exception: pass
-pass  # Добавлен pass в пустой блок
-if now - self._last_metrics_log >= 5.0and enable_metrics: logger.debug(f"[events] queue_le = {len(self.event_queue)} processed_tota = {self.events_processed} emitted_tota = {self.events_emitted}")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self._last_metrics_log= now
-except Exception: pass  # Добавлен pass в пустой блок
-# Обрабатываем события по приоритету
-while self.event_queue: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Находим событие с наивысшим приоритетом
-highest_pri or ity_event= max(self.event_queue,
-ke = lambda e: e.pri or ity.value)
-# Удаляем его из очереди
-self.event_queue.remove(highest_pri or ity_event)
-# Обрабатываем событие
-if self._process_single_event(highest_pri or ity_event):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-processed_count = 1
-self.events_processed = 1
-return processed_count
-except Exception as e: logger.err or(f"Ошибка обработки событий: {e}")
-return 0
-def _process_single_event(self, event: Event) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка одного события"""
-try: except Exception as e: logger.err or(f"Ошибка обработки события {event.event_type}: {e}")
-return False
-def get_subscription_count(self, event_type: str= None) -> int: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Получение количества подписок"""if event_type: return len(self.subscriptions.get(event_type, []))
-return sum(len(subs) for subsin self.subscriptions.values()):
-pass  # Добавлен pass в пустой блок
-def get_queue_size(self) -> int:"""Получение размера очереди событий"""return len(self.event_queue)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def clear_queue(self) -> None:"""Очистка очереди событий"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.event_queue.clear()
-logger.debug("Очередь событий очищена")
-def get_statis tics(self) -> Dict[str, Any]:
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Получение статистики системы событий"""return {
-'events_processed': self.events_processed,
-'events_emitted': self.events_emitted,
-'queue_size': len(self.event_queue),
-'subscription_count': self.get_subscription_count(),
-'event_types': lis t(self.subscriptions.keys())
-}
-def update(self, delta_time: float) -> None:"""Обновление системы событий"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Обрабатываем события
-processed= self.process_events()
-if processed > 0: logger.debug(f"Обработано {processed} событий")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def cleanup(self) -> None: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Очистка системы событий"""
-logger.in fo("Очистка системы событий...")
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка очистки системы событий: {e}")
-# Глобальный экземпляр системы событий
-_global_event_system: Optional[EventSystem]= None
-def get_global_event_system() -> EventSystem: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Получение глобального экземпляра системы событий"""global _global_event_system
-if _global_event_systemis None: _global_event_system= EventSystem()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-_global_event_system.in itialize()
-return _global_event_system
-def set_global_event_system(event_system: EventSystem) -> None:"""Установка глобального экземпляра системы событий"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-global _global_event_system
-_global_event_system= event_system
+class EventType(Enum):
+    """Типы событий"""
+    SYSTEM = "system"              # Системные события
+    GAME = "game"                  # Игровые события
+    UI = "ui"                      # События интерфейса
+    AUDIO = "audio"                # Аудио события
+    NETWORK = "network"            # Сетевые события
+    DEBUG = "debug"                # Отладочные события
+
+class EventPriority(Enum):
+    """Приоритеты событий"""
+    LOW = 0
+    NORMAL = 1
+    HIGH = 2
+    CRITICAL = 3
+
+class EventState(Enum):
+    """Состояния событий"""
+    PENDING = "pending"            # Ожидает обработки
+    PROCESSING = "processing"      # Обрабатывается
+    COMPLETED = "completed"        # Завершено
+    FAILED = "failed"              # Завершилось с ошибкой
+    CANCELLED = "cancelled"        # Отменено
+
+# = СТРУКТУРЫ ДАННЫХ
+
+@dataclass
+class Event:
+    """Событие"""
+    event_id: str
+    event_type: str
+    event_data: Dict[str, Any]
+    source: str
+    timestamp: float = field(default_factory=time.time)
+    priority: EventPriority = EventPriority.NORMAL
+    state: EventState = EventState.PENDING
+    retry_count: int = 0
+    max_retries: int = 3
+    error_message: Optional[str] = None
+
+@dataclass
+class EventHandler:
+    """Обработчик события"""
+    handler_id: str
+    handler_func: Callable
+    event_types: List[str]
+    priority: EventPriority = EventPriority.NORMAL
+    is_active: bool = True
+    last_called: float = 0.0
+    call_count: int = 0
+    error_count: int = 0
+
+@dataclass
+class EventSubscription:
+    """Подписка на событие"""
+    subscriber_id: str
+    event_type: str
+    handler: Callable
+    priority: EventPriority = EventPriority.NORMAL
+    is_active: bool = True
+    created_at: float = field(default_factory=time.time)
+
+class EventSystem:
+    """Система событий"""
+    
+    def __init__(self):
+        self.event_handlers: Dict[str, List[EventHandler]] = defaultdict(list)
+        self.event_queue: deque = deque()
+        self.subscriptions: Dict[str, List[EventSubscription]] = defaultdict(list)
+        self.event_history: List[Event] = []
+        self.max_history_size = 1000
+        self.is_running = False
+        self.processing_thread = None
+        self.lock = threading.Lock()
+        
+        # Статистика
+        self.stats = {
+            'events_processed': 0,
+            'events_failed': 0,
+            'handlers_registered': 0,
+            'subscriptions_active': 0
+        }
+        
+        logger.info("EventSystem инициализирована")
+    
+    def initialize(self) -> bool:
+        """Инициализация системы событий"""
+        try:
+            self.is_running = True
+            self.processing_thread = threading.Thread(target=self._event_processing_loop, daemon=True)
+            self.processing_thread.start()
+            logger.info("EventSystem успешно инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации EventSystem: {e}")
+            return False
+    
+    def shutdown(self) -> bool:
+        """Завершение работы системы событий"""
+        try:
+            self.is_running = False
+            if self.processing_thread and self.processing_thread.is_alive():
+                self.processing_thread.join(timeout=5.0)
+            logger.info("EventSystem успешно завершена")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка завершения EventSystem: {e}")
+            return False
+    
+    def emit(self, event_type: str, event_data: Dict[str, Any], source: str = "system", 
+             priority: EventPriority = EventPriority.NORMAL) -> bool:
+        """Отправка события"""
+        try:
+            event = Event(
+                event_id=f"{event_type}_{int(time.time() * 1000)}",
+                event_type=event_type,
+                event_data=event_data,
+                source=source,
+                priority=priority
+            )
+            
+            with self.lock:
+                self.event_queue.append(event)
+                self.event_history.append(event)
+                
+                # Ограничиваем размер истории
+                if len(self.event_history) > self.max_history_size:
+                    self.event_history.pop(0)
+            
+            logger.debug(f"Событие {event_type} добавлено в очередь от {source}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка отправки события {event_type}: {e}")
+            return False
+    
+    def on(self, event_type: str, handler: Callable, subscriber_id: str = "unknown", 
+            priority: EventPriority = EventPriority.NORMAL) -> bool:
+        """Подписка на событие"""
+        try:
+            subscription = EventSubscription(
+                subscriber_id=subscriber_id,
+                event_type=event_type,
+                handler=handler,
+                priority=priority
+            )
+            
+            with self.lock:
+                self.subscriptions[event_type].append(subscription)
+                self.stats['subscriptions_active'] += 1
+            
+            logger.debug(f"Подписка на {event_type} от {subscriber_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка подписки на {event_type}: {e}")
+            return False
+    
+    def off(self, event_type: str, subscriber_id: str) -> bool:
+        """Отписка от события"""
+        try:
+            with self.lock:
+                if event_type in self.subscriptions:
+                    self.subscriptions[event_type] = [
+                        sub for sub in self.subscriptions[event_type]
+                        if sub.subscriber_id != subscriber_id
+                    ]
+                    self.stats['subscriptions_active'] = len([
+                        sub for subs in self.subscriptions.values()
+                        for sub in subs if sub.is_active
+                    ])
+            
+            logger.debug(f"Отписка от {event_type} для {subscriber_id}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Ошибка отписки от {event_type}: {e}")
+            return False
+    
+    def subscribe(self, event_type: str, handler: Callable, subscriber_id: str = "unknown", 
+                  priority: EventPriority = EventPriority.NORMAL) -> bool:
+        """Alias compatible with EventBus.on(event_type, handler, priority)."""
+        return self.on(event_type, handler, subscriber_id, priority)
+    
+    def unsubscribe(self, event_type: str, subscriber_id: str) -> bool:
+        """Alias для отписки"""
+        return self.off(event_type, subscriber_id)
+    
+    def emit_event(self, event_type: str, event_data: Dict[str, Any], source: str = "system", 
+                   priority: EventPriority = EventPriority.NORMAL) -> bool:
+        """Alias для emit"""
+        return self.emit(event_type, event_data, source, priority)
+    
+    def _event_processing_loop(self):
+        """Основной цикл обработки событий"""
+        while self.is_running:
+            try:
+                if self.event_queue:
+                    with self.lock:
+                        if self.event_queue:
+                            # Обрабатываем событие с наивысшим приоритетом
+                            highest_priority_event = max(self.event_queue,
+                                                       key=lambda e: e.priority.value)
+                            self.event_queue.remove(highest_priority_event)
+                            
+                            if self._process_single_event(highest_priority_event):
+                                self.stats['events_processed'] += 1
+                            else:
+                                self.stats['events_failed'] += 1
+                
+                time.sleep(0.001)  # Небольшая пауза
+                
+            except Exception as e:
+                logger.error(f"Ошибка в цикле обработки событий: {e}")
+                time.sleep(0.1)
+    
+    def _process_single_event(self, event: Event) -> bool:
+        """Обработка одного события"""
+        try:
+            event.state = EventState.PROCESSING
+            
+            # Находим все подписки на этот тип события
+            subscriptions = self.subscriptions.get(event.event_type, [])
+            
+            if not subscriptions:
+                event.state = EventState.COMPLETED
+                return True
+            
+            # Сортируем по приоритету (высокий приоритет первым)
+            subscriptions.sort(key=lambda s: s.priority.value, reverse=True)
+            
+            success_count = 0
+            for subscription in subscriptions:
+                if not subscription.is_active:
+                    continue
+                
+                try:
+                    # Вызываем обработчик
+                    subscription.handler(event)
+                    subscription.last_called = time.time()
+                    subscription.call_count += 1
+                    success_count += 1
+                    
+                except Exception as e:
+                    subscription.error_count += 1
+                    logger.error(f"Ошибка в обработчике {subscription.subscriber_id} для {event.event_type}: {e}")
+            
+            if success_count > 0:
+                event.state = EventState.COMPLETED
+                return True
+            else:
+                event.state = EventState.FAILED
+                return False
+                
+        except Exception as e:
+            event.state = EventState.FAILED
+            event.error_message = str(e)
+            logger.error(f"Ошибка обработки события {event.event_type}: {e}")
+            return False
+    
+    def process_events(self, max_events: int = 100) -> int:
+        """Обработка событий в текущем потоке (для тестов)"""
+        processed = 0
+        while self.event_queue and processed < max_events:
+            with self.lock:
+                if self.event_queue:
+                    event = self.event_queue.popleft()
+                    if self._process_single_event(event):
+                        processed += 1
+        
+        return processed
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Получение статистики системы"""
+        with self.lock:
+            return {
+                'events_processed': self.stats['events_processed'],
+                'events_failed': self.stats['events_failed'],
+                'handlers_registered': self.stats['handlers_registered'],
+                'subscriptions_active': self.stats['subscriptions_active'],
+                'queue_size': len(self.event_queue),
+                'history_size': len(self.event_history),
+                'is_running': self.is_running
+            }
+    
+    def clear_history(self):
+        """Очистка истории событий"""
+        with self.lock:
+            self.event_history.clear()
+            logger.info("История событий очищена")
+    
+    def get_event_history(self, event_type: Optional[str] = None, 
+                         limit: int = 100) -> List[Event]:
+        """Получение истории событий"""
+        with self.lock:
+            if event_type:
+                filtered_events = [e for e in self.event_history if e.event_type == event_type]
+            else:
+                filtered_events = self.event_history.copy()
+            
+            return filtered_events[-limit:]

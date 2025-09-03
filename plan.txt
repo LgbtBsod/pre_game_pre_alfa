@@ -48,15 +48,19 @@ evolution_adaptation/
 │   └── mutants.py           # Химеры/мутанты
 ├── systems/                 
 │   ├── __init__.py
-│   ├── genetics.py          
-│   ├── emotions.py          
-│   ├── effects.py           # Система эффектов
-│   ├── skills.py            # Система скиллов
-│   ├── damage.py            # Система урона
-│   ├── inventory.py         # Инвентарь и слабости
-│   ├── progression.py       
-│   ├── ai_controller.py     # ИИ управления персонажами
-│   └── memory_system.py     # Система памяти
+│   ├── visualization/       # Использовать unified_visualization_system.py (LEGACY файлы не подключать)
+│   ├── effects/             # Система эффектов
+│   ├── skills/              # Система скиллов
+│   ├── items/               # Инвентарь и предметы
+│   ├── combat/              # Бой
+│   ├── memory/              # Память
+│   ├── evolution/           # Эволюция
+│   ├── ai/                  # AI
+│   ├── world/               # Мир
+│   ├── quest/               # Квесты
+│   ├── trading/             # Торговля
+│   ├── social/              # Социалка
+│   └── rendering/           # Рендеринг
 ├── ui/                      
 │   ├── __init__.py
 │   ├── menus.py             
@@ -314,7 +318,7 @@ elf.cooldown = cooldown
 
 ```
 
-##### 4.3. Система скиллов (systems/skills.py)
+##### 4.3. Система скиллов (systems/skills)
 Описание: Система активных и пассивных способностей персонажей.
 
 Пример реализации:
@@ -414,7 +418,7 @@ dash_skill = Skill(
 
 ```
 
-##### 4.4. Система урона (systems/damage.py)
+##### 4.4. Система урона (systems/combat)
 Описание: Система расчета и применения урона с различными типами и защитами.
 
 Пример реализации:

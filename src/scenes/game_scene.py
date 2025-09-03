@@ -1,3 +1,174 @@
+#!/usr/bin/env python3
+"""Game Scene - минимальная рабочая версия игровой сцены
+Безопасная реализация без жёстких зависимостей от Panda3D, согласованная с SceneManager.
+"""
+
+import logging
+from typing import Any, Optional
+
+from .scene_manager import Scene
+
+logger = logging.getLogger(__name__)
+
+# Безопасные импорты Panda3D UI (как в других сценах)
+try:
+    from direct.gui.OnscreenText import OnscreenText  # type: ignore
+    from panda3d.core import TextNode  # type: ignore
+    PANDA_AVAILABLE = True
+except Exception:
+    PANDA_AVAILABLE = False
+
+    class OnscreenText:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def setText(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+
+    class TextNode:  # type: ignore
+        ACenter = 0
+
+
+class GameScene(Scene):
+    """Игровая сцена (минимальная логика)
+    Совместима с базовым жизненным циклом: initialize -> start -> update/render -> cleanup
+    """
+
+    def __init__(self) -> None:
+        super().__init__("game_world")
+        self.title_text: Optional[OnscreenText] = None
+        self.elapsed_time: float = 0.0
+
+    def initialize(self) -> bool:
+        try:
+            logger.info("Инициализация GameScene...")
+            if PANDA_AVAILABLE:
+                self.title_text = OnscreenText(
+                    text="AI-EVOLVE: Game World",
+                    pos=(0.0, 0.9),
+                    scale=0.06,
+                    fg=(1.0, 1.0, 1.0, 1.0),
+                    align=TextNode.ACenter,
+                )
+            self.initialized = True
+            logger.info("GameScene инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации GameScene: {e}")
+            return False
+
+    def start(self) -> bool:
+        if not self.initialized:
+            if not self.initialize():
+                return False
+        self.active = True
+        return True
+
+    def update(self, delta_time: float) -> None:
+        # Простейшая логика обновления для демонстрации цикла
+        self.elapsed_time += max(0.0, float(delta_time))
+        if self.title_text and int(self.elapsed_time) % 2 == 0:
+            # Лёгкое обновление текста, чтобы видеть активность сцены
+            self.title_text.setText("AI-EVOLVE: Game World")
+
+    def render(self, render_node: Any) -> None:
+        # Panda3D сам отрисует сцену; оставляем заглушку
+        return
+
+    def handle_event(self, event: Any) -> None:
+        # События обрабатываются движком/системами ввода; минимальная заглушка
+        return
+
+    def cleanup(self) -> None:
+        try:
+            if self.title_text:
+                self.title_text.destroy()
+        finally:
+            super().cleanup()
+
+#!/usr/bin/env python3
+"""Game Scene - минимальная рабочая версия игровой сцены
+Безопасная реализация без жёстких зависимостей от Panda3D, согласованная с SceneManager.
+"""
+
+import logging
+from typing import Any, Optional
+
+from .scene_manager import Scene
+
+logger = logging.getLogger(__name__)
+
+# Безопасные импорты Panda3D UI (как в других сценах)
+try:
+    from direct.gui.OnscreenText import OnscreenText  # type: ignore
+    from panda3d.core import TextNode  # type: ignore
+    PANDA_AVAILABLE = True
+except Exception:
+    PANDA_AVAILABLE = False
+
+    class OnscreenText:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def setText(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+
+    class TextNode:  # type: ignore
+        ACenter = 0
+
+
+class GameScene(Scene):
+    """Игровая сцена (минимальная логика)
+    Совместима с базовым жизненным циклом: initialize -> start -> update/render -> cleanup
+    """
+
+    def __init__(self) -> None:
+        super().__init__("game_world")
+        self.title_text: Optional[OnscreenText] = None
+        self.elapsed_time: float = 0.0
+
+    def initialize(self) -> bool:
+        try:
+            logger.info("Инициализация GameScene...")
+            if PANDA_AVAILABLE:
+                self.title_text = OnscreenText(
+                    text="AI-EVOLVE: Game World",
+                    pos=(0.0, 0.9),
+                    scale=0.06,
+                    fg=(1.0, 1.0, 1.0, 1.0),
+                    align=TextNode.ACenter,
+                )
+            self.initialized = True
+            logger.info("GameScene инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации GameScene: {e}")
+            return False
+
+    def update(self, delta_time: float) -> None:
+        # Простейшая логика обновления для демонстрации цикла
+        self.elapsed_time += max(0.0, float(delta_time))
+        if self.title_text and int(self.elapsed_time) % 2 == 0:
+            # Лёгкое обновление текста, чтобы видеть активность сцены
+            self.title_text.setText("AI-EVOLVE: Game World")
+
+    def render(self, render_node: Any) -> None:
+        # Panda3D сам отрисует сцену; оставляем заглушку
+        return
+
+    def handle_event(self, event: Any) -> None:
+        # События обрабатываются движком/системами ввода; минимальная заглушка
+        return
+
+    def cleanup(self) -> None:
+        try:
+            if self.title_text:
+                self.title_text.destroy()
+        finally:
+            super().cleanup()
+
 from ..c or e.entity_regis try import regis ter_entity, unregis ter_entity
 
 from ..c or e.scene_manager import Scene
@@ -1502,7 +1673,6 @@ pass
 pass
 pass
 pass
-pass
 # Атака цели с использованием скиллов и предметов
 if decis ion.target: target_entity= next((e for ein self.entities if e.get('id') = decis ion.target), None):
     pass
@@ -1512,7 +1682,7 @@ pass
 pass
 pass
 pass
-pass  # Добавлен pass в пустой блок
+  # Добавлен pass в пустой блок
 if target_entity: pass
     pass
 pass

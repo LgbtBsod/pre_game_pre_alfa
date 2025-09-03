@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import CraftingType
+from src.core.state_manager import StateManager, StateType
 from typing import *
 from typing import Dict, List, Optional, Any, Union
 import logging
@@ -15,16 +17,7 @@ import time
 
 logger = logging.getLogger(__name__)
 
-# = ОСНОВНЫЕ ТИПЫ И ПЕРЕЧИСЛЕНИЯ
-
-class CraftingType(Enum):
-    """Типы крафтинга"""
-    WEAPON = "weapon"
-    ARMOR = "armor"
-    TOOL = "tool"
-    CONSUMABLE = "consumable"
-    MATERIAL = "material"
-    SPECIAL = "special"
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ КРАФТИНГА
 
 class CraftingDifficulty(Enum):
     """Сложность крафтинга"""

@@ -1,302 +1,118 @@
-from ..c or e.scene_manager import Scene
-
-from dataclasses import dataclass, field
-
-from direct.gui.DirectButton import DirectButton
-
-from direct.gui.OnscreenImage import OnscreenImage
-
-from direct.gui.OnscreenText import OnscreenText
-
-from enum import Enum
-
-from pand a3d.c or e import TextNode
-
-from pand a3d.c or e import Win dowProperties
-
-from pathlib import Path
-
-from typing import *
-
-from typing import Dict, Any
+#!/usr/bin/env python3
+"""Menu Scene - Сцена главного меню (минимальная рабочая версия)
+Используется базовый класс Scene из локального scene_manager.
+"""
 
 import logging
+from typing import Any, Optional
 
-import os
+from .scene_manager import Scene
 
-import sys
+logger = logging.getLogger(__name__)
 
-import time
+# Безопасные импорты Panda3D UI
+try:
+    from direct.gui.DirectButton import DirectButton  # type: ignore
+    from direct.gui.OnscreenText import OnscreenText  # type: ignore
+    from panda3d.core import TextNode  # type: ignore
+    PANDA_AVAILABLE = True
+except Exception:
+    PANDA_AVAILABLE = False
+    # Заглушки для отсутствия Panda3D
+    class OnscreenText:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def setText(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+    class DirectButton:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+    class TextNode:  # type: ignore
+        ACenter = 0
 
-#!/usr / bin / env python3
-"""Menu Scene - Сцена главного меню на Pand a3D"""import logging
 
-logger= logging.getLogger(__name__)
-class MenuScene(Scene):"""Сцена главного меню на Pand a3D"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-super().__in it__("menu")
-# UI элементы
-self.title_text= None
-self.start_button= None
-self.settings_button= None
-self.quit_button= None
-self.background_image= None
-logger.in fo("Сцена меню Pand a3D создана")
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация сцены меню"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации сцены меню: {e}")
-return False
-def _create_ui_elements(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание UI элементов меню"""
-# Используем корневой узел UI сцены
-# Привязываем к узлу UI текущей сцены(который уже находится под aspect2d)
-parent_node= self.ui_root if self.ui_root else None: pass  # Добавлен pass в пустой блок
-# Современный неоновый заголовок
-self.title_text= OnscreenText(
-tex = "AI - EVOLVE ENHANCED EDITION",
-po = (0, 0.75),
-scal = 0.14,
-f = (0.0, 1.0, 1.0, 1.0),  # Неоновый голубой(0..1)
-alig = TextNode.ACenter,
-mayChang = False,
-paren = parent_node,
-shado = (0, 0, 0, 0.8),
-shadowOffse = (0.02, 0.02)
-)
-# Кнопка "Начать игру"
-self.start_button= DirectButton(
-tex = "START GAME",
-po = (0, 0, 0.35),
-scal = 0.1,
-comman = self._start_game,
-frameColo = (0.0, 1.0, 0.392, 0.8),  # Неоновый зеленый(0..1)
-text_f = (1.0, 1.0, 1.0, 1.0),
-relie = 1,
-paren = parent_node
-)
-# Кнопка "Творец мира"
-self.creat or _button= DirectButton(
-tex = "WORLD CREATOR",
-po = (0, 0, 0.15),
-scal = 0.1,
-comman = self._open_creat or ,
-frameColo = (1.0, 0.756, 0.027, 0.8),  # Неоновый желтый(0..1)
-text_f = (1.0, 1.0, 1.0, 1.0),
-relie = 1,
-paren = parent_node
-)
-# Кнопка "Настройки"
-self.settings_button= DirectButton(
-tex = "SETTINGS",
-po = (0, 0, -0.05),
-scal = 0.1,
-comman = self._open_settings,
-frameColo = (1.0, 0.392, 1.0, 0.8),  # Неоновый розовый(0..1)
-text_f = (1.0, 1.0, 1.0, 1.0),
-relie = 1,
-paren = parent_node
-)
-# Кнопка "Выход"
-self.quit_button= DirectButton(
-tex = "QUIT",
-po = (0, 0, -0.25),
-scal = 0.1,
-comman = self._quit_game,
-frameColo = (1.0, 0.392, 0.392, 0.8),  # Неоновый красный(0..1)
-text_f = (1.0, 1.0, 1.0, 1.0),
-relie = 1,
-paren = parent_node
-)
-logger.debug("UI элементы меню созданы")
-def _start_game(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Начать игру"""
-if self.scene_manager: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Скрываем своё UI перед переключением
-try: except Exception: pass
-pass  # Добавлен pass в пустой блок
-self.scene_manager.switch_to_scene("game", "fade")
-logger.in fo("Переключение на игровую сцену")
-def _open_creat or(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Открыть творца мира"""
-if self.scene_manager: self.scene_manager.switch_to_scene("creat or ", "fade")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Переключение на сцену творца мира")
-def _open_settings(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Открыть настройки"""
-if self.scene_manager: self.scene_manager.switch_to_scene("settings", "fade")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Переключение на сцену настроек")
-def _quit_game(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Выход из игры"""
-logger.in fo("Выход из игры")
-# Здесь можно добавить логику сохранения и выхода
-sys.exit(0)
-def update(self, delta_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление сцены меню"""
-# Анимация UI элементов
-self.title_text.setText("AI - EVOLVE ENHANCED EDITION")
-pass
-def render(self, render_node):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Отрисовка сцены меню"""
-# Pand a3D автоматически отрисовывает UI
-self.title_text.setText("AI - EVOLVE ENHANCED EDITION")
-pass
-def hand le_event(self, event):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка событий"""# Pand a3D автоматически обрабатывает события кнопок
-pass
-def cleanup(self):"""Очистка сцены меню"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Очистка сцены меню Pand a3D...")
-# Уничтожение UI элементов
-if self.title_text: self.title_text.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.start_button: self.start_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.creat or _button: self.creat or _button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.settings_button: self.settings_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.quit_button: self.quit_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.background_image: self.background_image.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Сцена меню Pand a3D очищена")
+class MenuScene(Scene):
+    """Сцена главного меню"""
+
+    def __init__(self) -> None:
+        super().__init__("menu")
+        self.title_text: Optional[OnscreenText] = None
+        self.start_button: Optional[DirectButton] = None
+        self.settings_button: Optional[DirectButton] = None
+        self.quit_button: Optional[DirectButton] = None
+
+    def initialize(self) -> bool:
+        try:
+            logger.info("Инициализация MenuScene...")
+            # Создаем минимальные UI элементы, если доступен Panda3D
+            if PANDA_AVAILABLE:
+                self.title_text = OnscreenText(
+                    text="AI-EVOLVE: Enhanced Edition",
+                    pos=(0.0, 0.8),
+                    scale=0.08,
+                    fg=(1.0, 1.0, 1.0, 1.0),
+                    align=TextNode.ACenter,
+                )
+                # Кнопки могут требовать parent=aspect2d, но для минимальной версии опускаем
+                self.start_button = DirectButton(text="Start",
+                                                pos=(0, 0, 0.3),
+                                                scale=0.08,
+                                                command=self._start_game)
+                self.settings_button = DirectButton(text="Settings",
+                                                   pos=(0, 0, 0.1),
+                                                   scale=0.08,
+                                                   command=self._open_settings)
+                self.quit_button = DirectButton(text="Quit",
+                                                pos=(0, 0, -0.1),
+                                                scale=0.08,
+                                                command=self._quit_game)
+            self.initialized = True
+            logger.info("MenuScene инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации MenuScene: {e}")
+            return False
+
+    def _start_game(self) -> None:
+        if self.scene_manager:
+            logger.info("Переключение на игровую сцену")
+            # Идентификатор сцены игрового мира
+            self.scene_manager.load_scene("game_world")
+
+    def _open_settings(self) -> None:
+        if self.scene_manager:
+            logger.info("Переключение на сцену настроек")
+            self.scene_manager.load_scene("settings")
+
+    def _quit_game(self) -> None:
+        logger.info("Выход из игры запрошен")
+        # Фактический выход из приложения должен обрабатываться лаунчером/движком
+
+    def update(self, delta_time: float) -> None:
+        # Минимальная логика обновления
+        return
+
+    def render(self, render_node: Any) -> None:
+        # UI рендерится Panda3D автоматически; оставляем заглушку
+        return
+
+    def handle_event(self, event: Any) -> None:
+        # Обработка событий для кнопок обрабатывается DirectGUI
+        return
+
+    def cleanup(self) -> None:
+        try:
+            if self.title_text:
+                self.title_text.destroy()
+            if self.start_button:
+                self.start_button.destroy()
+            if self.settings_button:
+                self.settings_button.destroy()
+            if self.quit_button:
+                self.quit_button.destroy()
+        finally:
+            super().cleanup()

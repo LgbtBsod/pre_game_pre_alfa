@@ -1,248 +1,88 @@
-from ..c or e.scene_manager import Scene
-
-from dataclasses import dataclass, field
-
-from direct.gui.DirectButton import DirectButton
-
-from direct.gui.OnscreenText import OnscreenText
-
-from enum import Enum
-
-from pand a3d.c or e import TextNode
-
-from pathlib import Path
-
-from typing import *
-
-from typing import Dict, Any
+#!/usr/bin/env python3
+"""Pause Scene - Сцена паузы (минимальная рабочая версия)
+"""
 
 import logging
+from typing import Any, Optional
 
-import os
+from .scene_manager import Scene
 
-import sys
+logger = logging.getLogger(__name__)
 
-import time
+# Безопасные импорты Panda3D UI
+try:
+    from direct.gui.DirectButton import DirectButton  # type: ignore
+    from direct.gui.OnscreenText import OnscreenText  # type: ignore
+    from panda3d.core import TextNode  # type: ignore
+    PANDA_AVAILABLE = True
+except Exception:
+    PANDA_AVAILABLE = False
+    class OnscreenText:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+    class DirectButton:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+    class TextNode:  # type: ignore
+        ACenter = 0
 
-#!/usr / bin / env python3
-"""Pause Scene - Сцена паузы на Pand a3D"""import logging
 
-logger= logging.getLogger(__name__)
-class PauseScene(Scene):"""Сцена паузы на Pand a3D"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-super().__in it__("pause")
-# UI элементы
-self.pause_text= None
-self.resume_button= None
-self.settings_button= None
-self.menu_button= None
-logger.in fo("Сцена паузы Pand a3D создана")
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация сцены паузы"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации сцены паузы: {e}")
-return False
-def _create_ui_elements(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание UI элементов паузы"""
-# Используем корневой узел UI сцены
-parent_node= self.ui_root if self.ui_root else None: pass  # Добавлен pass в пустой блок
-# Современный неоновый заголовок паузы
-self.pause_text= OnscreenText(
-tex = "⏸️ PAUSED",
-po = (0, 0.5),
-scal = 0.12,
-f = (255, 255, 0, 1),  # Неоновый желтый
-alig = TextNode.ACenter,
-mayChang = False,
-paren = parent_node,
-shado = (0, 0, 0, 0.8),
-shadowOffse = (0.02, 0.02)
-)
-# Кнопка "Продолжить"
-self.resume_button= DirectButton(
-tex = "▶️ RESUME",
-po = (0, 0, 0.1),
-scal = 0.07,
-comman = self._resume_game,
-frameColo = (0, 255, 100, 0.8),  # Неоновый зеленый
-text_f = (255, 255, 255, 1),
-relie = 1,
-paren = parent_node
-)
-# Кнопка "Настройки"
-self.settings_button= DirectButton(
-tex = "⚙️ SETTINGS",
-po = (0, 0, -0.1),
-scal = 0.07,
-comman = self._open_settings,
-frameColo = (255, 100, 255, 0.8),  # Неоновый розовый
-text_f = (255, 255, 255, 1),
-relie = 1,
-paren = parent_node
-)
-# Кнопка "Главное меню"
-self.menu_button= DirectButton(
-tex = "🏠 MAIN MENU",
-po = (0, 0, -0.3),
-scal = 0.07,
-comman = self._return_to_menu,
-frameColo = (100, 100, 255, 0.8),  # Неоновый синий
-text_f = (255, 255, 255, 1),
-relie = 1,
-paren = parent_node
-)
-logger.debug("UI элементы паузы созданы")
-def _resume_game(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Продолжить игру"""
-if self.scene_manager: self.scene_manager.switch_to_scene("game", "in stant")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Возобновление игры")
-def _open_settings(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Открыть настройки"""
-if self.scene_manager: self.scene_manager.switch_to_scene("settings", "fade")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Переключение на сцену настроек")
-def _return_to_menu(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Вернуться в главное меню"""
-if self.scene_manager: self.scene_manager.switch_to_scene("menu", "fade")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Возврат в главное меню")
-def update(self, delta_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление сцены паузы"""# Анимация UI элементов
-pass
-def render(self, render_node):"""Отрисовка сцены паузы"""# Pand a3D автоматически отрисовывает UI
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-def hand le_event(self, event):"""Обработка событий"""# Pand a3D автоматически обрабатывает события кнопок
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-def cleanup(self):"""Очистка сцены паузы"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Очистка сцены паузы Pand a3D...")
-# Уничтожение UI элементов
-if self.pause_text: self.pause_text.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.resume_button: self.resume_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.settings_button: self.settings_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.menu_button: self.menu_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Сцена паузы Pand a3D очищена")
+class PauseScene(Scene):
+    """Сцена паузы"""
+
+    def __init__(self) -> None:
+        super().__init__("pause")
+        self.pause_text: Optional[OnscreenText] = None
+        self.resume_button: Optional[DirectButton] = None
+        self.settings_button: Optional[DirectButton] = None
+        self.menu_button: Optional[DirectButton] = None
+
+    def initialize(self) -> bool:
+        try:
+            logger.info("Инициализация PauseScene...")
+            if PANDA_AVAILABLE:
+                self.pause_text = OnscreenText(text="Paused",
+                                               pos=(0.0, 0.5), scale=0.1,
+                                               fg=(1, 1, 0, 1), align=TextNode.ACenter)
+                self.resume_button = DirectButton(text="Resume",
+                                                  pos=(0, 0, 0.1), scale=0.07,
+                                                  command=self._resume)
+                self.settings_button = DirectButton(text="Settings",
+                                                    pos=(0, 0, -0.1), scale=0.07,
+                                                    command=self._open_settings)
+                self.menu_button = DirectButton(text="Main Menu",
+                                                pos=(0, 0, -0.3), scale=0.07,
+                                                command=self._to_menu)
+            self.initialized = True
+            logger.info("PauseScene инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации PauseScene: {e}")
+            return False
+
+    def _resume(self) -> None:
+        if self.scene_manager:
+            logger.info("Возобновление игры")
+            self.scene_manager.load_scene("game_world")
+
+    def _open_settings(self) -> None:
+        if self.scene_manager:
+            logger.info("Открытие настроек")
+            self.scene_manager.load_scene("settings")
+
+    def _to_menu(self) -> None:
+        if self.scene_manager:
+            logger.info("Возврат в главное меню")
+            self.scene_manager.load_scene("main_menu")
+
+    def cleanup(self) -> None:
+        try:
+            for w in [self.pause_text, self.resume_button, self.settings_button, self.menu_button]:
+                if w:
+                    w.destroy()
+        finally:
+            super().cleanup()

@@ -15,20 +15,12 @@ import json
 import pickle
 
 from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import MemoryType
+from src.core.state_manager import StateManager, StateType
 
 logger = logging.getLogger(__name__)
 
-# = ТИПЫ ПАМЯТИ
-
-class MemoryType(Enum):
-    """Типы памяти"""
-    SHORT_TERM = "short_term"      # Кратковременная память
-    LONG_TERM = "long_term"        # Долговременная память
-    EPISODIC = "episodic"          # Эпизодическая память
-    SEMANTIC = "semantic"          # Семантическая память
-    PROCEDURAL = "procedural"      # Процедурная память
-    EMOTIONAL = "emotional"        # Эмоциональная память
-    GENETIC = "genetic"            # Генетическая память
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ ПАМЯТИ
 
 class MemoryCategory(Enum):
     """Категории памяти"""

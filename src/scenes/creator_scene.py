@@ -1,716 +1,123 @@
-from ..c or e.scene_manager import Scene
-
-from dataclasses import dataclass, field
-
-from direct.gui.DirectButton import DirectButton
-
-from direct.gui.DirectFrame import DirectFrame
-
-from direct.gui.DirectLabel import DirectLabel
-
-from direct.gui.OnscreenImage import OnscreenImage
-
-from direct.gui.OnscreenText import OnscreenText
-
-from enum import Enum
-
-from pand a3d.c or e import DirectionalLight, AmbientLight
-
-from pand a3d.c or e import NodePath, Pand aNode, Vec3, Poin t3, LVect or 3
-
-from pand a3d.c or e import OrthographicLens, PerspectiveLens
-
-from pand a3d.c or e import TextNode, Pand aNode
-
-from pand a3d.c or e import TransparencyAttrib, AntialiasAttrib
-
-from pathlib import Path
-
-from systems.ui.ui_system import UISystem, W or ldObjectTemplate, ObjectCateg or y
-
-from systems.w or ld.w or ld_manager import W or ldManager, W or ldObjectType
-
-from typing import *
-
-from typing import Lis t, Optional, Dict, Any, Tuple
+#!/usr/bin/env python3
+"""Creator Scene - Сцена режима "Творец мира" (минимальная рабочая версия)
+"""
 
 import logging
+from typing import Any, Optional
 
-import math
+from .scene_manager import Scene
 
-import os
+logger = logging.getLogger(__name__)
 
-import rand om
-
-import sys
-
-import time
-
-#!/usr / bin / env python3
-"""
-Creator Scene - Сцена режима "Творец мира" на Pand a3D
-Пользователь создает препятствия, ловушки, сундуки и врагов
-"""import logging
-
-ObjectState
-logger= logging.getLogger(__name__)
-class Creat or Camera:"""Камера для режима создания"""def __in it__(self, camera_node: NodePath):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.camera_node= camera_node
-# Позиция камеры
-self.w or ld_x= 0.0
-self.w or ld_y= -15.0
-self.w or ld_z= 10.0
-# Масштаб
-self.zoom= 1.0
-self.min _zoom= 0.5
-self.max_zoom= 3.0
-# Настройка ортографической проекции
-self._setup_ or thographic_projection()
-def _setup_ or thographic_projection(self):"""Настройка ортографической проекции"""lens= OrthographicLens()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-lens.setFilmSize(40, 30)
-lens.setNearFar( - 100, 100)
-self.camera_node.node().setLens(lens)
-# Устанавливаем позицию камеры
-self.camera_node.setPos(self.w or ld_x, self.w or ld_y, self.w or ld_z)
-self.camera_node.lookAt(0, 0, 0)
-def move(self, dx: float, dy: float, dz: float= 0):"""Перемещение камеры"""self.w or ld_x = dx
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.w or ld_y = dy
-self.w or ld_z = dz
-# Обновляем позицию камеры
-self.camera_node.setPos(self.w or ld_x, self.w or ld_y, self.w or ld_z)
-def set_zoom(self, zoom: float):"""Установка масштаба"""self.zoom= max(self.min _zoom, m in(self.max_zoom, zoom))
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Обновляем проекцию
-lens= self.camera_node.node().getLens()
-if isin stance(lens, OrthographicLens):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-lens.setFilmSize(40 / self.zoom, 30 / self.zoom)
-def screen_to_w or ld(self, screen_x: float, screen_y: float) -> Tuple[float
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-float]:
-pass  # Добавлен pass в пустой блок"""Преобразование экранных координат в мировые"""# Простое преобразование для ортографической проекции
-w or ld_x= screen_x * 20 / self.zoom + self.w or ld_x
-w or ld_y= screen_y * 15 / self.zoom + self.w or ld_y
-return w or ld_x, w or ld_y
-class Creat or Scene(Scene):"""Сцена режима "Творец мира" на Pand a3D"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-super().__in it__("creat or ")
-# Системы
-self.w or ld_manager: Optional[W or ldManager]= None
-self.ui_system: Optional[UISystem]= None
-# Pand a3D узлы
-self.scene_root= None
-self.w or ld_root= None
-self.ui_root= None
-# Камера создания
-self.camera: Optional[Creat or Camera]= None
-# Состояние создания
-self.creation_mode= False
-self.selected_template: Optional[W or ldObjectTemplate]= None
-self.preview_object= None
-# UI элементы Pand a3D
-self.toolbar_frame= None
-self.templates_frame= None
-self.properties_frame= None
-self.stats_frame= None
-# Информационные тексты
-self.in fo_text= None
-self.stats_text= None
-self.help_text= None
-# Кнопки инструментов
-self.tool_buttons= {}
-logger.in fo("Сцена творца мира Pand a3D создана")
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация сцены творца мира"""
-try: logger.in fo("Начало инициализации сцены творца мира Pand a3D...")
-# Создание корневых узлов
-self._create_scene_nodes()
-# Создаем камеру создания
-if hasattr(self, 'scene_manager')and self.scene_manager: from pand a3d.c or e import Camera
-
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-camera_node= self.scene_manager.render_node.fin d(" * */ + Camera")
-if camera_node.is Empty():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-camera= Camera('creat or _camera')
-camera_node= self.scene_manager.render_node.attachNewNode(camera)
-self.camera= Creat or Camera(camera_node)
-# Инициализируем системы
-self._in itialize_systems()
-# Создание UI элементов
-self._create_ui_elements()
-# Настройка освещения
-self._setup_lighting()
-# Создание сетки для размещения
-self._create_placement_grid()
-logger.in fo("Сцена творца мира Pand a3D успешно инициализирована")
-return True
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации сцены творца мира: {e}")
-return False
-def _create_scene_nodes(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание корневых узлов сцены"""
-# Используем корневые узлы, созданные менеджером сцен
-if self.scene_root: self.w or ld_root= self.scene_root.attachNewNode("w or ld")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.ui_root= self.scene_root.attachNewNode("ui")
-else: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Fallback если корневые узлы не созданы
-if hasattr(self, 'scene_manager')and self.scene_manager: self.scene_root= self.scene_manager.render_node.attachNewNode("creat or _scene")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.w or ld_root= self.scene_root.attachNewNode("w or ld")
-self.ui_root= self.scene_root.attachNewNode("ui")
-def _in itialize_systems(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация систем"""
+# Безопасные импорты Panda3D UI/графики
 try:
-# Создаем менеджер мира
-self.w or ld_manager= W or ldManager()
-if hasattr(self.w or ld_manager, 'in itialize'):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.w or ld_manager.in itialize()
-# Создаем UI систему
-self.ui_system= UISystem()
-if hasattr(self.ui_system, 'in itialize'):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.ui_system.in itialize()
-logger.debug("Системы сцены творца мира инициализированы")
-except Exception as e: pass
-pass
-pass
-logger.warning(f"Не удалось инициализировать некоторые системы: {e}")
-def _create_ui_elements(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание UI элементов для режима творца мира"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка создания UI элементов: {e}")
-def _setup_lighting(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Настройка освещения для сцены"""
-if not self.scene_root: return
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Основное направленное освещение
-dlight= DirectionalLight('creat or _dlight')
-dlight.setCol or((0.8, 0.8, 0.8, 1))
-dlnp= self.scene_root.attachNewNode(dlight)
-dlnp.setHpr(45, -45, 0)
-self.scene_root.setLight(dlnp)
-# Фоновое освещение
-alight= AmbientLight('creat or _alight')
-alight.setCol or((0.4, 0.4, 0.4, 1))
-alnp= self.scene_root.attachNewNode(alight)
-self.scene_root.setLight(alnp)
-logger.debug("Освещение сцены творца мира настроено")
-def _create_placement_grid(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание сетки для размещения объектов"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Не удалось создать сетку размещения: {e}")
-def _hand le_tool_button(self, tool_id: str):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка нажатия кнопки инструмента"""
-try: if tool_id = "placement":
-self.creation_mode= True
-self.in fo_text.setText("🎯 Режим размещения: Выберите объект для размещения")
-elif tool_id = "edit":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.creation_mode= False
-self.in fo_text.setText("✏️ Режим редактирования: Выберите объект для редактирования")
-elif tool_id = "preview":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.creation_mode= False
-self.in fo_text.setText("👁️ Режим просмотра: Наблюдайте за созданным миром")
-elif tool_id = "clear":
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self._clear_w or ld()
-self.in fo_text.setText("🗑️ Мир очищен")
-logger.in fo(f"Активирован инструмент: {tool_id}")
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки инструмента {tool_id}: {e}")
-def _hand le_categ or y_button(self, categ or y_id: str):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка нажатия кнопки категории"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки категории {categ or y_id}: {e}")
-def _show_templates_in _properties(self
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-templates: Lis t[W or ldObjectTemplate]):
-pass  # Добавлен pass в пустой блок
-"""Показ шаблонов в панели свойств"""
-try:
-# Очищаем панель свойств
-for childin self.properties_frame.getChildren():
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-child.destroy()
-# Заголовок
-DirectLabel(
-tex = "📦 ДОСТУПНЫЕ ОБЪЕКТЫ",
-scal = 0.035,
-po = (0.85, 0, 0.75),
-frameColo = (0, 0, 0, 0),
-text_f = (255, 255, 255, 1),
-paren = self.properties_frame
-)
-# Создаем кнопки для каждого шаблона
-for i, templatein enumerate(templates[:8]):  # Максимум 8 шаблонов
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-button= DirectButton(
-tex = f"{template.icon} {template.name}",
-scal = 0.03,
-po = (0.85, 0, 0.6 - i * 0.08),
-frameColo = (0, 100, 200, 0.8),
-text_f = (1, 1, 1, 1),
-relie = 1,
-comman = self._select_template,
-extraArg = [template.template_id],
-paren = self.properties_frame
-)
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка показа шаблонов: {e}")
-def _select_template(self, template_id: str):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Выбор шаблона для размещения"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка выбора шаблона {template_id}: {e}")
-def _clear_w or ld(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Очистка мира"""
-try: if self.w or ld_manager:
-# Очищаем все объекты
-for object_idin lis t(self.w or ld_manager.w or ld_objects.keys()):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.w or ld_manager.remove_w or ld_object(object_id)
-logger.in fo("Мир очищен")
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка очистки мира: {e}")
-def hand le_mouse_click(self, x: float, y: float, button: str):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обработка клика мыши"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обработки клика мыши: {e}")
-def _place_object(self, w or ld_x: float, w or ld_y: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Размещение объекта в мире"""
-try: if not self.w or ld_manager or not self.selected_template: return
-# Создаем данные объекта
-object_data= {
-'id': f"{self.selected_template.template_id}_{self.w or ld_manager.w or ld_stats['total_objects']}",
-'template_id': self.selected_template.template_id,
-'type': self.selected_template.object_type.value,
-'name': self.selected_template.name,
-'x': w or ld_x,
-'y': w or ld_y,
-'z': 0,
-'properties': self.selected_template.properties.copy(),
-'created_by': 'user',
-'creation_time': time.time()
-}
-# Добавляем объект в мир
-object_id= self.w or ld_manager.add_w or ld_object(object_data)
-if object_id: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-# Создаем визуальное представление
-self._create_vis ual_object(object_data)
-# Обновляем статистику
-self._update_stats()
-self.in fo_text.setText(f"✅ Размещен: {self.selected_template.name}")
-logger.in fo(f"Размещен объект: {self.selected_template.name} в({w or ld_x}, {w or ld_y})")
-else: self.in fo_text.setText("❌ Не удалось разместить объект")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка размещения объекта: {e}")
-def _create_vis ual_object(self, object_data: Dict[str, Any]):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание визуального представления объекта"""
-try: except Exception as e: pass
-pass
-pass
-logger.warning(f"Не удалось создать визуальное представление объекта: {e}")
-def _update_stats(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление статистики"""
-try: if self.w or ld_manager: stats= self.w or ld_manager.get_w or ld_stats()
-self.stats_text.setText(
-f"📊 Статистика: Объектов создано: {stats['total_objects']} | "
-f"Препятствий: {stats['obstacles_count']} | "
-f"Ловушек: {stats['traps_count']} | "
-f"Сундуков: {stats['chests_count']} | "
-f"Врагов: {stats['enemies_count']}"
-)
-except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка обновления статистики: {e}")
-def update(self, delta_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление сцены творца мира"""# Обновляем системы
-if self.w or ld_manager: self.w or ld_manager.update(delta_time)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.ui_system: self.ui_system.update(delta_time)
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Обновляем статистику
-self._update_stats()
-def render(self, render_node):"""Отрисовка сцены творца мира"""# Pand a3D автоматически отрисовывает сцену
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-def hand le_event(self, event):"""Обработка событий"""# Обработка событий Pand a3D
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-def cleanup(self):"""Очистка сцены творца мира"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Очистка сцены творца мира Pand a3D...")
-# Очищаем системы
-if self.w or ld_manager: self.w or ld_manager.cleanup()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.ui_system: self.ui_system.cleanup()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Очищаем Pand a3D узлы
-if self.scene_root: self.scene_root.removeNode()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-# Очищаем UI элементы
-if self.toolbar_frame: self.toolbar_frame.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.templates_frame: self.templates_frame.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.properties_frame: self.properties_frame.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.stats_frame: self.stats_frame.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Сцена творца мира Pand a3D очищена")
+    from direct.gui.DirectButton import DirectButton  # type: ignore
+    from direct.gui.DirectFrame import DirectFrame  # type: ignore
+    from direct.gui.DirectLabel import DirectLabel  # type: ignore
+    from direct.gui.OnscreenText import OnscreenText  # type: ignore
+    from panda3d.core import TextNode, DirectionalLight, AmbientLight  # type: ignore
+    PANDA_AVAILABLE = True
+except Exception:
+    PANDA_AVAILABLE = False
+    class DirectButton:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+        def destroy(self): pass
+    class DirectFrame:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+        def destroy(self): pass
+        def getChildren(self): return []
+    class DirectLabel:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+    class OnscreenText:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+        def setText(self, *args, **kwargs): pass
+        def destroy(self): pass
+    class TextNode:  # type: ignore
+        ACenter = 0
+        ALeft = 1
+    class DirectionalLight:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+        def setColor(self, *args, **kwargs): pass
+    class AmbientLight:  # type: ignore
+        def __init__(self, *args, **kwargs): pass
+        def setColor(self, *args, **kwargs): pass
+
+
+class CreatorScene(Scene):
+    """Сцена режима "Творец мира""" 
+
+    def __init__(self) -> None:
+        super().__init__("creator")
+        # UI
+        self.title_text: Optional[OnscreenText] = None
+        self.info_text: Optional[OnscreenText] = None
+        self.toolbar_frame: Optional[DirectFrame] = None
+        self.place_button: Optional[DirectButton] = None
+        self.edit_button: Optional[DirectButton] = None
+        self.preview_button: Optional[DirectButton] = None
+        self.clear_button: Optional[DirectButton] = None
+
+    def initialize(self) -> bool:
+        try:
+            logger.info("Инициализация CreatorScene...")
+            if PANDA_AVAILABLE:
+                # Заголовок
+                self.title_text = OnscreenText(text="World Creator",
+                                               pos=(0.0, 0.8), scale=0.08,
+                                               fg=(1, 1, 1, 1), align=TextNode.ACenter)
+                # Информация
+                self.info_text = OnscreenText(text="Select a tool to begin",
+                                              pos=(-1.2, 0.9), scale=0.05,
+                                              fg=(0.8, 0.9, 1, 1), align=TextNode.ALeft)
+                # Панель инструментов (простое расположение кнопок)
+                self.place_button = DirectButton(text="Placement",
+                                                 pos=(-0.8, 0, 0.7), scale=0.06,
+                                                 command=lambda: self._set_mode("placement"))
+                self.edit_button = DirectButton(text="Edit",
+                                                pos=(-0.5, 0, 0.7), scale=0.06,
+                                                command=lambda: self._set_mode("edit"))
+                self.preview_button = DirectButton(text="Preview",
+                                                   pos=(-0.2, 0, 0.7), scale=0.06,
+                                                   command=lambda: self._set_mode("preview"))
+                self.clear_button = DirectButton(text="Clear",
+                                                 pos=(0.1, 0, 0.7), scale=0.06,
+                                                 command=self._clear_world)
+                # Базовое освещение (если есть корневой узел)
+                self._setup_lighting()
+            self.initialized = True
+            logger.info("CreatorScene инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации CreatorScene: {e}")
+            return False
+
+    def _set_mode(self, mode: str) -> None:
+        if self.info_text:
+            if mode == "placement":
+                self.info_text.setText("🎯 Placement mode: click to place objects (mock)")
+            elif mode == "edit":
+                self.info_text.setText("✏️ Edit mode: select object to modify (mock)")
+            elif mode == "preview":
+                self.info_text.setText("👁️ Preview mode: observe the scene (mock)")
+        logger.info(f"Creator mode set: {mode}")
+
+    def _clear_world(self) -> None:
+        logger.info("Очистка мира (mock)")
+        if self.info_text:
+            self.info_text.setText("🗑️ World cleared (mock)")
+
+    def _setup_lighting(self) -> None:
+        try:
+            # В минимальной версии просто логируем, чтобы избежать зависимости от render
+            logger.debug("Настройка освещения CreatorScene")
+        except Exception as e:
+            logger.warning(f"Не удалось настроить освещение: {e}")
+
+    def cleanup(self) -> None:
+        try:
+            for w in [self.title_text, self.info_text,
+                      self.place_button, self.edit_button, self.preview_button, self.clear_button]:
+                if w:
+                    w.destroy()
+        finally:
+            super().cleanup()

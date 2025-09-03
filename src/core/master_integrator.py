@@ -21,7 +21,7 @@ from src.systems.attributes.attribute_system import AttributeSystem, AttributeSe
 from src.systems.combat.combat_system import CombatSystem
 from src.systems.skills.skill_system import SkillSystem
 from src.systems.items.item_system import ItemSystem
-from src.ui.ui_manager import UIManager
+from src.ui.unified_ui_system import UnifiedUISystem
 from src.systems.ai.ai_system import AISystem
 from src.systems.evolution.evolution_system import EvolutionSystem
 from src.systems.dialogue.dialogue_system import DialogueSystem
@@ -38,7 +38,9 @@ from src.systems.world.weather_system import WeatherSystem
 from src.systems.world.day_night_cycle import DayNightCycle
 from src.systems.world.season_system import SeasonSystem
 from src.systems.world.environmental_effects import EnvironmentalEffects
-from src.systems.visualization.isometric_visualization_system import IsometricVisualizationSystem
+from src.systems.visualization.unified_visualization_system import UnifiedVisualizationSystem
+from src.systems.effects.effect_system import EffectSystem
+from src.systems.world.unified_building_system import UnifiedBuildingSystem
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +169,14 @@ class MasterIntegrator(BaseComponent):
             
             # Создание всех систем
             self._create_all_systems()
+
+            # После создания систем фиксируем ссылку на AttributeSystem,
+            # чтобы далее передавать ее остальным системам при установке архитектурных компонентов
+            if 'attribute_system' in self.systems:
+                try:
+                    self.attribute_system = self.systems['attribute_system']  # type: ignore[assignment]
+                except Exception:
+                    logger.warning("Не удалось установить ссылку на AttributeSystem после создания систем")
             
             # Определение зависимостей
             self._define_system_dependencies()
@@ -293,15 +303,35 @@ class MasterIntegrator(BaseComponent):
     def _create_all_systems(self):
         """Создание всех систем"""
         try:
-            # Создаем только основные системы, которые точно существуют и работают
+            # Создаем все доступные системы
             systems_to_create = {
+                # Основные системы
                 'attribute_system': AttributeSystem(),
                 'content_system': ContentSystem(),
-                'isometric_visualization_system': IsometricVisualizationSystem(),
+                'unified_visualization_system': UnifiedVisualizationSystem(),
                 'rendering_system': RenderingSystem(),
                 'combat_system': CombatSystem(),
                 'skill_system': SkillSystem(),
-                'ui_manager': UIManager()
+                'unified_ui_system': UnifiedUISystem(),
+                
+                # Дополнительные системы
+                'item_system': ItemSystem(),
+                'ai_system': AISystem(),
+                'evolution_system': EvolutionSystem(),
+                'dialogue_system': DialogueSystem(),
+                'quest_system': QuestSystem(),
+                'memory_system': MemorySystem(),
+                'crafting_system': CraftingSystem(),
+                'trading_system': TradingSystem(),
+                'social_system': SocialSystem(),
+                'world_manager': WorldManager(),
+                'navigation_system': NavigationSystem(),
+                'weather_system': WeatherSystem(),
+                'day_night_cycle': DayNightCycle(),
+                'season_system': SeasonSystem(),
+                'environmental_effects': EnvironmentalEffects(),
+                'effect_system': EffectSystem(),
+                'unified_building_system': UnifiedBuildingSystem()
             }
             
             for system_name, system in systems_to_create.items():
@@ -319,13 +349,45 @@ class MasterIntegrator(BaseComponent):
         try:
             # Определяем зависимости между системами
             self.system_dependencies = {
+                # Базовые системы
                 'attribute_system': [],  # Базовая система, не зависит от других
                 'content_system': ['attribute_system'],
-                'isometric_visualization_system': ['content_system'],
-                'rendering_system': ['isometric_visualization_system'],
-                'combat_system': ['attribute_system'],  # Зависит от системы атрибутов
-                'skill_system': ['attribute_system', 'combat_system'],  # Зависит от атрибутов и боя
-                'ui_manager': ['attribute_system', 'rendering_system']  # Зависит от атрибутов и рендеринга
+                'memory_system': ['attribute_system'],
+                'unified_visualization_system': ['content_system'],
+                'rendering_system': ['unified_visualization_system'],
+                
+                # Игровые системы
+                'combat_system': ['attribute_system'],
+                'skill_system': ['attribute_system', 'combat_system'],
+                'item_system': ['attribute_system'],
+                'evolution_system': ['attribute_system', 'memory_system'],
+                'ai_system': ['attribute_system', 'memory_system'],
+                
+                # Социальные системы
+                'dialogue_system': ['memory_system'],
+                'social_system': ['memory_system', 'dialogue_system'],
+                'trading_system': ['item_system', 'social_system'],
+                'quest_system': ['dialogue_system', 'memory_system'],
+                
+                # Системы мира
+                'world_manager': ['content_system'],
+                'navigation_system': ['world_manager'],
+                'weather_system': ['world_manager'],
+                'season_system': ['weather_system'],
+                'day_night_cycle': ['world_manager'],
+                'environmental_effects': ['weather_system', 'season_system'],
+                
+                # Системы крафтинга
+                'crafting_system': ['item_system', 'skill_system'],
+                
+                # Системы эффектов
+                'effect_system': ['attribute_system'],
+                
+                # Системы зданий
+                'unified_building_system': ['world_manager', 'item_system'],
+                
+                # UI системы
+                'unified_ui_system': ['attribute_system', 'rendering_system', 'item_system']
             }
             
             logger.info("Зависимости систем определены")
@@ -433,12 +495,11 @@ class MasterIntegrator(BaseComponent):
                     'description': 'ItemSystem предоставляет модификаторы атрибутов'
                 }
             
-            # Интеграция UIManager с AttributeSystem
-            if 'ui_manager' in self.systems and 'attribute_system' in self.systems:
-                ui_manager = self.systems['ui_manager']
-                self.attribute_integrations['ui_manager'] = {
+            # Интеграция UnifiedUISystem с AttributeSystem
+            if 'unified_ui_system' in self.systems and 'attribute_system' in self.systems:
+                self.attribute_integrations['unified_ui_system'] = {
                     'type': 'direct',
-                    'description': 'UIManager отображает характеристики и модификаторы'
+                    'description': 'UnifiedUISystem отображает характеристики и модификаторы'
                 }
             
             # Интеграция AISystem с AttributeSystem

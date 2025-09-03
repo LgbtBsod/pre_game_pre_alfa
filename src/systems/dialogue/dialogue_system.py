@@ -12,32 +12,11 @@ import json
 import math
 from pathlib import Path
 
-from src.core.architecture import BaseComponent, ComponentType, Priority
+from src.core.architecture import BaseComponent, ComponentType, Priority, LifecycleState
+from src.core.constants import DialogueType, EmotionType
+from src.core.state_manager import StateManager, StateType
 
-# = ТИПЫ ДИАЛОГОВ
-class DialogueType(Enum):
-    """Типы диалогов"""
-    CASUAL = "casual"           # Обычный разговор
-    QUEST = "quest"            # Квестовый диалог
-    TRADE = "trade"            # Торговля
-    COMBAT = "combat"          # Боевой диалог
-    ROMANCE = "romance"        # Романтический диалог
-    THREAT = "threat"          # Угроза
-    PERSUASION = "persuasion"  # Убеждение
-    INTIMIDATION = "intimidation"  # Запугивание
-
-class EmotionType(Enum):
-    """Типы эмоций"""
-    HAPPY = "happy"
-    SAD = "sad"
-    ANGRY = "angry"
-    FEAR = "fear"
-    SURPRISE = "surprise"
-    DISGUST = "disgust"
-    NEUTRAL = "neutral"
-    EXCITED = "excited"
-    CONFUSED = "confused"
-    SUSPICIOUS = "suspicious"
+# = ДОПОЛНИТЕЛЬНЫЕ ТИПЫ ДИАЛОГОВ
 
 class RelationshipType(Enum):
     """Типы отношений"""

@@ -48,6 +48,9 @@ class GameEngine(ShowBase):
         self.event_bus: Optional[EventBus] = None
         self.state_manager: Optional[StateManager] = None
         self.repository_manager: Optional[RepositoryManager] = None
+        # Используем forward reference через Optional[Any], чтобы избежать предупреждений до импорта
+        from typing import Any as _Any
+        self.master_integrator: Optional[_Any] = None
         
         # Адаптеры для существующих систем (только для совместимости)
         self._legacy_adapters = {}
@@ -128,10 +131,28 @@ class GameEngine(ShowBase):
             # Создание RepositoryManager
             self.repository_manager = RepositoryManager()
             logger.info("RepositoryManager создан")
+
+            # Создание MasterIntegrator
+            from .master_integrator import MasterIntegrator  # локальный импорт, чтобы избежать циклов
+            self.master_integrator = MasterIntegrator()
+            logger.info("MasterIntegrator создан")
             
             # Регистрация основных менеджеров как компонентов
             self.component_manager.register_component(self.state_manager)
             self.component_manager.register_component(self.repository_manager)
+            self.component_manager.register_component(self.master_integrator)
+
+            # Передаем архитектурные компоненты в MasterIntegrator до инициализации
+            if self.master_integrator and self.state_manager:
+                try:
+                    self.master_integrator.set_architecture_components(self.state_manager, None)  # type: ignore[arg-type]
+                except Exception:
+                    logger.warning("Не удалось передать архитектурные компоненты в MasterIntegrator до инициализации")
+
+            # Инициализация всех компонентов
+            if not self.component_manager.initialize_all():
+                logger.error("Ошибка инициализации компонентов архитектуры")
+                return False
             
             logger.info("Новая архитектура инициализирована")
             return True
@@ -198,6 +219,11 @@ class GameEngine(ShowBase):
             if not self.component_manager.start_all():
                 logger.error("Ошибка запуска компонентов")
                 return False
+
+            # Запуск MasterIntegrator (инициализация и запуск внутренних систем)
+            if self.master_integrator:
+                # MasterIntegrator уже инициализирован как компонент; убедимся, что он запущен
+                pass
             
             self.running = True
             self.current_state = "running"
@@ -368,8 +394,11 @@ class GameEngine(ShowBase):
             if self.component_manager:
                 self.component_manager.destroy_all()
             
-            # Очистка Panda3D
-            self.cleanup()
+            # Очистка Panda3D (ShowBase имеет собственный cleanup, не вызываем рекурсивно метод класса)
+            try:
+                super().cleanup()
+            except Exception:
+                pass
             
             logger.info("Ресурсы игрового движка очищены")
             

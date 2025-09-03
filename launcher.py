@@ -27,40 +27,41 @@ _configure_console_encoding()
 def load_logging_config():
     """Загрузка конфигурации логирования"""
     try:
-        # В будущем можно загружать из файла конфигурации
-        return {
-            "level": "INFO",
-            "file_level": "DEBUG",
-            "console_level": "INFO",
-            "max_archive_files": 10,
-            "cleanup_on_startup": True,
-            "save_last_session": True,
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            "date_format": "%Y-%m-%d %H:%M:%S",
-            "external_libraries": {
-                "panda3d": "WARNING",
-                "numpy": "WARNING",
-                "PIL": "WARNING"
-            }
-        }
+        # Пытаемся загрузить из файла конфигурации
+        config_path = ROOT_DIR / "config" / "logging_config.json"
+        if config_path.exists():
+            import json
+            with open(config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                print(f"📋 Загружена конфигурация логирования из {config_path}")
+                return config.get("logging", {})
     except Exception as e:
         print(f"⚠️  Ошибка загрузки конфигурации логирования: {e}")
-        # Возвращаем настройки по умолчанию
-        return {
-            "level": "INFO",
-            "file_level": "DEBUG",
-            "console_level": "INFO",
-            "max_archive_files": 10,
-            "cleanup_on_startup": True,
-            "save_last_session": True,
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            "date_format": "%Y-%m-%d %H:%M:%S",
-            "external_libraries": {
-                "panda3d": "WARNING",
-                "numpy": "WARNING",
-                "PIL": "WARNING"
-            }
-        }
+    
+    # Возвращаем настройки по умолчанию
+    return {
+        "level": "INFO",
+        "file_level": "DEBUG",
+        "console_level": "INFO",
+        "max_archive_files": 10,
+        "cleanup_on_startup": True,
+        "save_last_session": True,
+        "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "date_format": "%Y-%m-%d %H:%M:%S",
+        "external_libraries": {
+            "panda3d": "WARNING",
+            "numpy": "WARNING",
+            "PIL": "WARNING",
+            "direct": "WARNING",
+            "panda3d.core": "WARNING"
+        },
+        "suppress_warnings": [
+            "setVerticalSync не поддерживается",
+            "setAntialias не поддерживается",
+            "LODManager недоступен",
+            "OcclusionCuller недоступен"
+        ]
+    }
 
 def cleanup_old_logs(log_dir: Path, archive_dir: Path, config: dict):
     """Очистка старых логов при каждом запуске игры"""
@@ -172,6 +173,19 @@ def setup_logging():
             logging.getLogger(lib_name).setLevel(getattr(logging, level))
         except Exception as e:
             print(f"⚠️  Не удалось установить уровень логирования для {lib_name}: {e}")
+    
+    # Создаем фильтр для подавления определенных предупреждений
+    suppress_warnings = logging_config.get("suppress_warnings", [])
+    if suppress_warnings:
+        class WarningFilter(logging.Filter):
+            def filter(self, record):
+                message = record.getMessage()
+                return not any(warning in message for warning in suppress_warnings)
+        
+        warning_filter = WarningFilter()
+        file_handler.addFilter(warning_filter)
+        console_handler.addFilter(warning_filter)
+        print(f"🔇 Настроена фильтрация {len(suppress_warnings)} типов предупреждений")
     
     # Сохраняем путь к текущему лог-файлу для возможного архивирования
     root_logger.current_log_file = current_log_file

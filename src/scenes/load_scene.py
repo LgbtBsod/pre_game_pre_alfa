@@ -1,372 +1,124 @@
-from ..c or e.scene_manager import Scene
-
-from dataclasses import dataclass, field
-
-from direct.gui.DirectButton import DirectButton
-
-from direct.gui.OnscreenText import OnscreenText
-
-from enum import Enum
-
-from pand a3d.c or e import TextNode
-
-from pathlib import Path
-
-from typing import *
-
-from typing import Dict, Any
+#!/usr/bin/env python3
+"""Load Scene - Сцена загрузки (минимальная рабочая версия)
+"""
 
 import logging
+from typing import Any, List, Optional
 
-import os
+from .scene_manager import Scene
 
-import sys
+logger = logging.getLogger(__name__)
 
-import time
+# Безопасные импорты Panda3D UI
+try:
+    from direct.gui.DirectButton import DirectButton  # type: ignore
+    from direct.gui.OnscreenText import OnscreenText  # type: ignore
+    from panda3d.core import TextNode  # type: ignore
+    PANDA_AVAILABLE = True
+except Exception:
+    PANDA_AVAILABLE = False
+    class OnscreenText:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+    class DirectButton:  # type: ignore
+        def __init__(self, *args, **kwargs):
+            pass
+        def destroy(self):
+            pass
+    class TextNode:  # type: ignore
+        ACenter = 0
+        ALeft = 1
 
-#!/usr / bin / env python3
-"""Load Scene - Сцена загрузки игры на Pand a3D"""import logging
 
-logger= logging.getLogger(__name__)
-class LoadScene(Scene):"""Сцена загрузки игры на Pand a3D"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def __in it__(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-super().__in it__("load_game")
-# UI элементы
-self.title_text= None
-self.back_button= None
-self.load_button= None
-self.delete_button= None
-self.save_lis t= None
-# Данные сохранений
-self.save_files= []
-self.selected_save= None
-logger.in fo("Сцена загрузки Pand a3D создана")
-def initialize(self) -> bool: pass
-    pass
-pass
-pass
-pass
-pass
-pass
-"""Инициализация сцены загрузки"""
-try: except Exception as e: pass
-pass
-pass
-logger.err or(f"Ошибка инициализации сцены загрузки: {e}")
-return False
-def _load_save_files(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Загрузка списка файлов сохранений"""
-# Имитация загрузки сохранений
-self.save_files= [
-{"name": "Save 1", "date": "2024 - 01 - 15 14:30", "level": 5},
-{"name": "Save 2", "date": "2024 - 01 - 14 18:45", "level": 3},
-{"name": "Auto Save", "date": "2024 - 01 - 15 15:20", "level": 4}
-]
-logger.debug(f"Загружено {len(self.save_files)} сохранений")
-def _create_ui_elements(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание UI элементов загрузки"""
-# Используем корневой узел UI сцены
-parent_node= self.ui_root if self.ui_root else None: pass  # Добавлен pass в пустой блок
-# Современный неоновый заголовок
-self.title_text= OnscreenText(
-tex = "💾 LOAD GAME",
-po = (0, 0.8),
-scal = 0.1,
-f = (0, 255, 255, 1),  # Неоновый голубой
-alig = TextNode.ACenter,
-mayChang = False,
-paren = parent_node,
-shado = (0, 0, 0, 0.8),
-shadowOffse = (0.02, 0.02)
-)
-# Список сохранений
-OnscreenText(
-tex = "📁 AVAILABLE SAVES:",
-po = (-0.8, 0.5),
-scal = 0.06,
-f = (255, 100, 255, 1),  # Неоновый розовый
-alig = TextNode.ALeft,
-mayChang = False,
-paren = parent_node,
-shado = (0, 0, 0, 0.6),
-shadowOffse = (0.01, 0.01)
-)
-# Создаем простой список сохранений
-self._create_save_lis t()
-# Кнопки
-self.load_button= DirectButton(
-tex = "🚀 LOAD",
-po = (-0.3, 0, -0.7),
-scal = 0.06,
-comman = self._load_selected_save,
-frameColo = (0, 255, 100, 0.8),  # Неоновый зеленый
-text_f = (255, 255, 255, 1),
-relie = 1,
-paren = parent_node
-)
-self.delete_button= DirectButton(
-tex = "🗑️ DELETE",
-po = (0, 0, -0.7),
-scal = 0.06,
-comman = self._delete_selected_save,
-frameColo = (255, 100, 100, 0.8),  # Неоновый красный
-text_f = (255, 255, 255, 1),
-relie = 1,
-paren = parent_node
-)
-self.back_button= DirectButton(
-tex = "⬅️ BACK",
-po = (0.3, 0, -0.7),
-scal = 0.06,
-comman = self._go_back,
-frameColo = (100, 100, 255, 0.8),  # Неоновый синий
-text_f = (255, 255, 255, 1),
-relie = 1,
-paren = parent_node
-)
-logger.debug("UI элементы загрузки созданы")
-def _create_save_lis t(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Создание списка сохранений"""
-# Используем корневой узел UI сцены
-parent_node= self.ui_root if self.ui_root else None: pass  # Добавлен pass в пустой блок
-# Простая реализация списка сохранений
-y_pos= 0.3
-for i, savein enumerate(self.save_files):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-save_text= OnscreenText(
-tex = f"💾 {save['name']} - Level {save['level']} ({save['date']})",
-po = (-0.8, y_pos),
-scal = 0.045,
-f = (255, 255, 100, 1),  # Неоновый желтый
-alig = TextNode.ALeft,
-mayChang = False,
-paren = parent_node,
-shado = (0, 0, 0, 0.5),
-shadowOffse = (0.01, 0.01)
-)
-# Создаем невидимую кнопку для выбора
-save_button= DirectButton(
-tex = "",
-po = (-0.8, 0, y_pos),
-scal = (2.0, 1.0, 0.05),
-comman = self._select_save,
-extraArg = [i],
-frameColo = (0, 0, 0, 0),
-relie = 0,
-paren = parent_node
-)
-y_pos = 0.1
-logger.debug("Список сохранений создан")
-def _select_save(self, save_in dex):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Выбор сохранения"""
-if 0 <= save_in dex < len(self.save_files):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-self.selected_save= save_in dex
-logger.in fo(f"Выбрано сохранение: {self.save_files[save_in dex]['name']}")
-def _load_selected_save(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Загрузка выбранного сохранения"""
-if self.selected_saveis not None: save_name= self.save_files[self.selected_save]['name']
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo(f"Загрузка сохранения: {save_name}")
-# Здесь будет логика загрузки сохранения
-if self.scene_manager: self.scene_manager.switch_to_scene("game", "fade")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-else: logger.warning("Не выбрано сохранение для загрузки")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def _delete_selected_save(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Удаление выбранного сохранения"""
-if self.selected_saveis not None: save_name= self.save_files[self.selected_save]['name']
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo(f"Удаление сохранения: {save_name}")
-# Здесь будет логика удаления сохранения
-# self.save_files.pop(self.selected_save)
-# self.selected_save= None
-else: logger.warning("Не выбрано сохранение для удаления")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-def _go_back(self):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Возврат назад"""
-if self.scene_manager: self.scene_manager.switch_to_scene("menu", "fade")
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Возврат в главное меню")
-def update(self, delta_time: float):
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-"""Обновление сцены загрузки"""# Анимация UI элементов
-pass
-def render(self, render_node):"""Отрисовка сцены загрузки"""# Pand a3D автоматически отрисовывает UI
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-def hand le_event(self, event):"""Обработка событий"""# Pand a3D автоматически обрабатывает события UI
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-pass
-def cleanup(self):"""Очистка сцены загрузки"""
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Очистка сцены загрузки Pand a3D...")
-# Уничтожение UI элементов
-if self.title_text: self.title_text.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.load_button: self.load_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.delete_button: self.delete_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-if self.back_button: self.back_button.destroy()
-    pass
-pass
-pass
-pass
-pass
-pass
-pass
-logger.in fo("Сцена загрузки Pand a3D очищена")
+class LoadScene(Scene):
+    """Сцена загрузки сохранений"""
+
+    def __init__(self) -> None:
+        super().__init__("load_game")
+        self.title_text: Optional[OnscreenText] = None
+        self.load_button: Optional[DirectButton] = None
+        self.delete_button: Optional[DirectButton] = None
+        self.back_button: Optional[DirectButton] = None
+        self.save_labels: List[OnscreenText] = []
+        self.selected_index: Optional[int] = None
+        self.save_files: List[dict] = []
+
+    def initialize(self) -> bool:
+        try:
+            logger.info("Инициализация LoadScene...")
+            self._load_save_files()
+            if PANDA_AVAILABLE:
+                self.title_text = OnscreenText(text="Load Game",
+                                               pos=(0.0, 0.8), scale=0.08,
+                                               fg=(1, 1, 1, 1), align=TextNode.ACenter)
+                self._create_save_list()
+                self.load_button = DirectButton(text="Load",
+                                                pos=(-0.3, 0, -0.8), scale=0.06,
+                                                command=self._load_selected)
+                self.delete_button = DirectButton(text="Delete",
+                                                  pos=(0.0, 0, -0.8), scale=0.06,
+                                                  command=self._delete_selected)
+                self.back_button = DirectButton(text="Back",
+                                                pos=(0.3, 0, -0.8), scale=0.06,
+                                                command=self._go_back)
+            self.initialized = True
+            logger.info("LoadScene инициализирована")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка инициализации LoadScene: {e}")
+            return False
+
+    def _load_save_files(self) -> None:
+        # Имитация наличия сохранений
+        self.save_files = [
+            {"name": "Save 1", "date": "2025-09-02 14:30", "level": 5},
+            {"name": "Save 2", "date": "2025-09-01 18:45", "level": 3},
+            {"name": "Auto Save", "date": "2025-09-02 15:20", "level": 4},
+        ]
+
+    def _create_save_list(self) -> None:
+        y = 0.4
+        self.save_labels = []
+        for idx, save in enumerate(self.save_files):
+            label = OnscreenText(text=f"{save['name']} - L{save['level']} ({save['date']})",
+                                 pos=(-0.8, y), scale=0.05,
+                                 fg=(1, 1, 0.7, 1), align=TextNode.ALeft)
+            self.save_labels.append(label)
+            # Простая зона выбора по индексу: в минимальной версии выбираем первый
+            if self.selected_index is None:
+                self.selected_index = 0
+            y -= 0.1
+
+    def _load_selected(self) -> None:
+        if self.selected_index is not None and 0 <= self.selected_index < len(self.save_files):
+            save_name = self.save_files[self.selected_index]["name"]
+            logger.info(f"Загрузка сохранения: {save_name}")
+            if self.scene_manager:
+                self.scene_manager.load_scene("game_world")
+        else:
+            logger.warning("Сохранение не выбрано")
+
+    def _delete_selected(self) -> None:
+        if self.selected_index is not None and 0 <= self.selected_index < len(self.save_files):
+            save_name = self.save_files[self.selected_index]["name"]
+            logger.info(f"Удаление сохранения: {save_name}")
+        else:
+            logger.warning("Сохранение не выбрано для удаления")
+
+    def _go_back(self) -> None:
+        if self.scene_manager:
+            logger.info("Возврат в меню")
+            self.scene_manager.load_scene("main_menu")
+
+    def cleanup(self) -> None:
+        try:
+            for w in [self.title_text, self.load_button, self.delete_button, self.back_button]:
+                if w:
+                    w.destroy()
+            for lbl in self.save_labels:
+                lbl.destroy()
+            self.save_labels = []
+        finally:
+            super().cleanup()

@@ -15,7 +15,7 @@ import threading
 # Пробуем разные способы импорта Panda3D
 try:
     from panda3d.core import *
-    from panda3d.core import NodePath
+    from panda3d.core import NodePath, LODManager, OcclusionCuller, Material, Light, DirectLabel , AmbientLight, DirectionalLight, CardMaker, Texture
 except ImportError:
     try:
         from direct.showbase.ShowBase import ShowBase
@@ -117,12 +117,22 @@ class RenderSettings:
 class RenderSystem(BaseComponent):
     """Система рендеринга с интеграцией Panda3D"""
     
-    def __init__(self):
+    def __init__(self, config=None, ui_manager=None):
+        """Инициализация системы рендеринга"""
         super().__init__(
             component_id="render_system",
             component_type=ComponentType.SYSTEM,
             priority=Priority.CRITICAL
         )
+        
+        # Добавляем состояние игры для предотвращения множественных сцен
+        self.game_state = "menu"  # "menu", "game", "paused"
+        self.game_scene_created = False
+        self.pause_menu_created = False
+        
+        # Добавляем защиту от множественных кликов
+        self.last_click_time = 0
+        self.click_cooldown = 0.05  
         
         # Panda3D компоненты
         self.showbase: Optional[ShowBase] = None
@@ -218,9 +228,25 @@ class RenderSystem(BaseComponent):
                     if hasattr(self.showbase.win, 'setVerticalSync'):
                         self.showbase.win.setVerticalSync(True)
                     else:
-                        logger.warning("setVerticalSync не поддерживается в данной версии Panda3D")
+                        logger.debug("setVerticalSync не поддерживается в данной версии Panda3D")
                 except Exception as vsync_e:
-                    logger.warning(f"Не удалось установить вертикальную синхронизацию: {vsync_e}")
+                    logger.debug(f"Не удалось установить вертикальную синхронизацию: {vsync_e}")
+            
+            # Настройка стабилизации рендеринга для устранения мерцания
+            try:
+                if hasattr(self.showbase, 'setBackgroundColor'):
+                    self.showbase.setBackgroundColor(0.1, 0.1, 0.1)  # Темный фон
+                
+                # Устанавливаем стабильный FPS
+                if hasattr(self.showbase, 'setFrameRateMeter'):
+                    self.showbase.setFrameRateMeter(True)
+                
+                # Настройка сглаживания для устранения мерцания
+                if hasattr(self.showbase.win, 'setAntialias'):
+                    self.showbase.win.setAntialias(True)
+                    
+            except Exception as render_e:
+                logger.debug(f"Не удалось настроить стабилизацию рендеринга: {render_e}")
             
             # Получаем основные компоненты
             self.render = self.showbase.render
@@ -260,7 +286,7 @@ class RenderSystem(BaseComponent):
                 elif hasattr(text, 'setColor'):
                     text.setColor(1, 1, 1, 1)
                 else:
-                    logger.warning("setColor не поддерживается для TextNode в данной версии Panda3D")
+                    logger.debug("setColor не поддерживается для TextNode в данной версии Panda3D")
             except Exception as e:
                 logger.warning(f"Не удалось установить цвет текста: {e}")
             
@@ -543,22 +569,39 @@ class RenderSystem(BaseComponent):
             texture.read(texture_path)
             return texture
         except Exception as e:
-            logger.warning(f"Не удалось загрузить текстуру {texture_path}: {e}")
+            logger.debug(f"Не удалось загрузить текстуру {texture_path}: {e}")
             return None
     
     def _setup_optimization(self) -> bool:
         """Настройка оптимизации рендеринга"""
         try:
             # Импорт оптимизации рендеринга
+            self.lod_manager = None
+            self.occlusion_culler = None
+            
             try:
-                from panda3d.core import LODManager, OcclusionCuller
-                self.lod_manager = LODManager()
-                self.occlusion_culler = OcclusionCuller()
-                logger.info("Оптимизация рендеринга настроена")
-            except ImportError:
-                logger.warning("LODManager недоступен в данной версии Panda3D - оптимизация отключена")
-                self.lod_manager = None
-                self.occlusion_culler = None
+                from panda3d.core import LODManager
+                # Проверяем, что LODManager действительно доступен и работает
+                test_lod = LODManager()
+                if test_lod is not None:
+                    self.lod_manager = test_lod
+                    logger.info("LODManager инициализирован для оптимизации")
+                else:
+                    logger.debug("LODManager недоступен - оптимизация отключена")
+            except (ImportError, AttributeError, Exception) as e:
+                logger.debug(f"LODManager недоступен в данной версии Panda3D: {e}")
+            
+            try:
+                from panda3d.core import OcclusionCuller
+                # Проверяем, что OcclusionCuller доступен
+                test_occlusion = OcclusionCuller()
+                if test_occlusion is not None:
+                    self.occlusion_culler = test_occlusion
+                    logger.info("OcclusionCuller инициализирован для оптимизации")
+                else:
+                    logger.debug("OcclusionCuller недоступен - оптимизация отключена")
+            except (ImportError, AttributeError, Exception) as e:
+                logger.debug(f"OcclusionCuller недоступен в данной версии Panda3D: {e}")
             
             # Настройка качества рендеринга
             self._apply_quality_settings()
@@ -580,9 +623,9 @@ class RenderSystem(BaseComponent):
                     if hasattr(self.showbase.win, 'setAntialias'):
                         self.showbase.win.setAntialias(False)
                     else:
-                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                        logger.debug("setAntialias не поддерживается в данной версии Panda3D")
                 except Exception as e:
-                    logger.warning(f"Не удалось отключить сглаживание: {e}")
+                    logger.debug(f"Не удалось отключить сглаживание: {e}")
                     
                 self.render.setShaderAuto(False)
                 
@@ -592,9 +635,9 @@ class RenderSystem(BaseComponent):
                     if hasattr(self.showbase.win, 'setAntialias'):
                         self.showbase.win.setAntialias(True)
                     else:
-                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                        logger.debug("setAntialias не поддерживается в данной версии Panda3D")
                 except Exception as e:
-                    logger.warning(f"Не удалось включить сглаживание: {e}")
+                    logger.debug(f"Не удалось включить сглаживание: {e}")
                     
                 self.render.setShaderAuto(True)
                 
@@ -604,9 +647,9 @@ class RenderSystem(BaseComponent):
                     if hasattr(self.showbase.win, 'setAntialias'):
                         self.showbase.win.setAntialias(True)
                     else:
-                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                        logger.debug("setAntialias не поддерживается в данной версии Panda3D")
                 except Exception as e:
-                    logger.warning(f"Не удалось включить сглаживание: {e}")
+                    logger.debug(f"Не удалось включить сглаживание: {e}")
                     
                 self.render.setShaderAuto(True)
                 self.render.setTwoSidedLighting(True)
@@ -617,9 +660,9 @@ class RenderSystem(BaseComponent):
                     if hasattr(self.showbase.win, 'setAntialias'):
                         self.showbase.win.setAntialias(True)
                     else:
-                        logger.warning("setAntialias не поддерживается в данной версии Panda3D")
+                        logger.debug("setAntialias не поддерживается в данной версии Panda3D")
                 except Exception as e:
-                    logger.warning(f"Не удалось включить сглаживание: {e}")
+                    logger.debug(f"Не удалось включить сглаживание: {e}")
                     
                 self.render.setShaderAuto(True)
                 self.render.setTwoSidedLighting(True)
@@ -659,10 +702,21 @@ class RenderSystem(BaseComponent):
             from direct.task import Task
             
             def update_task(task):
-                # Вращение куба
-                cube = self.render.find("cube")
-                if cube:
-                    cube.setH(cube.getH() + 1)
+                try:
+                    # Вращение куба
+                    cube = self.render.find("cube")
+                    if cube and not cube.isEmpty():
+                        cube.setH(cube.getH() + 1)
+                    
+                    # Стабилизация FPS для устранения мерцания
+                    if hasattr(self, 'showbase') and hasattr(self.showbase, 'setFrameRateMeter'):
+                        current_fps = self.showbase.getAverageFrameRate()
+                        if current_fps > 0 and current_fps < 30:
+                            logger.debug(f"Низкий FPS: {current_fps}")
+                            
+                except Exception as update_error:
+                    logger.debug(f"Ошибка в задаче обновления: {update_error}")
+                    
                 return Task.cont
             
             self.showbase.taskMgr.add(update_task, "render_update")
@@ -739,60 +793,564 @@ class RenderSystem(BaseComponent):
     def _on_start_game(self):
         """Обработчик нажатия кнопки START GAME"""
         try:
+            # Проверяем задержку между кликами
+            import time
+            current_time = time.time()
+            if current_time - self.last_click_time < self.click_cooldown:
+                logger.debug("⚠️  Слишком быстрый клик, игнорируем")
+                return
+            
+            # Проверяем состояние игры - предотвращаем множественные сцены
+            if self.game_state == "game":
+                logger.info("⚠️  Игра уже запущена, игнорируем повторное нажатие")
+                return
+                
             logger.info("🎮 Кнопка START GAME нажата!")
+            
+            # Обновляем время последнего клика
+            self.last_click_time = current_time
+            
+            # Изменяем состояние игры
+            self.game_state = "game"
             
             # Скрываем стартовое меню
             if hasattr(self, 'start_menu_elements'):
+                hidden_count = 0
                 for element in self.start_menu_elements.values():
                     if hasattr(element, 'hide'):
                         element.hide()
-                        logger.info("✅ Стартовое меню скрыто")
+                        hidden_count += 1
+                if hidden_count > 0:
+                    logger.info(f"✅ Скрыто {hidden_count} элементов стартового меню")
             
             # Здесь можно добавить логику запуска игры
             logger.info("🚀 Запуск игрового процесса...")
             
-            # Создаем простую игровую сцену
-            self._create_game_scene()
+            # Создаем простую игровую сцену только если она еще не создана
+            if not self.game_scene_created:
+                try:
+                    self._create_game_scene()
+                    self.game_scene_created = True
+                    logger.info("✅ Игровая сцена успешно создана")
+                except Exception as scene_error:
+                    logger.error(f"❌ Ошибка создания игровой сцены: {scene_error}")
+                    # Сбрасываем состояние при ошибке
+                    self.game_state = "menu"
+                    self.game_scene_created = False
+                    logger.info("🔄 Состояние игры сброшено в 'menu' из-за ошибки создания сцены")
+            else:
+                logger.info("✅ Игровая сцена уже существует")
             
         except Exception as e:
             logger.error(f"❌ Ошибка при нажатии START GAME: {e}")
+            # Сбрасываем состояние при любой ошибке
+            self.game_state = "menu"
+            self.game_scene_created = False
+            logger.info("🔄 Состояние игры сброшено в 'menu' из-за общей ошибки")
     
     def _on_settings(self):
         """Обработчик нажатия кнопки SETTINGS"""
         try:
+            # Проверяем задержку между кликами
+            import time
+            current_time = time.time()
+            if current_time - self.last_click_time < self.click_cooldown:
+                logger.debug("⚠️  Слишком быстрый клик, игнорируем")
+                return
+            
             logger.info("⚙️  Кнопка SETTINGS нажата!")
             
-            # Здесь можно добавить логику настроек
-            logger.info("🔧 Открытие настроек...")
+            # Обновляем время последнего клика
+            self.last_click_time = current_time
             
-            # Пока что просто выводим сообщение
-            if hasattr(self, 'showbase') and hasattr(self.showbase, 'render2d'):
-                from direct.gui.DirectLabel import DirectLabel
-                
-                settings_label = DirectLabel(
-                    parent=self.showbase.render2d,
-                    text="Настройки пока не реализованы",
-                    scale=0.03,
-                    pos=(0, 0, 0),
-                    text_fg=(1, 1, 1, 1),
-                    text_shadow=(0, 0, 0, 1)
-                )
-                
-                # Убираем через 3 секунды
-                from direct.task import Task
-                def remove_settings_label(task):
-                    settings_label.destroy()
-                    return Task.done
-                
-                self.showbase.taskMgr.doMethodLater(3.0, remove_settings_label, "remove_settings")
+            # Если игра запущена, показываем меню паузы
+            if self.game_state == "game":
+                self._show_pause_menu()
+            else:
+                # Иначе показываем настройки (НЕ игровую сцену!)
+                logger.info("🔧 Открытие настроек...")
+                self._show_settings_menu()
                 
         except Exception as e:
             logger.error(f"❌ Ошибка при нажатии SETTINGS: {e}")
     
+    def _show_pause_menu(self):
+        """Показать меню паузы"""
+        try:
+            if self.pause_menu_created:
+                logger.info("⚠️  Меню паузы уже отображается")
+                return
+                
+            logger.info("⏸️  Отображение меню паузы...")
+            
+            # Скрываем игровую сцену при показе меню паузы
+            self._ensure_game_scene_hidden()
+            
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'render2d'):
+                from direct.gui.DirectFrame import DirectFrame
+                from direct.gui.DirectButton import DirectButton
+                from direct.gui.DirectLabel import DirectLabel
+                
+                # Создаем фон меню паузы
+                pause_frame = DirectFrame(
+                    parent=self.showbase.render2d,
+                    frameColor=(0, 0, 0, 0.8),
+                    frameSize=(-0.5, 0.5, -0.6, 0.6),
+                    pos=(0, 0, 0)
+                )
+                
+                # Заголовок
+                pause_title = DirectLabel(
+                    parent=pause_frame,
+                    text="ПАУЗА",
+                    scale=0.06,
+                    pos=(0, 0, 0.4),
+                    text_fg=(1, 1, 1, 1),
+                    text_shadow=(0, 0, 0, 1)
+                )
+                
+                # Кнопка продолжить
+                resume_button = DirectButton(
+                    parent=pause_frame,
+                    text="Продолжить",
+                    scale=0.04,
+                    pos=(0, 0, 0.2),
+                    command=self._resume_game,
+                    frameColor=(0.2, 0.6, 0.2, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Кнопка настройки
+                settings_button = DirectButton(
+                    parent=pause_frame,
+                    text="Настройки",
+                    scale=0.04,
+                    pos=(0, 0, 0),
+                    command=self._show_settings_menu,
+                    frameColor=(0.2, 0.2, 0.6, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Кнопка выйти в меню
+                menu_button = DirectButton(
+                    parent=pause_frame,
+                    text="В главное меню",
+                    scale=0.04,
+                    pos=(0, 0, -0.2),
+                    command=self._return_to_main_menu,
+                    frameColor=(0.6, 0.2, 0.2, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Сохраняем элементы меню паузы
+                self.pause_menu_elements = {
+                    'frame': pause_frame,
+                    'title': pause_title,
+                    'resume': resume_button,
+                    'settings': settings_button,
+                    'menu': menu_button
+                }
+                
+                self.pause_menu_created = True
+                logger.info("✅ Меню паузы создано")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка создания меню паузы: {e}")
+    
+    def _show_settings_menu(self):
+        """Показать меню настроек"""
+        try:
+            logger.info("🔧 Открытие настроек...")
+            
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'render2d'):
+                from direct.gui.DirectFrame import DirectFrame
+                from direct.gui.DirectButton import DirectButton
+                from direct.gui.DirectLabel import DirectLabel
+                
+                # Создаем фон меню настроек
+                settings_frame = DirectFrame(
+                    parent=self.showbase.render2d,
+                    frameColor=(0, 0, 0, 0.9),
+                    frameSize=(-0.6, 0.6, -0.7, 0.7),
+                    pos=(0, 0, 0)
+                )
+                
+                # Заголовок настроек
+                settings_title = DirectLabel(
+                    parent=settings_frame,
+                    text="НАСТРОЙКИ",
+                    scale=0.06,
+                    pos=(0, 0, 0.5),
+                    text_fg=(1, 1, 0, 1),  # Яркий желтый
+                    text_shadow=(0, 0, 0, 1)
+                )
+                
+                # Кнопка качества графики
+                graphics_button = DirectButton(
+                    parent=settings_frame,
+                    text="Качество графики: СРЕДНЕЕ",
+                    scale=0.04,
+                    pos=(0, 0, 0.3),
+                    command=self._toggle_graphics_quality,
+                    frameColor=(0.3, 0.3, 0.6, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Кнопка звука
+                sound_button = DirectButton(
+                    parent=settings_frame,
+                    text="Звук: ВКЛ",
+                    scale=0.04,
+                    pos=(0, 0, 0.1),
+                    command=self._toggle_sound,
+                    frameColor=(0.3, 0.6, 0.3, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Кнопка управления
+                controls_button = DirectButton(
+                    parent=settings_frame,
+                    text="Управление",
+                    scale=0.04,
+                    pos=(0, 0, -0.1),
+                    command=self._show_controls_info,
+                    frameColor=(0.6, 0.3, 0.3, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Кнопка возврата
+                back_button = DirectButton(
+                    parent=settings_frame,
+                    text="НАЗАД",
+                    scale=0.04,
+                    pos=(0, 0, -0.3),
+                    command=self._close_settings_menu,
+                    frameColor=(0.6, 0.2, 0.2, 1),
+                    text_fg=(1, 1, 1, 1)
+                )
+                
+                # Сохраняем элементы меню настроек
+                self.settings_menu_elements = {
+                    'frame': settings_frame,
+                    'title': settings_title,
+                    'graphics': graphics_button,
+                    'sound': sound_button,
+                    'controls': controls_button,
+                    'back': back_button
+                }
+                
+                logger.info("✅ Меню настроек создано")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка при показе настроек: {e}")
+    
+    def _resume_game(self):
+        """Продолжить игру"""
+        try:
+            logger.info("▶️  Продолжение игры...")
+            
+            # Скрываем меню паузы
+            if hasattr(self, 'pause_menu_elements'):
+                for element in self.pause_menu_elements.values():
+                    if hasattr(element, 'hide'):
+                        element.hide()
+                self.pause_menu_created = False
+                logger.info("✅ Меню паузы скрыто")
+            
+            # Показываем игровую сцену при продолжении игры
+            self._ensure_game_scene_visible()
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка при продолжении игры: {e}")
+    
+    def _return_to_main_menu(self):
+        """Вернуться в главное меню"""
+        try:
+            logger.info("🏠 Возврат в главное меню...")
+            
+            # Скрываем меню паузы
+            if hasattr(self, 'pause_menu_elements'):
+                for element in self.pause_menu_elements.values():
+                    if hasattr(element, 'destroy'):
+                        element.destroy()
+                self.pause_menu_created = False
+            
+            # Скрываем игровую сцену
+            if hasattr(self, 'game_scene_elements'):
+                for element in self.game_scene_elements.values():
+                    if hasattr(element, 'destroy'):
+                        element.destroy()
+                self.game_scene_created = False
+            
+            # Очищаем задачи анимации
+            if hasattr(self, 'game_animation_tasks'):
+                for task_name in self.game_animation_tasks:
+                    if hasattr(self, 'showbase') and hasattr(self.showbase, 'taskMgr'):
+                        self.showbase.taskMgr.remove(task_name)
+                logger.info("✅ Задачи анимации очищены")
+            
+            # Очищаем управление камерой
+            self._cleanup_camera_controls()
+            
+            # Показываем стартовое меню
+            if hasattr(self, 'start_menu_elements'):
+                for element in self.start_menu_elements.values():
+                    if hasattr(element, 'show'):
+                        element.show()
+            
+            # Возвращаемся в состояние меню
+            self.game_state = "menu"
+            self.game_scene_created = False
+            logger.info("✅ Возврат в главное меню выполнен")
+            
+        except Exception as e:
+            logger.error(f"❌ Ошибка при возврате в главное меню: {e}")
+    
+    def _setup_keyboard_controls(self):
+        """Настройка клавиатурного управления"""
+        try:
+            logger.info("⌨️  Настройка клавиатурного управления...")
+            
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'accept'):
+                # Клавиша ESC для паузы/меню
+                self.showbase.accept('escape', self._handle_escape_key)
+                logger.info("✅ Клавиша ESC настроена для паузы")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка настройки клавиатуры: {e}")
+    
+    def _handle_escape_key(self):
+        """Обработка нажатия клавиши ESC"""
+        try:
+            if self.game_state == "game":
+                if not self.pause_menu_created:
+                    logger.info("⏸️  ESC нажата - показываем меню паузы")
+                    self._show_pause_menu()
+                else:
+                    logger.info("▶️  ESC нажата - скрываем меню паузы")
+                    self._resume_game()
+            elif self.game_state == "menu":
+                logger.info("⚠️  ESC нажата в главном меню - игнорируем")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка обработки клавиши ESC: {e}")
+    
+    def _ensure_game_scene_hidden(self):
+        """Убедиться, что игровая сцена скрыта в меню"""
+        try:
+            if hasattr(self, 'game_scene_elements') and self.game_scene_elements:
+                for element in self.game_scene_elements.values():
+                    try:
+                        if hasattr(element, 'hide') and element and not element.isEmpty():
+                            element.hide()
+                        elif hasattr(element, 'stash') and element and not element.isEmpty():
+                            element.stash()
+                    except Exception as element_error:
+                        logger.debug(f"Не удалось скрыть элемент: {element_error}")
+                logger.info("✅ Игровая сцена скрыта")
+        except Exception as e:
+            logger.error(f"❌ Ошибка скрытия игровой сцены: {e}")
+    
+    def _ensure_game_scene_visible(self):
+        """Убедиться, что игровая сцена видима в игре"""
+        try:
+            if hasattr(self, 'game_scene_elements') and self.game_scene_elements:
+                for element in self.game_scene_elements.values():
+                    try:
+                        if hasattr(element, 'show') and element and not element.isEmpty():
+                            element.show()
+                        elif hasattr(element, 'unstash') and element and not element.isEmpty():
+                            element.unstash()
+                    except Exception as element_error:
+                        logger.debug(f"Не удалось показать элемент: {element_error}")
+                logger.info("✅ Игровая сцена показана")
+        except Exception as e:
+            logger.error(f"❌ Ошибка показа игровой сцены: {e}")
+    
+    def _setup_camera_controls(self):
+        """Настройка простого управления камерой"""
+        try:
+            logger.info("📷 Настройка управления камерой...")
+            
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'accept'):
+                # Клавиши WASD для перемещения камеры
+                self.showbase.accept('w', self._move_camera_forward)
+                self.showbase.accept('s', self._move_camera_backward)
+                self.showbase.accept('a', self._move_camera_left)
+                self.showbase.accept('d', self._move_camera_right)
+                self.showbase.accept('q', self._move_camera_up)
+                self.showbase.accept('e', self._move_camera_down)
+                
+                # Клавиши стрелок для поворота камеры
+                self.showbase.accept('arrow_up', self._rotate_camera_up)
+                self.showbase.accept('arrow_down', self._rotate_camera_down)
+                self.showbase.accept('arrow_left', self._rotate_camera_left)
+                self.showbase.accept('arrow_right', self._rotate_camera_right)
+                
+                logger.info("✅ Управление камерой настроено (WASD + стрелки)")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка настройки управления камерой: {e}")
+    
+    def _move_camera_forward(self):
+        """Движение камеры вперед"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setY(self.showbase.camera, -0.5)
+    
+    def _move_camera_backward(self):
+        """Движение камеры назад"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setY(self.showbase.camera, 0.5)
+    
+    def _move_camera_left(self):
+        """Движение камеры влево"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setX(self.showbase.camera, -0.5)
+    
+    def _move_camera_right(self):
+        """Движение камеры вправо"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setX(self.showbase.camera, 0.5)
+    
+    def _move_camera_up(self):
+        """Движение камеры вверх"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setZ(self.showbase.camera, 0.5)
+    
+    def _move_camera_down(self):
+        """Движение камеры вниз"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setZ(self.showbase.camera, -0.5)
+    
+    def _rotate_camera_up(self):
+        """Поворот камеры вверх"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setP(self.showbase.camera.getP() - 5)
+    
+    def _rotate_camera_down(self):
+        """Поворот камеры вниз"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setP(self.showbase.camera.getP() + 5)
+    
+    def _rotate_camera_left(self):
+        """Поворот камеры влево"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setH(self.showbase.camera.getH() - 5)
+    
+    def _rotate_camera_right(self):
+        """Поворот камеры вправо"""
+        if hasattr(self, 'showbase') and hasattr(self.showbase, 'camera'):
+            self.showbase.camera.setH(self.showbase.camera.getH() + 5)
+    
+    def _cleanup_camera_controls(self):
+        """Очистка управления камерой"""
+        try:
+            logger.info("📷 Очистка управления камерой...")
+            
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'ignore'):
+                # Отключаем все клавиши управления камерой
+                camera_keys = ['w', 's', 'a', 'd', 'q', 'e', 
+                              'arrow_up', 'arrow_down', 'arrow_left', 'arrow_right']
+                
+                for key in camera_keys:
+                    self.showbase.ignore(key)
+                
+                logger.info("✅ Управление камерой очищено")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка очистки управления камерой: {e}")
+    
+    def _toggle_graphics_quality(self):
+        """Переключение качества графики"""
+        try:
+            current_quality = self.render_settings.quality
+            if current_quality == RenderQuality.LOW:
+                self.set_render_quality(RenderQuality.MEDIUM)
+            elif current_quality == RenderQuality.MEDIUM:
+                self.set_render_quality(RenderQuality.HIGH)
+            elif current_quality == RenderQuality.HIGH:
+                self.set_render_quality(RenderQuality.ULTRA)
+            else:
+                self.set_render_quality(RenderQuality.LOW)
+            
+            # Обновляем текст кнопки
+            if hasattr(self, 'settings_menu_elements') and 'graphics' in self.settings_menu_elements:
+                button = self.settings_menu_elements['graphics']
+                button['text'] = f"Качество графики: {self.render_settings.quality.value.upper()}"
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка переключения качества графики: {e}")
+    
+    def _toggle_sound(self):
+        """Переключение звука"""
+        try:
+            if not hasattr(self, 'sound_enabled'):
+                self.sound_enabled = True
+            
+            self.sound_enabled = not self.sound_enabled
+            
+            # Обновляем текст кнопки
+            if hasattr(self, 'settings_menu_elements') and 'sound' in self.settings_menu_elements:
+                button = self.settings_menu_elements['sound']
+                button['text'] = f"Звук: {'ВКЛ' if self.sound_enabled else 'ВЫКЛ'}"
+                
+            logger.info(f"🔊 Звук {'включен' if self.sound_enabled else 'выключен'}")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка переключения звука: {e}")
+    
+    def _show_controls_info(self):
+        """Показать информацию об управлении"""
+        try:
+            if hasattr(self, 'showbase') and hasattr(self.showbase, 'render2d'):
+                from direct.gui.DirectLabel import DirectLabel
+                
+                controls_info = DirectLabel(
+                    parent=self.showbase.render2d,
+                    text="Управление:\nWASD - движение камеры\nСтрелки - поворот камеры\nESC - пауза/меню\nМышь - выбор в меню",
+                    scale=0.03,
+                    pos=(0, 0, 0),
+                    text_fg=(1, 1, 0, 1),  # Яркий желтый
+                    text_shadow=(0, 0, 0, 1)
+                )
+                
+                # Убираем через 5 секунд
+                from direct.task import Task
+                def remove_controls_info(task):
+                    controls_info.destroy()
+                    return Task.done
+                
+                self.showbase.taskMgr.doMethodLater(5.0, remove_controls_info, "remove_controls_info")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка показа информации об управлении: {e}")
+    
+    def _close_settings_menu(self):
+        """Закрыть меню настроек"""
+        try:
+            if hasattr(self, 'settings_menu_elements'):
+                for element in self.settings_menu_elements.values():
+                    if hasattr(element, 'destroy'):
+                        element.destroy()
+                logger.info("✅ Меню настроек закрыто")
+                
+        except Exception as e:
+            logger.error(f"❌ Ошибка закрытия меню настроек: {e}")
+    
     def _on_quit_game(self):
         """Обработчик нажатия кнопки QUIT GAME"""
         try:
+            # Проверяем задержку между кликами
+            import time
+            current_time = time.time()
+            if current_time - self.last_click_time < self.click_cooldown:
+                logger.debug("⚠️  Слишком быстрый клик, игнорируем")
+                return
+            
             logger.info("🚪 Кнопка QUIT GAME нажата!")
+            
+            # Обновляем время последнего клика
+            self.last_click_time = current_time
             
             # Завершаем игру
             logger.info("🛑 Завершение игры...")
@@ -809,30 +1367,255 @@ class RenderSystem(BaseComponent):
             logger.info("🎨 Создание игровой сцены...")
             
             if hasattr(self, 'showbase'):
-                # Создаем простую 3D сцену
-                from panda3d.core import GeomNode, NodePath
+                # Скрываем стартовое меню
+                if hasattr(self, 'start_menu_elements'):
+                    hidden_count = 0
+                    for element in self.start_menu_elements.values():
+                        if hasattr(element, 'hide'):
+                            element.hide()
+                            hidden_count += 1
+                    if hidden_count > 0:
+                        logger.info(f"✅ Скрыто {hidden_count} элементов стартового меню")
                 
-                # Создаем тестовый куб
-                test_node = GeomNode("game_cube")
+                # Создаем простую 3D сцену
+                from panda3d.core import GeomNode, NodePath, TextNode, PandaNode
+                
+                # Очищаем предыдущую сцену если она существует
+                if hasattr(self, 'game_scene_elements') and self.game_scene_elements:
+                    for element in self.game_scene_elements.values():
+                        if hasattr(element, 'destroy'):
+                            element.destroy()
+                        elif hasattr(element, 'removeNode'):
+                            element.removeNode()
+                    logger.info("✅ Предыдущая игровая сцена очищена")
+                
+                # Очищаем предыдущие задачи анимации
+                if hasattr(self, 'game_animation_tasks'):
+                    for task_name in self.game_animation_tasks:
+                        if hasattr(self, 'showbase') and hasattr(self.showbase, 'taskMgr'):
+                            self.showbase.taskMgr.remove(task_name)
+                    logger.info("✅ Предыдущие задачи анимации очищены")
+                
+                # Очищаем предыдущее управление камерой
+                self._cleanup_camera_controls()
+                
+                # Создаем тестовый куб для персонажа
+                test_node = GeomNode("player_cube")
                 test_np = self.showbase.render.attachNewNode(test_node)
                 test_np.setPos(0, 5, 0)
                 
-                # Добавляем текст "ИГРА ЗАПУЩЕНА"
+                # Добавляем простую анимацию вращения
+                from direct.task import Task
+                def rotate_cube(task):
+                    test_np.setH(test_np.getH() + 1)
+                    return Task.cont
+                
+                self.showbase.taskMgr.add(rotate_cube, "rotate_cube")
+                logger.info("✅ Персонаж (куб) создан с анимацией")
+                
+                # Создаем простую землю
+                from panda3d.core import CardMaker
+                ground_maker = CardMaker("ground")
+                ground_maker.setFrame(-10, 10, -10, 10)
+                ground_np = self.showbase.render.attachNewNode(ground_maker.generate())
+                ground_np.setP(-90)  # Поворачиваем горизонтально
+                ground_np.setZ(-2)   # Размещаем ниже куба
+                ground_np.setColor(0.3, 0.5, 0.3, 1)  # Зеленый цвет
+                logger.info("✅ Земля создана")
+                
+                # Сохраняем элементы игровой сцены для возможного удаления
+                self.game_scene_elements = {
+                    'player_cube': test_np,
+                    'ground': ground_np
+                }
+                
+                # Сохраняем задачи анимации для очистки
+                self.game_animation_tasks = ['rotate_cube']
+                
+                # Создаем HUD/UI элементы
+                logger.info("🎮 Создание HUD/UI...")
+                
+                # Загружаем шрифт для HUD
+                hud_font = None
+                try:
+                    from panda3d.core import DynamicTextFont
+                    font_path = "assets/fonts/dotf1.ttf"
+                    
+                    # Проверяем существование файла шрифта
+                    if Path(font_path).exists():
+                        hud_font = DynamicTextFont(font_path)
+                        logger.info("✅ Шрифт для HUD загружен")
+                    else:
+                        logger.warning(f"⚠️  Файл шрифта не найден: {font_path}")
+                        
+                except ImportError:
+                    logger.warning("⚠️  DynamicTextFont недоступен в данной версии Panda3D")
+                except Exception as e:
+                    logger.warning(f"⚠️  Не удалось загрузить шрифт для HUD: {e}")
+                
+                # Создаем панель HUD
+                from direct.gui.DirectFrame import DirectFrame
+                hud_panel = DirectFrame(
+                    parent=self.showbase.render2d,
+                    frameColor=(0.1, 0.1, 0.1, 0.7),
+                    frameSize=(-0.4, 0.4, -0.1, 0.1),
+                    pos=(0, 0, -0.8)
+                )
+                logger.info("✅ Панель HUD создана")
+                
+                # Создаем элементы HUD
                 from direct.gui.DirectLabel import DirectLabel
                 
-                game_label = DirectLabel(
-                    parent=self.showbase.render2d,
-                    text="ИГРА ЗАПУЩЕНА!",
-                    scale=0.05,
-                    pos=(0, 0, 0.3),
-                    text_fg=(0, 1, 0, 1),
+                # Здоровье
+                health_label = DirectLabel(
+                    parent=hud_panel,
+                    text="HP: 100/100",
+                    scale=0.03,
+                    pos=(-0.3, 0, 0),
+                    text_fg=(1, 0.2, 0.2, 1),  # Яркий красный цвет для здоровья
                     text_shadow=(0, 0, 0, 1)
                 )
+                # Применяем шрифт через правильный метод
+                if hud_font:
+                    try:
+                        health_label.configure(font=hud_font)
+                    except Exception as font_e:
+                        logger.debug(f"Не удалось применить шрифт к health_label: {font_e}")
+                logger.info("✅ Индикатор здоровья создан")
                 
-                logger.info("✅ Игровая сцена создана")
+                # Мана
+                mana_label = DirectLabel(
+                    parent=hud_panel,
+                    text="MP: 50/50",
+                    scale=0.03,
+                    pos=(-0.1, 0, 0),
+                    text_fg=(0.2, 0.2, 1, 1),  # Яркий синий цвет для маны
+                    text_shadow=(0, 0, 0, 1)
+                )
+                # Применяем шрифт через правильный метод
+                if hud_font:
+                    try:
+                        mana_label.configure(font=hud_font)
+                    except Exception as font_e:
+                        logger.debug(f"Не удалось применить шрифт к mana_label: {font_e}")
+                logger.info("✅ Индикатор маны создан")
+                
+                # Уровень
+                level_label = DirectLabel(
+                    parent=hud_panel,
+                    text="LVL: 1",
+                    scale=0.03,
+                    pos=(0.1, 0, 0),
+                    text_fg=(1, 1, 0.2, 1),  # Яркий желтый цвет для уровня
+                    text_shadow=(0, 0, 0, 1)
+                )
+                # Применяем шрифт через правильный метод
+                if hud_font:
+                    try:
+                        level_label.configure(font=hud_font)
+                    except Exception as font_e:
+                        logger.debug(f"Не удалось применить шрифт к level_label: {font_e}")
+                logger.info("✅ Индикатор уровня создан")
+                
+                # Опыт
+                exp_label = DirectLabel(
+                    parent=hud_panel,
+                    text="EXP: 0/100",
+                    scale=0.03,
+                    pos=(0.3, 0, 0),
+                    text_fg=(0.2, 1, 0.2, 1),  # Яркий зеленый цвет для опыта
+                    text_shadow=(0, 0, 0, 1)
+                )
+                # Применяем шрифт через правильный метод
+                if hud_font:
+                    try:
+                        exp_label.configure(font=hud_font)
+                    except Exception as font_e:
+                        logger.debug(f"Не удалось применить шрифт к exp_label: {font_e}")
+                logger.info("✅ Индикатор опыта создан")
+                
+                # Сообщение о начале игры
+                game_start_label = DirectLabel(
+                    parent=self.showbase.render2d,
+                    text="ИГРА ЗАПУЩЕНА! Добро пожаловать в AI EVOLVE!",
+                    scale=0.04,
+                    pos=(0, 0, 0.3),
+                    text_fg=(0, 1, 0.5, 1),  # Яркий зеленый с оттенком
+                    text_shadow=(0, 0, 0, 1)
+                )
+                # Применяем шрифт через правильный метод
+                if hud_font:
+                    try:
+                        game_start_label.configure(font=hud_font)
+                    except Exception as font_e:
+                        logger.debug(f"Не удалось применить шрифт к game_start_label: {font_e}")
+                logger.info("✅ Сообщение о начале игры создано")
+                
+                # Инструкции по управлению
+                controls_label = DirectLabel(
+                    parent=self.showbase.render2d,
+                    text="Управление: WASD - движение, стрелки - поворот, ESC - пауза",
+                    scale=0.025,
+                    pos=(0, 0, 0.2),
+                    text_fg=(1, 1, 0.8, 1),  # Яркий белый с оттенком желтого
+                    text_shadow=(0, 0, 0, 1)
+                )
+                # Применяем шрифт через правильный метод
+                if hud_font:
+                    try:
+                        controls_label.configure(font=hud_font)
+                    except Exception as font_e:
+                        logger.debug(f"Не удалось применить шрифт к controls_label: {font_e}")
+                logger.info("✅ Инструкции по управлению созданы")
+                
+                # Добавляем HUD элементы в хранилище
+                self.game_scene_elements.update({
+                    'hud_panel': hud_panel,
+                    'health_label': health_label,
+                    'mana_label': mana_label,
+                    'level_label': level_label,
+                    'exp_label': exp_label,
+                    'game_start_label': game_start_label,
+                    'controls_label': controls_label
+                })
+                
+                # Убираем сообщение через 5 секунд
+                from direct.task import Task
+                def remove_game_start_label(task):
+                    game_start_label.destroy()
+                    return Task.done
+                
+                self.showbase.taskMgr.doMethodLater(5.0, remove_game_start_label, "remove_game_start")
+                
+                # Сохраняем ссылки на HUD элементы
+                self.hud_elements = {
+                    'panel': hud_panel,
+                    'health': health_label,
+                    'mana': mana_label,
+                    'level': level_label,
+                    'exp': exp_label
+                }
+                
+                logger.info("✅ Игровая сцена создана успешно")
+                
+                # Убеждаемся, что игровая сцена видима
+                self._ensure_game_scene_visible()
+                
+                # Добавляем простые элементы управления камерой
+                self._setup_camera_controls()
+                
+            else:
+                logger.error("❌ ShowBase недоступен")
                 
         except Exception as e:
             logger.error(f"❌ Ошибка создания игровой сцены: {e}")
+            import traceback
+            logger.error(f"Детали ошибки: {traceback.format_exc()}")
+            
+            # Сбрасываем состояние игры при ошибке
+            self.game_state = "menu"
+            self.game_scene_created = False
+            logger.info("🔄 Состояние игры сброшено в 'menu' из-за ошибки")
     
     def _create_simple_start_menu(self):
         """Создание простого стартового меню"""
@@ -841,6 +1624,16 @@ class RenderSystem(BaseComponent):
             logger.info("🎮 СОЗДАНИЕ ПРОСТОГО СТАРТОВОГО МЕНЮ")
             logger.info("=" * 50)
             
+            # Проверяем кодировку для корректного отображения символов
+            import sys
+            if sys.platform == "win32":
+                try:
+                    import locale
+                    locale.setlocale(locale.LC_ALL, 'Russian_Russia.1251')
+                    logger.info("✅ Кодировка для Windows установлена")
+                except Exception as locale_e:
+                    logger.debug(f"Не удалось установить кодировку: {locale_e}")
+            
             logger.info("Начинаем создание простого стартового меню...")
             
             # Импортируем необходимые компоненты
@@ -848,6 +1641,7 @@ class RenderSystem(BaseComponent):
                 from direct.gui.DirectFrame import DirectFrame
                 from direct.gui.DirectButton import DirectButton
                 from direct.gui.DirectLabel import DirectLabel
+                from direct.task import Task
                 logger.info("✅ Импорт DirectGUI компонентов успешен")
             except ImportError as e:
                 logger.error(f"❌ Ошибка импорта DirectGUI: {e}")
@@ -879,65 +1673,55 @@ class RenderSystem(BaseComponent):
                 logger.error(f"❌ Ошибка привязки панели к render2d: {e}")
                 return False
             
-            # Создаем заголовок
-            try:
-                title_label = DirectLabel(
-                    parent=menu_frame,
-                    text="AI EVOLVE",
-                    scale=0.05,
-                    pos=(0, 0, 0.25),
-                    text_fg=(1, 1, 1, 1),
-                    text_shadow=(0, 0, 0, 1)
-                )
-                logger.info("✅ Заголовок создан")
-            except Exception as e:
-                logger.error(f"❌ Ошибка создания заголовка: {e}")
-                return False
+                            # Создаем заголовок
+                try:
+                    title_label = DirectLabel(
+                        parent=menu_frame,
+                        text="AI EVOLVE",
+                        scale=0.05,
+                        pos=(0, 0, 0.25),
+                        text_fg=(0, 1, 1, 1),  # Яркий голубой
+                        text_shadow=(0, 0, 0, 1)
+                    )
+                    logger.info("✅ Заголовок создан")
+                except Exception as e:
+                    logger.error(f"❌ Ошибка создания заголовка: {e}")
+                    return False
             
-            # СОЗДАЕМ МАКСИМАЛЬНО ПРОСТЫЕ КНОПКИ
-            logger.info("🔧 Создание максимально простых кнопок...")
+            # СОЗДАЕМ МЕНЮ С АЛЬТЕРНАТИВНОЙ ОБРАБОТКОЙ СОБЫТИЙ
+            logger.info("🔧 Создание меню с альтернативной обработкой событий...")
             
             try:
-                # Простая функция для тестирования
-                def simple_test_click():
-                    logger.info("🎯 ПРОСТАЯ КНОПКА НАЖАТА!")
-                    print("🎯 КНОПКА РАБОТАЕТ!")
-                
-                # Кнопка START GAME - максимально простая
+                # Создаем простые кнопки без обработчиков
                 start_button = DirectButton(
                     parent=menu_frame,
                     text="START GAME",
                     scale=0.04,
                     pos=(0, 0, 0.1),
-                    frameColor=(0.3, 0.6, 0.3, 1),
-                    text_fg=(1, 1, 1, 1),
-                    command=simple_test_click,  # Используем простую функцию
+                    frameColor=(0.2, 0.8, 0.2, 1),  # Яркий зеленый
+                    text_fg=(0, 0, 0, 1),  # Черный текст для контраста
                     relief=1
                 )
                 logger.info("✅ Кнопка START GAME создана")
                 
-                # Кнопка SETTINGS - максимально простая
                 settings_button = DirectButton(
                     parent=menu_frame,
                     text="SETTINGS",
                     scale=0.04,
                     pos=(0, 0, 0),
-                    frameColor=(0.3, 0.3, 0.6, 1),
-                    text_fg=(1, 1, 1, 1),
-                    command=simple_test_click,  # Используем простую функцию
+                    frameColor=(0.2, 0.2, 0.8, 1),  # Яркий синий
+                    text_fg=(1, 1, 1, 1),  # Белый текст
                     relief=1
                 )
                 logger.info("✅ Кнопка SETTINGS создана")
                 
-                # Кнопка QUIT GAME - максимально простая
                 quit_button = DirectButton(
                     parent=menu_frame,
                     text="QUIT GAME",
                     scale=0.04,
                     pos=(0, 0, -0.1),
-                    frameColor=(0.6, 0.3, 0.3, 1),
-                    text_fg=(1, 1, 1, 1),
-                    command=simple_test_click,  # Используем простую функцию
+                    frameColor=(0.8, 0.2, 0.2, 1),  # Яркий красный
+                    text_fg=(1, 1, 1, 1),  # Белый текст
                     relief=1
                 )
                 logger.info("✅ Кнопка QUIT GAME создана")
@@ -945,72 +1729,72 @@ class RenderSystem(BaseComponent):
                 # Сохраняем ссылки на элементы меню
                 self.start_menu_elements = {
                     'frame': menu_frame,
-                    'title': title_label,
+                    'title': 'title_label',
                     'start_button': start_button,
                     'settings_button': settings_button,
                     'quit_button': quit_button
                 }
                 
-                # ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА КНОПОК
-                logger.info("🔍 Проверка функциональности кнопок...")
+                # ДОБАВЛЯЕМ АЛЬТЕРНАТИВНУЮ ОБРАБОТКУ СОБЫТИЙ
+                logger.info("🔧 Добавление альтернативной обработки событий...")
                 
-                # Проверяем, что кнопки действительно имеют обработчики
-                if hasattr(start_button, 'command'):
-                    logger.info("   ✅ START GAME кнопка имеет обработчик")
-                    # Проверяем, что обработчик действительно функция
-                    if callable(start_button.command):
-                        logger.info("   ✅ Обработчик START GAME вызываемый")
-                    else:
-                        logger.warning("   ⚠️  Обработчик START GAME не вызываемый")
-                else:
-                    logger.warning("   ⚠️  START GAME кнопка не имеет обработчика")
+                # Создаем задачу для проверки кликов по кнопкам
+                def check_button_clicks(task):
+                    try:
+                        if hasattr(self, 'showbase') and hasattr(self.showbase, 'mouseWatcherNode'):
+                            mouse_watcher = self.showbase.mouseWatcherNode
+                            if mouse_watcher and mouse_watcher.hasMouse():
+                                # Получаем позицию мыши
+                                if hasattr(mouse_watcher, 'getMouse'):
+                                    mouse_pos = mouse_watcher.getMouse()
+                                    
+                                    # Проверяем клик по START GAME кнопке
+                                    if hasattr(start_button, 'getBounds'):
+                                        bounds = start_button.getBounds()
+                                        if bounds and mouse_pos[0] >= bounds[0] and mouse_pos[0] <= bounds[1] and mouse_pos[1] >= bounds[2] and mouse_pos[1] <= bounds[3]:
+                                            if hasattr(mouse_watcher, 'is_button_down') and mouse_watcher.is_button_down('mouse1'):
+                                                # Проверяем состояние игры перед обработкой клика
+                                                if self.game_state != "game":
+                                                    logger.info("🎯 START GAME кнопка нажата через альтернативную обработку!")
+                                                    print("🎯 START GAME кнопка работает!")
+                                                    try:
+                                                        self._on_start_game()
+                                                    except Exception as click_error:
+                                                        logger.error(f"❌ Ошибка обработки клика START GAME: {click_error}")
+                                                else:
+                                                    logger.debug("⚠️  Игра уже запущена, игнорируем клик по START GAME")
+                                                return Task.cont
+                                    
+                                    # Проверяем клик по SETTINGS кнопке
+                                    if hasattr(settings_button, 'getBounds'):
+                                        bounds = settings_button.getBounds()
+                                        if bounds and mouse_pos[0] >= bounds[0] and mouse_pos[0] <= bounds[1] and mouse_pos[1] >= bounds[2] and mouse_pos[1] <= bounds[3]:
+                                            if hasattr(mouse_watcher, 'is_button_down') and mouse_watcher.is_button_down('mouse1'):
+                                                logger.info("🎯 SETTINGS кнопка нажата через альтернативную обработку!")
+                                                print("🎯 SETTINGS кнопка работает!")
+                                                self._on_settings()
+                                                return Task.cont
+                                    
+                                    # Проверяем клик по QUIT GAME кнопке
+                                    if hasattr(quit_button, 'getBounds'):
+                                        bounds = quit_button.getBounds()
+                                        if bounds and mouse_pos[0] >= bounds[0] and mouse_pos[0] <= bounds[1] and mouse_pos[1] >= bounds[2] and mouse_pos[1] <= bounds[3]:
+                                            if hasattr(mouse_watcher, 'is_button_down') and mouse_watcher.is_button_down('mouse1'):
+                                                logger.info("🎯 QUIT GAME кнопка нажата через альтернативную обработку!")
+                                                print("🎯 QUIT GAME кнопка работает!")
+                                                self._on_quit_game()
+                                                return Task.cont
+                    except Exception as e:
+                        logger.warning(f"⚠️  Ошибка в альтернативной обработке событий: {e}")
+                    
+                    return Task.cont
                 
-                if hasattr(settings_button, 'command'):
-                    logger.info("   ✅ SETTINGS кнопка имеет обработчик")
-                    if callable(settings_button.command):
-                        logger.info("   ✅ Обработчик SETTINGS вызываемый")
-                    else:
-                        logger.warning("   ⚠️  Обработчик SETTINGS не вызываемый")
-                else:
-                    logger.warning("   ⚠️  SETTINGS кнопка не имеет обработчика")
+                # Добавляем задачу проверки кликов
+                self.showbase.taskMgr.add(check_button_clicks, "button_click_checker")
+                logger.info("✅ Задача проверки кликов добавлена")
                 
-                if hasattr(quit_button, 'command'):
-                    logger.info("   ✅ QUIT GAME кнопка имеет обработчик")
-                    if callable(quit_button.command):
-                        logger.info("   ✅ Обработчик QUIT GAME вызываемый")
-                    else:
-                        logger.warning("   ⚠️  Обработчик QUIT GAME не вызываемый")
-                else:
-                    logger.warning("   ⚠️  QUIT GAME кнопка не имеет обработчика")
-                
-                # Проверяем состояние кнопок
-                if hasattr(start_button, 'state'):
-                    logger.info(f"   📊 Состояние START GAME кнопки: {start_button.state()}")
-                if hasattr(settings_button, 'state'):
-                    logger.info(f"   📊 Состояние SETTINGS кнопки: {settings_button.state()}")
-                if hasattr(quit_button, 'state'):
-                    logger.info(f"   📊 Состояние QUIT GAME кнопки: {quit_button.state()}")
-                
-                # Проверяем, что кнопки привязаны к правильному родителю
-                logger.info(f"   🔗 Родитель START GAME кнопки: {start_button.getParent()}")
-                logger.info(f"   🔗 Родитель SETTINGS кнопки: {settings_button.getParent()}")
-                logger.info(f"   🔗 Родитель QUIT GAME кнопки: {quit_button.getParent()}")
-                
-                # Проверяем, что кнопки действительно в render2d
-                if start_button.getParent() == self.showbase.render2d:
-                    logger.info("   ✅ START GAME кнопка в render2d")
-                else:
-                    logger.warning("   ⚠️  START GAME кнопка НЕ в render2d")
-                
-                if settings_button.getParent() == self.showbase.render2d:
-                    logger.info("   ✅ SETTINGS кнопка в render2d")
-                else:
-                    logger.warning("   ⚠️  SETTINGS кнопка НЕ в render2d")
-                
-                if quit_button.getParent() == self.showbase.render2d:
-                    logger.info("   ✅ QUIT GAME кнопка в render2d")
-                else:
-                    logger.warning("   ⚠️  QUIT GAME кнопка НЕ в render2d")
+                # Добавляем обработку клавиши ESC для паузы
+                self._setup_keyboard_controls()
                 
             except Exception as e:
                 logger.error(f"❌ Ошибка создания кнопок: {e}")

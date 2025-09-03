@@ -13,27 +13,43 @@ from src.core.state_manager import StateManager, StateType
 
 logger = logging.getLogger(__name__)
 
-class SceneType(Enum):
-    """Типы сцен"""
-    MAIN_MENU = "main_menu"
-    GAME_WORLD = "game_world"
-    COMBAT = "combat"
-    DIALOGUE = "dialogue"
-    INVENTORY = "inventory"
-    SKILL_TREE = "skill_tree"
-    MAP = "map"
-    SETTINGS = "settings"
-    LOADING = "loading"
-    CREDITS = "credits"
+class Scene:
+    """Базовый класс сцены с единым жизненным циклом"""
+    
+    def __init__(self, scene_id: str):
+        self.scene_id = scene_id
+        self.scene_manager: Optional["SceneManager"] = None
+        self.ui_root = None
+        self.initialized = False
+        self.active = False
+    
+    def attach_manager(self, manager: "SceneManager") -> None:
+        self.scene_manager = manager
+    
+    def initialize(self) -> bool:
+        self.initialized = True
+        return True
+    
+    def start(self) -> bool:
+        if not self.initialized:
+            if not self.initialize():
+                return False
+        self.active = True
+        return True
+    
+    def update(self, delta_time: float) -> None:
+        pass
+    
+    def render(self, render_node: Any) -> None:
+        pass
+    
+    def handle_event(self, event: Any) -> None:
+        pass
+    
+    def cleanup(self) -> None:
+        self.active = False
 
-class SceneState(Enum):
-    """Состояния сцен"""
-    UNLOADED = "unloaded"
-    LOADING = "loading"
-    ACTIVE = "active"
-    PAUSED = "paused"
-    TRANSITIONING = "transitioning"
-    UNLOADING = "unloading"
+"""Используются централизованные перечисления SceneType и SceneState из src.core.constants"""
 
 @dataclass
 class SceneData:
@@ -47,6 +63,7 @@ class SceneData:
     ui_elements: List[str] = field(default_factory=list)
     background_music: Optional[str] = None
     ambient_sounds: List[str] = field(default_factory=list)
+    instance: Optional["Scene"] = None
 
 @dataclass
 class SceneTransition:
@@ -72,6 +89,7 @@ class SceneManager(BaseComponent):
         
         # Сцены и переходы
         self.scenes: Dict[str, SceneData] = {}
+        self.scene_instances: Dict[str, Scene] = {}
         self.active_scene: Optional[str] = None
         self.previous_scene: Optional[str] = None
         self.scene_stack: List[str] = []
@@ -135,8 +153,8 @@ class SceneManager(BaseComponent):
             # Регистрируем состояния системы
             self._register_system_states()
             
-            # Создаем базовые сцены
-            self._create_default_scenes()
+            # Регистрируем встроенные сцены
+            self._register_builtin_scenes()
             
             # Загружаем настройки сцен
             self._load_scene_settings()
@@ -161,7 +179,7 @@ class SceneManager(BaseComponent):
             
             # Активируем начальную сцену
             if self.scenes:
-                first_scene = list(self.scenes.keys())[0]
+                first_scene = "main_menu" if "main_menu" in self.scenes else list(self.scenes.keys())[0]
                 self.load_scene(first_scene)
             
             self.system_state = LifecycleState.RUNNING
@@ -297,8 +315,11 @@ class SceneManager(BaseComponent):
     
     def _update_scene(self, scene: SceneData, delta_time: float):
         """Обновление отдельной сцены"""
-        # Здесь будет логика обновления сцены
-        pass
+        if scene.instance and scene.instance.active:
+            try:
+                scene.instance.update(delta_time)
+            except Exception as e:
+                logger.error(f"Ошибка обновления сцены {scene.scene_id}: {e}")
     
     def _process_transitions(self, delta_time: float):
         """Обработка переходов между сценами"""
@@ -324,6 +345,27 @@ class SceneManager(BaseComponent):
             
         except Exception as e:
             logger.error(f"Ошибка начала перехода: {e}")
+
+    def register_scene(self, scene_id: str, scene_instance: "Scene", scene_type: SceneType,
+                       scene_name: str, scene_file: str = "") -> bool:
+        """Регистрация экземпляра сцены"""
+        try:
+            scene_instance.attach_manager(self)
+            data = SceneData(
+                scene_id=scene_id,
+                scene_type=scene_type,
+                scene_name=scene_name,
+                scene_file=scene_file,
+                instance=scene_instance
+            )
+            self.scenes[scene_id] = data
+            self.scene_instances[scene_id] = scene_instance
+            self.scene_stats['total_scenes'] = len(self.scenes)
+            logger.info(f"Зарегистрирована сцена: {scene_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Ошибка регистрации сцены {scene_id}: {e}")
+            return False
     
     def create_scene(self, scene_id: str, scene_type: SceneType, scene_name: str, 
                     scene_file: str) -> Optional[SceneData]:
@@ -361,6 +403,13 @@ class SceneManager(BaseComponent):
             if self.active_scene:
                 self.previous_scene = self.active_scene
                 self.scene_stack.append(self.active_scene)
+                # Останавливаем предыдущую сцену
+                prev_data = self.scenes.get(self.previous_scene)
+                if prev_data and prev_data.instance and prev_data.instance.active:
+                    try:
+                        prev_data.instance.cleanup()
+                    except Exception as e:
+                        logger.error(f"Ошибка очистки предыдущей сцены {self.previous_scene}: {e}")
                 
                 # Ограничиваем размер стека
                 if len(self.scene_stack) > self.scene_settings['max_scene_stack_size']:
@@ -370,6 +419,19 @@ class SceneManager(BaseComponent):
             self.active_scene = scene_id
             self.scene_stats['scenes_loaded'] += 1
             self.scene_stats['current_scene_time'] = 0.0
+            
+            # Инициализируем и запускаем сцену
+            data = self.scenes[scene_id]
+            if data.instance:
+                try:
+                    if not data.instance.initialized:
+                        if not data.instance.initialize():
+                            logger.error(f"Инициализация сцены {scene_id} не удалась")
+                            return False
+                    data.instance.start()
+                except Exception as e:
+                    logger.error(f"Ошибка старта сцены {scene_id}: {e}")
+                    return False
             
             logger.info(f"Загружена сцена: {scene_id}")
             return True
@@ -387,7 +449,12 @@ class SceneManager(BaseComponent):
             
             # Если это активная сцена, деактивируем её
             if self.active_scene == scene_id:
-                self.active_scene = None
+                try:
+                    data = self.scenes[scene_id]
+                    if data.instance and data.instance.active:
+                        data.instance.cleanup()
+                finally:
+                    self.active_scene = None
             
             # Удаляем из стека
             if scene_id in self.scene_stack:
@@ -489,3 +556,24 @@ class SceneManager(BaseComponent):
             'total_scene_time': 0.0,
             'update_time': 0.0
         }
+
+    def _register_builtin_scenes(self):
+        """Регистрация встроенных сцен"""
+        try:
+            # Локальные импорты для избежания циклов
+            from .menu_scene import MenuScene
+            from .settings_scene import SettingsScene
+            from .load_scene import LoadScene
+            from .pause_scene import PauseScene
+            from .creator_scene import CreatorScene
+            from .game_scene import GameScene
+
+            self.register_scene("main_menu", MenuScene(), SceneType.MAIN_MENU, "Главное меню")
+            self.register_scene("settings", SettingsScene(), SceneType.SETTINGS, "Настройки")
+            self.register_scene("load_game", LoadScene(), SceneType.LOADING, "Загрузка")
+            # Для pauze используем SETTINGS как ближайший тип при отсутствии особого
+            self.register_scene("pause", PauseScene(), SceneType.SETTINGS, "Пауза")
+            self.register_scene("creator", CreatorScene(), SceneType.GAME_WORLD, "Творец мира")
+            self.register_scene("game_world", GameScene(), SceneType.GAME_WORLD, "Игровой мир")
+        except Exception as e:
+            logger.error(f"Ошибка регистрации встроенных сцен: {e}")
