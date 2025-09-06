@@ -24,6 +24,20 @@ def _configure_console_encoding():
 
 _configure_console_encoding()
 
+def _configure_python_io_encoding():
+    """Forces UTF-8 encoding for Python stdio on Windows to avoid Unicode errors."""
+    try:
+        os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+        # Python 3.7+ supports reconfigure on text IO wrappers
+        if hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        if hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+_configure_python_io_encoding()
+
 def load_logging_config():
     """Загрузка конфигурации логирования"""
     try:

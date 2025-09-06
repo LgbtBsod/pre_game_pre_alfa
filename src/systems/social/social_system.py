@@ -154,6 +154,9 @@ class SocialSystem(BaseComponent):
             priority=Priority.NORMAL
         )
         
+        # Логгер системы
+        self.logger = logging.getLogger(__name__)
+
         # Социальные данные
         self.social_profiles: Dict[str, SocialProfile] = {}
         self.interactions: List[Interaction] = []

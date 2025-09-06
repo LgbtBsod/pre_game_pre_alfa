@@ -180,12 +180,12 @@ class DialogueSystem(BaseComponent):
                     node_id="greeting_friendly",
                     speaker_id="npc",
                     text="Привет! Рад тебя видеть.",
-                    emotion=EmotionType.HAPPY,
+                    emotion=EmotionType.JOY,
                     options=[
                         DialogueOption(
                             option_id="greet_back",
                             text="Привет! Как дела?",
-                            consequences={"relationship": 0.1, "emotion": EmotionType.HAPPY}
+                            consequences={"relationship": 0.1, "emotion": EmotionType.JOY}
                         ),
                         DialogueOption(
                             option_id="greet_casual",
@@ -227,7 +227,7 @@ class DialogueSystem(BaseComponent):
         # Дружелюбный торговец
         self.character_personalities["merchant_friendly"] = CharacterPersonality(
             character_id="merchant_friendly",
-            base_emotion=EmotionType.HAPPY,
+            base_emotion=EmotionType.JOY,
             personality_traits={
                 "friendliness": 0.8,
                 "honesty": 0.7,
@@ -244,7 +244,7 @@ class DialogueSystem(BaseComponent):
         # Подозрительный стражник
         self.character_personalities["guard_suspicious"] = CharacterPersonality(
             character_id="guard_suspicious",
-            base_emotion=EmotionType.SUSPICIOUS,
+            base_emotion=EmotionType.FEAR,
             personality_traits={
                 "friendliness": 0.2,
                 "honesty": 0.8,
@@ -289,7 +289,7 @@ class DialogueSystem(BaseComponent):
             return False
     
     def start_dialogue(self, speaker_id: str, listener_id: str, 
-                      dialogue_type: DialogueType = DialogueType.CASUAL) -> str:
+                      dialogue_type: DialogueType = DialogueType.CONVERSATION) -> str:
         """Начало диалога"""
         try:
             dialogue_id = f"dialogue_{speaker_id}_{listener_id}_{int(time.time())}"
@@ -454,12 +454,12 @@ class DialogueSystem(BaseComponent):
     def _adapt_text_to_emotion(self, text: str, emotion: EmotionType) -> str:
         """Адаптация текста под эмоцию"""
         emotion_modifiers = {
-            EmotionType.HAPPY: ["с радостью", "весело", "с улыбкой"],
-            EmotionType.SAD: ["грустно", "с вздохом", "печально"],
-            EmotionType.ANGRY: ["сердито", "с раздражением", "гневно"],
+            EmotionType.JOY: ["с радостью", "весело", "с улыбкой"],
+            EmotionType.SADNESS: ["грустно", "с вздохом", "печально"],
+            EmotionType.ANGER: ["сердито", "с раздражением", "гневно"],
             EmotionType.FEAR: ["боязливо", "с тревогой", "нервно"],
             EmotionType.SURPRISE: ["с удивлением", "пораженно", "изумленно"],
-            EmotionType.EXCITED: ["с энтузиазмом", "воодушевленно", "с азартом"]
+            EmotionType.ANTICIPATION: ["с энтузиазмом", "воодушевленно", "с азартом"]
         }
         
         if emotion in emotion_modifiers:
@@ -490,9 +490,9 @@ class DialogueSystem(BaseComponent):
         base_rate = option.success_rate
         
         # Влияние эмоций
-        if context.emotional_state == EmotionType.HAPPY:
+        if context.emotional_state == EmotionType.JOY:
             base_rate *= 1.1
-        elif context.emotional_state == EmotionType.ANGRY:
+        elif context.emotional_state == EmotionType.ANGER:
             base_rate *= 0.8
         
         # Влияние отношений
@@ -640,7 +640,7 @@ class DialogueSystem(BaseComponent):
                 timestamp=time.time(),
                 speaker_id=speaker_id,
                 listener_id=listener_id,
-                dialogue_type=DialogueType.CASUAL,  # Можно определить по контексту
+                dialogue_type=DialogueType.CONVERSATION,  # Можно определить по контексту
                 topic="dialogue",
                 emotion=EmotionType.NEUTRAL,  # Можно определить по последствиям
                 relationship_change=consequences.get("relationship_change", 0.0),

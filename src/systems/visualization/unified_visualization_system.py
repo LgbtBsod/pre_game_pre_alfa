@@ -238,8 +238,14 @@ class UnifiedVisualizationSystem(BaseComponent):
         try:
             if not self.scene_root:
                 # Создаем корневой узел сцены если его нет
-                from panda3d.core import render
-                self.scene_root = render.attachNewNode("visualization_root")
+                scene_parent = None
+                try:
+                    from direct.showbase import ShowBase as _  # ensure globals
+                    scene_parent = render  # type: ignore[name-defined]
+                except Exception:
+                    scene_parent = None
+                self.scene_root = (scene_parent.attachNewNode("visualization_root")
+                                   if scene_parent is not None else NodePath("visualization_root"))
             
             # Создание изометрической камеры
             camera = Camera("isometric_camera")
@@ -268,8 +274,14 @@ class UnifiedVisualizationSystem(BaseComponent):
         """Настройка перспективного режима"""
         try:
             if not self.scene_root:
-                from panda3d.core import render
-                self.scene_root = render.attachNewNode("visualization_root")
+                scene_parent = None
+                try:
+                    from direct.showbase import ShowBase as _
+                    scene_parent = render  # type: ignore[name-defined]
+                except Exception:
+                    scene_parent = None
+                self.scene_root = (scene_parent.attachNewNode("visualization_root")
+                                   if scene_parent is not None else NodePath("visualization_root"))
             
             # Создание перспективной камеры
             camera = Camera("perspective_camera")
@@ -297,8 +309,14 @@ class UnifiedVisualizationSystem(BaseComponent):
         """Настройка режима вида сверху"""
         try:
             if not self.scene_root:
-                from panda3d.core import render
-                self.scene_root = render.attachNewNode("visualization_root")
+                scene_parent = None
+                try:
+                    from direct.showbase import ShowBase as _
+                    scene_parent = render  # type: ignore[name-defined]
+                except Exception:
+                    scene_parent = None
+                self.scene_root = (scene_parent.attachNewNode("visualization_root")
+                                   if scene_parent is not None else NodePath("visualization_root"))
             
             camera = Camera("top_down_camera")
             lens = OrthographicLens()
@@ -324,8 +342,14 @@ class UnifiedVisualizationSystem(BaseComponent):
         """Настройка режима от первого лица"""
         try:
             if not self.scene_root:
-                from panda3d.core import render
-                self.scene_root = render.attachNewNode("visualization_root")
+                scene_parent = None
+                try:
+                    from direct.showbase import ShowBase as _
+                    scene_parent = render  # type: ignore[name-defined]
+                except Exception:
+                    scene_parent = None
+                self.scene_root = (scene_parent.attachNewNode("visualization_root")
+                                   if scene_parent is not None else NodePath("visualization_root"))
             
             camera = Camera("first_person_camera")
             lens = PerspectiveLens()
@@ -350,8 +374,14 @@ class UnifiedVisualizationSystem(BaseComponent):
         """Настройка режима от третьего лица"""
         try:
             if not self.scene_root:
-                from panda3d.core import render
-                self.scene_root = render.attachNewNode("visualization_root")
+                scene_parent = None
+                try:
+                    from direct.showbase import ShowBase as _
+                    scene_parent = render  # type: ignore[name-defined]
+                except Exception:
+                    scene_parent = None
+                self.scene_root = (scene_parent.attachNewNode("visualization_root")
+                                   if scene_parent is not None else NodePath("visualization_root"))
             
             camera = Camera("third_person_camera")
             lens = PerspectiveLens()

@@ -166,13 +166,13 @@ class MemorySystem(BaseComponent):
             # Запуск процессов памяти
             self._start_memory_processes()
             
-            self.state = LifecycleState.READY
+            self._state = LifecycleState.READY
             logger.info("Система памяти успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы памяти: {e}")
-            self.state = LifecycleState.ERROR
+            self._state = LifecycleState.ERROR
             return False
     
     def _create_memory_patterns(self) -> bool:

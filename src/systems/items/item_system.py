@@ -236,20 +236,20 @@ class ItemSystem(BaseComponent):
         """Регистрация состояний системы"""
         if self.state_manager:
             self.state_manager.set_state(
-                f"{self.system_name}_settings",
+                f"{self.component_id}_settings",
                 self.system_settings,
                 StateType.SETTINGS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_stats",
+                f"{self.component_id}_stats",
                 self.system_stats,
                 StateType.STATISTICS
             )
             
             self.state_manager.set_state(
-                f"{self.system_name}_state",
-                self.system_state,
+                f"{self.component_id}_state",
+                self.state,
                 StateType.SYSTEM_STATE
             )
     
@@ -266,13 +266,13 @@ class ItemSystem(BaseComponent):
             # Создание наборов экипировки
             self._create_equipment_sets()
             
-            self.system_state = LifecycleState.READY
+            self._state = LifecycleState.READY
             logger.info("ItemSystem инициализирован успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации ItemSystem: {e}")
-            self.system_state = LifecycleState.ERROR
+            self._state = LifecycleState.ERROR
             return False
     
     def start(self) -> bool:
@@ -280,22 +280,22 @@ class ItemSystem(BaseComponent):
         try:
             logger.info("Запуск ItemSystem...")
             
-            if self.system_state != LifecycleState.READY:
+            if self.state != LifecycleState.READY:
                 logger.error("ItemSystem не готов к запуску")
                 return False
             
-            self.system_state = LifecycleState.RUNNING
+            self._state = LifecycleState.RUNNING
             logger.info("ItemSystem запущен успешно")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка запуска ItemSystem: {e}")
-            self.system_state = LifecycleState.ERROR
+            self._state = LifecycleState.ERROR
             return False
     
     def update(self, delta_time: float):
         """Обновление системы предметов"""
-        if self.system_state != LifecycleState.RUNNING:
+        if self.state != LifecycleState.RUNNING:
             return
         
         try:
@@ -313,7 +313,7 @@ class ItemSystem(BaseComponent):
             # Обновляем состояние в менеджере состояний
             if self.state_manager:
                 self.state_manager.set_state(
-                    f"{self.system_name}_stats",
+                    f"{self.component_id}_stats",
                     self.system_stats,
                     StateType.STATISTICS
                 )
@@ -326,7 +326,7 @@ class ItemSystem(BaseComponent):
         try:
             logger.info("Остановка ItemSystem...")
             
-            self.system_state = LifecycleState.STOPPED
+            self._state = LifecycleState.STOPPED
             logger.info("ItemSystem остановлен успешно")
             return True
             
@@ -346,7 +346,7 @@ class ItemSystem(BaseComponent):
             self.equipment_sets.clear()
             self.inventories.clear()
             
-            self.system_state = LifecycleState.DESTROYED
+            self._state = LifecycleState.DESTROYED
             logger.info("ItemSystem уничтожен успешно")
             return True
             
@@ -910,9 +910,9 @@ class ItemSystem(BaseComponent):
     def get_system_info(self) -> Dict[str, Any]:
         """Получение информации о системе"""
         return {
-                    'name': self.system_name,
-                    'state': self.system_state.value,
-                    'priority': self.system_priority.value,
+                    'name': self.component_id,
+                    'state': self.state.value,
+                    'priority': self.priority.value,
                     'item_templates_count': len(self.item_templates),
                     'equipment_sets_count': len(self.equipment_sets),
                     'inventories_count': len(self.inventories),

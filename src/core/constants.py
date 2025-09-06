@@ -121,6 +121,12 @@ class GeneType(Enum):
     RESISTANCE = "resistance"
     ADAPTATION = "adaptation"
     MUTATION = "mutation"
+    # Категории, используемые системой эволюции
+    PHYSICAL = "physical"
+    MENTAL = "mental"
+    SOCIAL = "social"
+    COMBAT = "combat"
+    MAGIC = "magic"
 
 class EvolutionType(Enum):
     """Типы эволюции"""
@@ -174,6 +180,10 @@ class WeatherType(Enum):
     SANDSTORM = "sandstorm"
     TOXIC_RAIN = "toxic_rain"
     RADIATION_STORM = "radiation_storm"
+    HAIL = "hail"
+    WINDY = "windy"
+    DROUGHT = "drought"
+    EXTREME = "extreme"
 
 class MemoryType(Enum):
     """Типы памяти (централизованные)"""
@@ -187,6 +197,13 @@ class MemoryType(Enum):
     EVOLUTION = "evolution"
     SOCIAL = "social"
     EMOTIONAL = "emotional"
+    # Расширенные типы памяти, используемые в системах
+    SHORT_TERM = "short_term"
+    LONG_TERM = "long_term"
+    EPISODIC = "episodic"
+    SEMANTIC = "semantic"
+    PROCEDURAL = "procedural"
+    GENETIC = "genetic"
 
 class DialogueType(Enum):
     """Типы диалогов (централизованные)"""
@@ -231,6 +248,10 @@ class CraftingType(Enum):
     ENCHANTING = "enchanting"
     ALCHEMY = "alchemy"
     ENGINEERING = "engineering"
+    # Короткие типы, используемые станциями в CraftingSystem
+    WEAPON = "weapon"
+    ARMOR = "armor"
+    CONSUMABLE = "consumable"
 
 class BuildingType(Enum):
     """Типы зданий (централизованные)"""

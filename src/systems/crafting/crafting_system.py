@@ -139,13 +139,13 @@ class CraftingSystem(BaseComponent):
             # Создание станций крафтинга
             self._create_crafting_stations()
             
-            self.state = LifecycleState.READY
+            self._state = LifecycleState.READY
             logger.info("Система крафтинга успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы крафтинга: {e}")
-            self.state = LifecycleState.ERROR
+            self._state = LifecycleState.ERROR
             return False
     
     def _load_recipes(self):

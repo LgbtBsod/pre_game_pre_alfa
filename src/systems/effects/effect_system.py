@@ -135,13 +135,13 @@ class EffectSystem(BaseComponent):
             if not self._create_base_effects():
                 return False
             
-            self.state = LifecycleState.READY
+            self._state = LifecycleState.READY
             logger.info("Система эффектов успешно инициализирована")
             return True
             
         except Exception as e:
             logger.error(f"Ошибка инициализации системы эффектов: {e}")
-            self.state = LifecycleState.ERROR
+            self._state = LifecycleState.ERROR
             return False
     
     def _load_effect_templates(self) -> bool:
